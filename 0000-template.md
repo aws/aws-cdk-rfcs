@@ -1,11 +1,13 @@
-- Feature Name: (fill me in with a unique identifier, my-awesome-feature)
-- Start Date: (fill me in with today's date, YYYY-MM-DD)
-- RFC PR: (leave this empty)
-- Related Issue: (leave this empty)
+---
+feature name: (fill me in with a unique identifier, my-awesome-feature)
+start date: (fill me in with today's date, YYYY-MM-DD)
+rfc pr: (leave this empty)
+related issue: (tracking issue number)
+---
 
 # Summary
 
-Brief explanation of the feature.
+Brief description of the feature.
 
 # Motivation
 
@@ -30,6 +32,12 @@ implementation to implement. This should get into specifics and corner-cases,
 and include examples of how the feature is used. Any new terminology should be
 defined here.
 
+Include any diagrams and/or visualizations that help to demonstrate the design.
+Here are some tools that we often use:
+
+- [Graphviz](http://graphviz.it/#/gallery/structs.gv)
+- [PlantText](https://www.planttext.com)
+
 # Drawbacks
 
 Why should we _not_ do this? Please consider:
@@ -49,21 +57,20 @@ There are tradeoffs to choosing any path. Attempt to identify them here.
   choosing them?
 - What is the impact of not doing this?
 
-# Prior Art
-
-Discuss priort art, both the good and the bad, in relation to this proposal. A
-few examples of what this could include are.
-
--
-
 # Adoption Strategy
 
 If we implement this proposal, how will existing CDK developers adopt it? Is
 this a breaking change? How can we assist in adoption?
 
+# Unresolved questions
+
+- What parts of the design do you expect to resolve through the RFC process before this gets merged?
+- What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
+- What related issues do you consider out of scope for this RFC that could be addressed in the future independently of the solution that comes out of this RFC?
+
 # Future Possibilities
 
-THing about what the natural extension and evolution of your proposal would be
+Think about what the natural extension and evolution of your proposal would be
 and how it would affect CDK as whole. Try to use this section as a tool to more
 fully consider all possible interactions with the project and ecosystem in your
 proposal. Also consider how this fits into the roadmap for the project.
@@ -73,8 +80,3 @@ are writing but are otherwise related.
 
 If you have tried and cannot think of any future possibilities, you may simply
 state that you cannot think of anything.
-
-# Unresolved questions
-
-Optional, but suggested for first drafts. What parts of the design are still
-TBD?
