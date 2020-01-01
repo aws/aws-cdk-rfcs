@@ -24,6 +24,11 @@ the motivation could be used to develop alternative solutions. In other words,
 enumerate the constraints you are trying to solve without coupling them too
 closely to the solution you have in mind.
 
+# Design Summary
+
+Summarize the approach of the feature design in a couple of sentences. Call out
+any known patterns or best practices the design is based around.
+
 # Detailed Design
 
 This is the bulk of the RFC. Explain the design in enough detail for somebody
@@ -64,9 +69,13 @@ this a breaking change? How can we assist in adoption?
 
 # Unresolved questions
 
-- What parts of the design do you expect to resolve through the RFC process before this gets merged?
-- What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
-- What related issues do you consider out of scope for this RFC that could be addressed in the future independently of the solution that comes out of this RFC?
+- What parts of the design do you expect to resolve through the RFC process
+  before this gets merged?
+- What parts of the design do you expect to resolve through the implementation
+  of this feature before stabilization?
+- What related issues do you consider out of scope for this RFC that could be
+  addressed in the future independently of the solution that comes out of this
+  RFC?
 
 # Future Possibilities
 
