@@ -1,15 +1,64 @@
 # AWS CDK RFCs - [Pending RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
 
-Many changes, including bug fixes and documentation improvements can be
-implemented and reviewed via the normal GitHub pull request workflow.
+This repo is a place to propose and track upcoming changes to CDK, JSII, and
+other related projects. It also is a great place to learn about the current and
+future state of the libraries.
 
-Some changes though are "substantial", and we ask that these be put through a
-bit of a design process and produce a consensus among the CDK core team.
-
-The "RFC" (request for comments) process is intended to provide a consistent and
-controlled path for new features to enter the project.
+See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
+existing proposals.
 
 [Pending RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
+
+## What does all this mean?!
+
+This document is a lot of information about process thats meant to help guide.
+It is not a set of rules that need to be strictly applied. It is designed to
+help contributors (and thats you!) become more involved with the tools that they
+rely on. All efforts to contribute are encouraged and appreciated.
+
+## What is an RFC?
+
+An RFC is a document that proposes and details a change or addition to the CDK,
+JSII, and other related tooling. It also is a process for reviewing and
+discussing the proposal and tracking its implementation. "Request for Comments"
+means a request for discussion and oversight about the future of the CDK and
+JSII from contributors and users. It is an open forum for suggestions,
+questions, and feedback.
+
+The process is intended to be as lightweight and reasonable as possible for the
+present circumstances. As usual, we are trying to let the process be driven by
+consensus and community norms, not impose more structure than necessary.
+
+The RFC process itself is subject to changes as dictated by the core team and
+the community. Proposals can include proposed changes to the RFC process itself
+to better serve contributors.
+
+## Contributions
+
+Contributions are welcome from anyone in a variety of ways.
+
+- [Reviewing and dicussing existing proposals](#reviewing-rfcs)
+
+Comments are welcome on proposal tracking issues and RFC pull requests. This can
+be to show support for a feature that you're really interested in having, or to
+point out possible red flags or downsides to the change.
+
+- [Creating new proposals](#what-the-process-is)
+
+If a feature or change you think is needed hasn't been proposed, create a new
+tracking issue.
+
+- [Writing RFC documents](#what-the-process-is)
+
+If you're interested in helping to design an existing proposal, comment on the
+tracking issue and get started on an RFC document.
+
+- [Implementing proposals that are ready](#implementing-an-rfc)
+
+Once a proposal has been reviewed and is ready, contributions to its
+implementation are greatly appreciated. We try to estimate the effort needed to
+implement a proposal. If you're looking for a good introductory project, look
+for proposals that are labeled "ready" and "effort/small".
 
 ## When to follow this process
 
@@ -21,15 +70,15 @@ benefit from an RFC are:
 - Any change to existing APIs that could break existing code.
 - The removal of existing features or public APIs.
 - The introduction of new idiomatic usage or conventions, even if they do not
-  include code changes to CDK itself.
+  include code changes to CDK or JSII themselves.
 - Changes to the documented contribution workflow.
 - Features that cross multiple construct libraries.
 - Additions or changes to framework capabilities.
 - Additions or changes to formal specifications like cloud assembly, tree.json,
-  jsii, etc.
+  JSII, etc.
 
 The RFC process is a great opportunity to get more eyeballs on your proposal
-before it becomes a part of a released version of CDK. Quite often, even
+before it becomes a part of a released version of CDK/JSII. Quite often, even
 proposals that seem "obvious" can be significantly improved once a wider group
 of interested people have a chance to weigh in.
 
@@ -45,17 +94,21 @@ first.
 Some changes do not require an RFC:
 
 - Bugfixes for known issues.
-- Additions only likely to be _noticed by_ other developers-of-CDK, invisible to
-  users-of-CDK.
+- Additions only likely to be _noticed by_ other developers of CDK/JSII, invisible
+  to users of CDK/JSII.
 - Additions of missing L1 or L2 constructs. Unless the service and/or constructs
   are especially complex or intentionally diverge from existing api design best
   practices.
 
+If you're not sure whether your change requires an RFC, feel free to create an
+issue and ask.
+
 ## What the process is
 
-In short, to get a major feature added to CDK, one usually first gets the RFC
-merged into the RFC repo as a markdown file. At that point the RFC is 'ready'
-and may be implemented with the goal of eventual inclusion into CDK.
+In short, to get a major feature added to CDK/JSII, one usually first gets the
+RFC merged into the RFC repo as a markdown file. At that point the RFC is
+'ready' and may be implemented with the goal of eventual inclusion into
+CDK/JSII.
 
 - [Create a tracking issue](https://github.com/awslabs/aws-cdk-rfcs/issues/new?template=tracking-issue.md)
   for the proposed feature if one doesn't already exist. Use the tracking issue
@@ -74,8 +127,8 @@ and may be implemented with the goal of eventual inclusion into CDK.
 - Build consensus and integrate feedback. RFCs that have broad support are much
   more likely to make progress than those that don't receive any comments.
 - Eventually, the team will decide whether the RFC is a candidate for inclusion
-  in CDK.
-- RFCs that are candidates for inclusion in CDK will enter a "final comment
+  in CDK/JSII.
+- RFCs that are candidates for inclusion in CDK/JSII will enter a "final comment
   period" lasting 3 calendar days. The beginning of this period will be signaled
   by a team member adding a comment and label on the RFCs pull request.
 - An RFC can be modified based upon feedback from the team and community.
@@ -91,7 +144,7 @@ A core team member will be assigned to 'champion' each proposal. They will
 generally be the ones updating the RFCs state in the tracking issue as it moves
 through the process. They can decide when a final comment period is triggered.
 
-## The RFC life-cycle
+## The RFC Life Cycle
 
 ![rfc-states](https://g.gravizo.com/svg?digraph%20states%20{node%20[shape=ellipse];proposed%20[label%20=%20%22Proposed%22];pending%20[label%20=%20%22Pending%22];fcp%20[label%20=%20%22Final%20Comment%20Period%22];ready%20[label%20=%20%22Ready%22];resolved%20[label%20=%20%22Resolved%22];proposed%20-%3E%20pending%20[label%20=%20%22%20rfc%20pr%20created%22];pending%20-%3E%20pending%20[label%20=%20%22%20revisions%22];pending%20-%3E%20fcp%20[label%20=%20%22core%20team%20approval%20%20%20%20%22];fcp%20-%3E%20pending%20[label%20=%20%22%20revision%20requested%22];fcp%20-%3E%20ready%20[label%20=%20%22%20merged%22];ready%20-%3E%20resolved%20[label%20=%20%22%20implementation%20complete%22];})
 
@@ -149,6 +202,17 @@ release; therefore we try to keep each RFC document somewhat in sync with the
 feature as planned, tracking such changes via followup pull requests to the
 document.
 
+## Reviewing RFCs
+
+Each week the team will attempt to review some set of open RFC pull requests.
+Comments and feedback on proposals in any state of the process are welcome and
+encouraged.
+
+Every RFC that we accept should have a core team champion, who will represent
+the feature and its progress. When an RFC is merged, we try to label the
+tracking with an estimation of effort required for implementation. These are
+general "t-shirt size" estimates e.g. small, medium, large.
+
 ## Implementing an RFC
 
 While the author of an RFC (like any other developer) is welcome to offer an
@@ -158,22 +222,6 @@ obligation to do so.
 If you are interested in working on the implementation for an RFC marked
 'ready', but cannot determine if someone else is already working on it, feel
 free to ask (e.g. by leaving a comment on the associated tracking issue).
-
-## Reviewing RFCs
-
-Each week the team will attempt to review some set of open RFC pull requests.
-
-Every RFC that we accept should have a core team champion, who will represent
-the feature and its progress.
-
-## Help this is all too informal!
-
-The process is intended to be as lightweight and reasonable for the present
-circumstances. As usual, we are trying to let the process be driven by consensus
-and community norms, not impose more structure than necessary.
-
-The RFC process itself is subject to changes as dictated by the core team and
-the community.
 
 **AWS CDK's RFC process owes its inspiration to the [Yarn RFC process], [Rust
 RFC process], [React RFC process], and [Ember RFC process]**
