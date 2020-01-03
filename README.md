@@ -1,13 +1,16 @@
-# AWS CDK RFCs - [Pending RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
+# AWS CDK RFCs - [RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
 
 This repo is a place to propose and track upcoming changes to CDK, JSII, and
 other related projects. It also is a great place to learn about the current and
-future state of the libraries.
+future state of the libraries and to discover projects for contribution.
 
 See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
 
-[Pending RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
+- [Proposed RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fproposed)
+- [Pending RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fpending)
+- [Ready RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fready)
+- [Resolved RFCs](https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=label%3Astatus%2Fresolved+)
 
 ## What does all this mean?!
 
@@ -57,8 +60,9 @@ tracking issue and get started on an RFC document.
 
 Once a proposal has been reviewed and is ready, contributions to its
 implementation are greatly appreciated. We try to estimate the effort needed to
-implement a proposal. If you're looking for a good introductory project, look
-for proposals that are labeled "ready" and "effort/small".
+implement a proposal. If you're looking for a good introductory project, [look
+for proposals that are labeled "ready" and "effort/small".]
+(https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=is%3Aopen+label%3Astatus%2Fready+label%3Aeffort%2Fsmall)
 
 ## When to follow this process
 
