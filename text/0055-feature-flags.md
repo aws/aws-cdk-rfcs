@@ -1,7 +1,8 @@
 ---
-feature name: feature-flags start date: rfc pr:
-https://github.com/aws/aws-cdk/pull/5017 related issue:
-https://github.com/awslabs/aws-cdk-rfcs/issues/55
+feature name: feature-flags 
+start date: 
+rfc pr: https://github.com/aws/aws-cdk/pull/5017 
+related issue: https://github.com/awslabs/aws-cdk-rfcs/issues/55
 ---
 
 # Summary
@@ -40,7 +41,7 @@ This feature is disabled by default, which means that the behavior for existing
 projects would remain the same (along with the limitation of course), but new
 projects would have the flag automatically enabled in their `cdk.json` file.
 
-# Approach
+# Design Summary
 
 The basic idea is that new breaking behavior will always be disabled by default
 and only enabled when a certain CDK context parameter is set. If not enabled,
