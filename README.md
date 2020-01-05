@@ -61,8 +61,7 @@ tracking issue and get started on an RFC document.
 Once a proposal has been reviewed and is ready, contributions to its
 implementation are greatly appreciated. We try to estimate the effort needed to
 implement a proposal. If you're looking for a good introductory project, [look
-for proposals that are labeled "ready" and "effort/small".]
-(https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=is%3Aopen+label%3Astatus%2Fready+label%3Aeffort%2Fsmall)
+for proposals that are labeled "ready" and "effort/small".](https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=is%3Aopen+label%3Astatus%2Fready+label%3Aeffort%2Fsmall)
 
 ## When to follow this process
 
