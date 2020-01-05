@@ -10,7 +10,7 @@ existing proposals.
 - [Proposed RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fproposed)
 - [Pending RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fpending)
 - [Ready RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fready)
-- [Resolved RFCs](https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=label%3Astatus%2Fresolved+)
+- [Resolved RFCs](https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=label%3Astatus%2Fresolved)
 
 ## What does all this mean?!
 
