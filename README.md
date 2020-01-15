@@ -1,11 +1,16 @@
-# AWS CDK RFCs - [RFC List](https://github.com/awslabs/aws-cdk-rfcs/pulls)
+# AWS CDK RFCs
 
-This repo is a place to propose and track upcoming changes to CDK, JSII, and
+This repo is a place to propose and track upcoming changes to [AWS CDK], [jsii], and
 other related projects. It also is a great place to learn about the current and
 future state of the libraries and to discover projects for contribution.
 
+[AWS CDK]: https://github.com/aws/aws-cdk
+[jsii]: https://github.com/aws/jsii
+
 See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
+
+You can browse RFCs by stage ("+1" on the issue if you want to see it move forward):
 
 - [Proposed RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fproposed)
 - [Pending RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fpending)
