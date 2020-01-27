@@ -63,7 +63,6 @@ existing proposals.
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[eladb](https://github.com/eladb)|proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[eladb](https://github.com/eladb)|proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[eladb](https://github.com/eladb)|proposed
-[53](https://github.com/aws/aws-cdk-rfcs/issues/53)|RFC: #16 RFC Process||[MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[eladb](https://github.com/eladb)|resolved
 <!--END_TABLE-->
 
