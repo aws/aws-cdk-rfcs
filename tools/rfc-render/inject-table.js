@@ -12,12 +12,7 @@ async function main() {
 
   console.error(`reading ${readmeFile}`);
   const text = (await fs.readFile(readmeFile, 'utf-8'));
-
-  console.error(text);
-
   const lines = text.split('\n');
-
-  console.error(lines);
 
   const begin = lines.indexOf('<!--BEGIN_TABLE-->');
   const end = lines.indexOf('<!--END_TABLE-->');
