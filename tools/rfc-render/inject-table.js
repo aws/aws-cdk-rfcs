@@ -7,8 +7,10 @@ async function main() {
   if (!readmeFile) {
     throw new Error(`usage: ${process.argv[1]} README.md > README.md`);
   }
-  
+
   const lines = (await fs.readFile(readmeFile, 'utf-8')).split('\n');
+
+  console.error(lines);
 
   const begin = lines.indexOf('<!--BEGIN_TABLE-->');
   const end = lines.indexOf('<!--END_TABLE-->');
