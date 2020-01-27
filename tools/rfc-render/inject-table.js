@@ -7,10 +7,10 @@ async function main() {
 
   const readmeFile = path.resolve(process.argv[2]);
   if (!readmeFile) {
-    throw new Error(`usage: ${process.argv[1]} README.md > README.md`);
+    throw new Error(`usage: ${process.argv[1]} README.md`);
   }
 
-  console.error(readmeFile);
+  console.error(`reading ${readmeFile}`);
   const text = (await fs.readFile(readmeFile, 'utf-8'));
 
   console.error(text);
@@ -27,7 +27,9 @@ async function main() {
   }
 
   const final = [ ...lines.slice(0, begin + 1), ...(await render()), ...lines.slice(end) ];
-  console.log(final.join('\n'));
+
+  console.error(`writing ${readmeFile}`);
+  await fs.writeFile(readmeFile, final.join('\n'));
 }
 
 main().catch(e => {
