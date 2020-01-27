@@ -34,13 +34,14 @@ async function render() {
     const result = await octo.paginate(request);
 
     for (const issue of result) {
-      const pr = findPullRequest(issue);
+      const { pr, champion } = findMetadata(issue);
       const doc = findDocFile(files, issue.number);
   
       issues.push({
         number: issue.number,
         title: issue.title,
-        login: issue.user && issue.user.login,
+        createdBy: issue.user && issue.user.login,
+        champion,
         status: status.split('/')[1],
         pr,
         doc
@@ -48,8 +49,8 @@ async function render() {
     }
   }
 
-  lines.push('#|Title|PR|Author|Status');
-  lines.push('-|-----|--|------|------');
+  lines.push('#|Title|PR|Created By|Champion|Status');
+  lines.push('-|-----|--|----------|--------|------');
 
   for (const row of issues) {
     const title = !row.doc ? row.title : `[${row.title}](https://github.com/aws/aws-cdk-rfcs/blob/master/text/${row.doc})`;
@@ -58,7 +59,8 @@ async function render() {
       `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
       title,
       row.pr,
-      `[${row.login}](https://github.com/${row.login})`,
+      renderUser(row.createdBy),
+      renderUser(row.champion),
       row.status
     ];
 
@@ -68,19 +70,43 @@ async function render() {
   return lines;
 }
 
+function renderUser(user) {
+  if (user.startsWith('@')) {
+    user = user.substring(1);
+  }
+
+  user = user.trim();
+  if (!user) {
+    return '';
+  }
+
+  return `[@${user}](https://github.com/${user})`;
+}
+
 function findDocFile(files, number) {
   return files.find(file => parseInt(file.split('-')[0]) === number);
 }
 
-function findPullRequest(issue) {
+function findMetadata(issue) {
   const body = issue.body || '';
   const lines = body.split('\n');
   const titleIndex = lines.findIndex(line => line.startsWith('|PR|Champion|'));
-  if (titleIndex === -1) { return undefined; }
+  if (titleIndex === -1) { 
+    return { pr: '', champion: '' }; 
+  }
 
-  const pr = lines[titleIndex + 2].split('|')[1].trim();
+  let [ , pr, champion ] = lines[titleIndex + 2].split('|');
+  pr = pr ? pr.trim() : '';
+  champion = champion ? champion.trim() : '';
 
-  if (pr === '#') { return undefined; }
-  if (pr.startsWith('[')) { return pr; }
-  return `[${pr}](https://github.com/aws/aws-cdk-rfcs/pull/${pr.substring(1)})`;
+  if (pr === '#') { 
+    pr = ''; 
+  }
+  
+  if (pr.startsWith('#')) { 
+    pr = `[${pr}](https://github.com/aws/aws-cdk-rfcs/pull/${pr.substring(1)})`; 
+  }
+ 
+
+  return { pr, champion };
 }

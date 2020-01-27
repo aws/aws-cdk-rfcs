@@ -3,8 +3,11 @@ const path = require('path');
 const { render } = require('./render-rfc-table');
 
 async function main() {
-  console.error(await fs.readdir('.'));
 
+  if (!process.argv[2]) {
+    throw new Error(`Usage: ${process.argv[1]} README.md`);
+  }
+  
   const readmeFile = path.resolve(process.argv[2]);
   if (!readmeFile) {
     throw new Error(`usage: ${process.argv[1]} README.md`);
