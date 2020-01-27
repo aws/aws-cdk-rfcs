@@ -21,6 +21,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: commit changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -am "chore: update RFC table in README"
+          if git diff-index --quiet HEAD --; then
+            echo "no changes"
+          else
+            echo "committing changes"
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit -am "chore: update RFC table in README"
+          fi
