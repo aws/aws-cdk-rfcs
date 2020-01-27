@@ -3,10 +3,12 @@ const path = require('path');
 const { render } = require('./render-rfc-table');
 
 async function main() {
-  const readmeFile = process.argv[2];
+  const readmeFile = path.resolve(process.argv[2]);
   if (!readmeFile) {
     throw new Error(`usage: ${process.argv[1]} README.md > README.md`);
   }
+
+  console.error(readmeFile);
 
   const lines = (await fs.readFile(readmeFile, 'utf-8')).split('\n');
 
