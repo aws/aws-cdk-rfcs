@@ -24,14 +24,16 @@ async function render() {
 
   for (const status of Object.keys(labels)) {
 
-    const result = await octo.issues.listForRepo({ 
+    const request = octo.issues.listForRepo.endpoint.merge({ 
       repo: 'aws-cdk-rfcs',
       owner: 'aws',
       state: 'all',
       labels: status
     });
 
-    for (const issue of result.data) {
+    const result = await octo.paginate(request);
+
+    for (const issue of result) {
       const pr = findPullRequest(issue);
       const doc = findDocFile(files, issue.number);
   
