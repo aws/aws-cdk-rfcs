@@ -27,4 +27,4 @@ jobs:
           commit-message: Update RFC table in README
           title: Update RFC table in README
           team-reviewers: aws/aws-cdk-core
-
+          branch: auto/update-rfc-table
