@@ -14,7 +14,7 @@ exports.render = render;
 
 async function render() {
   const lines = [];
-  const files = await fs.readdir(path.join('..', '..', 'text'));
+  const files = await fs.readdir(path.join(__dirname, '..', '..', 'text'));
 
   const octo = new Octokit({
     auth: process.env.GITHUB_TOKEN
