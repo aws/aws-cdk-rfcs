@@ -20,17 +20,11 @@ jobs:
           node tools/rfc-render/inject-table.js README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: commit changes
-        run: |
-          if git diff-index --quiet HEAD --; then
-            echo "no changes"
-          else
-            echo "committing changes"
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git commit -am "chore: update RFC table in README"
-          fi
-      - name: Push changes
-        uses: ad-m/github-push-action@master
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update RFC table in README
+          title: Update RFC table in README
+          team-reviewers: aws/aws-cdk-core
+
