@@ -10,12 +10,8 @@ future state of the libraries and to discover projects for contribution.
 See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
 
-You can browse RFCs by stage ("+1" on the issue if you want to see it move forward):
-
-- [Proposed RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fproposed)
-- [Pending RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fpending)
-- [Ready RFCs](https://github.com/awslabs/aws-cdk-rfcs/labels/status%2Fready)
-- [Resolved RFCs](https://github.com/awslabs/aws-cdk-rfcs/issues?utf8=%E2%9C%93&q=label%3Astatus%2Fresolved)
+<!--BEGIN_TABLE-->
+<!--END_TABLE-->
 
 ## What does all this mean?!
 
