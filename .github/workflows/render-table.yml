@@ -9,9 +9,16 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
-      - run: |
+      - name: install dependencies
+        run: |
           cd tools/rfc-render
           npm install
-          node inject-table.js
+      - name: render table
+        run: node tools/rfc-render/inject-table.js > README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "chore: update RFC table in README"
