@@ -1,5 +1,6 @@
 name: Render RFC Table
-on: [ issues ]
+on: 
+  - pull_request
 
 jobs:
   render:
