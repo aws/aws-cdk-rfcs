@@ -15,7 +15,7 @@ jobs:
           cd tools/rfc-render
           npm install
       - name: render table
-        run: node tools/rfc-render/inject-table.js > README.md
+        run: node tools/rfc-render/inject-table.js README.md > README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: commit changes
