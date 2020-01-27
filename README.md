@@ -17,6 +17,7 @@ existing proposals.
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|proposed
+[72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Asset Garbage Collector||[@eladb](https://github.com/eladb)||proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[@rix0rrr](https://github.com/rix0rrr)|[@rix0rrr](https://github.com/rix0rrr)|proposed
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|proposed
