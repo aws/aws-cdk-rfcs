@@ -9,8 +9,11 @@ async function main() {
   }
 
   console.error(readmeFile);
+  const text = (await fs.readFile(readmeFile, 'utf-8'));
 
-  const lines = (await fs.readFile(readmeFile, 'utf-8')).split('\n');
+  console.error(text);
+
+  const lines = text.split('\n');
 
   console.error(lines);
 
