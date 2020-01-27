@@ -28,7 +28,7 @@ RFC is to propose the API design, the best way to propose this is to write up
 the future user guide of the Cognito module, as if it was complete.
 
 The bulk of the RFC is in the supporting document -
-[working-backwards-readme.md](./cognito-construct-library/working-backwards-readme.md)
+[working-backwards-readme.md](./0095-cognito-construct-library/working-backwards-readme.md)
 
 # Detailed Design
 
