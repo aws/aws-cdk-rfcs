@@ -1,6 +1,7 @@
 name: Render RFC Table
 on: 
-  - pull_request
+  issues:
+    types: [opened,edited,deleted,transferred,assigned,unassigned,labeled,unlabeled]
 
 jobs:
   render:
