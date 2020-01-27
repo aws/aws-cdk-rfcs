@@ -1,6 +1,6 @@
 name: Render RFC Table
-on: 
-- issues
+on: [ issues ]
+
 jobs:
   render:
     runs-on: ubuntu-latest
