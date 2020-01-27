@@ -16,7 +16,6 @@ existing proposals.
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[eladb](https://github.com/eladb)|ready
-[96](https://github.com/aws/aws-cdk-rfcs/issues/96)|testing1234||[eladb](https://github.com/eladb)|proposed
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|cognito construct library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[nija-at](https://github.com/nija-at)|proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[rix0rrr](https://github.com/rix0rrr)|proposed
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[CaerusKaru](https://github.com/CaerusKaru)|proposed
@@ -46,6 +45,7 @@ existing proposals.
 [24](https://github.com/aws/aws-cdk-rfcs/issues/24)|Resource imports||[eladb](https://github.com/eladb)|proposed
 [23](https://github.com/aws/aws-cdk-rfcs/issues/23)|Stateful resource support||[eladb](https://github.com/eladb)|proposed
 [22](https://github.com/aws/aws-cdk-rfcs/issues/22)|Cost calculator||[eladb](https://github.com/eladb)|proposed
+[21](https://github.com/aws/aws-cdk-rfcs/issues/21)|CDK Explorer||[eladb](https://github.com/eladb)|proposed
 [53](https://github.com/aws/aws-cdk-rfcs/issues/53)|RFC: #16 RFC Process||[MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[eladb](https://github.com/eladb)|resolved
 <!--END_TABLE-->
