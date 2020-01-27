@@ -16,7 +16,7 @@ existing proposals.
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[eladb](https://github.com/eladb)|ready
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|cognito construct library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[nija-at](https://github.com/nija-at)|proposed
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[nija-at](https://github.com/nija-at)|proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[rix0rrr](https://github.com/rix0rrr)|proposed
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[CaerusKaru](https://github.com/CaerusKaru)|proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[eladb](https://github.com/eladb)|proposed
@@ -46,6 +46,23 @@ existing proposals.
 [23](https://github.com/aws/aws-cdk-rfcs/issues/23)|Stateful resource support||[eladb](https://github.com/eladb)|proposed
 [22](https://github.com/aws/aws-cdk-rfcs/issues/22)|Cost calculator||[eladb](https://github.com/eladb)|proposed
 [21](https://github.com/aws/aws-cdk-rfcs/issues/21)|CDK Explorer||[eladb](https://github.com/eladb)|proposed
+[20](https://github.com/aws/aws-cdk-rfcs/issues/20)|Security posture summary||[eladb](https://github.com/eladb)|proposed
+[19](https://github.com/aws/aws-cdk-rfcs/issues/19)|Introspection API||[eladb](https://github.com/eladb)|proposed
+[18](https://github.com/aws/aws-cdk-rfcs/issues/18)|Open context provider framework||[eladb](https://github.com/eladb)|proposed
+[17](https://github.com/aws/aws-cdk-rfcs/issues/17)|CLI support for multiple-environments||[eladb](https://github.com/eladb)|proposed
+[15](https://github.com/aws/aws-cdk-rfcs/issues/15)|Scaffolding||[eladb](https://github.com/eladb)|proposed
+[14](https://github.com/aws/aws-cdk-rfcs/issues/14)|Toolchain 2.0||[eladb](https://github.com/eladb)|proposed
+[13](https://github.com/aws/aws-cdk-rfcs/issues/13)|Reference documentation improvements||[eladb](https://github.com/eladb)|proposed
+[10](https://github.com/aws/aws-cdk-rfcs/issues/10)|New workshop modules||[eladb](https://github.com/eladb)|proposed
+[9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||[eladb](https://github.com/eladb)|proposed
+[8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[eladb](https://github.com/eladb)|proposed
+[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Runtime & infrastructure code integration||[eladb](https://github.com/eladb)|proposed
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency management experience||[eladb](https://github.com/eladb)|proposed
+[5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[eladb](https://github.com/eladb)|proposed
+[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[eladb](https://github.com/eladb)|proposed
+[3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[eladb](https://github.com/eladb)|proposed
+[2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[eladb](https://github.com/eladb)|proposed
+[1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[eladb](https://github.com/eladb)|proposed
 [53](https://github.com/aws/aws-cdk-rfcs/issues/53)|RFC: #16 RFC Process||[MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[eladb](https://github.com/eladb)|resolved
 <!--END_TABLE-->
