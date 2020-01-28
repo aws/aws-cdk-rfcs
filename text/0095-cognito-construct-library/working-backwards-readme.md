@@ -1,5 +1,8 @@
 # Amazon Cognito Construct Library
 
+> Note to the RFC reviewer: All comments in code blocks such as this one are either implementation notes or notes for
+> further investigation. Kindly ignore.
+
 Amazon Cognito provides authentication, authorization, and user management for your web and mobile apps. Your users can
 sign in directly with a user name and password, or through a third party such as Facebook, Amazon, Google or Apple.
 
@@ -17,22 +20,6 @@ SAML.
 
 The CDK APIs provide ways to both create user pools, via the `UserPool` constructor, or import existing ones that were
 created outside the CDK App.
-
-User pools can be imported using the `UserPool.fromUserPoolAttributes()` API. They can be imported either using the
-user pool ARN or the user pool id. For example:
-
-```ts
-const stack = new Stack(app, 'my-stack');
-
-UserPool.fromUserPoolAttributes(stack, 'my-imported-user-pool', {
-  userPoolId: 'us-east-1_123412341'
-});
-```
-
-> TODO: provider name and provider url return values?
-
-The following sections describe how user pools can be configured. **Unless explicitly stated, all of these
-configurations are available only when creating new user pools.**
 
 ### Sign Up
 
@@ -90,7 +77,7 @@ new UserPool(this, 'myuserpool', {
     welcomeSms: {
       message: 'Your temporary password for our awesome app is {####}'
     },
-    verifyContactMethods: [ ContactMethods.EMAIL, ContactMethods.PHONE_NUMBER ],
+    verifyContactMethods: [ ContactMethods.EMAIL, ContactMethods.PHONE ],
   }
 });
 ```
@@ -284,9 +271,111 @@ new UserPool(this, 'myuserpool', {
 });
 ```
 
+Triggers can also be added to the user pool outside of its constructor. This can be done via individual methods such as
+`addPreSgnUpTrigger()`, `addPostSignUpTrigger()`, `addPreAuthentication()`, etc.
+
+### Importing a User Pool
+
+User pools can be imported using the `UserPool.fromUserPoolAttributes()` API. They can be imported either using the
+user pool ARN or the user pool id. For example:
+
+```ts
+const stack = new Stack(app, 'my-stack');
+
+UserPool.fromUserPoolAttributes(stack, 'my-imported-user-pool', {
+  userPoolId: 'us-east-1_123412341'
+});
+```
+
+However, imported user pools have limited configurability.
+
+> Internal Note: TODO - provider name and provider url return values?
+
 ### Users
 
-> TODO
+Users are added to pools either as part of sign up or via the Cognito APIs directly. In addition to these, it is
+possible to add users to the user pool via the CDK.
+
+Use the `createUser()` API on the user pool to add users to the pool, as so -
+
+```ts
+const userpool = new UserPool(this, 'myuserpool', {
+  // ...
+  // ...
+});
+
+userpool.createUser(this, 'myuserpool-supportuser', {
+  userName: 'support-user',
+  deliveryMediums: [ ContactMethods.EMAIL, ContactMethods.PHONE ],
+  attributes: [
+    { name: StandardAttrs.EMAIL, value: 'support@awesomeapp.com' },
+    { name: 'callingcode' value: '12' }
+  ],
+  forceAliasCreation: true,
+  resendInvitation: true,
+});
+```
+
+The property `userName` is the name of the user and is mandatory.
+
+The property `deliveryMedium` is how the user will be contacted to sign up, upon first creation. Both email and sms are
+available here. The default is SMS (i.e., `ContactMethods.PHONE`).
+
+The property `attributes` specifies the list of standard and custom [attributes](#attributes) as part of the user.
+Values of the `StandardAttrs` enum can be used against `name` to reference standard attributes. If one or both contact
+methods are set with `deliveryMedium`, this attribute is required to be set as part of `attributes`. The default here is
+empty.
+
+`forceAliasCreation` can be used only when the user pool is configured with either email or phone as a verified contact
+method. When this is set, any existing user with the same email address or phone number will have its alias migrated to
+this user. The default is false.
+
+When the `resendInvitation` property is set to true, Cognito will resend the invitation message for a user that already
+exists but has not signed up. The default is false.
+
+Users can be created for imported user pools by using the `UserPoolUser` construct, as so -
+
+```ts
+const userpool = UserPool.fromUserPoolAttributes(this, 'myuserpool', { ... });
+
+new UserPoolUser(this, userpool, {
+  userPoolId: userpool.userPoolId,
+  // ...
+  // all of the same properties as above
+  // ...
+});
+```
+
+### Groups
+
+User pools can be configured with groups into which users are added. Groups is the primary mechanism in Cognito for
+permission assignment.
+
+Add a new group to the user pool using the `createGroup()` API, as so -
+
+```ts
+const userpool = new UserPool(this, 'myuserpool', { ... });
+
+const customerrole = new iam.Role(this, 'customer-role', { ... });
+
+userpool.createGroup(this, 'myuserpool-customers', {
+  groupName: 'customers',
+  description: 'group for myawesomeapp customers',
+  role: customerrole
+});
+```
+
+The required `groupName` and the optional `description` properties are the identifiers for this group.
+
+The `role` property refers to the IAM role whose permissions that the users in this group are able to assume.
+
+When several different groups are defined for the same user pool, they can be ordered to have a precendence. Precedence
+will determine which IAM role's permission will be available for a user when they are part of two different groups. See
+[CreateGroup
+API](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_CreateGroup.html#CognitoUserPools-CreateGroup-request-Precedence)
+for more details.
+
+Use the `takesPrecendenceOver()` API to set the precedence of one group over the other.
 
 ### Clients
 
