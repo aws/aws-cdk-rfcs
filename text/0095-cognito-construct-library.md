@@ -63,3 +63,18 @@ be created for these, that will then be prioritized based on customer requests a
   * Import using user pool name
   * Configure SES email actions.
   * ClientMetadata and ValidationData properties in User
+  * Support for Clients and HostedUI - https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html
+* Identity Pool
+  * External provider - Cognito. This requires CDK coverage of user pool clients (above). While it's available via the
+    APIs and CloudFormation resources, it is [not listed in the
+    documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html) as one
+    of the identity providers, so it might not be a sought after feature.
+  * External provider - OpenId connect. This requires coverage for OIDC identity providers in the IAM module.
+  * External provider - SAML. This requires coverage for SAML identity providers in the IAM module.
+
+The following are out of scope of this document and are unlikely to be implemented.
+
+* Identity pool cognito sync. Reason:
+  [Documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-sync.html) suggests the use of AWS
+  AppSync instead.
+

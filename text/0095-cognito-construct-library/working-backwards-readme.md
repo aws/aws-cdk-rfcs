@@ -18,8 +18,16 @@ User pools allows creating and managing your own directory of users that can sig
 integration with social identity providers such as Facebook, Google, Amazon, Microsoft Active Directory, etc. through
 SAML.
 
-The CDK APIs provide ways to both create user pools, via the `UserPool` constructor, or import existing ones that were
-created outside the CDK App.
+Using the CDK, a new user pool can be created as part of the stack using the construct's constructor. You must specify
+the `userPoolName`, as so -
+
+```ts
+new UserPool(this, 'myuserpool', {
+  userPoolName: 'myawesomeapp-userpool',
+  // ...
+  // ...
+});
+```
 
 ### Sign Up
 
@@ -377,13 +385,70 @@ for more details.
 
 Use the `takesPrecendenceOver()` API to set the precedence of one group over the other.
 
-### Clients
+## Identity Pools (Federated Identity)
 
-> TODO
+Identity pools enables creation of unique identities for their users and federate them with identity providers. These
+identity providers can be a Cognito user pool, Facebook, Google, or any other SAML-based identity provider.
+With an identity pool, you can obtain temporary, limited-privilege AWS credentials to access other AWS services.
 
-## Identity Pools
+Using the CDK, a new identity pool can be created as part of the stack using the construct's constructor. You must
+specify the `identityPoolName`. This is the quickest way to create an identity pool with all of the defaults -
 
-Control access of backend APIs and AWS resources for your app's users. Assign users to different roles and permissions,
-and get temporary AWS credentials for accessing AWS services.
+```ts
+new IdentityPool(this, 'myidentitypool', {
+  identityPoolName: 'myawesomeapp-identitypool',
+});
+```
 
-> TODO
+Identity pools can be configured to allow unauthenticated identities to access the application. This can be specified
+by setting the `unauthenticatedIdentities` boolean property. See [the Cognito
+guide](https://docs.aws.amazon.com/cognito/latest/developerguide/identity-pools.html) to learn more about
+unauthenticated identities. The default is `false`.
+
+Identity pools can be configured so that a user authenticating with it will go through a different workflow to bootstrap
+their credentials. There are two different flows for authentication with public providers - basic and enhanced. See [the
+authentication flow page on Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/authentication-flow.html)
+to learn more about them. Use the `authenticationFlow` property to configure this. By default, this will be the
+'enhanced' flow.
+
+This is the code snippet with these properties configured -
+
+```ts
+new IdentityPool(this, 'myidentitypool', {
+  identityPoolName: 'myawesomeapp-identitypool',
+  unauthenticatedIdentities: true,
+  authenticationFlow: AuthenticationFlow.ENHANCED,
+});
+```
+
+### Identity Providers
+
+Identity pools can be configured with external providers for sign in. These can be from facebook, google, twitter as
+well as, "login with Amazon" and Cognito user pools. Use the `identityProviers` property to configure these providers.
+Learn more about external identity providers at [Cognito's
+documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). The CDK
+documentation of the `identityProviders` property has more details on how to configure an identity pool with each of
+these external providers. By default none of the `identityProviders` are defined.
+
+> Internal Note: IdentityPool-SupportedLoginProviders takes a JSON with all of the providers configured.
+
+Besides the external identity providers, Cognito identity pools also support developer authenticated identities. Read
+[the documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/developer-authenticated-identities.html)
+to learn more about developer authenticated identities. This can be configured via the property `developerProvider`. By
+default, this is undefined.
+
+Code snippet with all of the external providers configured -
+
+```ts
+new IdentityPool(this, 'myidentitypool', {
+  // ...
+  identityProviders: {
+    amazon: { appId: 'amzn1.application.188a56d827a7d6555a8b67a5d' },
+    facebook: { appId: '7346241598935555' },
+    google: { clientId: '123456789012.apps.googleusercontent.com' },
+    twitter: { consumerKey: 'xvz1evFS4wEEPTGEFPHBog', consumerSecret: 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw' },
+    developerProvider: 'login.mycompany.myapp'
+  }
+});
+```
+
