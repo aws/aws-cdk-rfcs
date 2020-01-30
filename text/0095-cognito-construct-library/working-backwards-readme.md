@@ -1,7 +1,8 @@
 # Amazon Cognito Construct Library
 
-> Note to the RFC reviewer: All comments in code blocks such as this one are either implementation notes or notes for
-> further investigation. Kindly ignore.
+> Note to RFC reviewers: All comments in code blocks such as this one are either implementation notes, todos for
+> further investigation, or pieces of information that are important for this RFC review but will not be part of the
+> final README.
 
 [Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html) provides
 authentication, authorization, and user management for your web and mobile apps. Your users can sign in directly with a
@@ -127,7 +128,7 @@ of standard attributes that are available all user pools. Users are allowed to s
 to be required. Users will not be able to sign up without specifying the attributes that are marked as required. Besides
 these, additional attributes can be further defined, known as custom attributes.
 
-*Note that,* custom attributes cannot be marked as required.
+*Note that*, custom attributes cannot be marked as required.
 
 See the [documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html)
 on this to learn more.
@@ -432,13 +433,13 @@ This is the code snippet with these properties configured -
 ```ts
 new IdentityPool(this, 'myidentitypool', {
   identityPoolName: 'myawesomeapp-identitypool',
-  unauthenticatedIdentities: true,
+  allowUnauthenticated: true,
   authenticationFlow: AuthenticationFlow.ENHANCED,
 });
 ```
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
-> * unauthenticatedIdentities: false
+> * allowUnauthenticated: false
 > * authenticationFlow: `AuthenticationFlow.ENHANCED`
 
 ### Identity Providers
@@ -470,6 +471,85 @@ new IdentityPool(this, 'myidentitypool', {
   }
 });
 ```
+
+### Access Control
+
+Identity pools are configured with IAM roles from which temporary credentials will be provided to users of this pool
+when they need to access AWS resources. The IAM roles are configured with permissions based on what the users are
+allowed to access.
+
+An identity pool can have separate IAM roles configured for its authenticated users (authenticated via one of the
+identity providers as above) and unauthenticated users. They can be specified via the properties `authenticatedRole` and
+`unauthenticatedRole` properties. When no role is specified against these properties, CDK will create a new role with
+the permissions to Amazon Mobile Analytics and Amazon Cognito Sync. This is similar to the behaviour of the AWS console.
+Read the [IAM Roles documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/iam-roles.html) to learn
+more on how to set up your own IAM roles.
+
+```ts
+const authenRole = new iam.Role(this, 'cognito-authenticated-role', { ... });
+
+const unAuthenRole = new iam.Role(this, 'cognito-unauthenticated-role', { ... });
+
+new IdentityPool(this, 'my-awesome-id-pool', {
+  // ...
+  // ...
+  authenticatedRole: authenRole,
+  unAuthenticatedRole: unauthenRole
+});
+```
+
+The access control policies for a user can be extended so the user can obtain even more permissions, when they match
+specific rules. This can be specified via the `roleMappings` property. Learn more about [using rules to assign roles to
+users](https://docs.aws.amazon.com/cognito/latest/developerguide/role-based-access-control.html#using-rules-to-assign-roles-to-users).
+
+> Is there a better name than `roleMappings`?
+
+The following code snippet sets up two rules that assign the admin role based on whether the admin logged in via
+facebook or via google.
+
+```ts
+const adminRole = new iam.Role(this, 'admin-role', { ... });
+
+new IdentityPool(this, 'my-awesome-id-pool', {
+  // ...
+  // ...
+  roleMappings: {
+    'facebook': new FacebookRoleMapping({
+      rules: [
+        {
+          // if the identifier of the user as returned by facebook is 'boris'
+          claim: FacebookRoleMappingClaim.SUB,
+          matchType: MatchType.EQUALS,
+          value: 'boris',
+          role: adminRole
+        }
+      ],
+      ambiguousRoleResolution: AmbiguousRoleResolution.DENY
+    }),
+
+    'google': new GoogleRoleMapping({
+      rules: [
+        {
+          // if the verified email as returned by google is 'borissvenson@myawesomeapp.com'
+          claim: GoogleRoleMappingClaim.EMAIL_VERIFIED,
+          matchType: MatchType.EQUALS,
+          value: 'borissvenson@myawesomeapp.com',
+          role: adminRole
+        }
+      ],
+      ambiguousRoleResolution. AmbiguousRoleResolution.AUTHENTICATED_ROLE
+    })
+  }
+});
+```
+
+Finally, in order to generate temporary credentials, the IAM roles require a trust policy to be attached that permits
+the Cognito service to assume this role. The best practice is to specify a 'Condition' that this operation is allowed
+only when operating with the corresponding identity pool. See [Role Trust and
+Permissions](https://docs.aws.amazon.com/cognito/latest/developerguide/role-trust-and-permissions.html) to learn more.
+
+The CDK, by default, adds a trust policy with these configured to all roles used by the `IdentityPool`. To disable this,
+set the `configureRoleTrust` to `false`.
 
 ### Importing Identity Pools
 

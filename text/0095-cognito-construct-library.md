@@ -71,6 +71,7 @@ be created for these, that will then be prioritized based on customer requests a
     of the identity providers, so it might not be a sought after feature.
   * External provider - OpenId connect. This requires coverage for OIDC identity providers in the IAM module.
   * External provider - SAML. This requires coverage for SAML identity providers in the IAM module.
+  * Token based access control - Requires Cognito user pool clients (above).
 
 The following are out of scope of this document and are unlikely to be implemented.
 
