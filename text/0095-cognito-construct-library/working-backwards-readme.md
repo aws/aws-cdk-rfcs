@@ -56,22 +56,20 @@ time of user sign up that they then enter back into the system to verify these a
 
 *Note*: If both email and phone number are specified, Cognito will only verify the phone number. To also verify the
 email address, read [the documentation on email and phone
-verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html
+verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html)
 
 *Note*: By default, the email and/or phone number attributes will be marked as required if they are specified as a
 verified contact method. See [attributes](#attributes) section for details about standard attributes.
 
-> TODO: pre-signup lambda trigger
-
 The `verifyContactMethods` attribute allows for this to be configured.
 
-*Defaults*:
-* signUp.selfSignUp: true
-* signUp.tempPasswordValidity: 7 days
-* signUp.welcomeEmail.subject: 'Thanks for signing up'
-* signUp.welcomeEmail.body - 'Hello {username}, Your temporary password is {####}'
-* signUp.welcomeSms.message - 'Your temporary password is {####}'
-* signUp.verifyContactMethods - Email
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * signUp.selfSignUp: true
+> * signUp.tempPasswordValidity: 7 days
+> * signUp.welcomeEmail.subject: 'Thanks for signing up'
+> * signUp.welcomeEmail.body - 'Hello {username}, Your temporary password is {####}'
+> * signUp.welcomeSms.message - 'Your temporary password is {####}'
+> * signUp.verifyContactMethods - Email
 
 Code sample:
 
@@ -107,7 +105,8 @@ These are the various ways a user of your app can sign in. There are 4 options a
 * `EMAIL`: Allow signing in using the email address that is associated with the account.
 * `PHONE_NUMBER`: Allow signing in using the phone number that is associated with the account.
 
-*Defaults*: USERNAME.
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> SignInType: `USERNAME`.
 
 Code sample:
 
@@ -146,9 +145,9 @@ Additionally, two properties `mutable` and `adminOnly` properties can be set for
 specifies that the property can be modified by the user while the latter specifies that it can only be modified by the
 app's administrator and not by the user (using their access token).
 
-*Defaults*:
-* No standard attributes are marked required.
-* For all custom attributes, mutable is true and adminOnly is false.
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * No standard attributes are marked required.
+> * For all custom attributes, `mutable`: true & `adminOnly`: false.
 
 Code sample:
 
@@ -190,13 +189,13 @@ In order to send an SMS, Cognito needs an IAM role that it can assume with permi
 behalf of the AWS account. By default, CDK will create this IAM user but allows for it to be overridden via the
 `smsRole` permissions.
 
-*Defaults*:
-* security.mfa.enforcement: OPTIONAL
-* security.mfa.type: SMS
-* security.passwordPolicy.minLength: 8
-* security.passwordPolicy.required - lowercase, numbers and symbols
-* security.smsRole - assumable by `cognito-idp.amazonaws.com` and permitting `sns:Publish` action against resource `*`.
-  The role assumption will be conditioned on a strict equals on an ExternalId that will be unique to this user pool.
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * security.mfa.enforcement: OPTIONAL
+> * security.mfa.type: SMS
+> * security.passwordPolicy.minLength: 8
+> * security.passwordPolicy.required - lowercase, numbers and symbols
+> * security.smsRole - assumable by `cognito-idp.amazonaws.com` and permitting `sns:Publish` action against resource `*`.
+>   The role assumption will be conditioned on a strict equals on an ExternalId that will be unique to this user pool.
 
 Code sample:
 
@@ -231,9 +230,9 @@ on the user pool via the `from` property, and the `replyTo` property to configur
 User pools can also be configured to send emails through Amazon SES, however, that is not yet supported via the CDK. Use
 the cfn layer to configure this - https://docs.aws.amazon.com/cdk/latest/guide/cfn_layer.html.
 
-*Defaults*
-* email.from - TODO: find the default that Cognito uses.
-* email.replyTo - use the same address as from.
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * email.from - TODO: find the default that Cognito uses.
+> * email.replyTo - use the same address as from.
 
 Code sample:
 
@@ -259,8 +258,6 @@ to read more about user pool workflows using lambda triggers, and details around
 
 Check out the [documentation](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-cognito/lib/user-pool.ts#L148)
 to find the list of triggers supported by the CDK.
-
-*Defaults*: no lambda triggers are configured.
 
 Code sample:
 
@@ -308,8 +305,6 @@ const otherAwesomePool = UserPool.fromUserPoolArn(stack, 'other-awesome-user-poo
   'arn:aws:cognito-idp:eu-west-1:123456789012:userpool/us-east-1_mtRyYQ14D');
 ```
 
-However, imported user pools have limited configurability.
-
 > Internal Note: TODO - provider name and provider url return values?
 
 ### Users
@@ -340,19 +335,18 @@ userpool.createUser(this, 'myuserpool-supportuser', {
 The property `userName` is the name of the user and is mandatory.
 
 The property `deliveryMedium` is how the user will be contacted to sign up, upon first creation. Both email and sms are
-available here. The default is SMS (i.e., `ContactMethods.PHONE`).
+available here.
 
 The property `attributes` specifies the list of standard and custom [attributes](#attributes) as part of the user.
 Values of the `StandardAttrs` enum can be used against `name` to reference standard attributes. If one or both contact
-methods are set with `deliveryMedium`, this attribute is required to be set as part of `attributes`. The default here is
-empty.
+methods are set with `deliveryMedium`, this attribute is required to be set as part of `attributes`.
 
 `forceAliasCreation` can be used only when the user pool is configured with either email or phone as a verified contact
 method. When this is set, any existing user with the same email address or phone number will have its alias migrated to
-this user. The default is false.
+this user.
 
 When the `resendInvitation` property is set to true, Cognito will resend the invitation message for a user that already
-exists but has not signed up. The default is false.
+exists but has not signed up.
 
 Users can be created for imported user pools by using the `UserPoolUser` construct, as so -
 
@@ -366,6 +360,12 @@ new UserPoolUser(this, userpool, {
   // ...
 });
 ```
+
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * deliveryMedium: ContactsMethod.PHONE
+> * attributes: none
+> * forceAliasCreation: false
+> * resendInvitation: false
 
 ### Groups
 
@@ -398,6 +398,10 @@ for more details.
 
 Use the `takesPrecendenceOver()` API to set the precedence of one group over the other.
 
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * description - empty
+> * precedence - `undefined`
+
 ## Identity Pools (Federated Identity)
 
 Identity pools enables creation of unique identities for their users and federate them with identity providers. These
@@ -405,7 +409,7 @@ identity providers can be a Cognito user pool, Facebook, Google, or any other SA
 With an identity pool, you can obtain temporary, limited-privilege AWS credentials to access other AWS services.
 
 Using the CDK, a new identity pool can be created as part of the stack using the construct's constructor. You must
-specify the `identityPoolName`. This is the quickest way to create an identity pool with all of the defaults -
+specify the `identityPoolName`. This is the quickest way to create an identity pool using all of the defaults -
 
 ```ts
 new IdentityPool(this, 'myidentitypool', {
@@ -416,13 +420,12 @@ new IdentityPool(this, 'myidentitypool', {
 Identity pools can be configured to allow unauthenticated identities to access the application. This can be specified
 by setting the `unauthenticatedIdentities` boolean property. See [the Cognito
 guide](https://docs.aws.amazon.com/cognito/latest/developerguide/identity-pools.html) to learn more about
-unauthenticated identities. The default is `false`.
+unauthenticated identities.
 
 Identity pools can be configured so that a user authenticating with it will go through a different workflow to bootstrap
 their credentials. There are two different flows for authentication with public providers - basic and enhanced. See [the
 authentication flow page on Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/authentication-flow.html)
-to learn more about them. Use the `authenticationFlow` property to configure this. By default, this will be the
-'enhanced' flow.
+to learn more about them. Use the `authenticationFlow` property to configure this.
 
 This is the code snippet with these properties configured -
 
@@ -434,6 +437,10 @@ new IdentityPool(this, 'myidentitypool', {
 });
 ```
 
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * unauthenticatedIdentities: false
+> * authenticationFlow: `AuthenticationFlow.ENHANCED`
+
 ### Identity Providers
 
 Identity pools can be configured with external providers for sign in. These can be from facebook, google, twitter as
@@ -441,14 +448,13 @@ well as, "login with Amazon" and Cognito user pools. Use the `identityProviers` 
 Learn more about external identity providers at [Cognito's
 documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). The CDK
 documentation of the `identityProviders` property has more details on how to configure an identity pool with each of
-these external providers. By default none of the `identityProviders` are defined.
+these external providers.
 
 > Internal Note: IdentityPool-SupportedLoginProviders takes a JSON with all of the providers configured.
 
 Besides the external identity providers, Cognito identity pools also support developer authenticated identities. Read
 [the documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/developer-authenticated-identities.html)
-to learn more about developer authenticated identities. This can be configured via the property `developerProvider`. By
-default, this is undefined.
+to learn more about developer authenticated identities. This can be configured via the property `developerProvider`.
 
 Code snippet with all of the external providers configured -
 
@@ -484,8 +490,4 @@ const awesomePool = IdentityPool.fromIdentityPoolId(stack, 'awesome-identity-poo
 const otherAwesomePool = UserPool.fromIdentityPoolArn(stack, 'other-awesome-user-pool',
   'arn:aws:cognito-identity:us-east-1:0123456789:identitypool/us-east-1:1a1a1a1a-ffff-1111-9999-66655533');
 ```
-
-However, imported user pools have limited configurability.
-
-> Internal Note: TODO - provider name and provider url return values?
 
