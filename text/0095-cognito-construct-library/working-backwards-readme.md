@@ -3,18 +3,21 @@
 > Note to the RFC reviewer: All comments in code blocks such as this one are either implementation notes or notes for
 > further investigation. Kindly ignore.
 
-Amazon Cognito provides authentication, authorization, and user management for your web and mobile apps. Your users can
-sign in directly with a user name and password, or through a third party such as Facebook, Amazon, Google or Apple.
+[Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html) provides
+authentication, authorization, and user management for your web and mobile apps. Your users can sign in directly with a
+user name and password, or through a third party such as Facebook, Amazon, Google or Apple.
 
-The two main components of Amazon Cognito are user pools and identity pools. User pools are user directories that
-provide sign-up and sign-in options for your app users. Identity pools enable you to grant your users access to other
-AWS services.
+The two main components of Amazon Cognito are [user
+pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) and [identity
+pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html). User pools are user directories
+that provide sign-up and sign-in options for your app users. Identity pools enable you to grant your users access to
+other AWS services.
 
 This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk) project.
 
 ## User Pools
 
-User pools allows creating and managing your own directory of users that can sign up and sign in. They enable easy
+User pools allow creating and managing your own directory of users that can sign up and sign in. They enable easy
 integration with social identity providers such as Facebook, Google, Amazon, Microsoft Active Directory, etc. through
 SAML.
 
@@ -31,8 +34,8 @@ new UserPool(this, 'myuserpool', {
 
 ### Sign Up
 
-Users need to either signed up by the app's administrators or can sign themselves up. You can read more about both these
-kinds of sign up and how they work
+Users need to either be signed up by the app's administrators or can sign themselves up. You can read more about both
+these kinds of sign up and how they work
 [here](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html).
 
 Further, a welcome email and/or SMS can be configured to be sent automatically once a user has signed up. This welcome
@@ -52,7 +55,8 @@ When either one or both of these are configured to be verified, a confirmation m
 time of user sign up that they then enter back into the system to verify these attributes and confirm user sign up.
 
 *Note*: If both email and phone number are specified, Cognito will only verify the phone number. To also verify the
-email address, see https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html
+email address, read [the documentation on email and phone
+verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html
 
 *Note*: By default, the email and/or phone number attributes will be marked as required if they are specified as a
 verified contact method. See [attributes](#attributes) section for details about standard attributes.
@@ -97,11 +101,11 @@ new UserPool(this, 'myuserpool', {
 
 These are the various ways a user of your app can sign in. There are 4 options available with the enum `SignInType`:
 
-* USERNAME: Allow signing in using the one time immutable user name that the user chose at the time of sign up.
-* PREFERRED\_USERNAME: Allow signing in with an alternate user name that the user can change at any time. However, this
+* `USERNAME`: Allow signing in using the one time immutable user name that the user chose at the time of sign up.
+* `PREFERRED_USERNAME`: Allow signing in with an alternate user name that the user can change at any time. However, this
   is not available if the USERNAME option is not chosen.
-* EMAIL: Allow signing in using the email address that is associated with the account.
-* PHONE\_NUMBER: Allow signing in using the phone number that is associated with the account.
+* `EMAIL`: Allow signing in using the email address that is associated with the account.
+* `PHONE_NUMBER`: Allow signing in using the phone number that is associated with the account.
 
 *Defaults*: USERNAME.
 
@@ -124,9 +128,10 @@ of standard attributes that are available all user pools. Users are allowed to s
 to be required. Users will not be able to sign up without specifying the attributes that are marked as required. Besides
 these, additional attributes can be further defined, known as custom attributes.
 
-Custom attributes cannot be marked as required.
+*Note that,* custom attributes cannot be marked as required.
 
-[Go here](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html) for more info.
+See the [documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html)
+on this to learn more.
 
 Standard attributes are available via the `StandardAttrs` enum.
 
@@ -170,7 +175,8 @@ new UserPool(this, 'myuserpool', {
 User pools can be configured to enable MFA. It can either be turned off, set to optional or made required. Setting MFA
 to optional means that individual users can choose to enable it. Phone numbers must be verified if MFA is enabled.
 Additionally, MFA can be sent either via SMS text message or via a time-based software token.
-[Go here](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa.html) to learn more.
+See the [documentation on MFA](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa.html) to
+learn more.
 
 This can be configured by setting the `mfa.enforcement` option under `security` properties to be one of the values in
 the `MfaEnforcement` enum. Available values are `REQUIRED`, `OPTIONAL`, `OFF`.
@@ -282,17 +288,24 @@ new UserPool(this, 'myuserpool', {
 Triggers can also be added to the user pool outside of its constructor. This can be done via individual methods such as
 `addPreSgnUpTrigger()`, `addPostSignUpTrigger()`, `addPreAuthentication()`, etc.
 
-### Importing a User Pool
+### Importing User Pools
 
-User pools can be imported using the `UserPool.fromUserPoolAttributes()` API. They can be imported either using the
-user pool ARN or the user pool id. For example:
+Any user pool that has been created outside of this stack, can be imported into the CDK app. Importing a user pool
+allows for it to be used in other parts of the CDK app that reference an `IUserPool`. However, imported user pools have
+limited configurability. As a rule of thumb, none of the properties that is are part of the
+[`AWS::Cognito::UserPool`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpool.html)
+CloudFormation resource can be configured.
+
+User pools can be imported either by specifying the user pool id, via the `UserPool.fromUserPoolId()` API, or by
+specifying the user pool ARN, via the `UserPool.fromUserPoolArn()` API.
 
 ```ts
 const stack = new Stack(app, 'my-stack');
 
-UserPool.fromUserPoolAttributes(stack, 'my-imported-user-pool', {
-  userPoolId: 'us-east-1_123412341'
-});
+const awesomePool = UserPool.fromUserPoolId(stack, 'awesome-user-pool', 'us-east-1_oiuR12Abd');
+
+const otherAwesomePool = UserPool.fromUserPoolArn(stack, 'other-awesome-user-pool',
+  'arn:aws:cognito-idp:eu-west-1:123456789012:userpool/us-east-1_mtRyYQ14D');
 ```
 
 However, imported user pools have limited configurability.
@@ -451,4 +464,28 @@ new IdentityPool(this, 'myidentitypool', {
   }
 });
 ```
+
+### Importing Identity Pools
+
+Any identity pool that has been created outside of this stack, can be imported into the CDK app. Importing an identity
+pool allows for it to be used in other parts of the CDK app that reference an `IIdentityPool`. However, imported
+identity pools have limited configurability. As a rule of thumb, none of the properties that are part of the
+[`AWS::Cognito::IdentityPool`](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-identitypool.html)
+CloudFormation resource can be configured.
+
+Identity pools can be imported either by specifying the identity pool id, via the `UserPool.fromIdentityPoolId()` API,
+or by specifying the identity pool ARN, via the `UserPool.fromIdentityPoolArn()` API.
+
+```ts
+const stack = new Stack(app, 'my-stack');
+
+const awesomePool = IdentityPool.fromIdentityPoolId(stack, 'awesome-identity-pool', 'us-east-1:1a1a1a1a-ffff-1111-9999-12345678');
+
+const otherAwesomePool = UserPool.fromIdentityPoolArn(stack, 'other-awesome-user-pool',
+  'arn:aws:cognito-identity:us-east-1:0123456789:identitypool/us-east-1:1a1a1a1a-ffff-1111-9999-66655533');
+```
+
+However, imported user pools have limited configurability.
+
+> Internal Note: TODO - provider name and provider url return values?
 
