@@ -35,44 +35,14 @@ new UserPool(this, 'myuserpool', {
 
 ### Sign Up
 
-Users need to either be signed up by the app's administrators or can sign themselves up. You can read more about both
-these kinds of sign up and how they work
-[here](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html).
+Users need to either be signed up by the app's administrators or can sign themselves up. This can be configured via the
+`selfSignUp` property under the `signUp` group.
 
-Further, a welcome email and/or SMS can be configured to be sent automatically once a user has signed up. This welcome
-email and/or SMS will carry the temporary password for the user. The user will use this password to log in and reset
-their password. The temporary password is valid only for a limited number of days.
+A welcome email and/or SMS can be configured to be sent automatically once user has signed up. This welcome email and/or
+SMS will carry the temporary password for the user. The user will use this password to log in and reset their password.
+The temporary password is valid only for a limited number of days.
 
-All of these options can be configured under the `signUp` property. The pool can be configured to let users sign
-themselves up by setting the `selfSignUp` property. A welcome email template can be configured by specifying the
-`welcomeEmail` property and a similar `welcomeSms` property for the welcome SMS. The validity of the temporary password
-can be specified via the `tempPasswordValidity` property.
-
-The user pool can be configured such that either the user's email address, phone number or both should be verifed at the
-time of sign in. Verification is necessary for account recovery, so that there is at least one mode of communication for
-a user to reset their password or MFA token when lost.
-
-When either one or both of these are configured to be verified, a confirmation message and/or email are sent at the
-time of user sign up that they then enter back into the system to verify these attributes and confirm user sign up.
-
-*Note*: If both email and phone number are specified, Cognito will only verify the phone number. To also verify the
-email address, read [the documentation on email and phone
-verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html)
-
-*Note*: By default, the email and/or phone number attributes will be marked as required if they are specified as a
-verified contact method. See [attributes](#attributes) section for details about standard attributes.
-
-The `verifyContactMethods` attribute allows for this to be configured.
-
-> These are the defaults that will be part of tsdoc, and not part of the README -
-> * signUp.selfSignUp: true
-> * signUp.tempPasswordValidity: 7 days
-> * signUp.welcomeEmail.subject: 'Thanks for signing up'
-> * signUp.welcomeEmail.body - 'Hello {username}, Your temporary password is {####}'
-> * signUp.welcomeSms.message - 'Your temporary password is {####}'
-> * signUp.verifyContactMethods - Email
-
-Code sample:
+Consider the following code sample where a number of these properties are configured -
 
 ```ts
 new UserPool(this, 'myuserpool', {
@@ -88,10 +58,33 @@ new UserPool(this, 'myuserpool', {
     welcomeSms: {
       message: 'Your temporary password for our awesome app is {####}'
     },
-    verifyContactMethods: [ ContactMethods.EMAIL, ContactMethods.PHONE ],
   }
 });
 ```
+
+At least one of `welcomeEmail` or `welcomeSms` is required if `selfSignUp` is set to `true`. 
+
+User pool can be configured so that email address and/or phone number must be verified. This is what the
+`verifyContactMethods` property sets up. Verification is necessary for account recovery, and that at least one mode of
+communication exists.
+
+Learn more about the [sign up and verification
+process](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html#allowing-users-to-sign-up-and-confirm-themselves).
+
+*Note*: If both email and phone number are specified, Cognito will only verify the phone number. To also verify the
+email address, read [the documentation on email and phone
+verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html)
+
+*Note*: By default, the email and/or phone number attributes will be marked as required if they are specified as a
+verified contact method. See [attributes](#attributes) section for details about standard attributes.
+
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * signUp.selfSignUp: true
+> * signUp.tempPasswordValidity: 7 days
+> * signUp.welcomeEmail.subject: 'Thanks for signing up'
+> * signUp.welcomeEmail.body - 'Hello {username}, Your temporary password is {####}'
+> * signUp.welcomeSms.message - 'Your temporary password is {####}'
+> * signUp.verifyContactMethods - Email
 
 > Internal Note: Implemented via UserPool-AdminCreateUserConfig, temp password via UserPool-Policies,
 > verifyContactMethods via UserPool-AutoVerifiedAttributes.
@@ -128,19 +121,30 @@ of standard attributes that are available all user pools. Users are allowed to s
 to be required. Users will not be able to sign up without specifying the attributes that are marked as required. Besides
 these, additional attributes can be further defined, known as custom attributes.
 
-*Note that*, custom attributes cannot be marked as required.
+Learn more on [attributes in Cognito's
+documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html).
 
-See the [documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html)
-on this to learn more.
+The following code sample configures a user pool with two standard attributes (name and address) as required, and adds
+two optional attributes, one as 'string' type and one as 'number' type.
 
-Standard attributes are available via the `StandardAttrs` enum.
+```ts
+new UserPool(this, 'myuserpool', {
+  // ...
+  // ...
+  attributes: {
+    required: [ StandardAttrs.address, StandardAttrs.name ],
+    custom: {
+      'myappid': new StringAttr({ minLen: 5, maxLen: 15 }),
+      'callingcode': new NumberAttr({ min: 1, max: 3 }),
+    },
+  }
+});
+```
+
+*Note* that, custom attributes cannot be marked as required.
 
 *Note*: By default, the standard attributes 'email' and/or 'phone\_number' will automatically be marked required if
 they are one of the verified contact methods. See [Sign up](#sign-up) for details on verified contact methods.
-
-Custom attributes can be specified via the `stringAttr` and `numberAttr` methods, depending on whether the attribute
-type is either a string or a number. Constraints can be defined on both string and number types, with length constraint
-on the former and range constraint on the latter.
 
 Additionally, two properties `mutable` and `adminOnly` properties can be set for each custom attribute. The former
 specifies that the property can be modified by the user while the latter specifies that it can only be modified by the
@@ -149,22 +153,6 @@ app's administrator and not by the user (using their access token).
 > These are the defaults that will be part of tsdoc, and not part of the README -
 > * No standard attributes are marked required.
 > * For all custom attributes, `mutable`: true & `adminOnly`: false.
-
-Code sample:
-
-```ts
-new UserPool(this, 'myuserpool', {
-  // ...
-  // ...
-  attributes: {
-    required: [ StandardAttrs.address, StandardAttrs.name ],
-    custom: [
-      stringAttr({ name: 'myappid', minLen: 5, maxLen: 15 }),
-      numberAttr({ name: 'callingcode', min: 1, max: 3 }),
-    ],
-  }
-});
-```
 
 > Internal note: Implemented via UserPool-SchemaAttribute
 
