@@ -525,11 +525,19 @@ new IdentityPool(this, 'my-awesome-id-pool', {
           role: adminRole
         }
       ],
-      ambiguousRoleResolution. AmbiguousRoleResolution.AUTHENTICATED_ROLE
+      ambiguousRoleResolution: AmbiguousRoleResolution.AUTHENTICATED_ROLE
     })
   }
 });
 ```
+
+The list of mapping token claims (i.e., `claim` property) for each identity provider can be [found
+here](https://docs.aws.amazon.com/cognito/latest/developerguide/role-based-access-control.html#token-claims-for-role-based-access-control).
+
+The `ambiguousRoleResolution` specifies how Cognito should resolve if there is ambiguity while resolving the different
+rules. `DENY` specifies that no role should be provided while `AUTHENTICATED_ROLE` specifies that only the role
+specified against `authenticatedRole` be returned. Learn more about this property
+[here](https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_RoleMapping.html#CognitoIdentity-Type-RoleMapping-AmbiguousRoleResolution).
 
 Finally, in order to generate temporary credentials, the IAM roles require a trust policy to be attached that permits
 the Cognito service to assume this role. The best practice is to specify a 'Condition' that this operation is allowed
