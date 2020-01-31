@@ -2,7 +2,7 @@
 feature name: aws-construct-library-module-lifecycle
 start date: 2020-01-29
 rfc pr: (leave this empty)
-related issue: (tracking issue number)
+related issue: 0107
 ---
 
 # Summary
