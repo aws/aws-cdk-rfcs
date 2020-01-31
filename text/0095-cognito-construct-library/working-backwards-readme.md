@@ -221,7 +221,7 @@ the cfn layer to configure this - https://docs.aws.amazon.com/cdk/latest/guide/c
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
 > * email.from - TODO: find the default that Cognito uses.
-> * email.replyTo - use the same address as from.
+> * email.replyTo - same address as from.
 
 Code sample:
 
@@ -293,8 +293,6 @@ const awesomePool = UserPool.fromUserPoolId(stack, 'awesome-user-pool', 'us-east
 const otherAwesomePool = UserPool.fromUserPoolArn(stack, 'other-awesome-user-pool',
   'arn:aws:cognito-idp:eu-west-1:123456789012:userpool/us-east-1_mtRyYQ14D');
 ```
-
-> Internal Note: TODO - provider name and provider url return values?
 
 ### Users
 
