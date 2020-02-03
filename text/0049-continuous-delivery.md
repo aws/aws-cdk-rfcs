@@ -211,7 +211,9 @@ However, we also need to be able to express this environment-agnostic location i
 cdk-bootstrap-hnb659fds-container-assets-${AWS::ACCOUNT}-${AWS::REGION}:7a4f25ddcb08358916501c7536cdb11f33daf856896aa2a2bec3c7a5d735ace4
 ```
 
-When `cdk-assets` needs to publish an asset it will substitute `${AWS::ACCOUNT}` and `${AWS::REGION}` with the current account and region.
+Then `cdk-assets` will simply substitute `${AWS::ACCOUNT}` and `${AWS::REGION}` with the account and region derived from the credentials configured for the CLI.
+
+> NOTE: even when an IAM role from another account is assumed for publishing, `${AWS::ACCOUNT}` and `${AWS::REGION}` always resolve to the CLI configuration and not to the other account.
 
 ## Bootstrapping
 
