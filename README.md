@@ -16,7 +16,9 @@ existing proposals.
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|proposed
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy||[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
+[109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
+[87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Asset Garbage Collector||[@eladb](https://github.com/eladb)||proposed
@@ -34,7 +36,7 @@ existing proposals.
 [40](https://github.com/aws/aws-cdk-rfcs/issues/40)|Stack traces across language boundaries||[@eladb](https://github.com/eladb)||proposed
 [39](https://github.com/aws/aws-cdk-rfcs/issues/39)|Public assets (custom resources, docker images)||[@eladb](https://github.com/eladb)||proposed
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|Release from a "release" branch||[@eladb](https://github.com/eladb)||proposed
-[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Sister CDKs||[@eladb](https://github.com/eladb)||proposed
+[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Constructs Programming Model||[@eladb](https://github.com/eladb)||proposed
 [35](https://github.com/aws/aws-cdk-rfcs/issues/35)|Improving the contributor's experience||[@eladb](https://github.com/eladb)||proposed
 [34](https://github.com/aws/aws-cdk-rfcs/issues/34)|Third-party construct ecosystem||[@eladb](https://github.com/eladb)||proposed
 [32](https://github.com/aws/aws-cdk-rfcs/issues/32)|App-centric operational experience||[@eladb](https://github.com/eladb)||proposed
@@ -65,6 +67,7 @@ existing proposals.
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[@eladb](https://github.com/eladb)||proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|pending
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 <!--END_TABLE-->
 
