@@ -53,6 +53,7 @@ _Non-requirements/assumptions:_
 * We assume that **cdk.context.json** is committed into the repo. Any context-fetching will be done manually by users and committed to the repository.
 * There’s a one-to-one mapping between an app and a pipeline. We are not optimizing the experience for multiple apps per pipeline (although technically it should be possible to do it, but it’s not a use case we are focused on).
 * Dependency management, repository and project structure are out of scope: we don’t want to be opinionated about how users should structure their projects. They should be able to use the tools they are familiar with and are available to their teams to structure and modularize their applications.
+* Assets will not be supported in environment-agnostic stacks. [#4131](https://github.com/aws/aws-cdk/pull/4131) proposes that `cdk deploy` will default `env` to the current account/region, which means that the CLI use case will no longer treat stacks as environment-agnostic.
 
 ## Approach
 
@@ -185,31 +186,15 @@ Users should be able to vend custom asset providers to allow customizing how ass
 
 For example, a company might have an internal system that manages software artifacts. They can internally vend custom implementations for the `lambda.Code` and `ecs.ContainerImage` classes which will allow users to reference these artifacts and synthesize placeholders into the cloud assembly, which will later be resolved during the publishing stage and identified through a user-defined unique identifier.
 
-**Environment-Agnostic Stacks**
+**Environment-agnostic Stacks**
 
-When a stack is defined, users can specify the target environment (account/region) into which the stack is deployed via the `env` option.
+When a stack is defined, users can specify `env` (account and/or region).
 
 If `account` and/or `region` use the pseudo references `Aws.ACCOUNT_ID` and `Aws.REGION`, respectively, the stack is called "environment-agnostic". Certain features in the CDK, like VPC lookups for example, are not supported for environment-agnostic stacks since the specific account/region is required during synthesis.
 
-When synthesizing the location of an asset into a CloudFormation template for environment-agnostic stacks based on the conventional bootstrap names, the result will look something like this:
+The proposal described in [PR#4131](https://github.com/aws/aws-cdk/pull/4131) suggests that environment-agnostics stacks cannot be deployed using the CDK. However, it also proposes that the default behavior for `env` will be to use ("inherit") the CLI configured environment when a stack is deployed through `cdk deploy`.
 
-```json
-{ 
-  "Fn::Join": [ "", [ 
-    "cdk-bootstrap-hnb659fds-container-assets-", 
-    { "Ref": "AWS::AccountId" }, "-", { "Ref": "AWS::Region" },
-    ":7a4f25ddcb08358916501c7536cdb11f33daf856896aa2a2bec3c7a5d735ace4"
-  ] ] 
-}
-```
-
-When a template that contains this expression will be deployed, CloudFormation will resolve this to the correct location within the current account and region.
-
-However, we also need to be able to express this environment-agnostic location in `assets.json`. This can be done either by adding explicit support for `Fn::Join` and the region/account pseudo references in their CloudFormation syntax or by rendering a substitution syntax such as:
-
-```
-cdk-bootstrap-hnb659fds-container-assets-${AWS::ACCOUNT}-${AWS::REGION}:7a4f25ddcb08358916501c7536cdb11f33daf856896aa2a2bec3c7a5d735ace4
-```
+This means that the only way to produce environment-agnostic templates will be to explicitly indicate it when a stack is defined.
 
 Then `cdk-assets` will simply substitute `${AWS::ACCOUNT}` and `${AWS::REGION}` with the account and region derived from the credentials configured for the CLI.
 
