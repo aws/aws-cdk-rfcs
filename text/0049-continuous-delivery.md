@@ -196,7 +196,9 @@ The proposal described in [PR#4131](https://github.com/aws/aws-cdk/pull/4131) su
 
 This means that the only way to produce environment-agnostic templates will be to explicitly indicate it when a stack is defined.
 
-Since the specific account and region are required when resolving asset consumption and publishing locations, the current plan is for the default asset store implementation to **fail if assets are used from environment-agnostic stacks**. Again, bear in mind that the current behavior (where the default is environment-agnostic stacks) is going to be changed.
+Then `cdk-assets` will simply substitute `${AWS::ACCOUNT}` and `${AWS::REGION}` with the account and region derived from the credentials configured for the CLI.
+
+> NOTE: even when an IAM role from another account is assumed for publishing, `${AWS::ACCOUNT}` and `${AWS::REGION}` always resolve to the CLI configuration and not to the other account.
 
 ## Bootstrapping
 
