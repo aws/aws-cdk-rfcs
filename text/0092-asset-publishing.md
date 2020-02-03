@@ -24,10 +24,7 @@ The main components of the assets manifest are:
 
 * **Destinations:** describe where the asset should be published. At a minimum, for file assets, it includes the S3 bucket and object key and for docker images it includes the repository and image names. A destination may also indicate that an IAM role must be assumed in order to support cross environment publishing. 
 
-NOTES:
-
-* **Denormalization:** destinations are intentionally denormalized in order to keep the logic of where assets are published at the application or framework level and not in this tool. For example, consider a deployment system which requires that all assets are always published to the same location, and then replicated through some other means to their actual consumption point. Alternatively, a user may have unique security requirements that will require certain assets to be stored in dedicated locations (e.g. with a specific key) and others in a different location, even if they all go to the same environment. Therefore, this tool should not take any assumptions on where assets should be published besides the exact instructions in this file.
-* **Environment-agnostic:** In order to allow assets to be used in environment-agnostic stacks, `assets.json` will support two simple substitutions `${AWS::AccountId}` and `${AWS::Region}` which will be replaced with the currently configured account/region (alternatively, we can also decide to support CloudFormation intrinsic functions and pseudo references).
+  > Destinations are intentionally denormalized in order to keep the logic of where assets are published at the application or framework level and not in this tool. For example, consider a deployment system which requires that all assets are always published to the same location, and then replicated through some other means to their actual consumption point. Alternatively, a user may have unique security requirements that will require certain assets to be stored in dedicated locations (e.g. with a specific key) and others in a different location, even if they all go to the same environment. Therefore, this tool should not take any assumptions on where assets should be published besides the exact instructions in this file.
 
 Here is the complete manifest file schema in typescript:
 
