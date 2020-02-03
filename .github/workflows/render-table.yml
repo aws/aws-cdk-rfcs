@@ -1,0 +1,30 @@
+name: Render RFC Table
+on: 
+  issues:
+    types: [opened,edited,deleted,transferred,assigned,unassigned,labeled,unlabeled]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: install dependencies
+        run: |
+          cd tools/rfc-render
+          npm install
+      - name: render table
+        run: |
+          node tools/rfc-render/inject-table.js README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update RFC table in README
+          title: Update RFC table in README
+          team-reviewers: aws-cdk-core
+          branch: auto/update-rfc-table
