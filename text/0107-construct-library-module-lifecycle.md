@@ -127,7 +127,7 @@ This diagram illustrates the different GitHub artifacts and their relationships.
 
 
 
-![a](../images/GitHubArtifacts.png)
+![GitHubArtifactsPNG](../images/GitHubArtifacts.png)
 
 
 # Appendix B: Module complexity T-shirt sizes
