@@ -1,8 +1,8 @@
 ---
 feature name: cognito-construct-library
 start date: 27/01/2020
-rfc pr:
-related issue: n/a
+rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/91
+related issue: https://github.com/aws/aws-cdk-rfcs/issues/95
 ---
 
 # Summary
@@ -33,8 +33,8 @@ The design creates a couple of entry points for getting into the Cognito APIs.
 The first is the `UserPool` construct. The UserPool resource type itself can be fully configured via its constructor.
 Further resource types that are based on user pool, such as, user pool user, client, etc. can configured from this.
 
-The other entry point is the `IdentityPool` construct.
-> TODO
+The other entry point is the `IdentityPool` construct. Similar to the user pool, all subsequent resource types that are
+based on the identity pool, can be created and configured from this.
 
 # Adoption Strategy
 
@@ -46,13 +46,7 @@ changes to the API are to be expected.
 
 # Unresolved questions
 
-> - What parts of the design do you expect to resolve through the RFC process
->   before this gets merged?
-> - What parts of the design do you expect to resolve through the implementation
->   of this feature before stabilization?
-> - What related issues do you consider out of scope for this RFC that could be
->   addressed in the future independently of the solution that comes out of this
->   RFC?
+None.
 
 # Future Changes / Currently out of scope
 
