@@ -49,7 +49,7 @@ While experimenting on the module API design and implementation, we will be as t
 
 * **Stage 1 activities:**
 
-    * **Identify key stakeholders** - Opportunistically recruit stakeholders outside the CDK team to participate in API reviews and usability studies. Potential stakeholders include: service's product manager, service's developer advocates (if any), service's software development engineer (designated by service's leadership), solutions architects who specialize in service (sourced via internal mailing lists), and AWS Developer Tools developer advocates. 
+    * **Identify key stakeholders** - Opportunistically recruit stakeholders outside the CDK team to participate in API reviews and usability studies. Potential stakeholders include: service's product manager, service's developer advocates (if any), service's software development engineer(s) (designated by service's leadership), solutions architects who specialize in service (sourced via internal mailing lists), and AWS Developer Tools developer advocates. 
     * **Update GitHub tracking issue** - Summarize the primary use cases and required constructs as they are identified
     * **Author RFCs [optional]** - Request for comment documents are created for large / complex designs that require explanation and robust discussion. RFCs are stored in a separate [GitHub repo](https://github.com/aws/aws-cdk-rfcs), and the module's tracking issue will include links to relevant RFCs.
     * **Update Roadmap** - publicly indicate the module is work in progress
