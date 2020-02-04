@@ -49,6 +49,7 @@ While experimenting on the module API design and implementation, we will be as t
 
 * **Stage 1 activities:**
 
+    * **Identify key stakeholders** - Opportunistically recruit stakeholders outside the CDK team to participate in API reviews and usability studies. Potential stakeholders include: service's product manager, service's developer advocates (if any), service's software development engineer (designated by service's leadership), solutions architects who specialize in service (sourced via internal mailing lists), and AWS Developer Tools developer advocates. 
     * **Update GitHub tracking issue** - Summarize the primary use cases and required constructs as they are identified
     * **Author RFCs [optional]** - Request for comment documents are created for large / complex designs that require explanation and robust discussion. RFCs are stored in a separate [GitHub repo](https://github.com/aws/aws-cdk-rfcs), and the module's tracking issue will include links to relevant RFCs.
     * **Update Roadmap** - publicly indicate the module is work in progress
@@ -66,7 +67,7 @@ While experimenting on the module API design and implementation, we will be as t
      * **Successful API review** - conduct an API review/developer experience demo and invite relevant stakeholders
         * use module's README as the API review guide
         * address any concerns about API ergonomics
-        * review all lint exceptions to ensure they are acceptable for dev preview
+        * review all AWS Lint exceptions to ensure they are acceptable for dev preview
         * ensure at least 90% unit test coverage for all implemented L2 constructs
         * if the API/DevEx is rejected, make a list of necessary remediation tasks and update the module's tracking issue 
 
@@ -83,6 +84,7 @@ The goal of developer preview is to deliver a release candidate with a stable AP
     * **Usage** - module utilization in 2,000 or more stacks is considered sufficient usage. We will evaluate the language distribution of module use to determine if we need to target specific underrepresented programming language communities for feedback.
     * **No P0 bugs** - no new P0 bugs in the past 4 weeks
     * **Successful API/Docs review** - conduct the final API review/developer experience demo and invite relevant stakeholders
+        * review all AWS Lint exceptions and have a high bar for keeping them at GA
         * review and sign-off module’s README by tech writer
         * review and sign-off module's API by module owner
         * if the API/DevEx is rejected, make a list of necessary remediation tasks and update the module's tracking issue
