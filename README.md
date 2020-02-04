@@ -13,13 +13,16 @@ existing proposals.
 <!--BEGIN_TABLE-->
 #|Title|PR|Created By|Champion|Status
 -|-----|--|----------|--------|------
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|pending
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
+[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
+[118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||[@eladb](https://github.com/eladb)||proposed
+[116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@eladb](https://github.com/eladb)||proposed
 [110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
-[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Asset Garbage Collector||[@eladb](https://github.com/eladb)||proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[@rix0rrr](https://github.com/rix0rrr)|[@rix0rrr](https://github.com/rix0rrr)|proposed
@@ -61,14 +64,12 @@ existing proposals.
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||[@eladb](https://github.com/eladb)||proposed
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Runtime & infrastructure code integration||[@eladb](https://github.com/eladb)||proposed
-[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency management experience||[@eladb](https://github.com/eladb)||proposed
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency Issues caused by Hyper-Modularity||[@eladb](https://github.com/eladb)||proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[@eladb](https://github.com/eladb)||proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|pending
-[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 <!--END_TABLE-->
 
 ## What does all this mean?!
