@@ -16,7 +16,7 @@ existing proposals.
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
-[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy||[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
