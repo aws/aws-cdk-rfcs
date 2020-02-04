@@ -3,11 +3,11 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const labels = {
-  'status/ready': { },
-  'status/proposed': { },
-  'status/pending': { },
   'status/final-comment-period': { }, 
+  'status/pending': { },
+  'status/ready': { },
   'status/resolved': { },
+  'status/proposed': { },
 };
 
 exports.render = render;
