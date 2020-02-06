@@ -443,36 +443,6 @@ new IdentityPool(this, 'myidentitypool', {
 > * allowUnauthenticated: false
 > * authenticationFlow: `AuthenticationFlow.ENHANCED`
 
-### Identity Providers
-
-Identity pools can be configured with external providers for sign in. These can be from facebook, google, twitter as
-well as, "login with Amazon" and Cognito user pools. Use the `identityProviers` property to configure these providers.
-Learn more about external identity providers at [Cognito's
-documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). The CDK
-documentation of the `identityProviders` property has more details on how to configure an identity pool with each of
-these external providers.
-
-> Internal Note: IdentityPool-SupportedLoginProviders takes a JSON with all of the providers configured.
-
-Besides the external identity providers, Cognito identity pools also support developer authenticated identities. Read
-[the documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/developer-authenticated-identities.html)
-to learn more about developer authenticated identities. This can be configured via the property `developerProvider`.
-
-Code snippet with all of the external providers configured -
-
-```ts
-new IdentityPool(this, 'myidentitypool', {
-  // ...
-  identityProviders: {
-    amazon: { appId: 'amzn1.application.188a56d827a7d6555a8b67a5d' },
-    facebook: { appId: '7346241598935555' },
-    google: { clientId: '123456789012.apps.googleusercontent.com' },
-    twitter: { consumerKey: 'xvz1evFS4wEEPTGEFPHBog', consumerSecret: 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw' },
-    developerProvider: 'login.mycompany.myapp'
-  }
-});
-```
-
 ### Access Control
 
 Identity pools are configured with IAM roles from which temporary credentials will be provided to users of this pool
@@ -518,11 +488,42 @@ applies to the all of the roles specified in this section. To disable this, set 
 **Note** that, however, this does not apply to imported IAM roles; all of the correct trust policies must be set up
 outside of the CDK app.
 
-The access control policies for a user can be extended so the user can obtain even more permissions, when they match
-specific rules. This can be specified via the `roleMappings` property. Learn more about [using rules to assign roles to
-users](https://docs.aws.amazon.com/cognito/latest/developerguide/role-based-access-control.html#using-rules-to-assign-roles-to-users).
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * authenticatedRole & unauthenticatedRole - empty Role with the correct trust configured.
+> * no default rolemappings
 
-> Is there a better name than `roleMappings`?
+### Identity Providers
+
+Identity pools can be configured with external providers for sign in. These can be from facebook, google, twitter as
+well as, "login with Amazon" and Cognito user pools. Use the `identityProviers` property to configure these providers.
+Learn more about external identity providers at [Cognito's
+documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). The CDK
+documentation of the `identityProviders` property has more details on how to configure an identity pool with each of
+these external providers.
+
+Besides the external identity providers, Cognito identity pools also support developer authenticated identities. Read
+[the documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/developer-authenticated-identities.html)
+to learn more about developer authenticated identities. This can be configured via the property `developerProvider`.
+
+The following code snippet configures an identity pool with a bunch of external providers -
+
+```ts
+new IdentityPool(this, 'myidentitypool', {
+  // ...
+  identityProviders: {
+    amazon: { appId: 'amzn1.application.188a56d827a7d6555a8b67a5d' },
+    facebook: { appId: '7346241598935555' },
+    google: { clientId: '123456789012.apps.googleusercontent.com' },
+    twitter: { consumerKey: 'xvz1evFS4wEEPTGEFPHBog', consumerSecret: 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw' },
+    developerProvider: { name: 'login.mycompany.myapp' }
+  }
+});
+```
+
+When users are authenticated with one of these identity providers, they are supplied with the credentials of the
+`authenticatedRole` IAM role (see [access control section](#access-control). However, rules can be configured such that
+the access for specific users can be modified (elevated or restricted). Learn more about [using rules to assign roles to
+users](https://docs.aws.amazon.com/cognito/latest/developerguide/role-based-access-control.html#using-rules-to-assign-roles-to-users).
 
 The following code snippet sets up two rules that assign the admin role based on whether the admin logged in via
 facebook or via google.
@@ -533,9 +534,10 @@ const adminRole = new iam.Role(this, 'admin-role', { ... });
 new IdentityPool(this, 'my-awesome-id-pool', {
   // ...
   // ...
-  roleMappings: {
-    'facebook': new FacebookRoleMapping({
-      rules: [
+  identityProviders: {
+    facebook: {
+      appId: '7347241598935555',
+      roleMappingRules: [
         {
           // if the identifier of the user as returned by facebook is 'boris'
           claim: FacebookRoleMappingClaim.SUB,
@@ -545,20 +547,21 @@ new IdentityPool(this, 'my-awesome-id-pool', {
         }
       ],
       ambiguousRoleResolution: AmbiguousRoleResolution.DENY
-    }),
+    },
 
-    'google': new GoogleRoleMapping({
-      rules: [
+    google: {
+      clientId: '123456789012.apps.googleusercontent.com',
+      roleMappingRules: [
         {
-          // if the verified email as returned by google is 'borissvenson@myawesomeapp.com'
+          // if the verified email as returned by google is 'borissvenson@gmail.com'
           claim: GoogleRoleMappingClaim.EMAIL_VERIFIED,
           matchType: MatchType.EQUALS,
-          value: 'borissvenson@myawesomeapp.com',
+          value: 'borissvenson@gmail.com',
           role: adminRole
         }
       ],
       ambiguousRoleResolution: AmbiguousRoleResolution.AUTHENTICATED_ROLE
-    })
+    }
   }
 });
 ```
@@ -571,9 +574,9 @@ rules. `DENY` specifies that no role should be provided while `AUTHENTICATED_ROL
 specified against `authenticatedRole` be returned. Learn more about this property
 [here](https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_RoleMapping.html#CognitoIdentity-Type-RoleMapping-AmbiguousRoleResolution).
 
-> These are the defaults that will be part of tsdoc, and not part of the README -
-> * authenticatedRole & unauthenticatedRole - empty Role with the correct trust configured.
-> * no default rolemappings
+**Note:** As detailed in the [section on access control](#access-control), all roles specified here would automatically
+have a trust policy trusting the Cognito service and following the best practice, unless `configureRoleTrust` is set to
+`false` or if the IAM role is imported.
 
 ### Importing Identity Pools
 
