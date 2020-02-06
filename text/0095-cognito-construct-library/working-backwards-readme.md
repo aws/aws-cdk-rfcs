@@ -183,45 +183,41 @@ Additionally, MFA can be sent either via SMS text message or via a time-based so
 See the [documentation on MFA](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa.html) to
 learn more.
 
-This can be configured by setting the `mfa.enforcement` option under `security` properties to be one of the values in
-the `MfaEnforcement` enum. Available values are `REQUIRED`, `OPTIONAL`, `OFF`.
-The type of MFA can be configured by its peer property `type` which can be set to a list of values in the enum
-`MfaType`. The available values are `SMS` and `SOFTWARE_TOKEN`.
+The MFA enforcement policy and the type of MFA token to use can be configured by setting the `mfa` property group.
 
-User pools can be specify the constraints that should be applied when users choose their password. Constraints such as
-minimum length, whether lowercase, numbers and/or symbols are required can be specified.
+User pools can be configured a password policy for its users. The policy can specify a minimum length, whether
+lowercase, numbers and/or symbols must be present.
 
-In order to send an SMS, Cognito needs an IAM role that it can assume with permissions that allow it to send an SMS on
-behalf of the AWS account. By default, CDK will create this IAM user but allows for it to be overridden via the
-`smsRole` permissions.
+Cognito sends various messages to its users via SMS, for different actions, ranging from account verification to
+marketing. In order to send SMS messages, Cognito needs an IAM role that it can assume, with permissions that allow it
+to send SMS messages. By default, CDK will create this IAM role but can be explicily specified to an existing role via
+the `smsRole` property.
 
-> These are the defaults that will be part of tsdoc, and not part of the README -
-> * security.mfa.enforcement: OPTIONAL
-> * security.mfa.type: SMS
-> * security.passwordPolicy.minLength: 8
-> * security.passwordPolicy.required - lowercase, numbers and symbols
-> * security.smsRole - assumable by `cognito-idp.amazonaws.com` and permitting `sns:Publish` action against resource `*`.
->   The role assumption will be conditioned on a strict equals on an ExternalId that will be unique to this user pool.
-
-Code sample:
+The following code sample has these three properties configured.
 
 ```ts
 new UserPool(this, 'myuserpool', {
   // ...
   // ...
-  security: {
-    mfa: {
-      enforcement: MfaEnforcement.REQUIRED,
-      type: [ MfaType.SMS, MfaType.SOFTWARE_TOKEN ]
-    },
-    passwordPolicy: {
-      required: [ PasswordPolicy.LOWERCASE, PasswordPolicy.NUMBERS, PasswordPolicy.SYMBOLS ],
-      minLength: 12,
-    },
-    smsRole: iam.Role.fromRoleArn(/* ... */),
-  }
+  mfa: {
+    enforcement: MfaEnforcement.REQUIRED,
+    type: [ MfaType.SMS, MfaType.SOFTWARE_TOKEN ]
+  },
+  passwordPolicy: {
+    required: [ PasswordPolicy.LOWERCASE, PasswordPolicy.NUMBERS, PasswordPolicy.SYMBOLS ],
+    minLength: 12,
+  },
+  smsRole: iam.Role.fromRoleArn(/* ... */),
 });
 ```
+
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * mfa.enforcement: OPTIONAL
+> * mfa.type: SMS
+> * passwordPolicy.minLength: 8
+> * passwordPolicy.required - lowercase, numbers and symbols
+> * smsRole - assumable by `cognito-idp.amazonaws.com` and permitting `sns:Publish` action against resource `*`.
+>   The role assumption will be conditioned on a strict equals on an ExternalId that will be unique to this user pool.
 
 > Internal Note: Password policy via UserPool-Policies, MFA enable via UserPool-MfaConfiguration; MFA type via
 > UserPool-EnabledMfas; smsRole via UserPool-SmsConfiguration
@@ -360,7 +356,7 @@ Users can be created for imported user pools by using the `UserPoolUser` constru
 const userpool = UserPool.fromUserPoolAttributes(this, 'myuserpool', { ... });
 
 new UserPoolUser(this, userpool, {
-  userPoolId: userpool.userPoolId,
+  userPool: userpool,
   // ...
   // all of the same properties as above
   // ...
@@ -490,18 +486,37 @@ the permissions to Amazon Mobile Analytics and Amazon Cognito Sync. This is simi
 Read the [IAM Roles documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/iam-roles.html) to learn
 more on how to set up your own IAM roles.
 
+The following code configures an identity pool with two roles, one that authenticated users of the identity pool will
+assume and the other for unauthenticated users. It goes further to configure access read and read-write access to an S3
+bucket. When a role is not explicitly specified, CDK creates an empty role by default that can then be used by calling
+the `authenticatedRole` and `unauthenticatedRole` getter APIs on `IdentityPool`.
+
 ```ts
 const authenRole = new iam.Role(this, 'cognito-authenticated-role', { ... });
 
 const unAuthenRole = new iam.Role(this, 'cognito-unauthenticated-role', { ... });
 
-new IdentityPool(this, 'my-awesome-id-pool', {
+const identitypool = new IdentityPool(this, 'my-awesome-id-pool', {
   // ...
   // ...
   authenticatedRole: authenRole,
   unAuthenticatedRole: unauthenRole
 });
+
+bucket.grantRead(identitypool.authenticatedRole);
+bucket.grantWrite(identitypool.authenticatedRole);
+bucket.grantRead(identitypool.unauthenticatedRole);
 ```
+
+In order for Cognito to interact with these IAM roles, they require that a trust policy be attached that permits Cognito
+to assume this role. The best practice is to specify a 'Condition' that this operation is allowed only when operating
+with the corresponding identity pool. See [Role Trust and
+Permissions](https://docs.aws.amazon.com/cognito/latest/developerguide/role-trust-and-permissions.html) to learn more.
+The CDK automatically adds a trust policy to all roles used in the `IdentityPool` following these best practices. This
+applies to the all of the roles specified in this section. To disable this, set the `configureRoleTrust` to `false`.
+
+**Note** that, however, this does not apply to imported IAM roles; all of the correct trust policies must be set up
+outside of the CDK app.
 
 The access control policies for a user can be extended so the user can obtain even more permissions, when they match
 specific rules. This can be specified via the `roleMappings` property. Learn more about [using rules to assign roles to
@@ -556,13 +571,9 @@ rules. `DENY` specifies that no role should be provided while `AUTHENTICATED_ROL
 specified against `authenticatedRole` be returned. Learn more about this property
 [here](https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_RoleMapping.html#CognitoIdentity-Type-RoleMapping-AmbiguousRoleResolution).
 
-Finally, in order to generate temporary credentials, the IAM roles require a trust policy to be attached that permits
-the Cognito service to assume this role. The best practice is to specify a 'Condition' that this operation is allowed
-only when operating with the corresponding identity pool. See [Role Trust and
-Permissions](https://docs.aws.amazon.com/cognito/latest/developerguide/role-trust-and-permissions.html) to learn more.
-
-The CDK, by default, adds a trust policy with these configured to all roles used by the `IdentityPool`. To disable this,
-set the `configureRoleTrust` to `false`.
+> These are the defaults that will be part of tsdoc, and not part of the README -
+> * authenticatedRole & unauthenticatedRole - empty Role with the correct trust configured.
+> * no default rolemappings
 
 ### Importing Identity Pools
 
