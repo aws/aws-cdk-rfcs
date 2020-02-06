@@ -35,59 +35,76 @@ new UserPool(this, 'myuserpool', {
 
 ### Sign Up
 
-Users need to either be signed up by the app's administrators or can sign themselves up. This can be configured via the
-`selfSignUp` property under the `signUp` group.
+Users can either be signed up by the app's administrators or can sign themselves up. Once a user has signed up, their
+account needs to be confirmed. Cognito provides several ways to sign users up and confirm their accounts. Learn more
+about [user sign up here](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html).
 
-A welcome email and/or SMS can be configured to be sent automatically once user has signed up. This welcome email and/or
-SMS will carry the temporary password for the user. The user will use this password to log in and reset their password.
-The temporary password is valid only for a limited number of days.
-
-Consider the following code sample where a number of these properties are configured -
+Consider the following code sample which configures all of the properties related to sign up on a user pool -
 
 ```ts
 new UserPool(this, 'myuserpool', {
   // ...
   // ...
-  signUp: {
-    selfSignUp: true,
+  selfSignUp: {
+    verificationEmail: {
+      subject: 'Verify your email for our awesome app!',
+      body: 'Hello {username}, Thanks for signing up to our aweomse app! Your verification code is {####}',
+      verificationStyle: EmailVerificationStyle.CODE
+    },
+    verificationSms: {
+      message: 'Hello {username}, Thanks for signing up to our aweomse app! Your verification code is {####}',
+    }
+  },
+  adminSignUp: {
     tempPasswordValidity: Duration.days(3),
-    welcomeEmail: {
-      subject: 'Welcome to our awesome app!'
-      body: 'Hello {username}, Thanks for signing up to our awesome app! Your temporary password is {####}'
+    invitationEmail: {
+      subject: 'Invite to join our awesome app!'
+      body: 'Hello {username}, you have been invited to join our awesome app! Your temporary password is {####}'
     },
-    welcomeSms: {
+    invitationSms: {
       message: 'Your temporary password for our awesome app is {####}'
-    },
+    }
   }
 });
 ```
 
-At least one of `welcomeEmail` or `welcomeSms` is required if `selfSignUp` is set to `true`. 
+The `selfSignUp` property group contains configuration for the user pool's behaviour when a user signs themselves up.
+This primarily involves how they will confirm their accounts and verify their contact information. Learn more about
+[signing up and confirming user
+accounts](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html). When
+the `verificationEmail` and/or the `verificationSms` properties are specified, the user pool is configured to verify
+them. The email subject, body and the SMS message content can be configured. Learn more about [configuring SMS and email
+messages](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html).
+When verifying the account via email, the verification can either be done by the user entering a code into the app that
+was emailed to them, or by clicking on a $link. This can be configured using the `verificationStyle` property.
 
-User pool can be configured so that email address and/or phone number must be verified. This is what the
-`verifyContactMethods` property sets up. Verification is necessary for account recovery, and that at least one mode of
-communication exists.
+*Note*: If you would like to disable self sign up for your user pool, set the property `selfSignUp` to `undefined`.
 
-Learn more about the [sign up and verification
-process](https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html#allowing-users-to-sign-up-and-confirm-themselves).
+Besides self sign up, users can also be signed up directly by the administrator. Learn more about [creating user
+accounts as administrator](https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html).
+The `adminSignUp` property group lets this be configured. Similar to the verification email and SMS, an invitation email
+and/or SMS can be configured to be sent automatically an administrator signs a user up. This invitation email or SMS
+will carry the temporary password for the user. The user will use this password to log in and reset their password. The
+temporary password is valid only for a limited time which can be configured via the `tempPasswordValidity` policy.
 
-*Note*: If both email and phone number are specified, Cognito will only verify the phone number. To also verify the
-email address, read [the documentation on email and phone
-verification](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html)
-
-*Note*: By default, the email and/or phone number attributes will be marked as required if they are specified as a
-verified contact method. See [attributes](#attributes) section for details about standard attributes.
+*Note*: By default, the email and/or phone number attributes will be marked as required if `verificationEmail` or
+`verificationSms` respecitvely are specified. See [attributes](#attributes) section for more on standard attributes.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
-> * signUp.selfSignUp: true
-> * signUp.tempPasswordValidity: 7 days
-> * signUp.welcomeEmail.subject: 'Thanks for signing up'
-> * signUp.welcomeEmail.body - 'Hello {username}, Your temporary password is {####}'
-> * signUp.welcomeSms.message - 'Your temporary password is {####}'
-> * signUp.verifyContactMethods - Email
+> * selfSignUp - enabled; adminSignUp - disabled
+> * selfSignUp.verificationEmail.subject: 'Verify your new account'
+> * selfSignUp.verificationEmail.body - 'Hello {username}, Your verification code is {####}'
+> * selfSignUp.verificationEmail.verificationStyle - CODE
+> * selfSignUp.verificationSms.message - 'The verification code to your new account is {####}'
 
-> Internal Note: Implemented via UserPool-AdminCreateUserConfig, temp password via UserPool-Policies,
-> verifyContactMethods via UserPool-AutoVerifiedAttributes.
+> Internal Notes:
+> * disable self sign up via UserPool-AdminCreateUserConfig-AllowAdminCreateUserOnly
+> * enable verification of email and/or sms via UserPool-AutoVerifiedAttributes.
+> * `selfSignUp.verificationEmail` to both UserPool-EmailVerification\* and UserPool-VerificationMessageTemplate-Email\*
+> * `selfSignUp.verificationSms` to both UserPool-SmsVerificationMessage and UserPool-VerificationMessageTemplate-SmsMessage
+> * `verificationStyle` via UserPool-VerificationMessageTemplate-DefaultEmailOption
+> * `adminSignUp` via UserPool-AdminCreateUserConfig
+> * `adminSignUp.tempPasswordValidity` via UserPool-Policies
 
 ### Sign In
 
@@ -274,6 +291,8 @@ new UserPool(this, 'myuserpool', {
 Triggers can also be added to the user pool outside of its constructor. This can be done via individual methods such as
 `addPreSgnUpTrigger()`, `addPostSignUpTrigger()`, `addPreAuthentication()`, etc.
 
+The CDK will add necessary permission to the lambda functions for it to be invoked by the cognito service.
+
 ### Importing User Pools
 
 Any user pool that has been created outside of this stack, can be imported into the CDK app. Importing a user pool
@@ -310,10 +329,10 @@ const userpool = new UserPool(this, 'myuserpool', {
 userpool.createUser(this, 'myuserpool-supportuser', {
   userName: 'support-user',
   deliveryMediums: [ ContactMethods.EMAIL, ContactMethods.PHONE ],
-  attributes: [
-    { name: StandardAttrs.EMAIL, value: 'support@awesomeapp.com' },
-    { name: 'callingcode' value: '12' }
-  ],
+  attributes: {
+    [StandardAttrs.EMAIL]: 'support@awesomeapp.com',
+    callingcode: 12,
+  },
   forceAliasCreation: true,
   resendInvitation: true,
 });
