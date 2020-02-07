@@ -16,6 +16,6 @@ jobs:
           cd ../
       - name: run linter
         run: |
-          ./markdownlint-cli/node_modules/.bin/markdownlint -i text/0049-continuous-delivery.md text/**/*.md
+          ./markdownlint-cli/node_modules/.bin/markdownlint -i text/0049-continuous-delivery.md -i text/0092-asset-publishing.md text/**/*.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
