@@ -1,0 +1,10 @@
+{
+  "blank_line": false,
+  "fenced-code-language": false,
+  "line_length": {
+    "line_length": 150
+  },
+  "ol-prefix": false,
+  "single-h1": false,
+  "ul-style": false
+}
