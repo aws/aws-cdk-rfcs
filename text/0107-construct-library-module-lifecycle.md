@@ -2,7 +2,7 @@
 feature name: aws-construct-library-module-lifecycle 
 start date: 2020-01-29 
 rfc pr: (leave this empty) 
-related issue: #0107
+related issue: https://github.com/aws/aws-cdk-rfcs/issues/107
 ---
 
 # Summary
@@ -50,8 +50,8 @@ to add L2 resources in the future.
     > **INTERNAL NOTE:** we don't have alignment on adding CFN-only modules to the roadmap. This is captured as an action at the bottom of this doc.
 
   - **Observe** - watch KPIs to prioritize the construct library module's graduation:  
-    - Pull requests that add the first high-level constructs are the strongest signal to graduate a construct library module from stage 0 to stage 1 (experimental) and are prioritized first
-    - Customer "+1s" on a construct library module's tracking issue exceeding 100 positive reactions, are prioritized next
+    - pull requests that add the first high-level constructs are the strongest signal to graduate a construct library module from stage 0 to stage 1 (experimental) and are prioritized first
+    - customer "+1s" on a construct library module's tracking issue exceeding 100 positive reactions, are prioritized next
     - construct library modules that accumulate 10+ feature requests, are prioritized next 
 - **Exit Criteria** - AWS-CDK Construct Library modules move to stage 1:
   - when the first community PR for a module is merged, OR
@@ -90,7 +90,7 @@ and related to each other.
     and the module's tracking issue will include links to relevant RFCs.
   
   - **Update Roadmap** - publicly indicate the module is work in progress
-    - If an RFC is written, place the module’s tracking issue on the CDK roadmap in the “researching” column to indicate
+    - if an RFC is written, place the module’s tracking issue on the CDK roadmap in the “researching” column to indicate
       we need customer feedback on the module’s design. When the RFC process is complete, move the tracking issue to the "Working on it" column
     - otherwise, place the module’s tracking issue on the CDK roadmap in the “Working on it“ column
   
@@ -109,8 +109,6 @@ and related to each other.
     - report the number of stacks that include -experimental packages on a weekly basis to measure customer interest and experimentation.
   
   - **Repeat** - These activities are repeated until the module owner decides the module is feature complete and the API is ergonomic. At the end of the experimental stage, the construct library module’s GitHub tracking issue will have a description of the service, a list of targeted use cases, and a list of high-level constructs required to satisfy the use cases.
-    
-    > TODO: consider how the module owner decides the module is ready for graduation: the tracking Github issue for each module should have the major use cases modeled as a checklist. Every quarter, as part of the construct lib squad prioritization, owners look at the checklists for their module and if most/all of them are checked off, they should bring it to the squad as a candidate for the next stage.
 
 - **Exit Criteria**:
   - **Feature complete** - During each iteration in the experimental phase, a module's Github tracking issue will accumulate a checklist of major use cases. Every quarter, as part of the construct library module prioritization, owners look at the checklists for their module and if most/all of them are checked off, it is considered as a developer preview candidate.
