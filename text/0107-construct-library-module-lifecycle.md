@@ -133,10 +133,15 @@ breaking changes still remains while in Developer Preview, the package name will
 this stage.
 
 - **Stage 2 activities**:
+  - **Update [service_name]-experimental package** - deliver experimental constructs in their own package to clearly communicate module maturity. 
+    
+    - in the module's `package.json` set "Stability": "Developer Preview" to indicate the module is a feature complete release candidate, but is still subject to breaking changes
+  
   - **Update Roadmap** - move to the CDK public roadmap “Developer Preview”column to indicate we need customer feedback
     on the module’s implementation
   
   - **Observe** - monitor module utilization and GitHub issues filed against the experimental module
+  
   > TODO: be explicit about KPIs here
   
   - **Quality Assurance** - fix all P0 bugs as they are discovered and review all P1 bugs, making a clearly communicated
