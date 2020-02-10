@@ -11,7 +11,7 @@ See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
 
 <!--BEGIN_TABLE-->
-#|Title|PR|Created By|Champion|Status
+\#|Title|PR|Created By|Champion|Status
 -|-----|--|----------|--------|------
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|pending
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|pending
@@ -72,7 +72,7 @@ existing proposals.
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
 <!--END_TABLE-->
 
-## What does all this mean?!
+## What does all this mean?
 
 This document is a lot of information about process thats meant to help guide.
 It is not a set of rules that need to be strictly applied. It is designed to
@@ -177,9 +177,9 @@ CDK/JSII.
   for the proposed feature if one doesn't already exist. Use the tracking issue
   template as a guide. If a tracking issue already exists, make sure to update
   it and assign it to let others know you're working on a proposal.
-- Fork the RFC repo https://github.com/awslabs/aws-cdk-rfcs
+- Fork the [RFC repo](https://github.com/awslabs/aws-cdk-rfcs).
 - Copy `0000-template.md` to `text/<rfc#>-<my-feature>.md` where <rfc#> is the
-  tracking issue number and <my-feature> is the rfc title.
+  tracking issue number and `<my-feature>` is the rfc title.
 - Fill in the RFC. Put care into the details: **We welcome all honest efforts to
   contribute.**.
 - Submit a pull request with the title `RFC: <rfc#> <title>` where <rfc#> is the
@@ -212,7 +212,7 @@ through the process. They can decide when a final comment period is triggered.
 ![rfc-states](https://g.gravizo.com/svg?digraph%20states%20{node%20[shape=ellipse];proposed%20[label%20=%20%22Proposed%22];pending%20[label%20=%20%22Pending%22];fcp%20[label%20=%20%22Final%20Comment%20Period%22];ready%20[label%20=%20%22Ready%22];resolved%20[label%20=%20%22Resolved%22];proposed%20-%3E%20pending%20[label%20=%20%22%20rfc%20pr%20created%22];pending%20-%3E%20pending%20[label%20=%20%22%20revisions%22];pending%20-%3E%20fcp%20[label%20=%20%22core%20team%20approval%20%20%20%20%22];fcp%20-%3E%20pending%20[label%20=%20%22%20revision%20requested%22];fcp%20-%3E%20ready%20[label%20=%20%22%20merged%22];ready%20-%3E%20resolved%20[label%20=%20%22%20implementation%20complete%22];})
 
 <!-- for later reference from renderer -->
-<details> 
+<details>
 <summary></summary>
 custom_mark10
   digraph states {

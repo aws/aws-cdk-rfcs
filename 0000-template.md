@@ -19,7 +19,7 @@ related issue: (tracking issue number)
 
 > If the proposal involves a new or changed API, include a basic code example.
 > Omit this section if it's not applicable.
-> 
+>
 > Please focus on explaining the motivation so that if this RFC is not accepted,
 > the motivation could be used to develop alternative solutions. In other words,
 > enumerate the constraints you are trying to solve without coupling them too
@@ -37,23 +37,23 @@ related issue: (tracking issue number)
 > implementation to implement. This should get into specifics and corner-cases,
 > and include examples of how the feature is used. Any new terminology should be
 > defined here.
-> 
+>
 > Include any diagrams and/or visualizations that help to demonstrate the design.
 > Here are some tools that we often use:
-> 
+>
 > - [Graphviz](http://graphviz.it/#/gallery/structs.gv)
 > - [PlantText](https://www.planttext.com)
 
 # Drawbacks
 
 > Why should we _not_ do this? Please consider:
-> 
+>
 > - implementation cost, both in term of code size and complexity
 > - whether the proposed feature can be implemented in user space
 > - the impact on teaching people how to use CDK
 > - integration of this feature with other existing and planned features
 > - cost of migrating existing CDK applications (is it a breaking change?)
-> 
+>
 > There are tradeoffs to choosing any path. Attempt to identify them here.
 
 # Rationale and Alternatives
@@ -84,9 +84,9 @@ related issue: (tracking issue number)
 > and how it would affect CDK as whole. Try to use this section as a tool to more
 > fully consider all possible interactions with the project and ecosystem in your
 > proposal. Also consider how this fits into the roadmap for the project.
-> 
+>
 > This is a good place to "dump ideas", if they are out of scope for the RFC you
 > are writing but are otherwise related.
-> 
+>
 > If you have tried and cannot think of any future possibilities, you may simply
 > state that you cannot think of anything.
