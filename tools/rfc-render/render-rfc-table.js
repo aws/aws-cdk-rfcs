@@ -49,7 +49,7 @@ async function render() {
     }
   }
 
-  lines.push('\#|Title|PR|Created By|Champion|Status');
+  lines.push('\\#|Title|PR|Created By|Champion|Status');
   lines.push('-|-----|--|----------|--------|------');
 
   for (const row of issues) {
