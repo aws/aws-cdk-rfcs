@@ -2,6 +2,7 @@
   "blank_line": false,
   "commands-show-output": false,
   "fenced-code-language": false,
+  "first-line-h1": false,
   "line_length": {
     "line_length": 150
   },
@@ -10,8 +11,13 @@
   },
   "no-inline-html": {
     "allowed_elements": [
-      "span"
+      "span",
+      "details",
+      "summary"
     ]
+  },
+  "no-trailing-punctuation": {
+    "punctuation": ".,;:!。，；：！"
   },
   "ol-prefix": false,
   "single-h1": false,
