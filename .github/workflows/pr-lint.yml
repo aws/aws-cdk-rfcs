@@ -11,11 +11,9 @@ jobs:
           node-version: 12.x
       - name: install dependencies
         run: |
-          mkdir markdownlint-cli && cd markdownlint-cli
-          npm install markdownlint-cli
-          cd ../
+          npm install --prefix tools/linters
       - name: run linter
         run: |
-          ./markdownlint-cli/node_modules/.bin/markdownlint -i text/0049-continuous-delivery.md -i text/0092-asset-publishing.md text/**/*.md
+          ./tools/linters/node_modules/.bin/markdownlint -c ./tools/linters/markdownlint.json text/**/*.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

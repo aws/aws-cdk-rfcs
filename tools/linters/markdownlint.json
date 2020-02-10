@@ -1,8 +1,17 @@
 {
   "blank_line": false,
+  "commands-show-output": false,
   "fenced-code-language": false,
   "line_length": {
     "line_length": 150
+  },
+  "no-duplicate-heading": {
+    "siblings_only": true
+  },
+  "no-inline-html": {
+    "allowed_elements": [
+      "span"
+    ]
   },
   "ol-prefix": false,
   "single-h1": false,
