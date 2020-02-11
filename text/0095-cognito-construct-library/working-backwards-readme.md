@@ -235,7 +235,7 @@ Cognito will handle sending emails to users in the user pool. The address from w
 on the user pool via the `from` property, and the `replyTo` property to configure the email where replies are sent.
 
 User pools can also be configured to send emails through Amazon SES, however, that is not yet supported via the CDK. Use
-the cfn layer to configure this - https://docs.aws.amazon.com/cdk/latest/guide/cfn_layer.html.
+the [cfn layer](https://docs.aws.amazon.com/cdk/latest/guide/cfn_layer.html) to configure this.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
 >
