@@ -92,13 +92,15 @@ temporary password is valid only for a limited time which can be configured via 
 `verificationSms` respecitvely are specified. See [attributes](#attributes) section for more on standard attributes.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * selfSignUp - enabled; adminSignUp - disabled
 > * selfSignUp.verificationEmail.subject: 'Verify your new account'
 > * selfSignUp.verificationEmail.body - 'Hello {username}, Your verification code is {####}'
 > * selfSignUp.verificationEmail.verificationStyle - CODE
 > * selfSignUp.verificationSms.message - 'The verification code to your new account is {####}'
-
+>
 > Internal Notes:
+>
 > * disable self sign up via UserPool-AdminCreateUserConfig-AllowAdminCreateUserOnly
 > * enable verification of email and/or sms via UserPool-AutoVerifiedAttributes.
 > * `selfSignUp.verificationEmail` to both UserPool-EmailVerification\* and UserPool-VerificationMessageTemplate-Email\*
@@ -169,11 +171,12 @@ specifies that the property can be modified by the user while the latter specifi
 app's administrator and not by the user (using their access token).
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * No standard attributes are marked required.
 > * For all custom attributes, `mutable`: true & `adminOnly`: false.
-
+>
 > Internal note: Implemented via UserPool-SchemaAttribute
-
+>
 > Internal note: Follow up - is mutable = false and adminOnly = true allowed?
 
 ### Security
@@ -213,16 +216,17 @@ new UserPool(this, 'myuserpool', {
 ```
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * mfa.enforcement: OPTIONAL
 > * mfa.type: SMS
 > * passwordPolicy.minLength: 8
 > * passwordPolicy.required - lowercase, numbers and symbols
 > * smsRole - assumable by `cognito-idp.amazonaws.com` and permitting `sns:Publish` action against resource `*`.
 >   The role assumption will be conditioned on a strict equals on an ExternalId that will be unique to this user pool.
-
+>
 > Internal Note: Password policy via UserPool-Policies, MFA enable via UserPool-MfaConfiguration; MFA type via
 > UserPool-EnabledMfas; smsRole via UserPool-SmsConfiguration
-
+>
 > Internal Note: Account Recovery settings are missing from UserPool CloudFormation resource.
 
 ### Emails
@@ -234,6 +238,7 @@ User pools can also be configured to send emails through Amazon SES, however, th
 the cfn layer to configure this - https://docs.aws.amazon.com/cdk/latest/guide/cfn_layer.html.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * email.from - TODO: find the default that Cognito uses.
 > * email.replyTo - same address as from.
 
@@ -365,6 +370,7 @@ new UserPoolUser(this, userpool, {
 ```
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * deliveryMedium: ContactsMethod.PHONE
 > * attributes: none
 > * forceAliasCreation: false
@@ -402,6 +408,7 @@ for more details.
 Use the `takesPrecendenceOver()` API to set the precedence of one group over the other.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * description - empty
 > * precedence - `undefined`
 
@@ -441,6 +448,7 @@ new IdentityPool(this, 'myidentitypool', {
 ```
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * allowUnauthenticated: false
 > * authenticationFlow: `AuthenticationFlow.ENHANCED`
 
@@ -490,6 +498,7 @@ applies to the all of the roles specified in this section. To disable this, set 
 outside of the CDK app.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
+>
 > * authenticatedRole & unauthenticatedRole - empty Role with the correct trust configured.
 > * no default rolemappings
 
@@ -598,4 +607,3 @@ const awesomePool = IdentityPool.fromIdentityPoolId(stack, 'awesome-identity-poo
 const otherAwesomePool = UserPool.fromIdentityPoolArn(stack, 'other-awesome-user-pool',
   'arn:aws:cognito-identity:us-east-1:0123456789:identitypool/us-east-1:1a1a1a1a-ffff-1111-9999-66655533');
 ```
-
