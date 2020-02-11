@@ -11,18 +11,23 @@ See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
 
 <!--BEGIN_TABLE-->
-#|Title|PR|Created By|Champion|Status
+\#|Title|PR|Created By|Champion|Status
 -|-----|--|----------|--------|------
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|final-comment-period
+[60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|pending
+[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|pending
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|proposed
-[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
+[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
+[118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||[@eladb](https://github.com/eladb)||proposed
+[116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@eladb](https://github.com/eladb)||proposed
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
+[109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
+[87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Asset Garbage Collector||[@eladb](https://github.com/eladb)||proposed
+[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Garbage Collection for Assets||[@eladb](https://github.com/eladb)||proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[@rix0rrr](https://github.com/rix0rrr)|[@rix0rrr](https://github.com/rix0rrr)|proposed
-[60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|proposed
-[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|Support resource import||[@NetaNir](https://github.com/NetaNir)||proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|Standardize security groups||[@rix0rrr](https://github.com/rix0rrr)||proposed
 [50](https://github.com/aws/aws-cdk-rfcs/issues/50)|Standardize GitHub issues escalation process||[@RomainMuller](https://github.com/RomainMuller)||proposed
@@ -34,7 +39,7 @@ existing proposals.
 [40](https://github.com/aws/aws-cdk-rfcs/issues/40)|Stack traces across language boundaries||[@eladb](https://github.com/eladb)||proposed
 [39](https://github.com/aws/aws-cdk-rfcs/issues/39)|Public assets (custom resources, docker images)||[@eladb](https://github.com/eladb)||proposed
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|Release from a "release" branch||[@eladb](https://github.com/eladb)||proposed
-[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Sister CDKs||[@eladb](https://github.com/eladb)||proposed
+[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Constructs Programming Model||[@eladb](https://github.com/eladb)||proposed
 [35](https://github.com/aws/aws-cdk-rfcs/issues/35)|Improving the contributor's experience||[@eladb](https://github.com/eladb)||proposed
 [34](https://github.com/aws/aws-cdk-rfcs/issues/34)|Third-party construct ecosystem||[@eladb](https://github.com/eladb)||proposed
 [32](https://github.com/aws/aws-cdk-rfcs/issues/32)|App-centric operational experience||[@eladb](https://github.com/eladb)||proposed
@@ -59,16 +64,15 @@ existing proposals.
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||[@eladb](https://github.com/eladb)||proposed
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Runtime & infrastructure code integration||[@eladb](https://github.com/eladb)||proposed
-[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency management experience||[@eladb](https://github.com/eladb)||proposed
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency Issues caused by Hyper-Modularity||[@eladb](https://github.com/eladb)||proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[@eladb](https://github.com/eladb)||proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
-[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 <!--END_TABLE-->
 
-## What does all this mean?!
+## What does all this mean?
 
 This document is a lot of information about process thats meant to help guide.
 It is not a set of rules that need to be strictly applied. It is designed to
@@ -173,9 +177,9 @@ CDK/JSII.
   for the proposed feature if one doesn't already exist. Use the tracking issue
   template as a guide. If a tracking issue already exists, make sure to update
   it and assign it to let others know you're working on a proposal.
-- Fork the RFC repo https://github.com/awslabs/aws-cdk-rfcs
+- Fork the [RFC repo](https://github.com/awslabs/aws-cdk-rfcs).
 - Copy `0000-template.md` to `text/<rfc#>-<my-feature>.md` where <rfc#> is the
-  tracking issue number and <my-feature> is the rfc title.
+  tracking issue number and `<my-feature>` is the rfc title.
 - Fill in the RFC. Put care into the details: **We welcome all honest efforts to
   contribute.**.
 - Submit a pull request with the title `RFC: <rfc#> <title>` where <rfc#> is the
@@ -208,7 +212,7 @@ through the process. They can decide when a final comment period is triggered.
 ![rfc-states](https://g.gravizo.com/svg?digraph%20states%20{node%20[shape=ellipse];proposed%20[label%20=%20%22Proposed%22];pending%20[label%20=%20%22Pending%22];fcp%20[label%20=%20%22Final%20Comment%20Period%22];ready%20[label%20=%20%22Ready%22];resolved%20[label%20=%20%22Resolved%22];proposed%20-%3E%20pending%20[label%20=%20%22%20rfc%20pr%20created%22];pending%20-%3E%20pending%20[label%20=%20%22%20revisions%22];pending%20-%3E%20fcp%20[label%20=%20%22core%20team%20approval%20%20%20%20%22];fcp%20-%3E%20pending%20[label%20=%20%22%20revision%20requested%22];fcp%20-%3E%20ready%20[label%20=%20%22%20merged%22];ready%20-%3E%20resolved%20[label%20=%20%22%20implementation%20complete%22];})
 
 <!-- for later reference from renderer -->
-<details> 
+<details>
 <summary></summary>
 custom_mark10
   digraph states {

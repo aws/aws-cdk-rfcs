@@ -1,0 +1,20 @@
+name: PR Lint
+on: pull_request
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: install dependencies
+        run: |
+          npm install --prefix tools/linters
+      - name: run linter
+        run: |
+          cd ./tools/linters
+          npx --no-install markdownlint -c markdownlint.json ../../*.md ../../text/**/*.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

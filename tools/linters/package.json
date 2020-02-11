@@ -1,0 +1,8 @@
+{
+  "name": "linters",
+  "version": "1.0.0",
+  "license": "ISC",
+  "dependencies": {
+    "markdownlint-cli": "^0.22.0"
+  }
+}

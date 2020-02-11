@@ -6,28 +6,44 @@ This document specifies the requirements for this tool derived from the [continu
 
 ## Assumptions
 
-* Similarly to any resource defined through code and managed through CloudFormation, we are not attempting to protect assets from manual tampering by users.
+* Similarly to any resource defined through code and managed through CloudFormation, we are not attempting to protect assets from manual tampering by
+  users.
 
 ## Asset Manifest
 
-The main input to `cdk-assets` is a JSON file called `assets.json` which includes a manifest of assets. 
+The main input to `cdk-assets` is a JSON file called `assets.json` which includes a manifest of assets.
 
-The manifest lists all assets and for each asset it describes the asset **source** (with instructions on how to package the asset if needed) and a list of **destinations**, which are locations into which this asset needs to be published.
+The manifest lists all assets and for each asset it describes the asset **source** (with instructions on how to package the asset if needed) and a
+list of **destinations**, which are locations into which this asset needs to be published.
 
 The main components of the assets manifest are:
 
-* **Types:** there are currently two supported types: files and docker images. Files are uploaded to an Amazon S3 bucket and docker images are pushed to an Amazon ECR repository.
+* **Types:** there are currently two supported types: files and docker images. Files are uploaded to an Amazon S3 bucket and docker images are pushed
+  to an Amazon ECR repository.
 
-* **Identifiers:** assets are identified throughout the system via a unique identifier (the key in the `files` and `images` map). This identifier is based on the sha256 of the source (the contents of the file or directory) and will change only if the source changes. It can be used for local caching and optimization purposes. For example, a zip of a directory can be stored in a local cache by this identifier to avoid duplicate work.
+* **Identifiers:** assets are identified throughout the system via a unique identifier (the key in the `files` and `images` map). This identifier is
+  based on the sha256 of the source (the contents of the file or directory) and will change only if the source changes. It can be used for local
+  caching and optimization purposes. For example, a zip of a directory can be stored in a local cache by this identifier to avoid duplicate work.
 
-* **Sources:** the `source` information for each asset defines the file or directory (relative to the directory of `assets.json`), and additional **packaging** instructions, such as whether to create a zip file from a directory (for file assets) or which options to pass to `docker build`.
+* **Sources:** the `source` information for each asset defines the file or directory (relative to the directory of `assets.json`), and additional
+  **packaging** instructions, such as whether to create a zip file from a directory (for file assets) or which options to pass to `docker build`.
 
-* **Destinations:** describe where the asset should be published. At a minimum, for file assets, it includes the S3 bucket and object key and for docker images it includes the repository and image names. A destination may also indicate that an IAM role must be assumed in order to support cross environment publishing. 
+* **Destinations:** describe where the asset should be published. At a minimum, for file assets, it includes the S3 bucket and object key and for
+  docker images it includes the repository and image names. A destination may also indicate that an IAM role must be assumed in order to support cross
+  environment publishing.
 
 NOTES:
 
-* **Denormalization:** destinations are intentionally denormalized in order to keep the logic of where assets are published at the application or framework level and not in this tool. For example, consider a deployment system which requires that all assets are always published to the same location, and then replicated through some other means to their actual consumption point. Alternatively, a user may have unique security requirements that will require certain assets to be stored in dedicated locations (e.g. with a specific key) and others in a different location, even if they all go to the same environment. Therefore, this tool should not take any assumptions on where assets should be published besides the exact instructions in this file.
-* **Environment-agnostic:** In order to allow assets to be used in environment-agnostic stacks, `assets.json` will support two simple substitutions `${AWS::AccountId}` and `${AWS::Region}` which will be replaced with the currently configured account/region (alternatively, we can also decide to support CloudFormation intrinsic functions and pseudo references).
+* **Denormalization:** destinations are intentionally denormalized in order to keep the logic of where assets are published at the application or
+  framework level and not in this tool. For example, consider a deployment system which requires that all assets are always published to the same
+  location, and then replicated through some other means to their actual consumption point. Alternatively, a user may have unique security
+  requirements that will require certain assets to be stored in dedicated locations (e.g. with a specific key) and others in a different location,
+  even if they all go to the same environment. Therefore, this tool should not take any assumptions on where assets should be published besides the
+  exact instructions in this file.
+* **Environment-agnostic:** In order to allow assets to be used in environment-agnostic stacks, `assets.json` will support two simple substitutions
+  `${AWS::AccountId}` and `${AWS::Region}` which will be replaced with the currently configured account/region (alternatively, we can also decide to
+  support CloudFormation intrinsic functions and pseudo references). The "current" account and region will always refer to the one derived from the
+  CLI configuration even if `assets.json` instructs to assume a role from a different account.
 
 Here is the complete manifest file schema in typescript:
 
@@ -134,7 +150,8 @@ Example of `assets.json` with two assets: a docker image and a file asset. Both 
 
 ## API
 
-`cdk-assets` is designed as a stand-alone command line program and a library, so it can be integrated into other tools such as the CDK CLI or executed individually as a step in a CI/CD pipeline.
+`cdk-assets` is designed as a stand-alone command line program and a library, so it can be integrated into other tools such as the CDK CLI or executed
+individually as a step in a CI/CD pipeline.
 
 ### `publish`
 
@@ -145,7 +162,8 @@ cdk-assets publish DIR [ASSET-ID,ASSET-ID...]
 Packages and publishes assets to all destinations.
 
 * `DIR` is the directory from where to read `assets.json`, and which is used as the base directory for all file/directory references.
-* `ASSET-ID,...`: additional arguments represent asset identifiers to publish (default is to publish all assets). This can be used to implement concurrent publishing of assets (e.g. through CodePipeline).
+* `ASSET-ID,...`: additional arguments represent asset identifiers to publish (default is to publish all assets). This can be used to implement
+  concurrent publishing of assets (e.g. through CodePipeline).
 
 The `publish` command will do the following:
 
@@ -162,7 +180,8 @@ for each asset in manifest:
     publish to destination (upload/push)
 ```
 
-> When we execute this tool in a CodeBuild project, we should enable [local caching](https://docs.aws.amazon.com/codebuild/latest/userguide/build-caching.html#caching-local) of docker images as an optimization.
+> When we execute this tool in a CodeBuild project, we should enable [local
+> caching](https://docs.aws.amazon.com/codebuild/latest/userguide/build-caching.html#caching-local) of docker images as an optimization.
 
 Example (`cdk.out/assets.json` as above):
 
@@ -176,7 +195,7 @@ package  docker build --target=my-target --label=prod -f CustomDockerFile ./myim
 push     aws-cdk-images-2222222222US-us-east-1:d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a
 assume   arn:aws:iam::3333333333EU:role/aws-cdk-publish-3333333333EU-eu-west-2
 found    aws-cdk-images-3333333333EU-eu-west-2:d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a
-done     d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a    
+done     d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a
 --------------------------------------------------------------------------
 asset    a0bae29e7b47044a66819606c65d26a92b1e844f4b3124a5539efc0167a09e57
 found    s3://aws-cdk-files-2222222222US-us-east-1/a0bae29e7b47044a66819606c65d26a92b1e844f4b3124a5539efc0167a09e57.zip
@@ -190,9 +209,14 @@ done     a0bae29e7b47044a66819606c65d26a92b1e844f4b3124a5539efc0167a09e57
 
 The log above describes the following:
 
-The first asset to process is the docker image with id `d31ca1a...`. We first assume the role is the 2222US environment and check if the image exists in this ECR repository. Since it doesn't exist (`notfound`), we check if it exists in the local cache under the tag `d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a`. It doesn't so we build the docker image (`package`) and then push it. Then we assume the role from the 33333EU environment and find that the image is already in that ECR repository, so we just finish.
+The first asset to process is the docker image with id `d31ca1a...`. We first assume the role is the 2222US environment and check if the image exists
+in this ECR repository. Since it doesn't exist (`notfound`), we check if it exists in the local cache under the tag
+`d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a`. It doesn't so we build the docker image (`package`) and then push it. Then we
+assume the role from the 33333EU environment and find that the image is already in that ECR repository, so we just finish.
 
-The second asset is the file asset with id `a0bae...`. The first environment doesn't specify a role, so we just check if the file exists in the S3 bucket. It is, so we move to the next destination. We assume the role and check if the asset is in the s3 location. It is not (`notfound`), so we need to package and upload it. Before we package we check if it's cached locally and find that it is (`cached`), so no need to zip again, just `upload`.
+The second asset is the file asset with id `a0bae...`. The first environment doesn't specify a role, so we just check if the file exists in the S3
+bucket. It is, so we move to the next destination. We assume the role and check if the asset is in the s3 location. It is not (`notfound`), so we need
+to package and upload it. Before we package we check if it's cached locally and find that it is (`cached`), so no need to zip again, just `upload`.
 
 ### `ls`
 
@@ -214,9 +238,11 @@ This information is purely based on the contents of `assets.json`.
 
 ### Programmatic API
 
-The tool should expose a programmatic (library) API, so it can be integrated with other tools such as the AWS CLI and IDEs. The library should be jsii-compliant and released to all languages supported by the AWS CDK.
+The tool should expose a programmatic (library) API, so it can be integrated with other tools such as the AWS CLI and IDEs. The library should be
+jsii-compliant and released to all languages supported by the AWS CDK.
 
-Since the publishing process is highly asynchronous, the API should include the ability to subscribe to progress events in order to allow implementation of a rich user interface.
+Since the publishing process is highly asynchronous, the API should include the ability to subscribe to progress events in order to allow
+implementation of a rich user interface.
 
 Proposed API:
 
@@ -253,5 +279,7 @@ class Publish {
 ## Non-Functional Requirements
 
 * **test coverage**: codebase must have full unit test coverage and a set of integration tests that can be executed within a pipeline environment.
-* **minimal dependencies**: the tool should take the minimum amount of 3rd party dependencies in order to reduce attack surface and to simplify bundling for jsii.
-* **jsii**: the API must be jsii-complient, so it can be used programmatically from all supported languages. This means that all non-jsii dependencies must be bundled into the module.
+* **minimal dependencies**: the tool should take the minimum amount of 3rd party dependencies in order to reduce attack surface and to simplify
+  bundling for jsii.
+* **jsii**: the API must be jsii-complient, so it can be used programmatically from all supported languages. This means that all non-jsii dependencies
+  must be bundled into the module.
