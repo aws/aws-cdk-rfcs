@@ -3,11 +3,11 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const labels = {
-  'status/ready': { },
-  'status/proposed': { },
-  'status/pending': { },
   'status/final-comment-period': { }, 
+  'status/pending': { },
+  'status/ready': { },
   'status/resolved': { },
+  'status/proposed': { },
 };
 
 exports.render = render;
@@ -49,7 +49,7 @@ async function render() {
     }
   }
 
-  lines.push('#|Title|PR|Created By|Champion|Status');
+  lines.push('\\#|Title|PR|Created By|Champion|Status');
   lines.push('-|-----|--|----------|--------|------');
 
   for (const row of issues) {
