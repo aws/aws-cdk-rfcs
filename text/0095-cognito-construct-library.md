@@ -50,8 +50,8 @@ None.
 
 # Future Changes / Currently out of scope
 
-The following are currently out of scope for this document. Towards the end of the implementation, separate issues will
-be created for these, that will then be prioritized based on customer requests and +1s.
+The following are currently out of scope for this document. Separate issues will be created for these, that will then
+be prioritized based on customer requests and +1s.
 
 * User Pool
   * Import using user pool name

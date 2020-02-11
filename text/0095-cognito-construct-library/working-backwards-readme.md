@@ -22,8 +22,8 @@ User pools allow creating and managing your own directory of users that can sign
 integration with social identity providers such as Facebook, Google, Amazon, Microsoft Active Directory, etc. through
 SAML.
 
-Using the CDK, a new user pool can be created as part of the stack using the construct's constructor. You must specify
-the `userPoolName`, as so -
+Using the CDK, a new user pool can be created as part of the stack using the construct's constructor. You may specify
+the `userPoolName` to give your own identifier to the user pool. If not, CloudFormation will generate a name.
 
 ```ts
 new UserPool(this, 'myuserpool', {
@@ -48,11 +48,11 @@ new UserPool(this, 'myuserpool', {
   selfSignUp: {
     verificationEmail: {
       subject: 'Verify your email for our awesome app!',
-      body: 'Hello {username}, Thanks for signing up to our aweomse app! Your verification code is {####}',
-      verificationStyle: EmailVerificationStyle.CODE
+      body: 'Hello {username}, Thanks for signing up to our awesome app! Your verification code is {####}',
+      style: EmailVerificationStyle.CODE
     },
     verificationSms: {
-      message: 'Hello {username}, Thanks for signing up to our aweomse app! Your verification code is {####}',
+      message: 'Hello {username}, Thanks for signing up to our awesome app! Your verification code is {####}',
     }
   },
   adminSignUp: {
@@ -76,7 +76,8 @@ the `verificationEmail` and/or the `verificationSms` properties are specified, t
 them. The email subject, body and the SMS message content can be configured. Learn more about [configuring SMS and email
 messages](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html).
 When verifying the account via email, the verification can either be done by the user entering a code into the app that
-was emailed to them, or by clicking on a $link. This can be configured using the `verificationStyle` property.
+was emailed to them, or by clicking on a $link. This can be configured via the `style` property under
+`verificationEmail`.
 
 *Note*: If you would like to disable self sign up for your user pool, set the property `selfSignUp` to `undefined`.
 
@@ -410,8 +411,8 @@ Identity pools enables creation of unique identities for their users and federat
 identity providers can be a Cognito user pool, Facebook, Google, or any other SAML-based identity provider.
 With an identity pool, you can obtain temporary, limited-privilege AWS credentials to access other AWS services.
 
-Using the CDK, a new identity pool can be created as part of the stack using the construct's constructor. You must
-specify the `identityPoolName`. This is the quickest way to create an identity pool using all of the defaults -
+Using the CDK, a new identity pool can be created as part of the stack using the construct's constructor. You may
+specify the `identityPoolName`, however when not specified, CloudFormation will assign a name to the pool.
 
 ```ts
 new IdentityPool(this, 'myidentitypool', {
