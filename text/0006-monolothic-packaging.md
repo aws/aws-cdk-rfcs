@@ -134,7 +134,7 @@ See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 - [ ] `constructs`
 - [ ] How do we deal with `cx-api`?
 - [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
-- [ ] Rewrite all example code
+- [ ] Rewrite all example code (see [cdk-rewrite-mono-import](https://github.com/rix0rrr/cdk-rewrite-mono-imports)).
 - [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
 
 # Drawbacks
