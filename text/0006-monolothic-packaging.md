@@ -125,6 +125,8 @@ AWS CDK, and I would argue it is also more aligned with our user's mental model 
 
 See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 
+[PR](https://github.com/awslabs/aws-delivlib/pull/245) with the migration of aws-delivlib to monocdk.
+
 ## TODO
 
 - [ ] We lose per-module analytics which means we will to move to report
