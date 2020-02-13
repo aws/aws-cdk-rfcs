@@ -130,10 +130,12 @@ See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 - [ ] We lose per-module analytics which means we will to move to report
   analytics at the construct level.
 - [ ] We jsii to support the concept of "submodules". I believe this is easier
-  than arbitrary namespaces which we decided not to support in jsii.
+  than arbitrary namespaces which we decided not to support in jsii. One thing to consider for example, is where do submodule README files go.
 - [ ] `constructs`
 - [ ] How do we deal with `cx-api`?
-
+- [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
+- [ ] Rewrite all example code
+- [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
 
 # Drawbacks
 
