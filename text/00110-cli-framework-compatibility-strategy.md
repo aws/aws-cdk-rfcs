@@ -426,6 +426,8 @@ Nothing will catch this breaking change because:
 
 ## Quirk - CDK Synth
 
+This illustrates a quirk that can happen because of the new proposed compatibility model.
+
 Consider the following:
 
 ```console
@@ -435,7 +437,11 @@ cdk synth
 A newer version of the CDK CLI (>= 1.24.0) is necessary to interact with this app
 ```
 
-The message makes sense, but actually, synthesis worked, and `cdk.out` was created. Not sure its an actual problem, but it does kind of feel weird.
+The message makes sense, but actually, synthesis worked, and `cdk.out` was created. Which also makes sense.
+The validation is do is against the `manifest.version` value, therefore we have to first create the `Cloud-Assembly`, and only then validate.
+
+Not sure its an actual problem, but it does kind of feel weird.
+
 On one hand we are saying the CLI doesn't work with newer framework versions, on the other hand, it did,
 because it invoked the framework which created `cdk.out`...
 
