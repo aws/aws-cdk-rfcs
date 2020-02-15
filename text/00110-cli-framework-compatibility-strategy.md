@@ -329,7 +329,7 @@ we will now require that CLI `>=` Framework. Forcing users to upgrade their CLI 
 - It is a bit intrusive. Even though we currently sometimes do it, we usually don't. And this would mean
 users get a slightly less smooth upgrade experience.
 
-### Validating CLI `>=` Framework
+## Validating CLI `>=` Framework
 
 There is a different approach to achieve this than the one [described](#step-3-validate-cli--framework).
 
