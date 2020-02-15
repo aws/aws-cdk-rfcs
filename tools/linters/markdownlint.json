@@ -1,0 +1,25 @@
+{
+  "blank_line": false,
+  "commands-show-output": false,
+  "fenced-code-language": false,
+  "first-line-h1": false,
+  "line_length": {
+    "line_length": 150
+  },
+  "no-duplicate-heading": {
+    "siblings_only": true
+  },
+  "no-inline-html": {
+    "allowed_elements": [
+      "span",
+      "details",
+      "summary"
+    ]
+  },
+  "no-trailing-punctuation": {
+    "punctuation": ".,;:!。，；：！"
+  },
+  "ol-prefix": false,
+  "single-h1": false,
+  "ul-style": false
+}

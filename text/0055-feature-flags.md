@@ -65,9 +65,8 @@ without risking breakage in other unexpected areas.
 
 # Detailed Design
 
-
 Context keys for feature flags will be listed in `cx-api/lib/features.ts` and
-will take the form: `<module>:<feature>`. 
+will take the form: `<module>:<feature>`.
 
 For example:
 
@@ -158,7 +157,7 @@ that specifies the CDK version which created the project, but this means that
 users won't have the ability to pick and choose which capabilities they want to
 enable in case they need them but don't want to take the risk of unexpected
 changes.
- 
+
 The downside of the fine-grained approach is that it could result in a "blowing
 up" new `cdk.json` files in case there will be many new breaking capabilities
 between major releases. But this is hypothetical and even if this list ends up
@@ -194,15 +193,17 @@ contribution guide and will involve the following steps:
    through `cdk init`.
 5. In your PR title (which goes into CHANGELOG), add a `(behind feature flag)`
    suffix. e.g:
+
     ```
     fix(core): impossible to use the same physical stack name for two stacks (under feature flag)
     ```
+
 5. Under `BREAKING CHANGES`, add a prefix `(under feature flag)` and the name of
    the flag in the postfix. For example:
 
     ```
-    BREAKING CHANGE: (under feature flag) template file names for new projects created 
-    through "cdk init" will use the template artifact ID instead of the physical stack 
+    BREAKING CHANGE: (under feature flag) template file names for new projects created
+    through "cdk init" will use the template artifact ID instead of the physical stack
     name to enable  multiple stacks to use the same name (feature flag: @aws-cdk/core:enableStackNameDuplicates)
     ```
 
@@ -234,4 +235,3 @@ in the future (as well as any other idea of course):
 - Define a flag that will allow users to say "I want all feature up until a
   certain CDK version" (basically enables all features that were available when
   the version was releases).
-
