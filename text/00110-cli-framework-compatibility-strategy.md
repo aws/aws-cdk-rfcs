@@ -390,7 +390,7 @@ For example, all the CLI command line options, are part of this protocol. The co
 are essentially the same as those of properties in the `cx-protocol` object model.
 
 We could model those options in an object model, and run compatibility checks on that model. This will ensure we don't accidentally
-remove an option or make one require, for example.
+remove an option or make one required, for example.
 
 # Appendix
 
