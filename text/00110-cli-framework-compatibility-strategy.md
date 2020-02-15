@@ -49,7 +49,7 @@ Recently, we have had a few customer impacting issues that relate to our cx-prot
 A major contributing factor to those issues, is that the ergonomics of introducing breaking changes (cx-protocol version bump), are not very good.
 Something about the process feels convoluted and we seem to be getting it wrong almost every time we attempt it.
 
-Its hard to pin-point the exact technical reasons for this, but a re-think of the entire process, as well as the assumptions that lead to it, is warranted.
+We should consider a re-think of the entire process, as well as the assumptions that lead to it.
 
 ## Validate Compatibility
 
