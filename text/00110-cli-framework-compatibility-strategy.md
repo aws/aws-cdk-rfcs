@@ -75,7 +75,7 @@ This will make sure that when the CLI pulls in new versions of `cx-api` (on upgr
 
 ## Breaking changes in CLI
 
-Another way to to break CLI upgrades, is to simply change the CLI in a breaking way. This can, for example, be a change to the docker build command.
+Another way to break CLI upgrades, is to simply change the CLI in a breaking way. This can, for example, be a change to the docker build command.
 
 > See concrete [example](#remove---target-from-docker-build-command).
 
