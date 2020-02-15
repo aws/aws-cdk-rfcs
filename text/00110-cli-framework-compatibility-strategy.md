@@ -256,6 +256,8 @@ we perform whats called a *schema evolution*.
 That is, we read the **old** schema, and add the necessary properties (with some default values) in order for
 it to look exactly like the **new** schema would. This enables the CLI to essentially not be aware of any schema version expect for the last one.
 
+This is done in the [`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
+
 We stipulate that this is no longer needed. The compatibility checks will make sure we don't add a required property,
 or do any change that enables the CLI to rely on the structure of the new schemas. This will actually also be enforced by
 the compiler itself. For example, if we add a property, it has to be optional (because of the compatibility checks),
