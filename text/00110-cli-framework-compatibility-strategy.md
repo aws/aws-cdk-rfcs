@@ -73,7 +73,7 @@ We would treat `cx-api` as a regular `jsii` module that needs to maintain compat
 
 This will make sure that when the CLI pulls in new versions of `cx-api` (on upgrades), it will properly consume older cloud assemblies.
 
-### Breaking changes in CLI
+## Breaking changes in CLI
 
 Another way to to break CLI upgrades, is to simply change the CLI in a breaking way. This can, for example, be a change to the docker build command.
 
