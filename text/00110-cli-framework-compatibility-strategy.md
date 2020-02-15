@@ -209,7 +209,8 @@ if (versionNumber() < assembly.version) {
 ```
 
 This implies that the `version` in `manifest.json` will no longer be the value of `CLOUD_ASSEMBLY_VERSION`,
-it will simply be the version of the package itself.
+it will simply be the version of the package itself. It also means, that we can completely get rid of this constant,
+and of the separation we have in the code between `cx-protocol` version and our package versions.
 
 > See a [quirk](#Quirk---CDK-Synth) that is caused by this.
 
