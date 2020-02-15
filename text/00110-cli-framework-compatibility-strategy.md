@@ -15,8 +15,8 @@ as well as proposes technical mechanisms for validating those promises are uphel
 
 At a high level, we define the expected customer experience when upgrading either of the two CDK components:
 
-- CLI upgrades are non-intrusive. We will not require any additional action from the user to provide a fully working setup.
-- Framework upgrades are intrusive. We will require the user to upgrade the CLI as well.
+- CLI upgrades are compatible. New CLI versions should work with older framework versions, and all existing functionality is preserved.
+- Framework upgrades are incompatible. We will require the user to upgrade the CLI as well.
 
 This will eventually lead the user to always have a setup where `CLI >= Framework`.
 
