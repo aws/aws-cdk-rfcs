@@ -315,7 +315,7 @@ since it actually does provide a more consistent behavior than we have now. In a
 ## New Compatibility Model
 
 As we realized by now, this RFC proposes a significant change to our compatibility model.
-Instead of attempting to have old new framework versions support old CLI versions,
+Instead of attempting to have new framework versions support old CLI versions,
 we will now require that CLI `>=` Framework. Forcing users to upgrade their CLI every time they upgrade their framework.
 
 ### Why is it OK to enforce this requirement?
