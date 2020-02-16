@@ -184,8 +184,8 @@ The CLI should only depend on the new `cx-protocol` package, and **not** on the 
 This means that when users install new versions of the CLI, they also get a new version of `cx-protocol`,
 but since `cx-protocol` is backwards compatible, there is no risk of breaking API.
 
-> The CLI currently depends on parts of `cx-api` that don't strictly relate to proposed `cx-protocol` object model.
-> Analysis of those dependencies has yet to be done. Ideally, we could move that code away from `cx-api` and into the CLI itself. Perhaps even at the expense of some duplication if that code is being used in the framework as well.
+> The CLI currently depends on parts of `cx-api` that don't strictly relate to the proposed `cx-protocol` object model.
+> Analysis of those dependencies has yet to be done. Ideally, we would be able to move that code away from `cx-api` and into the CLI itself. Perhaps even at the expense of some duplication if that code is being used in the framework as well.
 > In any case, I don't think this will be a blocker for the design.
 
 #### Step 3: Validate CLI `>=` Framework
