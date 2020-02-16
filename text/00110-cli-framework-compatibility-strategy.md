@@ -367,7 +367,7 @@ This approach doesn't seem right because:
 1. This code can be executed outside the context of the CLI, which is why we need the `if (cliVersion)` statement.
 2. The `process.env.CLI_VERSION_ENV` is only available when the CLI invokes the `app` for synthesis.
 But what about when `app` points to an already existing `Cloud-Assembly`? In this case, the CLI doesn't execute any process,
-and simply create an instance of `CloudAssembly` immediately.
+and simply creates an instance of `CloudAssembly` immediately.
 
 As far as relationships go as well, it doesn't really make sense for the framework to be aware of the CLI. It should only be the other way around.
 
