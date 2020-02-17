@@ -55,7 +55,7 @@ We should consider a re-think of the entire process, as well as the assumptions 
 
 We want to make sure we have sufficient testing in place that validate we don't introduce any accidental CLI compatibility breakage.
 
-**Currently, the only way for us to detect these types of problems is by noticing them in the review process.**
+**Currently, the only way for us to detect these types of problems is by noticing them in the code review process.**
 
 # Design Summary
 
