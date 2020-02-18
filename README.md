@@ -13,10 +13,10 @@ existing proposals.
 <!--BEGIN_TABLE-->
 \#|Title|PR|Created By|Champion|Status
 -|-----|--|----------|--------|------
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|final-comment-period
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|pending
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|pending
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency Issues caused by Hyper-Modularity|[#122](https://github.com/aws/aws-cdk-rfcs/pull/122)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|pending
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|ready
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
