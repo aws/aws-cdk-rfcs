@@ -212,7 +212,7 @@ On the other hand, if the submitter is a core team member, they will identify
 another core team member, with consent, as their 'champion'. The champion would
 be the first contact for brainstorming, process and reviews. The core team
 would defer to the champion to do the first few rounds of reviews, after which
-the entire team would be engaged.
+the rest of the team should be engaged.
 
 ## The RFC Life Cycle
 
