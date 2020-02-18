@@ -203,9 +203,16 @@ CDK/JSII.
   will merge the RFCs associated pull request, at which point the RFC will
   become 'ready'.
 
-A core team member will be assigned to 'champion' each proposal. They will
+If the submitter is someone from our CDK community (i.e., not core team member),
+a core team member will be assigned to 'champion' each proposal. They will
 generally be the ones updating the RFCs state in the tracking issue as it moves
 through the process. They can decide when a final comment period is triggered.
+
+On the other hand, if the submitter is a core team member, they will identify
+another core team member, with consent, as their 'champion'. The champion would
+be the first contact for brainstorming, process and reviews. The core team
+would defer to the champion to do the first few rounds of reviews, after which
+the rest of the team should be engaged.
 
 ## The RFC Life Cycle
 
