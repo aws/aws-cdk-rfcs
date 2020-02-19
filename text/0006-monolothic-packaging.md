@@ -127,6 +127,12 @@ See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 
 [PR](https://github.com/awslabs/aws-delivlib/pull/245) with the migration of aws-delivlib to monocdk.
 
+## cx-api
+
+The cx-api module is used to coordinate the protocol between the CDK apps and the CLI. Today, both the CLI and the framework are dynamically linked against this module (it is defined in `dependencies`). Once we ship the CDK as a single monolithic module, we will need to decide how to coordinate the protocol.
+
+The current thinking is to *statically link* the protocol definitions between the CLI and the framework. This means that at build time we will create a copy of the protocol definitions (the `.ts` files) and use it both in the CLI and the framework.
+
 ## TODO
 
 - [ ] We lose per-module analytics which means we will to move to report
@@ -134,7 +140,6 @@ See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 - [ ] We jsii to support the concept of "submodules". I believe this is easier
   than arbitrary namespaces which we decided not to support in jsii. One thing to consider for example, is where do submodule README files go.
 - [ ] `constructs`
-- [ ] How do we deal with `cx-api`?
 - [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
 - [ ] Rewrite all example code (see [cdk-rewrite-mono-import](https://github.com/rix0rrr/cdk-rewrite-mono-imports)).
 - [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
