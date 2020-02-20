@@ -46,10 +46,37 @@ Recently, we have had a few customer impacting issues that relate to our cx-prot
 - [aws/aws-cdk: A newer version of the CDK CLI (>= 1.21.0) is necessary to interact with this app](https://github.com/aws/aws-cdk/issues/5986)
 - [aws/aws-cdk: CDK CLI can only be used with apps created by CDK >= 1.10.0](https://github.com/aws/aws-cdk/issues/4294)
 
-A major contributing factor to those issues, is that the ergonomics of introducing breaking changes (cx-protocol version bump), are not very good.
-Something about the process feels convoluted and we seem to be getting it wrong almost every time we attempt it.
+A major contributing factor to those issues, is that the ergonomics of introducing breaking changes (cx-protocol version bump), are not very good:
 
-We should consider a re-think of the entire process, as well as the assumptions that lead to it.
+- It requires us to **remember** to bump the cx-protocol version when we introduce incompatible changes.
+- In order for newer CLI version to support older framework, we do a *synthetic* manifest upgrade. This is also something we need to **remember**.
+
+There are also some quirky implementation details, in [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts):
+
+```typescript
+const toolkitVersion = parseSemver(CLOUD_ASSEMBLY_VERSION);
+```
+
+The CLI version takes the value of the latest cx-protocol version, and not the actual CLI version.
+
+
+```typescript
+
+// if framework > cli, we require a newer cli version
+if (semver.gt(frameworkVersion, toolkitVersion)) {
+  throw new Error(`A newer version of the CDK CLI (>= ${frameworkVersion}) is necessary to interact with this app`);
+}
+
+// if framework < cli, we require a newer framework version
+if (semver.lt(frameworkVersion, toolkitVersion)) {
+  throw new Error(`The CDK CLI you are using requires your app to use CDK modules with version >= ${CLOUD_ASSEMBLY_VERSION}`);
+}
+```
+
+This code (and comments) is contradictory to our current compatibility model, where we actually attempt to support two way compatibility.
+To facilitate this, we added the [`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
+
+Thats not to say that what we currently have can't work, but the fact that we getting it wrong almost every time, implies that we should re-think the process, as well as the assumptions that lead to it.
 
 ## Validate Compatibility
 
