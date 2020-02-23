@@ -65,7 +65,7 @@ existing proposals.
 [10](https://github.com/aws/aws-cdk-rfcs/issues/10)|New workshop modules||[@eladb](https://github.com/eladb)||proposed
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||[@eladb](https://github.com/eladb)||proposed
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
-[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Runtime & infrastructure code integration||[@eladb](https://github.com/eladb)||proposed
+[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Lambda Bundles||[@eladb](https://github.com/eladb)||proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
