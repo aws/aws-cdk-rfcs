@@ -13,16 +13,18 @@ existing proposals.
 <!--BEGIN_TABLE-->
 \#|Title|PR|Created By|Champion|Status
 -|-----|--|----------|--------|------
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|Cognito Construct Library|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|final-comment-period
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)|[@CaerusKaru](https://github.com/CaerusKaru)|[@eladb](https://github.com/eladb)|pending
-[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|pending
+[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments||[@eladb](https://github.com/eladb)|[@rix0rrr](https://github.com/rix0rrr)|pending
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency Issues caused by Hyper-Modularity|[#122](https://github.com/aws/aws-cdk-rfcs/pull/122)|[@eladb](https://github.com/eladb)|[@rix0rrr](https://github.com/rix0rrr)|pending
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|ready
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
+[127](https://github.com/aws/aws-cdk-rfcs/issues/127)|CDK to directly reference/import/update an existing stack||[@cathalaherne2](https://github.com/cathalaherne2)||proposed
 [118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||[@eladb](https://github.com/eladb)||proposed
 [116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@eladb](https://github.com/eladb)||proposed
-[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@iliapolo](https://github.com/iliapolo)|proposed
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@eladb](https://github.com/eladb)|proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
@@ -63,8 +65,7 @@ existing proposals.
 [10](https://github.com/aws/aws-cdk-rfcs/issues/10)|New workshop modules||[@eladb](https://github.com/eladb)||proposed
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||[@eladb](https://github.com/eladb)||proposed
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
-[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Runtime & infrastructure code integration||[@eladb](https://github.com/eladb)||proposed
-[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Dependency Issues caused by Hyper-Modularity||[@eladb](https://github.com/eladb)||proposed
+[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Lambda Bundles||[@eladb](https://github.com/eladb)||proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
@@ -203,9 +204,16 @@ CDK/JSII.
   will merge the RFCs associated pull request, at which point the RFC will
   become 'ready'.
 
-A core team member will be assigned to 'champion' each proposal. They will
+If the submitter is someone from our CDK community (i.e., not core team member),
+a core team member will be assigned to 'champion' each proposal. They will
 generally be the ones updating the RFCs state in the tracking issue as it moves
 through the process. They can decide when a final comment period is triggered.
+
+On the other hand, if the submitter is a core team member, they will identify
+another core team member, with consent, as their 'champion'. The champion would
+be the first contact for brainstorming, process and reviews. The core team
+would defer to the champion to do the first few rounds of reviews, after which
+the rest of the team should be engaged.
 
 ## The RFC Life Cycle
 
