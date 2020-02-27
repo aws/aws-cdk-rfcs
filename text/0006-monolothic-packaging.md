@@ -48,7 +48,7 @@ When a 3rd-party construct library declares it's dependency on the AWS CDK as
 This means that consumers of a 3rd-party construct library are expected to
 **directly** install all transitive dependencies. 
 
-For example, if someone publishes a 3rd-party construct library `foo` that uses the `@aws-cdk/aws-ecs`, the consumers of this library will not only have to take a dependency on `foo`, but also on `@aws-cdk/aws-ecs` **and all it's transitive dependencies** (i.e. 23 additional dependencies).
+For example, if someone publishes a 3rd-party construct library `foo` that uses the `@aws-cdk/aws-ecs`, the consumers of this library will not only have to take a dependency on `foo`, but also on `@aws-cdk/aws-ecs` **and all of its transitive dependencies** (i.e. 23 additional dependencies).
 
 This is an unacceptable user experience with our current tools.
 
