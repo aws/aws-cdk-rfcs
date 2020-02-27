@@ -137,7 +137,7 @@ The current thinking is to *statically link* the protocol definitions between th
 
 - [ ] We lose per-module analytics which means we will to move to report
   analytics at the construct level.
-- [ ] We jsii to support the concept of "submodules". I believe this is easier
+- [ ] We need jsii to support the concept of "submodules". I believe this is easier
   than arbitrary namespaces which we decided not to support in jsii. One thing to consider for example, is where do submodule README files go.
 - [ ] `constructs`
 - [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
