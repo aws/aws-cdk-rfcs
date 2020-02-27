@@ -265,7 +265,7 @@ Every individual package here was locally correct, but the combination of packag
 The CDK uses TypeScript, and the TypeScript compiler actually protects against this issue. If we actually typed the *tablify* function as
 ```ts
 import { Paddable } from 'leftpad';
-function tablify(rows:* *Array<Array<Paddable>>) { 
+function tablify(rows: Array<Array<Paddable>>) { 
   ...
 }
 ```
