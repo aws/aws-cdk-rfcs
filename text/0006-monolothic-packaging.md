@@ -160,7 +160,7 @@ apps they don't think of the AWS CDK as yet another library that they use, they
 think of the AWS CDK as the foundation of their app.
 
 We can draw the analogy to other standard libraries like the Node.js SDK, the
-JDK, the .NET Framework. When users write Node.js libraries or apps they don't "depend" on the Node.js SDK, they actually "peer depend" on it (it is expressed via a special `engines` section in `package.json` but for all intents and purposes it's behaves like a peer dependency).
+JDK, the .NET Framework. When users write Node.js libraries or apps they don't "depend" on the Node.js SDK, they actually "peer depend" on it (it is expressed via a special `engines` section in `package.json` but for all intents and purposes it behaves like a peer dependency).
 
 I would argue that if a vendor publishes a 3rd-party construct library, what they *really* want to say is "I am compatible with CDK >= 1.23.0". Then, the decision about which actual CDK version is being used is left to the app level.
 
