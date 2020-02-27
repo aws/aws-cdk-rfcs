@@ -76,7 +76,7 @@ if (semver.lt(frameworkVersion, toolkitVersion)) {
 This code (and comments) is contradictory to our current compatibility model, where we actually attempt to support two way compatibility.
 To facilitate this, we added the [`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
 
-Thats not to say that what we currently have can't work, but the fact that we getting it wrong almost every time, implies that we should re-think the process, as well as the assumptions that lead to it.
+Thats not to say that what we currently have can't work. But the fact that we are getting it wrong almost every time, implies that we should re-think the process, as well as the assumptions that lead to it.
 
 ## Validate Compatibility
 
@@ -99,6 +99,10 @@ The proposed solution for this case is to run API compatibility checks using `js
 We would treat `cx-api` as a regular `jsii` module that needs to maintain compatibility to its consumers, which is the CLI.
 
 This will make sure that when the CLI pulls in new versions of `cx-api` (on upgrades), it will properly consume older cloud assemblies.
+
+In addition to the API itself, cx-protocol can break other contracts, such as file system locations.
+
+> See concrete [example](#rename-target-property-in-containerImageAssetMetadataEntry).
 
 ## Breaking changes in CLI
 
