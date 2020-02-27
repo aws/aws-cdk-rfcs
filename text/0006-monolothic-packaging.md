@@ -64,7 +64,7 @@ direct CDK dependencies.
 
 The AWS CDK will be shipped as a single module that includes the core types and the entire AWS Construct Library.
 
-This means that a 3rd-party library will declare it's dependency on the CDK via a single module `aws-cdk-lib` (name to be decided):
+This means that a 3rd-party library will declare its dependency on the CDK via a single module `aws-cdk-lib` (name to be decided):
 
 ```json
 {
