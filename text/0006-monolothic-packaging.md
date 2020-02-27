@@ -269,7 +269,7 @@ function tablify(rows:* *Array<Array<Paddable>>) {
   ...
 }
 ```
-The TypeScript compiler would correctly resolve that type to Array<Array<Paddable@2>>, and refuse to compile the calling of *tablify* with an argument of type Array<Array<Paddable@1>>, because of the detected incompatibility between the types.
+The TypeScript compiler would correctly resolve that type to `Array<Array<Paddable@2>>`, and refuse to compile the calling of *tablify* with an argument of type `Array<Array<Paddable@1>>`, because of the detected incompatibility between the types.
 _TypeScript will refuse to compile if types of multiple copies of a package are mixed(*)._
 > (*) This is true for classes, where it will do nominal typing. For interfaces, TypeScript will do structural typing, which means any object that has members matching an interface definition is considered to implement that interface, whether it has been declared to implement it or not, and so a class from one copy of a library may be considered to implement an interface from a different copy.
 Here is an example for a compiler error caused by a dependency mix:
