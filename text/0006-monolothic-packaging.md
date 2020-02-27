@@ -41,7 +41,7 @@ way.**
 
 ## 3rd-party Construct Libraries
 
-When a 3rd-party construct library declares it's dependency on the AWS CDK as
+When a 3rd-party construct library declares its dependency on the AWS CDK, it's through
 ["peer dependencies"](https://nodejs.org/es/blog/npm/peer-dependencies) (see
 [Appendix](#peer-dependencies-in-npm) for details). 
 
