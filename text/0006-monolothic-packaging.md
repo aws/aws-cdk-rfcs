@@ -213,7 +213,7 @@ The ultimate root cause of the issues we are encountering is a specific feature 
 
 _Packages can appear multiple times in the dependency graph, at different versions._
 
-It simplifies the package manager because the package manager does not have to resolve version conflicts to arrive at a single version that will work across the entire dependency tree, and report a usable error if fails to do so. In the presence of version ranges, this is an open research problem, which NPM conveniently sidesteps.
+It simplifies the package manager because the package manager does not have to resolve version conflicts to arrive at a single version that will work across the entire dependency tree, and report a usable error if it fails to do so. In the presence of version ranges, this is an open research problem, which NPM conveniently sidesteps.
 
 ### The Feature
 
