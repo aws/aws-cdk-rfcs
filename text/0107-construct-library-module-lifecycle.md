@@ -215,6 +215,9 @@ The module is generally available with a backwards compatible guarantee across m
     - Champion will do a quick overview of external APIs not covered by the README.
     - Participants raise concerns.
     - Champion will address any asynchronous feedback provided in the graduation issue.
+    - Participants raise concerns.
+    - Champion will address any high traction open `guidance` issues.
+    - Participants raise concerns.
     - Champion will summarize and recap all action items.
     - Participants decide if the module stays in *Developer Preview* or if its ready to move to *Stable*. In addition, decide which action items need to be completed before graduation.
 
