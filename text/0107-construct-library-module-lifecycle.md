@@ -138,6 +138,8 @@ and related to each other.
     > thinks we’ve implemented the minimum features required for a delightful developer experience for modeling the
     > service infrastructure as code.
 
+  - **Successful Security review** - All policies and security sensitive commits are reviewed and approved by AppSec.
+
   - **Successful API review** - Conduct an API review/developer experience demo and invite relevant stakeholders
     - use module's README as the API review guide
     - address any concerns about API ergonomics
@@ -177,23 +179,64 @@ this stage.
 
   - **No P0 bugs** - No new P0 bugs in the past 4 weeks
 
-  - **Successful API/Docs review** - Conduct the final API review/developer experience demo and invite relevant
-    stakeholders
-    - review all AWS Lint exceptions and have a high bar for keeping them at GA
-    - review and sign-off module’s README by tech writer
-    - review and sign-off module's API by module owner
-    - if the API/DevEx is rejected, make a list of necessary remediation tasks and update the module's tracking issue
-
 ## Stage 3 - GA
 
 The module is generally available with a backwards compatible guarantee across minor versions.
 
 - **Entry activities**:
 
-  - **Update Roadmap** - Move to the CDK roadmap “shipped” column
+  - **Nominate champion** - A member of the Construct Library Squad is assigned as the graduation champion.
 
-  - **Update Module Stability Label** - In the module's `package.json`, set "Stability": "Stable" to indicate the
-    high-level constructs are production ready and adhere to the [SemVer specification](https://semver.org/).
+  - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
+
+  - **Create Graduation Issue** - Create a GitHub issue titled `Graduate @aws-cdk/{module} to stable`. This issue communicates our intent to graduate this module. It will also serve as an asynchronous channel for anyone who wants to provide feedback. Update the module tracking issue with a link to this issue so that the community can be notified.
+
+    > External Stakeholders and major community contributors should be contacted directly.
+
+  - **Conduct API review**
+
+    Champion to conduct a final API review.
+
+    > The champion is expected to be relatively versed in the library. If this requires some effort to achieve, the review should be scheduled with this in mind.
+
+    The goal of this review is to identify critical API and Security issues. It is meant to be as frictionless and slim as possible. Attendees are:
+
+    - Module owners (Required)
+    - Graduation Champion (Required)
+    - Other CDK Team Members (Optional)
+    - External Stakeholders (Optional)
+    - Community Contributors (Optional)
+
+    The review will be held on chime and the invite should be sent no less than a week in advance. This is to give the attendees a chance to prepare if they so desire. Include the agenda in the invite:
+
+    - Champion to introduce the people and re-iterate the goal of the review.
+    - 10-15 minutes individual reading of the module README.
+    - Participants raise concerns.
+    - Champion will do a quick overview of external APIs not covered by the README.
+    - Participants raise concerns.
+    - Champion will address any asynchronous feedback provided in the graduation issue.
+    - Champion will summarize and recap all action items.
+    - Participants decide if the module stays in *Developer Preview* or if its ready to move to *Stable*. In addition, decide which action items need to be completed before graduation.
+
+    The invite should also include the following "disclaimer":
+
+    *As you prepare for this session, try to focus on the most critical/obvious API and security issues. We strive to make the session as minimal as possible, so keep asking yourself: Is this really a graduation blocker?*
+
+  - **Complete Graduation Issues**
+
+    All issues that were deemed required for graduation in the API review are completed by the champion.
+
+  - **Create and Merge Graduation PR**
+
+    Once all required issues for graduation are complete, champion will create a PR that contains:
+
+    - Change stability in `package.json` from `experimental` to `stable`.
+    - Remove all `@experimental` annotations.
+    - Remove *Developer Preview* disclaimer from README.
+
+    This indicates that the high-level constructs are production ready and adhere to the [SemVer specification](https://semver.org/).
+
+  - **Update Roadmap** - Move to the CDK roadmap “shipped” column
 
   - **Communicate availability** -
     - notifications via Gitter and Twitter
