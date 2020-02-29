@@ -239,6 +239,8 @@ The module is generally available with a backwards compatible guarantee across m
 
     This indicates that the high-level constructs are production ready and adhere to the [SemVer specification](https://semver.org/).
 
+    The PR should be linked to the graduation issue and will close it once it merged.
+
   - **Update Roadmap** - Move to the CDK roadmap “shipped” column
 
   - **Communicate availability** -
