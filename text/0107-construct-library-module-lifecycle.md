@@ -122,8 +122,6 @@ and related to each other.
       in the module are linked in the tracking issue to indicate they are in scope. All P0 issues are fixed immediately,
       P1 issues are in scope for GA release, and P2 issues are deferred until we accumulate enough feedback to change
       its priority.
-    - report the number of stacks that include -experimental packages on a weekly basis to measure customer interest and
-      experimentation.
 
   - **Repeat** - These activities are repeated until the module owner decides the module is feature complete and the API
     is ergonomic. At the end of the experimental stage, the construct library module’s GitHub tracking issue will have a
@@ -152,7 +150,7 @@ and related to each other.
 The goal of developer preview is to deliver a release candidate with a stable API to conduct user acceptance testing and
 accumulate sufficient usage to declare a module is ready for general availability. We will only make breaking changes to
 developer preview modules when required to address unforeseen customer use cases or issues. Since the potential for
-breaking changes still remains while in Developer Preview, the package name will keep the“-experimental” suffix during
+breaking changes still remains while in Developer Preview, the package name will keep the“experimental” stability during
 this stage.
 
 - **Entry activities**:
@@ -165,8 +163,6 @@ this stage.
       include in the module are linked in the tracking issue to indicate they are in scope. All P0 issues are fixed
       immediately, P1 issues are in scope for GA release, and P2 issues are deferred until we accumulate enough feedback
       to change its priority.
-    - report the number of stacks that include -experimental packages on a weekly basis to measure customer interest and
-      experimentation.
 
   - **Quality Assurance** - Fix all P0 bugs as they are discovered and review all P1 bugs, making a clearly communicated
     fix/defer decision for each one
