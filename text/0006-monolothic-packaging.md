@@ -123,42 +123,73 @@ AWS CDK, and I would argue it is also more aligned with our user's mental model 
 
 # Detailed Design
 
-## Prototype
+See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment) for a protoype.
 
-See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
+## Submodules
 
-The prototype also includes:
+The monolithic module will be organized into submodules that match 1:1 the current module system we have for the AWS CDK. These submodules will be implemented using typescript **namespaced exports** (see [jsii PR](https://github.com/aws/jsii/pull/1297)).
 
-- `@monocdk-experiment/assert` which is `@aws-cdk/assert` which simply depends on `monocdk-experiment` instead of the normal modules.
-- `@monocdk-experiment/rewrite-imports` which automatically rewrites `import` statements (usage: `npx @monocdk-experiment/rewrite-imports **/*.ts`). Still a bit flacky but quite useful.
+* All `@aws-cdk/core` types will be exported without a namespace (root).
+* Hyphens in the current module names will be converted to underscores (`aws-s3` => `aws_s3`). 
 
+### Should we use the `aws_` prefix?
 
+We still need some way to discern between AWS Construct Library modules such as `aws-s3` and framework modules such as `assets`. If we didn't have the `aws-` prefix, and an AWS service will be introduced with the name of a module we already have (e.g. say we launched an "AWS Assets" service one day), we would have a conflict. 
 
-[PR](https://github.com/awslabs/aws-delivlib/pull/245) with the migration of aws-delivlib to monocdk.
+## Issues with Specific Modules
 
-## cx-api
+### cx-api
 
 The cx-api module is used to coordinate the protocol between the CDK apps and the CLI. Today, both the CLI and the framework are dynamically linked against this module (it is defined in `dependencies`). Once we ship the CDK as a single monolithic module, we will need to decide how to coordinate the protocol.
 
 The current thinking is to *statically link* the protocol definitions between the CLI and the framework. This means that at build time we will create a copy of the protocol definitions (the `.ts` files) and use it both in the CLI and the framework.
 
-## TODO
 
-- [ ] We lose per-module analytics which means we will to move to report
-  analytics at the construct level.
-- [ ] We need jsii to support the concept of "submodules". I believe this is easier
-  than arbitrary namespaces which we decided not to support in jsii. One thing to consider for example, is where do submodule README files go.
-- [ ] `constructs`
-- [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
-- [ ] Rewrite all example code (see [cdk-rewrite-mono-import](https://github.com/rix0rrr/cdk-rewrite-mono-imports)).
-- [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
+### @aws-cdk/assert
+
+The `@aws-cdk/assert` library cannot currently be bundled into the monolithic module because it is not jsii-comptiable and transitively depends on about 29 unwanted modules (see [graph](http://npm.broofa.com/?q=@aws-cdk/assert)). We have a plan to redesign it as a jsii module, but until then, we will have to continue to vend it separately.
+
+That is not an issue. For the prototype, this module is vended under `@monocdk-experiment/assert`. It's the same content, just takes a dependency on `monocdk-experiment`.
+
+[PR](https://github.com/awslabs/aws-delivlib/pull/245) with the migration of aws-delivlib to monocdk.
+
+### @aws-cdk/aws-s3-deployment
+
+The current size of this module is [~13MiB](https://arve0.github.io/npm-download-size/#@aws-cdk%2faws-s3-deployment), which is basically the majority of the content in the monocdk-experiment ([14.7MiB](https://arve0.github.io/npm-download-size/#monocdk-experiment)).
+
+The main reason is that this module includes a a Lambda bundle that contains a copy of the AWS CLI. The deployment resource provider leverages `aws s3 sync`, which is the most reliable S3 syncing method we know of.
+
+To address this, we are proposing to introduce to extract the AWS CLI into an AWS Lambda layer and release it as part of the AWS CDK. See [comment](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612) in the [RFC tracking issue](https://github.com/aws/aws-cdk-rfcs/issues/39) for public artifacts.
+
 
 # Drawbacks
 
-- [ ] In JavaScript/TypeScript code will always be fully qualified
-  (`aws_s3.Bucket` instead of `Bucket`) due to limitations of the `import` tool.
-- [ ] The size of the single module will be large (~50MiB) which can create issues of using the CDK in non-standard environments such as from a Lambda function. See this https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612
-- [ ] Breaking change
+## Ergonomics in JavaScript/TypeScript
+
+In JavaScript/TypeScript code will always be fully qualified (`aws_s3.Bucket` instead of `Bucket`) due to limitations of `import`.
+
+We could also allow people to use imports like this: `import { Bucket } from 'aws-cdk-lib/aws-s3'`. This requires that we organize the contents of the module in a way that will enable that.
+
+## Module Size
+
+The current size of the single module (1.26.0 of the prototype) is ([14.7MiB](https://arve0.github.io/npm-download-size/#monocdk-experiment)).
+
+This is actually now a major issue, especially the AWS CDK is primarily used in build environments and not in memory/disk-sensitive runtime environments such as the browser or AWS Lambda. Even for AWS Lambda, a 14.7MiB framework is not an issue.
+
+Having said that, the fact that we are bundling the entire construct library as a single module will eventually pose a size limitation, and we should make sure we don't exceed a reasonable size.
+
+To that end, we should:
+
+- Add a size limit per module which will fail build.
+- Support publishing pubic artifacts to S3 during release (see [mini-RFC](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612)).
+- Devise better guidelines as to what goes into the framework and what doesn't. Generally, we should mostly accomodate L2s and avoid L3s to reduce the chance for prolifiration.
+
+
+## This is a breaking change
+
+This will require major AWS CDK version bump (2.0.0) with all the implications.
+
+We can offer tools for migrating users from the old-style imports to the new style. The prototype ships with `@monocdk-experiment/rewrite-imports` which automatically rewrites `import` statements (usage: `npx @monocdk-experiment/rewrite-imports **/*.ts`). Still a bit flacky but quite useful. If we allow imports like this `aws-cdk-lib/aws-s3` then this tools is even easier to write.
 
 # Rationale and Alternatives
 
@@ -195,7 +226,13 @@ TODO
 
 # Unresolved questions
 
-TODO
+- [ ] We lose per-module analytics which means we will to move to report
+  analytics at the construct level.
+- [ ] We need jsii to support the concept of "submodules". I believe this is easier
+  than arbitrary namespaces which we decided not to support in jsii. One thing to consider for example, is where do submodule README files go.
+- [ ] `constructs`
+- [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
+- [ ] Which prefix to use for AWS modules? Currently it is `aws_`.
 
 # Future Possibilities
 
