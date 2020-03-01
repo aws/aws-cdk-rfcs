@@ -127,6 +127,13 @@ AWS CDK, and I would argue it is also more aligned with our user's mental model 
 
 See [monocdk-experiment](https://www.npmjs.com/package/monocdk-experiment).
 
+The prototype also includes:
+
+- `@monocdk-experiment/assert` which is `@aws-cdk/assert` which simply depends on `monocdk-experiment` instead of the normal modules.
+- `@monocdk-experiment/rewrite-imports` which automatically rewrites `import` statements (usage: `npx @monocdk-experiment/rewrite-imports **/*.ts`). Still a bit flacky but quite useful.
+
+
+
 [PR](https://github.com/awslabs/aws-delivlib/pull/245) with the migration of aws-delivlib to monocdk.
 
 ## cx-api
@@ -145,8 +152,6 @@ The current thinking is to *statically link* the protocol definitions between th
 - [ ] `@aws-cdk/assert` library. Do we have to do the assert library rewrite as a jsii module (we want to do that anyway!).
 - [ ] Rewrite all example code (see [cdk-rewrite-mono-import](https://github.com/rix0rrr/cdk-rewrite-mono-imports)).
 - [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
-
-
 
 # Drawbacks
 
