@@ -41,16 +41,18 @@ way.**
 
 ## 3rd-party Construct Libraries
 
-When a 3rd-party construct library declares its dependency on the AWS CDK, it's through
+When a 3rd-party construct library declares its dependency on the AWS CDK, it must be declared as a 
 ["peer dependencies"](https://nodejs.org/es/blog/npm/peer-dependencies) (see
-[Appendix](#peer-dependencies-in-npm) for details). 
+[Appendix](#peer-dependencies-in-npm) for the reasons). 
 
 This means that consumers of a 3rd-party construct library are expected to
-**directly** install all transitive dependencies. 
+**directly** install all transitive dependencies of this 3rd-party module.
 
 For example, if someone publishes a 3rd-party construct library `foo` that uses the `@aws-cdk/aws-ecs`, the consumers of this library will not only have to take a dependency on `foo`, but also on `@aws-cdk/aws-ecs` **and all of its transitive dependencies** (i.e. 23 additional dependencies).
 
-This is an unacceptable user experience with our current tools.
+This is basically a "leak" of implementation details, and can also result in breaking consumers. For example, consider a case where a 3rd-party module peer-depends on `@aws-cdk/module-a`. Now a JavaScript app consumes said 3rd party (defines it under `dependencies`). This means it has to directly also depend on `@aws-cdk/module-a` since it is a peer and won’t be automatically installed. Now, the 3rd party evolves in a non-breaking way (i.e. adds a feature without breaking APIs or fixes a bug) and now it also needs `@aws-cdk/module-b`. It declares it in it's `peerDependencies` section, and publishes a new minor (non-breaking) version. At this point, consumers that will attempt to upgrade to the new version may break and have to manually add `@aws-cdk/module-b` to their dependency list.
+
+Thes fact the consumers have to define dependencies they don't actually use and could also be broken in an unsolicited manner when a 3rd party adds a dependency are unacceptable experiences and create a major obstacle for a 3rd party eco-system.
 
 ## Poor Ergonomics
 
@@ -144,11 +146,13 @@ The current thinking is to *statically link* the protocol definitions between th
 - [ ] Rewrite all example code (see [cdk-rewrite-mono-import](https://github.com/rix0rrr/cdk-rewrite-mono-imports)).
 - [ ] Reference documentation needs to also support submodules/namespaces and use the submodule's README file.
 
+
+
 # Drawbacks
 
 - [ ] In JavaScript/TypeScript code will always be fully qualified
   (`aws_s3.Bucket` instead of `Bucket`) due to limitations of the `import` tool.
-- [ ] The size of the single module will be large (~50MiB) which can create issues of using the CDK in non-standard environments such as from a Lambda function.
+- [ ] The size of the single module will be large (~50MiB) which can create issues of using the CDK in non-standard environments such as from a Lambda function. See this https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612
 - [ ] Breaking change
 
 # Rationale and Alternatives
