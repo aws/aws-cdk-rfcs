@@ -16,6 +16,6 @@ jobs:
         run: |
           cd ./tools/linters
           echo "$(pwd)"
-          ./node_modules/.bin/markdownlint -c markdownlint.json ../../*.md ../../text/**/*.md
+          ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json *.md text/**/*.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
