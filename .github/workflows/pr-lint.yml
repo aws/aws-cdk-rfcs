@@ -15,6 +15,7 @@ jobs:
       - name: run linter
         run: |
           cd ./tools/linters
-          npx --no-install markdownlint -c markdownlint.json ../../*.md ../../text/**/*.md
+          echo "$(pwd)"
+          ./node_modules/.bin/markdownlint -c markdownlint.json ../../*.md ../../text/**/*.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
