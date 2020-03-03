@@ -15,5 +15,4 @@ jobs:
       - name: run linter
         run: |
           ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json *.md text/**/*.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo $?
