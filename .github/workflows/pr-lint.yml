@@ -14,5 +14,5 @@ jobs:
           npm install --prefix tools/linters
       - name: run linter
         run: |
-          find . -type f -name '*.md' -not -path '*/node_modules/*' -exec ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json '{}' ';' 2>&1 > linter-output
-          cat linter-output
+          find . -type f -name '*.md' -not -path '*/node_modules/*' -exec ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json '{}' ';' 2>&1 | tee linter-output
+          [ -s linter-output ] && exit 1
