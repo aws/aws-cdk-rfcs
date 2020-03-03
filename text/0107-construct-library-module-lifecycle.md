@@ -49,6 +49,7 @@ to add L2 resources in the future.
 ### Entry activities
 
 > The following actions are performed automatically during the weekly CDK release process:
+>
 > - Generation of the module L1 code when CFN introduces a new spec.
 > - Generation of the initial module README.
 > - Mark module as "experimental" in `package.json`.
@@ -203,7 +204,9 @@ The module is generally available with a backwards compatible guarantee across m
 
 - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
 
-- **Create Graduation Issue** - Create a GitHub issue titled `Graduate @aws-cdk/{module} to stable`. This issue communicates our intent to graduate this module. It will also serve as an asynchronous channel for anyone who wants to provide feedback. Update the module tracking issue with a link to this issue so that the community can be notified.
+- **Create Graduation Issue** - Create a GitHub issue titled `Graduate @aws-cdk/{module} to stable`.
+This issue communicates our intent to graduate this module. It will also serve as an asynchronous channel for anyone who wants to provide feedback.
+Update the module tracking issue with a link to this issue so that the community can be notified.
 
   > External Stakeholders and major community contributors should be contacted directly.
 
@@ -211,9 +214,11 @@ The module is generally available with a backwards compatible guarantee across m
 
   Champion to conduct a final API review.
 
-  > The champion is expected to be relatively versed in the library. If this requires some effort to achieve, the review should be scheduled with this in mind.
+  > The champion is expected to be relatively versed in the library.
+  > If this requires some effort to achieve, the review should be scheduled with this in mind.
 
-  The goal of this review is to identify critical API and Security issues. It is meant to be as frictionless and slim as possible. Attendees are:
+  The goal of this review is to identify critical API and Security issues.
+  It is meant to be as frictionless and slim as possible. Attendees are:
 
   - Module owners (Required)
   - Graduation Champion (Required)
@@ -221,7 +226,8 @@ The module is generally available with a backwards compatible guarantee across m
   - External Stakeholders (Optional)
   - Community Contributors (Optional)
 
-  The review will be held on chime and the invite should be sent no less than a week in advance. This is to give the attendees a chance to prepare if they so desire. Include the agenda in the invite:
+  The review will be held on chime and the invite should be sent no less than a week in advance.
+  This is to give the attendees a chance to prepare if they so desire. Include the agenda in the invite:
 
   - Champion to introduce the people and re-iterate the goal of the review.
   - 10-15 minutes individual reading of the module README.
@@ -233,12 +239,15 @@ The module is generally available with a backwards compatible guarantee across m
   - Champion will address any high traction open `guidance` issues.
   - Participants raise concerns.
   - Champion will summarize and recap all action items.
-  - **Participants decide if the module stays in *Developer Preview* or if its ready to move to *Stable*. In addition, decide which action items need to be completed before graduation.**
-      > Deciding to re-group asynchronously to allow some time to think about the concerns is also valid. In any case, it is the champion's responsibility to push this forward and bring it to a close.
+  - **Participants decide if the module stays in *Developer Preview* or if its ready to move to *Stable*.
+    In addition, decide which action items need to be completed before graduation.**
+      > Note that Deciding to re-group asynchronously to allow some time to think about the concerns is also valid.
+      > In any case, it is the champion's responsibility to push this forward and bring it to a close.
 
   The invite should also include the following "disclaimer":
 
-  *As you prepare for this session, try to focus on the most critical/obvious API and security issues. We strive to make the session as minimal as possible, so keep asking yourself: Is this really a graduation blocker?*
+  *As you prepare for this session, try to focus on the most critical/obvious API and security issues.
+  We strive to make the session as minimal as possible, so keep asking yourself: Is this really a graduation blocker?*
 
 - **Complete Graduation Issues**
 
