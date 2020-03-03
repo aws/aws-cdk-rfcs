@@ -57,9 +57,9 @@ be prioritized based on customer requests and +1s.
   * Import using user pool name
   * Configure SES email actions.
   * ClientMetadata and ValidationData properties in User
-  * Support for Clients and HostedUI - https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html
-  * Identity providers - https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-identity-federation.html
-  * Advanced security features - https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
+  * Support for [Clients and HostedUI](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html)
+  * [Identity providers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-identity-federation.html)
+  * [Advanced security features](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html)
 * Identity Pool
   * External provider - Cognito. This requires CDK coverage of user pool clients (above). While it's available via the
     APIs and CloudFormation resources, it is [not listed in the
@@ -74,4 +74,3 @@ The following are out of scope of this document and are unlikely to be implement
 * Identity pool cognito sync. Reason:
   [Documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-sync.html) suggests the use of AWS
   AppSync instead.
-
