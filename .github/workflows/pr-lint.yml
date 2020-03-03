@@ -14,5 +14,4 @@ jobs:
           npm install --prefix tools/linters
       - name: run linter
         run: |
-          ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json *.md text/**/*.md
-          echo $?
+          find . -type f -name '*.md' -not -path '*/node_modules/*' -exec ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json '{}' ';'
