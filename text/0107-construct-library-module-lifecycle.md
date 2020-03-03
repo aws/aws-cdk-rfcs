@@ -7,7 +7,7 @@ related issue: https://github.com/aws/aws-cdk-rfcs/issues/107
 
 # AWS Construct Library Module Lifecycle
 
-## Summary
+## Summary  
 
 The purpose of this document is to outline the process used to prioritize and mature modules in the AWS-CDK Construct
 Library. It outlines how we graduate modules from CloudFormation-only resources to modules that contain high-level
