@@ -14,8 +14,6 @@ jobs:
           npm install --prefix tools/linters
       - name: run linter
         run: |
-          cd ./tools/linters
-          echo "$(pwd)"
           ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json *.md text/**/*.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
