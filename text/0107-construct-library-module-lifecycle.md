@@ -7,7 +7,7 @@ related issue: https://github.com/aws/aws-cdk-rfcs/issues/107
 
 # AWS Construct Library Module Lifecycle
 
-## Summary  
+## Summary
 
 The purpose of this document is to outline the process used to prioritize and mature modules in the AWS-CDK Construct
 Library. It outlines how we graduate modules from CloudFormation-only resources to modules that contain high-level
@@ -99,7 +99,7 @@ and related to each other.
   reviews and usability studies. Potential stakeholders include:
   - service's product manager,
   - service's developer advocates (if any),
-  - service's software development engineer(s) (designated by service's leadership,
+  - service's software development engineer(s) (designated by service's leadership),
   - solutions architects who specialize in service (sourced via [Technical Field
     Communities](https://w.amazon.com/bin/view/AWS/Teams/TFC)),
   - AWS Developer Tools developer advocates
@@ -226,7 +226,7 @@ Update the module tracking issue with a link to this issue so that the community
   - External Stakeholders (Optional)
   - Community Contributors (Optional)
 
-  The review will be held on chime and the invite should be sent no less than a week in advance.
+  The review will be held over Chime and the invite should be sent no less than a week in advance.
   This is to give the attendees a chance to prepare if they so desire. Include the agenda in the invite:
 
   - Champion to introduce the people and re-iterate the goal of the review.
