@@ -2,7 +2,7 @@
 name: "RFC Tracking Issue"
 about: "Tracking issue for an RFC"
 title: proposal title
-labels: tracking issue, status/proposed
+labels: management/tracking, status/proposed
 ---
 
 <!-- fill out PR ID and core team champion when known -->
