@@ -67,7 +67,7 @@ existing proposals.
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Lambda Bundles||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
-[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
+[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|CDK Testing Tools||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[@eladb](https://github.com/eladb)||proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
