@@ -22,6 +22,7 @@ existing proposals.
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|Release from a "release" branch||[@eladb](https://github.com/eladb)||resolved
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@eladb](https://github.com/eladb)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
+[139](https://github.com/aws/aws-cdk-rfcs/issues/139)|"fromLookup" for additional resources||[@thibaut-singlefile](https://github.com/thibaut-singlefile)||proposed
 [127](https://github.com/aws/aws-cdk-rfcs/issues/127)|CDK to directly reference/import/update an existing stack||[@cathalaherne2](https://github.com/cathalaherne2)||proposed
 [118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||[@eladb](https://github.com/eladb)||proposed
 [116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@eladb](https://github.com/eladb)||proposed
@@ -67,7 +68,7 @@ existing proposals.
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Multi environment applications||[@eladb](https://github.com/eladb)||proposed
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Lambda Bundles||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||[@eladb](https://github.com/eladb)||proposed
-[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|Testing constructs||[@eladb](https://github.com/eladb)||proposed
+[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|CDK Testing Tools||[@eladb](https://github.com/eladb)||proposed
 [3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||[@eladb](https://github.com/eladb)||proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||[@eladb](https://github.com/eladb)||proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||[@eladb](https://github.com/eladb)||proposed
