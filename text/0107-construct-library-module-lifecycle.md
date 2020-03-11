@@ -217,7 +217,7 @@ Update the module tracking issue with a link to this issue so that the community
 
   The list can grow with additional tasks that are surfaced following the API review.
 
-See an example here: [AWS Config Graduation Issue](https://github.com/aws/aws-cdk/issues/5872).
+  See an example here: [AWS Config Graduation Issue](https://github.com/aws/aws-cdk/issues/5872).
 - **Conduct API review**
 
   Champion to conduct a final API review.
