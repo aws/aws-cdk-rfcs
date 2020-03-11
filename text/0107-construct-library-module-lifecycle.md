@@ -209,7 +209,7 @@ Update the module tracking issue with a link to this issue so that the community
   > External Stakeholders and major community contributors should be contacted directly.
 
   Include a checklist of tasks that must be completed before flipping the switch.
-  Initially, this checklist should include:
+  Initially, this would be:
 
     - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
     - **Validate developer experience** - Consult module owners, and make sure they agree with the decision to push for graduation with the current coverage and experience.
