@@ -202,14 +202,22 @@ The module is generally available with a backwards compatible guarantee across m
 
 - **Nominate champion** - A member of the Construct Library Squad is assigned as the graduation champion.
 
-- **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
-
 - **Create Graduation Issue** - Create a GitHub issue titled `Graduate @aws-cdk/{module} to stable`.
 This issue communicates our intent to graduate this module. It will also serve as an asynchronous channel for anyone who wants to provide feedback.
 Update the module tracking issue with a link to this issue so that the community can be notified.
 
   > External Stakeholders and major community contributors should be contacted directly.
 
+Include a checklist of tasks that must be completed before flipping the switch.
+Initially, this checklist should include:
+
+  - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
+  - **Validate developer experience** - Consult module owners, and make sure they agree with the decision to push for graduation with the current coverage and experience.
+  - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
+
+The list can grow with additional tasks that are surfaced following the API review.
+
+See an example here: [AWS Config Graduation Issue](https://github.com/aws/aws-cdk/issues/5872).
 - **Conduct API review**
 
   Champion to conduct a final API review.
@@ -243,6 +251,8 @@ Update the module tracking issue with a link to this issue so that the community
     In addition, decide which action items need to be completed before graduation.**
       > Note that Deciding to re-group asynchronously to allow some time to think about the concerns is also valid.
       > In any case, it is the champion's responsibility to push this forward and bring it to a close.
+
+  Champion will update the graduation issue checklist with relevant action items.
 
   The invite should also include the following "disclaimer":
 
