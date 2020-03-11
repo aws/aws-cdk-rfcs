@@ -211,8 +211,8 @@ Update the module tracking issue with a link to this issue so that the community
   Include a checklist of tasks that must be completed before flipping the switch.
   Initially, this would be:
 
-    - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
-    - **Validate developer experience** - Consult module owners and make sure they agree with the decision to push for graduation with the current coverage and experience.
+    - **Validate existing bugs** - Make sure there weer no *p0* bugs in the last 4 weeks.
+    - **Validate L2 coverage** - Consult module owners and make sure we have sufficient L2 coverage to provide a holistic developer experience.
     - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
 
   The list can grow with additional tasks that are surfaced following the API review.
