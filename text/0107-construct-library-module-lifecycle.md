@@ -208,14 +208,14 @@ Update the module tracking issue with a link to this issue so that the community
 
   > External Stakeholders and major community contributors should be contacted directly.
 
-Include a checklist of tasks that must be completed before flipping the switch.
-Initially, this checklist should include:
+  Include a checklist of tasks that must be completed before flipping the switch.
+  Initially, this checklist should include:
 
-  - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
-  - **Validate developer experience** - Consult module owners, and make sure they agree with the decision to push for graduation with the current coverage and experience.
-  - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
+    - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
+    - **Validate developer experience** - Consult module owners, and make sure they agree with the decision to push for graduation with the current coverage and experience.
+    - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
 
-The list can grow with additional tasks that are surfaced following the API review.
+  The list can grow with additional tasks that are surfaced following the API review.
 
 See an example here: [AWS Config Graduation Issue](https://github.com/aws/aws-cdk/issues/5872).
 - **Conduct API review**
