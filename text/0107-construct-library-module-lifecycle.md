@@ -212,7 +212,7 @@ Update the module tracking issue with a link to this issue so that the community
   Initially, this would be:
 
     - **Validate existing issues** - Make sure there are no *p0* bugs or feature requests.
-    - **Validate developer experience** - Consult module owners, and make sure they agree with the decision to push for graduation with the current coverage and experience.
+    - **Validate developer experience** - Consult module owners and make sure they agree with the decision to push for graduation with the current coverage and experience.
     - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
 
   The list can grow with additional tasks that are surfaced following the API review.
