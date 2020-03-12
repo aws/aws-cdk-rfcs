@@ -212,8 +212,7 @@ Update the module tracking issue with a link to this issue so that the community
   Initially, this would be:
 
   - **Validate existing bugs** - Make sure there were no *p0* bugs in the last 4 weeks.
-  - **Validate L2 coverage** - Consult module owners and make sure we have sufficient L2 coverage to provide a holistic developer experience,
-  i.e most major use cases can be configured via CDK, without needing prior manual setup.
+  - **Validate developer experience** - Consult module owners and make sure most major use cases can be configured via CDK.
   - **Clear awslint exclusions** - Review `awslint` exclusions and make the necessary code changes to remove what we can.
 
   The list can grow with additional tasks that are surfaced following the API review.
