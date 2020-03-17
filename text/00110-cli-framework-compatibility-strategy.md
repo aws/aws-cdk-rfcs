@@ -122,7 +122,7 @@ In addition, we will also run regression tests using new CLI code and previous f
 
 There are 2 mechanisms we need to implement:
 
-## API Compatibility Checks
+## Cloud Assembly Schema Compatibility Checks
 
 We need to make sure the objects that make up what we refer to as the `cx-protocol`, do not change in a breaking way.
 We should be able to leverage `jsii` to accomplish this. For example, this is an excerpt from the `.jsii` spec of the `cx-api` module:
