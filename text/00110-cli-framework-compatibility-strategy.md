@@ -193,24 +193,23 @@ These are the objects that will be later used by the CLI. Running compatibility 
 > In order to achieve this, we will either need to enhance the `jsii` checker, or refactor our code.
 In any case, we stipulate the necessary changes will be done.
 
-##### (2) De-serialization
+##### (2) Serialization
 
-The CLI will need to create this object model in-memory, from the disk representation.
-For this, we will provide a de-serialization method:
+The package will provide serialization methods:
 
 ```typescript
-const assembly = new CloudAssembly("/path/to/cloud-assembly");
-const artifacts = assembly.artifacts;
-const version = assembly.version;
-const runtime = assembly.runtime;
+/**
+ * Save manifest to to file.
+ *
+ * @param manifest - manifest.
+ */
+public static save(manifest: AssemblyManifest, filePath: string) {}
 ```
 
-This method will also be used by the framework, as the return value of the `app.synth()` method.
+This method will make sure `jsii` enforces the proper compatibility checks on those interfaces.
 
-> Serialization will not be part of this package, as it is only used in the framework.
-
-This new package has to be **stable** to enforce `jsii` compatibility. This is ok, it actually makes perfect
-sense for it to be stable as it represents the contract the `Cloud-Assembly` needs to adhere to.
+This new package also has to be **stable**. This is ok, it actually makes perfect sense for it to be stable as it
+represents the structural contract the `cloud-assembly-schema` needs to adhere to.
 
 #### Step 2: Change CLI dependencies
 
