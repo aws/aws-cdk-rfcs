@@ -431,6 +431,20 @@ are essentially the same as those of properties in the `cx-protocol` object mode
 We could model those options in an object model, and run compatibility checks on that model. This will ensure we don't accidentally
 remove an option or make one required, for example.
 
+### `cx-protocol` integration tests
+
+Like already [mentioned](#change-artifact-metadata-type-value), the fact that
+the cx protocol itself will remain API comptabile, doesn't necessarily mean
+that it can't break new CLI versions.
+
+Another compatibility layer we can add, is run snapshot testing, similair to what we do with our construct libraries.
+There, we make sure the CloudFormation template remains the same, here,
+we make sure the `manifest.json` remains the same (values wise).
+
+These types of tests however are somewhat volatile because we can accidentally push a snapshot change that is in fact breaking.
+API compatibility checks on the other do not have this vulunerability
+because we don't have control on the compatibility rules themselves.
+
 # Appendix
 
 ## Rename target property in `ContainerImageAssetMetadataEntry`
