@@ -173,10 +173,10 @@ This package will provide:
 
 #### (1) Object Model
 
-- CloudAssembly
+- MetadataEntry
 - RuntimeInfo
 - AssemblyManifest
-- CloudArtifact
+- ArtifactManifest
 - ...
 - ...
 
