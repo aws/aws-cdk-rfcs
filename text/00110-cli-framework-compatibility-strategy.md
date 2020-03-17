@@ -114,6 +114,10 @@ The proposed solution for this case is to run standard regression tests. That is
 
 This will make sure that old CLI functionality is still working, assuming of course it was covered by our integration tests.
 
+In addition, we will also run regression tests using new CLI code and previous framework versions. This will ensure that existing CLI functionality does not rely on new framework capabilities.
+
+> See concrete [example](#change-artifact-metadata-type-value)
+
 # Detailed Design
 
 There are 2 mechanisms we need to implement:
@@ -449,15 +453,34 @@ Thats because it doesn't matter, CLI upgrades should work regardless.
 
 ## Remove `--target` from docker build command
 
-This is a concrete example on how things can break when we introduce changes to the CLI.
-
 1. For some reason, we decide to stop passing `--target` to the docker build command.
 2. Perform necessary changes and fix all relevant tests.
 
-Nothing will catch this breaking change because:
+This type of change is forbidden, because it removes an existing CLI capability.
+
+However, nothing will catch this breaking change because:
 
 - The tests were explicitly changed to the support the removal of this feature.
 - API compatibility is still intact, the CLI is simply not using it as expected.
+
+Running regression tests, i.e, running previous integration tests, will catch this because we had a test that checks the `--target` feature (hopefully).
+
+## Change artifact metadata type value
+
+1. For some reason, we decide to rename the [`aws:cdk:asset`](https://github.com/aws/aws-cdk/blob/b52b43ddfea0398b3f6e05002bf5b97bc831d1a7/packages/%40aws-cdk/cx-api/lib/assets.ts#L1) marker.
+2. Perform necessary changes and fix all relevant tests.
+
+This type of change is forbidden, because it means new CLI versions will not work with cloud assemblies that are created by older framework versions.
+
+However, nothing will catch this breaking change because:
+
+- The tests were explicitly changed to the support the removal of this feature.
+- API compatibility is still intact, nothing in the structure of `manifest.json` changed, just the values.
+- Even the regression tests we talked about wont catch this because they always use new framework versions that create cloud assemblies that are compatible with new cli versions.
+
+In order to reject this type of change, we need to run the regression suite, but using older framework versions.
+
+
 
 ## Quirk - CDK Synth
 
