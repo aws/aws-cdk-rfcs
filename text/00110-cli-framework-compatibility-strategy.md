@@ -359,7 +359,7 @@ we will now require that CLI `>=` Framework. Forcing users to upgrade their CLI 
 ### Why is it OK to enforce this requirement?
 
 - We want to migrate most of the functionality to the framework. Making CLI upgrades especially safe.
-- Users tend to upgrade the CLI before upgrading the framework.
+- As an educated guess, we think users tend to upgrade the CLI before upgrading the framework.
 - We sometimes require that even now, and we haven't seen any backlash due to that.
 
 #### Why is it **NOT** OK to enforce this requirement?
