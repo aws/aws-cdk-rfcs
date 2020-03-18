@@ -16,6 +16,9 @@ as well as proposes technical mechanisms for validating those promises are uphel
 At a high level, we define the expected customer experience when upgrading either of the two CDK components:
 
 - CLI upgrades are compatible. New CLI versions should work with older framework versions, and all existing functionality is preserved.
+
+    > By *functionality*, we mean that the CLI is able to properly interpret older frameworks and perform the necessary actions to support the existing behavior.
+
 - Framework upgrades are incompatible. We will require the user to upgrade the CLI as well.
 
 This will eventually lead the user to always have a setup where `CLI >= Framework`.
@@ -167,7 +170,7 @@ when the CLI version is smaller than the `Cloud-Assembly` version.
 
 The plan therefore is as follows:
 
-### Step 1: Create a separate package called `cx-protocol`
+### Step 1: Create a separate package called `cloud-assembly-schema`
 
 This package will provide:
 
