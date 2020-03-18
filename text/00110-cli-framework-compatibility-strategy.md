@@ -17,7 +17,8 @@ At a high level, we define the expected customer experience when upgrading eithe
 
 - CLI upgrades are compatible. New CLI versions should work with older framework versions, and all existing functionality is preserved.
 
-    > By *functionality*, we mean that the CLI is able to properly interpret older frameworks and perform the necessary actions to support the existing behavior.
+    > By *functionality*, we mean that the CLI is able to properly interpret older frameworks and perform the necessary
+    actions to support the existing behavior.
 
 - Framework upgrades are incompatible. We will require the user to upgrade the CLI as well.
 
@@ -62,7 +63,6 @@ const toolkitVersion = parseSemver(CLOUD_ASSEMBLY_VERSION);
 
 The CLI version takes the value of the latest cx-protocol version, and not the actual CLI version.
 
-
 ```typescript
 
 // if framework > cli, we require a newer cli version
@@ -77,10 +77,11 @@ if (semver.lt(frameworkVersion, toolkitVersion)) {
 ```
 
 This code (and comments) is contradictory to our current compatibility model, where we actually attempt to support two way compatibility.
-To facilitate this, we added the [`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
+To facilitate this, we added the
+[`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
 
-Thats not to say that what we currently have can't work. But the fact that we are getting it wrong almost every time, implies that we should re-think the process,
-as well as the assumptions that lead to it.
+Thats not to say that what we currently have can't work. But the fact that we are getting it wrong almost
+every time, implies that we should re-think the process, as well as the assumptions that lead to it.
 
 ## Validate Compatibility
 
@@ -114,7 +115,8 @@ The proposed solution for this case is to run standard regression tests. That is
 
 This will make sure that old CLI functionality is still working, assuming of course it was covered by our integration tests.
 
-In addition, we will also run regression tests using new CLI code and previous framework versions. This will ensure that existing CLI functionality does not rely on new framework capabilities.
+In addition, we will also run regression tests using new CLI code and previous framework versions.
+This will ensure that existing CLI functionality does not rely on new framework capabilities.
 
 > See concrete [example](#change-artifact-metadata-type-value)
 
@@ -445,7 +447,8 @@ Running regression tests, i.e, running previous integration tests, will catch th
 
 ## Change artifact metadata type value
 
-1. For some reason, we decide to rename the [`aws:cdk:asset`](https://github.com/aws/aws-cdk/blob/b52b43ddfea0398b3f6e05002bf5b97bc831d1a7/packages/%40aws-cdk/cx-api/lib/assets.ts#L1) marker.
+1. For some reason, we decide to rename the
+[`aws:cdk:asset`](https://github.com/aws/aws-cdk/blob/b52b43ddfea0398b3f6e05002bf5b97bc831d1a7/packages/%40aws-cdk/cx-api/lib/assets.ts#L1) marker.
 2. Perform necessary changes and fix all relevant tests.
 
 This type of change is forbidden, because it means new CLI versions will not work with cloud assemblies that are created by older framework versions.
@@ -454,11 +457,10 @@ However, nothing will catch this breaking change because:
 
 - The tests were explicitly changed to the support the removal of this feature.
 - API compatibility is still intact, nothing in the structure of `manifest.json` changed, just the values.
-- Even the regression tests we talked about wont catch this because they always use new framework versions that create cloud assemblies that are compatible with new cli versions.
+- Even the regression tests we talked about wont catch this because they always use new framework versions that create
+cloud assemblies that are compatible with new cli versions.
 
 In order to reject this type of change, we need to run the regression suite, but using older framework versions.
-
-
 
 ## Quirk - CDK Synth
 
