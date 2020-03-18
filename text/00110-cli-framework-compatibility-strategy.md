@@ -79,7 +79,8 @@ if (semver.lt(frameworkVersion, toolkitVersion)) {
 This code (and comments) is contradictory to our current compatibility model, where we actually attempt to support two way compatibility.
 To facilitate this, we added the [`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60) function.
 
-Thats not to say that what we currently have can't work. But the fact that we are getting it wrong almost every time, implies that we should re-think the process, as well as the assumptions that lead to it.
+Thats not to say that what we currently have can't work. But the fact that we are getting it wrong almost every time, implies that we should re-think the process,
+as well as the assumptions that lead to it.
 
 ## Validate Compatibility
 
@@ -102,10 +103,6 @@ The proposed solution for this case is to run API compatibility checks using `js
 We would treat `cx-api` as a regular `jsii` module that needs to maintain compatibility to its consumers, which is the CLI.
 
 This will make sure that when the CLI pulls in new versions of `cx-api` (on upgrades), it will properly consume older cloud assemblies.
-
-In addition to the API itself, cx-protocol can break other contracts, such as file system locations.
-
-> See concrete [example](#rename-target-property-in-containerImageAssetMetadataEntry).
 
 ## Breaking changes in CLI
 
@@ -159,12 +156,6 @@ This means that, if we remove the `path` property from `ContainerImageAssetMetad
 PROP @aws-cdk/cx-api.ContainerImageAssetMetadataEntry.path: has been removed [removed:@aws-cdk/cx-api.ContainerImageAssetMetadataEntry.path]
 ```
 
-Currently, the `cx-api` module contains a lot of stuff that aren't strictly related to the protocol.
-
-> For example, `AssemblyBuildOptions`, which is used during synthesis by the framework. It is not used by the CLI (nor it should).
-
-This creates clutter, and might also cause issues with applying `jsii` compatibility checks.
-
 In addition, according to our new compatibility model, we need to make sure the user gets the correct error
 when the CLI version is smaller than the `Cloud-Assembly` version.
 
@@ -183,18 +174,12 @@ This package will provide:
 - ...
 - ...
 
-These are the objects that will be later used by the CLI. Running compatibility checks on them **should** ensure:
+These are the interfaces that will be later used by the CLI. Running compatibility checks on them will ensure:
 
 1. Rename/Remove properties is not allowed.
 2. Changing the type of a property is not allowed.
 3. Making an optional property required is not allowed.
 4. Adding a required property is not allowed.
-
-> The `jsii` compatibility checker currently doesn't actually provide us with all those requirements. It validates interfaces only with relation to their
-> usage, in either argument or return values of methods. This means that, for example, number 4 is allowed,
-> because the `ContainerImageAssetMetadataEntry` is not used as a function argument in `cx-api`.
-> In order to achieve this, we will either need to enhance the `jsii` checker, or refactor our code.
-In any case, we stipulate the necessary changes will be done.
 
 ##### (2) Serialization
 
@@ -202,30 +187,32 @@ The package will provide serialization methods:
 
 ```typescript
 /**
- * Save manifest to to file.
+ * Save manifest to file.
  *
  * @param manifest - manifest.
  */
 public static save(manifest: AssemblyManifest, filePath: string) {}
+
+/**
+ * Load manifest from file.
+ *
+ * @param manifest - manifest.
+ */
+public static load(filePath: string): AssemblyManifest {}
+
 ```
 
 This method will make sure `jsii` enforces the proper compatibility checks on those interfaces.
 
+> Note: The existence of the `load` method will also enforce output posture compatibility checks.
+> Essentially this means that we will not be able to make a required field optional.
+> This might sound non intuitive, but actually makes sense. These interfaces are exposed to our customers,
+> who might programtically access their properties. We wouldn't want user code to break because a property now might be `undefined`.
+
 This new package also has to be **stable**. This is ok, it actually makes perfect sense for it to be stable as it
 represents the structural contract the `cloud-assembly-schema` needs to adhere to.
 
-#### Step 2: Change CLI dependencies
-
-The CLI should only depend on the new `cx-protocol` package, and **not** on the `cx-api` package.
-
-This means that when users install new versions of the CLI, they also get a new version of `cx-protocol`,
-but since `cx-protocol` is backwards compatible, there is no risk of breaking API.
-
-> The CLI currently depends on parts of `cx-api` that don't strictly relate to the proposed `cx-protocol` object model.
-> Analysis of those dependencies has yet to be done. Ideally, we would be able to move that code away from `cx-api` and into the CLI itself. Perhaps even at the expense of some duplication if that code is being used in the framework as well.
-> In any case, I don't think this will be a blocker for the design.
-
-#### Step 3: Validate CLI `>=` Framework
+#### Step 2: Validate CLI `>=` Framework
 
 To make sure we enforce that the CLI version will always be `>=` than the framework version, we will add a
 validation in the CLI, immediately after we de-serialize the `Cloud-Assembly`:
@@ -255,31 +242,9 @@ and of the separation we have in the code between `cx-protocol` version and our 
 
 > See a [quirk](#Quirk---CDK-Synth) that is caused by this.
 
-To actually validate this behavior, we add an integration test:
+To actually validate this behavior, we add a unit test from the `exec.ts` file.
 
-\+ `test-cli-throws-on-new-framework.sh`
-
-```bash
-
-LATEST_PUBLISHED_VERSION=$(node -p 'require("package.json").version')
-NEXT_VERSION=$(bump_minor ${LATEST_PUBLISHED_VERSION})
-
-# create the cloud assembly
-cdk synth
-
-# patch it to simulate a later version
-sed -i "s/${LATEST_PUBLISHED_VERSION}/${NEXT_VERSION}/g" cdk.out/manifest.json
-
-# deploy the existing patched app, this should throw
-out=$(cdk -a cdk.out deploy)
-
-assert ${out} == "A newer version of the CDK CLI (>= ${NEXT_VERSION}) is necessary to interact with this app"
-```
-
-> This test feels a bit overly complex, though it probably accurately simulates a user upgrading the framework only.
-> Perhaps we can transform this to a unit test, though its not trivial.
-
-#### Step 4: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
+#### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
 
 Given all the above steps, we don't need the functionality provided
 by [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts).
@@ -372,7 +337,7 @@ users get a slightly less smooth upgrade experience.
 
 ## Validating CLI `>=` Framework
 
-There is a different approach to achieve this than the one [described](#step-3-validate-cli--framework).
+There is a different approach to achieve this than the one [described](#step-2-validate-cli--framework).
 
 The idea is that, instead of having the CLI do this validation, we make the framework validate this.
 We use the fact that the CLI already passes its version to the framework as an env variable.
@@ -395,9 +360,6 @@ constructor(directory: string) {
     // some more code
 }
 ```
-
-Then, testing this, becomes as simple as writing another unit test in `cloud-assembly.test.ts`. However, this might be one of those rare
-cases where simplicity of the test doesn't imply the design is correct.
 
 This approach doesn't seem right because:
 
@@ -512,7 +474,7 @@ A newer version of the CDK CLI (>= 1.24.0) is necessary to interact with this ap
 ```
 
 The message makes sense, but actually, synthesis worked, and `cdk.out` was created. Which also makes sense.
-The validation is do is against the `manifest.version` value, therefore we have to first create the `Cloud-Assembly`, and only then validate.
+The validation is done against the `manifest.version` value, therefore we have to first create the `Cloud-Assembly`, and only then validate.
 
 Not sure its an actual problem, but it does kind of feel weird.
 
