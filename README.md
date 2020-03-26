@@ -218,7 +218,11 @@ the rest of the team should be engaged.
 
 ## The RFC Life Cycle
 
-![rfc-states](https://g.gravizo.com/svg?
+![rfc-states](https://g.gravizo.com/svg?digraph%20states%20{node%20[shape=ellipse];proposed%20[label%20=%20%22Proposed%22];pending%20[label%20=%20%22Pending%22];fcp%20[label%20=%20%22Final%20Comment%20Period%22];ready%20[label%20=%20%22Ready%22];resolved%20[label%20=%20%22Resolved%22];proposed%20-%3E%20pending%20[label%20=%20%22%20rfc%20pr%20created%22];pending%20-%3E%20pending%20[label%20=%20%22%20revisions%22];pending%20-%3E%20fcp%20[label%20=%20%22core%20team%20approval%20%20%20%20%22];fcp%20-%3E%20pending%20[label%20=%20%22%20revision%20requested%22];fcp%20-%3E%20ready%20[label%20=%20%22%20merged%22];ready%20-%3E%20resolved%20[label%20=%20%22%20implementation%20complete%22];})
+
+<!-- for later reference from renderer -->
+<details>
+custom_mark10
   digraph states {
     node [shape=ellipse];
     proposed [label = "Proposed"];
@@ -233,7 +237,8 @@ the rest of the team should be engaged.
     fcp -> ready [label = " merged"];
     ready -> resolved [label = " implementation complete"];
   }
-)
+custom_mark10
+</details>
 
 An RFC flows through the following states.
 
