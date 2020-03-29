@@ -278,7 +278,7 @@ For example:
 
 
 
-#### Step 2: Validate Schema Version
+### Step 2: Validate Schema Version
 
 The highest schema version that the CLI can accept, is the schema version that it was shipped with.
 This version is exposed via the static `version` method in the *cloud-assembly-package*.
@@ -314,13 +314,13 @@ it will simply be the version of schema that was used to create it.
 
 To actually validate this behavior, we add a unit test for the `exec.ts` file.
 
-#### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
+### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
 
 Given all the above steps, we don't need the functionality provided
 by [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts).
 Lets dive deep into why is that exactly.
 
-##### Schema Evolution
+#### Schema Evolution
 
 The schema in `manifest.json` might be incomplete/different with regards to the expectation of new CLI versions.
 
@@ -348,7 +348,7 @@ without adding or modifying any properties.
 
 This brings us to the next item.
 
-##### Compatibility Validation
+#### Compatibility Validation
 
 This is done in the [`verifyManifestVersion`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L39) function,
 and contains two validations:
@@ -363,7 +363,7 @@ and contains two validations:
    the aforementioned evolution. But, if the evolution is not necessary anymore, than this validation is not necessary anymore.
    Which makes sense, since we do support this scenario.
 
-### CLI Regression Tests
+## CLI Regression Tests
 
 The second major mechanism we need to implement is CLI regression tests.
 
