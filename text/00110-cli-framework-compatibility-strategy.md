@@ -129,6 +129,26 @@ This will make sure that old CLI functionality is still working, assuming of cou
 In addition, we will also run regression tests using new CLI code and **previous** framework version.
 This will ensure that existing CLI functionality does not rely on new framework capabilities.
 
+### Exclusions
+
+Sometimes we might be to introduce an intentional breaking change, for example for security concerns.
+This breaking change might cause one of the previous integration tests to fail, which is actually ok.
+We therefore need an escape hatch that allows us to disable specific tests during the execution of those regression tests.
+
+To that end, we will implement an exlusions mechanism:
+
+```typescript
+[
+  {
+    "test": "test-cdk-iam-diff.sh",
+    "version": "1.30.0",
+    "justification": "iam policy generation has changed in version > 1.30.0 because..."
+  }
+]
+```
+
+Developers will be able to add entries to this list, which will cause the suite to skip those tests.
+
 > See concrete [example](#change-artifact-metadata-type-value)
 
 # Detailed Design
