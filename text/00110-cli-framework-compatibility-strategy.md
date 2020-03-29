@@ -276,8 +276,6 @@ For example:
         },
 ```
 
-
-
 ### Step 2: Validate Schema Version
 
 The highest schema version that the CLI can accept, is the schema version that it was shipped with.
