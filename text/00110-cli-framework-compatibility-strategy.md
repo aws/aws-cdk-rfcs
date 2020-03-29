@@ -13,16 +13,26 @@ This RFC addresses compatibility concerns for developing different parts of the 
 It details exactly what compatibility promises we should be advertising to our customers,
 as well as proposes technical mechanisms for validating those promises are upheld.
 
+The main concept proposed is the introduction of the *cloud-assembly-schema* package. This package will
+comprise only of the interfaces that define the communication between the framework and the CLI (or any other consumer for that matter).
+
+Following are the main mechanism we will implement:
+
+- *JSII* compatibility checks on the *cloud-assembly-schema* package.
+- Decouple schema version from module version.
+- CLI regression tests.
+
 At a high level, we define the expected customer experience when upgrading either of the two CDK components:
 
 - CLI upgrades are compatible. New CLI versions should work with older framework versions, and all existing functionality is preserved.
 
-    > By *functionality*, we mean that the CLI is able to properly interpret older frameworks and perform the necessary
-    actions to support the existing behavior.
+    > By *functionality*, we mean that the CLI is able to properly interpret older frameworks and perform the
+    necessary actions to support the existing behavior.
 
-- Framework upgrades are incompatible. We will require the user to upgrade the CLI as well.
+- Framework upgrades are comptabile **unless** the *cloud-assembly-schema* has changed, in which case, we will
+require the user to upgrade the CLI as well.
 
-This will eventually lead the user to always have a setup where `CLI >= Framework`.
+    > We will treat every change to the schema as a "breaking" one, [details](#schema-changes) below.
 
 # Motivation
 
@@ -93,17 +103,17 @@ We want to make sure we have sufficient testing in place that validate we don't 
 
 Assuming we adopt the new compatibility model, all we have to do is come up with a validation mechanism for the following breakage scenarios:
 
-## Breaking changes in CX Protocol
+## Breaking changes to *cloud-assembly-schema*
 
-Probably the most prominent scenario for causing breakage is pushing an incompatible change to the cx-protocol itself.
+Probably the most prominent scenario for causing breakage is pushing an incompatible change to the *cloud-assembly-schema* itself.
 This can, for example, be the removal of a property.
 
 > See concrete [example](#rename-target-property-in-containerImageAssetMetadataEntry).
 
 The proposed solution for this case is to run API compatibility checks using `jsii-diff`.
-We would treat `cx-api` as a regular `jsii` module that needs to maintain compatibility to its consumers, which is the CLI.
+We would treat *cloud-assembly-schema* as a regular `jsii` module that needs to maintain compatibility to its consumers, which is the CLI.
 
-This will make sure that when the CLI pulls in new versions of `cx-api` (on upgrades), it will properly consume older cloud assemblies.
+This will make sure that when the CLI pulls in new versions of *cloud-assembly-schema* (on upgrades), it will properly consume older cloud assemblies.
 
 ## Breaking changes in CLI
 
@@ -111,11 +121,12 @@ Another way to break CLI upgrades, is to simply change the CLI in a breaking way
 
 > See concrete [example](#remove---target-from-docker-build-command).
 
-The proposed solution for this case is to run standard regression tests. That is, run old CLI integration tests on the latest code (Framework and CLI).
+The proposed solution for this case is to run standard regression tests. That is, run old CLI integration
+tests on the latest code (Framework and CLI).
 
 This will make sure that old CLI functionality is still working, assuming of course it was covered by our integration tests.
 
-In addition, we will also run regression tests using new CLI code and previous framework versions.
+In addition, we will also run regression tests using new CLI code and **previous** framework version.
 This will ensure that existing CLI functionality does not rely on new framework capabilities.
 
 > See concrete [example](#change-artifact-metadata-type-value)
@@ -126,8 +137,8 @@ There are 2 mechanisms we need to implement:
 
 ## Cloud Assembly Schema Compatibility Checks
 
-We need to make sure the objects that make up what we refer to as the `cx-protocol`, do not change in a breaking way.
-We should be able to leverage `jsii` to accomplish this. For example, this is an excerpt from the `.jsii` spec of the `cx-api` module:
+We need to make sure the objects that make up what we refer to as the *cloud-assembly-schema*, do not change in a breaking way.
+We should be able to leverage `jsii` to accomplish this. For example, this is an excerpt from the `.jsii` spec of the *cx-api* module:
 
 ```json
 "name": "ContainerImageAssetMetadataEntry",
@@ -163,7 +174,7 @@ when the CLI version is smaller than the `Cloud-Assembly` version.
 
 The plan therefore is as follows:
 
-### Step 1: Create a separate package called `cloud-assembly-schema`
+### Step 1: Create a separate package called *cloud-assembly-schema*
 
 This package will provide:
 
@@ -202,9 +213,14 @@ public static save(manifest: AssemblyManifest, filePath: string) {}
  */
 public static load(filePath: string): AssemblyManifest {}
 
+/**
+ * Get the schema version.
+ */
+public static version(): string {}
+
 ```
 
-This method will make sure `jsii` enforces the proper compatibility checks on those interfaces.
+These methods will make sure `jsii` enforces the proper compatibility checks on those interfaces.
 
 > Note: The existence of the `load` method will also enforce output posture compatibility checks.
 > Essentially this means that we will not be able to make a required field optional.
@@ -214,10 +230,44 @@ This method will make sure `jsii` enforces the proper compatibility checks on th
 This new package also has to be **stable**. This is ok, it actually makes perfect sense for it to be stable as it
 represents the structural contract the `cloud-assembly-schema` needs to adhere to.
 
-#### Step 2: Validate CLI `>=` Framework
+#### (3) Json Schema
 
-To make sure we enforce that the CLI version will always be `>=` than the framework version, we will add a
-validation in the CLI, immediately after we de-serialize the `Cloud-Assembly`:
+We will create a standard [*json-schema*](https://json-schema.org/), that will be generated from the `typescript` interfaces.
+The schema file will be versioned separately from the module version, and consumers will be able to use it
+to validate cloud assemblies that they are interacting with.
+
+For example:
+
+```json
+"AssemblyManifest": {
+    "description": "A manifest which describes the cloud assembly.",
+    "type": "object",
+    "properties": {
+        "version": {
+            "description": "Protocol version",
+            "type": "string"
+        },
+        "artifacts": {
+            "description": "The set of artifacts in this assembly. (Default - no artifacts.)",
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/ArtifactManifest"
+            }
+        },
+```
+
+
+
+#### Step 2: Validate Schema Version
+
+The highest schema version that the CLI can accept, is the schema version that it was shipped with.
+This version is exposed via the static `version` method in the *cloud-assembly-package*.
+
+If the CLI encounteres assemblies with a higher version, it should reject them.
+
+To enforce this, we will add a validation in the CLI, immediately after we de-serialize the `Cloud-Assembly`:
+
+> Note that the de-serialization will always work because we cannot push breaking changes to the schema.
 
 in `exec.ts`
 
@@ -233,18 +283,16 @@ if (await fs.pathExists(app) && (await fs.stat(app)).isDirectory()) {
     assembly = new cxapi.CloudAssembly(outdir);
 }
 
-if (versionNumber() < assembly.version) {
-    throw new Error(`A newer version of the CDK CLI (>= ${assembly.version}) is necessary to interact with this app`);
+// reject assemblies created with a higher version than what we expect.
+if (Schema.version() < assembly.version) {
+    throw new Error(`Cloud assembly schema version mismatch...`);
 }
 ```
 
 This implies that the `version` in `manifest.json` will no longer be the value of `CLOUD_ASSEMBLY_VERSION`,
-it will simply be the version of the package itself. It also means, that we can completely get rid of this constant,
-and of the separation we have in the code between `cx-protocol` version and our package versions.
+it will simply be the version of schema that was used to create it.
 
-> See a [quirk](#Quirk---CDK-Synth) that is caused by this.
-
-To actually validate this behavior, we add a unit test from the `exec.ts` file.
+To actually validate this behavior, we add a unit test for the `exec.ts` file.
 
 #### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
 
@@ -299,7 +347,7 @@ and contains two validations:
 
 The second major mechanism we need to implement is CLI regression tests.
 
-As already mentioned, `cx-protocol` API breakage is not the only thing that can go wrong.
+As already mentioned, *cloud-assembly-schema* API breakage is not the only thing that can go wrong.
 This is to ensure that we don't introduce breaking changes to the CLI itself. The plan here is fairly straight forward:
 
 ```console
@@ -312,67 +360,18 @@ yarn integ-cli
 
 > Not to be taken literally, commands just illustrate intent
 
-# Drawbacks
+# Rationale
 
-The only drawback I can think of is that we will be forcing users to upgrade their CLI when they upgrade their framework.
-This is an additional action that they didn't have to take until now. However, calling this a *drawback* is debatable,
-since it actually does provide a more consistent behavior than we have now. In any case, we don't consider this a sufficiently serious issue.
+## Schema Changes
 
-# Rationale and Alternatives
+Imagine that we add an **optional** property to one of the interfaces, and change the CLI to use this new property (in a backwards compatible way of course).
+One might argue that existing CLI versions are still able to deploy those new assemblies, they will simply ignore the new property.
 
-## New Compatibility Model
+However, how will they know the nature of this new property? Deploying such a cloud assembly implies ignoring some instructions
+that might be critical to the assembly as a whole.
 
-As we realized by now, this RFC proposes a significant change to our compatibility model.
-Instead of attempting to have new framework versions support old CLI versions,
-we will now require that CLI `>=` Framework. Forcing users to upgrade their CLI every time they upgrade their framework.
-
-### Why is it OK to enforce this requirement?
-
-- We want to migrate most of the functionality to the framework. Making CLI upgrades especially safe.
-- As an educated guess, we think users tend to upgrade the CLI before upgrading the framework.
-- We sometimes require that even now, and we haven't seen any backlash due to that.
-
-#### Why is it **NOT** OK to enforce this requirement?
-
-- It is a bit intrusive. Even though we currently sometimes do it, we usually don't. And this would mean
-users get a slightly less smooth upgrade experience.
-
-## Validating CLI `>=` Framework
-
-There is a different approach to achieve this than the one [described](#step-2-validate-cli--framework).
-
-The idea is that, instead of having the CLI do this validation, we make the framework validate this.
-We use the fact that the CLI already passes its version to the framework as an env variable.
-
-in `cloud-assembly.ts`
-
-```typescript
-constructor(directory: string) {
-
-    // some code
-
-    const manifest = JSON.parse(fs.readFileSync(path.join(directory, MANIFEST_FILE), 'UTF-8'));
-
-    const cliVersion = process.env.CLI_VERSION_ENV
-
-    if (cliVersion && semver.gt(manifest.version, cliVersion)) {
-        throw new Error(`A newer version of the CDK CLI (>= ${assembly.version}) is necessary to interact with this app`);
-    }
-
-    // some more code
-}
-```
-
-This approach doesn't seem right because:
-
-1. This code can be executed outside the context of the CLI, which is why we need the `if (cliVersion)` statement.
-2. The `process.env.CLI_VERSION_ENV` is only available when the CLI invokes the `app` for synthesis.
-But what about when `app` points to an already existing `Cloud-Assembly`? In this case, the CLI doesn't execute any process,
-and simply creates an instance of `CloudAssembly` immediately.
-
-As far as relationships go as well, it doesn't really make sense for the framework to be aware of the CLI. It should only be the other way around.
-
-For these reasons, this approach was abandoned.
+For this reason, we treat **any** change to the schema as a "breaking" change, not just changes that break the format validation.
+This breaking change will be communicated as a `major` version bump of the schema.
 
 # Adoption Strategy
 
@@ -383,21 +382,22 @@ Having said that, this RFC can be a good reference documentation that provides r
 
 # Future Possibilities
 
-## Cleanup `cx-api`
+## Cleanup *cx-api*
 
-Separating `cx-protocol` stuff from `cx-api`, opens the door for doing a thorough cleanup. I think `cx-api` was initially regarded as the place for `cx-protocol`,
-though it currently contains a lot of other stuff. We should do an overview of the code inside `cx-api`, and move it to the appropriate place.
+Separating *cloud-assembly-schema* stuff from *cx-api*, opens the door for doing a thorough cleanup. I think *cx-api* was initially
+regarded as the place for *cloud-assembly-schema*, though it currently contains a lot of other stuff. We should do an overview of the
+code inside *cx-api*, and move it to the appropriate place.
 
 ### CLI API Compatibility Checks
 
 If we think about it, in the same way that the framework exposes a protocol to the CLI, the CLI in turn exposes a protocol to the end user.
 For example, all the CLI command line options, are part of this protocol. The compatibility requirements on those options
-are essentially the same as those of properties in the `cx-protocol` object model.
+are essentially the same as those of properties in the *cloud-assembly-schema* object model.
 
 We could model those options in an object model, and run compatibility checks on that model. This will ensure we don't accidentally
 remove an option or make one required, for example.
 
-### `cx-protocol` integration tests
+### Integration tests for *cx-api*
 
 Like already [mentioned](#change-artifact-metadata-type-value), the fact that
 the cx protocol itself will remain API comptabile, doesn't necessarily mean
@@ -415,7 +415,7 @@ because we don't have control on the compatibility rules themselves.
 
 ## Rename target property in `ContainerImageAssetMetadataEntry`
 
-This is a concrete example on how things can break when we introduce changes to the `cx-api`.
+This is a concrete example on how things can break when we introduce changes to the *cx-api*.
 
 1. Rename `target` in [`ContainerImageAssetMetadataEntry`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/assets.ts#L74) to `buildTarget`.
 2. Perform necessary changes in CLI and fix all relevant tests.
@@ -428,7 +428,7 @@ Our current CLI backwards compatibility tests will not detect this because:
 However, what will happen is the new CLI will ignore the `target` property that might exist in old cloud-assemblies,
 resulting in the breakage of this feature.
 
-Note that we didn't mention wether or not the developer remembered to bump the version of `cx-protocol`.
+Note that we didn't mention wether or not the developer remembered to bump the version of *cloud-assembly-schema*.
 Thats because it doesn't matter, CLI upgrades should work regardless.
 
 ## Remove `--target` from docker build command
@@ -461,38 +461,3 @@ However, nothing will catch this breaking change because:
 cloud assemblies that are compatible with new cli versions.
 
 In order to reject this type of change, we need to run the regression suite, but using older framework versions.
-
-## Quirk - CDK Synth
-
-This illustrates a quirk that can happen because of the new proposed compatibility model.
-
-Consider the following:
-
-```console
-npm install aws-cdk@1.23.0
-npm install @aws-cdk/aws-s3@1.24.0
-cdk synth
-A newer version of the CDK CLI (>= 1.24.0) is necessary to interact with this app
-```
-
-The message makes sense, but actually, synthesis worked, and `cdk.out` was created. Which also makes sense.
-The validation is done against the `manifest.version` value, therefore we have to first create the `Cloud-Assembly`, and only then validate.
-
-Not sure its an actual problem, but it does kind of feel weird.
-
-On one hand we are saying the CLI doesn't work with newer framework versions, on the other hand, it did,
-because it invoked the framework which created `cdk.out`...
-
-Perhaps we should say that only *cdk deploy* cannot operate on new framework versions, but maybe all other commands aren't really affected?
-
-The flow would then be:
-
-```console
-npm install aws-cdk@1.23.0
-npm install @aws-cdk/aws-s3@1.24.0
-cdk synth
-cdk deploy
-A newer version of the CDK CLI (>= 1.24.0) is necessary to deploy this app
-```
-
-This seems to make more sense.
