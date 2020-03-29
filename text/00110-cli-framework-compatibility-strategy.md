@@ -273,7 +273,9 @@ For example:
             "additionalProperties": {
                 "$ref": "#/definitions/ArtifactManifest"
             }
-        },
+        }
+    }
+}
 ```
 
 ### Step 2: Validate Schema Version
