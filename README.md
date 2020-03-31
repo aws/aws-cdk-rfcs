@@ -223,7 +223,6 @@ the rest of the team should be engaged.
 
 <!-- for later reference from renderer -->
 <details>
-<summary></summary>
 custom_mark10
   digraph states {
     node [shape=ellipse];
