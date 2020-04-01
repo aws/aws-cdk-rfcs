@@ -29,6 +29,7 @@ existing proposals.
 [110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@eladb](https://github.com/eladb)|proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||[@jaylucas](https://github.com/jaylucas)||proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||[@workeitel](https://github.com/workeitel)||proposed
+[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||[@Black742](https://github.com/Black742)||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Garbage Collection for Assets||[@eladb](https://github.com/eladb)||proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments||[@rix0rrr](https://github.com/rix0rrr)|[@rix0rrr](https://github.com/rix0rrr)|proposed
