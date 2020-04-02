@@ -1,7 +1,7 @@
 ---
 feature name: monolithic-packaging
 start date: 2020-02-13
-rfc pr: (leave this empty)
+rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/122
 related issue: #6
 ---
 
@@ -10,35 +10,6 @@ related issue: #6
 This RFC proposes to distribute the AWS CDK as a single module instead of 150+
 modules in order to allow third-party CDK modules to declare their dependency on
 the AWS CDK as a peer dependency.
-
-- [Summary](#summary)
-- [Motivation](#motivation)
-  - [Why we need to use peer dependencies?](#why-we-need-to-use-peer-dependencies)
-  - [Implications of peer dependencies](#implications-of-peer-dependencies)
-  - [What are we doing today?](#what-are-we-doing-today)
-  - [What are we proposing to do?](#what-are-we-proposing-to-do)
-- [Basic Example](#basic-example)
-- [Design Summary](#design-summary)
-- [Detailed Design](#detailed-design)
-  - [Module Names](#module-names)
-    - [TypeScript/JavaScript](#typescriptjavascript)
-    - [Java](#java)
-    - [.NET](#net)
-    - [Python](#python)
-  - [Issues with Specific Modules](#issues-with-specific-modules)
-    - [cx-api, cloud-assembly-schema and asset-schema](#cx-api-cloud-assembly-schema-and-asset-schema)
-    - [@aws-cdk/assert](#aws-cdkassert)
-    - [@aws-cdk/aws-s3-deployment](#aws-cdkaws-s3-deployment)
-- [Drawbacks](#drawbacks)
-  - [Module Size](#module-size)
-  - [This is a breaking change](#this-is-a-breaking-change)
-- [Rationale and Alternatives](#rationale-and-alternatives)
-  - [Alternatives Considered](#alternatives-considered)
-- [Adoption Strategy](#adoption-strategy)
-- [Remaining Work](#remaining-work)
-- [Future Possibilities](#future-possibilities)
-
-    - [Implications on CDK](#implications-on-cdk)
 
 # Motivation
 
