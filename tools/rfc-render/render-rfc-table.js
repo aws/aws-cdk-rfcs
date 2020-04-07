@@ -40,7 +40,7 @@ async function render() {
       issues.push({
         number: issue.number,
         title: issue.title,
-        createdBy: issue.user && issue.user.login,
+        assignee: issue.assignee && issue.assignee.login,
         champion,
         status: status.split('/')[1],
         pr,
@@ -49,7 +49,7 @@ async function render() {
     }
   }
 
-  lines.push('\\#|Title|PR|Created By|Champion|Status');
+  lines.push('\\#|Title|PR|Owner|Champion|Status');
   lines.push('-|-----|--|----------|--------|------');
 
   for (const row of issues) {
@@ -59,7 +59,7 @@ async function render() {
       `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
       title,
       row.pr,
-      renderUser(row.createdBy),
+      renderUser(row.assignee),
       renderUser(row.champion),
       row.status
     ];
@@ -71,6 +71,10 @@ async function render() {
 }
 
 function renderUser(user) {
+  if (!user) {
+    return '';
+  }
+
   if (user.startsWith('@')) {
     user = user.substring(1);
   }
