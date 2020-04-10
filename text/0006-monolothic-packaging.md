@@ -422,19 +422,20 @@ General recommendations:
 
 # Remaining Work
 
-- **Analytics**: We lose per-module analytics which means we will to move to report
+- [ ] **Analytics**: We lose per-module analytics which means we will to move to report
   analytics at the construct level.
-- **Reference documentation** needs to also support submodules/namespaces and
+- [ ] **Reference documentation** needs to also support submodules/namespaces and
   use the submodule's README file.
-- **Submodule renaming**: to preserve imports in some languages (i.e.
+- [ ] **Submodule renaming**: to preserve imports in some languages (i.e.
   Java/.NET), we need to be able to explicitly specify the "coordinates" of
   submodules in each language. For example, the S3 module is exported under the
   `aws_s3` module in mono-cdk, but we want it's types to be defined under the
   `software.amazon.awscdk.services.s3` Java package, so we need a way to specify
   this mapping somehow. This might be a problem for the "core" types which are exported without a submodule in the mono-cdk, but in Java they are currently
   under `software.amazon.awscdk.core`.
-- See open issues per language.
-- Add module size protection during build.
+- [ ] Add module size protection during build.
+- [ ] Determine if we want to include the `-patterns` modules in monocdk or leave those as separate libraries (I lead towards separate libraries).
+- [ ] See open issues per language.
 
 # Future Possibilities
 
