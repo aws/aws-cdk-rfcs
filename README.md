@@ -13,14 +13,13 @@ existing proposals.
 <!--BEGIN_TABLE-->
 \#|Title|PR|Owner|Champion|Status
 -|-----|--|----------|--------|------
-[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|Mono CDK|[#122](https://github.com/aws/aws-cdk-rfcs/pull/122)|[@eladb](https://github.com/eladb)|[@rix0rrr](https://github.com/rix0rrr)|final-comment-period
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|[@eladb](https://github.com/eladb)|pending
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)||[@eladb](https://github.com/eladb)|pending
-[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments|||[@rix0rrr](https://github.com/rix0rrr)|pending
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|ready
-[92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)||[@eladb](https://github.com/eladb)|ready
-[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|ready
+[92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Mono CDK](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[#122](https://github.com/aws/aws-cdk-rfcs/pull/122)|[@eladb](https://github.com/eladb)|[@rix0rrr](https://github.com/rix0rrr)|ready
+[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|resolved
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|Release from a "release" branch||[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)||resolved
 [36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Constructs Programming Model||||resolved
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
@@ -35,6 +34,7 @@ existing proposals.
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Garbage Collection for Assets||||proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments|||[@rix0rrr](https://github.com/rix0rrr)|proposed
+[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments|||[@rix0rrr](https://github.com/rix0rrr)|proposed
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|Support resource import||||proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|Standardize security groups||||proposed
 [50](https://github.com/aws/aws-cdk-rfcs/issues/50)|Standardize GitHub issues escalation process||||proposed
