@@ -25,7 +25,7 @@ manager needs to fetch all 40 dependencies.
 
 Most of the modules also accept objects from dependent modules as inputs. For
 example, when an `s3.Bucket` is defined, users can pass in a `kms.Key` object
-for encryption. 
+for encryption.
 
 In npm, it is possible for two modules to co-exist in the dependency graph in
 different versions, but this capability is hazardous in our case. For example,
@@ -76,7 +76,7 @@ new dependency is added.
 ## What are we proposing to do?
 
 This RFC proposes to release the entire AWS CDK as a single, monolithic module
-(aka "monocdk"). 
+(aka "monocdk").
 
 By releasing the CDK as a monolithic module, we can avoid the implications of
 peer dependencies across first-party modules (because there is only one module)
@@ -231,8 +231,8 @@ Open issues:
 
 Package name:
 
- * **Namespace**: `Amazon.CDK`
- * **Package ID**: `Amazon.CDK.Lib` (sadly `Amazon.CDK` is taken by v1.0 core)
+* **Namespace**: `Amazon.CDK`
+* **Package ID**: `Amazon.CDK.Lib` (sadly `Amazon.CDK` is taken by v1.0 core)
 
 Usage:
 
@@ -411,7 +411,7 @@ We looked into:
 
 # Adoption Strategy
 
-This will be discussed as part of the RFC for CDK 2.0. 
+This will be discussed as part of the RFC for CDK 2.0.
 
 General recommendations:
 
