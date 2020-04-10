@@ -53,7 +53,7 @@ for example, that if an app uses the **aws-ecs** module, the app will have to
 explicitly install all the 40 transitive dependencies.
 
 The other **critical** implication of using peer dependencies is that adding a peer
-dependency to a module in in fact **A BREAKING CHANGE**. Any direct or indirect
+dependency to a module is in fact **A BREAKING CHANGE**. Any direct or indirect
 consumer of this module will have to explicitly install the new dependency.
 This, according to semantic versioning, requires a major version bump.
 
