@@ -15,6 +15,7 @@ existing proposals.
 -|-----|--|----------|--------|------
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|[@eladb](https://github.com/eladb)|pending
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)||[@eladb](https://github.com/eladb)|pending
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|[Compatibility Assurance Strategy](https://github.com/aws/aws-cdk-rfcs/blob/master/text/00110-cli-framework-compatibility-strategy.md)|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@eladb](https://github.com/eladb)|ready
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|ready
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
@@ -27,7 +28,6 @@ existing proposals.
 [127](https://github.com/aws/aws-cdk-rfcs/issues/127)|CDK to directly reference/import/update an existing stack||||proposed
 [118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||||proposed
 [116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@rix0rrr](https://github.com/rix0rrr)||proposed
-[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|Compatibility Assurance Strategy|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@eladb](https://github.com/eladb)|proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||||proposed
 [107](https://github.com/aws/aws-cdk-rfcs/issues/107)|[Publish a Construct Library Module Lifecycle document](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md)|[#107](https://github.com/aws/aws-cdk-rfcs/pull/107)|[@ccfife](https://github.com/ccfife)|[@ccfife](https://github.com/ccfife)|proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||||proposed
