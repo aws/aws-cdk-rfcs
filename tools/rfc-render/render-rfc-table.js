@@ -3,11 +3,11 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const labels = {
+  'status/ready': { },
   'status/final-comment-period': { }, 
   'status/pending': { },
-  'status/ready': { },
-  'status/resolved': { },
   'status/proposed': { },
+  'status/resolved': { },
 };
 
 exports.render = render;
@@ -34,33 +34,40 @@ async function render() {
     const result = await octo.paginate(request);
 
     for (const issue of result) {
-      const { pr, champion } = findMetadata(issue);
+      const { champion, pr_number } = findMetadata(issue);
       const doc = findDocFile(files, issue.number);
+
+      let link;
+
+      // we we already have a doc, then the link should go to it
+      if (doc) {
+        link = `https://github.com/aws/aws-cdk-rfcs/blob/master/text/${doc}`;
+      } else if (pr_number) {
+        link = `https://github.com/aws/aws-cdk-rfcs/pull/${pr_number}`;
+      } else {
+        link = `https://github.com/aws/aws-cdk-rfcs/issues/${issue.number}`;
+      }
   
       issues.push({
         number: issue.number,
         title: issue.title,
+        link,
         assignee: issue.assignee && issue.assignee.login,
         champion,
         status: status.split('/')[1],
-        pr,
         doc
       });
     }
   }
 
-  lines.push('\\#|Title|PR|Owner|Champion|Status');
-  lines.push('-|-----|--|----------|--------|------');
+  lines.push('\\#|Title|Owner|Status');
+  lines.push('---|-----|-----|------');
 
   for (const row of issues) {
-    const title = !row.doc ? row.title : `[${row.title}](https://github.com/aws/aws-cdk-rfcs/blob/master/text/${row.doc})`;
-
     const cols = [
       `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
-      title,
-      row.pr,
+      `[${row.title}](${row.link})`,
       renderUser(row.assignee),
-      renderUser(row.champion),
       row.status
     ];
 
@@ -96,21 +103,12 @@ function findMetadata(issue) {
   const lines = body.split('\n');
   const titleIndex = lines.findIndex(line => line.startsWith('|PR|Champion|'));
   if (titleIndex === -1) { 
-    return { pr: '', champion: '' }; 
+    return { champion: '' }; 
   }
 
   let [ , pr, champion ] = lines[titleIndex + 2].split('|');
-  pr = pr ? pr.trim() : '';
   champion = champion ? champion.trim() : '';
 
-  if (pr === '#') { 
-    pr = ''; 
-  }
-  
-  if (pr.startsWith('#')) { 
-    pr = `[${pr}](https://github.com/aws/aws-cdk-rfcs/pull/${pr.substring(1)})`; 
-  }
- 
-
-  return { pr, champion };
+  const pr_number = (pr.startsWith('#') ? pr.substring(1) : '').trim();
+  return { champion, pr_number };
 }
