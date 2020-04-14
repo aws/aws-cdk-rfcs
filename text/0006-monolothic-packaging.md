@@ -1,8 +1,8 @@
 ---
 feature name: monolithic-packaging
 start date: 2020-02-13
-rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/122
-related issue: #6
+pr: https://github.com/aws/aws-cdk-rfcs/pull/122
+issue: https://github.com/aws/aws-cdk-rfcs/issues/6
 ---
 
 # Summary
