@@ -11,68 +11,68 @@ See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
 existing proposals.
 
 <!--BEGIN_TABLE-->
-\#|Title|PR|Owner|Champion|Status
--|-----|--|----------|--------|------
-[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|CDK v2.0||[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|[@eladb](https://github.com/eladb)|pending
-[60](https://github.com/aws/aws-cdk-rfcs/issues/60)|Bazel Build System|[#61](https://github.com/aws/aws-cdk-rfcs/pull/61)||[@eladb](https://github.com/eladb)|pending
-[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|[Compatibility Assurance Strategy](https://github.com/aws/aws-cdk-rfcs/blob/master/text/00110-cli-framework-compatibility-strategy.md)|[#111](https://github.com/aws/aws-cdk-rfcs/pull/111)|[@iliapolo](https://github.com/iliapolo)|[@eladb](https://github.com/eladb)|ready
-[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[#91](https://github.com/aws/aws-cdk-rfcs/pull/91)|[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|ready
-[92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
-[49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[#3437](https://github.com/aws/aws-cdk/pull/3437)|[@rix0rrr](https://github.com/rix0rrr)|[@eladb](https://github.com/eladb)|ready
-[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Mono CDK](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[#122](https://github.com/aws/aws-cdk-rfcs/pull/122)|[@eladb](https://github.com/eladb)|[@rix0rrr](https://github.com/rix0rrr)|ready
-[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[#56](https://github.com/aws/aws-cdk-rfcs/pull/56)|[@eladb](https://github.com/eladb)|[@eladb](https://github.com/eladb)|resolved
-[37](https://github.com/aws/aws-cdk-rfcs/issues/37)|Release from a "release" branch||[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)||resolved
-[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|Constructs Programming Model||||resolved
-[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|RFC Process|[#53](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
-[139](https://github.com/aws/aws-cdk-rfcs/issues/139)|"fromLookup" for additional resources||||proposed
-[127](https://github.com/aws/aws-cdk-rfcs/issues/127)|CDK to directly reference/import/update an existing stack||||proposed
-[118](https://github.com/aws/aws-cdk-rfcs/issues/118)|New CDK Major Version||||proposed
-[116](https://github.com/aws/aws-cdk-rfcs/issues/116)|Experimental modules||[@rix0rrr](https://github.com/rix0rrr)||proposed
-[109](https://github.com/aws/aws-cdk-rfcs/issues/109)|Create elasticache L2 constructs||||proposed
-[107](https://github.com/aws/aws-cdk-rfcs/issues/107)|[Publish a Construct Library Module Lifecycle document](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md)|[#107](https://github.com/aws/aws-cdk-rfcs/pull/107)|[@ccfife](https://github.com/ccfife)|[@ccfife](https://github.com/ccfife)|proposed
-[87](https://github.com/aws/aws-cdk-rfcs/issues/87)|On-Demand CFN Resource Generator||||proposed
-[72](https://github.com/aws/aws-cdk-rfcs/issues/72)|Stack Policy||||proposed
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|Garbage Collection for Assets||||proposed
-[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|CDK in locked-down environments|||[@rix0rrr](https://github.com/rix0rrr)|proposed
-[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|Changes to default stack environments|||[@rix0rrr](https://github.com/rix0rrr)|proposed
-[52](https://github.com/aws/aws-cdk-rfcs/issues/52)|Support resource import||||proposed
-[51](https://github.com/aws/aws-cdk-rfcs/issues/51)|Standardize security groups||||proposed
-[50](https://github.com/aws/aws-cdk-rfcs/issues/50)|Standardize GitHub issues escalation process||||proposed
-[48](https://github.com/aws/aws-cdk-rfcs/issues/48)|Faster builds||[@rix0rrr](https://github.com/rix0rrr)||proposed
-[46](https://github.com/aws/aws-cdk-rfcs/issues/46)|Hooks||||proposed
-[44](https://github.com/aws/aws-cdk-rfcs/issues/44)|Kotlin||||proposed
-[41](https://github.com/aws/aws-cdk-rfcs/issues/41)|Language conformance and coverage||||proposed
-[40](https://github.com/aws/aws-cdk-rfcs/issues/40)|Stack traces across language boundaries||||proposed
-[39](https://github.com/aws/aws-cdk-rfcs/issues/39)|Release public artifacts (lambda layers for custom resources, docker images)||||proposed
-[35](https://github.com/aws/aws-cdk-rfcs/issues/35)|Publish construct library guidelines||||proposed
-[34](https://github.com/aws/aws-cdk-rfcs/issues/34)|Third-party construct ecosystem||||proposed
-[32](https://github.com/aws/aws-cdk-rfcs/issues/32)|App-centric operational experience||||proposed
-[31](https://github.com/aws/aws-cdk-rfcs/issues/31)|Integration tests||||proposed
-[30](https://github.com/aws/aws-cdk-rfcs/issues/30)|Improve synthesized template output||||proposed
-[28](https://github.com/aws/aws-cdk-rfcs/issues/28)|Construct library graduation process||||proposed
-[27](https://github.com/aws/aws-cdk-rfcs/issues/27)|200 resource limit tools & guidance||||proposed
-[26](https://github.com/aws/aws-cdk-rfcs/issues/26)|Monitoring packs||||proposed
-[25](https://github.com/aws/aws-cdk-rfcs/issues/25)|Defaults & configuration policy||||proposed
-[24](https://github.com/aws/aws-cdk-rfcs/issues/24)|Resource imports||||proposed
-[23](https://github.com/aws/aws-cdk-rfcs/issues/23)|Stateful resource support||||proposed
-[22](https://github.com/aws/aws-cdk-rfcs/issues/22)|Cost calculator||||proposed
-[21](https://github.com/aws/aws-cdk-rfcs/issues/21)|CDK Explorer||||proposed
-[20](https://github.com/aws/aws-cdk-rfcs/issues/20)|Security posture summary||||proposed
-[19](https://github.com/aws/aws-cdk-rfcs/issues/19)|Introspection API||||proposed
-[18](https://github.com/aws/aws-cdk-rfcs/issues/18)|Open context provider framework||||proposed
-[17](https://github.com/aws/aws-cdk-rfcs/issues/17)|CLI support for multiple-environments||||proposed
-[15](https://github.com/aws/aws-cdk-rfcs/issues/15)|Scaffolding||||proposed
-[14](https://github.com/aws/aws-cdk-rfcs/issues/14)|Toolchain 2.0||[@shivlaks](https://github.com/shivlaks)||proposed
-[13](https://github.com/aws/aws-cdk-rfcs/issues/13)|Improvements to Reference docs||||proposed
-[10](https://github.com/aws/aws-cdk-rfcs/issues/10)|New workshop modules||||proposed
-[9](https://github.com/aws/aws-cdk-rfcs/issues/9)|Master developer guide sources in main repo||||proposed
-[8](https://github.com/aws/aws-cdk-rfcs/issues/8)|Project structure guidelines||||proposed
-[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|Lambda Bundles|||[@eladb](https://github.com/eladb)|proposed
-[5](https://github.com/aws/aws-cdk-rfcs/issues/5)|Security-restricted environments||||proposed
-[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|CDK Testing Tools||[@nija-at](https://github.com/nija-at)|[@nija-at](https://github.com/nija-at)|proposed
-[3](https://github.com/aws/aws-cdk-rfcs/issues/3)|Native Toolchain Integration||||proposed
-[2](https://github.com/aws/aws-cdk-rfcs/issues/2)|Migration Paths||||proposed
-[1](https://github.com/aws/aws-cdk-rfcs/issues/1)|CDK Watch||||proposed
+\#|Title|Owner|Status
+---|-----|-----|------
+[110](https://github.com/aws/aws-cdk-rfcs/issues/110)|[Compatibility Assurance Strategy](https://github.com/aws/aws-cdk-rfcs/blob/master/text/00110-cli-framework-compatibility-strategy.md)|[@iliapolo](https://github.com/iliapolo)|ready
+[95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[@nija-at](https://github.com/nija-at)|ready
+[92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[@rix0rrr](https://github.com/rix0rrr)|ready
+[49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[@rix0rrr](https://github.com/rix0rrr)|ready
+[6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Mono CDK](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@eladb](https://github.com/eladb)|ready
+[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/issues/79)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|pending
+[60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||pending
+[139](https://github.com/aws/aws-cdk-rfcs/issues/139)|["fromLookup" for additional resources](https://github.com/aws/aws-cdk-rfcs/issues/139)||proposed
+[127](https://github.com/aws/aws-cdk-rfcs/issues/127)|[CDK to directly reference/import/update an existing stack](https://github.com/aws/aws-cdk-rfcs/issues/127)||proposed
+[118](https://github.com/aws/aws-cdk-rfcs/issues/118)|[New CDK Major Version](https://github.com/aws/aws-cdk-rfcs/issues/118)||proposed
+[116](https://github.com/aws/aws-cdk-rfcs/issues/116)|[Experimental modules](https://github.com/aws/aws-cdk-rfcs/issues/116)|[@rix0rrr](https://github.com/rix0rrr)|proposed
+[109](https://github.com/aws/aws-cdk-rfcs/issues/109)|[Create elasticache L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/109)||proposed
+[107](https://github.com/aws/aws-cdk-rfcs/issues/107)|[Publish a Construct Library Module Lifecycle document](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md)|[@ccfife](https://github.com/ccfife)|proposed
+[87](https://github.com/aws/aws-cdk-rfcs/issues/87)|[On-Demand CFN Resource Generator](https://github.com/aws/aws-cdk-rfcs/issues/87)||proposed
+[72](https://github.com/aws/aws-cdk-rfcs/issues/72)|[Stack Policy](https://github.com/aws/aws-cdk-rfcs/issues/72)||proposed
+[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)||proposed
+[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in locked-down environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||proposed
+[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Changes to default stack environments](https://github.com/aws/aws-cdk-rfcs/issues/58)||proposed
+[52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/issues/52)||proposed
+[51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||proposed
+[50](https://github.com/aws/aws-cdk-rfcs/issues/50)|[Standardize GitHub issues escalation process](https://github.com/aws/aws-cdk-rfcs/issues/50)||proposed
+[48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)|[@rix0rrr](https://github.com/rix0rrr)|proposed
+[46](https://github.com/aws/aws-cdk-rfcs/issues/46)|[Hooks](https://github.com/aws/aws-cdk-rfcs/issues/46)||proposed
+[44](https://github.com/aws/aws-cdk-rfcs/issues/44)|[Kotlin](https://github.com/aws/aws-cdk-rfcs/issues/44)||proposed
+[41](https://github.com/aws/aws-cdk-rfcs/issues/41)|[Language conformance and coverage](https://github.com/aws/aws-cdk-rfcs/issues/41)||proposed
+[40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||proposed
+[39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/issues/39)||proposed
+[35](https://github.com/aws/aws-cdk-rfcs/issues/35)|[Publish construct library guidelines](https://github.com/aws/aws-cdk-rfcs/issues/35)||proposed
+[34](https://github.com/aws/aws-cdk-rfcs/issues/34)|[Third-party construct ecosystem](https://github.com/aws/aws-cdk-rfcs/issues/34)||proposed
+[32](https://github.com/aws/aws-cdk-rfcs/issues/32)|[App-centric operational experience](https://github.com/aws/aws-cdk-rfcs/issues/32)||proposed
+[31](https://github.com/aws/aws-cdk-rfcs/issues/31)|[Integration tests](https://github.com/aws/aws-cdk-rfcs/issues/31)||proposed
+[30](https://github.com/aws/aws-cdk-rfcs/issues/30)|[Improve synthesized template output](https://github.com/aws/aws-cdk-rfcs/issues/30)||proposed
+[28](https://github.com/aws/aws-cdk-rfcs/issues/28)|[Construct library graduation process](https://github.com/aws/aws-cdk-rfcs/issues/28)||proposed
+[27](https://github.com/aws/aws-cdk-rfcs/issues/27)|[200 resource limit tools & guidance](https://github.com/aws/aws-cdk-rfcs/issues/27)||proposed
+[26](https://github.com/aws/aws-cdk-rfcs/issues/26)|[Monitoring packs](https://github.com/aws/aws-cdk-rfcs/issues/26)||proposed
+[25](https://github.com/aws/aws-cdk-rfcs/issues/25)|[Defaults & configuration policy](https://github.com/aws/aws-cdk-rfcs/issues/25)||proposed
+[24](https://github.com/aws/aws-cdk-rfcs/issues/24)|[Resource imports](https://github.com/aws/aws-cdk-rfcs/issues/24)||proposed
+[23](https://github.com/aws/aws-cdk-rfcs/issues/23)|[Stateful resource support](https://github.com/aws/aws-cdk-rfcs/issues/23)||proposed
+[22](https://github.com/aws/aws-cdk-rfcs/issues/22)|[Cost calculator](https://github.com/aws/aws-cdk-rfcs/issues/22)||proposed
+[21](https://github.com/aws/aws-cdk-rfcs/issues/21)|[CDK Explorer](https://github.com/aws/aws-cdk-rfcs/issues/21)||proposed
+[20](https://github.com/aws/aws-cdk-rfcs/issues/20)|[Security posture summary](https://github.com/aws/aws-cdk-rfcs/issues/20)||proposed
+[19](https://github.com/aws/aws-cdk-rfcs/issues/19)|[Introspection API](https://github.com/aws/aws-cdk-rfcs/issues/19)||proposed
+[18](https://github.com/aws/aws-cdk-rfcs/issues/18)|[Open context provider framework](https://github.com/aws/aws-cdk-rfcs/issues/18)||proposed
+[17](https://github.com/aws/aws-cdk-rfcs/issues/17)|[CLI support for multiple-environments](https://github.com/aws/aws-cdk-rfcs/issues/17)||proposed
+[15](https://github.com/aws/aws-cdk-rfcs/issues/15)|[Scaffolding](https://github.com/aws/aws-cdk-rfcs/issues/15)||proposed
+[14](https://github.com/aws/aws-cdk-rfcs/issues/14)|[Toolchain 2.0](https://github.com/aws/aws-cdk-rfcs/issues/14)|[@shivlaks](https://github.com/shivlaks)|proposed
+[13](https://github.com/aws/aws-cdk-rfcs/issues/13)|[Improvements to Reference docs](https://github.com/aws/aws-cdk-rfcs/issues/13)||proposed
+[10](https://github.com/aws/aws-cdk-rfcs/issues/10)|[New workshop modules](https://github.com/aws/aws-cdk-rfcs/issues/10)||proposed
+[9](https://github.com/aws/aws-cdk-rfcs/issues/9)|[Master developer guide sources in main repo](https://github.com/aws/aws-cdk-rfcs/issues/9)||proposed
+[8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project structure guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)||proposed
+[7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||proposed
+[5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||proposed
+[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Tools](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|proposed
+[3](https://github.com/aws/aws-cdk-rfcs/issues/3)|[Native Toolchain Integration](https://github.com/aws/aws-cdk-rfcs/issues/3)||proposed
+[2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Migration Paths](https://github.com/aws/aws-cdk-rfcs/issues/2)||proposed
+[1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/issues/1)||proposed
+[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[@eladb](https://github.com/eladb)|resolved
+[37](https://github.com/aws/aws-cdk-rfcs/issues/37)|[Release from a "release" branch](https://github.com/aws/aws-cdk-rfcs/issues/37)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
+[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)|[@eladb](https://github.com/eladb)|resolved
+[16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|resolved
 <!--END_TABLE-->
 
 ## What does all this mean?
