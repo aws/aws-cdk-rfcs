@@ -5,7 +5,7 @@ on:
     # workflow and then this workflow will be blocked (github does not allow two
     # workflows to trigger each other)
     branches-ignore:
-      - auto/update-rfc-table
+      - 'auto/update-rfc-table'
 
 jobs:
   markdownlint:
