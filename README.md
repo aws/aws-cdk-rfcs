@@ -29,7 +29,7 @@ existing proposals.
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|[On-Demand CFN Resource Generator](https://github.com/aws/aws-cdk-rfcs/issues/87)||proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|[Stack Policy](https://github.com/aws/aws-cdk-rfcs/issues/72)||proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)||proposed
-[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in locked-down environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||proposed
+[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||proposed
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/issues/52)||proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||proposed
