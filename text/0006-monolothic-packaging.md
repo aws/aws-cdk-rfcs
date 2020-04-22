@@ -337,7 +337,7 @@ we don't exceed a reasonable size.
 To that end, we should:
 
 - Add a size limit per module which will fail build.
-- Support publishing pubic artifacts to S3 during release (see
+- Support publishing public artifacts to S3 during release (see
   [mini-RFC](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612)).
 - Devise better guidelines as to what goes into the framework and what doesn't.
   Generally, we should mostly accomodate L2s and avoid L3s to reduce the chance
