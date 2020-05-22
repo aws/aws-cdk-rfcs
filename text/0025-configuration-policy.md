@@ -87,7 +87,7 @@ best practices to CDK-managed infrastructure. This approach will provide a
 consistent mechanism to apply these practices, while keeping the actual
 business-logic-containing Stacks lightweight.
 
-See the discussion in https://github.com/aws/aws-cdk/issues/3235 for more
+See the discussion in <https://github.com/aws/aws-cdk/issues/3235> for more
 context.
 
 # Basic Example
@@ -105,6 +105,7 @@ any of the input props, as well as throw errors or create ancillary resources.
 
 A method is added to the `Stack` class with the following signature and default
 implementation:
+
 ```ts
 public onConstructCreation(className: string, id: string, props: any): any {
   return props;
