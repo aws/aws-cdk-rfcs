@@ -2,6 +2,10 @@ const Octokit = require('@octokit/rest');
 const fs = require('fs').promises;
 const path = require('path');
 
+// order matters here and intentional: sorted chronological in reverse order -
+// when it will be delivered. First the ones actually being worked on (coming
+// soon), then the ones in planning (less soon), approved (sometimes), etc. The
+// "done" items are last because they are less interesting in this list.
 const labels = {
   'status/implementing': { },
   'status/planning': { },
