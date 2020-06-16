@@ -7,10 +7,10 @@ future state of the libraries and to discover projects for contribution.
 [AWS CDK]: https://github.com/aws/aws-cdk
 [jsii]: https://github.com/aws/jsii
 
-Jump to: [When to submit an RFC?](#) [The RFC Process](#the-rfc-process)
-
-See [The RFC Life Cycle](#the-rfc-life-cycle) to learn more about the states of
-existing proposals.
+**Jump to**: [What is an RFC?](#what-is-an-rfc) |
+[When to submit?](#when-to-submit-an-rfc) |
+[RFC Process](#rfc-process) |
+[RFC Life Cycle](#the-rfc-life-cycle)
 
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
@@ -144,61 +144,59 @@ as a markdown file and gets it approved and merged into the RFC repo. At that po
 'approved' and may be implemented with the goal of eventual inclusion into
 CDK/JSII.
 
-- [Create a **tracking issue**](https://github.com/awslabs/aws-cdk-rfcs/issues/new?template=tracking-issue.md)
+1. [Create a **tracking issue**](https://github.com/awslabs/aws-cdk-rfcs/issues/new?template=tracking-issue.md)
   for the proposed feature if one doesn't already exist. Use the tracking issue
   template as a guide. If a tracking issue already exists, make sure to update
   it and assign it to let others know you're working on a proposal.
-- Fork the [RFC repo](https://github.com/awslabs/aws-cdk-rfcs).
-- Copy `0000-template.md` to `text/<rfc#>-<my-feature>.md` where <rfc#> is the
+2. Fork the [RFC repo](https://github.com/awslabs/aws-cdk-rfcs).
+3. Copy `0000-template.md` to `text/<rfc#>-<my-feature>.md` where <rfc#> is the
   tracking issue number and `<my-feature>` is the rfc title.
-- Fill in the RFC. Put care into the details: **We welcome all honest efforts to
+4. Fill in the RFC. Put care into the details: **We welcome all honest efforts to
   contribute.**.
-- Submit a **pull request** with the title `RFC: ### <title>` where ### is the
+5. Submit a **pull request** with the title `RFC: ### <title>` where ### is the
   tracking issue number and title is the name of the proposal. As a pull request
   the RFC will receive design feedback from the core team and the larger
   community, and the author should be prepared to make revisions in response.
-- Update the tracking issue with a link to the RFC PR.
-- **Advertise** your RFC amongst stakeholders via social channels (e.g. twitter) 
+6. Update the tracking issue with a link to the RFC PR.
+7. **Advertise** your RFC amongst stakeholders via social channels (e.g. twitter)
   and your team. Build consensus and integrate feedback. RFCs that have broad support 
   are much more likely to make progress than those that don't receive any comments.
-- Eventually, the team will decide whether the RFC is a candidate for inclusion
+8. Eventually, the team will decide whether the RFC is a candidate for inclusion
   in CDK/JSII.
-- RFCs that are candidates for inclusion in CDK/JSII will enter a "**final comment
+9. RFCs that are candidates for inclusion in CDK/JSII will enter a "**final comment
   period**" lasting 3 calendar days. The beginning of this period will be signaled
   by a team member adding a comment and label on the RFCs pull request.
-- An RFC can be modified based upon feedback from the team and community.
+10. An RFC can be modified based upon feedback from the team and community.
   Significant modifications may trigger a new final comment period.
-- An RFC may be **rejected** by the team after public discussion has settled and
+11. An RFC may be **rejected** by the team after public discussion has settled and
   comments have been made summarizing the rationale for rejection. A member of
   the team will then close the PR and issue.
-- An RFC may be accepted at the close of its final comment period. A team member
+12. An RFC may be accepted at the close of its final comment period. A team member
   will merge the RFCs associated pull request, at which point the RFC will
   become 'approved'.
-- At some point, someone will pick up the RFC for implementation. For major features
+13. At some point, someone will pick up the RFC for implementation. For major features
   this usually requires devising a detailed implementation plan. To that end, submit
   an **additional PR** on the RFC doc that fills in the "Implementation Plan" section.
-- Once this PR is approved, the RFC will move to the 'implementing' state. Usually we
-  track implemetation using GitHub projects.
-- Once implementation is complete, the RFC moves to 'done', and it's issue is closed.
+14. Once this PR is approved, the RFC will move to the 'implementing' state.
+    Usually we track implementation using GitHub projects.
+15. Once implementation is complete, the RFC moves to 'done', and it's issue is closed.
 
-If the submitter is someone from our CDK community (i.e., not core team member),
+> If the submitter is someone from our CDK community (i.e., not core team member),
 a core team member will be assigned to 'shephard' each proposal. They will
 generally be the ones updating the RFCs state in the tracking issue as it moves
 through the process. They can decide when a final comment period is triggered.
-
-On the other hand, if the submitter is a core team member, they will identify
+>
+> On the other hand, if the submitter is a core team member, they will identify
 another core team member, with consent, as their 'champion'. The champion would
 be the first contact for brainstorming, process and reviews. The core team
 would defer to the champion to do the first few rounds of reviews, after which
 the rest of the team should be engaged.
 
-## The RFC Life Cycle
+## RFC Life Cycle
 
-![rfc-states](./life-cycle.svg)
+![rfc-states](./images/lifecycle.png)
 
-<!-- for later reference from renderer -->
-<details>
-custom_mark10
+<!--
 digraph states {
     node [shape=ellipse];
     edge [color=gray, fontsize=12]
@@ -225,10 +223,7 @@ digraph states {
     plannning -> implementing [label = "rfc with implementation plan approved and merged"];
     implementing -> done [label = "implementation completed"];
 }  
-custom_mark10
-</details>
-
-An RFC flows through the following states:
+-->
 
 1. **Proposed** - A tracking issue has been created with a basic outline of the
    proposal.
@@ -248,8 +243,10 @@ An RFC flows through the following states:
 8. **Rejected** - During the review period, the RFC may be rejected and then it will
    be marked as such.
 
-**AWS CDK's RFC process owes its inspiration to the [Yarn RFC process], [Rust
-RFC process], [React RFC process], and [Ember RFC process]**
+---
+
+AWS CDK's RFC process owes its inspiration to the [Yarn RFC process], [Rust
+RFC process], [React RFC process], and [Ember RFC process]
 
 [yarn rfc process]: https://github.com/yarnpkg/rfcs
 [rust rfc process]: https://github.com/rust-lang/rfcs

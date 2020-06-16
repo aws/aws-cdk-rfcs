@@ -1,13 +1,5 @@
----
-title: "RFC: #<rfc#> <title>" <!-- <rfc#> is the tracking issue number and <title> is the rfc name -->
-labels: management/rfc
----
-
-<!-- Call out suggestions for reviewers to discuss -->
-
-<!-- link to the proposal document for readers to view rendered version -->
-[Rendered version](/my-fork/text/xxxx.md)
-
+* Tracking issue: #
+* [Rendered version](/my-branch/text/xxxx.md)
 
 ---
 

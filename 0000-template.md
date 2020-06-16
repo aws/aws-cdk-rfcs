@@ -5,25 +5,20 @@ rfc pr: (leave this empty)
 related issue: (tracking issue number)
 ---
 
-<!-- replace the blockquoted sections with your content -->
 # Summary
 
 > Brief description of the feature.
+
+# README
+
+> Work backwards from the README: pretend that this feature is already implemented and write the README section. It will help you think about your proposal from a user experience point of view.
+
+> If a README format does not make sense for your proposal, write a "Press Release" which announces your new feature instead.
 
 # Motivation
 
 > Why are we doing this? What use cases does it support? What is the expected
 > outcome?
-
-# Basic Example
-
-> If the proposal involves a new or changed API, include a basic code example.
-> Omit this section if it's not applicable.
->
-> Please focus on explaining the motivation so that if this RFC is not accepted,
-> the motivation could be used to develop alternative solutions. In other words,
-> enumerate the constraints you are trying to solve without coupling them too
-> closely to the solution you have in mind.
 
 # Design Summary
 
@@ -90,3 +85,12 @@ related issue: (tracking issue number)
 >
 > If you have tried and cannot think of any future possibilities, you may simply
 > state that you cannot think of anything.
+
+# Implementation Plan
+
+INTENTIONALLY LEFT BLANK: an implementation plan will be added when the RFC is
+scheduled for implementation.
+
+> The implementation plan should list all the tasks needed across the project in order to implement this RFC, and the planned order of implementation based on dependencies and analysis of the critical path.
+>
+> You can use a GitHub Project Board (and reference it here) to manage the execution of your plan.
