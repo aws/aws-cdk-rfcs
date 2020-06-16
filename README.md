@@ -181,14 +181,14 @@ as a markdown file and gets it approved and merged into the RFC repo. At that po
 15. Once implementation is complete, the RFC moves to 'done', and it's issue is closed.
 
 > If the submitter is someone from our CDK community (i.e., not core team member),
-a core team member will be assigned to 'shephard' each proposal. They will
+a core team member will be assigned to 'shepherd' each proposal. They will
 generally be the ones updating the RFCs state in the tracking issue as it moves
 through the process. They can decide when a final comment period is triggered.
 >
 > On the other hand, if the submitter is a core team member, they will identify
-another core team member, with consent, as their 'champion'. The champion would
+another core team member, with consent, as their 'shepherd'. The shepherd would
 be the first contact for brainstorming, process and reviews. The core team
-would defer to the champion to do the first few rounds of reviews, after which
+would defer to the shepherd to do the first few rounds of reviews, after which
 the rest of the team should be engaged.
 
 ## RFC Life Cycle
