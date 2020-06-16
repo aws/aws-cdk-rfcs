@@ -98,21 +98,21 @@ to better serve contributors.
 
 You should consider using this process if you intend to make "substantial"
 changes to [AWS CDK](https://github.com/aws/aws-cdk),
-[JSII](https://github.com/aws/jsii), or related tools. Some examples that would
+[jsii](https://github.com/aws/jsii), or related tools. Some examples that would
 benefit from an RFC are:
 
 - Any change to existing APIs that could break existing code.
 - The removal of existing features or public APIs.
 - The introduction of new idiomatic usage or conventions, even if they do not
-  include code changes to CDK or JSII themselves.
+  include code changes to CDK or jsii themselves.
 - Changes to the documented contribution workflow.
 - Features that cross multiple construct libraries.
 - Additions or changes to framework capabilities.
 - Additions or changes to formal specifications like cloud assembly, tree.json,
-  JSII, etc.
+  jsii, etc.
 
 The RFC process is a great opportunity to get more eyeballs on your proposal
-before it becomes a part of a released version of CDK/JSII. Quite often, even
+before it becomes a part of a released version of CDK/jsii. Quite often, even
 proposals that seem "obvious" can be significantly improved once a wider group
 of interested people have a chance to weigh in.
 
@@ -128,8 +128,8 @@ first.
 Some changes do not require an RFC:
 
 - Bugfixes for known issues.
-- Additions only likely to be _noticed by_ other developers of CDK/JSII, invisible
-  to users of CDK/JSII.
+- Additions only likely to be _noticed by_ other developers of CDK/jsii, invisible
+  to users of CDK/jsii.
 - Additions of missing L1 or L2 constructs. Unless the service and/or constructs
   are especially complex or intentionally diverge from existing api design best
   practices.
