@@ -143,42 +143,49 @@ In short, to get a major feature added to CDK/jsii, one usually writes an RFC
 as a markdown file and gets it approved and merged into the RFC repo. At that point the RFC is
 'approved' and may be implemented into CDK/jsii.
 
-1. [Create a **tracking issue**](https://github.com/awslabs/aws-cdk-rfcs/issues/new?template=tracking-issue.md)
-  for the proposed feature if one doesn't already exist. Use the tracking issue
-  template as a guide. If a tracking issue already exists, make sure to update
-  it and assign it to let others know you're working on a proposal.
+1. [Create a **tracking
+   issue**](https://github.com/awslabs/aws-cdk-rfcs/issues/new?template=tracking-issue.md)
+   for the proposed feature if one doesn't already exist. Use the tracking issue
+   template as a guide. If a tracking issue already exists, make sure to update
+   it and assign it to let others know you're working on a proposal.
 2. Fork the [RFC repo](https://github.com/awslabs/aws-cdk-rfcs).
 3. Copy `0000-template.md` to `text/<rfc#>-<my-feature>.md` where <rfc#> is the
-  tracking issue number and `<my-feature>` is the rfc title.
-4. Fill in the RFC. Put care into the details: **We welcome all honest efforts to
-  contribute.**.
+   tracking issue number and `<my-feature>` is the rfc title.
+4. Fill in the RFC. Put care into the details: **We welcome all honest efforts
+   to contribute.**.
 5. Submit a **pull request** with the title `RFC: ### <title>` where ### is the
-  tracking issue number and title is the name of the proposal. As a pull request
-  the RFC will receive design feedback from the core team and the larger
-  community, and the author should be prepared to make revisions in response.
+   tracking issue number and title is the name of the proposal. As a pull
+   request the RFC will receive design feedback from the core team and the
+   larger community, and the author should be prepared to make revisions in
+   response.
 6. Update the tracking issue with a link to the RFC PR.
-7. **Advertise** your RFC amongst stakeholders via social channels (e.g. twitter)
-  and your team. Build consensus and integrate feedback. RFCs that have broad support 
-  are much more likely to make progress than those that don't receive any comments.
+7. **Advertise** your RFC amongst stakeholders via social channels (e.g.
+   twitter) and your team. Build consensus and integrate feedback. RFCs that
+   have broad support are much more likely to make progress than those that
+   don't receive any comments.
 8. Eventually, the team will decide whether the RFC is a candidate for inclusion
-  in CDK/jsii.
-9. RFCs that are candidates for inclusion in CDK/JSII will enter a "**final comment
-  period**" lasting 3 calendar days. The beginning of this period will be signaled
-  by a team member adding a comment and label on the RFCs pull request.
+   in CDK/jsii.
+9. RFCs that are candidates for inclusion in CDK/jsii will enter a "**final comment
+   period**" lasting 3 calendar days. The beginning of this period will be signaled
+   by a team member adding a comment and label on the RFCs pull request.
 10. An RFC can be modified based upon feedback from the team and community.
-  Significant modifications may trigger a new final comment period.
-11. An RFC may be **rejected** by the team after public discussion has settled and
-  comments have been made summarizing the rationale for rejection. A member of
-  the team will then close the PR and issue.
-12. An RFC may be accepted at the close of its final comment period. A team member
-  will merge the RFCs associated pull request, at which point the RFC will
-  become 'approved'.
-13. At some point, someone will pick up the RFC for implementation. For major features
-  this usually requires devising a detailed implementation plan. To that end, submit
-  an **additional PR** on the RFC doc that fills in the "Implementation Plan" section.
+    Significant modifications may trigger a new final comment period. An RFC can
+    also be modified after it has been merged and approved, in which case a new
+    PR will be submitted with the modification, like any other code.
+11. An RFC may be **rejected** by the team after public discussion has settled
+    and comments have been made summarizing the rationale for rejection. A
+    member of the team will then close the PR and issue.
+12. An RFC may be accepted at the close of its final comment period. A team
+    member will merge the RFCs associated pull request, at which point the RFC
+    will become 'approved'.
+13. At some point, someone will pick up the RFC for implementation. For major
+    features this usually requires devising a detailed implementation plan. To
+    that end, submit an **additional PR** on the RFC doc that fills in the
+    "Implementation Plan" section.
 14. Once this PR is approved, the RFC will move to the 'implementing' state.
     Usually we track implementation using GitHub projects.
-15. Once implementation is complete, the RFC moves to 'done', and it's issue is closed.
+15. Once implementation is complete, the RFC moves to 'done', and it's issue is
+    closed.
 
 > If the submitter is someone from our CDK community (i.e., not core team member),
 a core team member will be assigned to 'shepherd' each proposal. They will
