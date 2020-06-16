@@ -161,7 +161,7 @@ as a markdown file and gets it approved and merged into the RFC repo. At that po
   and your team. Build consensus and integrate feedback. RFCs that have broad support 
   are much more likely to make progress than those that don't receive any comments.
 8. Eventually, the team will decide whether the RFC is a candidate for inclusion
-  in CDK/JSII.
+  in CDK/jsii.
 9. RFCs that are candidates for inclusion in CDK/JSII will enter a "**final comment
   period**" lasting 3 calendar days. The beginning of this period will be signaled
   by a team member adding a comment and label on the RFCs pull request.
