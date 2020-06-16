@@ -139,7 +139,7 @@ issue and ask.
 
 ## RFC Process
 
-In short, to get a major feature added to CDK/JSII, one usually writes an RFC 
+In short, to get a major feature added to CDK/jsii, one usually writes an RFC 
 as a markdown file and gets it approved and merged into the RFC repo. At that point the RFC is
 'approved' and may be implemented with the goal of eventual inclusion into
 CDK/JSII.
