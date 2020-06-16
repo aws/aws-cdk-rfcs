@@ -175,7 +175,7 @@ as a markdown file and gets it approved and merged into the RFC repo. At that po
 11. An RFC may be **rejected** by the team after public discussion has settled
     and comments have been made summarizing the rationale for rejection. A
     member of the team will then close the PR and issue.
-12. An RFC may be accepted at the close of its final comment period. A team
+12. An RFC may be **accepted** at the close of its final comment period. A team
     member will merge the RFCs associated pull request, at which point the RFC
     will become 'approved'.
 13. At some point, someone will pick up the RFC for implementation. For major
