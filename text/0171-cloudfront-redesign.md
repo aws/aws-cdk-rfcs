@@ -122,14 +122,14 @@ const myWebDistribution = new Distribution(this, 'myDist', {
 ```
 
 Additional cache behaviors can be specified at creation, or added to the origin(s) after the initial creation. These additional cache behaviors enable
-customization on a specific set of resources based on a URL path pattern. For example, we can add a behavior to `myWebDistribution` to override the
+customization for a specific set of resources based on a URL path pattern. For example, we can add a behavior to `myWebDistribution` to override the
 default time-to-live (TTL) for all of the images.
 
 ```ts
 myWebDistribution.origin.addBehavior('/images/*.jpg', {
   viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
   defaultTtl: cdk.Duration.days(7),
-})
+});
 ```
 
 ## Multiple Origins
@@ -170,25 +170,63 @@ The above will create both origins and a single origin group with the load balan
 
 Lambda@Edge is an extension of AWS Lambda, a compute service that lets you execute functions that customize the content that CloudFront delivers. You
 can author Node.js or Python functions in the US East (N. Virginia) region, and then execute them in AWS locations globally that are closer to the
-viewer, without provisioning or managing servers. Lambda@Edge functions are associated with a specific behavior and
+viewer, without provisioning or managing servers. Lambda@Edge functions are associated with a specific behavior and event type. Lambda@Edge can be
+used rewrite URLs, alter responses based on headers or cookies, or authorize requests based on headers or authorization tokens.
 
-**TODO:** Design the Lambda@Edge API.
+By default, Lambda@Edge functions are attached to the default behavior:
+
+```ts
+const myFunc = new lambda.Function(...);
+const myDist = new Distribution(...);
+myDist.addLambdaFunctionAssociation({
+  functionVersion: myFunc.currentVersion,
+  eventType: EventType.VIEWER_REQUEST,
+});
+```
+
+Lambda@Edge functions can also be associated with additional behaviors, either at behavior creation or after the fact, either by attaching
+directly to the behavior, or to the distribution and referencing the behavior.
+
+```ts
+// Assigning at behavior creation.
+myOrigin.addBehavior('/images/*.jpg', {
+  viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+  defaultTtl: cdk.Duration.days(7),
+  lambdaFunctionAssociations: [{
+    functionVersion: myFunc.currentVersion,
+    eventType: EventType.VIEWER_REQUEST,
+  }]
+});
+
+// Assigning after creation.
+const myImagesBehavior = myOrigin.addBehavior('/images/*.jpg', ...);
+myImagesBehavior.addLambdaFunctionAssociation({
+  functionVersion: myFunc.currentVersion,
+  eventType: EventType.VIEWER_REQUEST,
+});
+
+myDist.addLambdaFunctionAssociation({
+  functionVersion: myFunc.currentVersion,
+  eventType: EventType.ORIGIN_REQUEST,
+  behavior: myImagesBehavior,
+});
+```
 
 ---
 
 # Motivation
 
-> Why are we doing this? What use cases does it support? What is the expected
-> outcome?
-
-**_TODO_**
+The existing aws-cloudfront module doesn't adhere to standard naming convention, lacks convenience methods for more easily interacting with
+distributions, origins, and behaviors, and has been in an "experimental" state for years. This proposal aims to bring a friendlier, more ergonic
+interface to the module, and advance the module to a GA-ready state.
 
 # Design Summary
 
-> Summarize the approach of the feature design in a couple of sentences. Call out
-> any known patterns or best practices the design is based around.
-
-**_TODO_**
+The approach will create a new top-level Construct (`Distribution`) to replace the existing `CloudFrontWebDistribution`, as well as new constructs
+to represent the other logical resources for a distribution (i.e., `Origin`, `Behavior`). The new L2s will be created in the same aws-cloudfront
+module and no changes will be made to the existing L2s to preserve the existing experience. Unlike the existing L2, the new L2s will feature a
+variety of convenience methods (e.g., `addBehavior`) to aid in the creation of the distribution, and provide several out-of-the-box defaults for
+building distributions off of other resources (e.g., buckets, load balanced services).
 
 # Detailed Design
 
@@ -204,17 +242,15 @@ viewer, without provisioning or managing servers. Lambda@Edge functions are asso
 > - [Graphviz](http://graphviz.it/#/gallery/structs.gv)
 > - [PlantText](https://www.planttext.com)
 
+**_TODO_** - What is important to capture here for this RFC?
+
 # Drawbacks
 
-> Why should we _not_ do this? Please consider:
->
-> - implementation cost, both in term of code size and complexity
-> - whether the proposed feature can be implemented in user space
-> - the impact on teaching people how to use CDK
-> - integration of this feature with other existing and planned features
-> - cost of migrating existing CDK applications (is it a breaking change?)
->
-> There are tradeoffs to choosing any path. Attempt to identify them here.
+The primary drawback to this work is one of adoption. The aws-cloudfront module is one of the oldest in the CDK, and is used by many customers.
+These changes won't break any of the existing customers, but all existing customers would need to rewrite their CloudFront constructs to take
+advantage of the functionality and ease-of-use benefits of the new L2s. For building an entirely new set of L2s to be worth the return on investment,
+the improvements to functionality and ergonomics needs to be substantial. Feedback is welcome on how to best capitalize on this opportunity and make
+the friendliest interface possible.
 
 # Rationale and Alternatives
 
@@ -225,8 +261,8 @@ viewer, without provisioning or managing servers. Lambda@Edge functions are asso
 
 ## Flat vs nested origin:behaviors
 
-**TODO:** The behaviors are technically flat, allowing for arbitrary ordering of behaviors across origins. The nested approach here, while it
-  generally makes sense, makes this functionality a bit more difficult. Discuss trade-offs.
+**_TODO:_** _The behaviors are technically flat, allowing for arbitrary ordering of behaviors across origins. The nested approach here, while it
+  generally makes sense, makes this functionality a bit more difficult. Discuss the trade-offs here._
 
 # Adoption Strategy
 
@@ -237,27 +273,36 @@ viewer, without provisioning or managing servers. Lambda@Edge functions are asso
 
 # Unresolved questions
 
-> - What parts of the design do you expect to resolve through the RFC process
->   before this gets merged?
-> - What parts of the design do you expect to resolve through the implementation
->   of this feature before stabilization?
-> - What related issues do you consider out of scope for this RFC that could be
->   addressed in the future independently of the solution that comes out of this
->   RFC?
+1. Are `fromBucket` and `fromWebsiteBucket` (potentially) redundant? There isn't enough information
+on the `IBucket` interface to determine if the bucket has been configured for static web hosting and
+we should treat as such. However, we could have an additional parameter to `fromBucket` trigger this
+behavior (e.g., `isConfiguredAsWebsite`?).
+2. Does the nested (origin->behavior) model make sense? It's the most straightforward for 99% of use
+cases; however, the actual CloudFront (and CloudFormation) model is that there is a single default
+behavior and then a list of ordered behaviors, each associated with an origin. This is important in
+the case where the order of behaviors matters. For example,
+`[{origin-1,'images/*.jpg'},{origin-2,'images/*'},{origin-1,'*.gif'}]`.
+If the order of the last two is reversed (all origin behaviors grouped), the outcome changes. Possible
+alternatives to "flattening" the relationship would be to expose a property (`behaviorOrder`) to explicitly
+set the order. This is most important for the all-in-one scenarios where all origins and behaviors are passed
+to the constructor at once. In other scenarios, the order behaviors are created in can be used.
+3. Naming question -- `Distribution` seems the most natural name to replace `CloudFrontWebDistribution`; however,
+`IDistribution` already exists and doesn't exactly match the desired interface. `IDistribution` is used in the
+`aws-s3-deployment` module, which is also experimental. Would it be acceptable to break this interface, given that
+all CDK usages are in experimental modules?
 
-**_TODO_**
+# Future Possibilities
 
-## Future Possibilities
+One extension point for this redesign is building all-in-one "L3s" on top of the new L2s. One extremely common use case for CloudFront is
+to be used as a globally-distributed front on top of a S3 bucket configured for website hosting. One potential L3 for CloudFront would wrap
+this entire set of constructs into one easy-to-use construct. For example:
 
-> Think about what the natural extension and evolution of your proposal would be
-> and how it would affect CDK as whole. Try to use this section as a tool to more
-> fully consider all possible interactions with the project and ecosystem in your
-> proposal. Also consider how this fits into the roadmap for the project.
->
-> This is a good place to "dump ideas", if they are out of scope for the RFC you
-> are writing but are otherwise related.
->
-> If you have tried and cannot think of any future possibilities, you may simply
-> state that you cannot think of anything.
+```ts
+// Creates the hosted zone, S3 bucket, CloudFront distribution, ACM certificate, and wires everything together.
+new StaticWebsiteDistribution(this, 'SiteDistribution', {
+  domainName: 'www.example.com',
+  source: s3.Source.asset('static-website/'),
+});
+```
 
-**_TODO - Discuss "L3s" like StaticWebsiteDistribution that are all-in-one._**
+**_TODO_**: Add more examples?
