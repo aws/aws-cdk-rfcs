@@ -11,9 +11,11 @@ related issue: (tracking issue number)
 
 # README
 
-> Work backwards from the README: pretend that this feature is already implemented and write the README section. It will help you think about your proposal from a user experience point of view.
-
-> If a README format does not make sense for your proposal, write a "Press Release" which announces your new feature instead.
+> Work backwards from the README: pretend that this feature is already
+> implemented and write the README section. It will help you think about your
+> proposal from a user experience point of view. If a README format does not
+> make sense for your proposal, write a "Press Release" which announces your new
+> feature instead.
 
 # Motivation
 

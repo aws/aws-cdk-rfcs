@@ -139,7 +139,7 @@ issue and ask.
 
 ## RFC Process
 
-In short, to get a major feature added to CDK/jsii, one usually writes an RFC 
+In short, to get a major feature added to CDK/jsii, one usually writes an RFC
 as a markdown file and gets it approved and merged into the RFC repo. At that point the RFC is
 'approved' and may be implemented into CDK/jsii.
 
@@ -243,7 +243,7 @@ digraph states {
 4. **Approved** - The RFC PR is approved and merged to `master`, and the RFC is nonw
    ready to be implemented.
 5. **Planning** - A PR is created with the **Implementation Plan** section of the RFC.
-6. **Implementing** - Implemetation plan is approved and merged and the RFC is actively 
+6. **Implementing** - Implemetation plan is approved and merged and the RFC is actively
    being implemented.
 7. **Done** - Implementation is complete and merged across appropriate
    repositories.
