@@ -180,8 +180,9 @@ as a markdown file and gets it approved and merged into the RFC repo. At that po
     will become 'approved'.
 13. At some point, someone will pick up the RFC for implementation. For major
     features this usually requires devising a detailed implementation plan. To
-    that end, submit an **additional PR** on the RFC doc that fills in the
-    "Implementation Plan" section.
+    that end, submit an **additional PR** on the RFC doc that either fills in
+    the "Implementation Plan" section or references a separate document or
+    GitHub Project Board which includes the plan.
 14. Once this PR is approved, the RFC will move to the 'implementing' state.
     Usually we track implementation using GitHub projects.
 15. Once implementation is complete, the RFC moves to 'done', and it's issue is

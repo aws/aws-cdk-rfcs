@@ -91,6 +91,10 @@ related issue: (tracking issue number)
 INTENTIONALLY LEFT BLANK: an implementation plan will be added when the RFC is
 scheduled for implementation.
 
-> The implementation plan should list all the tasks needed across the project in order to implement this RFC, and the planned order of implementation based on dependencies and analysis of the critical path.
+> The implementation plan should analyze all the tasks needed in order to
+> implement this RFC, and the planned order of implementation based on
+> dependencies and analysis of the critical path.
 >
-> You can use a GitHub Project Board (and reference it here) to manage the execution of your plan.
+> Either add the plan here or add link which references a separate document
+> and/or a GitHub Project Board (and reference it here) which manages the
+> execution of your plan.
