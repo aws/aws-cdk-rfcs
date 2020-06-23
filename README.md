@@ -50,22 +50,34 @@ future state of the libraries and to discover projects for contribution.
 [35](https://github.com/aws/aws-cdk-rfcs/issues/35)|[Publish construct library guidelines](https://github.com/aws/aws-cdk-rfcs/issues/35)||💡 proposed
 [39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/issues/39)||💡 proposed
 [40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||💡 proposed
-[46](https://github.com/aws/aws-cdk-rfcs/issues/46)|[Hooks](https://github.com/aws/aws-cdk-rfcs/issues/46)||💡 proposed
 [48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)|[@rix0rrr](https://github.com/rix0rrr)|💡 proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/issues/52)||💡 proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||💡 proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)||💡 proposed
+[65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
+[66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||💡 proposed
+[67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||💡 proposed
+[69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[One-off "job" Stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||💡 proposed
+[70](https://github.com/aws/aws-cdk-rfcs/issues/70)|[Cost Estimation Tools](https://github.com/aws/aws-cdk-rfcs/issues/70)||💡 proposed
+[71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Hooks](https://github.com/aws/aws-cdk-rfcs/issues/71)||💡 proposed
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|[Stack Policy](https://github.com/aws/aws-cdk-rfcs/issues/72)||💡 proposed
 [73](https://github.com/aws/aws-cdk-rfcs/issues/73)|[AWS Resource Model](https://github.com/aws/aws-cdk-rfcs/issues/73)||💡 proposed
+[74](https://github.com/aws/aws-cdk-rfcs/issues/74)|[Common API for Resources with Web Addresses](https://github.com/aws/aws-cdk-rfcs/issues/74)||💡 proposed
+[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[Import L1s from CloudFormation Registry](https://github.com/aws/aws-cdk-rfcs/issues/77)||💡 proposed
 [78](https://github.com/aws/aws-cdk-rfcs/issues/78)|[Feature proposal: Workspaces](https://github.com/aws/aws-cdk-rfcs/issues/78)||💡 proposed
+[82](https://github.com/aws/aws-cdk-rfcs/issues/82)|[Loosely Coupled Stacks through SSM Parameters](https://github.com/aws/aws-cdk-rfcs/issues/82)||💡 proposed
+[83](https://github.com/aws/aws-cdk-rfcs/issues/83)|[Global Name Prefix](https://github.com/aws/aws-cdk-rfcs/issues/83)||💡 proposed
+[86](https://github.com/aws/aws-cdk-rfcs/issues/86)|[AWS Account Alias Resource](https://github.com/aws/aws-cdk-rfcs/issues/86)||💡 proposed
 [87](https://github.com/aws/aws-cdk-rfcs/issues/87)|[On-Demand CFN Resource Generator](https://github.com/aws/aws-cdk-rfcs/issues/87)||💡 proposed
 [109](https://github.com/aws/aws-cdk-rfcs/issues/109)|[Elasticache L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/109)||💡 proposed
 [116](https://github.com/aws/aws-cdk-rfcs/issues/116)|[Easier identification of experimental modules](https://github.com/aws/aws-cdk-rfcs/issues/116)|[@rix0rrr](https://github.com/rix0rrr)|💡 proposed
 [118](https://github.com/aws/aws-cdk-rfcs/issues/118)|[New CDK Major Version](https://github.com/aws/aws-cdk-rfcs/issues/118)||💡 proposed
 [127](https://github.com/aws/aws-cdk-rfcs/issues/127)|[CDK to directly reference/import/update an existing stack](https://github.com/aws/aws-cdk-rfcs/issues/127)||💡 proposed
 [139](https://github.com/aws/aws-cdk-rfcs/issues/139)|["fromLookup" for additional resources](https://github.com/aws/aws-cdk-rfcs/issues/139)||💡 proposed
+[159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||💡 proposed
+[161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
 [171](https://github.com/aws/aws-cdk-rfcs/issues/171)|[CloudFront Module Redesign](https://github.com/aws/aws-cdk-rfcs/issues/171)|[@njlynch](https://github.com/njlynch)|💡 proposed
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
@@ -78,23 +90,9 @@ future state of the libraries and to discover projects for contribution.
 [110](https://github.com/aws/aws-cdk-rfcs/issues/110)|[CLI Compatibility Strategy](https://github.com/aws/aws-cdk-rfcs/blob/master/text/00110-cli-framework-compatibility-strategy.md)|[@iliapolo](https://github.com/iliapolo)|✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
-[65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[AWS CDK in the Management Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||❓unknown
-[66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[Support for CloudFormation StackSets](https://github.com/aws/aws-cdk-rfcs/issues/66)||❓unknown
-[67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring packs and a centralized monitoring "hub"](https://github.com/aws/aws-cdk-rfcs/issues/67)||❓unknown
-[69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[Idea: one off "job" stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||❓unknown
-[70](https://github.com/aws/aws-cdk-rfcs/issues/70)|[Cost estimation tools](https://github.com/aws/aws-cdk-rfcs/issues/70)||❓unknown
-[71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Stacks and/or Contructs should emit events](https://github.com/aws/aws-cdk-rfcs/issues/71)||❓unknown
-[74](https://github.com/aws/aws-cdk-rfcs/issues/74)|[Common address interface for constructs that have a web address](https://github.com/aws/aws-cdk-rfcs/issues/74)||❓unknown
-[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[Support arbitrary JSON schema for L1 resource properties](https://github.com/aws/aws-cdk-rfcs/issues/77)||❓unknown
-[80](https://github.com/aws/aws-cdk-rfcs/issues/80)|[Support way to provide custom ContextProvider](https://github.com/aws/aws-cdk-rfcs/issues/80)||❓unknown
 [81](https://github.com/aws/aws-cdk-rfcs/issues/81)|[AWS Landing Zone CDK pattern request](https://github.com/aws/aws-cdk-rfcs/issues/81)||❓unknown
-[82](https://github.com/aws/aws-cdk-rfcs/issues/82)|[Loosely couple stacks with a SSM parameter wrapper](https://github.com/aws/aws-cdk-rfcs/issues/82)||❓unknown
-[83](https://github.com/aws/aws-cdk-rfcs/issues/83)|[Global name prefix switch](https://github.com/aws/aws-cdk-rfcs/issues/83)||❓unknown
 [85](https://github.com/aws/aws-cdk-rfcs/issues/85)|[Cross Account resource import and source account tracking](https://github.com/aws/aws-cdk-rfcs/issues/85)|[@skinny85](https://github.com/skinny85)|❓unknown
-[86](https://github.com/aws/aws-cdk-rfcs/issues/86)|[Create an L2 for AWS account aliases using a custom resource](https://github.com/aws/aws-cdk-rfcs/issues/86)||❓unknown
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
-[159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[[Feature idea] Import entire CDK app for cross-app resouce sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||❓unknown
-[161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[RFC: Cross-region/account references](https://github.com/aws/aws-cdk-rfcs/issues/161)||❓unknown
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[Simplify working with logical IDs when refactoring CDK code](https://github.com/aws/aws-cdk-rfcs/issues/162)||❓unknown
 <!--END_TABLE-->
 
