@@ -39,13 +39,13 @@ documents.
 // Creates a distribution for a S3 bucket.
 const myBucket = new s3.Bucket(...);
 new Distribution(this, 'myDist', {
-  origin: Origin.fromBucket(this, 'myOrigin', myBucket)
+  origin: Origin.fromBucket(myBucket)
 });
 
 // Creates a distribution for a S3 bucket that has been configured for website hosting.
 const myWebsiteBucket = new s3.Bucket(...);
 new Distribution(this, 'myDist', {
-  origin: Origin.fromWebsiteBucket(this, 'myOrigin', myBucket)
+  origin: Origin.fromWebsiteBucket(myBucket)
 });
 ```
 
@@ -58,12 +58,12 @@ Origins can also be created from other resources (e.g., load balancers, API gate
 // Creates a distribution for an application load balancer.
 const myLoadBalancer = new elbv2.ApplicationLoadBalancer(...);
 new Distribution(this, 'myDist', {
-  origin: Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer)
+  origin: Origin.fromLoadBalancerV2(myLoadBalancer)
 });
 
 // Creates a distribution for an HTTP server.
 new Distribution(this, 'myDist', {
-  origin: Origin.fromHTTPServer(this, 'myOrigin', {
+  origin: Origin.fromHTTPServer({
     domainName: 'www.example.com',
     originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY
   })
@@ -110,7 +110,7 @@ methods and viewer protocol policy of the cache.
 
 ```ts
 const myWebDistribution = new Distribution(this, 'myDist', {
-  origin: Origin.fromHTTPServer(this, 'myOrigin', {
+  origin: Origin.fromHTTPServer({
     domainName: 'www.example.com',
     originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY
   }),
@@ -141,8 +141,8 @@ following example shows how such a setup might be created:
 ```ts
 const myWebsiteBucket = new s3.Bucket(...);
 const myMultiOriginDistribution = new Distribution(this, 'myDist', {
-  origin: Origin.fromWebsiteBucket(this, 'myOrigin', myBucket),
-  additionalOrigins: [Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer, {
+  origin: Origin.fromWebsiteBucket(myBucket),
+  additionalOrigins: [Origin.fromLoadBalancerV2(myLoadBalancer, {
     pathPattern: '/api/*',
     allowedMethods: AllowedMethods.ALL,
     forwardQueryString: true,
@@ -157,8 +157,8 @@ for the distribution.
 
 ```ts
 const myOriginGroup = Origin.groupFromOrigins(
-  primaryOrigin: Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer),
-  fallbackOrigin: Origin.fromBucket(this, 'myFallbackOrigin', myBucket),
+  primaryOrigin: Origin.fromLoadBalancerV2(myLoadBalancer),
+  fallbackOrigin: Origin.fromBucket(myBucket),
   fallbackStatusCodes: [500, 503]
 );
 new Distribution(this, 'myDist', { origin: myOriginGroup });
@@ -192,7 +192,7 @@ directly to the behavior, or to the distribution and referencing the behavior.
 myOrigin.addBehavior('/images/*.jpg', {
   viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
   defaultTtl: cdk.Duration.days(7),
-  lambdaFunctionAssociations: [{
+  functionAssociation: [{
     functionVersion: myFunc.currentVersion,
     eventType: EventType.VIEWER_REQUEST,
   }]
@@ -200,12 +200,12 @@ myOrigin.addBehavior('/images/*.jpg', {
 
 // Assigning after creation.
 const myImagesBehavior = myOrigin.addBehavior('/images/*.jpg', ...);
-myImagesBehavior.addLambdaFunctionAssociation({
+myImagesBehavior.addFunctionAssociation({
   functionVersion: myFunc.currentVersion,
   eventType: EventType.VIEWER_REQUEST,
 });
 
-myDist.addLambdaFunctionAssociation({
+myDist.addFunctionAssociation({
   functionVersion: myFunc.currentVersion,
   eventType: EventType.ORIGIN_REQUEST,
   behavior: myImagesBehavior,
@@ -230,19 +230,190 @@ building distributions off of other resources (e.g., buckets, load balanced serv
 
 # Detailed Design
 
-> This is the bulk of the RFC. Explain the design in enough detail for somebody
-> familiar with CDK to understand, and for somebody familiar with the
-> implementation to implement. This should get into specifics and corner-cases,
-> and include examples of how the feature is used. Any new terminology should be
-> defined here.
->
-> Include any diagrams and/or visualizations that help to demonstrate the design.
-> Here are some tools that we often use:
->
-> - [Graphviz](http://graphviz.it/#/gallery/structs.gv)
-> - [PlantText](https://www.planttext.com)
+The design creates one new resource (`Distribution`) and two new classes (`Origin` and `Behavior`) to replace the current
+`CloudFrontWebDistribution` construct. Each of these new classes comes with helper methods (e.g., `addBehavior`) to make assembling more complex
+distributions easier, as well as factory constructors to make it easier to build common Origin and Behavior patterns (e.g., `Origin.fromBucket`).
 
-**_TODO_** - What is important to capture here for this RFC?
+The following is an incomplete, but representative, listing of the API:
+
+```ts
+class Distribution extends BaseDistribution {
+  static fromArn(scope: Construct, id: string, distributionArn: string): IDistribution;
+  static fromAttributes(scope: Construct, id: string, distributionArn: string): IDistribution;
+
+  constructor(scope: Construct, id: string, props: DistributionProps) {}
+
+  addOrigin(options: OriginOptions): Origin
+  addBehavior(pathPattern: string, options: BehaviorOptions): Behavior
+}
+
+class Origin {
+  static fromBucket(bucket: s3.IBucket, behaviorOptions?: BehaviorProps): Origin
+  static fromWebsiteBucket(bucket: s3.IBucket, behaviorOptions?: BehaviorProps): Origin
+  static fromLoadBalancerV2(loadBalancer: elbv2.ApplicationLoadBalancer, behaviorOptions?: BehaviorProps): Origin
+  static fromHttpServer(options: ServerOriginOptions, behaviorOptions?: BehaviorProps): Origin
+
+  constructor(props: OriginProps) {}
+
+  addBehavior(pathPattern: string, options: BehaviorOptions): Behavior
+}
+
+class Behavior {
+  constructor(props: BehaviorProps) {}
+
+  addFunctionAssociation(options: FunctionAssociationOptions): FunctionAssociation
+}
+```
+
+## Nested structure and relationships
+
+The `Distribution` has one top-level origin and behavior, which aligns to how the vast majority of customers use CloudFront today (based on public
+CDK examples). Customers can add additional origins (and origin groups) and behaviors, which are modeled as `additionalOrigins` and
+`additionalBehaviors`, respectively. Each origin may have multiple behaviors associated with it, so the relationship is modeled such that behaviors
+are added to origins. However, an authoritative list of behaviors is kept on the distribution to preserve ordering. This is done similarly to how
+ECS clusters keep track of Fargate profiles as they are created and associated with the cluster. In the below example, the '/api/\*' behavior for
+the load balancer origin will be ordered first, then the '/api/errors/\*' behavior on the bucket.
+
+```ts
+const myWebsiteBucket = new s3.Bucket(...);
+const myMultiOriginDistribution = new Distribution(this, 'myDist', {
+  origin: Origin.fromWebsiteBucket(this, 'myOrigin', myBucket),
+  additionalOrigins: [Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer, {
+    pathPattern: '/api/*',
+    allowedMethods: AllowedMethods.ALL,
+    forwardQueryString: true,
+  })];
+});
+myMultiOriginDistribution.origin.addBehavior('/api/errors/*', ...);
+```
+
+This approach was chosen as the simplest pattern to work with for the majority of customers that don't add multiple origins and behaviors, while
+still giving those power users control over behavior ordering, albeit implicitly. See the Rationale and Alternatives section for a discussion of
+other ways this was considered.
+
+## Interaction with other L2s
+
+The existing @aws-cdk/aws-cloudfront module is used in three other modules of the CDK: (1) aws-route53-patterns, (2) aws-route53-targets, and
+(3) aws-s3-deployment.
+
+1. In aws-route53-patterns, the CloudFrontWebDistribution is used internally to the HttpsRedirect class; no CloudFront
+properties or classes are exposed to the consumer. This usage can be swapped out when the new L2s are ready without impact to customers.
+2. In aws-route53-targets, the CloudFrontTarget constructor takes a CloudFrontWebDistribution as the sole parameter. This usage could actually
+be replaced with an IDistribution, and then work for both Distribution and CloudFrontWebDistribution. I _believe_ this is a backwards-compatible
+change; please correct me if I'm wrong.
+3. In aws-s3-deployment, BucketDeploymentProps has an optional IDistribution member, which does not need to be changed.
+
+## Comparison with the existing API
+
+The primary drawback of this work is that an existing CloudFront L2 already exists and is in wide use. To justify the creation of a new API, this
+section provides examples of what the user experience of common (and some uncommon) use cases will be before and after the redesign.
+
+### Use Case #1 - S3 bucket origin
+
+The simplest use case is to have a single S3 bucket origin, and no customized behaviors.
+
+**Before:**
+
+```ts
+new CloudFrontWebDistribution(this, 'MyDistribution', {
+  originConfigs: [{
+    s3OriginSource: { s3BucketSource: sourceBucket },
+    behaviors : [ { isDefaultBehavior: true }]
+  }]
+});
+```
+
+**After:**
+
+```ts
+new Distribution(this, 'MyDistribution', {
+  origin: Origin.fromBucket(sourceBucket)
+});
+```
+
+### Use Case #2 - S3 bucket origin with certificate and custom behavior
+
+This example keeps the same bucket, but adds one custom behavior and a certificate.
+
+**Before:**
+
+```ts
+new CloudFrontWebDistribution(this, 'MyDistribution', {
+  originConfigs: [{
+    s3OriginSource: { s3BucketSource: sourceBucket },
+    behaviors : [
+      { isDefaultBehavior: true },
+      {
+        pathPattern: 'images/*',
+        defaultTtl: cdk.Duration.days(7)
+      }
+    ]
+  }],
+  viewerCertificate: ViewerCertificate.fromAcmCertificate(myCertificate),
+});
+```
+
+**After:**
+
+```ts
+const dist = new Distribution(this, 'MyDistribution', {
+  origin: Origin.fromBucket(sourceBucket),
+  certificate: myCertificate
+});
+dist.origin.addBehavior('images/*', { defaultTtl: cdk.Duration.days(7) });
+```
+
+### Use Case #3 - Multi-origin, multi-behavior distribution with a Lambda@Edge function
+
+Both S3 and LoadBalancedFargateService origins, custom behaviors, and a Lambda function to top it all off.
+
+**Before:**
+
+```ts
+new CloudFrontWebDistribution(this, 'dist', {
+  originConfigs: [
+    {
+      customOriginSource: {
+        domainName: lbFargateService.loadBalancer.loadBalancerDnsName,
+        originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
+      },
+      behaviors: [{
+        isDefaultBehavior: true,
+        allowedMethods: CloudFrontAllowedMethods.ALL,
+        forwardedValues: { queryString: true },
+        lambdaFunctionAssociations: [{
+          lambdaFunction: myFunctionVersion,
+          eventType: LambdaEdgeEventType.ORIGIN_RESPONSE,
+        }]
+      }]
+    },
+    {
+      s3OriginSource: {
+        s3BucketSource: sourceBucket,
+        originAccessIdentity: OriginAccessIdentity.fromOriginAccessIdentityName(this, 'oai', 'distOAI'),
+      },
+      behaviors: [ { pathPattern: 'static/*' } ]
+    },
+  ],
+});
+```
+
+**After:**
+
+```ts
+const dist = new Distribution(this, 'MyDistribution', {
+  origin: Origin.fromLoadBalancerV2(lbFargateService.loadBalancer),
+  behavior: {
+    allowedMethods: AllowedMethods.ALL,
+    forwardQueryString: true,
+    functionAssociations: [{
+      function: myFunctionVersion,
+      eventType: EventType.ORIGIN_RESPONSE
+    }]
+  }
+});
+dist.addOrigin(Origin.fromBucket(sourceBucket), { pathPattern: 'static/*' });
+```
 
 # Drawbacks
 
@@ -254,22 +425,26 @@ the friendliest interface possible.
 
 # Rationale and Alternatives
 
-> - Why is this design the best in the space of possible designs?
-> - What other designs have been considered and what is the rationale for not
->   choosing them?
-> - What is the impact of not doing this?
+This RFC aims to take one of the older modules in the CDK and update it to the current set of design standards. By introducing secondary resource
+creation methods, factories for common L2-based origins, and flattening some of the top-level nested properties, we can offer an easier-to-use
+experience.
 
-## Flat vs nested origin:behaviors
+The interface aims to make it easiest for the 90%+ use cases of having a single origin based on an S3 bucket (or other CDK construct), with a single
+default behavior, optionally slightly customized; it accomplishes this by exposing a single top-level `origin` and `behavior` and making us of
+factory methods to construct origins from buckets, load balancers, and other common origins. Beyond that straightforward use-case, the decision was
+made to represent the behaviors as members of origins, as each behavior must be associated with an origin. This introduces one area of cognitive
+complexity in terms of behavior ordering.
 
-**_TODO:_** _The behaviors are technically flat, allowing for arbitrary ordering of behaviors across origins. The nested approach here, while it
-  generally makes sense, makes this functionality a bit more difficult. Discuss the trade-offs here._
+Behaviors are ordered and precedence is used to determine how to route requests to origin(s). For example, origin #1 could have custom behaviors with
+path patterns of 'images/\*.jpg' and '\*.gif', and origin #2 could have a behavior on 'images/\*'. Depending on the ordering, a request for
+'images/foo.gif' may either be routed to origin #1 or #2. The approach taken ties behavior precedence to order of creation. An alternative would
+be to expose a flat list of behaviors, and allow the user to manipulate that list to change precedence. Ultimately, this was discarded as an overly-
+complex interface with diminishing benefits. However, feedback is welcome on a more elegant way to give users control of behavior ordering.
 
 # Adoption Strategy
 
-> If we implement this proposal, how will existing CDK developers adopt it? Is
-> this a breaking change? How can we assist in adoption?
-
-**_TODO_**
+Once created, the new L2s can be used by existing CDK developers for new use cases, or by converting their existing CloudFrontWebDistribution usages
+to the new Distribution resource.
 
 # Unresolved questions
 
@@ -277,19 +452,12 @@ the friendliest interface possible.
 on the `IBucket` interface to determine if the bucket has been configured for static web hosting and
 we should treat as such. However, we could have an additional parameter to `fromBucket` trigger this
 behavior (e.g., `isConfiguredAsWebsite`?).
-2. Does the nested (origin->behavior) model make sense? It's the most straightforward for 99% of use
-cases; however, the actual CloudFront (and CloudFormation) model is that there is a single default
-behavior and then a list of ordered behaviors, each associated with an origin. This is important in
-the case where the order of behaviors matters. For example,
-`[{origin-1,'images/*.jpg'},{origin-2,'images/*'},{origin-1,'*.gif'}]`.
-If the order of the last two is reversed (all origin behaviors grouped), the outcome changes. Possible
-alternatives to "flattening" the relationship would be to expose a property (`behaviorOrder`) to explicitly
-set the order. This is most important for the all-in-one scenarios where all origins and behaviors are passed
-to the constructor at once. In other scenarios, the order behaviors are created in can be used.
-3. Naming question -- `Distribution` seems the most natural name to replace `CloudFrontWebDistribution`; however,
-`IDistribution` already exists and doesn't exactly match the desired interface. `IDistribution` is used in the
-`aws-s3-deployment` module, which is also experimental. Would it be acceptable to break this interface, given that
-all CDK usages are in experimental modules?
+2. What are the advantage/disadvantages to making both `Origin` and `Behavior` extend `cdk.Construct` (or not)?
+3. Other examples of constructs which modify the underlying Cfn* resources post-creation? For example, calling `addBehavior` after
+construction alters the synthesized construct (not by adding new resources, but by changing the original one). Any best practices or
+patterns to be aware of here for the implementation?
+4. Should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future updates to it? Any other
+suggestions on how we message the "v2" on the README to highlight the new option to customers?
 
 # Future Possibilities
 
@@ -305,4 +473,5 @@ new StaticWebsiteDistribution(this, 'SiteDistribution', {
 });
 ```
 
-**_TODO_**: Add more examples?
+This would be relatively easy to piece together from the existing constructs, and would follow the patterns of the aws-s3-deployment module
+to deploy the assets.
