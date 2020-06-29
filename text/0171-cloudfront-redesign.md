@@ -460,7 +460,9 @@ on the `IBucket` interface to determine if the bucket has been configured for st
 we should treat as such. However, we could have an additional parameter to `fromBucket` trigger this
 behavior (e.g., `isConfiguredAsWebsite`?).
 2. What level of breaking changes are acceptable for the existing `IDistribution` and `CloudFrontWebDistribution` resources? Notably, the
-`IDistribution` interface should extend `IResource`, and `CloudFrontWebDistribution` changed from extending `Construct` to `Resource`.
+`IDistribution` interface should extend `IResource`, and `CloudFrontWebDistribution` changed from extending `Construct` to `Resource`. Is this
+worth it, given the breaking changes to existing consumers? The alternative is to leave both `IDistribution` and `CloudFrontWebDistribution` as-is,
+and have `Distribution` directly extend `Resource`.
 3. Related to the above, should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future
 updates to it? Any other suggestions on how we message the "v2" on the README to highlight the new option to customers?
 
