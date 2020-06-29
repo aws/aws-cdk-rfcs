@@ -36,16 +36,18 @@ An S3 bucket can be added as an origin. If the bucket is configured as a website
 documents.
 
 ```ts
+import * as cloudfront from '@aws-cdk/aws-cloudfront';
+
 // Creates a distribution for a S3 bucket.
 const myBucket = new s3.Bucket(...);
-new Distribution(this, 'myDist', {
-  origin: Origin.fromBucket(myBucket)
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromBucket(myBucket),
 });
 
 // Creates a distribution for a S3 bucket that has been configured for website hosting.
 const myWebsiteBucket = new s3.Bucket(...);
-new Distribution(this, 'myDist', {
-  origin: Origin.fromWebsiteBucket(myBucket)
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromWebsiteBucket(myBucket),
 });
 ```
 
@@ -57,15 +59,15 @@ Origins can also be created from other resources (e.g., load balancers, API gate
 ```ts
 // Creates a distribution for an application load balancer.
 const myLoadBalancer = new elbv2.ApplicationLoadBalancer(...);
-new Distribution(this, 'myDist', {
-  origin: Origin.fromLoadBalancerV2(myLoadBalancer)
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromLoadBalancerV2(myLoadBalancer),
 });
 
 // Creates a distribution for an HTTP server.
-new Distribution(this, 'myDist', {
-  origin: Origin.fromHTTPServer({
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromHTTPServer({
     domainName: 'www.example.com',
-    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY
+    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
   })
 });
 ```
@@ -76,9 +78,9 @@ When you create a distribution, CloudFront returns a domain name for the distrib
 use your own domain name, such as `www.example.com`, you can add an alternate domain name to your distribution.
 
 ```ts
-new Distribution(this, 'myDist', {
-  origin: Origin.fromBucket(myBucket),
-  aliases: ['www.example.com']
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromBucket(myBucket),
+  aliases: ['www.example.com'],
 })
 ```
 
@@ -91,8 +93,8 @@ const myCertificate = new certmgr.DnsValidatedCertificate(this, 'mySiteCert', {
   domainName: 'www.example.com',
   hostedZone,
 });
-new Distribution(this, 'myDist', {
-  origin: Origin.fromBucket(myBucket),
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromBucket(myBucket),
   certificate: myCertificate,
 });
 ```
@@ -109,14 +111,14 @@ The properties of the default cache behavior can be adjusted as part of the dist
 methods and viewer protocol policy of the cache.
 
 ```ts
-const myWebDistribution = new Distribution(this, 'myDist', {
-  origin: Origin.fromHTTPServer({
+const myWebDistribution = new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromHTTPServer({
     domainName: 'www.example.com',
-    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY
+    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
   }),
   behavior: {
     allowedMethods: AllowedMethods.ALL,
-    viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+    viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
   }
 });
 ```
@@ -140,13 +142,15 @@ following example shows how such a setup might be created:
 
 ```ts
 const myWebsiteBucket = new s3.Bucket(...);
-const myMultiOriginDistribution = new Distribution(this, 'myDist', {
-  origin: Origin.fromWebsiteBucket(myBucket),
-  additionalOrigins: [Origin.fromLoadBalancerV2(myLoadBalancer, {
-    pathPattern: '/api/*',
-    allowedMethods: AllowedMethods.ALL,
-    forwardQueryString: true,
-  })];
+const myMultiOriginDistribution = new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromWebsiteBucket(myBucket),
+  additionalOrigins: [
+    cloudfront.Origin.fromLoadBalancerV2(myLoadBalancer, {
+      pathPattern: '/api/*',
+      allowedMethods: AllowedMethods.ALL,
+      forwardQueryString: true,
+    }),
+  ],
 });
 ```
 
@@ -156,12 +160,12 @@ primary origin returns specific HTTP status code failure responses. An origin gr
 for the distribution.
 
 ```ts
-const myOriginGroup = Origin.groupFromOrigins(
-  primaryOrigin: Origin.fromLoadBalancerV2(myLoadBalancer),
-  fallbackOrigin: Origin.fromBucket(myBucket),
-  fallbackStatusCodes: [500, 503]
-);
-new Distribution(this, 'myDist', { origin: myOriginGroup });
+const myOriginGroup = cloudfront.Origin.fromOriginGroup({
+  primaryOrigin: cloudfront.Origin.fromLoadBalancerV2(myLoadBalancer),
+  fallbackOrigin: cloudfront.Origin.fromBucket(myBucket),
+  fallbackStatusCodes: [500, 503],
+});
+new cloudfront.Distribution(this, 'myDist', { origin: myOriginGroup });
 ```
 
 The above will create both origins and a single origin group with the load balancer origin falling back to the S3 bucket in case of 500 or 503 errors.
@@ -177,7 +181,7 @@ By default, Lambda@Edge functions are attached to the default behavior:
 
 ```ts
 const myFunc = new lambda.Function(...);
-const myDist = new Distribution(...);
+const myDist = new cloudfront.Distribution(...);
 myDist.addLambdaFunctionAssociation({
   functionVersion: myFunc.currentVersion,
   eventType: EventType.VIEWER_REQUEST,
@@ -252,6 +256,7 @@ class Origin {
   static fromWebsiteBucket(bucket: s3.IBucket, behaviorOptions?: BehaviorProps): Origin
   static fromLoadBalancerV2(loadBalancer: elbv2.ApplicationLoadBalancer, behaviorOptions?: BehaviorProps): Origin
   static fromHttpServer(options: ServerOriginOptions, behaviorOptions?: BehaviorProps): Origin
+  static fromOriginGroup(options: OriginGroupOptions): Origin
 
   constructor(props: OriginProps) {}
 
@@ -276,13 +281,15 @@ the load balancer origin will be ordered first, then the '/api/errors/\*' behavi
 
 ```ts
 const myWebsiteBucket = new s3.Bucket(...);
-const myMultiOriginDistribution = new Distribution(this, 'myDist', {
-  origin: Origin.fromWebsiteBucket(this, 'myOrigin', myBucket),
-  additionalOrigins: [Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer, {
-    pathPattern: '/api/*',
-    allowedMethods: AllowedMethods.ALL,
-    forwardQueryString: true,
-  })];
+const myMultiOriginDistribution = new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromWebsiteBucket(this, 'myOrigin', myBucket),
+  additionalOrigins: [
+    cloudfront.Origin.fromLoadBalancerV2(this, 'myOrigin', myLoadBalancer, {
+      pathPattern: '/api/*',
+      allowedMethods: AllowedMethods.ALL,
+      forwardQueryString: true,
+    }),
+  ];
 });
 myMultiOriginDistribution.origin.addBehavior('/api/errors/*', ...);
 ```
@@ -318,7 +325,7 @@ The simplest use case is to have a single S3 bucket origin, and no customized be
 new CloudFrontWebDistribution(this, 'MyDistribution', {
   originConfigs: [{
     s3OriginSource: { s3BucketSource: sourceBucket },
-    behaviors : [ { isDefaultBehavior: true }]
+    behaviors : [ { isDefaultBehavior: true }],
   }]
 });
 ```
@@ -326,8 +333,8 @@ new CloudFrontWebDistribution(this, 'MyDistribution', {
 **After:**
 
 ```ts
-new Distribution(this, 'MyDistribution', {
-  origin: Origin.fromBucket(sourceBucket)
+new cloudfront.Distribution(this, 'MyDistribution', {
+  origin: cloudfront.Origin.fromBucket(sourceBucket),
 });
 ```
 
@@ -345,7 +352,7 @@ new CloudFrontWebDistribution(this, 'MyDistribution', {
       { isDefaultBehavior: true },
       {
         pathPattern: 'images/*',
-        defaultTtl: cdk.Duration.days(7)
+        defaultTtl: cdk.Duration.days(7),
       }
     ]
   }],
@@ -356,9 +363,9 @@ new CloudFrontWebDistribution(this, 'MyDistribution', {
 **After:**
 
 ```ts
-const dist = new Distribution(this, 'MyDistribution', {
-  origin: Origin.fromBucket(sourceBucket),
-  certificate: myCertificate
+const dist = new cloudfront.Distribution(this, 'MyDistribution', {
+  origin: cloudfront.Origin.fromBucket(sourceBucket),
+  certificate: myCertificate,
 });
 dist.origin.addBehavior('images/*', { defaultTtl: cdk.Duration.days(7) });
 ```
@@ -392,7 +399,7 @@ new CloudFrontWebDistribution(this, 'dist', {
         s3BucketSource: sourceBucket,
         originAccessIdentity: OriginAccessIdentity.fromOriginAccessIdentityName(this, 'oai', 'distOAI'),
       },
-      behaviors: [ { pathPattern: 'static/*' } ]
+      behaviors: [ { pathPattern: 'static/*' } ],
     },
   ],
 });
@@ -401,18 +408,18 @@ new CloudFrontWebDistribution(this, 'dist', {
 **After:**
 
 ```ts
-const dist = new Distribution(this, 'MyDistribution', {
-  origin: Origin.fromLoadBalancerV2(lbFargateService.loadBalancer),
+const dist = new cloudfront.Distribution(this, 'MyDistribution', {
+  origin: cloudfront.Origin.fromLoadBalancerV2(lbFargateService.loadBalancer),
   behavior: {
     allowedMethods: AllowedMethods.ALL,
     forwardQueryString: true,
     functionAssociations: [{
       function: myFunctionVersion,
-      eventType: EventType.ORIGIN_RESPONSE
+      eventType: EventType.ORIGIN_RESPONSE,
     }]
   }
 });
-dist.addOrigin(Origin.fromBucket(sourceBucket), { pathPattern: 'static/*' });
+dist.addOrigin(cloudfront.Origin.fromBucket(sourceBucket), { pathPattern: 'static/*' });
 ```
 
 # Drawbacks
@@ -444,7 +451,7 @@ complex interface with diminishing benefits. However, feedback is welcome on a m
 # Adoption Strategy
 
 Once created, the new L2s can be used by existing CDK developers for new use cases, or by converting their existing CloudFrontWebDistribution usages
-to the new Distribution resource.
+to the new cloudfront.Distribution resource.
 
 # Unresolved questions
 
@@ -452,12 +459,10 @@ to the new Distribution resource.
 on the `IBucket` interface to determine if the bucket has been configured for static web hosting and
 we should treat as such. However, we could have an additional parameter to `fromBucket` trigger this
 behavior (e.g., `isConfiguredAsWebsite`?).
-2. What are the advantage/disadvantages to making both `Origin` and `Behavior` extend `cdk.Construct` (or not)?
-3. Other examples of constructs which modify the underlying Cfn* resources post-creation? For example, calling `addBehavior` after
-construction alters the synthesized construct (not by adding new resources, but by changing the original one). Any best practices or
-patterns to be aware of here for the implementation?
-4. Should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future updates to it? Any other
-suggestions on how we message the "v2" on the README to highlight the new option to customers?
+2. What level of breaking changes are acceptable for the existing `IDistribution` and `CloudFrontWebDistribution` resources? Notably, the
+`IDistribution` interface should extend `IResource`, and `CloudFrontWebDistribution` changed from extending `Construct` to `Resource`.
+3. Related to the above, should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future
+updates to it? Any other suggestions on how we message the "v2" on the README to highlight the new option to customers?
 
 # Future Possibilities
 
