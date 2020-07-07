@@ -46,11 +46,19 @@ new cloudfront.Distribution(this, 'myDist', {
   origin: cloudfront.Origin.fromBucket(myBucket),
 });
 
+// Equivalent to the above
+const myBucket = new s3.Bucket(...);
+cloudfront.Distribution.forBucket(this, 'myDist', myBucket);
+
 // Creates a distribution for a S3 bucket that has been configured for website hosting.
 const myWebsiteBucket = new s3.Bucket(...);
 new cloudfront.Distribution(this, 'myDist', {
   origin: cloudfront.Origin.fromWebsiteBucket(myBucket),
 });
+
+// Equivalent to the above
+const myBucket = new s3.Bucket(...);
+cloudfront.Distribution.forWebsiteBucket(this, 'myDist', myBucket);
 ```
 
 Both of the S3 Origin options will automatically create an origin access identity and grant it access to the underlying bucket. This can be used in
@@ -225,7 +233,7 @@ myImagesBehavior.addEdgeFunction({
 # Motivation
 
 The existing aws-cloudfront module doesn't adhere to standard naming convention, lacks convenience methods for more easily interacting with
-distributions, origins, and behaviors, and has been in an "experimental" state for years. This proposal aims to bring a friendlier, more ergonic
+distributions, origins, and behaviors, and has been in an "experimental" state for years. This proposal aims to bring a friendlier, more ergonomic
 interface to the module, and advance the module to a GA-ready state.
 
 # Design Summary
@@ -249,6 +257,9 @@ The following is an incomplete, but representative, listing of the API:
 class Distribution extends BaseDistribution {
   static fromArn(scope: Construct, id: string, distributionArn: string): IDistribution;
   static fromAttributes(scope: Construct, id: string, distributionArn: string): IDistribution;
+
+  static forBucket(scope: Construct, id: string, bucket: IBucket): IDistribution;
+  static forWebsiteBucket(scope: Construct, id: string, bucket: IBucket): IDistribution;
 
   constructor(scope: Construct, id: string, props: DistributionProps) {}
 
