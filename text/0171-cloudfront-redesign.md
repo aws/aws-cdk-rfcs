@@ -7,7 +7,7 @@ related issue: https://github.com/aws/aws-cdk-rfcs/issues/171
 
 # Summary
 
-(Draft) Proposal to redesign the @aws-cdk/aws-cloudfront module.
+Proposal to redesign the @aws-cdk/aws-cloudfront module.
 
 The current module does not adhere to the best practice naming conventions or ease-of-use patterns
 that are present in the other CDK modules. A redesign of the API will allow for friendly, easier
@@ -32,6 +32,8 @@ possible performance.
 CloudFront distributions deliver your content from one or more origins; an origin is the location where you store the original version of your
 content. Origins can be created from S3 buckets or a custom origin (HTTP server).
 
+### From an S3 Bucket
+
 An S3 bucket can be added as an origin. If the bucket is configured as a website endpoint, the distribution can use S3 redirects and S3 custom error
 documents.
 
@@ -54,6 +56,8 @@ new cloudfront.Distribution(this, 'myDist', {
 Both of the S3 Origin options will automatically create an origin access identity and grant it access to the underlying bucket. This can be used in
 conjunction with a bucket that is not public to require that your users access your content using CloudFront URLs and not S3 URLs directly.
 
+### From an HTTP endpoint
+
 Origins can also be created from other resources (e.g., load balancers, API gateways), or from any accessible HTTP server.
 
 ```ts
@@ -67,7 +71,7 @@ new cloudfront.Distribution(this, 'myDist', {
 new cloudfront.Distribution(this, 'myDist', {
   origin: cloudfront.Origin.fromHTTPServer({
     domainName: 'www.example.com',
-    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
+    protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
   })
 });
 ```
@@ -114,7 +118,7 @@ methods and viewer protocol policy of the cache.
 const myWebDistribution = new cloudfront.Distribution(this, 'myDist', {
   origin: cloudfront.Origin.fromHTTPServer({
     domainName: 'www.example.com',
-    originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
+    protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
   }),
   behavior: {
     allowedMethods: AllowedMethods.ALL,
@@ -154,6 +158,8 @@ const myMultiOriginDistribution = new cloudfront.Distribution(this, 'myDist', {
 });
 ```
 
+## Origin Groups
+
 You can specify an origin group for your CloudFront origin if, for example, you want to configure origin failover for scenarios when you need high
 availability. Use origin failover to designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the
 primary origin returns specific HTTP status code failure responses. An origin group can be created and specified as the primary (or additional) origin
@@ -177,26 +183,30 @@ can author Node.js or Python functions in the US East (N. Virginia) region, and 
 viewer, without provisioning or managing servers. Lambda@Edge functions are associated with a specific behavior and event type. Lambda@Edge can be
 used rewrite URLs, alter responses based on headers or cookies, or authorize requests based on headers or authorization tokens.
 
-By default, Lambda@Edge functions are attached to the default behavior:
+The following shows a Lambda@Edge function added to the default behavior and triggered on every request.
 
 ```ts
 const myFunc = new lambda.Function(...);
-const myDist = new cloudfront.Distribution(...);
-myDist.addLambdaFunctionAssociation({
-  functionVersion: myFunc.currentVersion,
-  eventType: EventType.VIEWER_REQUEST,
+new cloudfront.Distribution(this, 'myDist', {
+  origin: cloudfront.Origin.fromBucket(myBucket),
+  behavior: {
+    edgeFunctions: [{
+      functionVersion: myFunc.currentVersion,
+      eventType: EventType.VIEWER_REQUEST,
+    }]
+  },
 });
 ```
 
-Lambda@Edge functions can also be associated with additional behaviors, either at behavior creation or after the fact, either by attaching
-directly to the behavior, or to the distribution and referencing the behavior.
+Lambda@Edge functions can also be associated with additional behaviors, either at behavior creation (associated with the origin) or after behavior
+creation.
 
 ```ts
 // Assigning at behavior creation.
 myOrigin.addBehavior('/images/*.jpg', {
   viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
   defaultTtl: cdk.Duration.days(7),
-  functionAssociation: [{
+  edgeFunctions: [{
     functionVersion: myFunc.currentVersion,
     eventType: EventType.VIEWER_REQUEST,
   }]
@@ -204,15 +214,9 @@ myOrigin.addBehavior('/images/*.jpg', {
 
 // Assigning after creation.
 const myImagesBehavior = myOrigin.addBehavior('/images/*.jpg', ...);
-myImagesBehavior.addFunctionAssociation({
+myImagesBehavior.addEdgeFunction({
   functionVersion: myFunc.currentVersion,
   eventType: EventType.VIEWER_REQUEST,
-});
-
-myDist.addFunctionAssociation({
-  functionVersion: myFunc.currentVersion,
-  eventType: EventType.ORIGIN_REQUEST,
-  behavior: myImagesBehavior,
 });
 ```
 
@@ -226,11 +230,12 @@ interface to the module, and advance the module to a GA-ready state.
 
 # Design Summary
 
-The approach will create a new top-level Construct (`Distribution`) to replace the existing `CloudFrontWebDistribution`, as well as new constructs
-to represent the other logical resources for a distribution (i.e., `Origin`, `Behavior`). The new L2s will be created in the same aws-cloudfront
-module and no changes will be made to the existing L2s to preserve the existing experience. Unlike the existing L2, the new L2s will feature a
-variety of convenience methods (e.g., `addBehavior`) to aid in the creation of the distribution, and provide several out-of-the-box defaults for
-building distributions off of other resources (e.g., buckets, load balanced services).
+The approach will create a new top-level Construct (`Distribution`) to replace the existing `CloudFrontWebDistribution`, as well as new constructs to
+represent the other logical resources for a distribution (i.e., `Origin`, `Behavior`). The new construct is optimized for the most common use cases of
+creating a distribution with a single origin and behavior. The new L2s will be created in the same aws-cloudfront module and no changes will be made
+to the existing L2s to preserve the existing experience. Unlike the existing L2, the new L2s will feature a variety of convenience methods (e.g.,
+`addBehavior`) to aid in the creation of the distribution, and provide several out-of-the-box defaults for building distributions off of other
+resources (e.g., buckets, load balanced services).
 
 # Detailed Design
 
@@ -248,7 +253,6 @@ class Distribution extends BaseDistribution {
   constructor(scope: Construct, id: string, props: DistributionProps) {}
 
   addOrigin(options: OriginOptions): Origin
-  addBehavior(pathPattern: string, options: BehaviorOptions): Behavior
 }
 
 class Origin {
@@ -266,7 +270,7 @@ class Origin {
 class Behavior {
   constructor(props: BehaviorProps) {}
 
-  addFunctionAssociation(options: FunctionAssociationOptions): FunctionAssociation
+  addEdgeFunction(options: EdgeFunctionOptions): EdgeFunction
 }
 ```
 
@@ -382,7 +386,7 @@ new CloudFrontWebDistribution(this, 'dist', {
     {
       customOriginSource: {
         domainName: lbFargateService.loadBalancer.loadBalancerDnsName,
-        originProtocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
+        protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
       },
       behaviors: [{
         isDefaultBehavior: true,
@@ -413,7 +417,7 @@ const dist = new cloudfront.Distribution(this, 'MyDistribution', {
   behavior: {
     allowedMethods: AllowedMethods.ALL,
     forwardQueryString: true,
-    functionAssociations: [{
+    edgeFunctions: [{
       function: myFunctionVersion,
       eventType: EventType.ORIGIN_RESPONSE,
     }]
@@ -455,15 +459,11 @@ to the new cloudfront.Distribution resource.
 
 # Unresolved questions
 
-1. Are `fromBucket` and `fromWebsiteBucket` (potentially) redundant? There isn't enough information
-on the `IBucket` interface to determine if the bucket has been configured for static web hosting and
-we should treat as such. However, we could have an additional parameter to `fromBucket` trigger this
-behavior (e.g., `isConfiguredAsWebsite`?).
-2. What level of breaking changes are acceptable for the existing `IDistribution` and `CloudFrontWebDistribution` resources? Notably, the
+1. What level of breaking changes are acceptable for the existing `IDistribution` and `CloudFrontWebDistribution` resources? Notably, the
 `IDistribution` interface should extend `IResource`, and `CloudFrontWebDistribution` changed from extending `Construct` to `Resource`. Is this
 worth it, given the breaking changes to existing consumers? The alternative is to leave both `IDistribution` and `CloudFrontWebDistribution` as-is,
 and have `Distribution` directly extend `Resource`.
-3. Related to the above, should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future
+2. Related to the above, should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future
 updates to it? Any other suggestions on how we message the "v2" on the README to highlight the new option to customers?
 
 # Future Possibilities
