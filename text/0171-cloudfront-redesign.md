@@ -113,25 +113,21 @@ new cloudfront.Distribution(this, 'myDist', {
 
 Note that in the above example the aliases are inferred from the certificate and do not need to be explicitly provided.
 
-## Caching Behaviors
+## Behaviors
 
-Each distribution has a default cache behavior which applies to all requests to that distribution; additional cache behaviors may be specified for a
-given URL path pattern. Cache behaviors allowing routing with multiple origins, controlling which HTTP methods to support, whether to require users to
-use HTTPS, and what query strings or cookies to forward to your origin, among other behaviors.
+Each distribution has a default behavior which applies to all requests to that distribution; additional behaviors may be specified for a
+given URL path pattern. Behaviors allow routing with multiple origins, controlling which HTTP methods to support, whether to require users to
+use HTTPS, and what query strings or cookies to forward to your origin, among others.
 
-The properties of the default cache behavior can be adjusted as part of the distribution creation. The following example shows configuring the HTTP
+The properties of the default behavior can be adjusted as part of the distribution creation. The following example shows configuring the HTTP
 methods and viewer protocol policy of the cache.
 
 ```ts
 const myWebDistribution = new cloudfront.Distribution(this, 'myDist', {
-  origin: cloudfront.Origin.fromHTTPServer({
-    domainName: 'www.example.com',
-    protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
-  }),
-  behavior: {
+  origin: cloudfront.Origin.fromLoadBalancerV2(myLoadBalancer, {
     allowedMethods: AllowedMethods.ALL,
     viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-  }
+  }),
 });
 ```
 
@@ -196,13 +192,12 @@ The following shows a Lambda@Edge function added to the default behavior and tri
 ```ts
 const myFunc = new lambda.Function(...);
 new cloudfront.Distribution(this, 'myDist', {
-  origin: cloudfront.Origin.fromBucket(myBucket),
-  behavior: {
+  origin: cloudfront.Origin.fromBucket(myBucket, {
     edgeFunctions: [{
       functionVersion: myFunc.currentVersion,
       eventType: EventType.VIEWER_REQUEST,
-    }]
-  },
+    }],
+  }),
 });
 ```
 
@@ -424,15 +419,14 @@ new CloudFrontWebDistribution(this, 'dist', {
 
 ```ts
 const dist = new cloudfront.Distribution(this, 'MyDistribution', {
-  origin: cloudfront.Origin.fromLoadBalancerV2(lbFargateService.loadBalancer),
-  behavior: {
+  origin: cloudfront.Origin.fromLoadBalancerV2(lbFargateService.loadBalancer, {
     allowedMethods: AllowedMethods.ALL,
     forwardQueryString: true,
     edgeFunctions: [{
       function: myFunctionVersion,
       eventType: EventType.ORIGIN_RESPONSE,
-    }]
-  }
+    }],
+  }),
 });
 dist.addOrigin(cloudfront.Origin.fromBucket(sourceBucket), { pathPattern: 'static/*' });
 ```
