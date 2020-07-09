@@ -77,7 +77,7 @@ new cloudfront.Distribution(this, 'myDist', {
 
 // Creates a distribution for an HTTP server.
 new cloudfront.Distribution(this, 'myDist', {
-  origin: cloudfront.Origin.fromHTTPServer({
+  origin: cloudfront.Origin.fromHttpServer({
     domainName: 'www.example.com',
     protocolPolicy: OriginProtocolPolicy.HTTPS_ONLY,
   })
@@ -250,11 +250,10 @@ The following is an incomplete, but representative, listing of the API:
 
 ```ts
 class Distribution extends BaseDistribution {
-  static fromArn(scope: Construct, id: string, distributionArn: string): IDistribution;
-  static fromAttributes(scope: Construct, id: string, distributionArn: string): IDistribution;
+  static fromDistributionAttributes(scope: Construct, id: string, attributes: DistributionAttributes): IDistribution;
 
-  static forBucket(scope: Construct, id: string, bucket: IBucket): IDistribution;
-  static forWebsiteBucket(scope: Construct, id: string, bucket: IBucket): IDistribution;
+  static forBucket(scope: Construct, id: string, bucket: IBucket): Distribution;
+  static forWebsiteBucket(scope: Construct, id: string, bucket: IBucket): Distribution;
 
   constructor(scope: Construct, id: string, props: DistributionProps) {}
 
