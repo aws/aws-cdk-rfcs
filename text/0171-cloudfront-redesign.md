@@ -307,6 +307,12 @@ This approach was chosen as the simplest pattern to work with for the majority o
 still giving those power users control over behavior ordering, albeit implicitly. See the Rationale and Alternatives section for a discussion of
 other ways this was considered.
 
+**Implementation Note:** The relationships as-is are modeled with one-way connections; Distributions know about Origins, but Origins have no
+references to Distributions, for example. This design makes the initial creation much simpler for users, but makes having a per-Distribution
+ordered list of Behaviors impossible. To correct this, the Origin will need some form of reference to the Distribution, either at creation or
+when being associated with the Distribution. The current (inelegant) proposal is for the Origin to expose a method (`_attachDistribution`) which
+is called by the Distribution to create the relationship. Feedback on this approach (or more elegent proposals) are welcome.
+
 ## Interaction with other L2s
 
 The existing @aws-cdk/aws-cloudfront module is used in three other modules of the CDK: (1) aws-route53-patterns, (2) aws-route53-targets, and
@@ -469,6 +475,7 @@ worth it, given the breaking changes to existing consumers? The alternative is t
 and have `Distribution` directly extend `Resource`.
 2. Related to the above, should the current (CloudFrontWebDistribution) construct be marked as "stable" to indicate we won't be making future
 updates to it? Any other suggestions on how we message the "v2" on the README to highlight the new option to customers?
+3. Any better patterns for associating the Origin with the Distribution than something like the proposed `_attachDistribution`?
 
 # Future Possibilities
 
