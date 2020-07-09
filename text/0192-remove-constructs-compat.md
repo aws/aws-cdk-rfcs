@@ -318,7 +318,12 @@ Possible solutions:
    violate an eslint rule, but we can disable it for the time being.
 
 We can start with #1 for a while and see how bad it is. If it is, we can try to
-introduce some automation or backporting.
+introduce some automation or back-porting.
+
+Something that we can definitely do on 1.x is replace all the variants such as
+`core.Construct` and `cdk.Construct` to just `Construct`. This will slightly
+help.
+
 
 ## Removal of "synthesize"
 
@@ -493,8 +498,9 @@ The prepare hook was used in the CDK in a few cases:
 
 The first two use cases have already been addressed by centralizing the "prepare" logic at the stage level (into [prepare-app.ts](TODO)).
 
-The 3rd item can be addressed using `Lazy` tokens, and will be addressed on 1.x
-prior to the 2.x fork.
+The 3rd item can be addressed using `Lazy` tokens (see
+[example](https://github.com/aws/aws-cdk/pull/8962/files#diff-51d435d71a31c2607f923fc4d96cac56R140)),
+and will be addressed on 1.x prior to the 2.x fork.
 
 ## Validation changes
 
@@ -658,3 +664,4 @@ merge conflict potential.
 - [ ] Remove the use of "prepare" and "synthesize" in 1.x
 - [ ] Implicit `App` for `Stack`s without a scope behind a feature flag and
       enable in our unit tests in 1.x
+- [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
