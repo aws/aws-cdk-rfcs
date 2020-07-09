@@ -25,18 +25,48 @@ This RFC describes the motivation, implications and plan for this project.
 [AWS CDK v2.0]: https://github.com/aws/aws-cdk-rfcs/issues/156
 [construct-compat.ts]: https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/construct-compat.ts
 
+# Table of Contents
+
+- [Summary](#summary)
+- [Table of Contents](#table-of-contents)
+- [Release Notes](#release-notes)
+  - [Removal of base types](#removal-of-base-types)
+  - [Changes in Aspects API](#changes-in-aspects-api)
+  - [Changes to IDependable implementation](#changes-to-idependable-implementation)
+  - [Stacks as root constructs](#stacks-as-root-constructs)
+  - [Stack traces no longer attached to metadata by default](#stack-traces-no-longer-attached-to-metadata-by-default)
+  - [Lifecycle hooks removal](#lifecycle-hooks-removal)
+  - [Summary](#summary-1)
+- [Motivation](#motivation)
+- [Design](#design)
+  - [Removal of the base types (`cdk.Construct`, `cdk.IConstruct`, ...)](#removal-of-the-base-types-cdkconstruct-cdkiconstruct-)
+  - [Removal of "synthesize"](#removal-of-synthesize)
+  - [Removal of "prepare"](#removal-of-prepare)
+  - [Validation changes](#validation-changes)
+  - [Stack trace settings](#stack-trace-settings)
+  - [Info/warning/error message metadata key changes](#infowarningerror-message-metadata-key-changes)
+- [Drawbacks](#drawbacks)
+  - [User migration effort](#user-migration-effort)
+  - [CDK codebase migration efforts](#cdk-codebase-migration-efforts)
+  - [Staging of the 2.x fork](#staging-of-the-2x-fork)
+- [Rationale and Alternatives](#rationale-and-alternatives)
+  - [Alternatives considered](#alternatives-considered)
+- [Adoption Strategy](#adoption-strategy)
+- [Unresolved questions](#unresolved-questions)
+- [Future Possibilities](#future-possibilities)
+- [Implementation Plan](#implementation-plan)
+
+
 # Release Notes
 
 > This section "works backwards" from the v2.0 release notes in order to
 > describe the user impact of this change.
 
+**BREAKING CHANGE**
+
 As part of CDK v2.0, all types related to the *constructs programming model*
 have been removed from the AWS CDK and should be used directly from the
 [constructs](https://github.com/aws/constructs) library.
-
-```
-BREAKING CHANGE
-```
 
 For the majority of CDK libraries and apps, you will simply need to add
 `constructs@^4` to your `package.json` and replace:
@@ -52,7 +82,7 @@ import { Cosntruct } from 'constructs';
 ```
 
 The following sections describe all the breaking changes related to this
-project.
+project:
 
 ## Removal of base types
 
