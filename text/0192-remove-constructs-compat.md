@@ -294,7 +294,7 @@ See the RFC for [monolithic packaging] for more details.
 This section analysis the required changes and discusses the implementation
 approach and alternatives.
 
-This design is based on this [proof of concept]().
+This design is based on this [proof of concept](https://github.com/aws/aws-cdk/pull/8962).
 
 ## Removal of the base types (`cdk.Construct`, `cdk.IConstruct`, ...)
 
@@ -652,7 +652,7 @@ scheduled for implementation.
 We will try to front load as much of this change to 1.x in order to reduce the
 merge conflict potential.
 
-- [ ] Initial prototype
+- [ ] Initial prototype: https://github.com/aws/aws-cdk/pull/8962
 - [ ] Migration guide in https://github.com/aws/aws-cdk/issues/8909
 - [ ] GitHub issue for "synthesize" and "prepare" guidance.
 - [ ] Remove the use of "prepare" and "synthesize" in 1.x
