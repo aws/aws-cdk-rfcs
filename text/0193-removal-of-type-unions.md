@@ -153,25 +153,116 @@ values to the various properties accepted by the resources. Late-binding values 
 which provide enhanced ergonomics for certain constructs, particularly where various components can be expected to
 collaborate on the finalized configuration of a resource.
 
+### Where existing APIs already support the use-case in a safe manner
+
 All _type unions_ where late-bound values can be represented in the literal type of the value (`string`, `number` and
 `any`) can be simplified to that literal type, since the required APIs already exist and the migration path for those
-use-cases is already very well defined: using `Lazy` factory methods to manually wrap `IResolvable` instances.
+use-cases is already very well defined: using `Lazy` factory methods to manually wrap `IResolvable` instances:
+- Current instances of:
+  ```ts
+  public propertyName: string | IResolvable;
+  ```
+
+- Are changed to:
+  ```ts
+  public propertyName: string;
+  ```
+
+- And places where an `IResolvable` was passed (if any) are replaced to:
+  ```ts
+  let value: IResolvable;
+  // ...
+  { propertyName: Lazy.stringValue(value) }
+  ```
+
+### Use-cases where existing APIs are not usable from statically typed languages
 
 On the other hand, _type unions_ of `IResolvable` and complex types (including collections) cannot be resolved that
 easily. In **TypeScript** and other dynamic languages (such as **Python**), the `Lazy.asAny` method can be used to wrap
 an `IResolvable` and evade the type checker. This approach is however no workable in **C#**, **Go** and **Java** (and
-likely other statically typed languages we may wish to support in the future).
+likely other statically typed languages we may wish to support in the future). For example the `s3.CfnBucket` accepts
+(and exposes) properties such as:
+```ts
+lifecycleConfiguration: CfnBucket.LifecycleConfigurationProperty | cdk.IResolvable | undefined;
+```
+
+#### Recommended Approach
 
 For those cases, one solution is to have users of statically typed languages use _[escape hatches]_ to forcefully
 override properties with the desired late-bound value, since _[escape hatches]_ offer `any`-typed accessors. This
 results in a degradation of ergonomics for statically typed languages, but not not imply a redution in available
-features offered by the AWS CDK.
+features offered by the AWS CDK:
 
-An option is to generate specific wrapper types that effectively encapsulate the _type union_, however such wrapper
+- Where **TypeScript** developers could use:
+  ```ts
+  let cfnBucket: CfnBucket;
+  let value: IResolvable;
+  // ...
+  bucket.lifecycleConfiguration = value as any;
+  ```
+
+- Developers in **Java** (and other statically typed languages) would instead use:
+  ```java
+  CfnBucket bucket;
+  IResolvable resolvable;
+  // ...
+  bucket.addPropertyOverride('LifecycleConfiguration', resolvable);
+  ```
+
+#### Alternative Approach
+
+Another option is to generate specific wrapper types that effectively encapsulate the _type union_, however such wrapper
 types must then be used for _all_ properties in order to avoid incurring an API breaking change if some _CloudFormation
 Resource_ schema adds support for alternate value types on a given property (this is possible since CloudFormation
 describes resource schemas using [JSON Schema]). This would result in a significant deterioration of the ergonomics of
-the _CloudFormation Resource_ classes, but provides an API that is safe to use from any programming language.
+the _CloudFormation Resource_ classes, but provides an API that is safe to use from any programming language:
+
+- This involves defining a type such as:
+  ```ts
+  // The type could be nested under the `Cfn<Resource>` class:
+  namespace CfnBucket {
+    // TODO: Come up with a better naming strategy
+    export class LifecycleConfigurationPropertyValue implements IResolvable {
+      /**
+       * Wraps an object literal to register on the Cfn property.
+      */
+      public static fromImmediate(value: LifecycleConfigurationProperty) {
+        return new LifecycleConfigurationPropertyValue(() => value);
+      }
+
+      /**
+       * Wraps an IResolvable late-bound value to register on the Cfn property.
+      */
+      public static fromLazy(value: IResolvable) {
+        return new LifecycleConfigurationPropertyValue((ctx) => value.resolve(ctx));
+      }
+
+      private constructor(public readonly resolve: (context: IResolveContext) => any) {}
+    }
+  }
+  ```
+
+- But consequently forces **TypeScript** users to replace:
+  ```ts
+  new CfnBucket(this, 'Resource', {
+    // ...
+    lifecycleConfiguration: {
+      rules: [{ expirationInDays: 7 }],
+    },
+  });
+  ```
+
+- With the pretty heavy syntax:
+  ```ts
+  new CfnBucket(this, 'Resource', {
+    // ...
+    lifecycleConfiguration: LifecycleConfigurationPropertyValue.immediate({
+      rules: ArrayOfRulesPropertyValue.immediate([
+        RulePropertyValue.immediate({ expirationInDays: 7 }),
+      ]),
+    }),
+  });
+  ```
 
 [escape hatches]: https://docs.aws.amazon.com/cdk/latest/guide/cfn_layer.html
 [json schema]: https://json-schema.org
