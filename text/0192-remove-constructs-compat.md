@@ -44,7 +44,7 @@ This RFC describes the motivation, implications and plan for this project.
   - [Removal of "prepare"](#removal-of-prepare)
   - [Validation changes](#validation-changes)
   - [Stack trace settings](#stack-trace-settings)
-  - [Info/warning/error message metadata key changes](#infowarningerror-message-metadata-key-changes)
+  - [Logging API changes](#logging-api-changes)
 - [Drawbacks](#drawbacks)
   - [User migration effort](#user-migration-effort)
   - [CDK codebase migration efforts](#cdk-codebase-migration-efforts)
@@ -68,7 +68,7 @@ As part of CDK v2.0, all types related to the *constructs programming model*
 have been removed from the AWS CDK and should be used directly from the
 [constructs](https://github.com/aws/constructs) library.
 
-For the majority of CDK libraries and apps, you will simply need to add
+For most CDK libraries and apps, you will probably just need to add
 `constructs@^4` to your `package.json` and replace:
 
 ```ts
@@ -104,8 +104,8 @@ To apply AWS tags to a scope, prefer `Tag.add(scope, name, value)`.
 
 ## Changes to IDependable implementation
 
-The method `construct.node.addDependency(otherConstruct)` did not change, and it
-is likely the primary usage, and therefore most users won't be impacted.
+The method `construct.node.addDependency(otherConstruct)` __did not change__,
+which is likely the only API you are using related to construct dependencies.
 
 If you need to implement `IDependable`, read on:
 
@@ -141,9 +141,13 @@ to reflect this change.
 
 ## Stack traces no longer attached to metadata by default
 
-For performance reasons, the `construct.addMetadata()` method will *not* attach
-stack traces to metadata entries. You can explicitly request to attach metadata
-by passing `{ stackTrace: true }` as the the 3rd argument to `addMetadata()`.
+For performance reasons, the `construct.node.addMetadata()` method will *not*
+attach stack traces to metadata entries. You can explicitly request to attach
+stack traces to a metadata entry using the `stackTrace` option:
+
+```ts
+construct.node.addMetadata(key, value, { stackTrace: true })
+```
 
 ## Lifecycle hooks removal
 
@@ -201,6 +205,9 @@ Practically this means that if you wish to implement validation for a custom
 construct, implement the `IValidation` interface and change your `validate`
 method from `protected` to `public`.
 
+If you implemented validation through the `onValidate()` method, it should be
+renamed to `validate()`.
+
 The static method `ConstructNode.validate(node)` is no longer available. You can
 use `construct.node.validate()` which only validates the _current_ construct and
 returns the list of error messages (whether or not the construct implements
@@ -250,8 +257,10 @@ to clean up this layer, and with it, improve maintainability and code hygiene.
 The current situation is error-prone since we have two `Construct` classes in
 the type closure. For example, when a developer types `"Construct"` and uses
 VSCode to _automatically add import statements_, the IDE will actually add an
-import for `constructs.Construct`, which is _not_ the type they need. Using the
-wrong type will fail during compilation (similar error as above).
+import for `constructs.Construct`. If they define a custom construct class which
+extends this type instead of the `core.Construct` type, it won't be possible to
+pass an instance of this class as a scope to AWS CDK constructs such as `Stack`
+for example.
 
 ### 3. Composability with other domains
 
@@ -279,10 +288,12 @@ these use case.
 
 ### 4. Non-intuitive dependency requirement
 
-As we transition to
-[monolithic packaging]
-as part of v2.x, CDK users will have to take a _peer dependency_ on both the CDK
-library (`aws-cdk-lib`) and `constructs`.
+As we transition to [monolithic packaging] as part of v2.x, CDK users will have
+to take a _peer dependency_ on both the CDK library (`aws-cdk-lib`) and
+`constructs`.
+
+> Currently, the AWS CDK also takes `constructs` as a normal dependency (similar
+> to all dependencies), but this is about to change with mono-cdk.
 
 The reason `constructs` will also be required (whether we leave the
 compatibility layer or not) is due to the fact that all CDK constructs
@@ -434,10 +445,27 @@ testing framework and throughout the synthesis code path (we have quite a lot of
 that), because we will be able to assume that `Stage.of(construct.node.root)` is
 never `undefined` and has a `synth()` method which returns a cloud assembly.
 
-Since unit tests sometimes use "incremental tests" for synthesized templates,
-and `stage.synth()` would reuse the synthesized output if called twice, we will
-also need to introduce a `stage.synth({ force: true })` option. This will
-be the default behavior when using `expect(stack)` or `SynthUtils.synth()`.
+Unit tests sometimes use "incremental tests" for synthesized templates. For
+example:
+
+```ts
+const stack = new Stack();
+const c1 = new MyConstruct(stack, 'c1', { foos: [ 'bar' ] });
+expect(stack).toHaveResource('AWS::Resource', {
+  Foos: [ 'bar' ]
+});
+
+// now add a "foo" and verify that the synthesized template contains two items
+c1.addFoo('baz');
+expect(stack).toHaveResource('AWS::Resource', {
+  Foos: [ 'bar', 'baz' ]
+});
+```
+
+Since `stage.synth()` (which is called by `expect(stack)`) would reuse the
+synthesized output if called twice, we will also need to introduce a
+`stage.synth({ force: true })` option. This will be the default behavior when
+using `expect(stack)` or `SynthUtils.synth()`.
 
 The main side effect of this change is that construct paths in unit tests will
 now change. In the above example, `foo.node.path` will change from `MyFoo` to
@@ -461,33 +489,6 @@ Therefore we propose to introduce this change as a feature flag over the 1.x cod
 
 This will allow us to update our tests in 1.x and avoid the merge conflicts
 forking on 2.x
-
-----
-
-
-
-
-constructs 4.x:
-
-- [x] Migrate to projen
-- [x] Branch to 4.x and release as @next
-- [x] Reintroduce `c.node` instead of `Node.of(c)`
-- [x] Removal of `onPrepare` and `onSynthesize` and all synthesis-related code.
-- [x] Reintroduce dependencies
-- [x] Change `node.dependencies` to return the list of node dependency (non recursive) and add `node.depgraph` which returns a `Graph` object from cdk8s.
-- [x] Stack trace control
-
-CDK changes:
-
-- [x] cfn2ts
-- [ ] Consider aliasing in TypeScript to reduce potential merge conflicts.
-
-- [ ] Require `app` when defining a `Stack`.
-- [ ] assets/compat.ts
-
-
-
-
 
 ## Removal of "prepare"
 
@@ -529,19 +530,25 @@ When stack traces are disabled (either through the CDK context or through
 `CDK_STACK_TRACE_DISABLE`), we will need to set the appropriate context key in
 `App` so that this will propagate to "constructs".
 
-## Info/warning/error message metadata key changes
+## Logging API changes
 
-The construct metadata keys for `addInfo()`, `addWarning()` and `addError()` are
-`aws:cdk:info`, etc. These are not the keys used by default in "constructs"
-since the library is not part of the AWS CDK.
+The `construct.node.addInfo()`, `construct.node.addWarning()` and
+`construct.node.Error()` methods are now available under the
+`Logging.of(construct)` API:
 
-To address this, the "constructs" library allows customizing these keys through a settings module. We will need to add that configuration to the `App` level so this behavior will be preserved.
+Instead of:
 
-Alternatively, we can consider also modifying the CLI to accept the new keys as
-well, but since these are weakly coupled, it may introduce unwanted breakage,
-without much need.
+```ts
+construct.node.addWarning('my warning');
+```
 
-We recommend the first approach.
+Use:
+
+```ts
+import { Logging } from '@aws-cdk/core';
+
+Logging.of(construct).addWarning('my warning');
+```
 
 # Drawbacks
 
@@ -664,6 +671,21 @@ scheduled for implementation.
 We will try to front load as much of this change to 1.x in order to reduce the
 merge conflict potential.
 
+constructs 4.x
+
+- [x] Migrate to projen
+- [x] Branch to 4.x and release as @next
+- [x] Reintroduce `c.node` instead of `Node.of(c)`
+- [x] Removal of `onPrepare` and `onSynthesize` and all synthesis-related code.
+- [x] Reintroduce dependencies
+- [x] Change `node.dependencies` to return the list of node dependency (non recursive) and add `node.depgraph` which returns a `Graph` object from cdk8s.
+- [x] Stack trace control
+
+CDK changes:
+
+- [x] cfn2ts
+- [ ] Consider aliasing in TypeScript to reduce potential merge conflicts.
+- [ ] assets/compat.ts
 - [ ] Initial prototype: https://github.com/aws/aws-cdk/pull/8962
 - [ ] Migration guide in https://github.com/aws/aws-cdk/issues/8909
 - [ ] GitHub issue for "synthesize" and "prepare" guidance.
