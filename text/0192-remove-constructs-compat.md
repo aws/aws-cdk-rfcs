@@ -23,7 +23,7 @@ and new projects such as CDK for Kubernetes.
 This RFC describes the motivation, implications and plan for this project.
 
 [AWS CDK v2.0]: https://github.com/aws/aws-cdk-rfcs/issues/156
-[construct-compat.ts]: https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/construct-compat.ts
+[construct-compat.ts]: https://github.com/aws/aws-cdk/blob/fcca86e82235387b88371a0682cd0fc88bc1b67e/packages/%40aws-cdk/core/lib/construct-compat.ts
 
 # Table of Contents
 
@@ -92,7 +92,6 @@ The following `@aws-cdk/core` types have stand-in replacements "constructs":
 - The `@aws-cdk/core.IConstruct` type has been replaced with `constructs.IConstruct`
 - The `@aws-cdk/core.ConstructOrder` class has been replaced with `constructs.ConstructOrder`
 - The `@aws-cdk/core.ConstructNode` class has been replaced with `constructs.Node`
-- `Construct.isConstruct(x)` should be replaced with `x instanceof Construct`.
 
 ## Changes in Aspects API
 
@@ -182,10 +181,16 @@ values or Aspects if appropriate.
 The **synthesis** hook (`construct.onSynthesize()` and `construct.synthesize()`)
 is no longer supported. Synthesis is now implemented only at the app level.
 
-The `ConstructNode.synthesize(node)` method no longer exists. To prepare an app
-or a stage, simply call `app.synth()` or `stage.synth()`.
+If your use case for overriding `synthesize()` was to write into the cloud
+assembly directory, you can now find the current cloud assembly output directory
+using `Stage.of(this).outdir`.
 
-To write files into the cloud assembly directory, use `Stage.of(this).outdir`.
+The `ConstructNode.synthesize(node)` method no longer exists. However, since now
+`Stage.of(construct)` is always defined and returns the enclosing stage/app, you
+can can synthesize a construct node through `Stage.of(construct).synth()`.
+
+For additional questions/guidance on how to implement your use case without this
+hook, please post a comment on this GitHub issue: [TODO].
 
 ### Validation
 
@@ -279,11 +284,12 @@ As we transition to
 as part of v2.x, CDK users will have to take a _peer dependency_ on both the CDK
 library (`aws-cdk-lib`) and `constructs`.
 
-The reason `constructs` will also be required (whether leave the compatibility
-layer or not) is due to the fact that all CDK constructs eventually extend the
-base `constructs.Construct` class. This means that this type is part of their
-public API and therefore a peer dependency is required (otherwise, there could
-be incompatible copies of `Construct` in the node runtime).
+The reason `constructs` will also be required (whether we leave the
+compatibility layer or not) is due to the fact that all CDK constructs
+eventually extend the base `constructs.Construct` class. This means that this
+type is part of their public API and therefore a peer dependency is required
+(otherwise, there could be incompatible copies of `Construct` in the node
+runtime).
 
 See the RFC for [monolithic packaging] for more details.
 
@@ -315,7 +321,7 @@ Possible solutions:
 2. Add some automation using eslint to fix these merge conflicts.
 3. Perform the change on the 1.x codebase such that the soon-to-be-moved types
    are imported separately from other types of `@aws-cdk/core`. This will
-   violate an eslint rule, but we can disable it for the time being.
+   violate an eslint rule (TODO), but we can disable it for the time being.
 
 We can start with #1 for a while and see how bad it is. If it is, we can try to
 introduce some automation or back-porting.
@@ -430,7 +436,7 @@ never `undefined` and has a `synth()` method which returns a cloud assembly.
 
 Since unit tests sometimes use "incremental tests" for synthesized templates,
 and `stage.synth()` would reuse the synthesized output if called twice, we will
-also need to introduce a `stage.synth({ forceResynth: true })` option. This will
+also need to introduce a `stage.synth({ force: true })` option. This will
 be the default behavior when using `expect(stack)` or `SynthUtils.synth()`.
 
 The main side effect of this change is that construct paths in unit tests will
@@ -568,7 +574,7 @@ The key would be to continuously merge between the branches.
 
 # Rationale and Alternatives
 
-As a general rule, software layers which do not provider value to users should
+As a general rule, software layers which do not provide value to users should
 not exist. The constructs compatibility layer was added as solution for
 maintaining backwards compatibility within the v1.x version line while we
 extract `constructs` into an independent library.
@@ -665,3 +671,5 @@ merge conflict potential.
 - [ ] Implicit `App` for `Stack`s without a scope behind a feature flag and
       enable in our unit tests in 1.x
 - [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
+- [ ] Import https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts to "constructs"
+- [ ] `constructs` documentation on how to implement centralized synthesis.
