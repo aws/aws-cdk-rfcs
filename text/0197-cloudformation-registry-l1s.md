@@ -38,26 +38,24 @@ since the [CloudFormation Registry] specifications are the master of record for 
 
 # Detailed Design
 
-> This is the bulk of the RFC. Explain the design in enough detail for somebody familiar with CDK to understand, and for
-> somebody familiar with the implementation to implement. This should get into specifics and corner-cases, and include
-> examples of how the feature is used. Any new terminology should be defined here.
->
-> Include any diagrams and/or visualizations that help to demonstrate the design. Here are some tools that we often use:
->
-> - [Graphviz](http://graphviz.it/#/gallery/structs.gv)
-> - [PlantText](https://www.planttext.com)
+The [`json2jsii`] tool provides facilities to generate _jsii structs_ from JSON Schema specifications, providing the
+basic building block for this migration. It might need to be changed (updated or forked) in order to generate code that
+is closer to the current output of `cfn2ts`, although if this RFC is implemented as part of [CDK v2], some amount of
+breaking change would be acceptable.
+
+[`json2jsii`]: https://github.com/aws/json2jsii
+[cdk v2]: https://github.com/aws/aws-cdk-rfcs/issues/79
 
 # Drawbacks
 
-> Why should we _not_ do this? Please consider:
->
-> - implementation cost, both in term of code size and complexity
-> - whether the proposed feature can be implemented in user space
-> - the impact on teaching people how to use CDK
-> - integration of this feature with other existing and planned features
-> - cost of migrating existing CDK applications (is it a breaking change?)
->
-> There are tradeoffs to choosing any path. Attempt to identify them here.
+While the [CloudFormation Resource Specification] document contains deep-links to the documentation pages, the
+[CloudFormation Registry] schemas have been observed to generally not include documentation URLs, even though the
+[meta-schema] supports a high-level URL. This means generating CloudFormation Resource classes from the [CloudFormation
+Registry] requires either losing the ability to reference the official documentation for most (if not all) resources, or
+cross-referecing the [CloudFormation Resource Specification] to extract the documentation URLs.
+
+[meta-schema]:
+  https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html#schema-properties-writeonlyproperties
 
 # Rationale and Alternatives
 
@@ -67,26 +65,25 @@ since the [CloudFormation Registry] specifications are the master of record for 
 
 # Adoption Strategy
 
-> If we implement this proposal, how will existing CDK developers adopt it? Is this a breaking change? How can we assist
-> in adoption?
+This change is expected to be executed in such a way that it is transparent to end users: the change will be invisible
+to users of higher level constructs (also known as _L2+_), and since we intend on preserving the exising CloudFormation
+Resource classes' API, users of those will not need to alter their code in order to upgrade to the new classes.
 
-# Unresolved questions)
+# Unresolved questions
 
-> - What parts of the design do you expect to resolve through the RFC process before this gets merged?
-> - What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
-> - What related issues do you consider out of scope for this RFC that could be addressed in the future independently of
->   the solution that comes out of this RFC?
+- Can we generate documentation deep-links based solely on the resource type and property (or attribute) name?
+- Can we reliably generate forward-compatible jsii structs from JSON schema?
+  - For example, can we avoid breaking the API if some property type changes to become a union of the previous type and
+    some other type
 
 # Future Possibilities
 
-> Think about what the natural extension and evolution of your proposal would be and how it would affect CDK as whole.
-> Try to use this section as a tool to more fully consider all possible interactions with the project and ecosystem in
-> your proposal. Also consider how this fits into the roadmap for the project.
->
-> This is a good place to "dump ideas", if they are out of scope for the RFC you are writing but are otherwise related.
->
-> If you have tried and cannot think of any future possibilities, you may simply state that you cannot think of
-> anything.
+Tools that allow generating classes from the [CloudFormation Registry] schemas can be exposed to users, allowing them to
+generate code for third-party CloudFormation Resources they have access to, which offer the same ergonomics as those
+provided as part of the AWS Construct Library. This reduces the effort needed in order to get minimal support for
+type-safe provisioning of such custom resources, and also helps with bootstrapping higher level constructs using those
+third-party resources (without those, developers need to directly defer into the framework-level `CfnResource` class,
+which does not provide any type-checking guarantees).
 
 # Implementation Plan
 
