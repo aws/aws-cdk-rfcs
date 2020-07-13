@@ -30,21 +30,26 @@ This RFC describes the motivation, implications and plan for this project.
 - [Summary](#summary)
 - [Table of Contents](#table-of-contents)
 - [Release Notes](#release-notes)
-  - [Removal of base types](#removal-of-base-types)
-  - [Changes in Aspects API](#changes-in-aspects-api)
-  - [Changes to IDependable implementation](#changes-to-idependable-implementation)
-  - [Stacks as root constructs](#stacks-as-root-constructs)
-  - [Stack traces no longer attached to metadata by default](#stack-traces-no-longer-attached-to-metadata-by-default)
-  - [Lifecycle hooks removal](#lifecycle-hooks-removal)
-  - [Summary](#summary-1)
+  - [01-BASE-TYPES: Removal of base types](#01-base-types-removal-of-base-types)
+  - [02-ASPECTS: Changes in Aspects API](#02-aspects-changes-in-aspects-api)
+  - [03-DEPENDABLE: Changes to IDependable implementation](#03-dependable-changes-to-idependable-implementation)
+  - [04-STACK-ROOT: Stacks as root constructs](#04-stack-root-stacks-as-root-constructs)
+  - [05-METADATA-TRACES: Stack traces no longer attached to metadata by default](#05-metadata-traces-stack-traces-no-longer-attached-to-metadata-by-default)
+  - [06-NO-PREPARE: The `prepare` hook is no longer supported](#06-no-prepare-the-prepare-hook-is-no-longer-supported)
+  - [07-NO-SYNTHESIZE: The `synthesize` hook is no longer supported](#07-no-synthesize-the-synthesize-hook-is-no-longer-supported)
+  - [08-VALIDATION: The `validate()` hook is now `node.addValidation()`](#08-validation-the-validate-hook-is-now-nodeaddvalidation)
+  - [09-LOGGING: Logging API changes](#09-logging-logging-api-changes)
 - [Motivation](#motivation)
 - [Design](#design)
-  - [Removal of the base types (`cdk.Construct`, `cdk.IConstruct`, ...)](#removal-of-the-base-types-cdkconstruct-cdkiconstruct-)
-  - [Removal of "synthesize"](#removal-of-synthesize)
-  - [Removal of "prepare"](#removal-of-prepare)
-  - [Validation changes](#validation-changes)
-  - [Stack trace settings](#stack-trace-settings)
-  - [Logging API changes](#logging-api-changes)
+  - [01-BASE-TYPES](#01-base-types)
+  - [02-ASPECTS](#02-aspects)
+  - [03-DEPENDABLE](#03-dependable)
+  - [04-STACK-ROOT](#04-stack-root)
+  - [05-METADATA-TRACES](#05-metadata-traces)
+  - [06-NO-PREPARE](#06-no-prepare)
+  - [07-NO-SYNTHESIZE](#07-no-synthesize)
+  - [08-VALIDATION](#08-validation)
+  - [09-LOGGING](#09-logging)
 - [Drawbacks](#drawbacks)
   - [User migration effort](#user-migration-effort)
   - [CDK codebase migration efforts](#cdk-codebase-migration-efforts)
@@ -55,6 +60,9 @@ This RFC describes the motivation, implications and plan for this project.
 - [Unresolved questions](#unresolved-questions)
 - [Future Possibilities](#future-possibilities)
 - [Implementation Plan](#implementation-plan)
+  - [Base types](#base-types)
+  - [Synthesis](#synthesis)
+  - [Prepare](#prepare)
 
 
 # Release Notes
@@ -68,56 +76,83 @@ As part of CDK v2.0, all types related to the *constructs programming model*
 have been removed from the AWS CDK and should be used directly from the
 [constructs](https://github.com/aws/constructs) library.
 
-For most CDK libraries and apps, you will probably just need to add
-`constructs@^4` to your `package.json` and replace:
+For most CDK libraries and apps, you will likely just need change this:
 
 ```ts
 import { Construct } from '@aws-cdk/core';
 ```
 
-with:
+With this:
 
 ```ts
 import { Cosntruct } from 'constructs';
 ```
 
-The following sections describe all the breaking changes related to this
-project:
+The following table summarizes the API changes between 1.x and 2.x:
 
-## Removal of base types
+1.x|2.x
+------|-----
+`@aws-cdk/*` | `aws-cdk-lib` and `constructs@^4`
+`import { Construct } from '@aws-cdk/core'` | `import { Construct } from 'constructs'`
+`@aws-cdk/core.Construct` | `constructs.Construct`
+`@aws-cdk/core.IConstruct` | `constructs.IConstruct`
+`@aws-cdk/core.ConstructOrder` | `constructs.ConstructOrder`
+`@aws-cdk/core.ConstructNode` | `constructs.Node`
+`Construct.isConstruct(x)` | `x instanceof Construct`
+`construct.node.applyAspect(aspect)` | `Aspects.of(construct).apply(aspect)`
+`@aws-cdk/core.IDependable` | `constructs.IDependable`
+`@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
+`@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
+`construct.node.dependencies` | Is now non-transitive
+`construct.addMetadata()` | Stack trace not attached by default
+`ConstructNode.prepare(node)`, `onPrepare()`, `prepare()` | Not supported
+`ConstructNode.synthesize(node)`, `onSynthesize()`, `synthesize()` | Not supported
+`construct.onValidate()`, `construct.validate()` hooks | Implement `constructs.IValidation` and call `node.addValidation()`
+`ConstructNode.validate(node)` | `construct.node.validate()`
 
-The following `@aws-cdk/core` types have stand-in replacements "constructs":
+The following sections describe all the related breaking changes and details
+migration strategies for each change.
+
+## 01-BASE-TYPES: Removal of base types
+
+The following `@aws-cdk/core` types have stand-in replacements in `constructs`:
 
 - The `@aws-cdk/core.Construct` class has been replaced with `constructs.Construct`
 - The `@aws-cdk/core.IConstruct` type has been replaced with `constructs.IConstruct`
 - The `@aws-cdk/core.ConstructOrder` class has been replaced with `constructs.ConstructOrder`
 - The `@aws-cdk/core.ConstructNode` class has been replaced with `constructs.Node`
 
-## Changes in Aspects API
+## 02-ASPECTS: Changes in Aspects API
 
 Aspects are not part of the "constructs" library, and therefore instead of
 `construct.node.applyAspect(aspect)` use `Aspects.of(construct).apply(aspect)`.
 
-To apply AWS tags to a scope, prefer `Tag.add(scope, name, value)`.
+The `Tag.add(scope, name, value)` API has been removed. To apply AWS tags to a
+scope, use:
 
-> TODO: should we change to `Tags.of(scope).add(name, value)`?
+```ts
+Tags.of(scope).add(name, value);
+```
 
-## Changes to IDependable implementation
+## 03-DEPENDABLE: Changes to IDependable implementation
 
-The method `construct.node.addDependency(otherConstruct)` __did not change__,
-which is likely the only API you are using related to construct dependencies.
+If you need to implement `IDependable`:
 
-If you need to implement `IDependable`, read on:
-
-- The `@aws-cdk/core.IDependable` type has been replaced with `constructs.IDependable`
-- The `@aws-cdk/core.DependencyTrait` class has been replaced with `constructs.Dependable`
+- The `@aws-cdk/core.IDependable` type has been replaced with
+  `constructs.IDependable`
+- The `@aws-cdk/core.DependencyTrait` class has been replaced with
+  `constructs.Dependable`
 - `@aws-cdk.core.DependencyTrait.get(x)` is now `constructs.Dependable.of(x)`
-- `construct.node.dependencies` is now **non-transitive** and returns only the dependencies added to the current node.
+- `construct.node.dependencies` is now **non-transitive** and returns only the
+  dependencies added to the current node.
+
+The method `construct.node.addDependency(otherConstruct)` __did not change__ and
+can be used as before.
 
 > TODO: You can use `construct.node.dependencyGraph` to access a rich object
 > model for reflecting on the node's dependency graph.
 
-## Stacks as root constructs
+## 04-STACK-ROOT: Stacks as root constructs
 
 It is common in unit tests to use `Stack` as the root of the tree:
 
@@ -139,7 +174,7 @@ of these two).
 This means that as you migrate to v2.x, some unit tests may need to be updated
 to reflect this change.
 
-## Stack traces no longer attached to metadata by default
+## 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
 For performance reasons, the `construct.node.addMetadata()` method will *not*
 attach stack traces to metadata entries. You can explicitly request to attach
@@ -149,93 +184,88 @@ stack traces to a metadata entry using the `stackTrace` option:
 construct.node.addMetadata(key, value, { stackTrace: true })
 ```
 
-## Lifecycle hooks removal
-
-The "constructs" library intentionally does not include support for `prepare()`
-and `synthesize()` as life-cycle hooks. As our understanding of the CDK evolved,
-we realized that these activities are domain-specific and should be implemented
-at the application scope (in the AWS CDK, this is the `Stage`/`App`).
-
-To that end, one of the major changes of v2.x is removal of support for the
-`prepare()` and `synthesize()` hooks. In most cases, an alternative solution is
-easy to come by.
-
-> TODO: create a github issue for consultation around this topic
-
-### Prepare
+## 06-NO-PREPARE: The `prepare` hook is no longer supported
 
 The **prepare** hook (`construct.onPrepare()` and `construct.prepare()`) is no
-longer supported as it can be abused easily and cause construct tree corruption.
+longer supported as it can easily be abused and cause construct tree corruption
+when the tree is mutated during this stage.
 
-The `ConstructNode.prepare(node)` method no longer exists. To prepare an app or
-a stage, simply call `app.synth()` or `stage.synth()`.
+Consider a design where you mutate the tree in-band, or use `Lazy` values or
+Aspects if appropriate.
 
-To obtain the top-level app stage from any construct, you can use:
+[TODO examples from the CDK itself]
 
-```ts
-const stage = Stage.of(construct);
-stage.synth();
-```
+The `ConstructNode.prepare(node)` method no longer exists. To realize references
+& dependencies in a scope call `Stage.of(scope).synth()`.
 
-Consider a design where you mutate the tree in-band (preferable), or use `Lazy`
-values or Aspects if appropriate.
+## 07-NO-SYNTHESIZE: The `synthesize` hook is no longer supported
 
-### Synthesis
+The `synthesize()` overload (or `onSynthesize()`) is no longer supported.
+Synthesis is now implemented only at the app level.
 
-The **synthesis** hook (`construct.onSynthesize()` and `construct.synthesize()`)
-is no longer supported. Synthesis is now implemented only at the app level.
-
-If your use case for overriding `synthesize()` was to write into the cloud
+If your use case for overriding `synthesize()` was to emit files into the cloud
 assembly directory, you can now find the current cloud assembly output directory
-using `Stage.of(this).outdir`.
+during initialization using `Stage.of(this).outdir`.
 
 The `ConstructNode.synthesize(node)` method no longer exists. However, since now
-`Stage.of(construct)` is always defined and returns the enclosing stage/app, you
-can can synthesize a construct node through `Stage.of(construct).synth()`.
+`Stage.of(scope)` is always defined and returns the enclosing stage/app, you
+can can synthesize a construct node through `Stage.of(scope).synth()`.
 
 For additional questions/guidance on how to implement your use case without this
 hook, please post a comment on this GitHub issue: [TODO].
 
-### Validation
+## 08-VALIDATION: The `validate()` hook is now `node.addValidation()`
 
-Validation is still supported, but instead of a protected base class method it
-is defined through an interface called `constructs.IValidation`.
+To add validation logic to a construct, use `construct.node.addValidation()`
+method instead of overriding a protected `validate()` method:
 
-Practically this means that if you wish to implement validation for a custom
-construct, implement the `IValidation` interface and change your `validate`
-method from `protected` to `public`.
+Before:
 
-If you implemented validation through the `onValidate()` method, it should be
-renamed to `validate()`.
+```ts
+class MyConstruct extends Construct {
+  protected validate(): string[] {
+    return [ 'validation-error' ];
+  }
+}
+```
+
+After:
+
+```ts
+class MyConstruct extends Construct {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+
+    this.node.addValidation({ validate: () => [ 'validation-error' ] });
+  }
+}
+```
 
 The static method `ConstructNode.validate(node)` is no longer available. You can
 use `construct.node.validate()` which only validates the _current_ construct and
-returns the list of error messages (whether or not the construct implements
-`IValidation`).
+returns the list of all error messages returned from calling
+`validation.validate()` on all validations added to this node.
 
-## Summary
+## 09-LOGGING: Logging API changes
 
-The following table summarizes the API changes between 1.x and 2.x:
+The `construct.node.addInfo()`, `construct.node.addWarning()` and
+`construct.node.Error()` methods are now available under the
+`Logging.of(construct)` API:
 
-1.x|2.x
-------|-----
-`@aws-cdk/*` | `aws-cdk-lib` and `constructs@^4`
-`import { Construct } from '@aws-cdk/core'` | `import { Construct } from 'constructs'`
-`@aws-cdk/core.Construct` | `constructs.Construct`
-`@aws-cdk/core.IConstruct` | `constructs.IConstruct`
-`@aws-cdk/core.ConstructOrder` | `constructs.ConstructOrder`
-`@aws-cdk/core.ConstructNode` | `constructs.Node`
-`Construct.isConstruct(x)` | `x instanceof Construct`
-`construct.node.applyAspect(aspect)` | `Aspects.of(construct).apply(aspect)`
-`@aws-cdk/core.IDependable` | `constructs.IDependable`
-`@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
-`@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
-`construct.node.dependencies` | Is now non-transitive
-`construct.addMetadata()` | Stack trace not attached by default
-`ConstructNode.prepare(node)`, `onPrepare()`, `prepare()` | Not supported
-`ConstructNode.synthesize(node)`, `onSynthesize()`, `synthesize()` | Not supported
-`construct.onValidate()`, `construct.validate()` hooks | Implement `constructs.IValidation`
-`ConstructNode.validate(node)` | `construct.node.validate()`
+Instead of:
+
+```ts
+construct.node.addWarning('my warning');
+```
+
+Use:
+
+```ts
+import { Logging } from '@aws-cdk/core';
+
+Logging.of(construct).addWarning('my warning');
+```
+
 
 # Motivation
 
@@ -311,9 +341,13 @@ See the RFC for [monolithic packaging] for more details.
 This section analysis the required changes and discusses the implementation
 approach and alternatives.
 
+For each change, we added a **What can we do on 1.x?** section which discusses
+our strategy for front-loading the change into the 1.x branch to reduce forking
+costs and/or alert users of the upcoming deprecation.
+
 This design is based on this [proof of concept](https://github.com/aws/aws-cdk/pull/8962).
 
-## Removal of the base types (`cdk.Construct`, `cdk.IConstruct`, ...)
+## 01-BASE-TYPES
 
 Once `construct-compat.ts` is removed from `@aws-cdk/core`, all CDK code (both
 the framework itself and user code) would need to be changed to use the types
@@ -322,87 +356,88 @@ from `constructs`.
 Since the APIs are similar in almost all cases, this is a simple mechanical
 change as shown in the [release notes](#release-notes).
 
+### What can we do on 1.x?
+
 The main concern for the CDK codebase is maintaining this change alongside a 1.x
 branch until we switch over to 2.x. Since this change includes modifications to
 all `import` sections in almost all of our files, merge conflicts are imminent.
 
-Possible solutions:
-1. Take the hit and resolve the conflicts manually every time. These are
-   mechanical fixes and easy to do.
-2. Add some automation using eslint to fix these merge conflicts.
-3. Perform the change on the 1.x codebase such that the soon-to-be-moved types
-   are imported separately from other types of `@aws-cdk/core`. This will
-   violate an eslint rule (TODO), but we can disable it for the time being.
+To reduce these costs, we propose to modify the `scope` argument on all  1.x to
+accept `constructs.Construct` instead of `core.Construct`.
 
-We can start with #1 for a while and see how bad it is. If it is, we can try to
-introduce some automation or back-porting.
+This will provide the following benefits (enforced by an `awslint` rule):
 
-Something that we can definitely do on 1.x is replace all the variants such as
-`core.Construct` and `cdk.Construct` to just `Construct`. This will slightly
-help.
+1. The `import` statement for `import { Construct } from 'construct'` would
+   already exist which will reduce merge conflicts.
+2. It will unlock composition of framework constructs into other domains (e.g.
+   it will be possible to pass an AWS CDK L2 to a terraform stack).
 
 
-## Removal of "synthesize"
+Note that we will *not* change the base classes to `constructs.Construct`
+because it is technically (and practically) a breaking API change (we must maintain
+the invariant that "`s3.Bucket` is a `core.Construct`".
 
-Version 4.x of the `constructs` library does not contain a lifecycle hook for
-synthesis.
+The remaining change in 2.x will be to update any base classes to use
+`constructs.Construct` but this is actually not very prevalent in the framework
+code because the majority of constructs actually extend `core.Resource`.
 
-### Motivation
+Alternatives considered:
+- **Do nothing in 1.x**: will incur an ongoing maintenance cost of the 1.x -> 2.x
+  merge conflicts.
+- **Automatic merge resolution and import organization**: requires research and
+  development, not necessarily worth it.
 
-The reason this is not available at the base class is because the abstraction
-did not "hold water" as the AWS CDK evolved and new CDKs emerged.  In the AWS
-CDK, we eventually ended up with a centralized synthesis logic at the
-`Stage`-level ([TODO: ref]). The main reason was that we needed to "break" the
-recursion in various domain-specific points (e.g. stages, nested stacks) which
-meant that the generic logic of "traverse the entire tree and call `synthesize`"
-did not hold. In `cdk8s`, the support for [TODO: chart dependencies] required
-that the name of the output manifest will be determined based on the topologic
-order at the app level. Here again, the generic approach failed.
+## 02-ASPECTS
 
-In leu of those failures, we decided that there is no additional value in
-actually offering a synthesis mechanism at the `constructs` level. Each
-CDK-domain implements synthesis at the "right" level. This does not mean that
-specific domains can't offer a decentralized approach (i.e. call a method called
-"synthesize" on all constructs in the tree), it just means that this is not
-provided at the base `Construct` class.
+Aspects are actually a form of "prepare" and as such, if they mutate the tree,
+their execution order becomes critical and extremely hard to get right. To that
+end, we decided to remove them from the `constructs` library as they pose a risk
+to the programming model.
 
-### Implications on CDK code base
+However, we are aware that aspects are used in by AWS CDK apps and even 3rd
+party libraries such as [cdk-watchful](https://github.com/eladb/cdk-watchful).
 
-In the AWS CDK itself, `synthesize()` was used in three locations:
+Therefore, we propose to continue to support aspects in 2.x, with the goal of
+rethinking this programming model for a future major version. One future
+direction is to turn aspects into "reactive" so that they subscribe to tree
+events and react in-band during initialization, and not as a separate phase.
 
-1. `Stack` - creates a CFN template and adds itself to the cloud assembly manifest.
-2. `AssetStaging` - stages an asset into the cloud assembly.
-3. `TreeMetadata` - creates `tree.json` with information about the construct tree.
+Since aspects are no longer part of the base programming model, we need a way to
+apply aspects to scopes for AWS CDK apps. To do that, we propose to use the
+"trait" pattern, which is becoming a common idiom for offering APIs over CDK
+scopes:
 
-For `Stack` and `TreeMetadata`, we will convert the generic `synthesize()`
-method to `_synthesizeTemplate()` and `_synthesizeTree()` and will call them
-from the centralized synthesis function.
+```ts
+Aspects.of(scope).apply(aspect);
+```
 
-The `AssetStaging` construct does not really need to wait until synthesis in
-order to stage the asset. In fact, all the information required already exists
-during initialization. The only missing information is the cloud assembly output
-directory, and this information is actually known during initialization (we know
-this as soon as the CDK app is created). Therefore, the solution for
-`AssetStaging` is to move the staging logic to the constructor and use
-`Stage.of(this).outdir` to find the output directory of the current stage.
+The major downside of this change is discoverability, but
+`construct.node.applyAspect` is not necessarily more discoverable. We will make
+sure documentation is clear.
 
-### Implications on end-users
+We will use this opportunity to normalize the tags API and change it to use the same
+pattern: `Tags.of(x).add(name, value)`.
 
-Participation in synthesis is an "advanced" feature of the CDK framework and se
-assume most end-users don't use this directly.
+### What can we do on 1.x?
 
-If they need "last minute processing", they would likely use `prepare()` (which
-is also being [TODO: removed]) but not `synthesize()`.
+- We will migrate the 1.x branch to `Aspects.of(x)` and add a deprecation
+  warning to `this.node.applyAspect()`.
+- Introduce `Tags.of(x).add()` and add a deprecation warning to `Tag.add()`.
 
-The use case of emitting arbitrary files into the cloud assembly directory is
-weak. The cloud assembly is a well-defined format, and is currently "closed".
-There are no extension points that tools can identify. To that end, just writing
-files to the cloud assembly output directory does not make tons of sense. Having
-said that, it is still possible to do in the same way we plan for
-`AssetStaging`.
+## 03-DEPENDABLE
 
+The `constructs` library supports dependencies through `node.addDependency` like
+in 1.x, but the API to implement `IDependable` has been slightly changed.
 
-### Using stacks as roots for unit tests
+The `constructs` library also introduces `DependencyGroup` which is a mix
+between `CompositeDependable` and `ConcreteDependable`.
+
+### What can we do on 1.x?
+
+It should be possible to migrate the 1.x codebase to use the new APIs without
+any breaking changes to users.
+
+## 04-STACK-ROOT
 
 If we move staging of assets to the initialization phase, it means we need to
 know at that time where is the cloud assembly output directory. As mentioned
@@ -475,22 +510,38 @@ to generate names will also change given `uniqueId` is based on the path.
 Since app-less stacks are only used during tests, this should not have
 implications on production code, but it does break some of our test suite.
 
-### Should we do this on 1.x?
+### What can we do on 1.x?
 
 In order to reduce [merge conflicts](#repository-migration-efforts) between 1.x
-and 2.x we propose to introduce this change on the 1.x branch prior to forking
+and 2.x we considered introducing this change on the 1.x branch prior to forking
 off 2.x.
 
-However, this could be perceived as a breaking change by end-users since
+However, this is technically a breaking (behavioral) change for end-users since
 `node.path` and `node.uniqueId`, and their derivatives, will change for trees
-rooted by a `Stack` and unit tests will need to be updated.
+rooted by a `Stack`, and unit tests will need to be updated.
 
-Therefore we propose to introduce this change as a feature flag over the 1.x codebase and enable it in our unit tests (I don't believe we have a way to enable feature flags for all unit tests, but we can devise one).
+Therefore we propose to introduce this change as a feature flag over the 1.x
+codebase and migrate all of our unit tests (I don't believe we have a way to
+enable feature flags for all unit tests, but we can devise one).
 
 This will allow us to update our tests in 1.x and avoid the merge conflicts
 forking on 2.x
 
-## Removal of "prepare"
+## 05-METADATA-TRACES
+
+Since stack traces are not attached to metadata entries by default in constructs
+4.x, we will need to pass `stackTrace: true` for `CfnResource`s. This will
+preserve the deploy-time stack traces which are very important for users.
+
+Other metadata entries will not get stack traces by default, and that's a
+reasonable behavioral change.
+
+### What can we do on 1.x?
+
+No need to introduce over 1.x as the change is very local to `CfnResource` and
+therefore can be applies over 2.x without risk.
+
+## 06-NO-PREPARE
 
 The "prepare" hook was removed from constructs since it is a very fragile API.
 Since the tree can be mutated during prepare, the order of `prepare` invocations
@@ -503,52 +554,112 @@ The prepare hook was used in the CDK in a few cases:
 3. Calculation of logical IDs based on hashes of other resources (API GW
    Deployment, Lambda Version).
 
-The first two use cases have already been addressed by centralizing the "prepare" logic at the stage level (into [prepare-app.ts](TODO)).
+The first two use cases have already been addressed by centralizing the
+"prepare" logic at the stage level (into [prepare-app.ts](TODO)).
 
-The 3rd item can be addressed using `Lazy` tokens (see
-[example](https://github.com/aws/aws-cdk/pull/8962/files#diff-51d435d71a31c2607f923fc4d96cac56R140)),
-and will be addressed on 1.x prior to the 2.x fork.
+### What can we do on 1.x?
 
-## Validation changes
+- The 3rd item can be addressed using `Lazy` tokens (see
+  [example](https://github.com/aws/aws-cdk/pull/8962/files#diff-51d435d71a31c2607f923fc4d96cac56R140)),
+  and will be addressed on 1.x prior to the 2.x fork.
+- We will also add a deprecation warning on 1.x which will identify constructs
+  that implement "prepare" and refer users to a GitHub issue for details and
+  consultation.
 
-Since construct validation is quite rare, in constructs 4.x, the `validate()` protected method was removed to clean up the namespace. The alternative is to implement an interface `IValidation` with a similar method.
+## 07-NO-SYNTHESIZE
 
-The breaking change is that users who implemented `validate()` would need to
-implement `IValidation` and change their `validate()` method from `protected` to
-`public`.
+Version 4.x of the `constructs` library does not contain a lifecycle hook for
+synthesis as described [above](#the-synthesize-hook-is-no-longer-supported).
 
-## Stack trace settings
+### Motivation
 
-Since stack traces are not attached to metadata entries by default in constructs
-4.x, we will need to pass `stackTrace: true` for `CfnResource`s. This will
-preserve the deploy-time stack traces which are very important for users.
+The reason this is not available at the base class is because the abstraction
+did not "hold water" as the AWS CDK evolved and new CDKs emerged.  In the AWS
+CDK, we eventually ended up with a centralized synthesis logic at the
+`Stage`-level ([TODO: ref]). The main reason was that we needed to "break" the
+recursion in various domain-specific points (e.g. stages, nested stacks) which
+meant that the generic logic of "traverse the entire tree and call `synthesize`"
+did not hold. In `cdk8s`, the support for [TODO: chart dependencies] required
+that the name of the output manifest will be determined based on the topologic
+order at the app level. Here again, the generic approach failed.
 
-Other metadata entries will not get stack traces by default, and that's a
-reasonable change.
+In leu of those failures, we decided that there is no additional value in
+actually offering a synthesis mechanism at the `constructs` level. Each
+CDK-domain implements synthesis at the "right" level. This does not mean that
+specific domains can't offer a decentralized approach (i.e. call a method called
+"synthesize" on all constructs in the tree), it just means that this is not
+provided at the base `Construct` class.
 
-When stack traces are disabled (either through the CDK context or through
-`CDK_STACK_TRACE_DISABLE`), we will need to set the appropriate context key in
-`App` so that this will propagate to "constructs".
+### Implications on CDK code base
 
-## Logging API changes
+In the AWS CDK itself, `synthesize()` was used in three locations:
 
-The `construct.node.addInfo()`, `construct.node.addWarning()` and
-`construct.node.Error()` methods are now available under the
-`Logging.of(construct)` API:
+1. `Stack` - creates a CFN template and adds itself to the cloud assembly manifest.
+2. `AssetStaging` - stages an asset into the cloud assembly.
+3. `TreeMetadata` - creates `tree.json` with information about the construct tree.
 
-Instead of:
+For `Stack` and `TreeMetadata`, we will convert the generic `synthesize()`
+method to `_synthesizeTemplate()` and `_synthesizeTree()` and will call them
+from the centralized synthesis function.
 
-```ts
-construct.node.addWarning('my warning');
-```
+The `AssetStaging` construct does not really need to wait until synthesis in
+order to stage the asset. In fact, all the information required already exists
+during initialization. The only missing information is the cloud assembly output
+directory, and this information is actually known during initialization (we know
+this as soon as the CDK app is created). Therefore, the solution for
+`AssetStaging` is to move the staging logic to the constructor and use
+`Stage.of(this).outdir` to find the output directory of the current stage.
 
-Use:
+### Implications on end-users
 
-```ts
-import { Logging } from '@aws-cdk/core';
+Participation in synthesis is an "advanced" feature of the CDK framework and se
+assume most end-users don't use this directly.
 
-Logging.of(construct).addWarning('my warning');
-```
+If they need "last minute processing", they would likely use `prepare()` (which
+is also being [TODO: removed]) but not `synthesize()`.
+
+The use case of emitting arbitrary files into the cloud assembly directory is
+weak. The cloud assembly is a well-defined format, and is currently "closed".
+There are no extension points that tools can identify. To that end, just writing
+files to the cloud assembly output directory does not make tons of sense. Having
+said that, it is still possible to do in the same way we plan for
+`AssetStaging`.
+
+### What can we do on 1.x?
+
+1. The framework changes should be done on the 1.x branch as they are non-breaking.
+2. We will also add a deprecation notice that identifies the existence of a
+   `synthesize()` method on a construct (during synthesis) and warns users that
+   this hook will no longer be available in 2.x, offering a GitHub issue for
+   details consultation.
+
+## 08-VALIDATION
+
+Since construct validation is quite rare and we want to encourage users to
+validate in entry points, in constructs 4.x, the `validate()` protected method
+was removed and `node.addValidation()` can be used to add objects that implement
+`IValidation`.
+
+An error will be thrown if a `validate()` method is found on constructs with
+instructions on how to implement validation in 2.x.
+
+### What can we do on 1.x?
+
+We can introduce this change over the 1.x as long as we continue to support
+`validate()` alongside a deprecation warning with instructions on how to migrate
+to the new API.
+
+## 09-LOGGING
+
+We decided that logging is not generic enough to include in `constructs`. It
+emits construct metadata that is very CLI specific (e.g. `aws:cdk:warning`) and
+currently there is no strong abstraction.
+
+To continue to enable logging, we will utilize the `Logging.of(x).addWarning()` pattern.
+
+### What can we do on 1.x?
+
+We can introduce this change on 1.x and add a deprecation warning.
 
 # Drawbacks
 
@@ -695,3 +806,15 @@ CDK changes:
 - [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
 - [ ] Import https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts to "constructs"
 - [ ] `constructs` documentation on how to implement centralized synthesis.
+
+## Base types
+
+- [ ] 1.x: Convert all `scope` to use `constructs.Construct` via an `awslint` rule.
+
+## Synthesis
+
+- [ ] 1.x: Implement synthesis changes
+- [ ] 1.x: Add deprecation warning if `synthesize()` is implemented
+
+## Prepare
+
