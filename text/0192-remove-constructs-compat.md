@@ -40,6 +40,10 @@ This RFC describes the motivation, implications and plan for this project.
   - [08-VALIDATION: The `validate()` hook is now `node.addValidation()`](#08-validation-the-validate-hook-is-now-nodeaddvalidation)
   - [09-LOGGING: Logging API changes](#09-logging-logging-api-changes)
 - [Motivation](#motivation)
+  - [1. Redundant layer](#1-redundant-layer)
+  - [2. Multiple `Construct` types](#2-multiple-construct-types)
+  - [3. Composability with other domains](#3-composability-with-other-domains)
+  - [4. Non-intuitive dependency requirement](#4-non-intuitive-dependency-requirement)
 - [Design](#design)
   - [01-BASE-TYPES](#01-base-types)
   - [02-ASPECTS](#02-aspects)
@@ -60,21 +64,18 @@ This RFC describes the motivation, implications and plan for this project.
 - [Unresolved questions](#unresolved-questions)
 - [Future Possibilities](#future-possibilities)
 - [Implementation Plan](#implementation-plan)
-  - [Base types](#base-types)
-  - [Synthesis](#synthesis)
-  - [Prepare](#prepare)
-
+  - [Preparation of 1.x](#preparation-of-1x)
+  - [constructs 4.x](#constructs-4x)
+  - [2.x Work](#2x-work)
 
 # Release Notes
 
 > This section "works backwards" from the v2.0 release notes in order to
 > describe the user impact of this change.
 
-**BREAKING CHANGE**
-
-As part of CDK v2.0, all types related to the *constructs programming model*
-have been removed from the AWS CDK and should be used directly from the
-[constructs](https://github.com/aws/constructs) library.
+**BREAKING CHANGE**: As part of CDK v2.0, all types related to the *constructs
+programming model* have been removed from the AWS CDK and should be used
+directly from the [constructs](https://github.com/aws/constructs) library.
 
 For most CDK libraries and apps, you will likely just need change this:
 
@@ -122,6 +123,8 @@ The following `@aws-cdk/core` types have stand-in replacements in `constructs`:
 - The `@aws-cdk/core.ConstructOrder` class has been replaced with `constructs.ConstructOrder`
 - The `@aws-cdk/core.ConstructNode` class has been replaced with `constructs.Node`
 
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
+
 ## 02-ASPECTS: Changes in Aspects API
 
 Aspects are not part of the "constructs" library, and therefore instead of
@@ -133,6 +136,8 @@ scope, use:
 ```ts
 Tags.of(scope).add(name, value);
 ```
+
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
 
 ## 03-DEPENDABLE: Changes to IDependable implementation
 
@@ -149,8 +154,10 @@ If you need to implement `IDependable`:
 The method `construct.node.addDependency(otherConstruct)` __did not change__ and
 can be used as before.
 
-> TODO: You can use `construct.node.dependencyGraph` to access a rich object
+> You can use the new `construct.node.dependencyGraph`  to access a rich object
 > model for reflecting on the node's dependency graph.
+
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
 
 ## 04-STACK-ROOT: Stacks as root constructs
 
@@ -174,6 +181,8 @@ of these two).
 This means that as you migrate to v2.x, some unit tests may need to be updated
 to reflect this change.
 
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/69e221ab5e2fcf564283f337ab8111196608520e).
+
 ## 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
 For performance reasons, the `construct.node.addMetadata()` method will *not*
@@ -184,6 +193,8 @@ stack traces to a metadata entry using the `stackTrace` option:
 construct.node.addMetadata(key, value, { stackTrace: true })
 ```
 
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
+
 ## 06-NO-PREPARE: The `prepare` hook is no longer supported
 
 The **prepare** hook (`construct.onPrepare()` and `construct.prepare()`) is no
@@ -193,7 +204,14 @@ when the tree is mutated during this stage.
 Consider a design where you mutate the tree in-band, or use `Lazy` values or
 Aspects if appropriate.
 
-[TODO examples from the CDK itself]
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/3d4fcb5ab72ca0777f3abfa2c4aa10e0d7deba6b).
+
+Although we recommend that you rethink the use of "prepare", you can use this
+idiom to implement "prepare" using aspects:
+
+```ts
+Aspects.of(this).apply({ visit: () => this.prepare() });
+```
 
 The `ConstructNode.prepare(node)` method no longer exists. To realize references
 & dependencies in a scope call `Stage.of(scope).synth()`.
@@ -207,12 +225,14 @@ If your use case for overriding `synthesize()` was to emit files into the cloud
 assembly directory, you can now find the current cloud assembly output directory
 during initialization using `Stage.of(this).outdir`.
 
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/02b45b50c27fffae1bfbc4f61f6adc1f8fd92672).
+
 The `ConstructNode.synthesize(node)` method no longer exists. However, since now
 `Stage.of(scope)` is always defined and returns the enclosing stage/app, you
 can can synthesize a construct node through `Stage.of(scope).synth()`.
 
 For additional questions/guidance on how to implement your use case without this
-hook, please post a comment on this GitHub issue: [TODO].
+hook, please post a comment on [this GitHub issue](https://github.com/aws/aws-cdk/issues/8909).
 
 ## 08-VALIDATION: The `validate()` hook is now `node.addValidation()`
 
@@ -266,6 +286,7 @@ import { Logging } from '@aws-cdk/core';
 Logging.of(construct).addWarning('my warning');
 ```
 
+See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
 
 # Motivation
 
@@ -276,13 +297,13 @@ There are various motivations for this change:
 3. Inability to compose AWS CDK constructs into other domains
 4. Non-intuitive dependency requirement on `constructs`
 
-### 1. Redundant layer
+## 1. Redundant layer
 
 The current compatibility layer does not have any logic in it. It is pure glue
 introduced in order to avoid breaking v1.x users. As we release v2.0 we are able
 to clean up this layer, and with it, improve maintainability and code hygiene.
 
-### 2. Multiple `Construct` types
+## 2. Multiple `Construct` types
 
 The current situation is error-prone since we have two `Construct` classes in
 the type closure. For example, when a developer types `"Construct"` and uses
@@ -292,7 +313,7 @@ extends this type instead of the `core.Construct` type, it won't be possible to
 pass an instance of this class as a scope to AWS CDK constructs such as `Stack`
 for example.
 
-### 3. Composability with other domains
+## 3. Composability with other domains
 
 The main motivation for this change is to enable composition of AWS CDK
 constructs with constructs from other domains.
@@ -316,7 +337,7 @@ Being able to create construct compositions from multiple domains is a powerful
 direction for the CDK ecosystem, and this change is required in order to enable
 these use case.
 
-### 4. Non-intuitive dependency requirement
+## 4. Non-intuitive dependency requirement
 
 As we transition to [monolithic packaging] as part of v2.x, CDK users will have
 to take a _peer dependency_ on both the CDK library (`aws-cdk-lib`) and
@@ -345,7 +366,7 @@ For each change, we added a **What can we do on 1.x?** section which discusses
 our strategy for front-loading the change into the 1.x branch to reduce forking
 costs and/or alert users of the upcoming deprecation.
 
-This design is based on this [proof of concept](https://github.com/aws/aws-cdk/pull/8962).
+This design is based on this [proof of concept](https://github.com/aws/aws-cdk/pull/9056).
 
 ## 01-BASE-TYPES
 
@@ -367,11 +388,10 @@ accept `constructs.Construct` instead of `core.Construct`.
 
 This will provide the following benefits (enforced by an `awslint` rule):
 
-1. The `import` statement for `import { Construct } from 'construct'` would
+1. The `import` statement for `import { Construct } from 'constructs'` would
    already exist which will reduce merge conflicts.
 2. It will unlock composition of framework constructs into other domains (e.g.
    it will be possible to pass an AWS CDK L2 to a terraform stack).
-
 
 Note that we will *not* change the base classes to `constructs.Construct`
 because it is technically (and practically) a breaking API change (we must maintain
@@ -382,6 +402,7 @@ The remaining change in 2.x will be to update any base classes to use
 code because the majority of constructs actually extend `core.Resource`.
 
 Alternatives considered:
+
 - **Do nothing in 1.x**: will incur an ongoing maintenance cost of the 1.x -> 2.x
   merge conflicts.
 - **Automatic merge resolution and import organization**: requires research and
@@ -473,7 +494,7 @@ assert(stack.node.scope instanceof App); // previously it was `undefined`
 
 Since only the root construct may have an empty ID, we will also need to assign
 an ID. We propose to use `"Stack"` since we already have fallback logic that
-uses this as the stack name when the stack does not have an ID (see [TODO]).
+uses this as the stack name when the stack does not have an ID (see [stack.ts](https://github.com/aws/aws-cdk/blob/8c0142030dce359591aa76fe314f19fce9eddbe6/packages/%40aws-cdk/core/lib/stack.ts#L920)).
 
 This change will allow us to remove any special casing we have for stacks in the
 testing framework and throughout the synthesis code path (we have quite a lot of
@@ -549,13 +570,14 @@ becomes critical, and almost impossible to get right without a rich model of
 relationships between these "prepare" calls.
 
 The prepare hook was used in the CDK in a few cases:
+
 1. Resolution of references across stacks and nested stacks
 2. Resolution of dependencies between constructs across stacks
 3. Calculation of logical IDs based on hashes of other resources (API GW
    Deployment, Lambda Version).
 
 The first two use cases have already been addressed by centralizing the
-"prepare" logic at the stage level (into [prepare-app.ts](TODO)).
+"prepare" logic at the stage level (into [prepare-app.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/prepare-app.ts)).
 
 ### What can we do on 1.x?
 
@@ -576,12 +598,15 @@ synthesis as described [above](#the-synthesize-hook-is-no-longer-supported).
 The reason this is not available at the base class is because the abstraction
 did not "hold water" as the AWS CDK evolved and new CDKs emerged.  In the AWS
 CDK, we eventually ended up with a centralized synthesis logic at the
-`Stage`-level ([TODO: ref]). The main reason was that we needed to "break" the
-recursion in various domain-specific points (e.g. stages, nested stacks) which
-meant that the generic logic of "traverse the entire tree and call `synthesize`"
-did not hold. In `cdk8s`, the support for [TODO: chart dependencies] required
-that the name of the output manifest will be determined based on the topologic
-order at the app level. Here again, the generic approach failed.
+`Stage`-level
+([synthesis.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/synthesis.ts)).
+The main reason was that we needed to "break" the recursion in various
+domain-specific points (e.g. stages, nested stacks) which meant that the generic
+logic of "traverse the entire tree and call `synthesize`" did not hold. In
+`cdk8s`, the support for [chart
+dependencies](https://github.com/awslabs/cdk8s/blob/ef95b9ffce8a39200e028c2fe8acc55a9915161c/packages/cdk8s/src/app.ts#L39)
+required that the name of the output manifest will be determined based on the
+topologic order at the app level. Here again, the generic approach failed.
 
 In leu of those failures, we decided that there is no additional value in
 actually offering a synthesis mechanism at the `constructs` level. Each
@@ -616,7 +641,8 @@ Participation in synthesis is an "advanced" feature of the CDK framework and se
 assume most end-users don't use this directly.
 
 If they need "last minute processing", they would likely use `prepare()` (which
-is also being [TODO: removed]) but not `synthesize()`.
+is also being [removed](#06-no-prepare-the-prepare-hook-is-no-longer-supported))
+but not `synthesize()`.
 
 The use case of emitting arbitrary files into the cloud assembly directory is
 weak. The cloud assembly is a well-defined format, and is currently "closed".
@@ -768,53 +794,89 @@ See [Release Notes](#release-notes).
 
 # Implementation Plan
 
-INTENTIONALLY LEFT BLANK: an implementation plan will be added when the RFC is
-scheduled for implementation.
-
-> The implementation plan should analyze all the tasks needed in order to
-> implement this RFC, and the planned order of implementation based on
-> dependencies and analysis of the critical path.
->
-> Either add the plan here or add link which references a separate document
-> and/or a GitHub Project Board (and reference it here) which manages the
-> execution of your plan.
+## Preparation of 1.x
 
 We will try to front load as much of this change to 1.x in order to reduce the
 merge conflict potential.
 
-constructs 4.x
+To that end, we will continuously merge from "master" into [the POC
+branch](https://github.com/aws/aws-cdk/pull/9056) and slowly back port changes
+from it into `master` as much as possible. The goal is the minimize the changes
+between master and the POC branch which will be merged into the 2.x branch once
+created.
 
-- [x] Migrate to projen
-- [x] Branch to 4.x and release as @next
-- [x] Reintroduce `c.node` instead of `Node.of(c)`
-- [x] Removal of `onPrepare` and `onSynthesize` and all synthesis-related code.
-- [x] Reintroduce dependencies
-- [x] Change `node.dependencies` to return the list of node dependency (non recursive) and add `node.depgraph` which returns a `Graph` object from cdk8s.
-- [x] Stack trace control
+- [01-BASE-TYPES](#01-base-types)
+  - [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
+  - [ ] Use an `awslint` rule to modify the `scope` argument on all 1.x to
+    accept `constructs.Construct` instead of `core.Construct`
+- [02-ASPECTS](#02-aspects)
+  - [ ] Introduce `Aspects.of(x)` and deprecate `applyAspect`
+  - [ ] Introduce `Tags.of()` and deprecate `Tag.add()`
+- [03-DEPENDABLE](#03-dependable)
+  - [ ] Introduce `Dependable` as an alias to `DependencyTrait`, introduce
+    `DependencyGroup`
+- [04-STACK-ROOT](#04-stack-root)
+  - [ ] Implicit `App` for root `Stack` under a feature flag and modify all
+    [relevant
+    tests](https://github.com/aws/aws-cdk/pull/9056/commits/69e221ab5e2fcf564283f337ab8111196608520e)
+    to run behind this flag.
+- [05-METADATA-TRACES](#05-metadata-traces)
+  - N/A
+- [06-NO-PREPARE](#06-no-prepare)
+  - [ ] Back port [this
+    commit](https://github.com/aws/aws-cdk/pull/9056/commits/3d4fcb5ab72ca0777f3abfa2c4aa10e0d7deba6b)
+    to master
+  - [ ] Add a deprecation warning if `onPrepare()` or `prepare()` is identified
+    on a construct during synthesis
+- [07-NO-SYNTHESIZE](#07-no-synthesize)
+  - [ ] Back port the changes related to synthesis from [this
+    commit](https://github.com/aws/aws-cdk/pull/9056/commits/02b45b50c27fffae1bfbc4f61f6adc1f8fd92672)
+  - [ ] Add a deprecation warning if `onSynthezize()` or `synthesize()` is
+    declared on a construct
+- [08-VALIDATION](#08-validation)
+  - [ ] Introduce `node.addValidation()` and deprecate `validate()` and
+    `onValidate()` by back porting [this
+    commit](https://github.com/aws/aws-cdk/pull/9056/commits/42bd929aa36dc97ae39b15b77cf1f69d754c4a92)
+    to master
+- [09-LOGGING](#09-logging)
+  - [ ] Introduce `Logging.of()` deprecate `node.addWarning/error/info`.
 
-CDK changes:
+## constructs 4.x
 
-- [x] cfn2ts
-- [ ] Consider aliasing in TypeScript to reduce potential merge conflicts.
-- [ ] assets/compat.ts
-- [ ] Initial prototype: https://github.com/aws/aws-cdk/pull/8962
-- [ ] Migration guide in https://github.com/aws/aws-cdk/issues/8909
-- [ ] GitHub issue for "synthesize" and "prepare" guidance.
-- [ ] Remove the use of "prepare" and "synthesize" in 1.x
-- [ ] Implicit `App` for `Stack`s without a scope behind a feature flag and
-      enable in our unit tests in 1.x
-- [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
-- [ ] Import https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts to "constructs"
-- [ ] `constructs` documentation on how to implement centralized synthesis.
+[This branch](https://github.com/aws/constructs/pull/133) is the staging branch
+for constructs 4.x.
 
-## Base types
+- [01-BASE-TYPES](#01-base-types)
+  - [x] Reintroduce `construct.node` instead of `Node.of(construct)`
+  - [ ] Reintroduce `Construct.isConstruct()`.
+- [02-ASPECTS](#02-aspects)
+  - [x] Remove aspects (`IAspect` and `node.applyAspect`).
+- [03-DEPENDABLE](#03-dependable)
+  - [x] Reintroduce dependencies (`IDependable`, `Dependable`,
+    `DependencyGroup`)
+  - [x] Change `node.dependencies` to return the list of node dependency (non
+    recursive) and add `node.depgraph` which returns a `Graph` object from
+    cdk8s.
+  - [x] Change `addDependency` to accept `IDependable` instead of `IConstruct`.
+  - [x] Return only local dependencies in `node.dependencies`
+  - [ ] Migrate [DependencyGraph](https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts) from cdk8s into `constructs`.
+- [04-STACK-ROOT](#04-stack-root)
+  - [x] Do not skip root construct when creating `path` and `uniqueId`.
+- [05-METADATA-TRACES](#05-metadata-traces)
+  - [x] Do not emit stack traces in `addMetadata` (`{ stackTrace: true }`).
+- [06-NO-PREPARE](#06-no-prepare)
+  - [x] Removal of `onPrepare` and `node.prepare()`
+- [07-NO-SYNTHESIZE](#07-no-synthesize)
+  - [x] Removal of `onSynthesize` and `node.synthesize()`
+  - [ ] Expose `lock()` and `unlock()`.
+- [08-VALIDATION](#08-validation)
+  - [ ] Introduce `IValidation`, `addValidation()` and `node.validate()`.
+- [09-LOGGING](#09-logging)
+  - [x] Remove `node.addWarning()`, `node.addError()`, ...
 
-- [ ] 1.x: Convert all `scope` to use `constructs.Construct` via an `awslint` rule.
+## 2.x Work
 
-## Synthesis
-
-- [ ] 1.x: Implement synthesis changes
-- [ ] 1.x: Add deprecation warning if `synthesize()` is implemented
-
-## Prepare
-
+- [ ] Once the 2.x branch will be created, we will merge the remaining changes
+  from the POC branch into it.
+- [ ] Write a migration guide with guidance on `synthesize` and `prepare` in
+  <https://github.com/aws/aws-cdk/issues/8909>
