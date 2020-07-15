@@ -415,7 +415,7 @@ their execution order becomes critical and extremely hard to get right. To that
 end, we decided to remove them from the `constructs` library as they pose a risk
 to the programming model.
 
-However, we are aware that aspects are used in by AWS CDK apps and even 3rd
+However, we are aware that aspects are used by AWS CDK apps and even 3rd
 party libraries such as [cdk-watchful](https://github.com/eladb/cdk-watchful).
 
 Therefore, we propose to continue to support aspects in 2.x, with the goal of
