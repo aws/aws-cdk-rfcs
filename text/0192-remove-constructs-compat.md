@@ -172,16 +172,11 @@ const myConstruct = new MyConstruct(stack, 'MyConstruct');
 This is still a supported idiom, but in 2.x these root stacks will have an
 implicit `App` parent. This means that `stack.node.scope` will be an `App`
 instance, while previously it was `undefined`. The "root" stack will have a
-construct ID of `Stack` (unless otherwise specified).
+construct ID of `Stack` unless otherwise specified.
 
-This has implications on the value of `construct.node.path` (it will be prefixed
-with `Stack/`) and the value of `construct.node.uniqueId` (and any derivatives
-of these two).
-
-This means that as you migrate to v2.x, some unit tests may need to be updated
-to reflect this change.
-
-See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/69e221ab5e2fcf564283f337ab8111196608520e).
+> Technically, this change should have resulted in the `node.path` and
+> `node.uniqueId` of all constructs defined within such trees to change, but we
+> are utilizing `node.relicate()` to maintain the current behavior.
 
 ## 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
@@ -494,7 +489,8 @@ assert(stack.node.scope instanceof App); // previously it was `undefined`
 
 Since only the root construct may have an empty ID, we will also need to assign
 an ID. We propose to use `"Stack"` since we already have fallback logic that
-uses this as the stack name when the stack does not have an ID (see [stack.ts](https://github.com/aws/aws-cdk/blob/8c0142030dce359591aa76fe314f19fce9eddbe6/packages/%40aws-cdk/core/lib/stack.ts#L920)).
+uses this as the stack name when the stack does not have an ID (see
+[stack.ts](https://github.com/aws/aws-cdk/blob/8c0142030dce359591aa76fe314f19fce9eddbe6/packages/%40aws-cdk/core/lib/stack.ts#L920)).
 
 This change will allow us to remove any special casing we have for stacks in the
 testing framework and throughout the synthesis code path (we have quite a lot of
@@ -523,30 +519,41 @@ synthesized output if called twice, we will also need to introduce a
 `stage.synth({ force: true })` option. This will be the default behavior when
 using `expect(stack)` or `SynthUtils.synth()`.
 
-The main side effect of this change is that construct paths in unit tests will
-now change. In the above example, `foo.node.path` will change from `MyFoo` to
-`Stack/MyFoo`. Additionally, tests for resources that utilized `node.uniqueId`
-to generate names will also change given `uniqueId` is based on the path.
+### Preserving paths and unique IDs using `node.relocate()`
 
-Since app-less stacks are only used during tests, this should not have
-implications on production code, but it does break some of our test suite.
+A side effect of adding a `App` parent to "root" stacks is that construct paths
+and unique IDs in unit tests will now change. In the above example,
+`foo.node.path` will change from `MyFoo` to `Stack/MyFoo`. Additionally, tests
+for resources that utilized `node.uniqueId` to generate names will also change
+given `uniqueId` is based on the path.
+
+
+To address this, we propose to introduce a new capability in `constructs` to
+"**relocate**" a scope to a different path. This capability will also be useful
+generally when refactoring code (for example, if I want to add a level of
+encapsulation to my app without breaking production deployments).
+
+Using this capability, we will relocate the "root" stack to the `""` path so that
+all paths and unique IDs will be preserved.
+
+### Alternative considered
+
+We explored the option of fixing all these test expectations throughout the CDK
+code base and back port this change over the 1.x behind a feature flag in order
+to reduce the potential merge conflicts between 1.x and 2.x.
+
+The downsides of this approach are:
+
+1. This is technically a breaking (behavioral) change for end-users since
+   `node.path` and `node.uniqueId`, and their derivatives, will change for trees
+   rooted by a `Stack`, and unit tests will need to be updated.
+1. We currently don't have a way to implicitly run all our unit tests behind a
+   feature flag, and it is not a trivial capability to add.
 
 ### What can we do on 1.x?
 
-In order to reduce [merge conflicts](#repository-migration-efforts) between 1.x
-and 2.x we considered introducing this change on the 1.x branch prior to forking
-off 2.x.
-
-However, this is technically a breaking (behavioral) change for end-users since
-`node.path` and `node.uniqueId`, and their derivatives, will change for trees
-rooted by a `Stack`, and unit tests will need to be updated.
-
-Therefore we propose to introduce this change as a feature flag over the 1.x
-codebase and migrate all of our unit tests (I don't believe we have a way to
-enable feature flags for all unit tests, but we can devise one).
-
-This will allow us to update our tests in 1.x and avoid the merge conflicts
-forking on 2.x
+We will add `node.relocate()` to `constructs` 3.x and implement this change over
+1.x.
 
 ## 05-METADATA-TRACES
 
@@ -816,10 +823,8 @@ created.
   - [ ] Introduce `Dependable` as an alias to `DependencyTrait`, introduce
     `DependencyGroup`
 - [04-STACK-ROOT](#04-stack-root)
-  - [ ] Implicit `App` for root `Stack` under a feature flag and modify all
-    [relevant
-    tests](https://github.com/aws/aws-cdk/pull/9056/commits/69e221ab5e2fcf564283f337ab8111196608520e)
-    to run behind this flag.
+  - [ ] Introduce `node.relocate()` in constructs 3.x
+  - [ ] Implement implicit `App` for root `Stack`s, relocated to "".
 - [05-METADATA-TRACES](#05-metadata-traces)
   - N/A
 - [06-NO-PREPARE](#06-no-prepare)
@@ -861,7 +866,8 @@ for constructs 4.x.
   - [x] Return only local dependencies in `node.dependencies`
   - [ ] Migrate [DependencyGraph](https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts) from cdk8s into `constructs`.
 - [04-STACK-ROOT](#04-stack-root)
-  - [x] Do not skip root construct when creating `path` and `uniqueId`.
+  - [x] Introduce `node.relocate()` to allow root stacks to be relocated to
+    `""`.
 - [05-METADATA-TRACES](#05-metadata-traces)
   - [x] Do not emit stack traces in `addMetadata` (`{ stackTrace: true }`).
 - [06-NO-PREPARE](#06-no-prepare)
