@@ -30,6 +30,7 @@ This RFC describes the motivation, implications and plan for this project.
 - [Summary](#summary)
 - [Table of Contents](#table-of-contents)
 - [Release Notes](#release-notes)
+  - [00-DEPENDENCY: Declare a dependency on "constructs"](#00-dependency-declare-a-dependency-on-constructs)
   - [01-BASE-TYPES: Removal of base types](#01-base-types-removal-of-base-types)
   - [02-ASPECTS: Changes in Aspects API](#02-aspects-changes-in-aspects-api)
   - [03-DEPENDABLE: Changes to IDependable implementation](#03-dependable-changes-to-idependable-implementation)
@@ -45,6 +46,7 @@ This RFC describes the motivation, implications and plan for this project.
   - [3. Composability with other domains](#3-composability-with-other-domains)
   - [4. Non-intuitive dependency requirement](#4-non-intuitive-dependency-requirement)
 - [Design](#design)
+  - [00-DEPENDENCY](#00-dependency)
   - [01-BASE-TYPES](#01-base-types)
   - [02-ASPECTS](#02-aspects)
   - [03-DEPENDABLE](#03-dependable)
@@ -86,7 +88,7 @@ import { Construct } from '@aws-cdk/core';
 With this:
 
 ```ts
-import { Cosntruct } from 'constructs';
+import { Construct } from 'constructs';
 ```
 
 The following table summarizes the API changes between 1.x and 2.x:
@@ -100,19 +102,60 @@ The following table summarizes the API changes between 1.x and 2.x:
 `@aws-cdk/core.ConstructOrder` | `constructs.ConstructOrder`
 `@aws-cdk/core.ConstructNode` | `constructs.Node`
 `Construct.isConstruct(x)` | `x instanceof Construct`
-`construct.node.applyAspect(aspect)` | `Aspects.of(construct).apply(aspect)`
+`construct.node.applyAspect(aspect)` | `Aspects.of(construct).add(aspect)`
 `@aws-cdk/core.IDependable` | `constructs.IDependable`
 `@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
 `@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
 `construct.node.dependencies` | Is now non-transitive
 `construct.addMetadata()` | Stack trace not attached by default
-`ConstructNode.prepare(node)`, `onPrepare()`, `prepare()` | Not supported
-`ConstructNode.synthesize(node)`, `onSynthesize()`, `synthesize()` | Not supported
+`ConstructNode.prepareTree()`, `node.prepare()`, `onPrepare()`, `prepare()` | Not supported, use aspects instead
+`ConstructNode.synthesizeTree()`, `node.synthesize()`, `onSynthesize()`, `synthesize()` | Not supported
 `construct.onValidate()`, `construct.validate()` hooks | Implement `constructs.IValidation` and call `node.addValidation()`
 `ConstructNode.validate(node)` | `construct.node.validate()`
 
 The following sections describe all the related breaking changes and details
 migration strategies for each change.
+
+## 00-DEPENDENCY: Declare a dependency on "constructs"
+
+As part of migrating your code to AWS CDK 2.0, you will need to declare a
+dependency on the `constructs` library (in addition to the `aws-cdk-lib` library
+which now includes the entire AWS CDK).
+
+For libraries, this should be a peer dependency, similarly to your dependency on
+the AWS CDK. You will likely also want to declare those as `devDependencies` in
+order to be able to run tests in your build environment.
+
+To increase interoperability of your library, the recommendation is to use the
+lowest possible __caret__ version:
+
+```json
+{
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0"
+  }
+}
+```
+
+For apps, you should declare these as direct dependencies, and you would
+normally want to use the highest version available:
+
+```json
+{
+  "dependencies": {
+    "aws-cdk-lib": "^2.44.0",
+    "constructs": "^10.787.0"
+  }
+}
+```
+
+NOTE: Due to it's foundational nature, the `constructs` library is committed to
+never introduce breaking changes. Therefore, it's version will be `10.x`.
 
 ## 01-BASE-TYPES: Removal of base types
 
@@ -128,7 +171,7 @@ See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b
 ## 02-ASPECTS: Changes in Aspects API
 
 Aspects are not part of the "constructs" library, and therefore instead of
-`construct.node.applyAspect(aspect)` use `Aspects.of(construct).apply(aspect)`.
+`construct.node.applyAspect(aspect)` use `Aspects.of(construct).add(aspect)`.
 
 The `Tag.add(scope, name, value)` API has been removed. To apply AWS tags to a
 scope, use:
@@ -172,17 +215,22 @@ const myConstruct = new MyConstruct(stack, 'MyConstruct');
 This is still a supported idiom, but in 2.x these root stacks will have an
 implicit `App` parent. This means that `stack.node.scope` will be an `App`
 instance, while previously it was `undefined`. The "root" stack will have a
-construct ID of `Stack` unless otherwise specified.
+construct ID of `Default` unless otherwise specified.
 
-> Technically, this change should have resulted in the `node.path` and
-> `node.uniqueId` of all constructs defined within such trees to change, but we
-> are utilizing `node.relicate()` to maintain the current behavior.
+Please note that this also means that the value of `node.path` for all
+constructs in the tree would now have a `Default/` prefix (if it was `Foo/Bar`
+it will now be `Default/Foo/Bar`).
+
+> In contrast, the value of `node.uniqueId` will _not_ change because `Default`
+> is a special ID that is ignored when calculating unique IDs (this feature
+> already exists in 1.x).
 
 ## 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
 For performance reasons, the `construct.node.addMetadata()` method will *not*
-attach stack traces to metadata entries. You can explicitly request to attach
-stack traces to a metadata entry using the `stackTrace` option:
+attach stack traces to metadata entries. Stack traces will still be associated
+with all `CfnResource` constructs and can also be added to custom metadata using
+the `stackTrace` option:
 
 ```ts
 construct.node.addMetadata(key, value, { stackTrace: true })
@@ -205,7 +253,7 @@ Although we recommend that you rethink the use of "prepare", you can use this
 idiom to implement "prepare" using aspects:
 
 ```ts
-Aspects.of(this).apply({ visit: () => this.prepare() });
+Aspects.of(this).add({ visit: () => this.prepare() });
 ```
 
 The `ConstructNode.prepare(node)` method no longer exists. To realize references
@@ -316,19 +364,29 @@ constructs with constructs from other domains.
 It is currently impossible to define AWS CDK constructs within a non-AWS-CDK
 construct scope.
 
-For example, consider the
-[Terrastack](https://github.com/TerraStackIO/terrastack) project or a similar
-one, which uses CDK constructs to define stacks through Terraform. Say we want to
-use an AWS CDK L2 inside a Terraform stack construct:
+For example, consider the [CDK for
+Terraform](https://github.com/hashicorp/terraform-cdk) or a similar project,
+which uses constructs to define stacks through Terraform.
+
+We are currently working with HashiCorp to enable the following use case in the
+Terraform CDK:
 
 ```ts
-const stack = new terrastack.Stack(...);
+import * as cdktf from 'cdktf';        // <=== Terraform CDK
+import * as s3 from '@aws-cdk/aws-s3'; // <=== AWS CDK
 
-// COMPILATION ERROR: `this` is not a `cdk.Construct`.
+const stack = new cdktf.TerraformStack(...);
+
+// COMPILATION ERROR: `this` is of type `constructs.Construct` and not a `@aws-cdk/core.Construct`.
 new s3.Bucket(this, 'my-bucket');
 ```
 
-Being able to create construct compositions from multiple domains is a powerful
+In order to enable this usage, we will need `s3.Bucket` to accept any object
+that implements `constructs.Construct` as its `scope`. At the moment, this will
+fail compilation with the error above, because the `scope` in `s3.Bucket` is
+`core.Construct`.
+
+Being able to create compositions from multiple CDK domains is a powerful
 direction for the CDK ecosystem, and this change is required in order to enable
 these use case.
 
@@ -341,12 +399,17 @@ to take a _peer dependency_ on both the CDK library (`aws-cdk-lib`) and
 > Currently, the AWS CDK also takes `constructs` as a normal dependency (similar
 > to all dependencies), but this is about to change with mono-cdk.
 
-The reason `constructs` will also be required (whether we leave the
-compatibility layer or not) is due to the fact that all CDK constructs
-eventually extend the base `constructs.Construct` class. This means that this
-type is part of their public API and therefore a peer dependency is required
-(otherwise, there could be incompatible copies of `Construct` in the node
-runtime).
+The reason `constructs` will have to be defined as a peer-dependency of the AWS
+CDK, whether we leave the compatibility layer or not, is due to the fact that
+all AWS CDK constructs eventually extend the base `constructs.Construct` class.
+This means that this type is part of their public API, and therefore must be
+defined as a peer dependency (otherwise, there could be incompatible copies of
+`Construct` in the dependency closure).
+
+The removal of the compatibility layer means that now anyone who uses the AWS
+CDK will need to explicitly use the `constructs.Construct` type (even for
+trivial apps), and therefore it would "make sense" for them to take a dependency
+on the `constructs` library.
 
 See the RFC for [monolithic packaging] for more details.
 
@@ -362,6 +425,25 @@ our strategy for front-loading the change into the 1.x branch to reduce forking
 costs and/or alert users of the upcoming deprecation.
 
 This design is based on this [proof of concept](https://github.com/aws/aws-cdk/pull/9056).
+
+## 00-DEPENDENCY
+
+In order to enable composability with other CDK domains (Terraform, Kubernetes),
+all constructs must use the same version of the `Construct` base class.
+
+As long as all libraries in a closure take a __peer dependency__ on a compatible
+version of `constructs`, the npm package manger will include a single copy of
+the library, and therefore all constructs will derive from the same `Construct`
+(and more importantly, accept the same `Construct` for `scope`).
+
+Practically this means that we can never introduce a major version of
+`constructs` because any major version will require a new major version of all
+CDKs, and that is impossible to require or coordinate given the decentralized
+nature of the ecosystem.
+
+We propose to take a commitment to __never introduce breaking changes in
+"constructs"__. This implies that we will never introduce another major version.
+To symbolize that to users, we will use the major version `10.x`.
 
 ## 01-BASE-TYPES
 
@@ -424,7 +506,7 @@ apply aspects to scopes for AWS CDK apps. To do that, we propose to use the
 scopes:
 
 ```ts
-Aspects.of(scope).apply(aspect);
+Aspects.of(scope).add(aspect);
 ```
 
 The major downside of this change is discoverability, but
@@ -443,7 +525,7 @@ pattern: `Tags.of(x).add(name, value)`.
 ## 03-DEPENDABLE
 
 The `constructs` library supports dependencies through `node.addDependency` like
-in 1.x, but the API to implement `IDependable` has been slightly changed.
+in 1.x, but the API to implement `IDependable` has been changed.
 
 The `constructs` library also introduces `DependencyGroup` which is a mix
 between `CompositeDependable` and `ConcreteDependable`.
@@ -519,24 +601,27 @@ synthesized output if called twice, we will also need to introduce a
 `stage.synth({ force: true })` option. This will be the default behavior when
 using `expect(stack)` or `SynthUtils.synth()`.
 
-### Preserving paths and unique IDs using `node.relocate()`
+### Preserving unique IDs using an ID of `Default`
 
-A side effect of adding a `App` parent to "root" stacks is that construct paths
-and unique IDs in unit tests will now change. In the above example,
-`foo.node.path` will change from `MyFoo` to `Stack/MyFoo`. Additionally, tests
-for resources that utilized `node.uniqueId` to generate names will also change
-given `uniqueId` is based on the path.
+A side effect of adding a `App` parent to "root" stacks is that we now have an
+additional parent scope for all constructs in the tree. The location of the
+construct in the tree is taken into account when calculating `node.path` and
+`node.uniqueId`.
 
+Since `uniqueId` is used in several places throughout the AWS Construct Library
+to allocate names for resources, and we have multiple unit tests that expect
+these values, we will use the ID `Default` for the root stack.
 
-To address this, we propose to introduce a new capability in `constructs` to
-"**relocate**" a scope to a different path. This capability will also be useful
-generally when refactoring code (for example, if I want to add a level of
-encapsulation to my app without breaking production deployments).
+The `uniqueId` algorithm in the constructs library (see [reference]()) ignores
+any node with the ID `Default` for the purpose of calculating the unique ID,
+which allows us to perform this change without breaking unique IDs.
 
-Using this capability, we will relocate the "root" stack to the `""` path so that
-all paths and unique IDs will be preserved.
+We will accept the fact that `node.path` is going to change for this specific
+use case (only relevant in tests).
 
 ### Alternative considered
+
+#### Alternative 1: Breaking unique IDs
 
 We explored the option of fixing all these test expectations throughout the CDK
 code base and back port this change over the 1.x behind a feature flag in order
@@ -550,10 +635,21 @@ The downsides of this approach are:
 1. We currently don't have a way to implicitly run all our unit tests behind a
    feature flag, and it is not a trivial capability to add.
 
+#### Alternative 2: `node.relocate()`
+
+We also explored the option of introducing an additional capability to
+constructs called `node.relocate(newPath)` which allows modifying the path of a
+scope such that all child scopes will automatically be "relocated" to a new
+path. This would have allowed avoiding the breakage in `node.path` but would
+have also introduced several other idiosyncrasies and potential violations of
+invariants such as the fact that a path is unique within the tree.
+
 ### What can we do on 1.x?
 
-We will add `node.relocate()` to `constructs` 3.x and implement this change over
-1.x.
+We will introduce this change over the 1.x branch as-is, acknowledging that we
+are technically breaking the behavior of `node.path` in unit tests which use
+`Stack` as the root. Since we are not breaking `uniqueId`, we expect this to be
+tolerable over the 1.x branch.
 
 ## 05-METADATA-TRACES
 
@@ -615,7 +711,7 @@ dependencies](https://github.com/awslabs/cdk8s/blob/ef95b9ffce8a39200e028c2fe8ac
 required that the name of the output manifest will be determined based on the
 topologic order at the app level. Here again, the generic approach failed.
 
-In leu of those failures, we decided that there is no additional value in
+In lieu of those failures, we decided that there is no additional value in
 actually offering a synthesis mechanism at the `constructs` level. Each
 CDK-domain implements synthesis at the "right" level. This does not mean that
 specific domains can't offer a decentralized approach (i.e. call a method called
@@ -644,19 +740,20 @@ this as soon as the CDK app is created). Therefore, the solution for
 
 ### Implications on end-users
 
-Participation in synthesis is an "advanced" feature of the CDK framework and se
+Participation in synthesis is an "advanced" feature of the CDK framework and we
 assume most end-users don't use this directly.
 
-If they need "last minute processing", they would likely use `prepare()` (which
-is also being [removed](#06-no-prepare-the-prepare-hook-is-no-longer-supported))
-but not `synthesize()`.
+If they need "last minute processing", they can add an aspect to the node which
+will be applied before synthesis (the alternative to "prepare").
 
 The use case of emitting arbitrary files into the cloud assembly directory is
 weak. The cloud assembly is a well-defined format, and is currently "closed".
-There are no extension points that tools can identify. To that end, just writing
-files to the cloud assembly output directory does not make tons of sense. Having
-said that, it is still possible to do in the same way we plan for
-`AssetStaging`.
+There are no extension points that tools can identify.
+
+To that end, just writing files to the cloud assembly output directory does not
+make tons of sense. Yet, if there is still a use case for writing files during
+initialization, it is possible to find out the output directory through
+`Stage.of(scope).outdir`. This is how asset staging will be implemented.
 
 ### What can we do on 1.x?
 
@@ -886,3 +983,5 @@ for constructs 4.x.
   from the POC branch into it.
 - [ ] Write a migration guide with guidance on `synthesize` and `prepare` in
   <https://github.com/aws/aws-cdk/issues/8909>
+- [ ] Updates to Developer Guide (add 2.x section)
+- [ ] Updates to READMEs across the library (add 2.x section)
