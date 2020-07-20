@@ -40,7 +40,7 @@ This aliasing offers multiple benefits for library authors and users alike:
   **TypeScript**'s `as any` to force a `Lazy` value can be replaced with a safer API using a _type union_ with
   `IResolvable`
 
-An important think to keep in mind is that changing the type of a parameter to a _type union_ is a breaking change for
+An important thing to keep in mind is that changing the type of a parameter to a _type union_ is a breaking change for
 those languages that do not natively support _type unions_. The `jsii-diff` tool can be used to automatically check that
 you incurred no such breakage on an API that was declared `@stable`. If you need to change a `@stable` API to support
 _type unions_ when it previously accepted only a single type, the easiest solution is to deprecate the current `@stable`
