@@ -19,6 +19,8 @@ degradations they are currently exposed to.
 
 # Release Notes
 
+## For the _jsii_ project
+
 Use of **TypeScript** _type unions_ on any visible APIs (`public` or `protected` members of `export`ed types) within
 _jsii libraries_ must be named through the use of an exported type alias, and all those visible APIs must refer to the
 union using the alias:
@@ -46,91 +48,38 @@ you incurred no such breakage on an API that was declared `@stable`. If you need
 _type unions_ when it previously accepted only a single type, the easiest solution is to deprecate the current `@stable`
 API and introduce a new one that accepts or returns the _type union_.
 
+## For the _AWS CDK_
+
+APIs of the CDK for **Java** and **.NET** where the **TypeScript** version is declared using **type unions** (e.g:
+`CfnBucket.LoggingConfigurationProperty | IResolvable`) have been updated to offer better type fidelity compared to the
+**TypeScript** version.
+
+For all affected parameters, an additional overload is available, accepting a named _union-like_ class:
+
+```java
+CfnBucket.Builder.create(this, "MyBucket")
+  // ...
+  .loggingConfiguration(LoggingConfigurationPropertyValue.fromIResolvable(lazyValue))
+  // ...
+  .build();
+```
+
+This _union-like_ type is also returned from methods instead of `Object`:
+
+```java
+final CfnBucket bucket = createBucket();
+
+// Attempt getting the value as an `IResolvable` instance (returns null if the instance is *definitely not* an IResolvable).
+@Nullable
+final IResolvable value = bucket.getLoggingConfiguration().asIResolvable();
+```
+
+This API increases the ability for static stype checking to identify programming errors, allowing developers using those
+languages to confidently write safe code.
+
 # Motivation
 
-## Existing use-cases
-
-_Type unions_ are a very useful feature in API designs within the CDK, as they offer the flexibility required in order
-to allow users to specify values either using immediate values (available at synthesis time) or lazy values (either
-resolved later during the synthesis process, or within the provisioning engine during deployment). For example, consider
-the following props interface (trimmed for brevity):
-
-```ts
-// @aws-cdk/aws-s3/lib/s3.generated.ts
-export interface CfnBucketProps {
-  // ...
-  readonly accelerateConfiguration?: CfnBucket.AccelerateConfigurationProperty | cdk.IResolvable;
-  // ...
-}
-export namespace CfnBucket {
-  // ...
-  export interface AccelerateConfigurationProperty {
-    // ...
-    readonly accelerationStatus: string;
-    // ...
-  }
-}
-```
-
-In certain cases, _type unions_ also need to be expressed in collection contexts (particularly _lists_):
-
-```ts
-// @aws-cdk/aws-lambda/lib/lambda.generated.ts
-export namespace CfnAlias {
-  // ...
-  export interface AliasRoutingConfigurationProperty {
-    // ...
-    readonly additionalVersionWeights: Array<CfnAlias.VersionWeightProperty | cdk.IResolvable> | cdk.IResolvable;
-    // ...
-  }
-  // ...
-}
-```
-
-Additionally, the [CloudFormation Registry Schema] is a subset of [JSON Schema Draft-07][json-schema-draft-07], which
-allows for properties to have multiple valid value types, which is naturally expressed in the form of a _type union_ in
-**TypeScript**. This is already anecdotically used in the [AWS Serverless Application Model], where the
-[`AWS::Serverless::Function` Events] property leverages a _type union_ of multiple possible event types, and the
-`S3EventProperty` candidate also supports specifying values as a scalar or array (a developer experience improvement in
-languages where _type unions_ are available):
-
-```ts
-// @aws-cdk/aws-sam/lib/sam.generated.ts
-export namespace CfnFunction {
-  // ...
-  export interface EventSourceProperty {
-    // ...
-    readonly properties:
-      | CfnFunction.S3EventProperty
-      | CfnFunction.SNSEventProperty
-      | CfnFunction.SQSEventProperty
-      | CfnFunction.KinesisEventProperty
-      | CfnFunction.DynamoDBEventProperty
-      | CfnFunction.ApiEventProperty
-      | CfnFunction.ScheduleEventProperty
-      | CfnFunction.CloudWatchEventEventProperty
-      | CfnFunction.CloudWatchLogsEventProperty
-      | CfnFunction.IoTRuleEventProperty
-      | CfnFunction.AlexaSkillEventProperty
-      | CfnFunction.EventBridgeRuleEventProperty
-      | cdk.IResolvable;
-    // ...
-  }
-  // ...
-  export interface S3EventProperty {
-    // ...
-    readonly events: string[] | string | cdk.IResolvable;
-    // ...
-  }
-}
-```
-
-[cloudformation registry schema]:
-  https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html
-[json-schema-draft-07]: https://json-schema.org/draft-07/json-schema-release-notes.html
-[aws serverless application model]: https://github.com/awslabs/serverless-application-model
-[`aws::serverless::function` events]:
-  https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-events
+Existing use-cases are documented [in annex](#existing-use-cases).
 
 ## Problems with the current implementation
 
@@ -161,8 +110,8 @@ degradation in the documentation experience, since the type signature of methods
 
 ### Type-safe overloads cannot always be generated
 
-Since most statically typed languages support _overloads_ (although **Go** does not). This means we are often able to
-leverage overloads to provide type-safe entry points, for example in the **Java** fluent builders:
+Since most statically typed languages support _overloads_ (although **Go** does not) we are often able to leverage
+overloads to provide type-safe entry points, for example in the **Java** fluent builders:
 
 ```java
 public class CfnFunction {
@@ -193,10 +142,10 @@ explosion of overloads (although this is not a common use-case and is mostly a s
 
 Certain statically typed languages are however unable to express certain combinations of _type union_ candidates because
 of the way _generics_ (while _generics_ are not supported in _jsii_ libraries, they are typically used in code
-generation for emitting _collection_ types such as `List<T>` and `Map<String, T>`) are _reified_.
+generation for emitting _collection_ types such as `List<T>` and `Map<String, T>`) are _[reified][reification]_.
 
-The exact impact of this issue is largely language dependent, for example, the **Java** compiler uses _type erasure_ as
-it's _reification_ mechanism:
+The exact impact of this issue is largely language dependent, for example, the **Java** compiler uses _[type erasure]_
+as it's _[reification]_ mechanism:
 
 | Source Code      | Erasure |
 | ---------------- | ------- |
@@ -230,6 +179,9 @@ public interface IErasureProblem {
 }
 ```
 
+[reification]: https://en.wikipedia.org/wiki/Reification_(computer_science)
+[type erasure]: https://docs.oracle.com/javase/tutorial/java/generics/erasure.html
+
 ### Impossible to express collections of a _type union_
 
 Similar to the issue with generating method overrides, there is no way in statically typed languages to express a
@@ -255,7 +207,7 @@ public class CfnAlias {
 
 ### Bugs in the Kernel
 
-Currently, the _jsii Kernel_ protocol imposes each object instance is annotated with exactly one type, and this type is
+Currently, the _jsii Kernel_ protocol requires each object instance is annotated with exactly one type, and this type is
 expected to match the dynamic type of the instance. Concretely, this means the value returned from **Javascript** to
 **Java** via a return type annotated as a _type union_ is expected to be one of the union candidates.
 
@@ -295,16 +247,8 @@ mentioned above without introducing unwanted boilerplate in dynamic languages th
 
 # Design Summary
 
-As this feature is a candidate for inclusion in [AWS CDK v2], the design should maximize the amount of changes that can
-be rolled out withon CDK v1 without breaking existing customers. The solution is hence described in two main milestones,
-none of which entails making breaking changes to the **TypeScript** APIs:
-
-1. [non-breaking changes](#non-breaking-chanes) where the feature will be incrementally built into AWS CDK v1 without
-   affecting any existing API
-2. [breaking changes](#breaking-changes) where code generation will be changed so that statically typed languages have a
-   better experience
-
-## Non-breaking changes
+This feature is designed in such a way that it can be gradually rolled out into codebases, so that AWS CDK v1 customers
+can start to benefit from the enhanced type safety features it offers to statically typed languages.
 
 First, the _jsii assembly_ schema needs to be augmented so that it can represent _type unions_ as part of a library's
 exported type system. This introduces a new type `kind`, and those will coexist with _classes_, _interfaces_ and _enums_
@@ -329,7 +273,8 @@ export type UnionType = CandidateA | CandidateB;
 ```
 
 In order to ensure ability to generate stable code for _union-like_ types in statically typed languages, the possible
-_candidate types_ of an aliased _type union_ must however be restricted to prevent name collisions:
+_candidate types_ of an aliased _type union_ must however be restricted (through `jsii` compile-time validation) to
+prevent name collisions:
 
 - all candidates **must** have distinct _unqalified names_:
   ```ts
@@ -341,31 +286,30 @@ _candidate types_ of an aliased _type union_ must however be restricted to preve
   // Invalid: ListOfFoo would collide with generated union-like accessors for `Foo[]`
   export type InvalidUnion = ListOfFoo | Bar;
   ```
+  - A warning could be emitted whenever any type is given a name prefixed with `ListOf` or `MapOf` to inform users that
+    those types will not be useable in type unions (so they will not _discover_ about this limitation only when they
+    attempt to create a union including the type)
 
 In order to preserve backwards-compatbility, and to retain ability to use this new feature against the current CDK v1
-codebase, the `jsii` compiler will not **require** that _type unions_ are systematically aliased. Similarly,
-`jsii-pacmak` will be modified in such a way that it continues producing the same code whether a _type union_ is aliased
-or not.
+codebase, the `jsii` compiler will **not require** that _type unions_ are aliased. It will continue processing inline
+(i.e: not aliased) _type unions_ and generating code for those in the way it currently does. Only aliased _type unions_
+will trigger emission of _union-like_ types.
 
 Once this done, the `cfn2ts` tool, which is used in the CDK to generate _CloudFormation Resources_ (also known as _L1
-constructs_) will be modified so that it emits aliases for any _type union_ it generates.
+constructs_) will be modified so that it emits aliased _type unions_ for any properties **introduced after** the latest
+release of AWS CDK v1. This behavior can be achieved by storing a list of all properties found in the CloudFormation
+Resource Specification at the time of that release, and branching code-generation based on whether the property is in
+the list or not.
 
-Gearing up for the [AWS CDK v2] release, `jsii` will be updated to accept a new option (`--strict=type-unions`) that
-will allow users to opt into **requiring** that any visible _type union_ is aliased. This feature will be gradually
-turned on in the AWS CDK v1 development branch, as all existing _type unions_ are aliased. Once the whole codebase has
-been updated so that no _type union_ is unaliased, it will be ready for the introduction of **breaking changes** as part
-of [AWS CDK v2].
+In order to gradually enahnce the developer experience in statically typed languages, a new `awslint` rule will be
+introduced to prohibit introduction of new inline _type unions_. Exceptions will be added for all existing APIs.
 
-## Breaking changes
+## Generating _union-like_ types
 
-In order to deliver the full potential of this solution, code generation needs to be changed in `jsii-pacmak` so that
-languages without native support for _type unions_ (**C#**, **Go**, and **Java**) have additional _union-like_ types
-emitted.
-
-In order to avoid having to cut a new major version of `jsii-pacamk`, the new code generation patterns will be gated by
-an opt-in flag (`--union-like-types`). When the flag is enabled, aliased _union types_ have a known name that can be
-used to generate the _union-like_ types. The proposed API for a union such as
-`export type UnionType = Foo | Map<Bar> | Baz[]` is the following:
+Code generation needs to be changed in `jsii-pacmak` so that languages without native support for _type unions_ (**C#**,
+**Go**, and **Java**) have additional _union-like_ types emitted. The proposed API for a union such as
+`export type UnionType = Foo | Map<Bar> | Baz[]` in each currently supported statically typed language is the following
+(subject ot change):
 
 - In **C#**
 
@@ -379,6 +323,9 @@ used to generate the _union-like_ types. The proposed API for a union such as
     public Foo? Foo { get; }
     public IReadOnlyDictionary<Bar>? MapOfBar { get; }
     public IReadOnlyList<Baz>? ListOfBaz { get; }
+
+    // Private constructor ensures all initialization happens though the factories
+    private UnionType(/*...*/) { /*...*/ }
   }
   ```
 
@@ -390,15 +337,30 @@ used to generate the _union-like_ types. The proposed API for a union such as
 
   ```java
   // UnionType.java
-  public final class UnionType {
-    public static UnionType fromFoo(Foo value) { /* ... */ }
-    public static UnionType fromMapOfBar(Map<String, Bar> value) { /* ... */ }
-    public static UnionType fromListOfBaz(Baz... value) { /* ... */ }
-    public static UnionType fromListOfBaz(List<Baz> value) { /* ... */ }
+  public abstract class UnionType {
+    public static UnionType fromFoo(Foo value) {
+      return new UnionType.FooUnionType(value);
+    }
+    public static UnionType fromMapOfBar(Map<String, Bar> value) {
+      return new UnionType.MapOfBarUnionType(value);
+    }
+    public static UnionType fromListOfBaz(Baz... value) {
+      return fromListOfBaz(Arrays.asList(value));
+    }
+    public static UnionType fromListOfBaz(List<Baz> value) {
+      return new UnionType.ListOfBaz(value);
+    }
 
-    public @Nullable Foo asFoo() { /* ... */ }
-    public @Nullable Map<String, Bar> asMapOfBar() { /* ... */ }
-    public @Nullable List<Baz> asListOfBaz() { /* ... */ }
+    public @Nullable Foo asFoo() { return null; }
+    public @Nullable Map<String, Bar> asMapOfBar() { return null; }
+    public @Nullable List<Baz> asListOfBaz() { return null; }
+
+    // Private constructor ensures all initialization happens through the factories
+    private UnionType(/* ... */) { /* ... */ }
+
+    private static final class FooUnionType extends UnionType { /*...*/ }
+    private static final class MapOfBarUnionType extends UnionType { /*...*/ }
+    private static final class ListOfBazUnionType extends UnionType { /*...*/ }
   }
   ```
 
@@ -427,18 +389,16 @@ API). Full support of _type unions_ as a type kind in the _jsii type model_ achi
 - it does not degrade the developer experience in languages with _native type_ union support
 - it requires significantly less effort from library authors
 
-This feature could however not be introduced as part of CDK v1, as the change of static (and dynamic) type it requires
-in statically typed languages would be breaking to existing customers. The release of [AWS CDK v2] is a prime
-opportunity to introduce this change and to address a well-known customer pain point.
-
 # Adoption Strategy
 
-This feature is a candidate for rollout as part of [AWS CDK v2]. Since the removal of type unions will incur significant
-breaking in the API of the generated CloudFormation Resource classes, it naturally requires a major version bump.
+Leveraging aliased _type unions_ in all existing CDK APIs would be a breaking change for all statically typed bindings.
+As such, the initial rollout will start as early as possible in AWS CDK v1, however existing APIs will not be updated to
+leverage aliased _type unions_, preserving all existing APIs.
 
-A migration guide will be provided on release of [AWS CDK v2] that explains how to migrate from the old API patterns
-over to the new ones, although the majority of users may not have to change anything in their code for it to continue
-working.
+If the solution is ready on time, it may be possible to update all existing APIs to aliased _type unions_ as part of the
+[AWS CDK v2] release, although this is not a hard requirement: those APIs that are currently (in AWS CDK v1) unusable in
+**C#** and **Java** can be intentionally updated outside of the context of a new major version, since existing code is
+already broken.
 
 [aws cdk v2]: https://github.com/aws/aws-cdk-rfcs/issues/79
 
@@ -449,6 +409,11 @@ working.
 
 # Future Possibilities
 
+It will be possible in the future to make the `jsii` compiler **require** aliased _type unions_, ensuring the best
+possible experience for developers in static languages. This can either be introduced in the current version of `jsii`
+though a new option (e.g: `--strict=type-union`); alternatively, a new major version could be released that does **not**
+support inline _type unions_ at all.
+
 As `jsii` gained the ability to track _type aliases_, more use for type aliasing can be considered valid. In particular,
 certain aliasing can be leveraged to disambiguate class names in certain contexts. For example, when renaming a class as
 part of a refactoring, a `@deprecated` type alias can be provided as a way to maintain compatibility with the old name
@@ -456,13 +421,14 @@ at very little cost.
 
 # Implementation Plan
 
-INTENTIONALLY LEFT BLANK: an implementation plan will be added when the RFC is scheduled for implementation.
-
-> The implementation plan should analyze all the tasks needed in order to implement this RFC, and the planned order of
-> implementation based on dependencies and analysis of the critical path.
->
-> Either add the plan here or add link which references a separate document and/or a GitHub Project Board (and reference
-> it here) which manages the execution of your plan.
+- [ ] Implement support for aliased _type unions_ in `jsii`
+- [ ] Implement _union-like_ type emission in `jsii-pacmak`
+  - [ ] in **C#**
+  - [ ] in **Java**
+  - [ ] in **Go**
+- [ ] Maje `jsii-diff` aware of aliased _type-unions_ (changing from inline to aliased, or back, is a breaking change)
+- [ ] Generate type aliases for new properties in `cfn2ts`
+- [ ] Implement `awslint` rule to prevent introduction of new un-aliased _type unions_
 
 ---
 
@@ -553,6 +519,88 @@ typeSystem.load(process.argv[2]).then((_assembly) => {
 });
 ```
 
+# Annex 2
+
+## Existing use-cases
+
+_Type unions_ are a very useful feature in API designs within the CDK, as they offer the flexibility required in order
+to allow users to specify values either using immediate values (available at synthesis time) or lazy values (either
+resolved later during the synthesis process, or within the provisioning engine during deployment). For example, consider
+the following props interface (trimmed for brevity):
+
+```ts
+// @aws-cdk/aws-s3/lib/s3.generated.ts
+export interface CfnBucketProps {
+  // ...
+  readonly accelerateConfiguration?: CfnBucket.AccelerateConfigurationProperty | cdk.IResolvable;
+  // ...
+}
+export namespace CfnBucket {
+  // ...
+  export interface AccelerateConfigurationProperty {
+    // ...
+    readonly accelerationStatus: string;
+    // ...
+  }
+}
 ```
 
+In certain cases, _type unions_ also need to be expressed in collection contexts (particularly _lists_):
+
+```ts
+// @aws-cdk/aws-lambda/lib/lambda.generated.ts
+export namespace CfnAlias {
+  // ...
+  export interface AliasRoutingConfigurationProperty {
+    // ...
+    readonly additionalVersionWeights: Array<CfnAlias.VersionWeightProperty | cdk.IResolvable> | cdk.IResolvable;
+    // ...
+  }
+  // ...
+}
 ```
+
+Additionally, the [CloudFormation Registry Schema] is a subset of [JSON Schema Draft-07][json-schema-draft-07], which
+allows for properties to have multiple valid value types, which is naturally expressed in the form of a _type union_ in
+**TypeScript**. This is already anecdotically used in the [AWS Serverless Application Model], where the
+[`AWS::Serverless::Function` Events] property leverages a _type union_ of multiple possible event types, and the
+`S3EventProperty` candidate also supports specifying values as a scalar or array (a developer experience improvement in
+languages where _type unions_ are available):
+
+```ts
+// @aws-cdk/aws-sam/lib/sam.generated.ts
+export namespace CfnFunction {
+  // ...
+  export interface EventSourceProperty {
+    // ...
+    readonly properties:
+      | CfnFunction.S3EventProperty
+      | CfnFunction.SNSEventProperty
+      | CfnFunction.SQSEventProperty
+      | CfnFunction.KinesisEventProperty
+      | CfnFunction.DynamoDBEventProperty
+      | CfnFunction.ApiEventProperty
+      | CfnFunction.ScheduleEventProperty
+      | CfnFunction.CloudWatchEventEventProperty
+      | CfnFunction.CloudWatchLogsEventProperty
+      | CfnFunction.IoTRuleEventProperty
+      | CfnFunction.AlexaSkillEventProperty
+      | CfnFunction.EventBridgeRuleEventProperty
+      | cdk.IResolvable;
+    // ...
+  }
+  // ...
+  export interface S3EventProperty {
+    // ...
+    readonly events: string[] | string | cdk.IResolvable;
+    // ...
+  }
+}
+```
+
+[cloudformation registry schema]:
+  https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html
+[json-schema-draft-07]: https://json-schema.org/draft-07/json-schema-release-notes.html
+[aws serverless application model]: https://github.com/awslabs/serverless-application-model
+[`aws::serverless::function` events]:
+  https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-events
