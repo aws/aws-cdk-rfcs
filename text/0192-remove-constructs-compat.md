@@ -67,7 +67,7 @@ This RFC describes the motivation, implications and plan for this project.
 - [Future Possibilities](#future-possibilities)
 - [Implementation Plan](#implementation-plan)
   - [Preparation of 1.x](#preparation-of-1x)
-  - [constructs 4.x](#constructs-4x)
+  - [constructs 10.x](#constructs-10x)
   - [2.x Work](#2x-work)
 
 # Release Notes
@@ -943,11 +943,13 @@ created.
 - [09-LOGGING](#09-logging)
   - [ ] Introduce `Logging.of()` deprecate `node.addWarning/error/info`.
 
-## constructs 4.x
+## constructs 10.x
 
 [This branch](https://github.com/aws/constructs/pull/133) is the staging branch
-for constructs 4.x.
+for constructs 10.x.
 
+- [00-DEPENDENCY](#00-dependency)
+  - [ ] Document API compatibility assurance and the 10.x version number.
 - [01-BASE-TYPES](#01-base-types)
   - [x] Reintroduce `construct.node` instead of `Node.of(construct)`
   - [ ] Reintroduce `Construct.isConstruct()`.
