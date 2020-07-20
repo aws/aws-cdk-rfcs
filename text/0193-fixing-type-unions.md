@@ -33,10 +33,10 @@ export interface FancyProps {
 
 This aliasing offers multiple benefits for library authors and users alike:
 
-- _type unions_ are no longer repeated in multiple locations, so that new candidates can be added in a single location
-- better code can be generated to support _type union_ APIs in languages without native support for type unions (most
+- _Type unions_ are no longer repeated in multiple locations, so that new candidates can be added in a single location
+- Better code can be generated to support _type union_ APIs in languages without native support for type unions (most
   statically typed languages, such as **C#**, **Go**, **Java**, ...)
-- safer code can be authored, since _type unions_ no longer have to be frowned upon: all unsafe usage of
+- Safer code can be authored, since _type unions_ no longer have to be frowned upon: all unsafe usage of
   **TypeScript**'s `as any` to force a `Lazy` value can be replaced with a safer API using a _type union_ with
   `IResolvable`
 
@@ -277,7 +277,7 @@ runtime validation stricter than what the **TypeScript** language does). Additio
 method implementations from one another at run-time, since the **Javascript** runtime does not retain type information
 for method arguments and return types (making homonymous methods impossible to tell apart).
 
-## Desired Features
+## Requirements
 
 The ideal situation is one where developers enjoy the same features and type safety from any programming language,
 regardless of it's dynamic or statically typed nature. This means a solution needs to satisfy the following
