@@ -18,25 +18,25 @@ tooling.
 
 # Design Summary
 
-In order to create the JSII Go language binding, the various types defined in Typescript for the CDK construct library need to be translated into
-equivalent types in Go. The three main types discussed here are Enums, Interfaces, and Classes.
+In order to create the JSII Go language binding, the various types defined in the JSII spec need to be translated into equivalent types in Go. The
+three main types discussed here are Enums, Interfaces, and Classes.
 
 # Detailed Design
 
 ## Enums
 
-The standard way of specifying an enum is with a custom type and constant generator iota, e.g.
+The standard way of specifying an enum in Go is with a custom type and constant generator iota, e.g.
 
 ```go
 type Month int // custom type, like type alias
 
 const (
-  Jan Month = iota + 1
-  Feb
-  Mar
-  Apr
-  May
-  ...
+    Jan Month = iota + 1
+    Feb
+    Mar
+    Apr
+    May
+    ...
 )
 // Jan=1, Feb=1, Mar=3 ...
 ```
@@ -75,7 +75,7 @@ const (
 
 ### Go Interfaces
 
-Go Interfaces are named collections of *method signatures*. They can be implemented by other types, including other interfaces. Go interfaces are.
+Go Interfaces are named collections of *method signatures*. They can be implemented by other types, including other interfaces. Go interfaces are
 implemented *implicitly*, so, e.g., the implements keyword is not needed by the type that is implementing an interface. Interfaces can embed other
 interfaces, which effectively allows the embedding interface to “inherit” all the methods defined in the embedded interface. This is the closest to
 how typescript interfaces use extends.
@@ -96,9 +96,10 @@ interfaces:
 
 Classes that implement an interface do so *explicitly* by using the implements keyword.
 
-In the JSII, there are two types of interfaces; *datatype* interfaces and *non-datatype* interfaces. The following describes how to handle each kind.
+In the JSII, there are two types of interfaces; *datatype* interfaces (or *structs*) and *non-datatype* interfaces (conventionally named `IXxx`, where
+`Xxx` is a resource name). The following describes how to handle each kind.
 
-### JSII Non-Datatype Interfaces
+### JSII Non-Datatype Interfaces (Structs)
 
 Typescript interfaces that define method signatures can be translated directly as Go interfaces. Any properties that the interface may contain would
 be converted to getters (and setters, as needed).
@@ -121,92 +122,104 @@ Go interface:
 
 ```go
 type ISecurityGroup interface {
-  IResource
-  IPeer
+    IResource
+    IPeer
 
-  SecurityGroupId() string
-  AllowAllOutbound() bool
-  AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
-  AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
+    SecurityGroupId() string
+    AllowAllOutbound() bool
+    AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
+    AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
 }
 ```
 
-### JSII Datatype Interfaces
+### JSII Datatype Interfaces (`IResource`)
 
-In the JSII, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)  that
-indicates that the interface only contains properties. While this does corresponds directly to a Go struct, we would likely need to generate both a Go
-interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This is in order to
-support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward compatibility in
-case the datatype interface eventually extends another. Were it not for these considerations, it would be simpler to simply have a single Go struct
-that corresponds to a datatype interface (see last bullet point in Notes/Concerns).
+In the JSII, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)
+attribute that indicates that the interface only contains properties. While this does corresponds directly to a Go struct, we would likely need to
+generate both a Go interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This
+is in order to support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward
+compatibility in case the datatype interface eventually extends another. Were it not for these considerations, it would be simpler to simply have a
+single Go struct that corresponds to a datatype interface (see last bullet point in Notes/Concerns).
 
 #### Case 1: Typescript datatype interface (no extensions)
 
-Here, a datatype interface (`LinuxParametersProps`)  is converted into a Go interface (`LinuxParameterPropsIface` ), where each property becomes a
-getter method (in this case, as the properties are readonly, there are no setter methods generated). This Go interface is then implemented by a struct
+Here, a datatype interface (`HealthCheck`) is converted into a Go interface (`HealthCheck`), where each property becomes a
+getter method (JSII datatype properties always are readonly, so there are no setter methods generated). This Go interface is then implemented by a struct
 (LinuxParameterProps), which would contain the properties from the original typescript interface as non-exported (i.e. lowercase) properties and rely
 on the generated Getter methods for readonly access (as when _used as an argument_ to the constructor):
 
+[Example](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596):
+
 ```ts
-export interface LinuxParametersProps {
-  readonly initProcessEnabled?: boolean;
-  readonly sharedMemorySize?: number;
+export interface HealthCheck {
+  readonly command: string[];
+  readonly interval?: cdk.Duration;
+  readonly retries?: number;
+  readonly startPeriod?: cdk.Duration;
+  readonly timeout?: cdk.Duration;
 }
 
-export class LinuxParameters extends cdk.Construct {
-  private readonly initProcessEnabled?: boolean;
-  private readonly sharedMemorySize?: number;
-  ...
-
-  // Used as argument in constructor:
-  constructor(scope: cdk.Construct, id: string, props: LinuxParametersProps = {}) {
-    super(scope, id);
-
-    this.sharedMemorySize = props.sharedMemorySize;
-    this.initProcessEnabled = props.initProcessEnabled;
-  }
+function renderHealthCheck(hc: HealthCheck): CfnTaskDefinition.HealthCheckProperty {
+  return {
+    command: getHealthCheckCommand(hc),
+    interval: hc.interval != null ? hc.interval.toSeconds() : 30,
+    retries: hc.retries !== undefined ? hc.retries : 3,
+    startPeriod: hc.startPeriod && hc.startPeriod.toSeconds(),
+    timeout: hc.timeout !== undefined ? hc.timeout.toSeconds() : 5,
+  };
 }
 ```
 
-Go translation ([Go playground example](https://play.golang.org/p/wwdI6aM-Nlv)):
+Go translation (Run example in the [Go playground](https://play.golang.org/p/_eRLhVmXmp8):
 
 ```go
 package ecs
 
-// NOTE: Corresponding interface would need a suffix, e.g. `Iface`,
-// to disambiguate from the struct
-type LinuxParameterPropsIface interface {
-  InitProcessEnabled() bool
-  SharedMemorySize() int64
+type HealthCheckIface interface{
+   Command() []string
+   Interval() cdk.Duration;
+   Retries() int
+   StartPeriod() cdk.Duration;
+   Timeout() cdk.Duration;
 }
 
-type LinuxParameterProps struct {
-  initProcessEnabled bool
-  sharedMemorySize int64
+type HealthCheck struct {
+    command []string
+    interval cdk.Duration;
+    retries int
+    startPeriod cdk.Duration;
+    timeout cdk.Duration;
 }
 
-func (p LinuxParameterProps) InitProcessEnabled() bool {
-  return p.initProcessEnabled
+func (h HealthCheck) Command() []string {
+    return h.command
 }
 
-func (p LinuxParameterProps) SharedMemorySize() int64 {
-  return p.sharedMemorySize
+func (h HealthCheck) Retries() int {
+    return h.retries
 }
 
-// represents class
-type LinuxParameters struct {
-  initProcessEnabled bool
-  sharedMemorySize int64
-  ...
+func (h HealthCheck) Interval() cdk.Duration {
+    return h.interval
 }
 
-func New(props LinuxParameterPropsIface) *LinuxParameters {
-  return &LinuxParameters{
-    initProcessEnabled: props.InitProcessEnabled(),
-    sharedMemorySize: props.SharedMemorySize(),
-  }
+func (h HealthCheck) StartPeriod() cdk.Duration {
+    return h.startPeriod
 }
 
+func (h HealthCheck) Timeout() cdk.Duration {
+    return h.timeout
+}
+
+func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
+    return CfnTaskDefintion.HealthCheckProperty{
+        command:     hc.Command(),
+        interval:    hc.Interval(),
+        retries:     hc.Retries(),
+        startPeriod: hc.StartPeriod(),
+        timeout:     hc.Timeout(),
+    }
+}
 ```
 
 #### Case 2: Extending Typescript datatype interfaces
@@ -276,23 +289,23 @@ type BaseServiceProps struct {
 }
 
 func (o BaseServiceOptions) Cluster() ICluster { return o.cluster }
-func (o BaseServiceOptions) DesiredCount() int{ return o.desiredCount }
+func (o BaseServiceOptions) DesiredCount() int { return o.desiredCount }
 
 // ... etc
 
 ```
 
-This allows the embedding interface (here, `BaseServicePropsIFace`) to “inherit” all the methods defined in the embedded interface
+This allows the embedding interface (here, `BaseServicePropsIFace`) to "inherit" all the methods defined in the embedded interface
 (`BaseServiceOptionsIFace`). Similarly, the embedding struct (`BaseServiceProps`) would have access to all the properties of the embedded struct
 (`BaseServiceOptions`) through having it as an anonymous field (See: [Go playground example](https://play.golang.org/p/XRpTH3LN6bx)).
 
 ```go
 props := BaseServiceProps{
-  BaseServiceOptions{
-    ServiceName: "myService",
-    ...
-  },
-  LaunchType: "EC2",
+    BaseServiceOptions{
+      ServiceName: "myService",
+      ...
+    },
+    LaunchType: "EC2",
 }
 
 props.ServiceName  // => "myService"
@@ -318,11 +331,11 @@ definition would be converted into a Go struct:
 
 ```go
 type HealthCheck struct {
-  Command []string
-  Interval cdk.Duration;
-  Retries int
-  StartPeriod cdk.Duration;
-  Timeout cdk.Duration;
+    Command []string
+    Interval cdk.Duration;
+    Retries int
+    StartPeriod cdk.Duration;
+    Timeout cdk.Duration;
 }
 ```
 
@@ -357,12 +370,6 @@ func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
 }
 ```
 
-#### Questions
-
-* Are properties on datatype interfaces always [immutable](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L607-L611)?
-  (All the datatype interfaces in the [JSII calc test assembly](https://github.com/aws/jsii/blob/master/packages/jsii-calc/test/assembly.jsii) appear
-to only have immutable, i.e. readonly, properties).
-
 ## Classes
 
 Typescript takes an object-oriented approach to classes, which includes using polymorphism and subtyping, neither of which are natively supported in
@@ -370,14 +377,16 @@ Go, which is not an object-oriented language. While custom structs, which can be
 methods", can be used to encapsulate object-like behavior in Go, subtyping on these custom structs is not possible. In order to simulate subtyping, we
 would need to generate an interface in addition to a concrete struct for each JSII class.
 
-The JSII [ClassType](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L803) assembly provides information on whether a
+The JSII [ClassType](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L803) provides information on whether a
 class is abstract, whether it extends another class, and whether it implements other interfaces. We will discuss each case in turn.
 
 ### Case 1: Simple class
 
+Example (Taken from [Typescript handbook](https://www.typescriptlang.org/docs/handbook/classes.html#classes)):
+
 ```ts
 class Greeter {
-    greeting: string;
+    readonly greeting: string;
 
     constructor(message: string) {
         this.greeting = message;
@@ -408,6 +417,7 @@ type Greeter struct {
 func New(message string) *Greeter {
     return &Greeter{message}
 }
+
 func (g *Greeter) Greet() string {
     return fmt.Sprintf("Hello, %+s", g.greeting)
 }
@@ -419,24 +429,28 @@ fmt.Println(g.Greet()) // "Hello, world"
 
 ### Case 2: Extending a Base class
 
+Example (taken from [here](https://www.typescriptlang.org/docs/handbook/classes.html#inheritance)):
+
 ```ts
 class Animal {
-    name: string;
+    public readonly name: string;
+
     constructor(theName: string) { this.name = theName; }
-    move(distanceInMeters: number = 0) {
+
+    public move(distanceInMeters: number = 0) {
         console.log(`${this.name} moved ${distanceInMeters}m.`);
     }
 }
 
 class Snake extends Animal {
     constructor(name: string) { super(name); }
-    move(distanceInMeters = 5) {
+    public move(distanceInMeters = 5) {
         console.log("Slithering...");
         super.move(distanceInMeters);
     }
 }
 
-let sam = new Snake("Sammy the Python");
+const sam = new Snake("Sammy the Python");
 
 sam.move();
 //  Slithering...
@@ -557,7 +571,7 @@ type ICluster interface {
 
 // Generated interface for Cluster class
 type ClusterIface interface {
-  ICluster
+    ICluster
 }
 
 // Generated struct for Cluster class
