@@ -2,13 +2,27 @@ const Octokit = require('@octokit/rest');
 const fs = require('fs').promises;
 const path = require('path');
 
-const labels = {
-  'status/ready': { },
-  'status/final-comment-period': { }, 
-  'status/pending': { },
-  'status/proposed': { },
-  'status/resolved': { },
-};
+const UNKNOWN_STATUS = 'status/unknown';
+
+// order matters here and intentional: sorted chronological in reverse order -
+// when it will be delivered. First the ones actually being worked on (coming
+// soon), then the ones in planning (less soon), approved (sometimes), etc. The
+// "done" items are last because they are less interesting in this list.
+
+const display = {
+  'status/implementing': '👷 implementing',
+  'status/planning': '📆 planning',
+  'status/approved': '👍 approved',
+  'status/final-comment-period': '⏰ final comments',
+  'status/review': '✍️ review',
+  'status/proposed': '💡 proposed',
+  'status/done': '✅ done',
+  'status/rejected': '👎 rejected',
+  [UNKNOWN_STATUS]: '❓unknown',
+}
+
+
+const labels = Object.keys(display);
 
 exports.render = render;
 
@@ -20,61 +34,85 @@ async function render() {
     auth: process.env.GITHUB_TOKEN
   });
 
-  const issues = [];
+  const issueByStatus = { };
 
-  for (const status of Object.keys(labels)) {
+  for (const status of labels) {
+    issueByStatus[status] = [];
+  }
 
-    const request = octo.issues.listForRepo.endpoint.merge({ 
-      repo: 'aws-cdk-rfcs',
-      owner: 'aws',
-      state: 'all',
-      labels: status
-    });
+  const request = octo.issues.listForRepo.endpoint.merge({
+    repo: 'aws-cdk-rfcs',
+    owner: 'aws',
+    state: 'all',
+  });
 
-    const result = await octo.paginate(request);
+  const result = await octo.paginate(request);
 
-    for (const issue of result) {
-      const { champion, pr_number } = findMetadata(issue);
-      const doc = findDocFile(files, issue.number);
-
-      let link;
-
-      // we we already have a doc, then the link should go to it
-      if (doc) {
-        link = `https://github.com/aws/aws-cdk-rfcs/blob/master/text/${doc}`;
-      } else if (pr_number) {
-        link = `https://github.com/aws/aws-cdk-rfcs/pull/${pr_number}`;
-      } else {
-        link = `https://github.com/aws/aws-cdk-rfcs/issues/${issue.number}`;
-      }
-  
-      issues.push({
-        number: issue.number,
-        title: issue.title,
-        link,
-        assignee: issue.assignee && issue.assignee.login,
-        champion,
-        status: status.split('/')[1],
-        doc
-      });
+  for (const issue of result) {
+    // skip pull requests
+    if (issue.pull_request) {
+      continue;
     }
+
+    const status = determineStatus(issue.labels);
+    let warning = '';
+
+    if (issue.state === 'closed') {
+
+      // skip closed issues of unknown status
+      if (status === UNKNOWN_STATUS) {
+        continue;
+      }
+
+    }
+
+    const { champion, pr_number } = findMetadata(issue);
+    const doc = findDocFile(files, issue.number);
+
+    let link;
+
+    // we we already have a doc, then the link should go to it
+    if (doc) {
+      link = `https://github.com/aws/aws-cdk-rfcs/blob/master/text/${doc}`;
+    } else if (pr_number) {
+      link = `https://github.com/aws/aws-cdk-rfcs/pull/${pr_number}`;
+    } else {
+      link = `https://github.com/aws/aws-cdk-rfcs/issues/${issue.number}`;
+    }
+
+    issueByStatus[status].push({
+      number: issue.number,
+      title: issue.title,
+      link,
+      assignee: issue.assignee && issue.assignee.login,
+      champion,
+      status,
+      doc,
+      warning
+    });
   }
 
   lines.push('\\#|Title|Owner|Status');
   lines.push('---|-----|-----|------');
 
-  for (const row of issues) {
-    const cols = [
-      `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
-      `[${row.title}](${row.link})`,
-      renderUser(row.assignee),
-      row.status
-    ];
+  for (const issues of Object.values(issueByStatus)) {
+    for (const row of issues.sort(byNumber)) {
+      const cols = [
+        `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
+        `[${row.title}](${row.link})`,
+        renderUser(row.assignee),
+        display[row.status],
+      ];
 
-    lines.push(cols.join('|'));
+      lines.push(cols.join('|'));
+    }
   }
 
   return lines;
+}
+
+function byNumber(a, b) {
+  return a.number - b.number;
 }
 
 function renderUser(user) {
@@ -111,4 +149,19 @@ function findMetadata(issue) {
 
   const pr_number = (pr.startsWith('#') ? pr.substring(1) : '').trim();
   return { champion, pr_number };
+}
+
+function determineStatus(item) {
+  const result = [];
+  for (const label of item) {
+    if (labels.includes(label.name)) {
+      result.push(label.name);
+    }
+  }
+
+  if (result.length !== 1) {
+    return UNKNOWN_STATUS;
+  } else {
+    return result[0];
+  }
 }
