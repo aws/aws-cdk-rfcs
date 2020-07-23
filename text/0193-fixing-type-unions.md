@@ -254,16 +254,16 @@ First, the _jsii assembly_ schema needs to be augmented so that it can represent
 exported type system. This introduces a new type `kind`, and those will coexist with _classes_, _interfaces_ and _enums_
 within the `types` section of the assembly. The required information is straight forward:
 
-| Property           | Type                        | Required     | Description                                         |
-| ------------------ | --------------------------- | ------------ | --------------------------------------------------- |
-| `name`             | `string`                    | **Required** | The unqualified name of the union type              |
-| `fqn`              | `string`                    | **Required** | The _jsii_ fully-qualified name of the type         |
-| `kind`             | `@jsii/spec.TypeKind.UNION` | **Required** | The type kind discriminator                         |
-| `assembly`         | `string`                    | **Required** | The name of the assembly containing the union type  |
-| `types`            | `string[]`                  | **Required** | The _jsii_ fully-qualified names of candidate types |
-| `namespace`        | `string`                    |              | The namespace in which the union type is declared   |
-| `docs`             | `@jsii/spec.Docs`           |              | Any documentation attached to the union type        |
-| `locationInModule` | `@jsii/spec.SourceLocation` |              | The source location of the type alias declaration   |
+| Property           | Type                                 | Required     | Description                                         |
+| ------------------ | ------------------------------------ | ------------ | --------------------------------------------------- |
+| `name`             | `string`                             | **Required** | The unqualified name of the union type              |
+| `fqn`              | `string`                             | **Required** | The _jsii_ fully-qualified name of the type         |
+| `kind`             | `@jsii/spec.TypeKind.NamedUnionType` | **Required** | The type kind discriminator                         |
+| `assembly`         | `string`                             | **Required** | The name of the assembly containing the union type  |
+| `types`            | `@jsii/spec.TypeReference[]`         | **Required** | The _jsii_ fully-qualified names of candidate types |
+| `namespace`        | `string`                             |              | The namespace in which the union type is declared   |
+| `docs`             | `@jsii/spec.Docs`                    |              | Any documentation attached to the union type        |
+| `locationInModule` | `@jsii/spec.SourceLocation`          |              | The source location of the type alias declaration   |
 
 The `jsii` compiler will then be modified in order to locate and process exported _union type_ alias declarations, such
 as:
@@ -371,11 +371,10 @@ from **Javascript** to the host application, removing all ambiguity regarding wh
 
 # Drawbacks
 
-This approach might be expensive to implement as it might require fundamentally changing how the `jsii` compiler works.
-It currently operates on the `tsc` _Type Checker_ API, which preprocesses type aliases away in order to have a more
-streamlined type system to reason over. In order to property process aliased _type unions_, it may be necessary to fall
-back on the `Node` API, which allows more direct inspection of the original source code, however provides fewer
-inspection capabilities (since the type system has not been fully resolved at the time a `Node` is processed).
+This approach may allow developers in statically typed languages to cause _undefined behavior_ to occur if they are not
+provided with a way to validate whether a _union-like_ instancs is of a candidate type or not. Without such an API,
+developers may use an invalid `as<TypeName>` accessor and retrive a proxy that may behave unexpectedly. This behavior is
+however identical to what happens in **TypeScript** when developers use `as any` to evade type checking.
 
 # Rationale and Alternatives
 
