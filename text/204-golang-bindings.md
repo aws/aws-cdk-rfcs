@@ -266,7 +266,7 @@ type BaseServiceOptionsIface interface {
 }
 
 type BaseServicePropsIface interface {
-    serviceOptions           BaseServiceOptionsIface  // embeddeded interface
+    BaseServiceOptionsIface  // embeddeded interface
     LaunchType()             LaunchType
 }
 
@@ -284,7 +284,7 @@ type BaseServiceOptions struct {
 }
 
 type BaseServiceProps struct {
-    baseOptions         BaseServiceOptions  // embedded (anonymous?) field
+    BaseServiceOptions  // embedded (anonymous) field
     launchType          LaunchType
 }
 
@@ -302,13 +302,13 @@ This allows the embedding interface (here, `BaseServicePropsIFace`) to "inherit"
 ```go
 props := BaseServiceProps{
     BaseServiceOptions{
-      ServiceName: "myService",
+      serviceName: "myService",
       ...
     },
-    LaunchType: "EC2",
+    launchType: "EC2",
 }
 
-props.ServiceName  // => "myService"
+props.serviceName  // => "myService"
 ```
 
 ### Notes/Concerns
