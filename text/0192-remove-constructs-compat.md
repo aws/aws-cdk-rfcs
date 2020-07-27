@@ -1,7 +1,7 @@
 ---
 feature name: remove-constructs-compat
 start date: 2020-07-05
-rfc pr: (leave this empty)
+rfc pr: [#195](https://github.com/aws/aws-cdk-rfcs/pull/195)
 related issue: [#192](https://github.com/aws/aws-cdk-rfcs/issues/192)
 ---
 
