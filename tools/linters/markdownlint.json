@@ -4,6 +4,7 @@
   "fenced-code-language": false,
   "first-line-h1": false,
   "line_length": {
+    "code_block_line_length": 512,
     "line_length": 150
   },
   "no-duplicate-heading": {
