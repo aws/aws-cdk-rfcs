@@ -32,6 +32,7 @@ This RFC describes the motivation, implications and plan for this project.
 - [Release Notes](#release-notes)
   - [00-DEPENDENCY: Declare a dependency on "constructs"](#00-dependency-declare-a-dependency-on-constructs)
   - [01-BASE-TYPES: Removal of base types](#01-base-types-removal-of-base-types)
+  - [10-CONSTRUCT-NODE: `myConstruct.node` is now `myConstrct.construct`](#10-construct-node-myconstructnode-is-now-myconstrctconstruct)
   - [02-ASPECTS: Changes in Aspects API](#02-aspects-changes-in-aspects-api)
   - [03-DEPENDABLE: Changes to IDependable implementation](#03-dependable-changes-to-idependable-implementation)
   - [04-STACK-ROOT: Stacks as root constructs](#04-stack-root-stacks-as-root-constructs)
@@ -48,6 +49,7 @@ This RFC describes the motivation, implications and plan for this project.
 - [Design](#design)
   - [00-DEPENDENCY](#00-dependency)
   - [01-BASE-TYPES](#01-base-types)
+  - [10-CONSTRUCT-NODE](#10-construct-node)
   - [02-ASPECTS](#02-aspects)
   - [03-DEPENDABLE](#03-dependable)
   - [04-STACK-ROOT](#04-stack-root)
@@ -91,7 +93,18 @@ With this:
 import { Construct } from 'constructs';
 ```
 
-The following table summarizes the API changes between 1.x and 2.x:
+Additionally, The `node` property in `Construct` is now called `construct`. This
+means, for example, order to find the `path` of a construct `foo`, use:
+
+```ts
+foo.construct.path // instead of `foo.node.path`
+```
+
+---
+
+The following table summarizes the API changes between 1.x and 2.x. The
+following sections describe all the related breaking changes and details
+migration strategies for each change.
 
 1.x|2.x
 ------|-----
@@ -101,20 +114,18 @@ The following table summarizes the API changes between 1.x and 2.x:
 `@aws-cdk/core.IConstruct` | `constructs.IConstruct`
 `@aws-cdk/core.ConstructOrder` | `constructs.ConstructOrder`
 `@aws-cdk/core.ConstructNode` | `constructs.Node`
-`Construct.isConstruct(x)` | `x instanceof Construct`
-`construct.node.applyAspect(aspect)` | `Aspects.of(construct).add(aspect)`
+`myConstruct.node` | `myConstruct.construct`
+`myConstruct.node.applyAspect(aspect)` | `Aspects.of(myConstruct).add(aspect)`
 `@aws-cdk/core.IDependable` | `constructs.IDependable`
 `@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
 `@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
-`construct.node.dependencies` | Is now non-transitive
-`construct.addMetadata()` | Stack trace not attached by default
+`myConstruct.`node.dependencies` | Is now non-transitive
+`myConstruct.`addMetadata()` | Stack trace not attached by default
 `ConstructNode.prepareTree()`, `node.prepare()`, `onPrepare()`, `prepare()` | Not supported, use aspects instead
 `ConstructNode.synthesizeTree()`, `node.synthesize()`, `onSynthesize()`, `synthesize()` | Not supported
-`construct.onValidate()`, `construct.validate()` hooks | Implement `constructs.IValidation` and call `node.addValidation()`
-`ConstructNode.validate(node)` | `construct.node.validate()`
+`myConstruct.`onValidate()`, `myConstruct.`validate()` hooks | Implement `constructs.IValidation` and call `myConstruct.construct.addValidation()`
+`ConstructNode.validate(node)` | `myConstruct.construct.validate()`
 
-The following sections describe all the related breaking changes and details
-migration strategies for each change.
 
 ## 00-DEPENDENCY: Declare a dependency on "constructs"
 
@@ -168,6 +179,27 @@ The following `@aws-cdk/core` types have stand-in replacements in `constructs`:
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
 
+## 10-CONSTRUCT-NODE: `myConstruct.node` is now `myConstrct.construct`
+
+The `node` property of `Construct` was removed in favor of a property named
+`construct` in order to improve discoverability of the construct API and reduce
+the chance for naming conflicts with generated APIs (see
+[hashicorp/terraform-cdk#230](https://github.com/hashicorp/terraform-cdk/pull/230)).
+
+For example, to add a dependency to a construct:
+
+Before:
+
+```ts
+c1.node.addDependency(c2);
+```
+
+After:
+
+```ts
+c1.construct.addDependency(c2);
+```
+
 ## 02-ASPECTS: Changes in Aspects API
 
 Aspects are not part of the "constructs" library, and therefore instead of
@@ -191,13 +223,13 @@ If you need to implement `IDependable`:
 - The `@aws-cdk/core.DependencyTrait` class has been replaced with
   `constructs.Dependable`
 - `@aws-cdk.core.DependencyTrait.get(x)` is now `constructs.Dependable.of(x)`
-- `construct.node.dependencies` is now **non-transitive** and returns only the
+- `c.construct.dependencies` is now **non-transitive** and returns only the
   dependencies added to the current node.
 
-The method `construct.node.addDependency(otherConstruct)` __did not change__ and
+The method `c.construct.addDependency(otherConstruct)` __did not change__ and
 can be used as before.
 
-> You can use the new `construct.node.dependencyGraph`  to access a rich object
+> You can use the new `c.construct.dependencyGraph`  to access a rich object
 > model for reflecting on the node's dependency graph.
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
@@ -213,27 +245,27 @@ const myConstruct = new MyConstruct(stack, 'MyConstruct');
 ```
 
 This is still a supported idiom, but in 2.x these root stacks will have an
-implicit `App` parent. This means that `stack.node.scope` will be an `App`
+implicit `App` parent. This means that `stack.construct.scope` will be an `App`
 instance, while previously it was `undefined`. The "root" stack will have a
 construct ID of `Default` unless otherwise specified.
 
-Please note that this also means that the value of `node.path` for all
+Please note that this also means that the value of `construct.path` for all
 constructs in the tree would now have a `Default/` prefix (if it was `Foo/Bar`
 it will now be `Default/Foo/Bar`).
 
-> In contrast, the value of `node.uniqueId` will _not_ change because `Default`
+> In contrast, the value of `construct.uniqueId` will _not_ change because `Default`
 > is a special ID that is ignored when calculating unique IDs (this feature
 > already exists in 1.x).
 
 ## 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
-For performance reasons, the `construct.node.addMetadata()` method will *not*
+For performance reasons, the `c.construct.addMetadata()` method will *not*
 attach stack traces to metadata entries. Stack traces will still be associated
 with all `CfnResource` constructs and can also be added to custom metadata using
 the `stackTrace` option:
 
 ```ts
-construct.node.addMetadata(key, value, { stackTrace: true })
+c.construct.addMetadata(key, value, { stackTrace: true })
 ```
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
@@ -279,7 +311,7 @@ hook, please post a comment on [this GitHub issue](https://github.com/aws/aws-cd
 
 ## 08-VALIDATION: The `validate()` hook is now `node.addValidation()`
 
-To add validation logic to a construct, use `construct.node.addValidation()`
+To add validation logic to a construct, use `c.construct.addValidation()`
 method instead of overriding a protected `validate()` method:
 
 Before:
@@ -299,13 +331,13 @@ class MyConstruct extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.node.addValidation({ validate: () => [ 'validation-error' ] });
+    this.construct.addValidation({ validate: () => [ 'validation-error' ] });
   }
 }
 ```
 
 The static method `ConstructNode.validate(node)` is no longer available. You can
-use `construct.node.validate()` which only validates the _current_ construct and
+use `c.construct.validate()` which only validates the _current_ construct and
 returns the list of all error messages returned from calling
 `validation.validate()` on all validations added to this node.
 
@@ -318,7 +350,7 @@ The `construct.node.addInfo()`, `construct.node.addWarning()` and
 Instead of:
 
 ```ts
-construct.node.addWarning('my warning');
+myConstruct.node.addWarning('my warning');
 ```
 
 Use:
@@ -484,6 +516,76 @@ Alternatives considered:
   merge conflicts.
 - **Automatic merge resolution and import organization**: requires research and
   development, not necessarily worth it.
+
+## 10-CONSTRUCT-NODE
+
+As we realize that we won't be able to release additional major versions of the
+"constructs" in order to ensure interoperability between domains is always
+possible, we need to closely examine the API of this library.
+
+In particular, the API of the `Construct` class, which is the base of all
+constructs in all CDKs, should be as small as possible in order not to "pollute"
+domain-specific APIs introduced in various domains.
+
+In many cases (cdk8s, cdktf), constructs are *generated* on-demand from
+domain-specific API specifications. In such cases, we need to ensure that the
+API in `Construct` does not conflict with generated property names or methods.
+
+The current API of `Construct` in the base class (2.x, 3.x) only includes a
+bunch of protected `onXxx` methods (`onPrepare`, `onValidate` and
+`onSynthesize`). Those methods will be removed in 10.x
+([prepare](#06-no-prepare) and [synthesize](#07-no-synthesize) are no longer
+supported and [validate](#08-validation) will be supported through
+`addValidation()`).
+
+In AWS CDK 1.x, to construct API, is available under `myConstruct.node`. This
+API has been intentionally removed from "constructs" 3.x in order to allow the
+compatibility layer in AWS CDK 1.x to use property name and expose the shim
+type. The base library currently offers `Node.of(scope)` as an alternative - but
+this API is cumbersome to use and not discoverable. In evidence, in CDK for
+Terraform, they chose to offer
+[`constructNode`](https://github.com/hashicorp/terraform-cdk/blob/5becfbc699180adfe920dec794200bbf56dda0a7/packages/cdktf/lib/terraform-element.ts#L21)
+in `TerraformElement` as a sugar for `Node.of()`.
+
+Another downside of `Node.of()` is that it means that the `IConstruct` interface
+is now an empty interface, which is a very weak type in TypeScript due to
+structural typing (it's structurally identical to `any`).
+
+As we evaluate this use case for constructs 10.x, we would like to restore the
+ability to access the construct API from a property of `Construct`, and use that
+property as the single marker that represents a construct type (`IConstruct`).
+
+To reduce the risk of naming conflicts (e.g. see [Terraform CDK
+issue](https://github.com/hashicorp/terraform-cdk/pull/230)) between `node` and
+domain-specific APIs, we propose to introduce this API under the name
+`construct` (of type `Node`).
+
+This has a few benefits:
+
+1. It signals that "this is the construct API" and more uniquely identifies with
+   it.
+3. The chance for conflicts with domain-specific names is minimized.
+3. We can introduce this API without breaking existing code while deprecating
+   `node` in the AWS CDK.
+
+The main downside is that is is **a breaking change** in AWS CDK 2.x. There is
+likely quite a lot of code out there (a [few
+hundred](https://github.com/search?q=cdk+node.addDependency++extension%3Ats&type=Code&ref=advsearch&l=&l=)
+results for an approximated GitHub code search).
+
+> We also considered the name `constructNode` as an alternative but there is no
+> additional value in the word "node" being included, especially given the type
+> is `Node`.
+
+### What can we do in 1.x
+
+As mentioned above, since this is a new name for this property, we can
+technically introduce it in 1.x and announce that `node` is deprecated. This
+will allow users to migrate to the new API before 2.x is released and hopefully
+will reduce some of the friction from the 2.x migration.
+
+To encourage users to migrate, we will consider introducing this deprecation
+through a runtime warning message (as well as the @deprecated API annotation).
 
 ## 02-ASPECTS
 
@@ -913,6 +1015,10 @@ created.
   - [ ] Normalize reference to base types (`cdk.Construct` => `Construct`).
   - [ ] Use an `awslint` rule to modify the `scope` argument on all 1.x to
     accept `constructs.Construct` instead of `core.Construct`
+- [10-CONSTRUCT-NODE](#10-construct-node)
+  - [ ] Introduce `c.construct` as an alias to `c.node`
+  - [ ] Deprecate `c.node` (with a warning message)
+  - [ ] Replace all `c.node` with `c.construct`.
 - [02-ASPECTS](#02-aspects)
   - [ ] Introduce `Aspects.of(x)` and deprecate `applyAspect`
   - [ ] Introduce `Tags.of()` and deprecate `Tag.add()`
@@ -951,8 +1057,9 @@ for constructs 10.x.
 - [00-DEPENDENCY](#00-dependency)
   - [ ] Document API compatibility assurance and the 10.x version number.
 - [01-BASE-TYPES](#01-base-types)
-  - [x] Reintroduce `construct.node` instead of `Node.of(construct)`
-  - [ ] Reintroduce `Construct.isConstruct()`.
+  - [x] Reintroduce `Construct.isConstruct()`.
+- [10-CONSTRUCT-NODE](#10-construct-node)
+  - [ ] Reintroduce `construct.construct` instead of `Node.of(construct)`
 - [02-ASPECTS](#02-aspects)
   - [x] Remove aspects (`IAspect` and `node.applyAspect`).
 - [03-DEPENDABLE](#03-dependable)
@@ -965,8 +1072,7 @@ for constructs 10.x.
   - [x] Return only local dependencies in `node.dependencies`
   - [ ] Migrate [DependencyGraph](https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts) from cdk8s into `constructs`.
 - [04-STACK-ROOT](#04-stack-root)
-  - [x] Introduce `node.relocate()` to allow root stacks to be relocated to
-    `""`.
+  - N/A
 - [05-METADATA-TRACES](#05-metadata-traces)
   - [x] Do not emit stack traces in `addMetadata` (`{ stackTrace: true }`).
 - [06-NO-PREPARE](#06-no-prepare)
