@@ -519,9 +519,9 @@ Alternatives considered:
 
 ## 10-CONSTRUCT-NODE
 
-As we realize that we won't be able to release additional major versions of the
-"constructs" in order to ensure interoperability between domains is always
-possible, we need to closely examine the API of this library.
+Since we won't be able to release additional major versions of the
+"constructs" library (in order to ensure interoperability between domains is always
+possible), we need to closely examine the API of this library.
 
 In particular, the API of the `Construct` class, which is the base of all
 constructs in all CDKs, should be as small as possible in order not to "pollute"
@@ -532,20 +532,22 @@ domain-specific API specifications. In such cases, we need to ensure that the
 API in `Construct` does not conflict with generated property names or methods.
 
 The current API of `Construct` in the base class (2.x, 3.x) only includes a
-bunch of protected `onXxx` methods (`onPrepare`, `onValidate` and
+few protected `onXxx` methods (`onPrepare`, `onValidate` and
 `onSynthesize`). Those methods will be removed in 10.x
 ([prepare](#06-no-prepare) and [synthesize](#07-no-synthesize) are no longer
 supported and [validate](#08-validation) will be supported through
 `addValidation()`).
 
-In AWS CDK 1.x, to construct API, is available under `myConstruct.node`. This
-API has been intentionally removed from "constructs" 3.x in order to allow the
-compatibility layer in AWS CDK 1.x to use property name and expose the shim
-type. The base library currently offers `Node.of(scope)` as an alternative - but
-this API is cumbersome to use and not discoverable. In evidence, in CDK for
-Terraform, they chose to offer
-[`constructNode`](https://github.com/hashicorp/terraform-cdk/blob/5becfbc699180adfe920dec794200bbf56dda0a7/packages/cdktf/lib/terraform-element.ts#L21)
+In AWS CDK 1.x the construct API is available under `myConstruct.node`. This
+API has been intentionally removed when we extracted "constructs" from the AWS CDK
+in order to allow the compatibility layer in AWS CDK 1.x to use the same property name
+and expose the shim type (jsii does not allow changing the type of a property in a subclass). 
+
+The base library currently offers `Node.of(scope)` as an alternative - but this API is cumbersome
+to use and not discoverable. In evidence, in CDK for Terraform, they chose to offer [`constructNode`]
 in `TerraformElement` as a sugar for `Node.of()`.
+
+[`constructNode`]: https://github.com/hashicorp/terraform-cdk/blob/5becfbc699180adfe920dec794200bbf56dda0a7/packages/cdktf/lib/terraform-element.ts#L21
 
 Another downside of `Node.of()` is that it means that the `IConstruct` interface
 is now an empty interface, which is a very weak type in TypeScript due to
@@ -562,13 +564,11 @@ domain-specific APIs, we propose to introduce this API under the name
 
 This has a few benefits:
 
-1. It signals that "this is the construct API" and more uniquely identifies with
-   it.
-3. The chance for conflicts with domain-specific names is minimized.
-3. We can introduce this API without breaking existing code while deprecating
-   `node` in the AWS CDK.
+1. It's semantically signals that "this is the construct API".
+2. The chance for conflicts with domain-specific names is low ("construct" is not prevalent).
+3. We can introduce this API while deprecating `node` in AWS CDK 1.x.
 
-The main downside is that is is **a breaking change** in AWS CDK 2.x. There is
+The main downside is that it is **a breaking change** in AWS CDK 2.x. There is
 likely quite a lot of code out there (a [few
 hundred](https://github.com/search?q=cdk+node.addDependency++extension%3Ats&type=Code&ref=advsearch&l=&l=)
 results for an approximated GitHub code search).
