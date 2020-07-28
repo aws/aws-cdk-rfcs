@@ -121,12 +121,12 @@ migration strategies for each change.
 `@aws-cdk/core.IDependable` | `constructs.IDependable`
 `@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
 `@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
-`myConstruct.`node.dependencies` | Is now non-transitive
-`myConstruct.`addMetadata()` | Stack trace not attached by default
-`ConstructNode.prepareTree()`,`node.prepare()`,`onPrepare()`,`prepare()` | Not supported, use aspects instead
-`ConstructNode.synthesizeTree()`,`node.synthesize()`,`onSynthesize()`,`synthesize()` | Not supported
-`myConstruct.`onValidate()`,`myConstruct.`validate()` hooks | Implement `constructs.IValidation` and call `myConstruct.construct.addValidation()` instead
-`ConstructNode.validate(node)` | `myConstruct.construct.validate()`
+`myConstruct.`node.dependencies`| Is now non-transitive
+`myConstruct.`addMetadata()`| Stack trace not attached by default
+`ConstructNode.prepareTree()`,`node.prepare()`,`onPrepare()`,`prepare()`| Not supported, use aspects instead
+`ConstructNode.synthesizeTree()`,`node.synthesize()`,`onSynthesize()`,`synthesize()`| Not supported
+`myConstruct.`onValidate()`,`myConstruct.`validate()`hooks | Implement`constructs.IValidation`and call`myConstruct.construct.addValidation()`instead
+`ConstructNode.validate(node)`|`myConstruct.construct.validate()`
 
 ### 00-DEPENDENCY: Declare a dependency on "constructs"
 
@@ -715,8 +715,8 @@ Since `uniqueId` is used in several places throughout the AWS Construct Library
 to allocate names for resources, and we have multiple unit tests that expect
 these values, we will use the ID `Default` for the root stack.
 
-The `uniqueId` algorithm in the constructs library (see [reference](https://github.com/aws/constructs/blob/d5c3ee0a89e09318838f78bfb89832c0548d846d/src/private/uniqueid.ts#L33)) ignores
-any node with the ID `Default` for the purpose of calculating the unique ID,
+The `uniqueId` algorithm in the constructs library (see [reference](https://github.com/aws/constructs/blob/d5c3ee0a89e09318838f78bfb89832c0548d846d/src/private/uniqueid.ts#L33))
+ignores any node with the ID `Default` for the purpose of calculating the unique ID,
 which allows us to perform this change without breaking unique IDs.
 
 We will accept the fact that `node.path` is going to change for this specific
