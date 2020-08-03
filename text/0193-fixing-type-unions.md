@@ -8,19 +8,21 @@ related issue: 193
 # Summary
 
 _Type unions_ is a feature of the TypeScript language that allows typing values as "one of several candidate types". This is achieved by specifying a
-`|`-delimited list of candidate types (e.g: `Foo | Bar`). While this feature is common in dynamic languages (**TypeScript**, **Python**, ...), it is
-almost always absent from statically typed languages (**Java**, **C#**, ...). In those languages, the impossibility to represent _type unions_
-natively results in degraded developer experience due to the reduced fidelity of the generated typings.
+`|`-delimited list of candidate types (e.g: `Foo | Bar`). While this feature is common in interpreted languages (**TypeScript**, **Python**, ...), it
+is absent from **C#**, **Go** and **Java**, and many other langauges (which could be future _jsii_ target languages) with similar features require
+_naming_ the _union-like_ type (e.g: **Rust** and **Swift**). In those languages, the impossibility to represent anonymous _type unions_ (and
+sometimes, any _type unions_) natively results in degraded developer experience due to the reduced fidelity of the generated typings.
 
-This RFC proposes to introduce new features in the _jsii_ compiler to support generation of additional code that will allow statically typed languages
-to benefit from the flexibility of type unions without having to endure the experience degradations they are currently exposed to.
+This RFC proposes to introduce new features in the _jsii_ compiler to support generation of additional code that will allow languages without support
+for _type unions_ (or only for _named type unions_) to benefit from the flexibility of type unions without having to endure the experience
+degradations they are currently exposed to.
 
 # Release Notes
 
 ## For the _jsii_ project
 
-Use of **TypeScript** _type unions_ on any visible APIs (`public` or `protected` members of `export`ed types) within _jsii libraries_ must be named
-through the use of an exported type alias, and all those visible APIs must refer to the union using the alias:
+Use of **TypeScript** _type unions_ on any visible APIs (`public` or `protected` members of `export`ed types) within _jsii libraries_ should be named
+through the use of an exported type alias, and all those visible APIs should refer to the union using the alias:
 
 ```ts
 export type ShinyUnion = Foo | Bar | Baz;
@@ -33,15 +35,16 @@ export interface FancyProps {
 This aliasing offers multiple benefits for library authors and users alike:
 
 - _Type unions_ are no longer repeated in multiple locations, so that new candidates can be added in a single location
-- Better code can be generated to support _type union_ APIs in languages without native support for type unions (most statically typed languages, such
-  as **C#**, **Go**, **Java**, ...)
+- Better code can be generated to support _type union_ APIs in languages without native support for _type unions_ (**C#**, **Go**, **Java**, ...) as
+  well as possible future supported languages which only support _named type unions_
 - Safer code can be authored, since _type unions_ no longer have to be frowned upon: all unsafe usage of **TypeScript**'s `as any` to force a `Lazy`
   value can be replaced with a safer API using a _type union_ with `IResolvable`
 
-An important thing to keep in mind is that changing the type of a parameter to a _type union_ is a breaking change for those languages that do not
-natively support _type unions_. The `jsii-diff` tool can be used to automatically check that you incurred no such breakage on an API that was declared
-`@stable`. If you need to change a `@stable` API to support _type unions_ when it previously accepted only a single type, the easiest solution is to
-deprecate the current `@stable` API and introduce a new one that accepts or returns the _type union_.
+An important thing to keep in mind is that changing a type declaration to a _type union_ is a breaking change for those languages that do not natively
+support _type unions_ (while this is not the case when updating a parameter's type in **TypeScript**). The `jsii-diff` tool can be used to
+automatically check that you incurred no such breakage on an API that was declared `@stable`. If you need to change a `@stable` API to support _type
+unions_ when it previously accepted only a single type, the recommended approach is to deprecate the current `@stable` API and introduce a new one
+that accepts or returns the _type union_.
 
 ## For the _AWS CDK_
 
@@ -77,14 +80,14 @@ Existing use-cases are documented [in annex](#existing-use-cases).
 
 ## Problems with the current implementation
 
-While Dynamic languages typically support _type unions_ without problems, statically typed languages such as **C#**, **Go** and **Java** lack native
-support for those types. The resulting developer experience degradations are detailed in this section, with a **Java** example based on the use-case
-examples listed above where possible.
+While **TypeScript** and **Python** natively support _type unions_, other supported languages (**C#**, **Go** and **Java**) lack native support for
+them. The resulting developer experience degradations are detailed in this section, with a **Java** example based on the use-case examples presented
+in [annex](#annex-2) where possible.
 
 ### Return values cannot be accurately typed
 
-When a method or property returns a _type union_, statically typed languages are simply unable to express that and must instead fall-back to the
-generic common super-type (e.g: `java.lang.Object` in **Java**):
+When a method or property returns a _type union_, affected languages are simply unable to express that and must instead fall-back to the language's
+common super-type (e.g: `java.lang.Object` in **Java**):
 
 ```java
 public class CfnFunction {
@@ -104,8 +107,8 @@ signature of methods is no longer accurate.
 
 ### Type-safe overloads cannot always be generated
 
-Since most statically typed languages support _overloads_ (although **Go** does not) we are often able to leverage overloads to provide type-safe
-entry points, for example in the **Java** fluent builders:
+Most of the affected languages support _method overloads_ (although **Go** does not). In such cases, overloads can be leveraged in order to provide
+type-safe entry points, for example in the **Java** fluent builders:
 
 ```java
 public class CfnFunction {
@@ -130,16 +133,13 @@ public class CfnFunction {
 }
 ```
 
-A similar pattern is used for methods, where an overload must be generated for each possible combination of _type union_ candidates. This can be
-problematic if a method accepts multiple _union-typed_ parameters, as this can lead to an explosion of overloads (although this is not a common
+A similar pattern is used for method parameters, where an overload could be generated for each possible combination of _type union_ candidates. This
+can be problematic if a method accepts multiple _union-typed_ parameters, as this can lead to an explosion of overloads (although this is not a common
 use-case and is mostly a stylistic concern).
 
-Certain statically typed languages are however unable to express certain combinations of _type union_ candidates because of the way _generics_ (while
-_generics_ are not supported in _jsii_ libraries, they are typically used in code generation for emitting _collection_ types such as `List<T>` and
-`Map<String, T>`) are _[reified][reification]_.
-
-The exact impact of this issue is largely language dependent, for example, the **Java** compiler uses _[type erasure]_ as it's _[reification]_
-mechanism:
+**Java** is however unable to express certain combinations of _type union_ candidates because of the way _generics_ (while _generics_ are not
+supported in _jsii_ libraries, they are typically used in code generation for emitting _collection_ types such as `List<T>` and `Map<String, T>`) are
+_[reified][reification]_ during compilation by performing _[type erasure]_:
 
 | Source Code      | Erasure |
 | ---------------- | ------- |
@@ -178,7 +178,7 @@ public interface IErasureProblem {
 
 ### Impossible to express collections of a _type union_
 
-Similar to the issue with generating method overrides, there is no way in statically typed languages to express a collection of a _type union_.
+Similar to the issue with generating method overrides, there is no way in affected languages to express a collection of a _type union_.
 
 ```java
 public class CfnAlias {
@@ -221,8 +221,8 @@ types (making homonymous methods impossible to tell apart).
 
 ## Requirements
 
-The ideal situation is one where developers enjoy the same features and type safety from any programming language, regardless of it's dynamic or
-statically typed nature. This means a solution needs to satisfy the following requirements:
+The ideal situation is one where developers enjoy the same features and type safety from any programming language, regardless of whether it natively
+supports _type unions_, only _named type unions_, or no _type unions_ at all. This means a solution needs to satisfy the following requirements:
 
 - _Type unions_ can be returned in a type-safe manner from methods and properties
 - _Type unions_ can be instantiated & passed into methods or assigned to properties in a type-safe manner
@@ -230,14 +230,14 @@ statically typed nature. This means a solution needs to satisfy the following re
 - _Type unions_ can be received as parameters of native method orverrides (when a **Javascript** method or property is overridden from a class in
   another language)
 
-On the other hand, a solution may involve generating code that is substantially different from one language to the other. This means statically typed
-languages can leverage additional generated code in order to satisfy the requirements mentioned above without introducing unwanted boilerplate in
-dynamic languages that do not need that.
+On the other hand, a solution may involve generating code that is substantially different from one language to the other. This means languages without
+native _type unions_ can leverage additional generated code in order to satisfy the requirements mentioned above without introducing unwanted
+boilerplate in languages that natively support _type unions_.
 
 # Design Summary
 
 This feature is designed in such a way that it can be gradually rolled out into codebases, so that AWS CDK v1 customers can start to benefit from the
-enhanced type safety features it offers to statically typed languages.
+enhanced type safety features it offers to languages without _type unions_.
 
 First, the _jsii assembly_ schema needs to be augmented so that it can represent _type unions_ as part of a library's exported type system. This
 introduces a new type `kind`, and those will coexist with _classes_, _interfaces_ and _enums_ within the `types` section of the assembly. The required
@@ -260,8 +260,8 @@ The `jsii` compiler will then be modified in order to locate and process exporte
 export type UnionType = CandidateA | CandidateB;
 ```
 
-In order to ensure ability to generate stable code for _union-like_ types in statically typed languages, the possible _candidate types_ of an aliased
-_type union_ must however be restricted (through `jsii` compile-time validation) to prevent name collisions:
+In order to ensure ability to generate stable code for _union-like_ types in languages without native _type unions_, the possible _candidate types_ of
+an aliased _type union_ must however be restricted (through `jsii` compile-time validation) to prevent name collisions:
 
 - all candidates **must** have distinct _unqalified names_:
 
@@ -289,14 +289,14 @@ that it emits aliased _type unions_ for any properties **introduced after** the 
 a list of all properties found in the CloudFormation Resource Specification at the time of that release, and branching code-generation based on
 whether the property is in the list or not.
 
-In order to gradually enahnce the developer experience in statically typed languages, a new `awslint` rule will be introduced to prohibit introduction
-of new inline _type unions_. Exceptions will be added for all existing APIs.
+In order to gradually enahnce the developer experience in languages without _type unions_, a new `awslint` rule will be introduced to prohibit
+introduction of new inline _type unions_. Exceptions will be added for all existing APIs.
 
 ## Generating _union-like_ types
 
 Code generation needs to be changed in `jsii-pacmak` so that languages without native support for _type unions_ (**C#**, **Go**, and **Java**) have
 additional _union-like_ types emitted. The proposed API for a union such as `export type UnionType = Foo | Map<Bar> | Baz[]` in each currently
-supported statically typed language is the following (subject ot change):
+supported language without native _type unions_ is the following (subject to change):
 
 - In **C#**
 
@@ -307,9 +307,10 @@ supported statically typed language is the following (subject ot change):
     public static UnionType FromMapOfBar(IReadOnlyDictionary<Bar> value) { /* ... */ }
     public static UnionType FromListOfBaz(IReadOnlyList<Baz> value) { /* ... */ }
 
-    public Foo? Foo { get; }
-    public IReadOnlyDictionary<Bar>? MapOfBar { get; }
-    public IReadOnlyList<Baz>? ListOfBaz { get; }
+    // Those may throw InvalidCastException
+    public Foo Foo { get; }
+    public IReadOnlyDictionary<Bar> MapOfBar { get; }
+    public IReadOnlyList<Baz> ListOfBaz { get; }
 
     // Private constructor ensures all initialization happens though the factories
     private UnionType(/*...*/) { /*...*/ }
@@ -338,9 +339,9 @@ supported statically typed language is the following (subject ot change):
       return new UnionType.ListOfBaz(value);
     }
 
-    public @Nullable Foo asFoo() { return null; }
-    public @Nullable Map<String, Bar> asMapOfBar() { return null; }
-    public @Nullable List<Baz> asListOfBaz() { return null; }
+    public Foo asFoo() { throw new ClassCastException(); }
+    public Map<String, Bar> asMapOfBar() { throw new ClassCastException(); }
+    public List<Baz> asListOfBaz() { throw new ClassCastException(); }
 
     // Private constructor ensures all initialization happens through the factories
     private UnionType(/* ... */) { /* ... */ }
@@ -351,24 +352,46 @@ supported statically typed language is the following (subject ot change):
   }
   ```
 
-The _jsii Kernel_ will need adjustments in order to better support those types. The generated libraries will provide a new argument to the _jsii
-kernel_'s `load` API if it's code was generated with `--union-like-types` enabled. This way, the kernel will be bale to reference the declared _type
-union_'s information when annotating instances that are passed from **Javascript** to the host application, removing all ambiguity regarding which
-type is serialized.
+The _jsii Kernel_ will be aware of the _aliased type unions_, and values passed from **JavaScript** to the _host application_ will be annotated with
+the _union type_'s fully qualified name if the value is not an instance of a known class (this is the case for values of _struct_ types). On the other
+hand, if the value is the instance of a _jsii_ class, the instance will continue to be serialized using this class' fully qualified name, and the
+languages' runtime libraries will wrap that using the _union-like type_ as necessary.
+
+It does not make sense for a _host application_ to use a _type union_ fully qualified name with the _jsii Kernel_'s `create` call: one of the
+candidate types should be instanciated instead.
+
+When a _type union_ value is passed from the _host application_ to **JavaScript**, the _jsii Kernel_ will accept all candidate types that compose the
+_type union_, as well as the _type union_ itself (which can only be a _by-reference_ proxy to an object owned by the **JavaScript** process).
 
 # Drawbacks
 
-This approach may allow developers in statically typed languages to cause _undefined behavior_ to occur if they are not provided with a way to
-validate whether a _union-like_ instancs is of a candidate type or not. Without such an API, developers may use an invalid `as<TypeName>` accessor and
-retrive a proxy that may behave unexpectedly. This behavior is however identical to what happens in **TypeScript** when developers use `as any` to
-evade type checking.
+This approach may allow developers to write code that results in _undefined behavior_ if they are not provided with an API allowing to validate
+whether some instance is of a candidate type or not. While the `as<TypeName>` methods will throw an exception if the value is **definitely** not of
+the requested type, it is not always possible to conclusively check this. It is for example not possible to distinguish instances that anonymously
+implement either of the following interfaces (for there is no way at runtime to determine the return type of those methods, short of calling them):
+
+```ts
+export interface IFoo {
+  method(): Foo;
+}
+export interface IBar {
+  method(): Bar;
+}
+```
+
+Without an API to check the instance's conformance to some interface, developers may be allowed to use an invalid `as<TypeName>` accessor and retrive
+a proxy that may behave unexpectedly. This behavior is however largely similar to what can happen in **TypeScript** when developers use `as any` to
+evade type checking: attempting an operation that is not actually supported by the instance **may** silently fail, result in a runtime error, or
+return a value of an unexpected type (although in this last scenario, **C#** and **Java** will typically throw a class cast error right away, while
+**JavaScript** runtimes would continue executing).
 
 # Rationale and Alternatives
 
 Improving support for _type unions_ appears to be the best way going forward, as complete removal of type unions has proven to be challenging from an
-API design pespective: it tends to make the experience significantly worse for dynamic languages (as boilerplate-heavy patterns must be leveraged as a
-replacement for _type unions_), and would reduce the flexibility in language-specific code generation for _union-like_ types (as those would be bound
-to the **TypeScript** API). Full support of _type unions_ as a type kind in the _jsii type model_ achieves better outcomes:
+API design pespective: it tends to make the experience significantly worse for languages with antive support for _type unions_ (as boilerplate-heavy
+patterns must be leveraged as a replacement for _type unions_), and would reduce the flexibility in language-specific code generation for _union-like_
+types (as those would be bound to the **TypeScript** API). Full support of _type unions_ as a type kind in the _jsii type model_ achieves better
+outcomes:
 
 - it ensures consistency around _union-like_ types
 - it does not degrade the developer experience in languages with _native type_ union support
@@ -376,9 +399,9 @@ to the **TypeScript** API). Full support of _type unions_ as a type kind in the 
 
 # Adoption Strategy
 
-Leveraging aliased _type unions_ in all existing CDK APIs would be a breaking change for all statically typed bindings. As such, the initial rollout
-will start as early as possible in AWS CDK v1, however existing APIs will not be updated to leverage aliased _type unions_, preserving all existing
-APIs.
+Leveraging aliased _type unions_ in all existing CDK APIs would be a breaking change for all bindings to languages without native _type unions_. As
+such, the initial rollout will start as early as possible in AWS CDK v1, however existing APIs will not be updated to leverage aliased _type unions_,
+preserving all existing APIs.
 
 If the solution is ready on time, it may be possible to update all existing APIs to aliased _type unions_ as part of the [AWS CDK v2] release,
 although this is not a hard requirement: those APIs that are currently (in AWS CDK v1) unusable in **C#** and **Java** can be intentionally updated
@@ -394,8 +417,8 @@ outside of the context of a new major version, since existing code is already br
 # Future Possibilities
 
 It will be possible in the future to make the `jsii` compiler **require** aliased _type unions_, ensuring the best possible experience for developers
-in static languages. This can either be introduced in the current version of `jsii` though a new option (e.g: `--strict=type-union`); alternatively, a
-new major version could be released that does **not** support inline _type unions_ at all.
+in languages without native _type unions_. This can either be introduced in the current version of `jsii` though a new option (e.g:
+`--strict=type-union`); alternatively, a new major version could be released that does **not** support inline _type unions_ at all.
 
 As `jsii` gained the ability to track _type aliases_, more use for type aliasing can be considered valid. In particular, certain aliasing can be
 leveraged to disambiguate class names in certain contexts. For example, when renaming a class as part of a refactoring, a `@deprecated` type alias can
@@ -408,7 +431,7 @@ be provided as a way to maintain compatibility with the old name at very little 
   - [ ] in **C#**
   - [ ] in **Java**
   - [ ] in **Go**
-- [ ] Maje `jsii-diff` aware of aliased _type-unions_ (changing from inline to aliased, or back, is a breaking change)
+- [ ] Make `jsii-diff` aware of aliased _type-unions_ (changing from inline to aliased, or back, is a breaking change)
 - [ ] Generate type aliases for new properties in `cfn2ts`
 - [ ] Implement `awslint` rule to prevent introduction of new un-aliased _type unions_
 
