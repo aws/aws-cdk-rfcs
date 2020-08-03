@@ -100,8 +100,7 @@ and related to each other.
   - service's product manager,
   - service's developer advocates (if any),
   - service's software development engineer(s) (designated by service's leadership),
-  - solutions architects who specialize in service (sourced via [Technical Field
-    Communities](https://w.amazon.com/bin/view/AWS/Teams/TFC)),
+  - solutions architects who specialize in service,
   - AWS Developer Tools developer advocates
 
 - **Update GitHub tracking issue** - List the primary use cases for the service and the constructs required to satisfy

@@ -16,10 +16,5 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
-      - name: install dependencies
-        run: |
-          npm install --prefix tools/linters
       - name: run linter
-        run: |
-          find . -type f -name '*.md' -not -path '*/node_modules/*' -not -path '*/.github/*' |\
-            xargs -I'{}' ./tools/linters/node_modules/.bin/markdownlint -c tools/linters/markdownlint.json '{}'
+        run: ./lint.sh
