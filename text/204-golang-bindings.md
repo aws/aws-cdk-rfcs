@@ -96,8 +96,8 @@ interfaces:
 
 Classes that implement an interface do so *explicitly* by using the implements keyword.
 
-In jsii, there are two types of interfaces; *datatype* interfaces (or *structs*) and *non-datatype* interfaces (conventionally named `IXxx`, where
-`Xxx` is a resource name). The following describes how to handle each kind.
+In jsii, there are two types of interfaces; *structs* (aka: *datatypes* - immutable pure data objects) and *behavioral interfaces* (named `IXxx`,
+where `Xxx` is a resource name). The following describes how to handle each kind.
 
 ### JSII Non-Datatype Interfaces (`IResource`)
 
@@ -135,7 +135,7 @@ type ISecurityGroup interface {
 ### JSII Datatype Interfaces (Structs)
 
 In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)
-attribute that indicates that the interface only contains properties. While this does corresponds directly to a Go struct, we would likely need to
+attribute that indicates that the interface only contains readonly properties. While this does corresponds directly to a Go struct, we would likely need to
 generate both a Go interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This
 is in order to support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward
 compatibility in case the datatype interface eventually extends another. Were it not for these considerations, it would be simpler to simply have a
