@@ -18,7 +18,7 @@ tooling.
 
 # Design Summary
 
-In order to create the JSII Go language binding, the various types defined in the JSII spec need to be translated into equivalent types in Go. The
+In order to create the jsii Go language binding, the various types defined in the jsii spec need to be translated into equivalent types in Go. The
 three main types discussed here are Enums, Interfaces, and Classes.
 
 # Detailed Design
@@ -96,10 +96,10 @@ interfaces:
 
 Classes that implement an interface do so *explicitly* by using the implements keyword.
 
-In the JSII, there are two types of interfaces; *datatype* interfaces (or *structs*) and *non-datatype* interfaces (conventionally named `IXxx`, where
+In jsii, there are two types of interfaces; *datatype* interfaces (or *structs*) and *non-datatype* interfaces (conventionally named `IXxx`, where
 `Xxx` is a resource name). The following describes how to handle each kind.
 
-### JSII Non-Datatype Interfaces (Structs)
+### JSII Non-Datatype Interfaces (`IResource`)
 
 Typescript interfaces that define method signatures can be translated directly as Go interfaces. Any properties that the interface may contain would
 be converted to getters (and setters, as needed).
@@ -132,9 +132,9 @@ type ISecurityGroup interface {
 }
 ```
 
-### JSII Datatype Interfaces (`IResource`)
+### JSII Datatype Interfaces (Structs)
 
-In the JSII, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)
+In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)
 attribute that indicates that the interface only contains properties. While this does corresponds directly to a Go struct, we would likely need to
 generate both a Go interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This
 is in order to support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward
@@ -144,7 +144,7 @@ single Go struct that corresponds to a datatype interface (see last bullet point
 #### Case 1: Typescript datatype interface (no extensions)
 
 Here, a datatype interface (`HealthCheck`) is converted into a Go interface (`HealthCheck`), where each property becomes a
-getter method (JSII datatype properties always are readonly, so there are no setter methods generated). This Go interface is then implemented by a struct
+getter method (jsii datatype properties always are readonly, so there are no setter methods generated). This Go interface is then implemented by a struct
 (LinuxParameterProps), which would contain the properties from the original typescript interface as non-exported (i.e. lowercase) properties and rely
 on the generated Getter methods for readonly access (as when _used as an argument_ to the constructor):
 
@@ -315,7 +315,7 @@ props.serviceName  // => "myService"
 
 * When fields in the Go struct are exported, the struct cannot have a method with the same name (e.g. exported field `Bar` , and method `Bar()`.
    Using a `Bar()` getter on a private field bar is most consistent with idiomatic Go;  however, this may make code generation more difficult since it
-would potentially necessitate converting public properties on the source (JSII) class into an interface implemented by the custom struct (Go “class”).
+would potentially necessitate converting public properties on the source (jsii) class into an interface implemented by the custom struct (Go “class”).
 The *alternative* to this is to prefix the methods in the generated Go interface with Get, e.g. `GetBar()` to avoid the name collision.
 * Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default “empty”
   values for each type, which are not nullable)
@@ -375,9 +375,9 @@ func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
 Typescript takes an object-oriented approach to classes, which includes using polymorphism and subtyping, neither of which are natively supported in
 Go, which is not an object-oriented language. While custom structs, which can be used as pointer receivers in function definitions to simulate
 methods", can be used to encapsulate object-like behavior in Go, subtyping on these custom structs is not possible. In order to simulate subtyping, we
-would need to generate an interface in addition to a concrete struct for each JSII class.
+would need to generate an interface in addition to a concrete struct for each jsii class.
 
-The JSII [ClassType](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L803) provides information on whether a
+The jsii [ClassType](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L803) provides information on whether a
 class is abstract, whether it extends another class, and whether it implements other interfaces. We will discuss each case in turn.
 
 ### Case 1: Simple class
@@ -454,7 +454,7 @@ const sam = new Snake("Sammy the Python");
 
 sam.move();
 //  Slithering...
-// Sammy the Python moved 10m.
+// Sammy the Python moved 5m.
 ```
 
 In Go:
@@ -615,20 +615,20 @@ JSII String would be satisfied by Go's string type.
 
 #### Number
 
-JSII number does not distinguish the difference between integer and float. This either requires JSII for Go to treat all numbers as float64, or define
-a new jsii.Number type that "wraps" Go number types into the singular JSII Number type.
+JSII number does not distinguish the difference between integer and float. This either requires jsii for Go to treat all numbers as float64, or define
+a new jsii.Number type that "wraps" Go number types into the singular jsii Number type.
 
-Typescript numbers are float64 with a max integer size of 2^53 -1. This means that Customers could want to provide a int64 value that would lose
+Typescript numbers are float64 with a max safe integer size of 2^53 -1. This means that Customers could want to provide a int64 value that would lose
 precision.
 
 #### Any
 
-JSII any maps to Go's empty interface type. JSII for Go should replace all JSII any types with interface{}.
+JSII any maps to Go's empty interface type. JSII for Go should replace all jsii any types with interface{}.
 
 ### Promise
 
-Promises do not exist natively in Go. JSII functions would be wrapped within a synchronous Go function that wait for the async JSII function to be
-complete, and return either the result or an error. This is the same pattern used for Java and .Net JSII bindings.
+Promises do not exist natively in Go. JSII functions would be wrapped within a synchronous Go function that wait for the async jsii function to be
+complete, and return either the result or an error. This is the same pattern used for Java and .Net jsii bindings.
 
 ```go
 func JSIIPromise() (resp, error) { /* ... */ }

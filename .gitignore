@@ -1,2 +1,3 @@
 # VSCode Local history extension
 .history/
+*.swp
