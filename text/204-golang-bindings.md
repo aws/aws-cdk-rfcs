@@ -61,6 +61,8 @@ export enum LaunchType {
 Go translation:
 
 ```go
+package launchtype
+
 type LaunchType string
 
 const (
@@ -69,7 +71,35 @@ const (
 )
 ```
 
-*_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/master/service/ecs/api.go#L20410-L20416) handles enums.
+*_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/master/service/ecs/api.go#L20410-L20416) handles
+enums.
+
+We could also add some utility functions to make the API a little neater:
+```go
+func EC2() LaunchType {
+	return LaunchTypeEc2
+}
+
+func Fargate() LaunchType {
+	return LaunchTypeFargate
+}
+
+func Values() []LaunchType {
+	return []LaunchType{
+		LaunchTypeEc2,
+		LaunchTypeFargate,
+	}
+}
+```
+
+Encapsulating the enum within a package would then create an intuitive namespacing (Run example in the [Go
+playground](https://play.golang.org/p/-KyXiVS4z8s))
+
+```go
+fmt.Println(launchtype.EC2()) // => "EC2"
+fmt.Println(launchtype.Fargate()) // => "FARGATE"
+fmt.Println(launchtype.Values()) // => [EC2 FARGATE]
+```
 
 ## Interfaces
 
