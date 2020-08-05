@@ -171,11 +171,11 @@ is in order to support subtyping, as the interface is typically what is passed a
 compatibility in case the datatype interface eventually extends another. Were it not for these considerations, it would be simpler to simply have a
 single Go struct that corresponds to a datatype interface (see last bullet point in Notes/Concerns).
 
-#### Case 1: Typescript datatype interface (no extensions)
+#### Case 1: Typescript struct/datatype interface (no extensions)
 
-Here, a datatype interface (`HealthCheck`) is converted into a Go interface (`HealthCheck`), where each property becomes a
+Here, a datatype interface (`HealthCheck`) is converted into a Go interface (`IHealthCheck`), where each property becomes a
 getter method (jsii datatype properties always are readonly, so there are no setter methods generated). This Go interface is then implemented by a struct
-(LinuxParameterProps), which would contain the properties from the original typescript interface as non-exported (i.e. lowercase) properties and rely
+(HealthCheck), which would contain the properties from the original typescript interface as non-exported (i.e. lowercase) properties and rely
 on the generated Getter methods for readonly access (as when _used as an argument_ to the constructor):
 
 [Example](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596):
@@ -189,7 +189,7 @@ export interface HealthCheck {
   readonly timeout?: cdk.Duration;
 }
 
-function renderHealthCheck(hc: HealthCheck): CfnTaskDefinition.HealthCheckProperty {
+function renderHealthCheck(hc: HealthCheck): cfntaskdefinition.HealthCheckProperty {
   return {
     command: getHealthCheckCommand(hc),
     interval: hc.interval != null ? hc.interval.toSeconds() : 30,
@@ -205,7 +205,7 @@ Go translation (Run example in the [Go playground](https://play.golang.org/p/_eR
 ```go
 package ecs
 
-type HealthCheckIface interface{
+type IHealthCheck interface{
    Command() []string
    Interval() cdk.Duration;
    Retries() int
@@ -221,8 +221,9 @@ type HealthCheck struct {
     timeout cdk.Duration;
 }
 
+// See NOTE below
 func (h HealthCheck) Command() []string {
-    return h.command
+    return append([]string{}, h.command...)
 }
 
 func (h HealthCheck) Retries() int {
@@ -241,7 +242,7 @@ func (h HealthCheck) Timeout() cdk.Duration {
     return h.timeout
 }
 
-func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
+func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
     return CfnTaskDefintion.HealthCheckProperty{
         command:     hc.Command(),
         interval:    hc.Interval(),
@@ -251,6 +252,9 @@ func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
     }
 }
 ```
+
+**NOTE**: To ensure immutability, getters that return a slice type should return a copy of the slice, since elements could be reordered or replaced
+otherwise.
 
 #### Case 2: Extending Typescript datatype interfaces
 
@@ -374,8 +378,8 @@ This would allow a function that takes that interface as an argument, such as
 (simplified, without accounting for default values):
 
 ```go
-func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
-    return CfnTaskDefintion.HealthCheckProperty{
+func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
+    return cfnTaskDefinition.HealthCheckProperty{
         command:     hc.Command,
         interval:    hc.Interval,
         retries:     hc.Retries,
@@ -383,14 +387,13 @@ func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
         timeout:     hc.Timeout,
     }
 }
-
 ```
 
 Rather than:
 
 ```go
-func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
-    return CfnTaskDefintion.HealthCheckProperty{
+func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
+    return cfntaskdefintion.HealthCheckProperty{
         command:     hc.GetCommand(),
         interval:    hc.GetInterval(),
         retries:     hc.GetRetries(),
