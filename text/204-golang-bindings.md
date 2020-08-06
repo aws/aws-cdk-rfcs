@@ -75,20 +75,21 @@ const (
 enums.
 
 We could also add some utility functions to make the API a little neater:
+
 ```go
 func EC2() LaunchType {
-	return LaunchTypeEc2
+    return LaunchTypeEc2
 }
 
 func Fargate() LaunchType {
-	return LaunchTypeFargate
+    return LaunchTypeFargate
 }
 
 func Values() []LaunchType {
-	return []LaunchType{
-		LaunchTypeEc2,
-		LaunchTypeFargate,
-	}
+    return []LaunchType{
+        LaunchTypeEc2,
+        LaunchTypeFargate,
+    }
 }
 ```
 
@@ -164,8 +165,8 @@ type ISecurityGroup interface {
 
 ### JSII Datatype Interfaces (Structs)
 
-In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888)
-attribute that indicates that the interface only contains readonly properties. While this does corresponds directly to a Go struct, we would likely need to
+In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888) attribute
+that indicates that the interface only contains readonly properties. While this does corresponds directly to a Go struct, we would likely need to
 generate both a Go interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This
 is in order to support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward
 compatibility in case the datatype interface eventually extends another. Were it not for these considerations, it would be simpler to simply have a
@@ -353,7 +354,7 @@ would potentially necessitate converting public properties on the source (jsii) 
 The *alternative* to this is to prefix the methods in the generated Go interface with Get, e.g. `GetBar()` to avoid the name collision.
 * Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default "empty"
   values for each type, which are not nullable)
-* Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface,  in order to disambiguate it from the struct. This is
+* Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface, in order to disambiguate it from the struct. This is
   a bit verbose, and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead) if the interface name is what will
 primarily be used by the customer.
 
