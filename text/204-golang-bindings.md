@@ -492,7 +492,7 @@ sam.move();
 ```
 
 In Go:
-([Go playground example](https://play.golang.org/p/ZwoKmLn5OkV))
+([Go playground example](https://play.golang.org/p/v9gVW0bG2y1))
 ([Example with embedded field as named property](https://play.golang.org/p/nWfmHhxbs1G))
 
 ```go
@@ -535,7 +535,7 @@ func NewSnake(name string) SnakeIface {
 }
 
 func (s *Snake) Name() string {
-    return s.Animal.Name()      // simulates "super" call
+    return s.name  // inherits `name` property from `Animal`
 }
 
 func (s *Snake) Move(distance int64) {
