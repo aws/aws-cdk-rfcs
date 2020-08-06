@@ -347,11 +347,11 @@ props.serviceName  // => "myService"
 
 ### Notes/Concerns
 
-* When fields in the Go struct are exported, the struct cannot have a method with the same name (e.g. exported field `Bar` , and method `Bar()`.
+* When fields in the Go struct are exported, the struct cannot have a method with the same name (e.g. exported field `Bar`, and method `Bar()`.
    Using a `Bar()` getter on a private field bar is most consistent with idiomatic Go;  however, this may make code generation more difficult since it
-would potentially necessitate converting public properties on the source (jsii) class into an interface implemented by the custom struct (Go “class”).
+would potentially necessitate converting public properties on the source (jsii) class into an interface implemented by the custom struct (Go "class").
 The *alternative* to this is to prefix the methods in the generated Go interface with Get, e.g. `GetBar()` to avoid the name collision.
-* Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default “empty”
+* Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default "empty"
   values for each type, which are not nullable)
 * Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface,  in order to disambiguate it from the struct. This is
   a bit verbose, and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead) if the interface name is what will
