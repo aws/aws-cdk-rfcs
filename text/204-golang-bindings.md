@@ -94,7 +94,7 @@ func Values() []LaunchType {
 ```
 
 Encapsulating the enum within a package would then create an intuitive namespacing (Run example in the [Go
-playground](https://play.golang.org/p/-KyXiVS4z8s))
+playground](https://play.golang.org/p/olztr74OKsk))
 
 ```go
 fmt.Println(launchtype.EC2()) // => "EC2"
