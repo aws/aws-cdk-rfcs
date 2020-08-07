@@ -13,7 +13,8 @@ build a full featured ECS service out of components that provide specific featur
 # README
 
 The new ECS `Service` construct is a simple base class to describe your application. You can use
-to easily attach AWS ECS features to your application using a system of extensions. Each extension is responsible for a single feature that you might want to enable on your service.
+to easily attach AWS ECS features to your application using a system of extensions. Each
+extension is responsible for a single feature that you might want to enable on your service.
 
 For example you can use the `AppMeshExtension` to add an Envoy proxy sidecar to your ECS
 service's task definition, enable Cloud Map on your ECS service, and automatically register
@@ -481,5 +482,4 @@ The traits would be able to be added at both the service and environment level.
 A full implementation plan will be added when the RFC is
 scheduled for implementation.
 
-Note that a working proof of concept PR is already open on the CDK repo here:
-https://github.com/aws/aws-cdk/pull/9069
+Note that a [working proof of concept PR is already open on the CDK repo](https://github.com/aws/aws-cdk/pull/9069)
