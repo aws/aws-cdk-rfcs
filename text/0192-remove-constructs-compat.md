@@ -588,6 +588,10 @@ will reduce some of the friction from the 2.x migration.
 To encourage users to migrate, we will consider introducing this deprecation
 through a runtime warning message (as well as the @deprecated API annotation).
 
+#### Alternative Considered
+
+See [discussion](https://github.com/aws/aws-cdk-rfcs/pull/195/files#r460718960) over the RFC PR.
+
 ### 02-ASPECTS
 
 Aspects are actually a form of "prepare" and as such, if they mutate the tree,
