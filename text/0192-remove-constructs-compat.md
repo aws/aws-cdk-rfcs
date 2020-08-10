@@ -346,7 +346,7 @@ returns the list of all error messages returned from calling
 
 The `construct.node.addInfo()`, `construct.node.addWarning()` and
 `construct.node.Error()` methods are now available under the
-`Logging.of(construct)` API:
+`Annotations.of(construct)` API:
 
 Instead of:
 
@@ -357,9 +357,9 @@ myConstruct.node.addWarning('my warning');
 Use:
 
 ```ts
-import { Logging } from '@aws-cdk/core';
+import { Annotations } from '@aws-cdk/core';
 
-Logging.of(construct).addWarning('my warning');
+Annotations.of(construct).addWarning('my warning');
 ```
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
@@ -890,7 +890,7 @@ We decided that logging is not generic enough to include in `constructs`. It
 emits construct metadata that is very CLI specific (e.g. `aws:cdk:warning`) and
 currently there is no strong abstraction.
 
-To continue to enable logging, we will utilize the `Logging.of(x).addWarning()` pattern.
+To continue to enable logging, we will utilize the `Annotations.of(x).addWarning()` pattern.
 
 #### What can we do on 1.x for 09-LOGGING
 
@@ -1050,7 +1050,7 @@ created.
     commit](https://github.com/aws/aws-cdk/pull/9056/commits/42bd929aa36dc97ae39b15b77cf1f69d754c4a92)
     to master
 - [09-LOGGING](#09-logging)
-  - [ ] Introduce `Logging.of()` deprecate `node.addWarning/error/info`.
+  - [ ] Introduce `Annotations.of()` deprecate `node.addWarning/error/info`.
 
 ### constructs 10.x
 
