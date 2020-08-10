@@ -43,7 +43,7 @@ Currently we have built out a set of L3 constructs:
 - `ScheduledEc2Task`, `ScheduledFargateTask`
 
 These classes are useful as starter patterns, but aren't very flexible. Most of the
-decisions about the resulting architecture and integratons are made in the class name
+decisions about the resulting architecture and integrations are made in the class name
 itself. Only a few customizations can be made to the resulting architecture via the
 properties passed to the constructor.
 
@@ -196,8 +196,8 @@ following hooks:
 - `addHooks()` - This hook is called after all the extensions are added to a
   `ServiceDescription`, but before any of the other extension hooks have been run. It gives
   each extension a chance to do some inspection of the overall `ServiceDescription` and see
-  what other extensions have been added. Some extension may want to register hooks on the
-  other extension to modify them. For example the Firelens extension wants to be able to
+  what other extensions have been added. Some extensions may want to register hooks on the
+  other extensions to modify them. For example the Firelens extension wants to be able to
   modify the settings of the application container to route logs through Firelens.
 - `modifyTaskDefinitionProps()` - This is hook is passed the proposed `ecs.TaskDefinitionProps`
   for a TaskDefinition that is about to be created. This allows the extension to make
@@ -330,34 +330,52 @@ const myEnvironment = new Environment(stack, 'production', {
 
 This allows you to manually specify a precreated VPC or cluster if you already have
 these constructs defined and don't want to rely on the `Environment` to create them
-for you. Either way you can use the `Environment` to create a service like this.
+for you. Either way you pass the `Environment` when creating a service, and the
+service will be placed inside that `Environment`:
+
+```js
+const myService = new Service(stack, 'my-service', {
+  environment: myEnvironment
+  serviceDescription: myServiceDesc
+});
+```
 
 # Drawbacks
 
 One trade-off of this approach is that if not done well it will suffer from the
 same problems of the existing L3 constructs: customers will run into something that
 they can not configure and will have to fail out of the L3 construct back into L2
-constructs. However due to the increased amount of functionality which is only accessible
+constructs.
+
+This drawback can be mitigated both by good API design, but also by educating users on
+how to create their own custom extensions. For example it would be possible for someone
+to create their own extension: `MyServiceCustomizer` which modifies the underlying L2
+construct properties directly.
+
+Another drawback of this approach is that it creates a dependence on the L3 construct.
+This `Service` class implements attractive new features that can not be easily implemented
+at L2 without deep knowledge of the feature itself.
 via these L3 construct extensions it will be a massive effort to reimplement the same
-results directly at the L2 level. In summary the L3 construct configures a tremendous
-amount of things, which are very hard to get right at the L2 level, so it will create
-a dependence on the L3 construct.
+results directly at the L2 level. Basically once you start implementing your service
+using this L3 construct it would be almost impossible to refactor your CDK app back into
+lower level L2 constructs because the surface area and logic that the L3 construct
+implements is very broad.
 
-Do we anticipate certain extensions conflicting with each other?
+1. __Do we anticipate certain extensions conflicting with each other?__
 
-Yes it is possible that extensions may conflict with each other. It is the responsibility
-of each extension to check for other extensions at the time of being added to the service
-and throw an exception if there is an expected conflict.
+   Yes it is possible that extensions may conflict with each other. It is the responsibility
+   of each extension to check for other extensions at the time of being added to the service
+   and throw an exception if there is an expected conflict.
 
-Given that ECS patterns are meant to push best practices in application
-infrastructure/architecture, how will we provide that guidance with extensions?
+2. __Given that ECS patterns are meant to push best practices in application
+   infrastructure/architecture, how will we provide that guidance with extensions?__
 
-The goal of these extensions is to do the right thing by default, similar to the
-existing ECS patterns, but the user just has more choices about what combinations
-of feature integrations they want to enable. When using the built-in extensions there
-should be no "bad" choices. If a user wants to leave out an extension it is safe to
-do so, and if they chose to enable it there should be no gotchas from adding another
-extension. The goal is to make this hard to misuse, but still powerful and extendable.
+   The goal of these extensions is to do the right thing by default, similar to the
+   existing ECS patterns, but the user just has more choices about what combinations
+   of feature integrations they want to enable. When using the built-in extensions there
+   should be no "bad" choices. If a user wants to leave out an extension it is safe to
+   do so, and if they chose to enable it there should be no gotchas from adding another
+   extension. The goal is to make this hard to misuse, but still powerful and extendable.
 
 # Rationale and Alternatives
 
@@ -366,7 +384,7 @@ an extension type system. The existing
 [`TaskDefinition.addExtension()`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-ecs.TaskDefinition.html#add-wbr-extensionextension)
 method is the beginning of an attempt at this.
 
-However attempting to build out extensions on the L2 level will fail to meet customer
+However attempting to build out extensions on the L2 level will fail to fully meet customer
 expectations because the features they want to enable bridge multiple different
 types of L2 construct. For example in order for an extension like App Mesh to work
 properly it must change the service to have a cloud map configuration, change the
@@ -391,9 +409,9 @@ the `Service` construct from the start due to its enhanced extendable capabiliti
 
 - Does this API address the customer need well enough?
 - Is the API configurable enough? Are we missing important properties that need to be able
-  to be passed into the L3 construct to change the L2 construct?
-- Is the initial set of extensions full featured enough?
-- If not what other extensions do we need to develop?
+  to be passed into the L3 construct to change the L2 constructs?
+- Is the initial set of extensions full featured enough? If not what other extensions do we
+  need to develop?
 
 # Future Possibilities
 
