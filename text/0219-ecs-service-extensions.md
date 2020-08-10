@@ -13,7 +13,7 @@ build a full featured ECS service out of components that provide specific featur
 # README
 
 The new ECS `Service` construct is a simple base class to describe your application. You can use
-to easily attach AWS ECS features to your application using a system of extensions. Each
+it to easily attach AWS ECS features to your application using a system of extensions. Each
 extension is responsible for a single feature that you might want to enable on your service.
 
 For example you can use the `AppMeshExtension` to add an Envoy proxy sidecar to your ECS
@@ -32,7 +32,7 @@ As we add more features to ECS one problem that must be faced is that ECS is not
 service. The strength of ECS is in its integration with other AWS services, so customers
 expect these integrations to be as smooth and easy as possible. We must create CDK
 constructs that can help customers connect their ECS orchestrated application to other
-AWS services. The constructs in CDK must be extensible enough address all the possible
+AWS services. The constructs in CDK must be extensible enough to address all the possible
 integrations that users may want to enable on their ECS service.
 
 Currently we have built out a set of L3 constructs:
