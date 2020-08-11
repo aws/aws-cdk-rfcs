@@ -174,10 +174,11 @@ single Go struct that corresponds to a datatype interface (see last bullet point
 
 #### Case 1: Typescript struct/datatype interface (no extensions)
 
-Here, a datatype interface (`HealthCheck`) is converted into a Go interface (`IHealthCheck`), where each property becomes a
-getter method (jsii datatype properties always are readonly, so there are no setter methods generated). This Go interface is then implemented by a struct
-(HealthCheck), which would contain the properties from the original typescript interface as non-exported (i.e. lowercase) properties and rely
-on the generated Getter methods for readonly access (as when _used as an argument_ to the constructor):
+In the case of a simple a datatype interface (`HealthCheck`) without extensions, we would generate both a Go struct (HealthCheck), which would hold
+the properties of the original typescript interface as public members, and a Go interface (`IHealthCheck`) that defines getter methods for each
+property that would be implemented by the corresponding struct (jsii datatype properties always are readonly, so there are no setter methods
+generated). Since Go does not allow a struct to have exported members with the same name as an interface method, we would have to prefix the interface
+methods; the recommendation here is to use a `Get` prefix.
 
 [Example](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596):
 
@@ -201,61 +202,65 @@ function renderHealthCheck(hc: HealthCheck): cfntaskdefinition.HealthCheckProper
 }
 ```
 
-Go translation (Run example in the [Go playground](https://play.golang.org/p/_eRLhVmXmp8):
+Go translation (Run example in the [Go playground](https://play.golang.org/p/o84uoUGORYH):
 
 ```go
 package ecs
 
 type IHealthCheck interface{
-   Command() []string
-   Interval() cdk.Duration;
-   Retries() int
-   StartPeriod() cdk.Duration;
-   Timeout() cdk.Duration;
+   GetCommand() []string
+   GetInterval() cdk.Duration;
+   GetRetries() int
+   GetStartPeriod() cdk.Duration;
+   GetTimeout() cdk.Duration;
 }
 
 type HealthCheck struct {
-    command []string
-    interval cdk.Duration;
-    retries int
-    startPeriod cdk.Duration;
-    timeout cdk.Duration;
+    Command []string
+    Interval cdk.Duration;
+    Retries int
+    StartPeriod cdk.Duration;
+    Timeout cdk.Duration;
 }
 
 // See NOTE below
-func (h HealthCheck) Command() []string {
+func (h HealthCheck) GetCommand() []string {
     return append([]string{}, h.command...)
 }
 
-func (h HealthCheck) Retries() int {
+func (h HealthCheck) GetRetries() int {
     return h.retries
 }
 
-func (h HealthCheck) Interval() cdk.Duration {
+func (h HealthCheck) GetInterval() cdk.Duration {
     return h.interval
 }
 
-func (h HealthCheck) StartPeriod() cdk.Duration {
+func (h HealthCheck) GetStartPeriod() cdk.Duration {
     return h.startPeriod
 }
 
-func (h HealthCheck) Timeout() cdk.Duration {
+func (h HealthCheck) GetTimeout() cdk.Duration {
     return h.timeout
 }
 
 func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
     return CfnTaskDefintion.HealthCheckProperty{
-        command:     hc.Command(),
-        interval:    hc.Interval(),
-        retries:     hc.Retries(),
-        startPeriod: hc.StartPeriod(),
-        timeout:     hc.Timeout(),
+        Command:     hc.GetCommand(),
+        Interval:    hc.GetInterval(),
+        Retries:     hc.GetRetries(),
+        StartPeriod: hc.GetStartPeriod(),
+        Timeout:     hc.GetTimeout(),
     }
 }
 ```
 
 **NOTE**: To ensure immutability, getters that return a slice type should return a copy of the slice, since elements could be reordered or replaced
-otherwise.
+
+It is worth noting that this is not the idiomatic Go way of accessing struct members; normally, a struct would contain unexported members (e.g.
+`command`) and implement a Getter method with the uppercase method name (e.g.  `Command()`). However, having unexported members would make
+instantiating the struct unreasonably difficult for our use case, as struct members can only be set if they are exported. This does make the syntax
+more unwieldy when accessing the members within a function that takes the datatype interface as an argument, but the tradeoff is easier instantiation.
 
 #### Case 2: Extending Typescript datatype interfaces
 
@@ -284,125 +289,179 @@ export interface BaseServiceProps extends BaseServiceOptions {
 As before, the Go translation would have the getter methods (e.g. readonly cluster) defined in a the generated interface, which correspond to
 non-exported struct members in the struct that implements each getter.
 
+The interface generated for the jsii struct being extended would be **embedded** in the extending struct.
+
 ```go
 package ecs
 
 type BaseServiceOptionsIface interface {
-    Cluster()                ICluster
-    DesiredCount()           *int
-    ServiceName()            *string
-    MaxHealthyPercent()      *int
-    MinHealthyPercent()      *int
-    HealthCheckGracePeriod() *Duration
-    CloudMapOptions()        CloudMapOptions
-    PropagateTags()          PropagatedTagSource
-    EnableECSManagedTags()   *bool
-    DeploymentController()   DeploymentController
+    GetCluster()                ICluster
+    GetDesiredCount()           *int
+    GetServiceName()            *string
+    GetMaxHealthyPercent()      *int
+    GetMinHealthyPercent()      *int
+    GetHealthCheckGracePeriod() *Duration
+    GetCloudMapOptions()        CloudMapOptions
+    GetPropagateTags()          PropagatedTagSource
+    GetEnableECSManagedTags()   *bool
+    GetDeploymentController()   DeploymentController
 }
 
 type BaseServicePropsIface interface {
     BaseServiceOptionsIface  // embeddeded interface
-    LaunchType()             LaunchType
+    GetLaunchType()             LaunchType
 }
+```
 
+However, for the corresponding structs, we can take one of two approaches:
+
+the first is to embed the extended struct into the extending struct:
+(See: [Go playground example](https://play.golang.org/p/Dcww2kYR_Qx)).
+
+```go
 type BaseServiceOptions struct {
-    cluster                ICluster
-    desiredCount           *int
-    serviceName            *string
-    maxHealthyPercent      *int
-    minHealthyPercent      *int
-    healthCheckGracePeriod *Duration
-    cloudMapOptions        CloudMapOptions
-    propagateTags          PropagatedTagSource
-    enableECSManagedTags   *bool
-    deploymentController   DeploymentController
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
 }
-
 type BaseServiceProps struct {
     BaseServiceOptions  // embedded (anonymous) field
-    launchType          LaunchType
+    LaunchType          LaunchType
 }
 
 func (o BaseServiceOptions) Cluster() ICluster { return o.cluster }
 func (o BaseServiceOptions) DesiredCount() int { return o.desiredCount }
+// ... etc
+
+// BaseServiceProps does not have to re-implement all the methods above
+func (p BaseServiceProps) GetLaunchType() string     { return p.LaunchType }
+
+
+// example function that takes the embedding interface
+func TakesBaseServicePropsIface(props BaseServicePropsIface) {
+    fmt.Printf("Class: %T\nValue:%+[1]v", props)
+}
+```
+
+This allows the embedding struct (here, `BaseServiceProps`) to "inherit" all the methods defined in the embedded interface
+(`BaseServiceOptionsIFace`) automatically.
+
+The advantages of this approach are:
+
+- there would be less boilerplate, since `BaseServiceProps` would not need to re-implement the methods defined in `BaseServiceOptionsIface`.
+- any changes to the extended interface would automatically be inherited by the extending interface.
+
+The main disadvantage of embedding is that instantiating the struct would require knowledge of which properties are inherited from the embedded
+struct, i.e.:
+
+```go
+serviceProps := ecs.BaseServiceProps{
+    ServiceName:       "myService",
+    MaxHealthyPercent: 100,
+    MinHealthyPercent: 50,
+    LaunchType: "EC2",
+}
+
+ecs.TakesBaseServicePropsIface(serviceProps)
+```
+
+The second approach is not to embed the struct, but **flatten** all the properties inherited from the extended interface.
+(See: [Go playground example](https://play.golang.org/p/ioL4XRpjETA)).
+
+```go
+type BaseServiceOptions struct {
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+}
+
+type BaseServiceProps struct {
+    // Flattened properties generated from extended interface (i.e. Base ServiceOptions)
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+
+    LaunchType          LaunchType
+}
+
+func (o BaseServiceOptions) GetServiceName() string    { return o.ServiceName }
+func (o BaseServiceOptions) GetMaxHealthyPercent() int { return o.MaxHealthyPercent }
+func (o BaseServiceOptions) GetMinHealthyPercent() int { return o.MinHealthyPercent }
 
 // ... etc
 
+// Generated interface methods inherited from BaseServiceOptionsIface
+func (p BaseServiceProps) GetServiceName() string    { return p.ServiceName }
+func (p BaseServiceProps) GetMaxHealthyPercent() int { return p.MaxHealthyPercent }
+func (p BaseServiceProps) GetMinHealthyPercent() int { return p.MinHealthyPercent }
+func (p BaseServiceProps) GetLaunchType() string     { return p.LaunchType }
+
+// ... etc
 ```
 
-This allows the embedding interface (here, `BaseServicePropsIFace`) to "inherit" all the methods defined in the embedded interface
-(`BaseServiceOptionsIFace`). Similarly, the embedding struct (`BaseServiceProps`) would have access to all the properties of the embedded struct
-(`BaseServiceOptions`) through having it as an anonymous field (See: [Go playground example](https://play.golang.org/p/XRpTH3LN6bx)).
+This approach would allow for properties to be passed to a function in a flattened data structure, i.e.
 
 ```go
-props := BaseServiceProps{
-    BaseServiceOptions{
-      serviceName: "myService",
-      ...
-    },
-    launchType: "EC2",
+serviceProps := ecs.BaseServiceProps{
+    ServiceName:       "myService",
+    MaxHealthyPercent: 100,
+    MinHealthyPercent: 50,
+    LaunchType: "EC2",
 }
 
-props.serviceName  // => "myService"
+ecs.TakesBaseServicePropsIface(serviceProps)
+```
+
+The disadvantage is that there is much more boilerplate generated to implement the inherited methods, and any change to the inherited interface would
+be a breaking change to anything inheriting it. For the latter concern, within the jsii, any generated code would be tied to some version of jsii, so
+we would be able to re-generate datatype interfaces that extend other datatypes. For customers creating their own custom constructs, they could
+mititage potential breaking changes in jsii interfaces by creating their own interface wrappers, e.g.
+
+```go
+// custom method that takes wrapped interface
+func myCustomMethod(props CustomServicePropsIface) {...}
+
+// wrapper - takes subset of methods definfed in BaseServiceOptionsIface
+type CustomServicePropsIface interface {
+    GetServiceName() string
+    GetMaxHealthyPercent() int
+    GetMinHealthyPercent() int
+}
 ```
 
 ### Notes/Concerns
 
-* When fields in the Go struct are exported, the struct cannot have a method with the same name (e.g. exported field `Bar`, and method `Bar()`.
-   Using a `Bar()` getter on a private field bar is most consistent with idiomatic Go;  however, this may make code generation more difficult since it
-would potentially necessitate converting public properties on the source (jsii) class into an interface implemented by the custom struct (Go "class").
-The *alternative* to this is to prefix the methods in the generated Go interface with Get, e.g. `GetBar()` to avoid the name collision.
 * Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default "empty"
   values for each type, which are not nullable)
 * Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface, in order to disambiguate it from the struct. This is
   a bit verbose, and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead) if the interface name is what will
 primarily be used by the customer.
-
 * The alternative to having to implement both a struct and interface is simply translating the datatype interface into a struct. This option has the
   added advantage of having a more streamlined API, rather than having to convert each property into a getter method and having to call those methods
-to access data fields. For example, something like the
-[HealthCheck](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596-L642) interface in a container
-definition would be converted into a Go struct:
-
-```go
-type HealthCheck struct {
-    Command []string
-    Interval cdk.Duration;
-    Retries int
-    StartPeriod cdk.Duration;
-    Timeout cdk.Duration;
-}
-```
-
-This would allow a function that takes that interface as an argument, such as
-[renderHealthCheck](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L652-L660) look like this
-(simplified, without accounting for default values):
-
-```go
-func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
-    return cfnTaskDefinition.HealthCheckProperty{
-        command:     hc.Command,
-        interval:    hc.Interval,
-        retries:     hc.Retries,
-        startPeriod: hc.StartPeriod,
-        timeout:     hc.Timeout,
-    }
-}
-```
-
-Rather than:
-
-```go
-func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
-    return cfntaskdefintion.HealthCheckProperty{
-        command:     hc.GetCommand(),
-        interval:    hc.GetInterval(),
-        retries:     hc.GetRetries(),
-        startPeriod: hc.GetStartPeriod(),
-        timeout:     hc.GetTimeout(),
-    }
-}
-```
+to access data fields. However, this is not a viable option since in order to pass them as arguments to functions, structs would have to be
+structurally typed, which is not the case for Go structs. The only way to satisfy the structural typing requirements of argments is through
+interfaces.
 
 ## Classes
 
