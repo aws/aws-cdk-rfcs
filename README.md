@@ -96,6 +96,7 @@ future state of the libraries and to discover projects for contribution.
 [85](https://github.com/aws/aws-cdk-rfcs/issues/85)|[Cross Account resource import and source account tracking](https://github.com/aws/aws-cdk-rfcs/issues/85)|[@skinny85](https://github.com/skinny85)|❓unknown
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[Simplify working with logical IDs when refactoring CDK code](https://github.com/aws/aws-cdk-rfcs/issues/162)||❓unknown
+[223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Better experience when developing lambda functions in the cdk](https://github.com/aws/aws-cdk-rfcs/issues/223)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
