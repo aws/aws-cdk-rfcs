@@ -21,7 +21,7 @@ future state of the libraries and to discover projects for contribution.
 [193](https://github.com/aws/aws-cdk-rfcs/issues/193)|[Fixing of type unions](https://github.com/aws/aws-cdk-rfcs/pull/194)|[@RomainMuller](https://github.com/RomainMuller)|⏰ final comments
 [18](https://github.com/aws/aws-cdk-rfcs/issues/18)|[Open context provider framework](https://github.com/aws/aws-cdk-rfcs/pull/167)|[@ddneilson](https://github.com/ddneilson)|✍️ review
 [25](https://github.com/aws/aws-cdk-rfcs/issues/25)|[Defaults & configuration policy](https://github.com/aws/aws-cdk-rfcs/issues/25)|[@njlynch](https://github.com/njlynch)|✍️ review
-[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/pull/156)|[@RomainMuller](https://github.com/RomainMuller)|✍️ review
+[79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0079-cdk-2.0.md)|[@RomainMuller](https://github.com/RomainMuller)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/issues/1)||💡 proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Migration Paths](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
@@ -97,6 +97,14 @@ future state of the libraries and to discover projects for contribution.
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[Simplify working with logical IDs when refactoring CDK code](https://github.com/aws/aws-cdk-rfcs/issues/162)||❓unknown
 [223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Better experience when developing lambda functions in the cdk](https://github.com/aws/aws-cdk-rfcs/issues/223)||❓unknown
+[226](https://github.com/aws/aws-cdk-rfcs/issues/226)|[Context provider for cross-account CFN stack outputs](https://github.com/aws/aws-cdk-rfcs/issues/226)||❓unknown
+[227](https://github.com/aws/aws-cdk-rfcs/issues/227)|[Integrate AWS CloudFormation StackSets for AWS Organizations as part of `cdk deploy`](https://github.com/aws/aws-cdk-rfcs/issues/227)||❓unknown
+[228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[Support for app.postDeploy() for post-deploy functions](https://github.com/aws/aws-cdk-rfcs/issues/228)||❓unknown
+[229](https://github.com/aws/aws-cdk-rfcs/issues/229)|[Construct library pattern for metrics](https://github.com/aws/aws-cdk-rfcs/issues/229)||❓unknown
+[230](https://github.com/aws/aws-cdk-rfcs/issues/230)|[Construct library pattern for grants](https://github.com/aws/aws-cdk-rfcs/issues/230)||❓unknown
+[231](https://github.com/aws/aws-cdk-rfcs/issues/231)|[Construct library pattern for resources that use a VPC](https://github.com/aws/aws-cdk-rfcs/issues/231)||❓unknown
+[232](https://github.com/aws/aws-cdk-rfcs/issues/232)|[Construct library pattern for resources that need IAM roles](https://github.com/aws/aws-cdk-rfcs/issues/232)||❓unknown
+[233](https://github.com/aws/aws-cdk-rfcs/issues/233)|[Using Custom Types with CDK](https://github.com/aws/aws-cdk-rfcs/issues/233)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
