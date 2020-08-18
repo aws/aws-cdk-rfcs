@@ -763,4 +763,5 @@ this disadvantage.
 
 # Future Possibilities
 
-This will hopefully further pave the way for more language bindings for the CDK.
+This will hopefully further pave the way for more language bindings for the CDK. It would also be interesting to use this as a stepping stone to
+create an automated scaffolding for other target language code generation.
