@@ -752,7 +752,7 @@ package dependencies. Imports may be aliased to avoid namespace collisions.
 # Drawbacks
 
 The programming model for Go differs significantly from that of Typescript. Imposing an object-oriented philosophy on a procedural language may result
-in non-idiomatic constructs and APIs in the target language. However, the tradeoff for having CDK constructs available in more languages outweights
+in non-idiomatic constructs and APIs in the target language. However, the tradeoff for having CDK constructs available in more languages outweighs
 this disadvantage.
 
 # Unresolved questions
