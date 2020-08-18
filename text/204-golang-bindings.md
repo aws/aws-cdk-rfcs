@@ -336,8 +336,8 @@ type BaseServiceProps struct {
     LaunchType          LaunchType
 }
 
-func (o BaseServiceOptions) Cluster() ICluster { return o.cluster }
-func (o BaseServiceOptions) DesiredCount() int { return o.desiredCount }
+func (o BaseServiceOptions) Cluster() ICluster { return o.Cluster }
+func (o BaseServiceOptions) DesiredCount() int { return o.DesiredCount }
 // ... etc
 
 // BaseServiceProps does not have to re-implement all the methods above
