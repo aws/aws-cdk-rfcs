@@ -225,23 +225,23 @@ type HealthCheck struct {
 
 // See NOTE below
 func (h HealthCheck) GetCommand() []string {
-    return append([]string{}, h.command...)
+    return append([]string{}, h.Command...)
 }
 
 func (h HealthCheck) GetRetries() int {
-    return h.retries
+    return h.Retries
 }
 
 func (h HealthCheck) GetInterval() cdk.Duration {
-    return h.interval
+    return h.Interval
 }
 
 func (h HealthCheck) GetStartPeriod() cdk.Duration {
-    return h.startPeriod
+    return h.StartPeriod
 }
 
 func (h HealthCheck) GetTimeout() cdk.Duration {
-    return h.timeout
+    return h.Timeout
 }
 
 func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
@@ -561,6 +561,7 @@ package animal
 type AnimalIface interface {
     Name() string
     Move(distance int64)
+    isAnimal() // private method saftey check
 }
 
 // Base class implementation
@@ -585,12 +586,14 @@ type SnakeIface interface {
   AnimalIface
 }
 
+// Snake class would be customer-defined extension of Animal
 type Snake struct {
     Animal
 }
 
 func NewSnake(name string) SnakeIface {
-    return &Snake{Animal{name}}
+    a := NewAnimal{name}  // or ExtendAnimal, to avoid introspection for super calls later
+    return &Snake{a}
 }
 
 func (s *Snake) Name() string {
@@ -599,6 +602,7 @@ func (s *Snake) Name() string {
 
 func (s *Snake) Move(distance int64) {
     fmt.Printf("Slithering...\n")
+    // how to look up Animal.Move to delegate to the node runtime? Use JSII-reflect
     s.Animal.Move(distance)
 }
 
