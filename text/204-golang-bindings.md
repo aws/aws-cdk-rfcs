@@ -494,7 +494,7 @@ let greeter = new Greeter("world");
 greeter.greet() // "Hello, world"
 ```
 
-In Go: ([Go playground example](https://play.golang.org/p/cMW3Rv0lERh))
+In Go: ([Go playground example](https://play.golang.org/p/S2EgQr946Gh))
 
 ```go
 package greeter
@@ -507,7 +507,7 @@ type Greeter struct {
     greeting string
 }
 
-func New(message string) *Greeter {
+func NewGreeter(message string) *Greeter {
     return &Greeter{message}
 }
 
@@ -516,7 +516,7 @@ func (g *Greeter) Greet() string {
 }
 
 // usage
-g := greeter.New("world")
+g := greeter.NewGreeter("world")
 fmt.Println(g.Greet()) // "Hello, world"
 ```
 
