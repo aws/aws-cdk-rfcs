@@ -559,22 +559,23 @@ package animal
 
 // Base class as interface
 type AnimalIface interface {
-    Name() string
+    GetName() string
+
     Move(distance int64)
     isAnimal() // private method saftey check
 }
 
 // Base class implementation
 type Animal struct {
-    name string
+    Name string
 }
 
 func NewAnimal(name string) AnimalIface {
     return &Animal{name}
 }
 
-func (a *Animal) Name() string {
-    return a.name
+func (a *Animal) GetName() string {
+    return a.Name
 }
 
 func (a *Animal) Move(distance int64) {
@@ -657,13 +658,13 @@ Go struct (derived from TS class) with embedded struct (derived from TS datatype
 type ICluster interface {
     IResource
 
-    ClusterName()              string
-    ClusterArn()               string
-    Vpc()                      ec2.IVpc
-    Connections()              ec2.Connections
-    HasEc2Capacity()           bool
-    DefaultCloudMapNamespace() cloudmap.INamespace
-    AutoscalingGroup()         autoscaling.IAutoScalingGroup
+    GetClusterName()              string
+    GetClusterArn()               string
+    GetVpc()                      ec2.IVpc
+    GetConnections()              ec2.Connections
+    GetHasEc2Capacity()           bool
+    GetDefaultCloudMapNamespace() cloudmap.INamespace
+    GetAutoscalingGroup()         autoscaling.IAutoScalingGroup
 }
 
 // Generated interface for Cluster class
@@ -676,18 +677,25 @@ type Cluster struct {
     Resource
     ICluster
 
-    connections ec2.Connections
-    vpc         ec2.IVpc
-    clusterArn  string
-    clusterName string
+    Connections ec2.Connections
+    Vpc         ec2.IVpc
+    ClusterArn  string
+    ClusterName string
 
+    // private properties
     defaultCloudMapNamespace cloudmap.INamespace
     hasEc2Capacity           bool
     autoscalingGroup         autoscaling.IAutoScalingGroup
 }
 
-func (c *Cluster) ClusterName() string {
-    return c.clusterName
+// Public getter on public property
+func (c *Cluster) GetClusterName() string {
+    return c.ClusterName
+}
+
+// Public getter on private property
+func (c *Cluster) GetHasEc2Capacity() bool {
+    return c.hasEc2Capacity
 }
 
 // ...etc
