@@ -14,7 +14,7 @@ pull_request_rules:
       dismiss_reviews: {}
     conditions:
       - -title~=(WIP|wip)
-      - -label~=^(blocked|do-not-merge)
+      - -label~=(blocked|do-not-merge)
       - -merged
       - -closed
       - "#approved-reviews-by>=1"
