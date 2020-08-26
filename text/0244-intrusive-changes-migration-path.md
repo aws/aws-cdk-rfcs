@@ -1,8 +1,8 @@
 ---
-feature name: (fill me in with a unique identifier, my-awesome-feature)
-start date: (fill me in with today's date, YYYY-MM-DD)
-rfc pr: (leave this empty)
-related issue: (tracking issue number)
+feature name: Migration Path For Intrusive Changes
+start date: 2020-08-26
+rfc pr: 
+related issue: https://github.com/aws/aws-cdk-rfcs/issues/244
 ---
 
 # Summary
