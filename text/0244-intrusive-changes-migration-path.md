@@ -1,7 +1,7 @@
 ---
 feature name: Migration Path For Intrusive Changes
 start date: 2020-08-26
-rfc pr: 
+rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/245
 related issue: https://github.com/aws/aws-cdk-rfcs/issues/244
 ---
 
