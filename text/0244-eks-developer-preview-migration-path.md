@@ -64,7 +64,8 @@ README for `aws-eks-experimental` will include the following notice:
 
 > This module is now deprecated in favor of [`aws-eks`](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks-next).
 >
-> Note that migrating to [`aws-eks`](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks-next) will require you to replace your existing clusters.
+> Note that migrating to [`aws-eks`](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks-next) will
+> require you to replace your existing clusters.
 
 README for `aws-eks` will include the following notice:
 
@@ -110,8 +111,8 @@ While we won't be advocating for users to use the `aws-eks-next` module, it stil
 
 # Adoption Strategy
 
-During the development of the `aws-eks-next` module, users are not expected to switch over to it. If some users choose to anyway, we will make our intentions and plan
-for this module very clear, as already mentioned in the [README](#README) section.
+During the development of the `aws-eks-next` module, users are not expected to switch over to it. If some users choose to anyway,
+we will make our intentions and plan for this module very clear, as already mentioned in the [README](#README) section.
 
 Once development is finalized, and we promote `aws-eks-next` to `aws-eks`, the expected user experience is as such.
 
@@ -128,7 +129,8 @@ Or, add the necessary feature flag to `cdk.json` and continue with the new modul
 # Unresolved questions
 
 - The current approach creates a strange quick where post promotion, we are left we a deprecated library called `aws-eks-experimental`.
-This library isn't actually experimental, in the sense that it won't actually break since we stop touching it. Can we come up with a different name? Perhaps `aws-eks-heritage`? (`legacy` is taken :\)
+This library isn't actually experimental, in the sense that it won't actually break since we stop touching it. Can we come up
+with a different name? Perhaps `aws-eks-heritage`? (`legacy` is taken :\)
 
 # Future Possibilities
 
