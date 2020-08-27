@@ -46,7 +46,6 @@ README for `aws-eks` will include the following notice:
 > This module will eventually be replaced by the [`aws-eks-next`](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks-next) module.
 > This change will require you to replace your existing clusters.
 > Since we know this kind of operation is highly intrusive, when the replacement happens, we will still be supporting the current module under the `aws-eks-experimental` name.
-> This way, you can choose to migrate at your own pace, and plan out the cluster replacement as needed.
 
 README for `aws-eks-next` will include the following notice:
 
