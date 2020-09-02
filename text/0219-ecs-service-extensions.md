@@ -500,4 +500,4 @@ The traits would be able to be added at both the service and environment level.
 A full implementation plan will be added when the RFC is
 scheduled for implementation.
 
-Note that a [working proof of concept PR is already open on the CDK repo](https://github.com/aws/aws-cdk/pull/9069)
+Note that a [working proof of concept PR is already open on the CDK repo](https://github.com/aws/aws-cdk/pull/10129)
