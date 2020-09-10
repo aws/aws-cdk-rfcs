@@ -104,6 +104,8 @@ Some alternatives to this strategy are:
   'experimental' in all experimental APIs.
 - Use clever build tricks to hide experimental modules. This might be possible in Typescript, where the type files are
   separate from implementation, but might prove difficult or impossible in other languages such as Python.
+- Use runtime checks. Calling an experimental API would throw an exception which can be silenced by flipping a flag
+  ALLOW_EXPERIMENTAL=1.
 
 # Adoption Strategy
 
