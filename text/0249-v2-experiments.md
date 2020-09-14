@@ -1,8 +1,7 @@
 ---
-feature name: V2 Experiments
+feature name: Experimental APIs Post 1.x
 start date: 2020-09-08
-? rfc pr
-? related issue
+rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 ---
 
 # Summary
@@ -99,9 +98,9 @@ will be basically the same.
 
 Some alternatives to this strategy are:
 
-- Make no changes and continue to experiment in the main release. Improve documentation so that it is more obvious to
-  users that they are importing experimental code. We might also make it a policy to actually include the name
-  'experimental' in all experimental APIs.
+- Make no changes and continue to experiment in the main release.
+  - Improve documentation so that it is more obvious to users that they are importing experimental code.
+  - Make it a policy to actually include the name 'experimental' in all experimental APIs.
 - Use clever build tricks to hide experimental modules. This might be possible in Typescript, where the type files are
   separate from implementation, but might prove difficult or impossible in other languages such as Python.
 - Use runtime checks. Calling an experimental API would throw an exception which can be silenced by flipping a flag
