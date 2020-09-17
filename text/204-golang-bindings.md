@@ -476,6 +476,13 @@ class is abstract, whether it extends another class, and whether it implements o
 ### Case 1: Simple class
 
 Example (Taken from [Typescript handbook](https://www.typescriptlang.org/docs/handbook/classes.html#classes)):
+Readonly properties on the class would be translated as exported methods on the interface, implemented by the generated target struct (see section on
+datatype interfaces). Instance methods would be declared in the generated interface and implemented by the target struct.
+
+Static methods, on the other hand, would be generated as package-level functions. Since there could be multiple classes within a package, there is not
+a good way to namespace a static function in an idiomatic way (e.g. `ClassName.StaticMethod()`); to ensure that static methods maintain the
+characteristic of not requiring a concrete receiver while still ensuring some kind of namespacing, the proposal is to add the class name is a prefix
+to the top-level function. These methods would not be included in the corresponding interface.
 
 ```ts
 class Greeter {
@@ -488,36 +495,51 @@ class Greeter {
     greet(): string {
         return "Hello, " + this.greeting;
     }
+
+    public static foo(): string {
+        return "foo";
+    }
 }
 
 let greeter = new Greeter("world");
 greeter.greet() // "Hello, world"
 ```
 
-In Go: ([Go playground example](https://play.golang.org/p/S2EgQr946Gh))
+In Go: ([Go playground example](https://play.golang.org/p/A6WyCL1Liul))
 
 ```go
 package greeter
 
 type GreeterIface interface {
     Greet() string
+    GetGreeting() string
 }
 
 type Greeter struct {
-    greeting string
+    Greeting string
 }
 
 func NewGreeter(message string) *Greeter {
     return &Greeter{message}
 }
 
+func (g *Greeter) GetGreeting() string {
+    return g.Greeting
+}
+
 func (g *Greeter) Greet() string {
-    return fmt.Sprintf("Hello, %+s", g.greeting)
+    return fmt.Sprintf("Hello, %+s", g.Greeting)
+}
+
+// static method
+func GreeterFoo() string {
+    return fmt.Printf("foo");
 }
 
 // usage
 g := greeter.NewGreeter("world")
 fmt.Println(g.Greet()) // "Hello, world"
+fmt.Println(greeter.GreeterFoo()) // "foo"
 ```
 
 ### Case 2: Extending a Base class
