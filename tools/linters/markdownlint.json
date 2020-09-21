@@ -4,7 +4,8 @@
   "fenced-code-language": false,
   "first-line-h1": false,
   "line_length": {
-    "line_length": 150
+    "line_length": 150,
+    "tables": false
   },
   "no-duplicate-heading": {
     "siblings_only": true
