@@ -11,8 +11,9 @@
   },
   "no-inline-html": {
     "allowed_elements": [
-      "span",
+      "br",
       "details",
+      "span",
       "summary"
     ]
   },
