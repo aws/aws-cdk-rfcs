@@ -121,11 +121,11 @@ migration strategies for each change.
 `@aws-cdk/core.IDependable` | `constructs.IDependable`
 `@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
 `@aws-cdk.core.DependencyTrait.get(x)` | `constructs.Dependable.of(x)`
-`myConstruct.`node.dependencies`| Is now non-transitive
-`myConstruct.`addMetadata()`| Stack trace not attached by default
+`myConstruct.node.dependencies`| Is now non-transitive
+`myConstruct.addMetadata()`| Stack trace not attached by default
 `ConstructNode.prepareTree()`,`node.prepare()`,`onPrepare()`,`prepare()`| Not supported, use aspects instead
 `ConstructNode.synthesizeTree()`,`node.synthesize()`,`onSynthesize()`,`synthesize()`| Not supported
-`myConstruct.`onValidate()`,`myConstruct.`validate()`hooks | Implement`constructs.IValidation`and call`myConstruct.construct.addValidation()`instead
+`myConstruct.onValidate()`,`myConstruct.validate()`hooks | Implement`constructs.IValidation`and call`myConstruct.construct.addValidation()`instead
 `ConstructNode.validate(node)`|`myConstruct.construct.validate()`
 
 ### 00-DEPENDENCY: Declare a dependency on "constructs"
