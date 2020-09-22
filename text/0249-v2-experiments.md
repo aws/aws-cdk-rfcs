@@ -112,9 +112,6 @@ An example would be Cognito User Pools, when we want to add additional Identity 
 
 - Create the implementation file and export it.
   - packages/@aws-cdk-previews/cognito/lib/user-pool-idps/OpenIdConnect.ts
-- In this example, a change to the stable library would have to be made first:
-  - Change the constructor for UserPoolClientIdentityProvider to be public
-  - Release a new minor version of @aws-cdk-lib
 - A user that wants to try it would import both the stable and experimental package
 
 ```typescript
