@@ -51,6 +51,7 @@ future state of the libraries and to discover projects for contribution.
 [35](https://github.com/aws/aws-cdk-rfcs/issues/35)|[Publish construct library guidelines](https://github.com/aws/aws-cdk-rfcs/issues/35)||💡 proposed
 [39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/issues/39)||💡 proposed
 [40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||💡 proposed
+[40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||💡 proposed
 [48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)|[@rix0rrr](https://github.com/rix0rrr)|💡 proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/issues/52)||💡 proposed
@@ -87,7 +88,7 @@ future state of the libraries and to discover projects for contribution.
 [247](https://github.com/aws/aws-cdk-rfcs/issues/247)|[CDK Common Stored Data Type Model](https://github.com/aws/aws-cdk-rfcs/issues/247)||💡 proposed
 [248](https://github.com/aws/aws-cdk-rfcs/issues/248)|[Standardized context key for "cheap mode"](https://github.com/aws/aws-cdk-rfcs/issues/248)||💡 proposed
 [249](https://github.com/aws/aws-cdk-rfcs/issues/249)|[V2 Experiments](https://github.com/aws/aws-cdk-rfcs/issues/249)|[@ericzbeard](https://github.com/ericzbeard)|💡 proposed
-[253](https://github.com/aws/aws-cdk-rfcs/issues/253)|[CDK Metadata v2](https://github.com/aws/aws-cdk-rfcs/issues/253)||💡 proposed
+[253](https://github.com/aws/aws-cdk-rfcs/issues/253)|[CDK Metadata v2](https://github.com/aws/aws-cdk-rfcs/pull/254)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
 [36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)|[@eladb](https://github.com/eladb)|✅ done
