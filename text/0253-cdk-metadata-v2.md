@@ -145,6 +145,7 @@ Experiments with a random sampling of 400 resources from the list of classes:
 > Tree-encoding in this case means rearranging the data and sorting it so that
 > we can share common prefixes. Example:
 > ```
+>
 > 1_63_0.monocdk-experiment.{aws_amplify.DomainOptions,aws_apigateway.{CfnResource,MethodLoggingLevel},aws_autoscaling.Monitoring,aws_backup.Backup{PlanRule,Selection},aws_chatbot.SlackChannelConfiguration,aws_codedeploy.IEcsApplication,aws_ec2.{AclTraffic,CfnDHCPOptions,NatInstanceImage},aws_eks.PatchType,aws_elasticloadbalancingv2.{CfnListenerRule,NetworkLoadBalancerAttributes},aws_glue.Table,aws_greengrass.CfnCoreDefinitionVersion,aws_logs_destinations.LambdaDestination,aws_rds.{ClusterEngineBindOptions,DatabaseProxy},aws_route53_patterns.HttpsRedirect}
 > ```
 
