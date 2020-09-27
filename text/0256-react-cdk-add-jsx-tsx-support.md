@@ -120,7 +120,6 @@ A set of ReactCDK components that has feature parity with all TS components from
 * step function special cases where the components that make it up are customized for developer ergonomics/dx.
 * this is additional alternative to amplify add [backend] (e.g. api, auth, etc.)
 
-
 # Drawbacks
 
 * React is not universally liked.  If it becomes associated with CDK there is potential brand/product damage.
@@ -162,3 +161,9 @@ scheduled for implementation.
 > Either add the plan here or add link which references a separate document
 > and/or a GitHub Project Board (and reference it here) which manages the
 > execution of your plan.
+
+# Resources
+
+* original "concept" conversation on [twitter](https://twitter.com/pfeilbr/status/1304757893544148992?s=20)
+* [`Hello ReactCDK` app concept gist](https://gist.github.com/pfeilbr/78db35ec7cac5886f771bc2d81e7aacd)
+* [Part 1/3 - Beginners guide to Custom React Renderers. How to build your own renderer from scratch?](https://blog.atulr.com/react-custom-renderer-1)
