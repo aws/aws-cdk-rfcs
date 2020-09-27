@@ -15,7 +15,7 @@ is a developer ergonomics/DX concern.
 
 Create CDK applications using React.
 
-**TL;DR**
+**TLDR**
 
 ## Hello ReactCDK
 
@@ -176,7 +176,6 @@ and map to corresponding services (e.g. control flow -> step fn, events -> Event
 lambdas (lang level) -> lambdas :))
 
 # Implementation Plan
-
 
 # Resources
 
