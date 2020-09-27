@@ -15,8 +15,6 @@ is a developer ergonomics/DX concern.
 
 Create CDK applications using React.
 
-**TLDR**
-
 ## Hello ReactCDK
 
 Example ReactCDK application
