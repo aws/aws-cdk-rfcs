@@ -156,8 +156,8 @@ type ISecurityGroup interface {
     IResource
     IPeer
 
-    SecurityGroupId() string
-    AllowAllOutbound() bool
+    GetSecurityGroupId() string
+    GetAllowAllOutbound() bool
     AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
     AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
 }
