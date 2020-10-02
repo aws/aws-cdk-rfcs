@@ -30,7 +30,7 @@ perception of instability has driven some users away, or caused them to limit th
 constructs, which do not provide them with the benefits of higher level abstractions.
 
 This RFC proposes that we stop releasing breaking changes in the main packages that we vend that are not hidden by a
-feature flag. A user that installs aws-cdk-lib using npm or pip or any other package manager should be confident that
+feature flag. A user that installs `aws-cdk-lib` using npm or pip or any other package manager should be confident that
 there will be no intentional breaking changes in the 2.x line of releases for its lifetime.
 
 # README
@@ -60,12 +60,12 @@ paragraph:
 # Design Summary
 
 - Before releasing v2 to GA, all experimental code will either be marked as stable or deprecated and removed from the
-  packages that we vend, such as aws-cdk and aws-cdk-lib.
-- A new folder structure will be created under packages called @aws-cdk-previews. All new modules will begin their
+  packages that we vend, such as `aws-cdk` and `aws-cdk-lib`.
+- A new folder structure will be created under `packages/` called `aws-cdk-lib-previews`. All new modules will begin their
   lifecycle there, and any modules we decide to deprecate for further experimentation will be moved there.
-- The new @aws-cdk-previews package will take a peer dependency on @aws-cdk.
-- When a module is ready for graduation to GA, in a single commit, the code will be moved to packages/@aws-cdk and the
-  metadata tags for stability and maturity will be set to 'stable'.
+- The `aws-cdk-lib-previews` package will be versioned separately from `aws-cdk-lib`, starting with `0.1.0`.
+- The new `aws-cdk-lib-previews` package will take a peer dependency on `aws-cdk-lib`.
+- When a module is ready for graduation to GA, in a single commit, the code will be moved to `packages/aws-cdk-lib`.
 - A feature flag strategy will be devised to handle experimental APIs within stable modules, or in the core. Runtime
   checks will make sure users who have not opted in do not call experimental APIs.
 
@@ -92,7 +92,14 @@ Some alternatives to this strategy are:
   - Make it a policy to actually include the name 'experimental' in all experimental APIs.
 - Use clever build tricks to hide experimental modules. This might be possible in Typescript, where the type files are
   separate from implementation, but might prove difficult or impossible in other languages such as Python.
-- Call the experimental package aws-cdk-lib-experiments instead of aws-cdk-lib-previews.
+- Call the experimental package `aws-cdk-lib-experiments` instead of `aws-cdk-lib-previews`.
+- Instead of vending a separate package, use submodules:
+
+```typescript
+import * as eks from 'aws-cdk-lib/aws-eks-experimental';
+// or we could do
+import * as eks from 'aws-cdk-lib/experimental/aws-eks';
+```
 
 # Adoption Strategy
 
@@ -100,7 +107,9 @@ The hope is that for the majority of users, upgrading from 1.x to 2.x will be as
 the top of their source files, rebuilding, and redeploying. This upgrade should not result in any resources being
 destroyed and recreated, except in very specific cases where we have made it clear to users, such as with the EKS L2
 construct library. The same should be true for users upgrading from the preview package to the stable package as modules
-are graduated from Developer Preview to GA.
+are graduated from Developer Preview to GA. User who depend on experimental modules that end up being deprecated and
+moved to the `aws-cdk-lib-previews` package will need to install that dependency in addition to changing their import
+statements, but they should be able to continue using those L2s without any other changes to their code.
 
 # Implementation Plan
 
@@ -111,8 +120,8 @@ This section contains examples covering common scenarios:
 - Create a new package in `packages/aws-cdk-lib-previews` exactly the same we we would have for v1
 - Follow the v1 process for module lifecycle until it's ready to GA
 - [How does documentation work for the preview package?]
-- To graduate it, move the package to `packages/aws-cdk-lib`, set the module stability and maturity to stable, and remove any
-  @experimental tags in the doc comments.
+- To graduate it, move the package to `packages/aws-cdk-lib`, set the module stability and maturity to stable, and
+  remove any @experimental tags in the doc comments.
 
 ## 2. Adding new experimental classes to an existing L2.
 
@@ -134,9 +143,8 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 ## 3. Adding a new experimental function to an existing stable class.
 
-Let's say we have the stable `Bucket` class from the `s3` submodule.
-We want to add an experimental method to it.
-We use the `@experimental` decorator:
+Let's say we have the stable `Bucket` class from the `s3` submodule. We want to add an experimental method to it. We use
+the `@experimental` decorator:
 
 ```typescript
 export class Bucket {
@@ -152,10 +160,8 @@ export class Bucket {
 }
 ```
 
-This decorator is recognized by JSII,
-and it will add a runtime check to the generated code
-(for all languages)
-that will enforce setting the following feature flag in `cdk.json`:
+This decorator is recognized by JSII, and it will add a runtime check to the generated code (for all languages) that
+will enforce setting the following feature flag in `cdk.json`:
 
 ```json
 {
@@ -165,27 +171,21 @@ that will enforce setting the following feature flag in `cdk.json`:
 }
 ```
 
-Not setting this flag will cause the code to fail at runtime with a descriptive error.
-This flag will be set to `false` by default in the `cdk.json`
-file generated by `cdk init`.
+Not setting this flag will cause the code to fail at runtime with a descriptive error. This flag will be set to `false`
+by default in the `cdk.json` file generated by `cdk init`.
 
 This way, the customer will have to explicitly opt-in to use this experimental feature of a stable module.
 
 ## 4. How to work around stable modules that want to refer to experiments
 
-This will no longer be possible,
-but it's quite commonly needed,
-for example, in StepFunction Tasks.
+This will no longer be possible, but it's quite commonly needed, for example, in StepFunction Tasks.
 
-When StepFunctions release a new integration,
-we might not have an L2 for that service yet.
-Currently, we would create a very simple L2 in the L1-only module.
-Let's use SageMaker as an example:
+When StepFunctions release a new integration, we might not have an L2 for that service yet. Currently, we would create a
+very simple L2 in the L1-only module. Let's use SageMaker as an example:
 
 ```typescript
 // this interface & class are all experimental
-export interface ISageMakerEndpoint extends IResource {
-}
+export interface ISageMakerEndpoint extends IResource {}
 
 export class SageMakerEndpoint extends Resource {
   public static fromEndpointName(scope: Construct, id: string, endpointName: string): ISageMakerEndpoint {
@@ -197,21 +197,16 @@ export class SageMakerEndpoint extends Resource {
 // we can do:
 export interface SageMakerUpdateEndpointProps {
   readonly endpoint: ISageMakerEndpoint;
-} 
+}
 ```
 
-This way, even though the class `SageMakerEndpoint`
-can undergo breaking changes,
-the basic contract between `ISageMakerEndpoint`
-and `SageMakerUpdateEndpoint` will be preserved;
-so, in this way,
-it's safe to depend on an experimental module from a stable one.
+This way, even though the class `SageMakerEndpoint` can undergo breaking changes, the basic contract between
+`ISageMakerEndpoint` and `SageMakerUpdateEndpoint` will be preserved; so, in this way, it's safe to depend on an
+experimental module from a stable one.
 
 This proposal will make this kind of dependency no longer possible.
 
 ## 5. Changing the entire implementation for a core module.
 
-This will no longer be allowed.
-The old module will have to be deprecated,
-a new one created,
-and the old one will only be removed in the next major version bump.
+This will no longer be allowed. The old module will have to be deprecated, a new one created, and the old one will only
+be removed in the next major version bump.
