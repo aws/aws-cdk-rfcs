@@ -115,7 +115,7 @@ statements, but they should be able to continue using those L2s without any othe
 
 This section contains examples covering common scenarios:
 
-## 1. A brand new L2, where there was only an L1 before.
+## 1. A brand new L2, where there was only an L1 before
 
 - Create a new package in `packages/aws-cdk-lib-previews` exactly the same we we would have for v1
 - Follow the v1 process for module lifecycle until it's ready to GA
@@ -123,7 +123,7 @@ This section contains examples covering common scenarios:
 - To graduate it, move the package to `packages/aws-cdk-lib`, set the module stability and maturity to stable, and
   remove any @experimental tags in the doc comments.
 
-## 2. Adding new experimental classes to an existing L2.
+## 2. Adding new experimental classes to an existing L2
 
 An example would be Cognito User Pools, when we want to add additional Identity Pool Providers.
 
@@ -141,7 +141,7 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 ```
 
-## 3. Adding a new experimental function to an existing stable class.
+## 3. Adding a new experimental function to an existing stable class
 
 Let's say we have the stable `Bucket` class from the `s3` submodule. We want to add an experimental method to it. We use
 the `@experimental` decorator:
@@ -206,7 +206,7 @@ experimental module from a stable one.
 
 This proposal will make this kind of dependency no longer possible.
 
-## 5. Changing the entire implementation for a core module.
+## 5. Changing the entire implementation for a core module
 
 This will no longer be allowed. The old module will have to be deprecated, a new one created, and the old one will only
 be removed in the next major version bump.
