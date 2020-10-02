@@ -115,8 +115,8 @@ An example would be Cognito User Pools, when we want to add additional Identity 
 - A user that wants to try it would import both the stable and experimental package
 
 ```typescript
-import * as cognito from '@aws-cdk-lib/aws_cognito';
-import * as cognitoPreview from '@aws-cdk-previews/aws_cognito';
+import * as cognito from 'aws-cdk-lib/aws_cognito';
+import * as cognitoPreview from 'aws-cdk-previews/aws_cognito';
 
 const idp = new cognitoPreview.UserPoolIdentityProviderOidc(this, 'OIDC', {...});
 const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
