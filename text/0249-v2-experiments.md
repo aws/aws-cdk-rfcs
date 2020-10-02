@@ -16,7 +16,7 @@ unless they explicitly opt in by installing an experimental package or by settin
 CDK releases contain a combination of stable and experimental features, which has proven to be a pain point for
 customers. The aws-cdk package is released frequently, at least once per week and sometimes more, and each release
 increments the minor version number (e.g 1.59.0 to 1.60.0). In the planned 2.0 release of CDK, the main focus of the
-major version upgrade is to stop packaging modules separately and to include them all in one package called aws-cdk-lib.
+major version upgrade is to stop packaging modules separately and to include them all in one package called `aws-cdk-lib`.
 This will solve a number of problems related to peer dependencies that make it harder to vend independent libraries
 based on the CDK, but it does not address the backwards compatibility problem caused by minor releases with breaking
 changes to experimental modules.
