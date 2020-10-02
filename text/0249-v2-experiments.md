@@ -16,7 +16,7 @@ unless they explicitly opt in by installing an experimental package or by settin
 CDK releases contain a combination of stable and experimental features, which has proven to be a pain point for
 customers. The aws-cdk package is released frequently, at least once per week and sometimes more, and each release
 increments the minor version number (e.g 1.59.0 to 1.60.0). In the planned 2.0 release of CDK, the main focus of the
-major version upgrade is to stop packaging modules separately and to include them all in one package called aws-cdk-lib.
+major version upgrade is to stop packaging modules separately and to include them all in one package called `aws-cdk-lib`.
 This will solve a number of problems related to peer dependencies that make it harder to vend independent libraries
 based on the CDK, but it does not address the backwards compatibility problem caused by minor releases with breaking
 changes to experimental modules.
@@ -100,7 +100,7 @@ This section contains examples covering common scenarios:
 
 ## 1. A brand new L2, where there was only an L1 before.
 
-- Create a new package in packages/@aws-cdk-previews exactly the same we we would have for v1
+- Create a new package in `packages/@aws-cdk-previews` exactly the same we we would have for v1
 - Follow the v1 process for module lifecycle until it's ready to GA
 - [How does documentation work for the preview package?]
 - To graduate it, move the package to packages/@aws-cdk, set the module stability and maturity to stable, and remove any
@@ -115,8 +115,8 @@ An example would be Cognito User Pools, when we want to add additional Identity 
 - A user that wants to try it would import both the stable and experimental package
 
 ```typescript
-import * as cognito from '@aws-cdk-lib/aws_cognito';
-import * as cognitoPreview from '@aws-cdk-previews/aws_cognito';
+import * as cognito from 'aws-cdk-lib/aws_cognito';
+import * as cognitoPreview from 'aws-cdk-previews/aws_cognito';
 
 const idp = new cognitoPreview.UserPoolIdentityProviderOidc(this, 'OIDC', {...});
 const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
