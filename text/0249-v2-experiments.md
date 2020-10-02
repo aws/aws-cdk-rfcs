@@ -100,7 +100,7 @@ This section contains examples covering common scenarios:
 
 ## 1. A brand new L2, where there was only an L1 before.
 
-- Create a new package in packages/@aws-cdk-previews exactly the same we we would have for v1
+- Create a new package in `packages/@aws-cdk-previews` exactly the same we we would have for v1
 - Follow the v1 process for module lifecycle until it's ready to GA
 - [How does documentation work for the preview package?]
 - To graduate it, move the package to packages/@aws-cdk, set the module stability and maturity to stable, and remove any
