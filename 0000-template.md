@@ -93,9 +93,14 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 > Make sure to include a `BREAKING CHANGE` section above with a a description of the breaking
 > changes and the migration path.
 
+### What are the drawbacks of this solution?
+
+> Describe any problems/risks that can be introduced if we implement this RFC.
+
 ### What alternative solutions did you consider?
 
-> Briefly describe alternative approaches that you considered.
+> Briefly describe alternative approaches that you considered. If there are
+> hairy details, include them in an appendix.
 
 ### What is the high level implementation plan?
 
@@ -108,11 +113,13 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 
 ### Are there any open issues that need to be addressed later?
 
-> Describe any major open issues that this RFC did not take into account. Each
-> issue should have a GitHub issue associated with it and listed here.
+> Describe any major open issues that this RFC did not take into account. Once
+> the RFC is approved, create GitHub issues for these issues and update this RFC
+> of the project board with these issue IDs.
 
 ## Appendix: ....
 
-Feel free to add any number of appendices as you see fit, but don't expect these
-to be reviewed. For example, you can add an appendix with a more detailed design
-document.
+Feel free to add any number of appendices as you see fit. Appendices are
+expected to allow readers to dive deeper to certain sections if they like. For
+example, you can include an appendix which describes the detailed design of an
+algorithm and reference it from the FAQ.
