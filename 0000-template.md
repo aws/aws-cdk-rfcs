@@ -1,6 +1,6 @@
 ---
-rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/xxx <-- fill this after you've already created the PR
-related issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
+rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after you've already created the PR
+tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 ---
 
 # [TITLE]
@@ -41,7 +41,7 @@ related issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 
 ## FAQ
 
-> This section includes a answers to questions customers will likely ask about
+> This section should contain answers to questions customers will likely ask about
 > this release. Similar to the working backwards section, this section should be
 > written "from the future" in a language as if the feature is now released.
 >
