@@ -1007,6 +1007,10 @@ We eventually decided not to include this change because languages like .NET do 
 to have the same name as the class `Construct` and `Construct` (this name is preserved in .NET to the constructor),
 and jsii does not have any support for per-language naming.
 
+References:
+ - Pull request to change all occurances of `node` to `construct` in the AWS CDK codebase: https://github.com/aws/aws-cdk/pull/9557
+ - Commit which reverts this change after jsii packaging failure: https://github.com/aws/aws-cdk/commit/b6c1c8098c54160a09cae778d521fb1d3e6416f3
+
 The original text follows:
 
 Since we won't be able to release additional major versions of the
