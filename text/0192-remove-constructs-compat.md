@@ -93,13 +93,6 @@ With this:
 import { Construct } from 'constructs';
 ```
 
-Additionally, The `node` property in `Construct` is now called `construct`. This
-means, for example, order to find the `path` of a construct `foo`, use:
-
-```ts
-foo.construct.path // instead of `foo.node.path`
-```
-
 ---
 
 The following table summarizes the API changes between 1.x and 2.x. The
@@ -114,7 +107,6 @@ migration strategies for each change.
 `@aws-cdk/core.IConstruct` | `constructs.IConstruct`
 `@aws-cdk/core.ConstructOrder` | `constructs.ConstructOrder`
 `@aws-cdk/core.ConstructNode` | `constructs.Node`
-`myConstruct.node` | `myConstruct.construct`
 `myConstruct.node.applyAspect(aspect)` | `Aspects.of(myConstruct).add(aspect)`
 `@aws-cdk/core.IDependable` | `constructs.IDependable`
 `@aws-cdk/core.DependencyTrait` | `constructs.Dependable`
@@ -123,8 +115,8 @@ migration strategies for each change.
 `myConstruct.addMetadata()`| Stack trace not attached by default
 `ConstructNode.prepareTree()`,`node.prepare()`,`onPrepare()`,`prepare()`| Not supported, use aspects instead
 `ConstructNode.synthesizeTree()`,`node.synthesize()`,`onSynthesize()`,`synthesize()`| Not supported
-`myConstruct.onValidate()`,`myConstruct.validate()`hooks | Implement`constructs.IValidation`and call`myConstruct.construct.addValidation()`instead
-`ConstructNode.validate(node)`|`myConstruct.construct.validate()`
+`myConstruct.onValidate()`,`myConstruct.validate()`hooks | Implement`constructs.IValidation`and call`myConstruct.node.addValidation()`instead
+`ConstructNode.validate(node)`|`myConstruct.node.validate()`
 
 ### 00-DEPENDENCY: Declare a dependency on "constructs"
 
@@ -201,13 +193,13 @@ If you need to implement `IDependable`:
 - The `@aws-cdk/core.DependencyTrait` class has been replaced with
   `constructs.Dependable`
 - `@aws-cdk.core.DependencyTrait.get(x)` is now `constructs.Dependable.of(x)`
-- `c.construct.dependencies` is now **non-transitive** and returns only the
+- `c.node.dependencies` is now **non-transitive** and returns only the
   dependencies added to the current node.
 
-The method `c.construct.addDependency(otherConstruct)` __did not change__ and
+The method `c.node.addDependency(otherConstruct)` __did not change__ and
 can be used as before.
 
-> You can use the new `c.construct.dependencyGraph`  to access a rich object
+> You can use the new `c.node.dependencyGraph`  to access a rich object
 > model for reflecting on the node's dependency graph.
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
@@ -223,7 +215,7 @@ const myConstruct = new MyConstruct(stack, 'MyConstruct');
 ```
 
 This is still a supported idiom, but in 2.x these root stacks will have an
-implicit `App` parent. This means that `stack.construct.scope` will be an `App`
+implicit `App` parent. This means that `stack.node.scope` will be an `App`
 instance, while previously it was `undefined`. The "root" stack will have a
 construct ID of `Default` unless otherwise specified.
 
@@ -237,13 +229,13 @@ it will now be `Default/Foo/Bar`).
 
 ### 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
-For performance reasons, the `c.construct.addMetadata()` method will *not*
+For performance reasons, the `c.node.addMetadata()` method will *not*
 attach stack traces to metadata entries. Stack traces will still be associated
 with all `CfnResource` constructs and can also be added to custom metadata using
 the `stackTrace` option:
 
 ```ts
-c.construct.addMetadata(key, value, { stackTrace: true })
+c.node.addMetadata(key, value, { stackTrace: true })
 ```
 
 See [examples](https://github.com/aws/aws-cdk/pull/9056/commits/e4dff913d486592b1899182e9a928765553654fa).
@@ -289,7 +281,7 @@ hook, please post a comment on [this GitHub issue](https://github.com/aws/aws-cd
 
 ### 08-VALIDATION: The `validate()` hook is now `node.addValidation()`
 
-To add validation logic to a construct, use `c.construct.addValidation()`
+To add validation logic to a construct, use `c.node.addValidation()`
 method instead of overriding a protected `validate()` method:
 
 Before:
@@ -309,13 +301,13 @@ class MyConstruct extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.construct.addValidation({ validate: () => [ 'validation-error' ] });
+    this.node.addValidation({ validate: () => [ 'validation-error' ] });
   }
 }
 ```
 
 The static method `ConstructNode.validate(node)` is no longer available. You can
-use `c.construct.validate()` which only validates the _current_ construct and
+use `c.node.validate()` which only validates the _current_ construct and
 returns the list of all error messages returned from calling
 `validation.validate()` on all validations added to this node.
 
@@ -1007,6 +999,10 @@ We eventually decided not to include this change because languages like .NET do 
 to have the same name as the class `Construct` and `Construct` (this name is preserved in .NET to the constructor),
 and jsii does not have any support for per-language naming.
 
+We also considered the name `constructNode` as an alternative but there is no
+additional value in the word "node" being included, especially given the type
+is `Node`.
+
 References:
 
 - Pull request to change all occurances of `node` to `construct` in the AWS CDK codebase: <https://github.com/aws/aws-cdk/pull/9557>
@@ -1014,74 +1010,58 @@ References:
 
 The original text follows:
 
-Since we won't be able to release additional major versions of the
-"constructs" library (in order to ensure interoperability between domains is always
-possible), we need to closely examine the API of this library.
-
-In particular, the API of the `Construct` class, which is the base of all
-constructs in all CDKs, should be as small as possible in order not to "pollute"
-domain-specific APIs introduced in various domains.
-
-In many cases (cdk8s, cdktf), constructs are *generated* on-demand from
-domain-specific API specifications. In such cases, we need to ensure that the
-API in `Construct` does not conflict with generated property names or methods.
-
-The current API of `Construct` in the base class (2.x, 3.x) only includes a
-few protected `onXxx` methods (`onPrepare`, `onValidate` and
-`onSynthesize`). Those methods will be removed in 10.x
-([prepare](#06-no-prepare) and [synthesize](#07-no-synthesize) are no longer
-supported and [validate](#08-validation) will be supported through
-`addValidation()`).
-
-In AWS CDK 1.x the construct API is available under `myConstruct.node`. This
-API has been intentionally removed when we extracted "constructs" from the AWS CDK
-in order to allow the compatibility layer in AWS CDK 1.x to use the same property name
-and expose the shim type (jsii does not allow changing the type of a property in a subclass).
-
-The base library currently offers `Node.of(scope)` as an alternative - but this API is cumbersome
-to use and not discoverable. In evidence, in CDK for Terraform, they chose to offer [`constructNode`]
-in `TerraformElement` as a sugar for `Node.of()`.
+> Since we won't be able to release additional major versions of the
+> "constructs" library (in order to ensure interoperability between domains is always
+> possible), we need to closely examine the API of this library.
+> 
+> In particular, the API of the `Construct` class, which is the base of all
+> constructs in all CDKs, should be as small as possible in order not to "pollute"
+> domain-specific APIs introduced in various domains.
+> 
+> In many cases (cdk8s, cdktf), constructs are *generated* on-demand from
+> domain-specific API specifications. In such cases, we need to ensure that the
+> API in `Construct` does not conflict with generated property names or methods.
+> 
+> The current API of `Construct` in the base class (2.x, 3.x) only includes a
+> few protected `onXxx` methods (`onPrepare`, `onValidate` and
+> `onSynthesize`). Those methods will be removed in 10.x
+> ([prepare](#06-no-prepare) and [synthesize](#07-no-synthesize) are no longer
+> supported and [validate](#08-validation) will be supported through
+> `addValidation()`).
+> 
+> In AWS CDK 1.x the construct API is available under `myConstruct.node`. This
+> API has been intentionally removed when we extracted "constructs" from the AWS CDK
+> in order to allow the compatibility layer in AWS CDK 1.x to use the same property name
+> and expose the shim type (jsii does not allow changing the type of a property in a subclass).
+> 
+> The base library currently offers `Node.of(scope)` as an alternative - but this API is cumbersome
+> to use and not discoverable. In evidence, in CDK for Terraform, they chose to offer [`constructNode`]
+> in `TerraformElement` as a sugar for `Node.of()`.
+> 
+> 
+> Another downside of `Node.of()` is that it means that the `IConstruct` interface
+> is now an empty interface, which is a very weak type in TypeScript due to
+> structural typing (it's structurally identical to `any`).
+> 
+> As we evaluate this use case for constructs 10.x, we would like to restore the
+> ability to access the construct API from a property of `Construct`, and use that
+> property as the single marker that represents a construct type (`IConstruct`).
+> 
+> To reduce the risk of naming conflicts (e.g. see [Terraform CDK issue](https://github.com/hashicorp/terraform-cdk/pull/230)) 
+> between `node` and
+> domain-specific APIs, we propose to introduce this API under the name
+> `construct` (of type `Node`).
+> 
+> This has a few benefits:
+> 
+> 1. It's semantically signals that "this is the construct API".
+> 2. The chance for conflicts with domain-specific names is low ("construct" is not prevalent).
+> 3. We can introduce this API while deprecating `node` in AWS CDK 1.x.
+> 
+> The main downside is that it is **a breaking change** in AWS CDK 2.x. There is
+> likely quite a lot of code out there (a [few hundred](https://github.com/search?q=cdk+node.addDependency++extension%3Ats&type=Code&ref=advsearch&l=&l=)
+> results for an approximated GitHub code search).
+>
+> See [discussion](https://github.com/aws/aws-cdk-rfcs/pull/195/files#r460718960) over the RFC PR.
 
 [`constructNode`]: https://github.com/hashicorp/terraform-cdk/blob/5becfbc699180adfe920dec794200bbf56dda0a7/packages/cdktf/lib/terraform-element.ts#L21
-
-Another downside of `Node.of()` is that it means that the `IConstruct` interface
-is now an empty interface, which is a very weak type in TypeScript due to
-structural typing (it's structurally identical to `any`).
-
-As we evaluate this use case for constructs 10.x, we would like to restore the
-ability to access the construct API from a property of `Construct`, and use that
-property as the single marker that represents a construct type (`IConstruct`).
-
-To reduce the risk of naming conflicts (e.g. see [Terraform CDK
-issue](https://github.com/hashicorp/terraform-cdk/pull/230)) between `node` and
-domain-specific APIs, we propose to introduce this API under the name
-`construct` (of type `Node`).
-
-This has a few benefits:
-
-1. It's semantically signals that "this is the construct API".
-2. The chance for conflicts with domain-specific names is low ("construct" is not prevalent).
-3. We can introduce this API while deprecating `node` in AWS CDK 1.x.
-
-The main downside is that it is **a breaking change** in AWS CDK 2.x. There is
-likely quite a lot of code out there (a [few
-hundred](https://github.com/search?q=cdk+node.addDependency++extension%3Ats&type=Code&ref=advsearch&l=&l=)
-results for an approximated GitHub code search).
-
-> We also considered the name `constructNode` as an alternative but there is no
-> additional value in the word "node" being included, especially given the type
-> is `Node`.
-
-#### What can we do in 1.x
-
-As mentioned above, since this is a new name for this property, we can
-technically introduce it in 1.x and announce that `node` is deprecated. This
-will allow users to migrate to the new API before 2.x is released and hopefully
-will reduce some of the friction from the 2.x migration.
-
-To encourage users to migrate, we will consider introducing this deprecation
-through a runtime warning message (as well as the @deprecated API annotation).
-
-#### Alternative Considered
-
-See [discussion](https://github.com/aws/aws-cdk-rfcs/pull/195/files#r460718960) over the RFC PR.
