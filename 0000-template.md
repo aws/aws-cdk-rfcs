@@ -90,7 +90,7 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 >
 > Describe what ways did you consider to deliver this without breaking users?
 >
-> Make sure to include a `BREAKING CHANGE` section above with a a description of the breaking
+> Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
 > changes and the migration path.
 
 ### What are the drawbacks of this solution?
