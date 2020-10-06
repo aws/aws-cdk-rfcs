@@ -69,7 +69,7 @@ We need a sufficiently unique string representation of each construct type. A
 construct identifier should the following components:
 
 * Library and version
-* Qualified class name; the qualified class name itself consists of two copmonents:
+* Qualified class name; the qualified class name itself consists of two components:
   * Submodule
   * Class name
 
@@ -83,13 +83,13 @@ Submodules are a concept introduced at the jsii level to organize the monocdk
 package, and they serve to disambiguate type names between classes that
 originally were different libraries. For example, both the `@aws-cdk/aws-ecs`
 and `@aws-cdk/aws-eks` packages have a class named `Cluster`, so when we
-bundle those packages into `monocdk` we need a way to namespace those names,
-as `monocdk.Cluster` by itself would be ambiguous. Submodules are the namespacing
+bundle those packages into `aws-cdk-lib` we need a way to namespace those names,
+as `aws-cdk-lib.Cluster` by itself would be ambiguous. Submodules are the namespacing
 mechanism we introduced.
 
 ## Collecting construct identifiers
 
-There are two strategies for getting a construct identifier this for every construct:
+There are two strategies for getting a construct's identifier:
 
 * Manually annotate each construct in some way, adding a unique identifier for it
   (either by passing additional strings, adding decorators, or some other mechanism).
