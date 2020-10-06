@@ -26,7 +26,7 @@ construct libraries used in the CDK application that synthesized the templates.
 
 The goal of CDK Metadata is twofold:
 
-* Track what library versions customers are using, so that if there are severy (security)
+* Track what library versions customers are using, so that if there are severe (security)
   problems with a library, we can contact them in a targeted fashion and suggest
   they upgrade.
 * Get business metrics on the adoption of CDK and its libraries. This includes # of accounts,
@@ -505,4 +505,3 @@ Resources:
         wKVE/HOCgIQrRofRC0suQYuRg8T3OdNGnYRCKHIdgiLIMChV+y7NS+bxfnx8CSbXytQkXLx3iX9OSl+OmlTeeQY5awKMNM/dScR7tpbE8tmEXvBFgcqnTUUs
         nW5r/rjfQtFwk5w+1cifgmylq45Nk8al8K5Y4aur
 ```
-
