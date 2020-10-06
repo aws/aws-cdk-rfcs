@@ -4,15 +4,17 @@
   "fenced-code-language": false,
   "first-line-h1": false,
   "line_length": {
-    "line_length": 150
+    "line_length": 150,
+    "tables": false
   },
   "no-duplicate-heading": {
     "siblings_only": true
   },
   "no-inline-html": {
     "allowed_elements": [
-      "span",
+      "br",
       "details",
+      "span",
       "summary"
     ]
   },
@@ -21,6 +23,5 @@
   },
   "ol-prefix": false,
   "single-h1": false,
-  "ul-style": false,
-  "no-space-in-code": false
+  "ul-style": false
 }
