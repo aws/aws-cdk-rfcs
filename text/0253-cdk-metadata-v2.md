@@ -43,11 +43,16 @@ we move to CDK v2, the entire CDK library will be vended as one library, destroy
 our ability to measure in the same way.
 
 At the same time, our current method fails in the face of multiple distinct
-stacks in the same application. For example, in the case of a CDK Pipelines
-application, the `@aws-cdk/pipelines` library would be counted `N+1` times:
-in addition to the pipeline stack itself, once for every environment deployed
-via that pipeline because the library happened to be in memory while those
-stacks were being synthesized.
+stacks in the same application. If two different stacks exist in the same
+application, each using a single construct library, then we will count both
+construct libraries as "having been used" for both stacks (because they were
+loaded into memory at the time the stacks were synthesized).
+
+Though not limited to, this becomes even more pronounced in the case of a CDK
+Pipelines application: the `@aws-cdk/pipelines` library would be counted
+`N+1` times. In addition to the pipeline stack itself, once for every
+environment deployed via that pipeline because the library happened to be in
+memory while those stacks were being synthesized.
 
 We therefore need to move to a more fine-grained tracking system: a stack
 will report the individual constructs used to synthesize that stack.
@@ -56,17 +61,90 @@ We will retain the existing behavior that we will only collect information
 about constructs from AWS-authored construct libraries. 3rd-party information
 will not be collected.
 
+We will *not* collect counts of each construct used, we will just record its
+presence. Collecting more and more information is starting to feel invasive
+(this is still customer application code we are collecting metrics on), and I
+don't feel comfortable with that.
+
 # Design
 
-There are two subproblems to address:
+There are two major subproblems to address:
 
-* Collecting construct identifiers: library name, version, and qualified class name.
+* Collecting information on the construct list.
 * Encoding that information into the metadata resource.
 
-## Construct identifiers
+## Collecting construct information
 
-We need a sufficiently unique string representation of each construct type. A
-construct identifier should the following components:
+> In the context of this section, the terms *construct* and *construct type*
+> are used interchangeably and are meant to be interpreted as the programming
+> language concept *class*. The term *construct instance* maps to the
+> programming language concept *instance*.
+
+The problem of collecting construct information can be decomposed into the following
+subproblems:
+
+* Identifying the specific construct instances to report
+* Identifying the construct type to report for each instance
+* Representing the construct type as a string
+* Collecting the information necessary to build that string for each construct
+
+### Identifying instances
+
+Since the metadata resource reports on a per-stack basis, and in order to avoid double-counting
+constructs or construct libraries, we will iterate over the construct tree of each stack and
+record the construct instances of the constructs in it.
+
+* Recursion stops upon encountering a contained `Stack`, `Stage` or `NestedStack`.
+* Contrary to today, nested stacks will each have their own copy of a metadata resource.
+
+We will only collect constructs instances whose construct types are from a library
+that is vended by AWS (see Appendix 1 for more information on how we detect a
+construct's library).
+
+### Identifying construct types to report
+
+It may happen that the concrete type of a construct instance may not be
+reportable. This can happen for two reasons:
+
+* It's from a user-defined or 3rd-party library which we purposely ignore.
+* It may not be an exported class so we cannot determine the filename and hence
+  won't be able to determine its library at all (see Appendix 1 for more
+  information on how this works).
+
+For those cases we have a choice to make:
+
+1. Don't report the construct at all
+2. Follow up the class' inheritance chain, picking the first construct that is
+   considered reportable.
+
+Consider some examples:
+
+```ts
+// (a) Will be reported as 'Resource': class is not exported but anonymous class
+// extends 'Resource'.
+const bucket = Bucket.fromBucketName(this, 'ImportedBucket', 'my-bucket');
+
+// (b) Will be reported as 'Construct' since it's a user-defined class and hence
+// not in scope.
+const myConstruct = new MyConstruct(this, 'MyConstruct', { ... });
+
+// (c) On the other hand, the following might be interesting to report as 'Bucket'
+// (assuming the class 'extends Bucket').
+const richBucket = new RichBucket(this, 'RichBucket', { ... });
+```
+
+When we pick option 2, every stack is bound to end up with the constructs `Construct`
+and `Resource` (resulting form example code as in `(a)` and `(b)`), leading to noise.
+
+Nevertheless, we will still pick option 2 (following up the inheritance chain)
+in order to be able to detect situations like `(c)`.
+
+### Representation: construct identifiers
+
+We need a sufficiently unique string representation of each construct type to identify it.
+
+Let's introduce the concept of a *construct identifier*. A construct
+identifier has the following components:
 
 * Library and version
 * Qualified class name; the qualified class name itself consists of two components:
@@ -84,10 +162,25 @@ package, and they serve to disambiguate type names between classes that
 originally were different libraries. For example, both the `@aws-cdk/aws-ecs`
 and `@aws-cdk/aws-eks` packages have a class named `Cluster`, so when we
 bundle those packages into `aws-cdk-lib` we need a way to namespace those names,
-as `aws-cdk-lib.Cluster` by itself would be ambiguous. Submodules are the namespacing
+as `aws-cdk-lib:Cluster` by itself would be ambiguous. Submodules are the namespacing
 mechanism we introduced.
 
-## Collecting construct identifiers
+In order to not proliferate identifier variations, it would be nice if the
+submodule names would be the same names we use in the jsii build of CDK.
+There's no strict need for them to be, but it just might ease future analysis
+if we kept that consistency. Specifically, we'd like an example submodule
+name to be `aws_eks` instead of `aws-eks`.
+
+Some sample construct identifiers:
+
+```text
+constructs@10.0.0:Construct
+aws-cdk-lib@2.0.1:Stack
+aws-cdk-lib@2.0.0:aws_eks.Cluster
+@aws-solutions-constructs/aws-lambda-sqs@1.2.3:AwsLambdaSqs
+```
+
+### Collecting construct identifiers
 
 There are two strategies for getting a construct's identifier:
 
@@ -99,91 +192,42 @@ There are two strategies for getting a construct's identifier:
 Manual annotation seems an undesirable amount of work, so we will have to
 make do with the reflection capabilities provided by NodeJS.
 
-### NodeJS reflection
+> What about NodeJS' `__filename` magic variable? `__filename` only ever
+> represents the *current* file, i.e. the file that that symbol occurs in. We
+> wouldn't be able to write shared code in, say, `construct.ts` to obtain the
+> file name of the `Cluster` construct.
 
-Runtime reflection in NodeJS gives us access to the following information:
+From NodeJS reflection (see Appendix 1), we are able to obtain the following
+pieces of information given a construct instance:
 
-* An object's class, by accessing its `constructor` property.
-* The file a class is defined in, which we can find by examining
-  `require.cache[filePath].exports` for every file, and selecting the
-  `filePath` whose `exports` contain the given `constructor`.
-  * From the filename, we hope to be able to deduce the package and submodule
-    names.
+* The construct's **unqualified class name**
+* The **file path** of the JavaScript file that exports the construct, if available.
+  (If unavailable, we will recurse up its inheritance chain until we find a class with
+  a file path).
+  * From the file path of the JavaScript file, we will also be able to determine the
+    class' package (by searching for a containing `package.json` and reading
+    the information therein).
 
-This method has the following caveats:
+We can now fill the construct identifier's components as follows:
 
-* If the class is non-exported (such as an `class Import implements IBucket {
-  ... }`) it will not show up in the `exports`, and we won't be able to figure
-  out what file it's from. It will most likely show up as `Construct` (the
-  first exported base class).
-  * The only feasible solution to fixing this is to do manual annotation, which
-  I don't think we want to resort to.
+**CLASS NAME**: the construct's unqualified class name we obtain from reflection.
 
-* A constructor may be found in multiple file's `exports` (because of
-  re-exporting symbols from another file, something we regularly do in
-  files like `index.ts`). If it is, take the file with the file path deepest
-  in the directory hierarchy. That approach is going to help us identify the
-  correct submodule (see next section).
+**LIBRARY/VERSION**: `name` and `version` from the `package.json` we found based
+on the class' file path.
 
-> Implementation note: looking up the source file from a class is a potentially
-> expensive operation as it takes a linear scan through all sources for every class.
-> We should build a reverse index in order to speed this up.
-
-### Inheritance
-
-A class has an inheritance chain, and the concrete class of the object may
-not be reportable. For example, it may not be exported (so we cannot determine
-the filename and hence not the package). It may also be exported but from
-a user-defined or 3rd-party library which we purposely intend to not report on.
-
-For those cases we have a choice to make:
-
-* Don't report the construct at all
-* Follow up the inheritance chain to report the first class that is exported by
-  a construct library we're interested in (as determined by the `filePath`
-  where we found the exported class).
-
-The second case will give us slightly more information, although it might not
-necessarily be the most useful. Consider:
-
-```ts
-// Will be reported as 'Resource': class is not exported but anonymous class
-// extends 'Resource'.
-const bucket = Bucket.fromBucketName(this, 'ImportedBucket', 'my-bucket');
-
-// Will be reported as 'Construct' since it's a user-defined class and hence
-// not in scope.
-const myConstruct = new MyConstruct(this, 'MyConstruct', { ... });
-
-// On the other hand, the following might be interesting to report as 'Bucket'
-// (assuming the class 'extends Bucket').
-const richBucket = new RichBucket(this, 'RichBucket', { ... });
-```
-
-### Identifier components
-
-We obtain the construct identifier's components as follows:
-
-**CLASS NAME** We can get the simple class name by reading `obj.constructor.name`.
-
-**LIBRARY/VERSION** We can find the package a class is from by crawling up the
-directory tree from the filename we identified and looking for
-`package.json`, getting the `name` and `version` from that file.
-
-**SUBMODULE** Getting submodule names is more complex, as they don't have a
+**SUBMODULE**: Submodule names are a concept invented by us, and don't have a
 runtime representation in NodeJS. We will have to derive the submodule from
-the file path and a helper file. The next section goes into more detail.
+the file path and a helper file we generate at build time. The next section
+goes into more detail.
 
-### Submodule names
+#### Submodules
 
 Especially in monocdk and the upcoming v2, disambiguating identical class names
 by submodule is going to be essential. The question is how we will determine
 submodule names from file paths, keeping a couple of goals in mind:
 
-* In order to not proliferate identifier variations, it would be nice if the
-  submodule names would be the same names we use in the jsii build of CDK. There's
-  no strict need for them to be, but it just might ease future analysis if
-  we kept that consistency.
+* The submodule names reported here should preferably the same as jsii's
+  submodule names.
 * The mechanism should still work with libraries that don't have a submodule structure
   at all, such as non-CDK team construct libraries vended by AWS like `@aws-solutions-constructs`.
 
@@ -198,20 +242,67 @@ File name                                                              | Submodu
 We could obtain submodule names by establishing conventions on monocdk's
 directory structure, using rules as "ignore `/lib/` and replace `-` with `_`
 to obtain the module name", for example. This reliance on convention seems
-brittle and unflexible. Instead, let's use a configuration file.
+brittle and inflexible. Instead, let's use a configuration file.
 
-One possible candidate is the jsii manifest. It contains the right module names
-already, but there is nothing in the jsii manifest that could reliably be used to
-trace source files to class names or module names. Plus, the jsii manifest
-is rather big to load.
+#### jsii manifest
+
+What about the jsii manifest? It contains the right module names already, and
+it seems to have a `locationInModule` entry that seems to do what we need:
+
+```json
+{
+  "name": "Cluster",
+  "namespace": "aws_eks",
+  // ...
+  "locationInModule": {
+    "filename": "lib/aws-eks/lib/cluster.ts",
+    "line": 685
+  },
+}
+```
+
+However, I don't think this is appropriate to use for the following reasons:
+
+Reading the jsii manifest ties us to using jsii in a way that I don't think
+is necessary or appropriate. Maybe a sister team will vend a pure TypeScript
+construct library (maybe something like *Punchcard*) that they want tracked.
+But tying ourselves to the jsii manifest we will make that impossible.
+
+`locationInModule` is an optional feature of the jsii manifest that is used
+to indicate a *source location*. It is used in the documentation to
+opportunistically generate hyperlinks to GitHub source locations for every
+API element.
+
+As it identifies source locations, those source locations might not map
+trivially onto the runtime locations that NodeJS will discover. As a first
+trivial example: the jsii manifest contains `cluster.ts` as a filename,
+but at runtime this will be `cluster.js` so now we have to map one to the
+other.
+
+A second, slightly less trivial example: I'd like to give ourselves
+the ability to webpack individual submodules into a single JavaScript
+file. As it turns out, loading monocdk currently takes over 1000ms
+as NodeJS crawls each individual `.js` file, while loading a webpacked
+monocdk takes ~160ms. If we were to do that though, `locationInModule`
+would still contain `cluster.ts` while the runtime location would be
+`__build.js` in some subdirectory.
+
+The JSII manifest is rather big (`22M` for the entire bundle, taking around
+~250ms to load on my machine) and I'd rather avoid having to load it on every
+synthesis action if we don't have to.
+
+All in all, I feel the jsii manifest would be not a great choice to load
+submodule information from. We should denormalize it into a separate
+configuration file instead.
 
 #### cdk-metadata.json
 
-Instead, we can use an additional lookup table that can be generated by the
-monocdk build tool, which is in charge of picking the submodule names and
-generating the submodule structure anyway. The only thing it needs to do
-is record those decisions in an additional file called `cdk-metadata.json`,
-which looks like this:
+We will use an additional lookup table in a well-known file instead.
+
+That lookup that can be generated by the monocdk build tool, which is in
+charge of picking the submodule names and generating the submodule structure
+anyway. The only thing it needs to do is record those decisions in an
+additional file called `cdk-metadata.json`, which looks like this:
 
 ```json
 {
@@ -248,7 +339,10 @@ reported for their libraries.
 > use of the fact that JSON dictionaries are ordered and make sure the deeper
 > directories occur first.
 
-### jsii considerations
+#### jsii considerations
+
+Will the mechanisms described here still work when a is client using the CDK
+via jsii? The answer is yes.
 
 When a jsii-enabled client is instantiating AWS constructs, the full original
 library has been loaded into the NodeJS process and the files on disk
@@ -260,7 +354,16 @@ to obtain a construct identifier for the class, but fortunately we're only
 interested in AWS-vended constructs anyway and they will all be implemented
 in TypeScript.
 
+> Should we ever want to open this mechanism up to non-TypeScript libraries, an obvious
+> mechanism is to introduce a well-known metadata tag that we can read a construct's
+> construct identifier from (falling back to the default search algorithm if none
+> is found). It becomes a library author's concern of how to attach the metadata
+> then.
+
 ## Metadata resource encoding
+
+Once we have the list of construct identifiers, we need to encode it into the metadata
+resource.
 
 The Metadata resource looks like this:
 
@@ -275,12 +378,10 @@ Resources:
 
 ### Construct list size
 
-Once we have established a list of construct names to transmit, the question is how
-we will encode them into the CloudFormation template, given that the list may be sizeable.
-
-A rough estimate of the maximum number of constructs used in a stack will be
-about 400 (maximum of 200 L1s with a corresponding L2 wrapper). We will
-therefore need to encode roughly 400 strings of the form
+The list of construct identifiers we have discovered may be sizeable. A rough
+estimate of the maximum number of constructs used in a stack will be about
+400 (maximum of 200 L1s with a corresponding L2 wrapper). We will therefore
+need to encode roughly 400 strings of the form
 `@aws-solutions-constructs/aws-lambda-sqs.LambdaToSqs@1.63.0`.
 
 The longest overall type in the current monocdk is
@@ -316,10 +417,10 @@ a CloudFormation template):
 | Bloom Filter (1% error)    | 720b        | 960b          |
 
 Prefix-grouped, gzipped data seems to give the best results that are still
-convenient and generic to work with (see Appendix 1 for a description of
+convenient and generic to work with (see Appendix 2 for a description of
 prefix grouping).
 
-See Appendix 2 for an example blob to be added to a template. I'm not super
+See Appendix 3 for an example blob to be added to a template. I'm not super
 happy with this, but this is the most straightfoward option available.
 
 If we are willing to do more work, we can achieve less space used up by doing
@@ -362,7 +463,7 @@ an encoding scheme as well:
 
 The only valid payload value encodings at the moment are:
 
-* `prefix`: prefix-encoded string list (see Appendix 1).
+* `prefix`: prefix-encoded string list (see Appendix 2).
 * `plain`: plaintext data.
 
 Encoding may change the type (the encoded value is a `string` but the decoded
@@ -406,7 +507,38 @@ This can be implemented in v1 already, no need to wait for v2.
 * Wait until no libraries are reported via old `Modules` mechanism.
 * Remove the code that generates the `Modules` field from the CDK.
 
-# Appendix 1: Reference implementation for prefix-grouping used above
+# Appendix 1: NodeJS reflection
+
+Runtime reflection in NodeJS gives us access to the following information:
+
+* An object's class, by accessing its `constructor` property.
+* The file a class is defined in, which we can find by examining
+  `require.cache[filePath].exports` for every file, and selecting the
+  `filePath` whose `exports` contain the given `constructor`.
+  * From the filename, we hope to be able to deduce the package and submodule
+    names.
+
+This method has the following caveats:
+
+* If the class is non-exported (such as an `class Import implements IBucket {
+  ... }`) it will not show up in the `exports`, and we won't be able to figure
+  out what file it's from. It will most likely show up as `Construct` (the
+  first exported base class).
+  * The only feasible solution to fixing this is to do manual annotation, which
+  I don't think we want to resort to.
+
+* A constructor may be found in multiple file's `exports` (because of
+  re-exporting symbols from another file, something we regularly do in
+  files like `index.ts`). If it is, take the file with the file path deepest
+  in the directory hierarchy. That approach is going to help us identify the
+  correct submodule (see next section).
+
+> Implementation note: looking up the source file from a class is a potentially
+> expensive operation as it takes a linear scan through all sources for every class.
+> We should build a reverse index in order to speed this up.
+
+
+# Appendix 2: Reference implementation for prefix-grouping used above
 
 Prefix-grouping in this case means rearranging the data and sorting it so that
 we can share common prefixes. Example of a prefix-grouped list:
@@ -459,7 +591,7 @@ def tree_ified(xs):
   return ''.join(ret)
 ```
 
-# Appendix 2: Example metadata resource
+# Appendix 3: Example metadata resource
 
 For reference, at the compression numbers we are able to reach, every
 template will contain something like this:
