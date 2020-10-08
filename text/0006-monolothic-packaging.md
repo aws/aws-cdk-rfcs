@@ -52,10 +52,11 @@ If we modeled all the CDK dependencies as peers (as they should be), it means,
 for example, that if an app uses the **aws-ecs** module, the app will have to
 explicitly install all the 40 transitive dependencies.
 
-The other **critical** implication of using peer dependencies is that adding a peer
-dependency to a module is in fact **A BREAKING CHANGE**. Any direct or indirect
-consumer of this module will have to explicitly install the new dependency.
-This, according to semantic versioning, requires a major version bump.
+The other **critical** implication of using peer dependencies is that adding a
+peer dependency to a module is in fact **A BREAKING CHANGE**. Any direct or
+indirect consumer of this module will have to explicitly install the new
+dependency. This, according to semantic versioning, requires a major version
+bump.
 
 ## What are we doing today?
 
@@ -80,7 +81,7 @@ This RFC proposes to release the entire AWS CDK as a single, monolithic module
 
 By releasing the CDK as a monolithic module, we can avoid the implications of
 peer dependencies across first-party modules (because there is only one module)
-*and* enable third-party libraries to safely declare the CDK as a peer
+_and_ enable third-party libraries to safely declare the CDK as a peer
 dependency (because any consumer of this library will surely have the CDK
 defined as a direct dependency).
 
@@ -170,12 +171,15 @@ into a single npm package during the build phase of the repo.
 
 The monolithic module will be organized into **submodules** that match 1:1 the
 current module system we have for the AWS CDK. These submodules will be
-implemented using typescript **namespaced exports** (see [jsii
-PR](https://github.com/aws/jsii/pull/1297)).
+implemented using typescript **namespaced exports** (see
+[jsii PR](https://github.com/aws/jsii/pull/1297)).
 
-* All `@aws-cdk/core` types will be exported without a namespace (root) ([PR #7007](https://github.com/aws/aws-cdk/pull/7007)).
-* Hyphens in the current module names will be converted to underscores (`aws-s3` => `aws_s3`).
-* The package will be organized to support "barrel imports" ([PR #6996](https://github.com/aws/aws-cdk/pull/6996))
+- All `@aws-cdk/core` types will be exported without a namespace (root)
+  ([PR #7007](https://github.com/aws/aws-cdk/pull/7007)).
+- Hyphens in the current module names will be converted to underscores (`aws-s3`
+  => `aws_s3`).
+- The package will be organized to support "barrel imports"
+  ([PR #6996](https://github.com/aws/aws-cdk/pull/6996))
 
 ## Module Names
 
@@ -183,7 +187,7 @@ PR](https://github.com/aws/jsii/pull/1297)).
 
 Package name:
 
-* **Module**: `aws-cdk-lib`
+- **Module**: `aws-cdk-lib`
 
 Usage:
 
@@ -199,15 +203,16 @@ import { aws_s3 } from 'aws-cdk-lib';
 
 Migration path:
 
-* Update `package.json` and remove all dependencies on `@aws-cdk/xyz` and add `aws-cdk-lib`.
-* Replace `"@aws-cdk"` with `"aws-cdk-lib"` in all source files.
+- Update `package.json` and remove all dependencies on `@aws-cdk/xyz` and add
+  `aws-cdk-lib`.
+- Replace `"@aws-cdk"` with `"aws-cdk-lib"` in all source files.
 
 ### Java
 
 Package name:
 
-* **Group ID**: `software.amazon.awscdk`
-* **Artifact ID**: `aws-cdk-lib`
+- **Group ID**: `software.amazon.awscdk`
+- **Artifact ID**: `aws-cdk-lib`
 
 Usage:
 
@@ -218,12 +223,13 @@ import software.amazon.awscdk.services.ec2.Vpc;
 
 Migration path:
 
-* Update `pom.xml` and replace all existing dependencies with the monolithic module.
-* No change required in source files
+- Update `pom.xml` and replace all existing dependencies with the monolithic
+  module.
+- No change required in source files
 
 Open issues:
 
-* Will core types will have to go under `software.amazon.awscdk` instead of
+- Will core types will have to go under `software.amazon.awscdk` instead of
   `software.amazon.awscdk.core`? This depends if submodule renaming will support
   specifying the per-language names for the root module.
 
@@ -231,8 +237,8 @@ Open issues:
 
 Package name:
 
-* **Namespace**: `Amazon.CDK`
-* **Package ID**: `Amazon.CDK.Lib` (sadly `Amazon.CDK` is taken by v1.0 core)
+- **Namespace**: `Amazon.CDK`
+- **Package ID**: `Amazon.CDK.Lib` (sadly `Amazon.CDK` is taken by v1.0 core)
 
 Usage:
 
@@ -245,8 +251,8 @@ using Amazon.CDK.AWS.S3;
 
 Package name:
 
-* **dist-name**: `aws-cdk-lib` or `aws-cdk`
-* **module name**: `aws_cdk` or `aws_cdk_lib` (to preserve current usage?)
+- **dist-name**: `aws-cdk-lib` or `aws-cdk`
+- **module name**: `aws_cdk` or `aws_cdk_lib` (to preserve current usage?)
 
 Usage:
 
@@ -262,13 +268,16 @@ from aws_cdk import (
 
 Migration path:
 
-* All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and replaced with `aws-cdk-lib`.
-* No change in code usage, unless we decide to rename the module to `aws_cdk_lib`.
+- All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and
+  replaced with `aws-cdk-lib`.
+- No change in code usage, unless we decide to rename the module to
+  `aws_cdk_lib`.
 
 Open issues:
 
-* Should we use `aws-cdk-lib` or `aws-cdk` as the distName?
-* Should we use `aws_cdk` as the module name to preserve compatibility or rename to `aws_cdk_lib`?
+- Should we use `aws-cdk-lib` or `aws-cdk` as the distName?
+- Should we use `aws_cdk` as the module name to preserve compatibility or rename
+  to `aws_cdk_lib`?
 
 ## Issues with Specific Modules
 
@@ -281,7 +290,7 @@ monolithic module, we will need to decide how to coordinate the protocol.
 
 The proposed solution is to continue to vend these modules as separate modules,
 but also incorporate them statically into the mono-cdk (like we do for every
-other module). This means that the mono-cdk will have a *copy* of this protocol,
+other module). This means that the mono-cdk will have a _copy_ of this protocol,
 while the CLI will take a runtime dependency on them. These protocols have a
 separate versioning model, to ensure that the outputs of the framework are
 compatible with the CLI.
@@ -343,7 +352,9 @@ To that end, we should:
   Generally, we should mostly accomodate L2s and avoid L3s to reduce the chance
   for proliferation.
 
-In the future, we can consider minifying the code to reduce it's footprint or send users to [bundlephobia](https://bundlephobia.com/result?p=monocdk-experiment).
+In the future, we can consider minifying the code to reduce it's footprint or
+send users to
+[bundlephobia](https://bundlephobia.com/result?p=monocdk-experiment).
 
 ## This is a breaking change
 
@@ -351,8 +362,8 @@ This will require major AWS CDK version bump (2.0.0) with all the implications.
 
 We can offer tools for migrating users from the old-style imports to the new
 style. The prototype ships with `@monocdk-experiment/rewrite-imports` which
-automatically rewrites `import` statements (usage: `npx
-@monocdk-experiment/rewrite-imports **/*.ts`). Still a bit flacky but quite
+automatically rewrites `import` statements (usage:
+`npx @monocdk-experiment/rewrite-imports **/*.ts`). Still a bit flacky but quite
 useful. If we allow imports like this `aws-cdk-lib/aws-s3` then this tools is
 even easier to write.
 
@@ -360,8 +371,9 @@ even easier to write.
 
 Monolithic packaging is basically the only way forward:
 
-1. **Peer dependencies are the only way to model dependencies** inside the CDK and
-   between third-party libraries and the CDK itself (see [Motivation](#motivation)).
+1. **Peer dependencies are the only way to model dependencies** inside the CDK
+   and between third-party libraries and the CDK itself (see
+   [Motivation](#motivation)).
 2. **Adding a new peer dependency is a breaking change**, which we and
    third-party library vendors simply cannot afford.
 
@@ -381,7 +393,7 @@ environments, they expect these standard libraries and runtimes to be brought in
 by their consumers. In Node.js, for example, there is a special attribute in
 `package.json` that basically defines the "peer Node.js dependency" (called
 `engines`). I would argue that if a vendor publishes a 3rd-party construct
-library, what they *really* want to say is "I am compatible with CDK >= 1.23.0".
+library, what they _really_ want to say is "I am compatible with CDK >= 1.23.0".
 Then, the decision about which actual CDK version is being used is left to the
 app level.
 
@@ -422,19 +434,21 @@ General recommendations:
 
 # Remaining Work
 
-- [ ] **Analytics**: We lose per-module analytics which means we will to move to report
-  analytics at the construct level.
-- [ ] **Reference documentation** needs to also support submodules/namespaces and
-  use the submodule's README file.
+- [ ] **Analytics**: We lose per-module analytics which means we will to move to
+      report analytics at the construct level.
+- [ ] **Reference documentation** needs to also support submodules/namespaces
+      and use the submodule's README file.
 - [ ] **Submodule renaming**: to preserve imports in some languages (i.e.
-  Java/.NET), we need to be able to explicitly specify the "coordinates" of
-  submodules in each language. For example, the S3 module is exported under the
-  `aws_s3` module in mono-cdk, but we want it's types to be defined under the
-  `software.amazon.awscdk.services.s3` Java package, so we need a way to specify
-  this mapping somehow. This might be a problem for the "core" types which are exported without a submodule in the mono-cdk, but in Java they are currently
-  under `software.amazon.awscdk.core`.
+      Java/.NET), we need to be able to explicitly specify the "coordinates" of
+      submodules in each language. For example, the S3 module is exported under
+      the `aws_s3` module in mono-cdk, but we want it's types to be defined
+      under the `software.amazon.awscdk.services.s3` Java package, so we need a
+      way to specify this mapping somehow. This might be a problem for the
+      "core" types which are exported without a submodule in the mono-cdk, but
+      in Java they are currently under `software.amazon.awscdk.core`.
 - [ ] Add module size protection during build.
-- [ ] Determine if we want to include the `-patterns` modules in monocdk or leave those as separate libraries (I lead towards separate libraries).
+- [ ] Determine if we want to include the `-patterns` modules in monocdk or
+      leave those as separate libraries (I lead towards separate libraries).
 - [ ] See open issues per language.
 
 # Future Possibilities
