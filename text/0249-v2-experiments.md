@@ -6,207 +6,262 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 
 # Summary
 
-When CDK v2 is released to General Availability (GA), the main construct library package that we vend will no longer
-contain experimental code. Experimental modules, including modules in Developer Preview, will be vended in a separate
-package. Experimental APIs will be opt-in. Users will not experience breaking changes in minor releases of the CDK
-unless they explicitly opt in by installing an experimental package or by setting a feature flag.
+When CDK version `2.0` is released to General Availability (GA),
+the main Construct Library package that we vend will no longer contain unstable code.
+Unstable modules, including modules in Developer Preview, will be vended separately.
+Users will not experience breaking changes in minor releases of the CDK unless they explicitly opt-in to using unstable APIs.
 
 # Motivation
 
-CDK releases contain a combination of stable and experimental features, which has proven to be a pain point for
-customers. The AWS CDK is released frequently, at least once per week and sometimes more, and each release increments
-the minor version number (e.g 1.59.0 to 1.60.0) for all AWS CDK packages. In the planned 2.0 release of CDK, the main
-focus of the major version upgrade is to stop packaging modules separately and to include them all in one package called
-`aws-cdk-lib`. This will solve a number of problems related to peer dependencies that make it harder to vend independent
-libraries based on the CDK, but it does not address the backwards compatibility problem caused by minor releases with
-breaking changes to experimental modules.
+CDK releases contain a combination of stable and unstable features,
+which has proven to be a pain point for customers.
+The AWS CDK packages are released frequently -- at least once per week, sometimes more --
+and each release increments the minor version number (e.g. `1.59.0` to `1.60.0`).
+In the planned `2.0` release of CDK,
+the main focus of the major version upgrade is to stop packaging modules separately and to include them all in one package called `aws-cdk-lib`.
+This will solve a number of problems related to peer dependencies that make it harder to vend third-party libraries based on the CDK,
+but it does not address the backwards compatibility problem caused by minor releases containing breaking changes to unstable APIs.
 
-The CDK uses an exception to semantic versioning expectations by labeling certain modules as experimental, to allow us
-to make breaking changes to those modules in minor version upgrades. There is precedent for this in other open source
-projects, but for CDK users, it has been a constant source of pain and frustration. Users who do not carefully read and
-understand the documentation simply install packages, copy sample code, make a few tweaks and put the code into
-production. When they later upgrade to a new version, they are surprised to find that their code no longer works. The
-perception of instability has driven some users away, or caused them to limit their usage of CDK to the fundamental L1
-constructs, which do not provide them with the benefits of higher level abstractions.
+The CDK uses an exception to semantic versioning by labeling certain APIs (and entire modules) as unstable,
+to allow us to make breaking changes to those APIs in minor version upgrades.
+There is precedent for this in other open source projects,
+but for CDK users, it has been a constant source of pain and frustration.
+Users who do not carefully read and understand the documentation simply install packages,
+copy sample code, make a few tweaks and put the code into production.
+When they later upgrade to a new version, they are surprised to find that their code no longer works.
+The perception of instability has driven some users away,
+or caused them to limit their usage of CDK to the fundamental L1 constructs,
+which do not provide them with the benefits of higher-level abstractions.
 
-This RFC proposes that we stop releasing breaking changes in the main packages that we vend that are not hidden by a
-feature flag. A user that installs `aws-cdk-lib` using npm or pip or any other package manager should be confident that
-there will be no intentional breaking changes in the 2.x line of releases for its lifetime.
+This RFC proposes that we stop releasing breaking changes in the main packages that we vend.
+A user that installs `aws-cdk-lib` using NPM or `pip` or any other package manager should be confident there will be no breaking changes in the `2.x` line of releases for its lifetime.
 
-# README
+# Goals
 
-The following section will be removed from the CDK Readme:
+These are the goals of this RFC,
+in order from most to least important:
 
-> Modules in the AWS Construct Library are designated Experimental while we build them; experimental modules may have
-> breaking API changes in any release. After a module is designated Stable, it adheres to semantic versioning, and only
-> major releases can have breaking changes. Each module's stability designation is available on its Overview page in the
-> AWS CDK API Reference. For more information, see Versioning in the CDK Developer Guide.
+## 1. Unstable code should require clear, explicit opt-in
 
-The existing contributor guide does not mention experimental code, so the following will be added after the intro
-paragraph:
+It should be absolutely obvious to a CDK customer when they are opting in to using an unstable API.
+From experience, we have determined that including that information in the `ReadMe` file of a module,
+or in the inline code documentation available in an editor/IDE,
+does not meet the criteria of "absolutely obvious".
 
-> If you are contributing to a 2.x release, keep in mind that you may not introduce breaking changes to any public
-> facing API. Experimental modules are developed in a separate package, and experimental APIs added to stable modules
-> are hidden behind a feature flag, which causes a runtime error when those APIs are called without the flag being set.
+If a customer is not aware of the stable vs unstable distinction,
+that means they're using _only_ stable APIs,
+and that they will not be broken with minor version CDK releases.
 
-```json
-{
-  "context": {
-    "@aws-cdk:allowExperimentalFeatures": true
-  }
-}
-```
+## 2. The CDK team can still perform API experiments
 
-# Design Summary
+We believe that one of the reasons for CDK's success is the ability to release functionality quickly into the hands of customers,
+to get their feedback.
+The ability to release experiments is crucial for that speed;
+if every single released API decision carried with it the absolute burden of being 100% backwards compatible,
+that would slow the pace of CDK innovation considerably
+(especially third-party contributions),
+and would lengthen the feedback loop from our customers on the quality of the proposed APIs.
 
-- Before releasing v2 to GA, all experimental code will either be marked as stable or deprecated and removed from the
-  packages that we vend, such as `aws-cdk` and `aws-cdk-lib`.
-- A new folder structure will be created under `packages/` called `aws-cdk-lib-previews`. All new modules will begin their
-  lifecycle there, and any modules we decide to deprecate for further experimentation will be moved there.
-- The `aws-cdk-lib-previews` package will be versioned separately from `aws-cdk-lib`, starting with `0.1.0`.
-- The new `aws-cdk-lib-previews` package will take a peer dependency on `aws-cdk-lib`.
-- When a module is ready for graduation to GA, in a single commit, the code will be moved to `packages/aws-cdk-lib`.
-- A feature flag strategy will be devised to handle experimental APIs within stable modules, or in the core. Runtime
-  checks will make sure users who have not opted in do not call experimental APIs.
+For those reasons, we consider it essential for the CDK team to retain the capability to perform experiments with our APIs
+(of course, only those that are clearly marked as such).
 
-# Drawbacks
+# Proposed changes
 
-- When we graduate a module, users who have participated in the Developer Preview will have to update their imports to
-  make use of the stable version in the main repository.
-- For developers who are working on experimental code that has complex dependencies with the core and with other
-  modules, development will be more complicated.
-- In some cases, experimentation will not be possible. New features introduced to the main repository will have to be
-  vetted much more carefully before they are merged, since any public API released as part of v2 will have to be
-  supported for the lifetime of the major version.
-- The stable package that we vend cannot take dependencies on the experimental package.
-- API design for L2 construct libraries will have to take into account the possibility of future additions that are
-  implemented in a separate package. This might lead to awkward choices, like making functions public that otherwise
-  would have been private.
+To achieve the goals of this RFC,
+we propose the following changes:
 
-# Alternatives
+## 1. No unstable code in mono-CDK
 
-Some alternatives to this strategy are:
+Because of a combination of how `aws-cdk-lib` will be depended on by third-party libraries
+(through peer dependencies),
+and the goals of ths RFC,
+it will no longer be possible to vend unstable code as part of `aws-cdk-lib`.
 
-- Make no changes and continue to experiment in the main release.
-  - Improve documentation so that it is more obvious to users that they are importing experimental code.
-  - Make it a policy to actually include the name 'experimental' in all experimental APIs.
-- Use clever build tricks to hide experimental modules. This might be possible in Typescript, where the type files are
-  separate from implementation, but might prove difficult or impossible in other languages such as Python.
-- Call the experimental package `aws-cdk-lib-experiments` instead of `aws-cdk-lib-previews`.
-- Instead of vending a separate package, use submodules:
+We will need to add validations to our build scripts that make sure this rule is never broken.
 
-```typescript
-import * as eks from 'aws-cdk-lib/aws-eks-experimental';
-// or we could do
-import * as eks from 'aws-cdk-lib/experimental/aws-eks';
-```
+### Why can't we vend unstable code in mono-CDK?
 
-# Adoption Strategy
+This paragraph explains why it's not possible to vend unstable code in mono-CDK.
+If you're already convinced that that's true,
+feel free to skip to the next section.
 
-The hope is that for the majority of users, upgrading from 1.x to 2.x will be as simple as changing import statements at
-the top of their source files, rebuilding, and redeploying. This upgrade should not result in any resources being
-destroyed and recreated, except in very specific cases where we have made it clear to users, such as with the EKS L2
-construct library. The same should be true for users upgrading from the preview package to the stable package as modules
-are graduated from Developer Preview to GA. User who depend on experimental modules that end up being deprecated and
-moved to the `aws-cdk-lib-previews` package will need to install that dependency in addition to changing their import
-statements, but they should be able to continue using those L2s without any other changes to their code.
+<details>
+Imagine we could ship unstable code in `aws-cdk-lib`.
+The following scenario would then be possible:
 
-# Implementation Plan
+Let's say we have a third-party library, `my-library`, that vends `MyConstruct`.
+It's considered stable by its author.
+However, inside the implementation of `MyConstruct`,
+it uses an experimental construct, `SomeExperiment`.
+It's just an implementation detail, though;
+it's not reflected in the API of `MyConstruct`.
 
-This section contains examples covering common scenarios:
+`my-library` is released in version `2.0.0`,
+and it has a peer dependency on `aws-cdk-lib` version `2.10.0`
+(with a caret, so `"aws-cdk-lib": "^2.10.0"`).
 
-## 1. A brand new L2, where there was only an L1 before
+Some time passes, enough that `aws-cdk-lib` is now in version `2.20.0`.
+A CDK customer wants to use `my-library`
+together with the newest and shiniest `aws-cdk-lib`,`2.20.0`,
+as they need some recently released features.
+However, incidentally, in version `2.12.0` of `aws-cdk-lib`,
+`SomeExperiment` was broken -- which is fine, it's an experimental API.
+Suddenly, the combination of `my-library` `2.0.0`
+and `aws-cdk-lib` `2.20.0` will fail for the customer at runtime,
+and there's basically no way for them to unblock themselves other than pinning to version `2.11.0` of `aws-cdk-lib`,
+which was exactly the problem mono-CDK was designed to prevent in the first place.
+</details>
 
-- Create a new package in `packages/aws-cdk-lib-previews` exactly the same we we would have for v1
-- Follow the v1 process for module lifecycle until it's ready to GA
-- [How does documentation work for the preview package?]
-- To graduate it, move the package to `packages/aws-cdk-lib`, set the module stability and maturity to stable, and
-  remove any @experimental tags in the doc comments.
+## 2. Separate unstable code from mono-CDK
 
-## 2. Adding new experimental classes to an existing L2
+As a consequence of the above point,
+we need to move all unstable code out of the mono-CDK.
 
-An example would be Cognito User Pools, when we want to add additional Identity Pool Providers.
+There a few possible options where the unstable code can be moved.
+They all have their advantages and disadvantages.
 
-- Create the implementation file and export it.
-  - `packages/aws-cdk-lib-previews/cognito/lib/user-pool-idps/OpenIdConnect.ts`
-- A user that wants to try it would import both the stable and experimental package
+**Note**: I purposefully don't mention the issue of how should this decision affect the number of Git repositories the CDK project uses.
+I consider that an orthogonal concern to this one,
+and more of an implementation detail.
+The number of Git repositories is also a two-way door,
+unlike the package structure decision,
+which I believe cannot be changed without bumping the major version of CDK.
 
-```typescript
-import * as cognito from 'aws-cdk-lib/aws_cognito';
-import * as cognitoPreview from 'aws-cdk-lib-previews/aws_cognito';
+### Option 1: sub-package of `aws-cdk-lib`
 
-const idp = new cognitoPreview.UserPoolIdentityProviderOidc(this, 'OIDC', {...});
+In this option,
+we would use the namespacing features of each language to vend a separate namespace for the experimental APIs.
+The customer would have to explicitly opt-in by using a language-level import of a namespace with "experimental" in the name.
+
+For example, let's imagine that the Cognito library had both stable and unstable APIs.
+They would both reside in the same package,
+but not in the same namespace:
+
+```ts
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cognito_preview from 'aws-cdk-lib/experimental/aws-cognito';
+
+const idp = new cognito_preview.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
 const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
 const userPoolClient = new cognito.UserPoolClient(...);
-
 ```
 
-## 3. Adding a new experimental function to an existing stable class
+Advantages:
 
-Let's say we have the stable `Bucket` class from the `s3` submodule. We want to add an experimental method to it. We use
-the `@experimental` decorator:
+* It's possible for stable module to depend on unstable ones.
+  This is something that's used pretty commonly in the CDK today:
+  
+    ```
+    ⚠️  Stable package '@aws-cdk/aws-applicationautoscaling' depends on unstable package '@aws-cdk/aws-autoscaling-common'
+    ⚠️  Stable package '@aws-cdk/aws-autoscaling' depends on unstable package '@aws-cdk/aws-autoscaling-common'
+    ⚠️  Stable package '@aws-cdk/aws-elasticloadbalancingv2-actions' depends on unstable package '@aws-cdk/aws-cognito'
+    ⚠️  Stable package '@aws-cdk/aws-events-targets' depends on unstable package '@aws-cdk/aws-batch'
+    ⚠️  Stable package '@aws-cdk/aws-lambda' depends on unstable package '@aws-cdk/aws-efs'
+    ⚠️  Stable package '@aws-cdk/aws-route53-patterns' depends on unstable package '@aws-cdk/aws-cloudfront'
+    ⚠️  Stable package '@aws-cdk/aws-route53-targets' depends on unstable package '@aws-cdk/aws-cloudfront'
+    ⚠️  Stable package '@aws-cdk/aws-route53-targets' depends on unstable package '@aws-cdk/aws-cognito'
+    ⚠️  Stable package '@aws-cdk/aws-stepfunctions-tasks' depends on unstable package '@aws-cdk/aws-batch'
+    ⚠️  Stable package '@aws-cdk/aws-stepfunctions-tasks' depends on unstable package '@aws-cdk/aws-glue'
+    ```
 
-```typescript
-export class Bucket {
-  // ...
+* It's possible for unstable modules to depend on other unstable modules.
+  This is also something that's common today in the CDK:
+  
+    ```
+    ℹ️️  Unstable package '@aws-cdk/aws-appsync' depends on unstable package '@aws-cdk/aws-cognito'
+    ℹ️️  Unstable package '@aws-cdk/aws-backup' depends on unstable package '@aws-cdk/aws-efs'
+    ℹ️️  Unstable package '@aws-cdk/aws-backup' depends on unstable package '@aws-cdk/aws-rds'
+    ℹ️️  Unstable package '@aws-cdk/aws-cloudfront-origins' depends on unstable package '@aws-cdk/aws-cloudfront'
+    ℹ️️  Unstable package '@aws-cdk/aws-docdb' depends on unstable package '@aws-cdk/aws-efs'
+    ℹ️️  Unstable package '@aws-cdk/aws-s3-deployment' depends on unstable package '@aws-cdk/aws-cloudfront'
+    ℹ️️  Unstable package '@aws-cdk/aws-ses-actions' depends on unstable package '@aws-cdk/aws-ses'
+    ```
 
-  /**
-   * This is a new experimental methd.
-   */
-  @experimental
-  public newExperimentalMethod(): void {
-    // ...
-  }
-}
+Disadvantages:
+
+* Might be considered less explicit,
+  as a customer never says they want to depend on a package containing unstable APIs.
+* If a third-party package depends on an unstable API in a non-obvious way,
+  that might break for customers.
+* Graduating a module to stable will be a breaking change for customers.
+  We can mitigate this downside by keeping the old unstable module around,
+  but that leads to duplicated classes in the same package.
+
+### Option 2: separate single unstable package
+
+Instead of vending the unstable modules together with the stable ones,
+we can vend a second mono-CDK, `aws-cdk-lib-experiments` (actual name can be changed before release of course).
+A customer will have to explicitly depend on `aws-cdk-lib-experiments`,
+which will be released in version `0.x` to make it even more obvious that this is unstable code.
+`aws-cdk-lib-experiments` would have a caret peer dependency on `aws-cdk-lib`.
+
+So, the above Cognito example would look like this:
+
+```ts
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cognito_preview from 'aws-cdk-lib-experiments/aws-cognito';
+
+const idp = new cognito_preview.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
+const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
+const userPoolClient = new cognito.UserPoolClient(...);
 ```
 
-This decorator is recognized by JSII, and it will add a runtime check to the generated code (for all languages) that
-will enforce setting the following feature flag in `cdk.json`:
+Advantages:
 
-```json
-{
-  "context": {
-    "@aws-cdk:allowExperimentalFeatures": true
-  }
-}
+* Very explicit (customer has to add a dependency on a package with "experiments" in the name and version `0.x`).
+* It's possible for unstable modules to depend on other unstable modules.
+
+Disadvantages:
+
+* It's not possible for stable modules to depend on unstable ones.
+  This has serious side implications:
+  * All unstable modules that have stable dependents today will have to be graduated before `v2.0` is released.
+  * Before a module is graduated, all of its dependencies need to be graduated.
+  * It will not be possible to add new dependencies on unstable modules to stable modules in the future
+    (for example, that's a common need for StepFunction Tasks).
+* Graduating a module to stable will be a breaking change for customers.
+  We can mitigate this downside by keeping the old unstable module around,
+  but that leads to duplicated classes.
+
+### Option 3: separate multiple unstable packages
+
+In this option, each experimental library will be vended as a separate package.
+Each would have the name "experiments" in it
+(possible naming convention: `@aws-cdk-lib-experiments/aws-<service>`),
+and would be released in version `0.x` to make it absolutely obvious this is unstable code.
+Each package would declare a caret peer dependency on `aws-cdk-lib`.
+
+So, the above Cognito example would be:
+
+```ts
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cognito_preview from '@aws-cdk-lib-experiments/aws-cognito';
+
+const idp = new cognito_preview.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
+const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
+const userPoolClient = new cognito.UserPoolClient(...);
 ```
 
-Not setting this flag will cause the code to fail at runtime with a descriptive error. This flag will be set to `false`
-by default in the `cdk.json` file generated by `cdk init`.
+Advantages:
 
-This way, the customer will have to explicitly opt-in to use this experimental feature of a stable module.
+* Very explicit (customer has to add a dependency on a package with "experiments" in the name and version `0.x`).
+* This is closest to the third-party CDK package experience our customers will have.
 
-## 4. How to work around stable modules that want to refer to experiments
+Disadvantages:
 
-This will no longer be possible, but it's quite commonly needed, for example, in StepFunction Tasks.
+* It's not possible for stable modules to depend on unstable ones.
+* It's not possible for unstable modules to depend on other unstable modules,
+  as doing that brings us back to the dependency hell that mono-CDK was designed to solve.
+* Graduating a module to stable will be a breaking change for customers.
+  We can mitigate this downside by keeping the old unstable package around,
+  but that leads to duplicated classes.
 
-When StepFunctions release a new integration, we might not have an L2 for that service yet. Currently, we would create a
-very simple L2 in the L1-only module. Let's use SageMaker as an example:
+## 3. Extra unstable precautions
 
-```typescript
-// this interface & class are all experimental
-export interface ISageMakerEndpoint extends IResource {}
+### Require a feature flag for unstable code
 
-export class SageMakerEndpoint extends Resource {
-  public static fromEndpointName(scope: Construct, id: string, endpointName: string): ISageMakerEndpoint {
-    // ...
-  }
-}
+ToDo
 
-// then, in StepFunction Tasks,
-// we can do:
-export interface SageMakerUpdateEndpointProps {
-  readonly endpoint: ISageMakerEndpoint;
-}
-```
+### Force a naming convention for unstable code
 
-This way, even though the class `SageMakerEndpoint` can undergo breaking changes, the basic contract between
-`ISageMakerEndpoint` and `SageMakerUpdateEndpoint` will be preserved; so, in this way, it's safe to depend on an
-experimental module from a stable one.
-
-This proposal will make this kind of dependency no longer possible.
-
-## 5. Changing the entire implementation for a core module
-
-This will no longer be allowed. The old module will have to be deprecated, a new one created, and the old one will only
-be removed in the next major version bump.
+ToDo
