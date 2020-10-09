@@ -188,9 +188,9 @@ Disadvantages:
   that might break for customers when upgrading to a version of `aws-cdk-lib`
   that has broken that functionality compared to the `aws-cdk-lib` version the third-party construct is built against
   (basically, the same scenario from above that explains why we can no longer have unstable code in stable mono-CDK modules).
-  None of the 3 options solve the problem of allowing third-party libraries to safely depend on experimental Construct Library code; 
+  None of the options solve the problem of allowing third-party libraries to safely depend on experimental Construct Library code; 
   however, the fact that all experimental code in this variant is shipped in `aws-cdk-lib`
-  makes this particular problem more likely to manifest itself in my estimation.
+  makes this particular problem more likely to manifest itself.
 * Graduating a module to stable will be a breaking change for customers.
   We can mitigate this downside by keeping the old unstable module around,
   but that leads to duplicated classes in the same package.
@@ -308,10 +308,55 @@ Disadvantages:
 
 ## 3. Extra unstable precautions
 
+This chapter discusses additional precautions we can choose to implement to re-inforce goal #1 above.
+These are orthogonal to the decision on how to divide the stable and experimental modules
+(meaning, we could implement any of these with each of the options above).
+
 ### Require a feature flag for unstable code
 
-ToDo
+In this variant,
+we would add a runtime check into all unstable APIs that immediately fails with an exception if the following context is missing:
+
+```json
+{
+  "context": {
+    "@aws-cdk:allowExperimentalFeatures": true
+  }
+}
+```
+
+Note that `cdk init` will create a project with this context value set to `false`.
+
+To avoid the manual and error-prone process of adding this check to every single unstable API,
+we will need to modify JSII so that it recognizes the `@xperimental` decorator,
+and adds this check during compilation.
+
+Advantages:
+
+* Changing the context flag will be an explicit opt in from the customer to agree to use unstable APIs.
+
+Disadvantages:
+
+* This will force setting the flag also for transitive experimental code
+  (for example, when an unstable API is used as an implementation detail of a construct,
+  but not in its public interface),
+  which might be confusing.
+* Since there is a single flag for all unstable code,
+  setting it once might hide other instances of using unstable code,
+  working against stated goal #1.
+* Requires changes in JSII.
 
 ### Force a naming convention for unstable code
 
-ToDo
+We can modify JSII to force a certain naming convention for unstable code,
+for example to add a specific prefix or suffix to all unstable APIs.
+
+Advantages:
+
+* Should fulfill goal #1 - it will be impossible to use an unstable API by accident.
+
+Disadvantages:
+
+* Will force some pretty long and ugly names on our APIs.
+* Graduating a module will require a lot of code changes from our customers to remove the prefix/suffix.
+* Requires changes in JSII.
