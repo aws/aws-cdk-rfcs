@@ -89,7 +89,7 @@ will carry the temporary password for the user. The user will use this password 
 temporary password is valid only for a limited time which can be configured via the `tempPasswordValidity` policy.
 
 *Note*: By default, the email and/or phone number attributes will be marked as required if `verificationEmail` or
-`verificationSms` respecitvely are specified. See [attributes](#attributes) section for more on standard attributes.
+`verificationSms` respectively are specified. See [attributes](#attributes) section for more on standard attributes.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
 >
@@ -194,7 +194,7 @@ lowercase, numbers and/or symbols must be present.
 
 Cognito sends various messages to its users via SMS, for different actions, ranging from account verification to
 marketing. In order to send SMS messages, Cognito needs an IAM role that it can assume, with permissions that allow it
-to send SMS messages. By default, CDK will create this IAM role but can be explicily specified to an existing role via
+to send SMS messages. By default, CDK will create this IAM role but can be explicitly specified to an existing role via
 the `smsRole` property.
 
 The following code sample has these three properties configured.
@@ -399,13 +399,13 @@ The required `groupName` and the optional `description` properties are the ident
 
 The `role` property refers to the IAM role whose permissions that the users in this group are able to assume.
 
-When several different groups are defined for the same user pool, they can be ordered to have a precendence. Precedence
+When several different groups are defined for the same user pool, they can be ordered to have a precedence. Precedence
 will determine which IAM role's permission will be available for a user when they are part of two different groups. See
 [CreateGroup
 API](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_CreateGroup.html#CognitoUserPools-CreateGroup-request-Precedence)
 for more details.
 
-Use the `takesPrecendenceOver()` API to set the precedence of one group over the other.
+Use the `takesPrecedenceOver()` API to set the precedence of one group over the other.
 
 > These are the defaults that will be part of tsdoc, and not part of the README -
 >
@@ -502,10 +502,10 @@ outside of the CDK app.
 > * authenticatedRole & unauthenticatedRole - empty Role with the correct trust configured.
 > * no default rolemappings
 
-### Identity Providers
+### Identity Providers
 
 Identity pools can be configured with external providers for sign in. These can be from facebook, google, twitter as
-well as, "login with Amazon" and Cognito user pools. Use the `identityProviers` property to configure these providers.
+well as, "login with Amazon" and Cognito user pools. Use the `identityProviders` property to configure these providers.
 Learn more about external identity providers at [Cognito's
 documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). The CDK
 documentation of the `identityProviders` property has more details on how to configure an identity pool with each of
