@@ -1,7 +1,7 @@
 ---
-feature name: feature-flags 
-start date: 
-rfc pr: https://github.com/aws/aws-cdk/pull/5017 
+feature name: feature-flags
+? start date
+rfc pr: https://github.com/aws/aws-cdk/pull/5017
 related issue: https://github.com/awslabs/aws-cdk-rfcs/issues/55
 ---
 
@@ -85,7 +85,7 @@ We will mandate that when a feature or bug fix is introduced under a feature
 flag, the CHANGELOG will include:
 
 - The suffix `(under feature flag)` in the title.
-- A `BREAKING CHANGES` paragraph will be added which describes the *new*
+- A `BREAKING CHANGES` paragraph will be added which describes the _new_
   behavior but disclaims that it will only apply to new projects created through
   `cdk init`. It will also indicate the context key this flag uses for users who
   wish to enable it manually in their project.
@@ -117,9 +117,10 @@ out which flag to enable in their `cdk.json` and how.
 This drawback will be mitigated by:
 
 - [ ] Adding a documentation section about feature flags in the developer guide,
-  pointing to the `cx-api/lib/features.ts` file as an index of feature flags.
-- [x] Announce the feature flag ID in our release notes under `BREAKING CHANGE:
-  (under feature flag)`.
+      pointing to the `cx-api/lib/features.ts` file as an index of feature
+      flags.
+- [x] Announce the feature flag ID in our release notes under
+      `BREAKING CHANGE: (under feature flag)`.
 
 ## Testing
 
@@ -148,7 +149,7 @@ enabled.
 To mitigate this risk we will:
 
 - [ ] Add feature flags to `cdk doctor` and update bug report template
-  accordingly to request users to run `cdk doctor`.
+      accordingly to request users to run `cdk doctor`.
 
 # Rationale and Alternatives
 
@@ -175,10 +176,10 @@ The contributor experience for using feature flags will be documented in the
 contribution guide and will involve the following steps:
 
 1. Seek the approval of a core team member that a feature flag can be used.
-   * If the feature in question is being planned via an RFC, and the feature
+   - If the feature in question is being planned via an RFC, and the feature
      flag is contained in the proposal, core team member approval should include
      the feature flag.
-   * If the feature is being tracked in a single issue without an RFC, approval
+   - If the feature is being tracked in a single issue without an RFC, approval
      should be indicated in this issue.
 2. Define a new const under
    [cx-api/lib/features.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/cx-api/lib/features.ts)
@@ -194,18 +195,18 @@ contribution guide and will involve the following steps:
 5. In your PR title (which goes into CHANGELOG), add a `(behind feature flag)`
    suffix. e.g:
 
-    ```
-    fix(core): impossible to use the same physical stack name for two stacks (under feature flag)
-    ```
+   ```
+   fix(core): impossible to use the same physical stack name for two stacks (under feature flag)
+   ```
 
-5. Under `BREAKING CHANGES`, add a prefix `(under feature flag)` and the name of
+6. Under `BREAKING CHANGES`, add a prefix `(under feature flag)` and the name of
    the flag in the postfix. For example:
 
-    ```
-    BREAKING CHANGE: (under feature flag) template file names for new projects created
-    through "cdk init" will use the template artifact ID instead of the physical stack
-    name to enable  multiple stacks to use the same name (feature flag: @aws-cdk/core:enableStackNameDuplicates)
-    ```
+   ```
+   BREAKING CHANGE: (under feature flag) template file names for new projects created
+   through "cdk init" will use the template artifact ID instead of the physical stack
+   name to enable  multiple stacks to use the same name (feature flag: @aws-cdk/core:enableStackNameDuplicates)
+   ```
 
 # Unresolved questions
 
