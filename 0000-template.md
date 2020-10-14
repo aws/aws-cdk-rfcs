@@ -117,7 +117,7 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 > the RFC is approved, create GitHub issues for these issues and update this RFC
 > of the project board with these issue IDs.
 
-## Appendix: ....
+## Appendix
 
 Feel free to add any number of appendices as you see fit. Appendices are
 expected to allow readers to dive deeper to certain sections if they like. For

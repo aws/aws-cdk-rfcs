@@ -5,8 +5,6 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/111
 related issue: https://github.com/aws/aws-cdk-rfcs/issues/110
 ---
 
-<!-- replace the blockquoted sections with your content -->
-
 # Summary
 
 This RFC addresses compatibility concerns for developing different parts of the
@@ -33,14 +31,14 @@ either of the two CDK components:
 - CLI upgrades are compatible. New CLI versions should work with older framework
   versions, and all existing functionality is preserved.
 
-  > By _functionality_, we mean that the CLI is able to properly interpret older
-  > frameworks and perform the necessary actions to support the existing
-  > behavior.
+> By _functionality_, we mean that the CLI is able to properly interpret older
+> frameworks and perform the necessary actions to support the existing behavior.
 
 - Framework upgrades are comptabile **unless** the _cloud-assembly-schema_ has
   changed, in which case, we will require the user to upgrade the CLI as well.
 
-      > We will treat every change to the schema as a "breaking" one, [details](#schema-changes) below.
+> We will treat every change to the schema as a "breaking" one,
+> [details](#schema-changes) below.
 
 # Motivation
 
@@ -90,7 +88,7 @@ const toolkitVersion = parseSemver(CLOUD_ASSEMBLY_VERSION);
 The CLI version takes the value of the latest cx-protocol version, and not the
 actual CLI version.
 
-```typescript
+```ts
 // if framework > cli, we require a newer cli version
 if (semver.gt(frameworkVersion, toolkitVersion)) {
   throw new Error(
@@ -225,7 +223,7 @@ leverage `jsii` to accomplish this. For example, this is an excerpt from the
 This means that, if we remove the `path` property from
 `ContainerImageAssetMetadataEntry`, jsii should produce an error, and indeed:
 
-```console
+```sh
 ❯ yarn compat
 PROP @aws-cdk/cx-api.ContainerImageAssetMetadataEntry.path: has been removed [removed:@aws-cdk/cx-api.ContainerImageAssetMetadataEntry.path]
 ```
@@ -342,7 +340,7 @@ de-serialize the `Cloud-Assembly`:
 
 in `exec.ts`
 
-```typescript
+```ts
 var assembly;
 
 if ((await fs.pathExists(app)) && (await fs.stat(app)).isDirectory()) {
@@ -436,7 +434,7 @@ As already mentioned, _cloud-assembly-schema_ API breakage is not the only thing
 that can go wrong. This is to ensure that we don't introduce breaking changes to
 the CLI itself. The plan here is fairly straight forward:
 
-```console
+```sh
 git checkout v${LATEST_PUBLISHED_VERSION}
 npm install /path/to/aws-cdk
 npm install /path/to/packages/*
