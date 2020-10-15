@@ -6,11 +6,10 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 
 # Summary
 
-When CDK version `2.0` is released to General Availability (GA), the main
-Construct Library package that we vend will no longer contain unstable code.
-Unstable modules, including modules in Developer Preview, will be vended
-separately. Users will not experience breaking changes in minor releases of the
-CDK unless they explicitly opt-in to using unstable APIs.
+When CDK version `2.0` is released to General Availability (GA),
+the single monolithic Construct Library package we vend will no longer allow breaking changes in its main modules.
+Unstable modules, which include both modules that are Experimental, and in Developer Preview, will be vended separately.
+Users will not experience breaking changes in minor releases of the CDK unless they explicitly opt-in to using unstable APIs.
 
 # Motivation
 
@@ -46,19 +45,26 @@ of releases for its lifetime.
 
 These are the goals of this RFC, in order from most to least important:
 
-## 1. Unstable code should require clear, explicit opt-in
+## 1. Using CDK APIs that don't guarantee backwards-compatibility should require clear, explicit opt-in
 
-It should be absolutely obvious to a CDK customer when they are opting in to
-using an unstable API. From experience, we have determined that including that
-information in the `ReadMe` file of a module, or in the inline code
-documentation available in an editor/IDE, does not meet the criteria of
-"absolutely obvious".
+It should be absolutely obvious to a CDK customer when they are opting in to using an API
+that might have backwards-incompatible changes in the future.
+From experience, we have determined that including that information in the `ReadMe` file of a module,
+or in the inline code documentation available in an editor/IDE,
+does not meet the criteria of "absolutely obvious".
 
 If a customer is not aware of the stable vs unstable distinction, that means
 they're using _only_ stable APIs, and that they will not be broken with minor
 version CDK releases.
 
-## 2. The CDK team can still perform API experiments
+## 2. We want to foster a vibrant ecosystem of third-party CDK packages
+
+In our estimation, the CDK cannot be successful without growing an expansive collection of third-party packages
+that provide reusable Constructs on various levels of abstraction.
+Changing to vending the Construct Library as a monolithic package is one part of making that possible;
+we should make sure our approach to unstable code also takes this into account.
+
+## 3. The CDK team can still perform API experiments
 
 We believe that one of the reasons for CDK's success is the ability to release
 functionality quickly into the hands of customers, to get their feedback. The
@@ -76,131 +82,42 @@ clearly marked as such).
 
 To achieve the goals of this RFC, we propose the following changes:
 
-## 1. No unstable code in the main mono-CDK modules
+## 1. No more breaking changes in the main mono-CDK modules
 
-Because of a combination of how `aws-cdk-lib` will be depended on by third-party
-libraries (through peer dependencies), and the goals of ths RFC, it will no
-longer be possible to vend unstable code as part of `aws-cdk-lib`'s main modules
-(so, modules that are marked "stable" will no longer have the capability to have
-unstable APIs inside of them).
+Because of a combination of how `aws-cdk-lib` will be depended on by third-party libraries
+(through peer dependencies), and the goals of this RFC,
+it will no longer be possible to make breaking changes to code inside `aws-cdk-lib`'s main modules.
 
-We will need to add validations to our build scripts that make sure this rule is
-never broken.
+(See Appendix A below for a detailed explanation why that is)
 
-### Why can't we vend unstable code in mono-CDK stable modules?
+We will still retain the ability to mark APIs as `@experimental` in `aws-cdk-lib` main modules,
+but the meaning of that marker will change considerably compared to `1.x`.
+It will be an indication to customers that this API is still in the process of being baked,
+and it might be a bad idea (especially for more conservative customers) to use it in production yet.
+However, an API marked `@experimental` cannot ever be changed in a backwards-incompatible way;
+it can be marked `@deprecated`, but it will not be removed until the next major version of the CDK.
 
-This paragraph explains why it's not possible to vend unstable code in the
-mono-CDK main modules. If you're already convinced that that's true, feel free
-to skip to the next section.
+We will need to change the backwards-compatibility validations in our build scripts to make sure they cover `@experimental` APIs as well.
 
-<details>
-Imagine we could ship unstable code in `aws-cdk-lib`.
-The following scenario would then be possible:
+## 2. Separate "breakable" code from mono-CDK main modules
 
-Let's say we have a third-party library, `my-library`, that vends `MyConstruct`.
-It's considered stable by its author. However, inside the implementation of
-`MyConstruct`, it uses an experimental construct, `SomeExperiment`, from
-mono-CDK's S3 module. It's just an implementation detail, though; it's not
-reflected in the API of `MyConstruct`.
+As a consequence of the above point,
+we need to move all code that doesn't guarantee backwards-compatibility out of the mono-CDK main modules.
 
-`my-library` is released in version `2.0.0`, and it has a peer dependency on
-`aws-cdk-lib` version `2.10.0` (with a caret, so `"aws-cdk-lib": "^2.10.0"`).
+There a few possible options where this "breakable" code can be moved.
+They all have their advantages and disadvantages.
 
-Some time passes, enough that `aws-cdk-lib` is now in version `2.20.0`. A CDK
-customer wants to use `my-library` together with the newest and shiniest
-`aws-cdk-lib`,`2.20.0`, as they need some recently released features. However,
-incidentally, in version `2.12.0` of `aws-cdk-lib`, `SomeExperiment` was broken
--- which is fine, it's an experimental API. Suddenly, the combination of
-`my-library` `2.0.0` and `aws-cdk-lib` `2.20.0` will fail for the customer at
-runtime, and there's basically no way for them to unblock themselves other than
-pinning to version `2.11.0` of `aws-cdk-lib`, which was exactly the problem
-mono-CDK was designed to prevent in the first place.
-
-</details>
-
-## 2. Separate unstable code from mono-CDK main modules
-
-As a consequence of the above point, we need to move all unstable code out of
-the mono-CDK main modules.
-
-There a few possible options where the unstable code can be moved. They all have
-their advantages and disadvantages.
-
-**Note**: I purposefully don't mention the issue of how should this decision
+**Note #1**: I purposefully don't mention the issue of how should this decision
 affect the number of Git repositories the CDK project uses. I consider that an
 orthogonal concern to this one, and more of an implementation detail. The number
 of Git repositories is also a two-way door, unlike the package structure
 decision, which I believe cannot be changed without bumping the major version of
 CDK.
 
-### Option 1: sub-package of `aws-cdk-lib`
-
-In this option, we would use the namespacing features of each language to vend a
-separate namespace for the experimental APIs. The customer would have to
-explicitly opt-in by using a language-level import of a namespace with
-"experimental" in the name.
-
-For example, let's imagine that the Cognito library had both stable and unstable
-APIs. They would both reside in the same package, `aws-cdk-lib`, but not in the
-same namespace:
-
-```ts
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as cognito_preview from 'aws-cdk-lib/experimental/aws-cognito';
-
-const idp = new cognito_preview.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
-const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
-const userPoolClient = new cognito.UserPoolClient(...);
-```
-
-Advantages:
-
-- It's possible for stable module to depend on unstable ones. This is something
-  that's used pretty commonly in the CDK today:
-
-  ```
-  ⚠️  Stable package '@aws-cdk/aws-applicationautoscaling' depends on unstable package '@aws-cdk/aws-autoscaling-common'
-  ⚠️  Stable package '@aws-cdk/aws-autoscaling' depends on unstable package '@aws-cdk/aws-autoscaling-common'
-  ⚠️  Stable package '@aws-cdk/aws-elasticloadbalancingv2-actions' depends on unstable package '@aws-cdk/aws-cognito'
-  ⚠️  Stable package '@aws-cdk/aws-events-targets' depends on unstable package '@aws-cdk/aws-batch'
-  ⚠️  Stable package '@aws-cdk/aws-lambda' depends on unstable package '@aws-cdk/aws-efs'
-  ⚠️  Stable package '@aws-cdk/aws-route53-patterns' depends on unstable package '@aws-cdk/aws-cloudfront'
-  ⚠️  Stable package '@aws-cdk/aws-route53-targets' depends on unstable package '@aws-cdk/aws-cloudfront'
-  ⚠️  Stable package '@aws-cdk/aws-route53-targets' depends on unstable package '@aws-cdk/aws-cognito'
-  ⚠️  Stable package '@aws-cdk/aws-stepfunctions-tasks' depends on unstable package '@aws-cdk/aws-batch'
-  ⚠️  Stable package '@aws-cdk/aws-stepfunctions-tasks' depends on unstable package '@aws-cdk/aws-glue'
-  ```
-
-- It's possible for unstable modules to depend on other unstable modules. This
-  is also something that's common today in the CDK:
-
-  ```
-  ℹ️️  Unstable package '@aws-cdk/aws-appsync' depends on unstable package '@aws-cdk/aws-cognito'
-  ℹ️️  Unstable package '@aws-cdk/aws-backup' depends on unstable package '@aws-cdk/aws-efs'
-  ℹ️️  Unstable package '@aws-cdk/aws-backup' depends on unstable package '@aws-cdk/aws-rds'
-  ℹ️️  Unstable package '@aws-cdk/aws-cloudfront-origins' depends on unstable package '@aws-cdk/aws-cloudfront'
-  ℹ️️  Unstable package '@aws-cdk/aws-docdb' depends on unstable package '@aws-cdk/aws-efs'
-  ℹ️️  Unstable package '@aws-cdk/aws-s3-deployment' depends on unstable package '@aws-cdk/aws-cloudfront'
-  ℹ️️  Unstable package '@aws-cdk/aws-ses-actions' depends on unstable package '@aws-cdk/aws-ses'
-  ```
-
-Disadvantages:
-
-- Might be considered less explicit, as a customer never says they want to
-  depend on a package containing unstable APIs, or with `0.x` for the version.
-- If a third-party package depends on an unstable API in a non-obvious way (for
-  example, only in the implementation of a construct, not in its public API),
-  that might break for customers when upgrading to a version of `aws-cdk-lib`
-  that has broken that functionality compared to the `aws-cdk-lib` version the
-  third-party construct is built against (basically, the same scenario from
-  above that explains why we can no longer have unstable code in stable mono-CDK
-  modules). None of the options solve the problem of allowing third-party
-  libraries to safely depend on experimental Construct Library code; however,
-  the fact that all experimental code in this variant is shipped in
-  `aws-cdk-lib` makes this particular problem more likely to manifest itself.
-- Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable module around, but that
-  leads to duplicated classes in the same package.
+**Note #2**: the options are numbered after the historical order in which they were proposed,
+not in the order they appear in the document.
+Check out Appendix C for the options with the missing numbers --
+they were considered, but discarded by the team as not viable.
 
 ### Option 2: separate single unstable package
 
@@ -211,7 +128,7 @@ before release of course). A customer will have to explicitly depend on
 even more obvious that this is unstable code. `aws-cdk-lib-experiments` would
 have a caret peer dependency on `aws-cdk-lib`.
 
-So, the above Cognito example would look like this:
+Example using stable and unstable Cognito APIs:
 
 ```ts
 import * as cognito from 'aws-cdk-lib/aws-cognito';
@@ -224,21 +141,23 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 Advantages:
 
-- Very explicit (customer has to add a dependency on a package with
+1. Very explicit (customer has to add a dependency on a package with
   "experiments" in the name and version `0.x`).
-- It's possible for unstable modules to depend on other unstable modules.
+2. It's possible for unstable modules to depend on other unstable modules
+  (see Appendix B for data on how necessary that is for the CDK currently).
 
 Disadvantages:
 
-- It's not possible for stable modules to depend on unstable ones. This has
-  serious side implications:
+1. It's not possible for stable modules to depend on unstable ones
+  (see Appendix B for data on how necessary that is for the CDK currently).
+  This has serious side implications:
   - All unstable modules that have stable dependents today will have to be
     graduated before `v2.0` is released.
   - Before a module is graduated, all of its dependencies need to be graduated.
   - It will not be possible to add new dependencies on unstable modules to
     stable modules in the future (for example, that's a common need for
     StepFunction Tasks).
-- Graduating a module to stable will be a breaking change for customers. We can
+2. Graduating a module to stable will be a breaking change for customers. We can
   mitigate this downside by keeping the old unstable module around, but that
   leads to duplicated classes.
 
@@ -250,7 +169,7 @@ Each would have the name "experiments" in it (possible naming convention:
 `0.x` to make it absolutely obvious this is unstable code. Each package would
 declare a caret peer dependency on `aws-cdk-lib`.
 
-So, the above Cognito example would be:
+Example using stable and unstable Cognito APIs:
 
 ```ts
 import * as cognito from 'aws-cdk-lib/aws-cognito';
@@ -263,70 +182,31 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 Advantages:
 
-- Very explicit (customer has to add a dependency on a package with
+1. Very explicit (customer has to add a dependency on a package with
   "experiments" in the name and version `0.x`).
-- This is closest to the third-party CDK package experience our customers will
+2. This is closest to the third-party CDK package experience our customers will
   have.
 
 Disadvantages:
 
-- It's not possible for stable modules to depend on unstable ones (with the same
-  implications as above).
-- It's not possible for unstable modules to depend on other unstable modules, as
-  doing that brings us back to the dependency hell that mono-CDK was designed to
-  solve.
-- Graduating a module to stable will be a breaking change for customers. We can
+1. It's not possible for stable modules to depend on unstable ones
+  (see Appendix B for data on how necessary that is for the CDK currently),
+  with the same implications as above.
+2. It's not possible for unstable modules to depend on other unstable modules
+  (see Appendix B for data on how necessary that is for the CDK currently),
+  as doing that brings us back to the dependency hell that mono-CDK was designed to solve.
+3. Graduating a module to stable will be a breaking change for customers. We can
   mitigate this downside by keeping the old unstable package around, but that
   leads to duplicated classes.
 
-### Option 4: separate V3 that's all unstable
-
-In this option, we will fork the CDK codebase and maintain 2 long-lived
-branches: one for version `2.x`, which will be all stable, and one for version
-`3.x`, which will be all unstable.
-
-So, the above Cognito example would be (assuming the dependency on
-`"aws-cdk-lib"` is in version `"3.x.y"`):
-
-```ts
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-
-const idp = new cognito.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
-const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
-const userPoolClient = new cognito.UserPoolClient(...);
-```
-
-Advantages:
-
-- It's possible for unstable modules to depend on other unstable modules.
-
-Disadvantages:
-
-- It's not possible for stable modules to depend on unstable ones (with the same
-  implications as above).
-- Does not make it obvious to customers that this is unstable (`3.x` is
-  considered stable in semantic versioning).
-- We are going from "some code is stable, some is unstable" to "all of this is
-  unstable", which seems to be against the customer feedback we're hearing
-  that's the motivation for this RFC.
-- Two long-lived Git branches will mean constant merge-hell between the two, and
-  since `3.x` has free rein to change anything, there will be a guarantee of
-  constant conflicts between the two.
-- Fragments the mono-CDK third-party library community into two.
-- Very confusing when we want to release the next major version of the CDK (I
-  guess we go straight to `4.x`...?).
-- The fact that all code in `3.x` is unstable means peer dependencies don't work
-  (see above for why).
-- Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable package around, but that
-  leads to duplicated classes between the 2 versions.
-
 ## 3. Extra unstable precautions
 
-This chapter discusses additional precautions we can choose to implement to
-re-inforce goal #1 above. These are orthogonal to the decision on how to divide
-the stable and experimental modules (meaning, we could implement any of these
-with each of the options above).
+This chapter discusses additional precautions we can choose to implement to re-inforce goal #1 above.
+These are orthogonal to the decision on how to divide the stable and unstable modules
+(meaning, we could implement any of these with each of the options above).
+
+These could be added to either `@experimental` APIs in stable modules,
+to all APIs in unstable modules, or both.
 
 ### Require a feature flag for unstable code
 
@@ -364,17 +244,167 @@ Disadvantages:
 
 ### Force a naming convention for unstable code
 
-We can modify JSII to force a certain naming convention for unstable code, for
-example to add a specific prefix or suffix to all unstable APIs.
+We can modify `awslint` to force a certain naming convention for unstable code,
+for example to add a specific prefix or suffix to all unstable APIs.
 
 Advantages:
 
 - Should fulfill goal #1 - it will be impossible to use an unstable API by
   accident.
+- Does not require changes in JSII, only in `awslint`.
 
 Disadvantages:
 
 - Will force some pretty long and ugly names on our APIs.
 - Graduating a module will require a lot of code changes from our customers to
   remove the prefix/suffix.
-- Requires changes in JSII.
+
+# Appendix A - why can't we break backwards compatibility in the code of mono-CDK main modules?
+
+This section explains why it will not be possible to break backwards compatibility of any API inside the stable modules of mono-CDK.
+
+Imagine we could break backwards compatibility in the code of the  `aws-cdk-lib` main modules.
+The following scenario would then be possible:
+
+Let's say we have a third-party library, `my-library`, that vends `MyConstruct`.
+It's considered stable by its author.
+However, inside the implementation of `MyConstruct`,
+it uses an experimental construct, `SomeExperiment`, from mono-CDK's S3 module.
+It's just an implementation detail, though; it's not reflected in the API of `MyConstruct`.
+
+`my-library` is released in version `2.0.0`,
+and it has a peer dependency on `aws-cdk-lib` version `2.10.0`
+(with a caret, so `"aws-cdk-lib": "^2.10.0"`).
+
+Some time passes, enough that `aws-cdk-lib` is now in version `2.20.0`.
+A CDK customer wants to use `my-library` together with the newest and shiniest `aws-cdk-lib`,`2.20.0`,
+as they need some recently released features.
+However, incidentally, in version `2.15.0` of `aws-cdk-lib`,
+`SomeExperiment` was broken -- which is fine, it's an experimental API.
+Suddenly, the combination of `my-library` `2.0.0` and `aws-cdk-lib` `2.20.0`
+will fail for the customer at runtime,
+and there's basically no way for them to unblock themselves other than pinning to version `2.14.0` of `aws-cdk-lib`,
+which was exactly the problem mono-CDK was designed to prevent in the first place.
+
+# Appendix B - modules depending on unstable modules
+
+This section contains the snapshot of the interesting dependencies between Construct Library modules as of writing this document.
+
+## Stable modules depending on unstable modules
+
+```
+⚠️  Stable module '@aws-cdk/aws-applicationautoscaling' depends on unstable module '@aws-cdk/aws-autoscaling-common'
+⚠️  Stable module '@aws-cdk/aws-autoscaling' depends on unstable module '@aws-cdk/aws-autoscaling-common'
+⚠️  Stable module '@aws-cdk/aws-elasticloadbalancingv2-actions' depends on unstable module '@aws-cdk/aws-cognito'
+⚠️  Stable module '@aws-cdk/aws-events-targets' depends on unstable module '@aws-cdk/aws-batch'
+⚠️  Stable module '@aws-cdk/aws-lambda' depends on unstable module '@aws-cdk/aws-efs'
+⚠️  Stable module '@aws-cdk/aws-route53-patterns' depends on unstable module '@aws-cdk/aws-cloudfront'
+⚠️  Stable module '@aws-cdk/aws-route53-targets' depends on unstable module '@aws-cdk/aws-cloudfront'
+⚠️  Stable module '@aws-cdk/aws-route53-targets' depends on unstable module '@aws-cdk/aws-cognito'
+⚠️  Stable module '@aws-cdk/aws-stepfunctions-tasks' depends on unstable module '@aws-cdk/aws-batch'
+⚠️  Stable module '@aws-cdk/aws-stepfunctions-tasks' depends on unstable module '@aws-cdk/aws-glue'
+```
+
+## Unstable modules depending on other unstable modules
+
+```
+ℹ️️  Unstable module '@aws-cdk/aws-appsync' depends on unstable module '@aws-cdk/aws-cognito'
+ℹ️️  Unstable module '@aws-cdk/aws-backup' depends on unstable module '@aws-cdk/aws-efs'
+ℹ️️  Unstable module '@aws-cdk/aws-backup' depends on unstable module '@aws-cdk/aws-rds'
+ℹ️️  Unstable module '@aws-cdk/aws-cloudfront-origins' depends on unstable module '@aws-cdk/aws-cloudfront'
+ℹ️️  Unstable module '@aws-cdk/aws-docdb' depends on unstable module '@aws-cdk/aws-efs'
+ℹ️️  Unstable module '@aws-cdk/aws-s3-deployment' depends on unstable module '@aws-cdk/aws-cloudfront'
+ℹ️️  Unstable module '@aws-cdk/aws-ses-actions' depends on unstable module '@aws-cdk/aws-ses'
+```
+
+# Appendix C - discarded solutions to problem #2
+
+These potential solutions to problem #2 were discarded by the team as not viable.
+
+## Option 1: separate submodules of `aws-cdk-lib`
+
+In this option, we would use the namespacing features of each language to vend a separate namespace for the experimental APIs.
+The customer would have to explicitly opt-in by using a language-level import of a namespace with "experimental" in the name.
+
+Example using stable and unstable Cognito APIs:
+
+```ts
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cognito_preview from 'aws-cdk-lib/experimental/aws-cognito';
+
+const idp = new cognito_preview.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
+const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
+const userPoolClient = new cognito.UserPoolClient(...);
+```
+
+Advantages:
+
+1. It's possible for stable module to depend on unstable ones
+  (see Appendix B for data on how necessary that is for the CDK currently)
+2. It's possible for unstable modules to depend on other unstable modules
+  (see Appendix B for data on how necessary that is for the CDK currently).
+
+Disadvantages:
+
+1. Might be considered less explicit, as a customer never says they want to
+  depend on a package containing unstable APIs, or with `0.x` for the version.
+2. If a third-party package depends on an unstable API in a non-obvious way (for
+  example, only in the implementation of a construct, not in its public API),
+  that might break for customers when upgrading to a version of `aws-cdk-lib`
+  that has broken that functionality compared to the `aws-cdk-lib` version the
+  third-party construct is built against (basically, the same scenario from
+  above that explains why we can no longer have unstable code in stable mono-CDK
+  modules). None of the options solve the problem of allowing third-party
+  libraries to safely depend on unstable Construct Library code; however,
+  the fact that all unstable code in this variant is shipped in
+  `aws-cdk-lib` makes this particular problem more likely to manifest itself.
+3. Graduating a module to stable will be a breaking change for customers. We can
+  mitigate this downside by keeping the old unstable module around, but that
+  leads to duplicated classes in the same package.
+
+**Verdict**: discarded because disadvantage #2 was considered a show-stopper.
+
+## Option 4: separate V3 that's all unstable
+
+In this option, we will fork the CDK codebase and maintain 2 long-lived
+branches: one for version `2.x`, which will be all stable, and one for version
+`3.x`, which will be all unstable.
+
+Example using stable and unstable Cognito APIs:
+(assuming the dependency on `"aws-cdk-lib"` is in version `"3.x.y"`):
+
+```ts
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+
+const idp = new cognito.UserPoolIdentityProviderOidc(this, 'OIDC', { ... });
+const supported = [cognito.UserPoolClientIdentityProvider.custom("MyProviderName")];
+const userPoolClient = new cognito.UserPoolClient(...);
+```
+
+Advantages:
+
+1. It's possible for unstable modules to depend on other unstable modules
+  (see Appendix B for data on how necessary that is for the CDK currently).
+
+Disadvantages:
+
+1. It's not possible for stable modules to depend on unstable ones (with the same
+  implications as above).
+2. Does not make it obvious to customers that this is unstable (`3.x` is
+  considered stable in semantic versioning).
+3. We are going from "some code is stable, some is unstable" to "all of this is
+  unstable", which seems to be against the customer feedback we're hearing
+  that's the motivation for this RFC.
+4. Two long-lived Git branches will mean constant merge-hell between the two, and
+  since `3.x` has free rein to change anything, there will be a guarantee of
+  constant conflicts between the two.
+5. Fragments the mono-CDK third-party library community into two.
+6. Very confusing when we want to release the next major version of the CDK (I
+  guess we go straight to `4.x`...?).
+7. The fact that all code in `3.x` is unstable means peer dependencies don't work
+  (see above for why).
+8. Graduating a module to stable will be a breaking change for customers. We can
+  mitigate this downside by keeping the old unstable package around, but that
+  leads to duplicated classes between the 2 versions.
+
+**Verdict**: discarded as a worse version of option #5.
