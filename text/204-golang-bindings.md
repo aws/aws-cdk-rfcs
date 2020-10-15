@@ -484,6 +484,9 @@ a good way to namespace a static function in an idiomatic way (e.g. `ClassName.S
 characteristic of not requiring a concrete receiver while still ensuring some kind of namespacing, the proposal is to add the class name is a prefix
 to the top-level function. These methods would not be included in the corresponding interface.
 
+Similarly, static properties would be generated as a function at the package level with the same prefixing as with static methods. This way, we can
+still delegate calls to the jsii runtime to get the static property value.
+
 ```ts
 class Greeter {
     readonly greeting: string;
@@ -499,6 +502,8 @@ class Greeter {
     public static foo(): string {
         return "foo";
     }
+
+    public static readonly hello = "hello";
 }
 
 let greeter = new Greeter("world");
@@ -535,6 +540,12 @@ func (g *Greeter) Greet() string {
 func GreeterFoo() string {
     return fmt.Printf("foo");
 }
+
+// static property
+func GreeterHello() string {
+   return "hello" // this will actually be a jsii Getter call
+}
+
 
 // usage
 g := greeter.NewGreeter("world")
