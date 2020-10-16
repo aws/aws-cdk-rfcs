@@ -613,7 +613,7 @@ Effectively, this seems to be a no-go.
 No need to change the sources when using a stable library with an
 experimental app, as the namespaces and class names will be the same.
 
-????
+...pending responses from .NET SDK team...
 
 **Go**
 
@@ -670,7 +670,7 @@ awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3tran
 
 **NuGet**
 
-Does not have a notion of prerelease tags.
+...pending responses from .NET SDK team...
 
 ## Different major versions
 
@@ -717,5 +717,7 @@ regular versions.
 Like pre-release tags.
 
 **NuGet**
+
+...pending responses from .NET SDK team...
 
 **Go**
