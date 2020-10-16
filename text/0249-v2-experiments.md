@@ -224,7 +224,9 @@ struct properties that are technically `@experimental`.
 
 For JavaScript, an IDE will (hopefully) not autocomplete APIs missing from
 the `.d.ts` files, but otherwise nothing prevents users from calling the
-APIs, or passing struct properties that are technically experimental.
+APIs, or passing struct properties that are technically experimental. On the
+other hand, JavaScript devs are by definition required to read the docs,
+so they can't miss the *experimental* banners displayed there.
 
 For jsii client languages, the bindings for experimental APIs will simply not
 exist so there's no way to work around that (though we'll have to check
