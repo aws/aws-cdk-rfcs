@@ -233,13 +233,30 @@ aren't in the declared API surface).
 
 **Vending**
 
-There are a number of different ways we can choose to distinguish the two builds:
+There are a number of different ways we can choose to distinguish the two builds.
+See Appendix D for an evaluation of all the possibilities.
 
 - Distinguish by package name
+  - Can't be used in **pip**: there's no way to have an app that uses the experimental
+    library work with a library that uses the stable library (no way to prevent the
+    transitive dependency package with a different name from being installed).
 - Distinguish by prerelease tag
+  - Can't be used in **Maven**: an app can't depend on stable versions only
+    (a range of `[1.60.0,2.0.0)` would also match `1.61.0-experimental`).
 - Distinguish by major version
+  - All package managers have a way to bring in a different version of a package,
+    although many of them will complain that declared dependencies aren't satisified.
 
-See Appendix D for a thorough breakdown of why we vend the way we do.
+Distinguishing by major version is the only possibility that works across all
+package managers.
+
+Something like:
+
+| Scheme   | Stable   | Experimental            |
+|----------|----------|-------------------------|
+| Even/odd | `2.60.1` | `3.60.1`                |
+| +100     | `2.60.1` | `102.60.1`              |
+| <1       | `2.60.1` | `0.2.60-experimental.1` |
 
 **Summary**
 
@@ -253,7 +270,7 @@ Advantages:
 Disadvantages:
 
 1. Protection not offered for JavaScript users, can be bypassed in TypeScript.
-2. Stable/experimental scheme is not based on any well-known industry
+2. Stable/experimental versioning scheme is not based on any well-known industry
    standard, we're going to have to clearly explain it to people.
 
 ## 3. Extra unstable precautions
@@ -607,13 +624,21 @@ We would vend the experimental build under a prerelease tag, for example:
 - `aws-cdk-lib@1.60.0`
 - `aws-cdk-lib@1.60.0-experimental`
 
+We could get rid of some of the ordering and warning problems by making sure the
+experimental version semver-orders *after* the stable version:
+
+- `aws-cdk-lib@1.60.100-experimental`
+- `aws-cdk-lib@1.61.0-experimental`
+
+But that is most likely just going to break people's heads so let's not even try.
+
 | .     | Stable apps | Experimental app uses Stable lib | Without complaints | Lib advertises Experimental |
 |-------|-------------|----------------------------------|--------------------|-----------------------------|
 | NPM   | yes         | yes                              | no                 | no                          |
 | Maven | no          | with excluded dependencies       | yes                | yes                         |
-| pip   | yes         | not possible                     | -                  | no                          |
+| pip   | yes         | yes                              | no                 | yes                         |
 | NuGet | ?           | ?                                | ?                  | ?                           |
-| Go    | ?           | ?                                |                    | ?                           |
+| Go    | ?           | ?                                | ?                  | ?                           |
 
 **NPM**
 
@@ -630,35 +655,65 @@ Experimental app uses stable lib:
 
 **pip**
 
+Stable ranges: yes, `>=1.60.0` will not match version `1.60.1-experimental` [ref](https://pip.pypa.io/en/stable/reference/pip_install/#pre-release-versions)
+
+Experimental app uses stable lib: `pip` allows overriding transitive dependencies using `requirements.txt`, but it will complain
+while doing so:
+
+Example (I tried with different packages):
+
+```text
+awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3transfer 0.2.0 which is incompatible.
+```
+
 **NuGet**
 
 Does not have a notion of prerelease tags.
 
+## Different major versions
 
-## Different package names with NPM rename
+We would vend the experimental build under a prerelease tag, for example:
 
-**Versioning**
+- `aws-cdk-lib@2.60.0`
+- `aws-cdk-lib@3.60.0` (odd ranges are experimental)
 
-We will use a variant of the regular version number to indicate the version
-including experimental versions. It's important that the experimental
-version will not be installed or used automatically unless the user explicitly
-asks for it.
+Or:
 
-- **npm** semver prerelease `1.60.0-experimental`. An unqualified
-  `npm install` will never install it. A range of `^1.60.0-experimental`
-  *will* match `1.61.0` so consumers of this version can never use `^` to
-  select it.
-- **Maven** we can't use semver, because Maven doesn't skip prerelease
-  versions like npm does (that is, a range of `[1.59.0, 1.60.0)` *will*
-  bring in `1.60.0-experimental` since that comes *before* `1.60.0` in
-  semver and Maven does not skip tags). `-SNAPSHOT` seems to have undesired
-  behavioral effects. **SEEMS IMPOSSIBLE**
-- **C#**
-- **Python**
-- **Go** ???
+- `aws-cdk-lib@2.60.0`
+- `aws-cdk-lib@102.60.0` (100+ versions are experimental)
 
+| .     | Stable apps | Experimental app uses Stable lib | Without complaints | Lib advertises Experimental |
+|-------|-------------|----------------------------------|--------------------|-----------------------------|
+| NPM   | yes         | yes                              | yes                | no                          |
+| Maven | yes         | with excluded dependencies       | yes                | yes                         |
+| pip   | yes         | yes                              | no                 | yes                         |
+| NuGet | ?           | ?                                | ?                  | ?                           |
+| Go    | ?           | ?                                | ?                  | ?                           |
 
-| Package Manager | Strategy              |
-|-----------------|-----------------------|
-| npm             | `1.60.0-experimental` |
-|                 |                       |
+**NPM**
+
+Mostly like pre-release tags, except libraries using stable can explicitly declare they're usable
+with both stable and experimental ranges by using multiple `peerDependency` ranges:
+
+```json
+{
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.60.0,^102.60.0"
+  }
+}
+```
+
+This would suppress the warning you would otherwise get for a non-compatible version.
+
+**Maven**
+
+Like pre-release tags, except we don't get the mixing in of pre-release versions with
+regular versions.
+
+**pip**
+
+Like pre-release tags.
+
+**NuGet**
+
+**Go**
