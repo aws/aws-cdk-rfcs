@@ -510,7 +510,7 @@ let greeter = new Greeter("world");
 greeter.greet() // "Hello, world"
 ```
 
-In Go: ([Go playground example](https://play.golang.org/p/A6WyCL1Liul))
+In Go: ([Go playground example](https://play.golang.org/p/T20xlddRo6A))
 
 ```go
 package greeter
@@ -538,18 +538,17 @@ func (g *Greeter) Greet() string {
 
 // static method
 func GreeterFoo() string {
-    return fmt.Printf("foo");
+    return fmt.Sprintf("foo");
 }
 
 // static property
 func GreeterHello() string {
-   return "hello" // this will actually be a jsii Getter call
+    return "hello"; // this will actually be a call to jsii.StaticGet
 }
 
-func SetGreeterHello(hello string) {
-   // call to jsii StaticSet
+func GreeterSetHello() {
+    // this will actually be a call to jsii.StaticSet
 }
-
 
 // usage
 g := greeter.NewGreeter("world")
