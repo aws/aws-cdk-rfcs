@@ -503,7 +503,7 @@ class Greeter {
         return "foo";
     }
 
-    public static readonly hello = "hello";
+    public static hello = "hello";
 }
 
 let greeter = new Greeter("world");
@@ -544,6 +544,10 @@ func GreeterFoo() string {
 // static property
 func GreeterHello() string {
    return "hello" // this will actually be a jsii Getter call
+}
+
+func SetGreeterHello(hello string) {
+   // call to jsii StaticSet
 }
 
 
