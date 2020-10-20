@@ -243,22 +243,31 @@ See Appendix D for an evaluation of all the possibilities.
     library work with a library that uses the stable library (no way to prevent the
     transitive dependency package with a different name from being installed).
 - Distinguish by prerelease tag
-  - Can't be used in **Maven**: an app can't depend on stable versions only
-    (a range of `[1.60.0,2.0.0)` would also match `1.61.0-experimental`).
+  - Most logical
+  - If a library depends on `>=1.60.0` and an app tries to satisfy that with
+    `1.60.0-experimental`, even though this will functionally work, package
+    managers might complain because in semver `1.60.0-experimental < 1.60.0`.
+    Package managers that complain: **npm**, **pip**.
+  - **Maven**: does not recognize prerelease tags. This means that *apps* can't
+    have an open-ended version range since they might accidentally pick up experimental
+    versions (a Maven range of `[1.60.0, 2.0.0)` *will* match `1.61.0-experimental`).
+    This might not be a problem as this is rarely done in practice (since Maven doesn't
+    have a lock file, the `pom` itself serves as the lock file).
 - Distinguish by major version
-  - All package managers have a way to bring in a different version of a package,
-    although many of them will complain that declared dependencies aren't satisified.
+  - Very similar to prerelease tags, except we don't depend on Package Manager's support
+    for prerelease tags; all PMs support major versions.
 
-Distinguishing by major version is the only possibility that works across all
-package managers.
+Even though there are downsides, the prerelease tag is the least bad of the
+alternatives.
 
-Something like:
+We could consider working around the package manager complaints about version ordering
+by making sure the experimental version sorts after the stable version, perhaps by
+using the patch number to enforce ordering:
 
-| Scheme   | Stable   | Experimental            |
-|----------|----------|-------------------------|
-| Even/odd | `2.60.1` | `3.60.1`                |
-| +100     | `2.60.1` | `102.60.1`              |
-| <1       | `2.60.1` | `0.2.60-experimental.1` |
+```
+1.60.0-experimental < 1.60.0
+                      1.60.0 < 1.60.100-experimental
+```
 
 **Summary**
 
@@ -266,7 +275,7 @@ Advantages:
 
 1. Stable code can depend on unstable code.
 2. Stabilizing code will not be a breaking change for customers.
-3. Stabilizing code will be a simple operation for CDK developers.
+3. Stabilizing code will be a simple operation for CDK developers (remove an annotation).
 4. No additional management overhead of multiple packages/repos/etc.
 
 Disadvantages:
@@ -274,6 +283,7 @@ Disadvantages:
 1. Protection not offered for JavaScript users, can be bypassed in TypeScript.
 2. Stable/experimental versioning scheme is not based on any well-known industry
    standard, we're going to have to clearly explain it to people.
+3. NPM and pip will complain about incorrect dependencies when apps use experimental.
 
 ## 3. Extra unstable precautions
 
@@ -528,8 +538,8 @@ The tl;dr of this section is as follows. Read below for details.
 |-------|-------------|----------------------------------|--------------------|-----------------------------|
 | NPM   | yes         | with package aliases             | yes                | no                          |
 | Maven | yes         | with excluded dependencies       | yes                | yes                         |
-| pip   | yes         | not possible                     | -                  | no                          |
-| NuGet | ?           | ?                                | ?                  | ?                           |
+| pip   | yes         | no                               | -                  | no                          |
+| NuGet | yes         | no                               | no                 | yes                         |
 | Go    | ?           | ?                                |                    | ?                           |
 
 **NPM**
@@ -634,13 +644,13 @@ experimental version semver-orders *after* the stable version:
 
 But that is most likely just going to break people's heads so let's not even try.
 
-| .     | Stable apps | Experimental app uses Stable lib | Without complaints | Lib advertises Experimental |
-|-------|-------------|----------------------------------|--------------------|-----------------------------|
-| NPM   | yes         | yes                              | no                 | no                          |
-| Maven | no          | with excluded dependencies       | yes                | yes                         |
-| pip   | yes         | yes                              | no                 | yes                         |
-| NuGet | ?           | ?                                | ?                  | ?                           |
-| Go    | ?           | ?                                | ?                  | ?                           |
+| .     | Stable apps        | Experimental app uses Stable lib | Without complaints | Lib advertises Experimental |
+|-------|--------------------|----------------------------------|--------------------|-----------------------------|
+| NPM   | yes                | yes                              | no                 | yes                         |
+| Maven | no but that's okay | yes                              | yes                | yes                         |
+| pip   | yes                | yes                              | no                 | yes                         |
+| NuGet | yes                | yes                              | ?                  | yes                         |
+| Go    | ?                  | ?                                | ?                  | ?                           |
 
 **NPM**
 
@@ -651,9 +661,24 @@ a missing peerDependency though.
 
 **Maven**
 
-Stable ranges: no, `[1.60.0,)` *will* include `1.61.1-experimental`.
+Stable ranges: no, `[1.60.0,)` *will* include `1.61.1-experimental`. However,
+this might not be an issue as `pom.xml` typically serves as the lock file and
+people will not build applications with open-ended ranges in the pom file.
 
-Experimental app uses stable lib:
+If we *wanted* to, we could vend as `1.60.0-experimental-SNAPSHOT`; snapshot
+versions will not match a range unless specifically requested. However,
+`SNAPSHOT` versions are not intended for this, they are intended to indicate
+mutability and bypass caches: every configurable time period (by default,
+every day but can be every build, and snapshots can also be disabled
+altogether) the `SNAPSHOT` version will be fetchd again, as it is assumed to
+be mutable.
+
+Maven uses a "closest to root wins" dependency model, so the application can
+substitute an experimental version in place of the declared stable
+compatibility.
+
+It will not complain about incompatible versions unless you really *really*
+ask for it.
 
 **pip**
 
@@ -686,10 +711,10 @@ Or:
 
 | .     | Stable apps | Experimental app uses Stable lib | Without complaints | Lib advertises Experimental |
 |-------|-------------|----------------------------------|--------------------|-----------------------------|
-| NPM   | yes         | yes                              | yes                | no                          |
-| Maven | yes         | with excluded dependencies       | yes                | yes                         |
+| NPM   | yes         | yes                              | yes                | yes                         |
+| Maven | yes         | yes                              | yes                | yes                         |
 | pip   | yes         | yes                              | no                 | yes                         |
-| NuGet | ?           | ?                                | ?                  | ?                           |
+| NuGet | yes         | yes                              | ?                  | yes                         |
 | Go    | ?           | ?                                | ?                  | ?                           |
 
 **NPM**
@@ -700,7 +725,7 @@ with both stable and experimental ranges by using multiple `peerDependency` rang
 ```json
 {
   "peerDependencies": {
-    "aws-cdk-lib": "^2.60.0,^102.60.0"
+    "aws-cdk-lib": "^2.60.0 ^102.60.0"
   }
 }
 ```
@@ -718,6 +743,8 @@ Like pre-release tags.
 
 **NuGet**
 
-...pending responses from .NET SDK team...
+Like pre-release tags.
 
 **Go**
+
+?
