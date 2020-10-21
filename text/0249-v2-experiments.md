@@ -275,7 +275,8 @@ minor or the patch version:
 
 Advantages:
 
-1. Stable code can depend on unstable code.
+1. It's possible for stable modules to depend on unstable ones
+  (see Appendix B for data on how necessary that is for the CDK currently).
 2. Stabilizing code will not be a breaking change for customers.
 3. Stabilizing code will be a simple operation for CDK developers (remove an annotation).
 4. No additional management overhead of multiple packages/repos/etc.
