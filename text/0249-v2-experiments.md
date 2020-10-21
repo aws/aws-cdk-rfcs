@@ -244,10 +244,11 @@ See Appendix D for an evaluation of all the possibilities.
     transitive dependency package with a different name from being installed).
 - Distinguish by prerelease tag
   - Most logical
-  - If a library depends on `>=1.60.0` and an app tries to satisfy that with
+  - **NuGet**: if a library depends on `>=1.60.0` and an app tries to satisfy that with
     `1.60.0-experimental`, even though this will functionally work, package
-    managers might complain because in semver `1.60.0-experimental < 1.60.0`.
-    Package managers that complain: **npm**, **pip**.
+    managers will complain because in semver `1.60.0-experimental < 1.60.0`.
+    NuGet completely errors out on this and fails the "restore" operation.
+    **npm** and **pip** merely complain.
   - **Maven**: does not recognize prerelease tags. This means that *apps* can't
     have an open-ended version range since they might accidentally pick up experimental
     versions (a Maven range of `[1.60.0, 2.0.0)` *will* match `1.61.0-experimental`).
@@ -258,15 +259,16 @@ See Appendix D for an evaluation of all the possibilities.
     for prerelease tags; all PMs support major versions.
 
 Even though there are downsides, the prerelease tag is the least bad of the
-alternatives.
+alternatives. We have to work around the version ordering problem though, by making
+sure the experimental version sorts after the stable version. We can either use the
+minor or the patch version:
 
-We could consider working around the package manager complaints about version ordering
-by making sure the experimental version sorts after the stable version, perhaps by
-using the patch number to enforce ordering:
+```shell
+# Experimental uses minor bump
+1.60.0 < 1.61.0-experimental
 
-```
-1.60.0-experimental < 1.60.0
-                      1.60.0 < 1.60.100-experimental
+# Experimental uses (fake) patch bump
+1.60.0 < 1.60.100-experimental
 ```
 
 **Summary**
@@ -283,7 +285,6 @@ Disadvantages:
 1. Protection not offered for JavaScript users, can be bypassed in TypeScript.
 2. Stable/experimental versioning scheme is not based on any well-known industry
    standard, we're going to have to clearly explain it to people.
-3. NPM and pip will complain about incorrect dependencies when apps use experimental.
 
 ## 3. Extra unstable precautions
 
@@ -649,7 +650,7 @@ But that is most likely just going to break people's heads so let's not even try
 | NPM   | yes                | yes                              | no                 | yes                         |
 | Maven | no but that's okay | yes                              | yes                | yes                         |
 | pip   | yes                | yes                              | no                 | yes                         |
-| NuGet | yes                | yes                              | ?                  | yes                         |
+| NuGet | yes                | with bumped patch version        | yes                | yes                         |
 | Go    | ?                  | ?                                | ?                  | ?                           |
 
 **NPM**
@@ -695,7 +696,14 @@ awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3tran
 
 **NuGet**
 
-...pending responses from .NET SDK team...
+PJ Pittle from the .NET team has confirmed for us that NuGet will complain and **error out** if we use:
+
+- Library depends on CDK `>= 1.60.0`
+- App uses CDK `1.60.0-experimental`
+
+(Because of semver ordering.)
+
+The only solution seems to be to make sure that the experimental version sorts after the stable version.
 
 ## Different major versions
 
@@ -713,7 +721,7 @@ Or:
 |-------|-------------|----------------------------------|--------------------|-----------------------------|
 | NPM   | yes         | yes                              | yes                | yes                         |
 | Maven | yes         | yes                              | yes                | yes                         |
-| pip   | yes         | yes                              | no                 | yes                         |
+| pip   | yes         | no                               | -                  | yes                         |
 | NuGet | yes         | yes                              | ?                  | yes                         |
 | Go    | ?           | ?                                | ?                  | ?                           |
 
