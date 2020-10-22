@@ -310,11 +310,11 @@ See Appendix D for an evaluation of all the possibilities.
     library work with a library that uses the stable library (no way to prevent the
     transitive dependency package with a different name from being installed).
 - Distinguish by prerelease tag
-  - **NuGet**: if a library depends on `>=1.60.0` and an app tries to satisfy that with
-    `1.60.0-experimental`, even though this will functionally work, package
-    managers will complain because in semver `1.60.0-experimental < 1.60.0`.
-    NuGet completely errors out on this and fails the "restore" operation.
-    **npm** and **pip** merely complain.
+  - **NuGet**: requires that experimental version semver-sorts *after* the
+    matching stable version, otherwise it errors out and fails the restore
+    operation.
+  - **npm**: will always complain when trying to satisfy a stable requirement
+    with an experimental version, regardless of how it sorts.
   - **Maven**: does not recognize prerelease tags. This means that *apps* can't
     have an open-ended version range since they might accidentally pick up experimental
     versions (a Maven range of `[1.60.0, 2.0.0)` *will* match `1.61.0-experimental`).
@@ -745,31 +745,40 @@ experimental app, as the namespaces and class names will be the same.
 
 We would vend the experimental build under a prerelease tag, for example:
 
-- `aws-cdk-lib@1.60.0`
-- `aws-cdk-lib@1.60.0-experimental`
+- `1.60.0`
+- `1.60.0-experimental`
+
+Because of semver ordering, if we use the numbering above then the `experimental`
+version will sort *before* the stable version, which may lead to problems
+because a library's dependency requirement of `^1.60.0` would *not* be satisfied
+by a version numbered `1.60.0-experimental`.
 
 We could get rid of some of the ordering and warning problems by making sure the
-experimental version semver-orders *after* the stable version:
+experimental version semver-orders *after* the stable version by making sure
+we bump some number:
 
 - `aws-cdk-lib@1.60.100-experimental`
 - `aws-cdk-lib@1.61.0-experimental`
 
-But that is most likely just going to break people's heads so let's not even try.
-
-| .     | Stable apps        | Experimental app uses Stable lib | ...without complaints | Lib advertises Experimental |
-|-------|--------------------|----------------------------------|-----------------------|-----------------------------|
-| NPM   | yes                | yes                              | no                    | yes                         |
-| Maven | no but that's okay | yes                              | yes                   | yes                         |
-| pip   | yes                | yes                              | no                    | yes                         |
-| NuGet | yes                | with bumped patch version        | yes                   | yes                         |
-| Go    | ?                  | ?                                | ?                     | ?                           |
+| .     | Stable apps        | Experimental app uses Stable lib | ...without complaints       | Lib advertises Experimental |
+|-------|--------------------|----------------------------------|-----------------------------|-----------------------------|
+| NPM   | yes                | yes                              | no                          | yes                         |
+| Maven | no but that's okay | yes                              | yes                         | yes                         |
+| pip   | yes                | yes                              | if experimental sorts later | yes                         |
+| NuGet | yes                | if experimental sorts later      | yes                         | yes                         |
+| Go    | ?                  | ?                                | ?                           | ?                           |
 
 **NPM**
 
-Stable ranges: yes, `^1.60.0` does not include `1.61.1-experimental`.
+Can apps use stable ranges: yes, `^1.60.0` will not auto-pick `1.61.1-experimental` for downloading.
 
-Experimental app uses stable lib: can be done, the lib only uses a peerDependency. `npm ls` will complain about
-a missing peerDependency though.
+Experimental app uses stable lib: can be done, the lib only uses a `peerDependency`.
+
+However, if the `peerDependency` of a library is stable (`^1.60.0`) and we're trying to satisfy it
+with an experimental version, `npm ls` will complain *regardless* of where the experimental
+version sorts with respect to the stable version.
+
+It will *work*, but npm will *complain*.
 
 **Maven**
 
@@ -790,20 +799,25 @@ substitute an experimental version in place of the declared stable
 compatibility.
 
 It will not complain about incompatible versions unless you really *really*
-ask for it.
+ask for diagnostics (and even then it's hard to get it to show an error).
 
 **pip**
 
 Stable ranges: yes, `>=1.60.0` will not match version `1.60.1-experimental` [ref](https://pip.pypa.io/en/stable/reference/pip_install/#pre-release-versions)
 
-Experimental app uses stable lib: `pip` allows overriding transitive dependencies using `requirements.txt`, but it will complain
-while doing so:
+Experimental app uses stable lib: `pip` allows overriding transitive dependencies using `requirements.txt`.
 
-Example (I tried with different packages):
+It will complain if the experimental version sorts before the stable version, but will NOT complain if
+the experimental version sorts after the stable version. Everything still gets installed, even if it complains.
+
+Example of a complaint (using a different package):
 
 ```text
 awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3transfer 0.2.0 which is incompatible.
 ```
+
+(Note: when trying the PyPI testing server, the version number schema I had in mind: `X.Y.Z-experimental` is not
+accepted, nor is `X.Y-experimental` or `X.Yexp`. Ultimately I had to go for `1.60rc1`.)
 
 **NuGet**
 
