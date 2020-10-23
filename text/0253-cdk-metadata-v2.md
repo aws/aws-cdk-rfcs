@@ -14,10 +14,12 @@ reporting.
 Instead, the metadata resource will start reporting individual constructs
 used in a Stack's synthesis.
 
-For every construct used in a Stack from a library containing a
-`cdk-metadata.json` file, we will collect the library name, version and
-qualified class name (using a generated lookup table to obtain submodule
-names) and submit these to the metadata service in a gzipped blob.
+For every construct used in a Stack we will use the new `jsii-rtti` library
+to obtain its type FQN, and if its module matches against a hardcoded allow-list
+we will include it in the list of constructs.
+
+The list of constructs gets prefix-encoded to save space and is added to the
+template in a gzipped form.
 
 # Background
 
@@ -66,29 +68,31 @@ presence. Collecting more and more information is starting to feel invasive
 (this is still customer application code we are collecting metrics on), and I
 don't feel comfortable with that.
 
+# Glossary
+
+**Construct**: an abstract, reusable specification of Cloud Infrastructure.
+In practice, implemented by a `class`
+**Construct type**: same as "Construct".
+**Construct instance**: a concrete single definition of a construct. In
+practice, a class instance.
+**Construct identifier**: a string describing a specific version of a
+*construct.
+**RTTI**: Run-Time Type Information; a mechanism by which a compiler emits
+information about the types it has processed which can be read by programs
+during execution, used to power reflection.
+
 # Design
 
-There are two major subproblems to address:
+These are the major subproblems this design addresses:
 
-* Collecting information on the construct list.
-* Encoding that information into the metadata resource.
+* Obtaining a list of construct instances appropriate for the scope of the
+  metadata resource.
+* Obtaining a construct identifier given a construct instance.
+* Filtering a list of construct identifiers to only retain the ones
+  we're allowed to report on.
+* Encoding that remaining list into the metadata resource.
 
-## Collecting construct information
-
-> In the context of this section, the terms *construct* and *construct type*
-> are used interchangeably and are meant to be interpreted as the programming
-> language concept *class*. The term *construct instance* maps to the
-> programming language concept *instance*.
-
-The problem of collecting construct information can be decomposed into the following
-subproblems:
-
-* Identifying the specific construct instances to report
-* Identifying the construct type to report for each instance
-* Representing the construct type as a string
-* Collecting the information necessary to build that string for each construct
-
-### Identifying instances
+## Obtaining construct instances
 
 Since the metadata resource reports on a per-stack basis, and in order to avoid double-counting
 constructs or construct libraries, we will iterate over the construct tree of each stack and
@@ -97,273 +101,52 @@ record the construct instances of the constructs in it.
 * Recursion stops upon encountering a contained `Stack`, `Stage` or `NestedStack`.
 * Contrary to today, nested stacks will each have their own copy of a metadata resource.
 
-We will only collect constructs instances whose construct types are from a library
-that is vended by AWS (see Appendix 1 for more information on how we detect a
-construct's library).
+## Obtaining construct identifiers
 
-### Identifying construct types to report
+From a construct instance, we need to obtain a construct identifier. To not
+proliferate variants of identifiers too much, it's preferable for this identifier
+to be the same, or substantially the same, as the class' jsii type name.
 
-It may happen that the concrete type of a construct instance may not be
-reportable. This can happen for two reasons:
+We are planning to eventually introduce a feature for jsii-powered Run-Time
+Type Information (RTTI). We will use this project to start introducing that
+feature at its very simplest, and the initial feature will be to retrieve a jsii
+FQN and module version from an object instance. See Appendix A for a description
+of how jsii RTTI will work.
 
-* It's from a user-defined or 3rd-party library which we purposely ignore.
-* It may not be an exported class so we cannot determine the filename and hence
-  won't be able to determine its library at all (see Appendix 1 for more
-  information on how this works).
+For the initial version of Metadata v2, we will simply say that the construct
+identifier is whatever jsii RTTI returns.
 
-For those cases we have a choice to make:
+> In the future, we may want to onboard libraries that are not jsii-libraries (either
+> written in plain TypeScript or a jsii client language like Java); if that happens,
+> we will add a CDK-specific core library function to attach a specific construct
+> identifier to a construct instance, like
+> `CdkMetadata.describe(construct, "@my/library.MyConstruct@1.2.3")`.
 
-1. Don't report the construct at all
-2. Follow up the class' inheritance chain, picking the first construct that is
-   considered reportable.
+## Filtering down the list of construct identifiers
 
-Consider some examples:
+To protect the privacy of our users, we only want to report on 1st-party
+constructs, authored and vended by AWS.
+
+We decided against an open system, instead preferring to have a specific
+allow-list of packages (or package prefixes) we are going to report on. For
+example, the current list looks like this and can be found
+[here](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/core/lib/private/runtime-info.ts):
 
 ```ts
-// (a) Will be reported as 'Resource': class is not exported but anonymous class
-// extends 'Resource'.
-const bucket = Bucket.fromBucketName(this, 'ImportedBucket', 'my-bucket');
-
-// (b) Will be reported as 'Construct' since it's a user-defined class and hence
-// not in scope.
-const myConstruct = new MyConstruct(this, 'MyConstruct', { ... });
-
-// (c) On the other hand, the following might be interesting to report as 'Bucket'
-// (assuming the class 'extends Bucket').
-const richBucket = new RichBucket(this, 'RichBucket', { ... });
+const WHITELIST_SCOPES = ['@aws-cdk', '@aws-solutions-konstruk', '@aws-solutions-constructs', '@amzn'];
+const WHITELIST_PACKAGES = ['aws-rfdk'];
 ```
 
-When we pick option 2, every stack is bound to end up with the constructs `Construct`
-and `Resource` (resulting form example code as in `(a)` and `(b)`), leading to noise.
-
-Nevertheless, we will still pick option 2 (following up the inheritance chain)
-in order to be able to detect situations like `(c)`.
-
-### Representation: construct identifiers
-
-We need a sufficiently unique string representation of each construct type to identify it.
-
-Let's introduce the concept of a *construct identifier*. A construct
-identifier has the following components:
-
-* Library and version
-* Qualified class name; the qualified class name itself consists of two components:
-  * Submodule
-  * Class name
-
-Construct identifiers will be formatted like this:
-
-```text
-library@version:[submodule.]classname
-```
-
-Submodules are a concept introduced at the jsii level to organize the monocdk
-package, and they serve to disambiguate type names between classes that
-originally were different libraries. For example, both the `@aws-cdk/aws-ecs`
-and `@aws-cdk/aws-eks` packages have a class named `Cluster`, so when we
-bundle those packages into `aws-cdk-lib` we need a way to namespace those names,
-as `aws-cdk-lib:Cluster` by itself would be ambiguous. Submodules are the namespacing
-mechanism we introduced.
-
-In order to not proliferate identifier variations, it would be nice if the
-submodule names would be the same names we use in the jsii build of CDK.
-There's no strict need for them to be, but it just might ease future analysis
-if we kept that consistency. Specifically, we'd like an example submodule
-name to be `aws_eks` instead of `aws-eks`.
-
-Some sample construct identifiers:
-
-```text
-constructs@10.0.0:Construct
-aws-cdk-lib@2.0.1:Stack
-aws-cdk-lib@2.0.0:aws_eks.Cluster
-@aws-solutions-constructs/aws-lambda-sqs@1.2.3:AwsLambdaSqs
-```
-
-### Collecting construct identifiers
-
-There are two strategies for getting a construct's identifier:
-
-* Manually annotate each construct in some way, adding a unique identifier for it
-  (either by passing additional strings, adding decorators, or some other mechanism).
-* Try to automatically infer the identifier components from the reflection
-  capabilities available to us in NodeJS.
-
-Manual annotation seems an undesirable amount of work, so we will have to
-make do with the reflection capabilities provided by NodeJS.
-
-> What about NodeJS' `__filename` magic variable? `__filename` only ever
-> represents the *current* file, i.e. the file that that symbol occurs in. We
-> wouldn't be able to write shared code in, say, `construct.ts` to obtain the
-> file name of the `Cluster` construct.
-
-From NodeJS reflection (see Appendix 1), we are able to obtain the following
-pieces of information given a construct instance:
-
-* The construct's **unqualified class name**
-* The **file path** of the JavaScript file that exports the construct, if available.
-  (If unavailable, we will recurse up its inheritance chain until we find a class with
-  a file path).
-  * From the file path of the JavaScript file, we will also be able to determine the
-    class' package (by searching for a containing `package.json` and reading
-    the information therein).
-
-We can now fill the construct identifier's components as follows:
-
-**CLASS NAME**: the construct's unqualified class name we obtain from reflection.
-
-**LIBRARY/VERSION**: `name` and `version` from the `package.json` we found based
-on the class' file path.
-
-**SUBMODULE**: Submodule names are a concept invented by us, and don't have a
-runtime representation in NodeJS. We will have to derive the submodule from
-the file path and a helper file we generate at build time. The next section
-goes into more detail.
-
-#### Submodules
-
-Especially in monocdk and the upcoming v2, disambiguating identical class names
-by submodule is going to be essential. The question is how we will determine
-submodule names from file paths, keeping a couple of goals in mind:
-
-* The submodule names reported here should preferably the same as jsii's
-  submodule names.
-* The mechanism should still work with libraries that don't have a submodule structure
-  at all, such as non-CDK team construct libraries vended by AWS like `@aws-solutions-constructs`.
-
-Some examples of what we want to derive:
-
-File name                                                              | Submodule
------------------------------------------------------------------------|----------
-.../node_modules/aws-cdk-lib/lib/aws-ecs/lib/cluster.js                | "aws_ecs"
-.../node_modules/aws-cdk-lib/lib/aws-eks/lib/cluster.js                | "aws_eks"
-.../node_modules/@aws-solutions-constructs/aws-lambda-sqs/lib/index.js | ""
-
-We could obtain submodule names by establishing conventions on monocdk's
-directory structure, using rules as "ignore `/lib/` and replace `-` with `_`
-to obtain the module name", for example. This reliance on convention seems
-brittle and inflexible. Instead, let's use a configuration file.
-
-#### jsii manifest
-
-What about the jsii manifest? It contains the right module names already, and
-it seems to have a `locationInModule` entry that seems to do what we need:
-
-```json
-{
-  "name": "Cluster",
-  "namespace": "aws_eks",
-  // ...
-  "locationInModule": {
-    "filename": "lib/aws-eks/lib/cluster.ts",
-    "line": 685
-  },
-}
-```
-
-However, I don't think this is appropriate to use for the following reasons:
-
-Reading the jsii manifest ties us to using jsii in a way that I don't think
-is necessary or appropriate. Maybe a sister team will vend a pure TypeScript
-construct library (maybe something like *Punchcard*) that they want tracked.
-But tying ourselves to the jsii manifest we will make that impossible.
-
-`locationInModule` is an optional feature of the jsii manifest that is used
-to indicate a *source location*. It is used in the documentation to
-opportunistically generate hyperlinks to GitHub source locations for every
-API element.
-
-As it identifies source locations, those source locations might not map
-trivially onto the runtime locations that NodeJS will discover. As a first
-trivial example: the jsii manifest contains `cluster.ts` as a filename,
-but at runtime this will be `cluster.js` so now we have to map one to the
-other.
-
-A second, slightly less trivial example: I'd like to give ourselves
-the ability to webpack individual submodules into a single JavaScript
-file. As it turns out, loading monocdk currently takes over 1000ms
-as NodeJS crawls each individual `.js` file, while loading a webpacked
-monocdk takes ~160ms. If we were to do that though, `locationInModule`
-would still contain `cluster.ts` while the runtime location would be
-`__build.js` in some subdirectory.
-
-The JSII manifest is rather big (`22M` for the entire bundle, taking around
-~250ms to load on my machine) and I'd rather avoid having to load it on every
-synthesis action if we don't have to.
-
-All in all, I feel the jsii manifest would be not a great choice to load
-submodule information from. We should denormalize it into a separate
-configuration file instead.
-
-#### cdk-metadata.json
-
-We will use an additional lookup table in a well-known file instead.
-
-That lookup that can be generated by the monocdk build tool, which is in
-charge of picking the submodule names and generating the submodule structure
-anyway. The only thing it needs to do is record those decisions in an
-additional file called `cdk-metadata.json`, which looks like this:
-
-```json
-{
-  "submodules": {
-    "lib/aws-ecs": "aws_ecs",
-    "lib/aws-eks": "aws_eks",
-    ...
-  }
-}
-```
-
-Absence of a directory in this list or an empty directory indicates no submodule name.
-
-Currently, CDK core contains a hardcoded list of module names for which
-metadata should be reported. We can make this an open opt-in protocol by
-triggering this reporting off purely off of the presence of the `cdk-metadata.json`
-file, which removes the need for the hard-coded names found here:
-
-https://github.com/aws/aws-cdk/blob/1f7311f56457556a6f229e745cd24e3f1e5fe1d3/packages/%40aws-cdk/core/lib/private/runtime-info.ts#L5-L8
-
-Other library vendors like the AWS Solutions Architects Team simply needs
-to add an empty `cdk-metadata.json` to their libraries to get metadata
-reported for their libraries.
-
-> **Implementation note:** if a `cdk-metadata.json` file is found, we will stop
-> emitting the library name to the current `Modules` property of the metadata
-> resource, so that we can use presence of a module in that list as an indicator
-> of (lack of) adoption of this protocol.
-
-.
-
-> **Implementation note:** the first matching directory found will be used, so should
-> we ever need a situation to support submodules-in-submodules, we can make
-> use of the fact that JSON dictionaries are ordered and make sure the deeper
-> directories occur first.
-
-#### jsii considerations
-
-Will the mechanisms described here still work when a is client using the CDK
-via jsii? The answer is yes.
-
-When a jsii-enabled client is instantiating AWS constructs, the full original
-library has been loaded into the NodeJS process and the files on disk
-(`package.json` et al) match the disk layout we're expecting, so the
-mechanism will work the same.
-
-When a jsii-enabled client instantiates a foreign class we will not be able
-to obtain a construct identifier for the class, but fortunately we're only
-interested in AWS-vended constructs anyway and they will all be implemented
-in TypeScript.
-
-> Should we ever want to open this mechanism up to non-TypeScript libraries, an obvious
-> mechanism is to introduce a well-known metadata tag that we can read a construct's
-> construct identifier from (falling back to the default search algorithm if none
-> is found). It becomes a library author's concern of how to attach the metadata
-> then.
+Having a PR opened against the CDK to update this list will be a clear
+interaction moment between an AWS team trying to onboard with this mechanism
+and us, and will prevent 3rd party authors from accidentally (or maliciously)
+onboarding themselves as well and sending us information that we don't want to
+be responsible for.
 
 ## Metadata resource encoding
 
-Once we have the list of construct identifiers, we need to encode it into the metadata
-resource.
+Once we have the list of construct identifiers, we need to encode it into the
+metadata resource.
 
 The Metadata resource looks like this:
 
@@ -412,26 +195,26 @@ a CloudFormation template):
 | gzipped                    | 3.6k        | 4.8k          |
 | Zopfli                     | 3.4k        | 4.6k          |
 | bzip2                      | 3.4k        | 4.6k          |
-| Prefix-grouped (plaintext) | 7.4k        | -             |
-| Prefix-grouped gzipped     | 3.0k        | 4.0k          |
+| Affix-grouped (plaintext)  | 7.4k        | -             |
+| Affix-grouped gzipped      | 3.0k        | 4.0k          |
 | Bloom Filter (1% error)    | 720b        | 960b          |
 
-Prefix-grouped, gzipped data seems to give the best results that are still
-convenient and generic to work with (see Appendix 2 for a description of
+Affix-grouped, gzipped data seems to give the best results that are still
+convenient and generic to work with (see Appendix B for a description of
 prefix grouping).
 
-See Appendix 3 for an example blob to be added to a template. I'm not super
+See Appendix C for an example blob to be added to a template. I'm not super
 happy with this, but this is the most straightfoward option available.
 
-If we are willing to do more work, we can achieve less space used up by doing
-more esoteric things. One option would be to use a Bloom Filter, which can use
-a configurable amount of storage to achieve a configurable hit error ratio.
-For example, achieving about a 1% false positive rate would take on the order
-of about ~1k base64-encoded bytes. However, in order to extract a construct list
-from this Bloom Filter would be a considerable amount of work: we would need
-a full list of all construct available in every library and at every version,
-in order to test each construct's presence in the filter. This would destroy
-the openness of the protocol, and is probably not worth it.
+> If we are willing to do more work, we can achieve less space used up by doing
+> more esoteric things. One option would be to use a Bloom Filter, which can use
+> a configurable amount of storage to achieve a configurable hit error ratio.
+> For example, achieving about a 1% false positive rate would take on the order
+> of about ~1k base64-encoded bytes. However, in order to extract a construct list
+> from this Bloom Filter would be a considerable amount of work: we would need
+> a full list of all construct available in every library and at every version,
+> in order to test each construct's presence in the filter. This imposes a lot
+> of complexity on the receiver, which is probably not worth the space savings.
 
 ### Analytics payload
 
@@ -463,7 +246,7 @@ an encoding scheme as well:
 
 The only valid payload value encodings at the moment are:
 
-* `prefix`: prefix-encoded string list (see Appendix 2).
+* `afx`: affix-encoded string list (see Appendix B).
 * `plain`: plaintext data.
 
 Encoding may change the type (the encoded value is a `string` but the decoded
@@ -483,6 +266,22 @@ with bits anymore once the data hits an AWS datacenter.
 We will be able more information into additional fields of the metadata resource.
 Size of template, number of resources are obvious candidates.
 
+We will be able to support non-jsii languages by adding metadata-specific APIs
+to the CDK.
+
+The jsii RTTI mechanism can be extended in the future as well, though those extensions
+are out of scope of this RFC.
+
+If we want to change the encoding of the payload in any way, we can.
+
+If the payload grows too large and changing the encoding scheme won't be
+enough to reduce it, we can transport and reference the payload as an asset.
+Though, that would require us to gain read access to a customer's S3 bucket
+from our account, which has security implications; it would also require a
+customer to have a bootstrapped account for *every* deployment, even small
+ones (though we could lift *that* limitation by hosting bootstrap buckets on behalf
+of users).
+
 # Unresolved questions
 
 - How acceptable is the giant base64-encoded blob in the template? If we want
@@ -492,53 +291,103 @@ Size of template, number of resources are obvious candidates.
 
 This can be implemented in v1 already, no need to wait for v2.
 
-* Instruct all AWS library authors to add an empty `cdk-metadata.json` to the root of their
-  packages.
-* Update metadata service backend to accept new `Constructs` field. This is where
-  decoding should happen back to a flat list again.
+* Implement RTTI support in in jsii.
+* Inform dependent teams that they need to upgrade to the jsii version that supports
+  RTTI.
+* Update metadata service backend to accept new `Analytics` field. This is where
+  decoding should happen back to a flat list again. Metadata service should extract
+  packages from the construct list to continue emitting the old information as well.
 * Update canary to exercise new field.
-* Update reporting tool to report on new information (in addition to old one).
-  We will be generating 2 sets of results according to
-  2  different schemas.
-* Add `cdk-metadata.json` to all current packages and the monocdk package.
-* Emit both `Constructs` and `Modules` to the metadata resource, skipping emitting
-  modules that have a `cdk-metadata.json` to the `Modules` array.
+* Update metadata reporting job to report on both new and old information.
+* Update metadata resource construction implementation in CDK to switch to RTTI
+  implementation, and start emitting `Analytics` field.
 * Verify metrics are coming in
-* Wait until no libraries are reported via old `Modules` mechanism.
-* Remove the code that generates the `Modules` field from the CDK.
 
-# Appendix 1: NodeJS reflection
+# Appendix 1: jsii Run-Time Type Information
 
-Runtime reflection in NodeJS gives us access to the following information:
+We will start by having the jsii compiler add FQN information to every
+JavaScript class it emits.
 
-* An object's class, by accessing its `constructor` property.
-* The file a class is defined in, which we can find by examining
-  `require.cache[filePath].exports` for every file, and selecting the
-  `filePath` whose `exports` contain the given `constructor`.
-  * From the filename, we hope to be able to deduce the package and submodule
-    names.
+Effectively, every class will be emitted as this in the `.js` file (the
+`.d.ts` file remains unchanged).
 
-This method has the following caveats:
+```js
+// This will be added to the top of every source file
+const vfqnSym = Symbol.for('jsii.vfqn');
 
-* If the class is non-exported (such as an `class Import implements IBucket {
-  ... }`) it will not show up in the `exports`, and we won't be able to figure
-  out what file it's from. It will most likely show up as `Construct` (the
-  first exported base class).
-  * The only feasible solution to fixing this is to do manual annotation, which
-  I don't think we want to resort to.
+export class SomeClass {
+  // Every class gets an additional field added to it
+  private static [vfqnSym] = 'module.SomeClass@1.2.3';
 
-* A constructor may be found in multiple file's `exports` (because of
-  re-exporting symbols from another file, something we regularly do in
-  files like `index.ts`). If it is, take the file with the file path deepest
-  in the directory hierarchy. That approach is going to help us identify the
-  correct submodule (see next section).
+  // Regular class emits here...
+}
+```
 
-> Implementation note: looking up the source file from a class is a potentially
-> expensive operation as it takes a linear scan through all sources for every class.
-> We should build a reverse index in order to speed this up.
+We will introduce a new jsii package to access this information, called `jsii-rtti`.
 
+It will have the following API:
 
-# Appendix 2: Reference implementation for prefix-grouping used above
+```ts
+class TypeInformation {
+  /**
+   * Get type information based on an object instance
+   */
+  public static forObject(object: any): TypeInformationForObject | undefined;
+
+  /** Type FQN */
+  public readonly fqn: string;
+
+  /** Module version */
+  public readonly version: string;
+
+  /** Base class type information */
+  public readonly baseClass: TypeInformation | undefined;
+}
+
+interface TypeInformationForObject {
+  /** Type information for the first base class that has type information */
+  readonly typeInformation: TypeInformation;
+
+  /**
+   * How many classes were skipped before finding an ancestor with type information
+   *
+   * This number will be 0 if the object itself was an instance of a class with
+   * type information.
+   */
+  readonly classesSkipped: number;
+}
+```
+
+# Appendix B: Reference implementation for affix-grouping used above
+
+> IMPLEMENTATION NOTE: The code below written and tested against
+> a different format of construct identifier than the one currently being
+> advertised by this RFC, and did purely did *prefix* grouping, ignoring
+> postfixes. It turned a list like:
+>
+> ```text
+> monocdk-experiment@1.63.0:aws_amplify.DomainOptions
+> monocdk-experiment@1.63.0:aws_amplify.Branch
+>
+> # into
+> monocdk-experiment@1.63.0:aws_amplify.{Branch,DomainOptions}
+> ```
+>
+> Now that the current advertised format contains the version number at the
+> end, we should extend our prefix-grouping algorithm into one that also considers
+> postfixes (hence, turning it into "affix" grouping):
+>
+> ```text
+> monocdk-experiment.aws_amplify.DomainOptions@1.63.0
+> monocdk-experiment.aws_amplify.Branch@1.63.0
+>
+> # should turn into
+> monocdk-experiment.aws_amplify.{Branch,DomainOptions}@1.63.0
+> ```
+>
+> The same compression properties will still hold as suffixes are nearly
+> guaranteed to match up with prefixes (since users won't have multiple versions
+> of the same library in their program).
 
 Prefix-grouping in this case means rearranging the data and sorting it so that
 we can share common prefixes. Example of a prefix-grouped list:
@@ -591,10 +440,10 @@ def tree_ified(xs):
   return ''.join(ret)
 ```
 
-# Appendix 3: Example metadata resource
+# Appendix C: Example metadata resource
 
-For reference, at the compression numbers we are able to reach, every
-template will contain something like this:
+For reference, at the compression numbers we are able to reach, a template
+will (at worst) contain a blob like this:
 
 ```yaml
 Resources:
