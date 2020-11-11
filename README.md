@@ -16,10 +16,11 @@ future state of the libraries and to discover projects for contribution.
 \#|Title|Owner|Status
 ---|-----|-----|------
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0079-cdk-2.0.md)|[@RomainMuller](https://github.com/RomainMuller)|👷 implementing
-[192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|👍 approved
+[192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|👷 implementing
 [193](https://github.com/aws/aws-cdk-rfcs/issues/193)|[Fixing of type unions](https://github.com/aws/aws-cdk-rfcs/pull/194)|[@RomainMuller](https://github.com/RomainMuller)|⏰ final comments
 [18](https://github.com/aws/aws-cdk-rfcs/issues/18)|[Open context provider framework](https://github.com/aws/aws-cdk-rfcs/pull/167)|[@ddneilson](https://github.com/ddneilson)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
+[204](https://github.com/aws/aws-cdk-rfcs/issues/204)|[Go language bindings](https://github.com/aws/aws-cdk-rfcs/pull/206)||✍️ review
 [249](https://github.com/aws/aws-cdk-rfcs/issues/249)|[V2 Experiments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.md)|[@ericzbeard](https://github.com/ericzbeard)|✍️ review
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/issues/1)||💡 proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Migration Paths](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
@@ -78,7 +79,6 @@ future state of the libraries and to discover projects for contribution.
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
 [201](https://github.com/aws/aws-cdk-rfcs/issues/201)|[Construct scope relocation](https://github.com/aws/aws-cdk-rfcs/issues/201)||💡 proposed
-[204](https://github.com/aws/aws-cdk-rfcs/issues/204)|[Go language bindings](https://github.com/aws/aws-cdk-rfcs/issues/204)||💡 proposed
 [217](https://github.com/aws/aws-cdk-rfcs/issues/217)|[Alternative Infrastructure Providers](https://github.com/aws/aws-cdk-rfcs/issues/217)||💡 proposed
 [219](https://github.com/aws/aws-cdk-rfcs/issues/219)|[ECS Patterns Service Builder](https://github.com/aws/aws-cdk-rfcs/issues/219)||💡 proposed
 [242](https://github.com/aws/aws-cdk-rfcs/issues/242)|[Bootstrap stacks as CDK apps](https://github.com/aws/aws-cdk-rfcs/issues/242)||💡 proposed
