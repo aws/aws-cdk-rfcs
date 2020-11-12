@@ -153,7 +153,9 @@ than generate code on-demand.
 
 ### Are there any open issues that need to be addressed later?
 
-Not obviously.
+Do we want to support `fromCloudFormation()` (used by `@aws-cdk/cfn-include`)
+for these resources? The implementation of `cfn-include` will become quite a
+lot trickier if we do.
 
 ## Appendix
 

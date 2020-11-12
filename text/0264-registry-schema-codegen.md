@@ -47,7 +47,8 @@ for:
 * What properties are used to hold secrets/passwords/etc (`writeOnlyProperties`).
 * Deprecated properties (`deprecatedProperties`).
 
-Here are extensions that are now possible that will pose problems for us:
+There are things that customers are now able to specify that will pose
+problems for us:
 
 * Anonymous object types (example: see `AWS::Kendra::DataSource`, `DataSourceToIndexFieldMapping`).
   We will need to invent names for these types, which is going to lead to issues
@@ -56,7 +57,9 @@ Here are extensions that are now possible that will pose problems for us:
   a non-official extension to the spec invented by GoFormation).
 * Type unions to encode relationships between properties themselves.
 
-Examples of the latter:
+Here are two examples of the latter, one recommendedby the CloudFormation documentation to show
+how this feature could be used in theory, and one where this feature is already being used in
+practice in the current specification:
 
 As recommended in the doc section [how to encapsulate complex
 logic](https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html#resource-type-howto-logic),
@@ -94,6 +97,34 @@ has been factored out and applies to both branches of the `oneOf`).
 > specify both properties you could satisfy both subschemas which is not allowed
 > by `oneOf`.
 
+There are also some technical problems with the spec that need to be addressed
+(or reckoned with) before we can properly consume the spec:
+
+* The CloudFormation Registry Schema is a confusing superset of JSON Schema,
+  as it combines both *properties* and *attributes* in the same type definition.
+  There are fields alongside the type definition which tell you which properties
+  are actually input properties, and which ones represent output attributes (
+  retrievable via `{ Ref }` and `{ Fn::GetAtt }`). Code generators and compatibility
+  checkers need to clearly separate these sets of properties out because they
+  need to be treated very differently.
+* There is currently no good source of information in the CloudFormation Registry
+  Schema on attributes that can be `{ Fn::GetAtt }`ed. `readOnlyProperties`
+  would seem to represent those, but it does not currently handle the case
+  where a `Property` and `Attribute` have the same name. Support for that
+  will be forthcoming, but until then we can't reliably switch over.
+
+## SAM Specification
+
+We are also generating L1s for the SAM resource types, which are by now
+being used in 60% of all customer stacks.
+
+The SAM specification has been hand-written to mimic the old CloudFormation
+specification, but with extensions. This specification is not maintained
+by CloudFormation and hence is not being converted to JSON schema by them.
+
+We will need to write our own CloudFormation specification -> JSON Schema
+converter to be able to keep on using SAM resources once we switch over.
+
 ## Major Components
 
 Implementing support for this requires the following components:
@@ -122,10 +153,47 @@ Implementing support for this requires the following components:
 
 ## High level design
 
-### Spec repository
+```test
+                               ┌────────────────┐          ┌───────────────────┐
+                               │                │          │                   │
+                        ┌─────▶│    cfnspec     │─────────▶│ cfn-schema-tools  │
+┌────────────────┐      │      │                │  bundle  │                   │
+│                │      │      └────────────────┘          └───────────────────┘
+│    codegen     │──────┤
+│                │      │      ┌────────────────┐
+└────────────────┘      │      │                │
+                        └─────▶│   json2jsii    │
+                               │                │
+                               └────────────────┘
+```
 
-We introduce a new package like `@aws-cdk/cfnspec`, which contains a copy of
-the resource specification and associated code to query it.
+### cfn-schema-tools: Spec Parser and Diff Tool
+
+This is where we load and query the underlying Schema files. We want to do
+light transforms from the underlying files to hide the internal details.
+
+For example, resource metadata, input properties and output attributes have
+all been mashed into the same JSON-schema-like file, but they are conceptually
+different and clearly making the distinction here will make downstream processing
+easier (with less duplication of knowledge about schema representation).
+
+The parser comes with a diff tool to compare two versions of the schema and
+produce a list of differences. This is necessary to generate the CHANGELOG for
+specification changes we import into the CDK.
+
+The diff tool should be extended to classify changes into additive changes
+and breaking changes so that the tool can be used by CloudFormation resource
+authors. See **Appendix A** for a list of changes that should be considered
+breaking.
+
+We add the converter for CloudFormation Specification to CloudFormation
+Registry Schema here as well.
+
+### cfnspec: Spec repository
+
+We introduce a new package like the current `@aws-cdk/cfnspec`, which
+contains a copy of the resource specification and associated code to query
+it.
 
 - This is where we can once again apply patches (either still json-patches or
   a different format).
@@ -143,13 +211,25 @@ For example, useful information we can get from cfn-lint:
 
 Etc.
 
-### Diff Tool
+### codegen: Code Generation
 
-WIP
+There are 3 parts of the codebase that are generated from the specification:
 
-### Code Generation
+- Interfaces representing the input properties to the CloudFormation
+  resources (i.e. `CfnBucketProps`, `CfnBucket.LifecycleProps`, etc.). We should be
+  able to use `json2jsii` for most of these, although it may need to be extended
+  a little to support all use cases. See **Appendix B** for a list of changes.
+- Construct classes representing the resources themselves (i.e. `CfnBucket`).
+- Routines that will convert back and forth between the programming language
+  model and the CloudFormation model (`toCloudFormation()` and `fromCloudFormation()`).
+- Validation routines to check that a given set of CloudFormation properties
+  matches the schema; in the current implementation these validate types and
+  presence of required properties, but the new schema has the ability to express
+  mutual exclusion between properties, valid enumeration values, string lengths,
+  and more.
 
-WIP
+We will generate everything to `lib/<module>.generated.ts`, same as the current
+code generator.
 
 ## Why should we _not_ do this?
 
@@ -161,7 +241,31 @@ be able to generate resources on-demand.
 
 ## What is the high level implementation plan?
 
-WIP
+- Start by introducing the new spec package, containing only the CloudFormation Registry
+  Schema, and start filling out the tools to query the model.
+- Start filling out the codegen to generate initial classes, types,
+  conversion methods and validators.
+- Based on an environment variable, have the build run the old or new codegen.
+- Use `jsii-diff`/`jsii-reflect` to compare assemblies built using the old and new codegen,
+  and keep iterating until they show no changes (this may take a significant amount of time
+  depending on the details).
+- Translate the patches we currently have on the old `cfnspec` to equivalent patches on the
+  new schema.
+- Write the diff tool and have it generate a CHANGELOG on updates.
+- Add a spec update task for the new spec, including generation of new packages
+  and CHANGELOG generation.
+- Run the spec update task as a periodic job.
+- Write CloudFormation Specification -> CloudFormation Registry Schema converter and add
+  support for SAM.
+- Generate extended property validation routines (enum types, string lengths, regex patterns)
+- Start incorporating additional model metadata from `cfn-lint`.
+- Add an update task to import new specification data from `cfn-lint`.
+- Run the `cfnlint` import task as a periodic job.
+- Verify that `jsii-diff`/`jsii-reflect` still show no changes when CDK is built using the
+  new codegen, and that the build passes successfully.
+- Flip over to the new codegen by default.
+- Wait for a month to make sure no unexpected errors come in. If they do, revert.
+- Remove the legacy codegen and the spec update job.
 
 ## Open Issues
 
@@ -169,21 +273,31 @@ There seems to be no proper inventory of `{ Fn::GetAtt }`able attributes of
 resources in the new spec. Or there is, but it conflicts with other parts of
 the spec. A query on this is outstanding.
 
-## Appendix: Breaking Changes
+## Appendix A: Breaking Changes
 
-1. property is changed to required.
-2. new property is added and is a required property.
-3. mutable property is changed to immutable.
-4. property is removed from resource spec.
-5. type of the property has changed.
-6. property case is modified.
+The following changes made to the Schema should be considered breaking changes:
+
+1. Property is changed to required.
+2. New property is added and is a required property.
+3. Mutable property is changed to immutable.
+4. Property is removed from resource spec.
+5. Type of the property has changed.
+6. Property case is modified.
 
 Also:
 
 7. Type name is changed (or an anonymous type is given a name or vice versa).
+8. Types of input properties are strengthened.
+9. Types of output properties are weakened.
+10. A property is removed from the `readOnlyProperties` (`{ Fn::GetAtt }` list).
 
-## Appendix: Changes to json2jsii
+The following rules are not about changes, but about schemas that are straight-up invalid:
+
+1. A `readOnlyProperty` or `primaryIdentifier` (corresponding to `{ Fn::GetAtt }`able
+   or `{ Ref }`able attributes) has a complex type (type must be a scalar or list of scalars).
+
+## Appendix B: Changes to json2jsii
 
 - No line breaks in generated docs
 - Needs different doc annotations
-- Need to be able to filter properties out
+- Verify support for complex JSON schema constructs (like `oneOf`, etc).
