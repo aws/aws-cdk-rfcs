@@ -46,7 +46,7 @@ our ability to measure in the same way.
 
 At the same time, our current method fails in the face of multiple distinct
 stacks in the same application. If two different stacks exist in the same
-application, each using a single construct library, then we will count both
+application, each using a different construct library, then we will count both
 construct libraries as "having been used" for both stacks (because they were
 loaded into memory at the time the stacks were synthesized).
 
@@ -64,20 +64,18 @@ about constructs from AWS-authored construct libraries. 3rd-party information
 will not be collected.
 
 We will *not* collect counts of each construct used, we will just record its
-presence. Collecting more and more information is starting to feel invasive
-(this is still customer application code we are collecting metrics on), and I
-don't feel comfortable with that.
+presence.
 
 # Glossary
 
-**Construct**: an abstract, reusable specification of Cloud Infrastructure.
+- **Construct**: an abstract, reusable specification of Cloud Infrastructure.
 In practice, implemented by a `class`
-**Construct type**: same as "Construct".
-**Construct instance**: a concrete single definition of a construct. In
+- **Construct type**: same as "Construct".
+- **Construct instance**: a concrete single definition of a construct. In
 practice, a class instance.
-**Construct identifier**: a string describing a specific version of a
+- **Construct identifier**: a string describing a specific version of a
 *construct.
-**RTTI**: Run-Time Type Information; a mechanism by which a compiler emits
+- **RTTI**: Run-Time Type Information; a mechanism by which a compiler emits
 information about the types it has processed which can be read by programs
 during execution, used to power reflection.
 
@@ -95,9 +93,10 @@ These are the major subproblems this design addresses:
 ## Obtaining construct instances
 
 Since the metadata resource reports on a per-stack basis, and in order to avoid double-counting
-constructs or construct libraries, we will iterate over the construct tree of each stack and
-record the construct instances of the constructs in it.
+constructs or libraries, we will iterate over the construct tree of each stack and
+record the construct instances found in there.
 
+* This is done during stack synthesis.
 * Recursion stops upon encountering a contained `Stack`, `Stage` or `NestedStack`.
 * Contrary to today, nested stacks will each have their own copy of a metadata resource.
 
@@ -133,15 +132,15 @@ example, the current list looks like this and can be found
 [here](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/core/lib/private/runtime-info.ts):
 
 ```ts
-const WHITELIST_SCOPES = ['@aws-cdk', '@aws-solutions-konstruk', '@aws-solutions-constructs', '@amzn'];
-const WHITELIST_PACKAGES = ['aws-rfdk'];
+const ALLOWLIST_SCOPES = ['@aws-cdk', '@aws-solutions-konstruk', '@aws-solutions-constructs', '@amzn'];
+const ALLOWLIST_PACKAGES = ['aws-rfdk'];
 ```
 
 Having a PR opened against the CDK to update this list will be a clear
 interaction moment between an AWS team trying to onboard with this mechanism
 and us, and will prevent 3rd party authors from accidentally (or maliciously)
-onboarding themselves as well and sending us information that we don't want to
-be responsible for.
+onboarding themselves as well and sending us information that we don't have
+a use-case for.
 
 ## Metadata resource encoding
 
@@ -185,9 +184,8 @@ as well as bytes that count toward the template size (maximum of 460kB).
 As an experiment, I've drawn 400 random class names from the complete list of class
 names currently in monocdk; that set of class names comes to about 23kB (uncompressed).
 
-Trying various methods of compression on it yields the following (keeping in mind
-that the result of binary compression will need to be base64-encoded to transmit via
-a CloudFormation template):
+Trying various methods of compression at maximum compression level yields the following
+results:
 
 | Description                | Raw size    | Base64ed size |
 |----------------------------|-------------|---------------|
@@ -198,6 +196,9 @@ a CloudFormation template):
 | Affix-grouped (plaintext)  | 7.4k        | -             |
 | Affix-grouped gzipped      | 3.0k        | 4.0k          |
 | Bloom Filter (1% error)    | 720b        | 960b          |
+
+> base64: the result of binary compression will need to be base64-encoded to
+> be transmitted via a CloudFormation template.
 
 Affix-grouped, gzipped data seems to give the best results that are still
 convenient and generic to work with (see Appendix B for a description of
@@ -234,26 +235,30 @@ The only valid payload encodings at the moment are:
 * `deflate64`: base64-encoded, gzipped data.
 * `plain`: plaintext data.
 
-The payload itself is a JSON object with `"constructs"` currently defined as the only
-valid key (but can be extended in the future). Values can be prefixed with
-an encoding scheme as well:
+The payload itself is a JSON object with `"constructs"` currently defined as
+the only valid key (but can be extended in the future). This protocol can be
+extended by adding additional keys to the object.
+
+Values inside the JSON object can be annotated with an encoding scheme as
+well. If so, the same key followed by the text `$encoding` is added to the
+same object.
 
 ```json
 {
-  "constructs": "[<value-encoding>:]<prefix-encoded construct list>"
+  "constructs$encoding": "<value-encoding>",
+  "constructs": <construct list data>
 }
 ```
 
-The only valid payload value encodings at the moment are:
+The only valid value encodings at the moment are:
 
-* `afx`: affix-encoded string list (see Appendix B).
-* `plain`: plaintext data.
+* `afx`: string list, affix-encoded as a string (see Appendix B).
+* `literal`: literal JSON value.
 
-Encoding may change the type (the encoded value is a `string` but the decoded
+The `$encoding` key may be missing, in which case `literal` is implied.
+
+Encoding may change the type (for `afx` the encoded value is a `string` but the decoded
 value is a `string[]`).
-
-> If a value does not start with > /^[a-z0-9]{,10}:/ it is considered to
-> be not encoded (the encoding is considered to be "plain").
 
 ## Metadata resource decoding
 
@@ -287,10 +292,21 @@ of users).
 - How acceptable is the giant base64-encoded blob in the template? If we want
   to cut down on it, what clever strategies can we come up with?
 
+# Server-side considerations
+
+This RFC does not explicitly detail out the work that needs to happen
+on the server side. A light design doc should be written in a private
+place before starting. Considerations:
+
+- Decode before storage.
+- Emulate the old data from the new (more detailed data).
+- Emit two different reports, two different schemas to two different locations.
+
 # Implementation Plan
 
-This can be implemented in v1 already, no need to wait for v2.
+This can be implemented in CDK v1 already, no need to wait for CDK v2.
 
+* Server-side design doc.
 * Implement RTTI support in in jsii.
 * Inform dependent teams that they need to upgrade to the jsii version that supports
   RTTI.
@@ -300,8 +316,27 @@ This can be implemented in v1 already, no need to wait for v2.
 * Update canary to exercise new field.
 * Update metadata reporting job to report on both new and old information.
 * Update metadata resource construction implementation in CDK to switch to RTTI
-  implementation, and start emitting `Analytics` field.
+  implementation, and start emitting `Analytics` field. Update tests.
 * Verify metrics are coming in
+
+# Testing
+
+We will have the following tests:
+
+- Unit tests: verify in `core` that given some standard constructs, they are represented
+  in the generated Metadata resource.
+- CLI integration: the Metadata resource is always generated.
+- Server-side unit test: only expected data is recorded, legacy data is synthesized from
+  new data.
+- Server-side canary: if the Metadata resource is present in a template, its data is recorded.
+
+
+# FAQ
+
+## Why don't we collect even more data, like construct counts and the entire hierarchy?
+
+This is our customer's sensitive information; collecting more than
+rough aggregates is an invasion of privacy.
 
 # Appendix 1: jsii Run-Time Type Information
 
@@ -313,11 +348,11 @@ Effectively, every class will be emitted as this in the `.js` file (the
 
 ```js
 // This will be added to the top of every source file
-const vfqnSym = Symbol.for('jsii.vfqn');
+const vfqnSym = Symbol.for('jsii.rtti');
 
 export class SomeClass {
   // Every class gets an additional field added to it
-  private static [vfqnSym] = 'module.SomeClass@1.2.3';
+  private static [vfqnSym] = { fqn: 'module.SomeClass', version: '1.2.3' };
 
   // Regular class emits here...
 }
