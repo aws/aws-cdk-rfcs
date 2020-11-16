@@ -96,7 +96,16 @@ Since the metadata resource reports on a per-stack basis, and in order to avoid 
 constructs or libraries, we will iterate over the construct tree of each stack and
 record the construct instances found in there.
 
-* This is done during stack synthesis.
+When CDK library coverage starts to approach 100%, users will ideally be
+using only L2 constructs, which themselves contain L1 constructs, and both
+would be reported. Doing so is not actually all that useful, and in fact
+makes it harder to detect interesting cases like when users are opting to
+forego existing L2 implementations to use the underlying L1 implementations
+directly (indicating there is a feature/coverage gap in our L2 layer).
+To that end, we will ignore classes that inherit from `CfnResource` if
+their parent inherits from `Resource`.
+
+* This collection process is done during stack synthesis.
 * Recursion stops upon encountering a contained `Stack`, `Stage` or `NestedStack`.
 * Contrary to today, nested stacks will each have their own copy of a metadata resource.
 
@@ -162,8 +171,8 @@ Resources:
 
 The list of construct identifiers we have discovered may be sizeable. A rough
 estimate of the maximum number of constructs used in a stack will be about
-400 (maximum of 200 L1s with a corresponding L2 wrapper). We will therefore
-need to encode roughly 400 strings of the form
+200 (maximum of 200 L1/L2s with a couple of higher-level constructs). We will
+therefore need to encode roughly 200 strings of the form
 `@aws-solutions-constructs/aws-lambda-sqs.LambdaToSqs@1.63.0`.
 
 The longest overall type in the current monocdk is
@@ -180,6 +189,11 @@ take up a lot of space in the template: vertical space while looking at it,
 as well as bytes that count toward the template size (maximum of 460kB).
 
 ### Compression
+
+> The following experiments were run with with 400 construct names, whereas the
+> method we're proposing currently will lead to 200 construct names. All sizes
+> (except for the Bloom filter) can roughly be divided by 2 in order to get
+> good approximations for the final sizes.
 
 As an experiment, I've drawn 400 random class names from the complete list of class
 names currently in monocdk; that set of class names comes to about 23kB (uncompressed).
