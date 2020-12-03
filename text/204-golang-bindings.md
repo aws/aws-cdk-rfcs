@@ -202,7 +202,7 @@ function renderHealthCheck(hc: HealthCheck): cfntaskdefinition.HealthCheckProper
 }
 ```
 
-Go translation (Run example in the [Go playground](https://play.golang.org/p/o84uoUGORYH):
+Go translation (Run example in the [Go playground](https://play.golang.org/p/o84uoUGORYH)):
 
 ```go
 package ecs
