@@ -363,9 +363,11 @@ struct, i.e.:
 
 ```go
 serviceProps := ecs.BaseServiceProps{
-    ServiceName:       "myService",
-    MaxHealthyPercent: 100,
-    MinHealthyPercent: 50,
+    BaseServiceOptions{
+        ServiceName:       "myService",
+        MaxHealthyPercent: 100,
+        MinHealthyPercent: 50,
+    },
     LaunchType: "EC2",
 }
 
