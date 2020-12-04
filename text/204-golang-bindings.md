@@ -289,7 +289,7 @@ export interface BaseServiceProps extends BaseServiceOptions {
 As before, the Go translation would have the getter methods (e.g. readonly cluster) defined in a the generated interface, which correspond to
 non-exported struct members in the struct that implements each getter.
 
-The interface generated for the jsii struct being extended would be **embedded** in the extending struct.
+The interface generated for the jsii struct being extended would be **embedded** in the extending struct's interface.
 
 ```go
 package ecs
@@ -438,13 +438,19 @@ ecs.TakesBaseServicePropsIface(serviceProps)
 The disadvantage is that there is much more boilerplate generated to implement the inherited methods, and any change to the inherited interface would
 be a breaking change to anything inheriting it. For the latter concern, within the jsii, any generated code would be tied to some version of jsii, so
 we would be able to re-generate datatype interfaces that extend other datatypes. For customers creating their own custom constructs, they could
-mititage potential breaking changes in jsii interfaces by creating their own interface wrappers, e.g.
+mitigate potential breaking changes in jsii interfaces by either embedding the generated type in their constructs, or creating their own interface
+wrappers, e.g.
 
 ```go
 // custom method that takes wrapped interface
 func myCustomMethod(props CustomServicePropsIface) {...}
 
-// wrapper - takes subset of methods definfed in BaseServiceOptionsIface
+// Option 1 - embed the generated struct
+type CustomServicePropsIface interface {
+    BaseServiceOptionsIface
+}
+
+// Option 2 - wrapper that takes subset of methods defined in BaseServiceOptionsIface
 type CustomServicePropsIface interface {
     GetServiceName() string
     GetMaxHealthyPercent() int
