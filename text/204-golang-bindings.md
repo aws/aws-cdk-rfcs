@@ -461,7 +461,8 @@ type CustomServicePropsIface interface {
 ### Notes/Concerns
 
 * Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default "empty"
-  values for each type, which are not nullable)
+  values for each type, which are not nullable). However, this might result in a less than ideal developer experience. Another option is to use a
+wrapper type for optional values.
 * Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface, in order to disambiguate it from the struct. This is
   a bit verbose, and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead) if the interface name is what will
 primarily be used by the customer.
