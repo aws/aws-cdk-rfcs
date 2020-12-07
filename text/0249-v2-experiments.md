@@ -151,12 +151,14 @@ Disadvantages:
 1. It's not possible for stable modules to depend on unstable ones
   (see Appendix B for data on how necessary that is for the CDK currently).
   This has serious side implications:
-  - All unstable modules that have stable dependents today will have to be
-    graduated before `v2.0` is released.
-  - Before a module is graduated, all of its dependencies need to be graduated.
-  - It will not be possible to add new dependencies on unstable modules to
-    stable modules in the future (for example, that's a common need for
-    StepFunction Tasks).
+
+- All unstable modules that have stable dependents today will have to be
+  graduated before `v2.0` is released.
+- Before a module is graduated, all of its dependencies need to be graduated.
+- It will not be possible to add new dependencies on unstable modules to
+  stable modules in the future (for example, that's a common need for
+  StepFunction Tasks).
+
 2. Graduating a module to stable will be a breaking change for customers. We can
   mitigate this downside by keeping the old unstable module around, but that
   leads to duplicated classes.
@@ -211,7 +213,7 @@ from the **public interface** of the stable release. The implementation
 `aws-cdk-lib` can safely use experimental APIs internally (though not in
 their public API surfaces).
 
-**How does stripping APIs from the public work?**
+#### How does stripping APIs from the public work?
 
 | TypeScript            | JavaScript | Java, Python, C#, Go            |
 |-----------------------|------------|---------------------------------|
@@ -237,7 +239,7 @@ was already being done before TypeScript existed, I did not survey the current
 landscape of IDEs to figure out which ones use what techniques to provide
 autocomplete for users.
 
-**What about experimental struct properties**
+#### What about experimental struct properties
 
 We also commonly use `@experimental` to indicate experimental struct
 properties for `Props` types.
@@ -300,7 +302,7 @@ to detect and prevent this, or accept it.
 The example above is for TypeScript; it obviously also holds for JavaScript, and *might*
 hold for jsii languages in certain cases.
 
-**Vending**
+#### Vending
 
 There are a number of different ways we can choose to distinguish the two builds.
 See Appendix D for an evaluation of all the possibilities.
@@ -339,7 +341,7 @@ the minor or the patch version:
 1.60.0 < 1.60.100-experimental
 ```
 
-**Summary**
+#### Summary
 
 Advantages:
 
@@ -616,7 +618,7 @@ The tl;dr of this section is as follows. Read below for details.
 | NuGet | yes         | no                               | no                    | yes                         |
 | Go    | ?           | ?                                |                       | ?                           |
 
-**NPM**
+### NPM*
 
 In NPM-based languages (JavaScript and TypeScript), the package name appears
 in source code (in the `require()` statement). If we changed the library
@@ -701,7 +703,7 @@ point of view the library depends on *stable* CDK (whereas we want it to
 declare that it depends on *experimental* CDK). It's only notes in the README
 that can inform the consumer otherwise.
 
-**Maven**
+### Maven
 
 No need to change the sources when using a stable library with an
 experimental app, as the namespaces and class names will be the same.
@@ -714,9 +716,9 @@ Using a stable library in an experimental app can be done in two ways:
   to remove the dependency on the *stable* build (looks like this is necessary for
   every stable library individually)
 
-https://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html#
+[Reference](https://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html#)
 
-**pip**
+### pip
 
 No need to change the sources when using a stable library with an
 experimental app, as the namespaces and class names will be the same.
@@ -730,14 +732,14 @@ specify their dependency version, which is not really acceptable.
 
 Effectively, this seems to be a no-go.
 
-**.NET Core/NuGet**
+### .NET Core/NuGet
 
 No need to change the sources when using a stable library with an
 experimental app, as the namespaces and class names will be the same.
 
 ...pending responses from .NET SDK team...
 
-**Go**
+### Go
 
 ???
 
@@ -768,7 +770,7 @@ we bump some number:
 | NuGet | yes                | if experimental sorts later      | yes                         | yes                         |
 | Go    | ?                  | ?                                | ?                           | ?                           |
 
-**NPM**
+### NPM
 
 Can apps use stable ranges: yes, `^1.60.0` will not auto-pick `1.61.1-experimental` for downloading.
 
@@ -780,7 +782,7 @@ version sorts with respect to the stable version.
 
 It will *work*, but npm will *complain*.
 
-**Maven**
+### Maven
 
 Stable ranges: no, `[1.60.0,)` *will* include `1.61.1-experimental`. However,
 this might not be an issue as `pom.xml` typically serves as the lock file and
@@ -801,7 +803,7 @@ compatibility.
 It will not complain about incompatible versions unless you really *really*
 ask for diagnostics (and even then it's hard to get it to show an error).
 
-**pip**
+### pip
 
 Stable ranges: yes, `>=1.60.0` will not match version `1.60.1-experimental` [ref](https://pip.pypa.io/en/stable/reference/pip_install/#pre-release-versions)
 
@@ -819,7 +821,7 @@ awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3tran
 (Note: when trying the PyPI testing server, the version number schema I had in mind: `X.Y.Z-experimental` is not
 accepted, nor is `X.Y-experimental` or `X.Yexp`. Ultimately I had to go for `1.60rc1`.)
 
-**NuGet**
+### NuGet
 
 PJ Pittle from the .NET team has confirmed for us that NuGet will complain and **error out** if we use:
 
@@ -850,7 +852,7 @@ Or:
 | NuGet | yes         | yes                              | ?                     | yes                         |
 | Go    | ?           | ?                                | ?                     | ?                           |
 
-**NPM**
+### NPM
 
 Mostly like pre-release tags, except libraries using stable can explicitly declare they're usable
 with both stable and experimental ranges by using multiple `peerDependency` ranges:
@@ -865,19 +867,19 @@ with both stable and experimental ranges by using multiple `peerDependency` rang
 
 This would suppress the warning you would otherwise get for a non-compatible version.
 
-**Maven**
+### Maven
 
 Like pre-release tags, except we don't get the mixing in of pre-release versions with
 regular versions.
 
-**pip**
+### pip
 
 Like pre-release tags.
 
-**NuGet**
+### NuGet
 
 Like pre-release tags.
 
-**Go**
+### Go
 
 ?
