@@ -344,7 +344,6 @@ We will have the following tests:
   new data.
 - Server-side canary: if the Metadata resource is present in a template, its data is recorded.
 
-
 # FAQ
 
 ## Why don't we collect even more data, like construct counts and the entire hierarchy?
