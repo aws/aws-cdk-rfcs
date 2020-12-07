@@ -152,12 +152,12 @@ Disadvantages:
   (see Appendix B for data on how necessary that is for the CDK currently).
   This has serious side implications:
 
-- All unstable modules that have stable dependents today will have to be
-  graduated before `v2.0` is released.
-- Before a module is graduated, all of its dependencies need to be graduated.
-- It will not be possible to add new dependencies on unstable modules to
-  stable modules in the future (for example, that's a common need for
-  StepFunction Tasks).
+    - All unstable modules that have stable dependents today will have to be
+      graduated before `v2.0` is released.
+    - Before a module is graduated, all of its dependencies need to be graduated.
+    - It will not be possible to add new dependencies on unstable modules to
+      stable modules in the future (for example, that's a common need for
+      StepFunction Tasks).
 
 2. Graduating a module to stable will be a breaking change for customers. We can
   mitigate this downside by keeping the old unstable module around, but that
