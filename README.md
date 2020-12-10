@@ -91,6 +91,8 @@ future state of the libraries and to discover projects for contribution.
 [256](https://github.com/aws/aws-cdk-rfcs/issues/256)|[ReactCDK: Add JSX/TSX Support](https://github.com/aws/aws-cdk-rfcs/pull/258)||💡 proposed
 [264](https://github.com/aws/aws-cdk-rfcs/issues/264)|[Generating L1s from CloudFormation Registry Schema Format](https://github.com/aws/aws-cdk-rfcs/issues/264)||💡 proposed
 [272](https://github.com/aws/aws-cdk-rfcs/issues/272)|[CI/CD to Cloudfront Deploy](https://github.com/aws/aws-cdk-rfcs/issues/272)||💡 proposed
+[275](https://github.com/aws/aws-cdk-rfcs/issues/275)|[route53-patterns for cross account DNS delegation](https://github.com/aws/aws-cdk-rfcs/issues/275)||💡 proposed
+[277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
 [36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)|[@eladb](https://github.com/eladb)|✅ done
@@ -106,7 +108,7 @@ future state of the libraries and to discover projects for contribution.
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[Simplify working with logical IDs when refactoring CDK code](https://github.com/aws/aws-cdk-rfcs/issues/162)||❓unknown
 [223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Better experience when developing lambda functions in the cdk](https://github.com/aws/aws-cdk-rfcs/issues/223)||❓unknown
-[226](https://github.com/aws/aws-cdk-rfcs/issues/226)|[Context provider for cross-account CFN stack outputs](https://github.com/aws/aws-cdk-rfcs/issues/226)||❓unknown
+[226](https://github.com/aws/aws-cdk-rfcs/issues/226)|[Context provider for cross-account CFN stack outputs](https://github.com/aws/aws-cdk-rfcs/issues/226)|[@skinny85](https://github.com/skinny85)|❓unknown
 [227](https://github.com/aws/aws-cdk-rfcs/issues/227)|[Integrate AWS CloudFormation StackSets for AWS Organizations as part of `cdk deploy`](https://github.com/aws/aws-cdk-rfcs/issues/227)||❓unknown
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[Support for app.postDeploy() for post-deploy functions](https://github.com/aws/aws-cdk-rfcs/issues/228)||❓unknown
 [231](https://github.com/aws/aws-cdk-rfcs/issues/231)|[Construct library pattern for resources that use a VPC](https://github.com/aws/aws-cdk-rfcs/issues/231)||❓unknown
