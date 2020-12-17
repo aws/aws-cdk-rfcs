@@ -81,6 +81,7 @@ required to make prioritization decisions to add L2 resources in the future.
 - **Observe** - Watch KPIs to prioritize the construct library module's
   graduation. The [prioritization framework](#construct-prioritization-tenets)
   will be leveraged.
+
 ### Exit Criteria
 
 - **Review** - The first pull request introducing `L2 constructs` for a module
@@ -167,7 +168,7 @@ of how these GitHub artifacts are used and related to each other.
 ### Exit Criteria
 
 - **Major Use Cases Addressed** - During each iteration in the experimental
-  phase, a module's Github tracking issue will accumulate a checklist of major use cases. 
+  phase, a module's Github tracking issue will accumulate a checklist of major use cases.
 
   - Issues tagged to the GitHub project's `developer-preview`
   milestone have been completed.
@@ -223,10 +224,10 @@ remains while in Developer Preview, the package name will keep the
   intended to be another review of the API ergonomics, naming, etc. The API review
   will examine the following:
 
-    - breaking changes that were made after `developer-preview`
-    - bake time and usage
-    - guidance issues, user feedback indicative of a gap in the developer experience
-    - feature requests and bugs opened after moving to developer preview
+  - breaking changes that were made after `developer-preview`
+  - bake time and usage
+  - guidance issues, user feedback indicative of a gap in the developer experience
+  - feature requests and bugs opened after moving to developer preview
 
 - **Bake time** - Modules will spend time in developer preview to accumulate sufficient
 usage data to gain confidence in the API’s ergonomics and customer acceptance. The API
@@ -364,7 +365,7 @@ modules to work on next:
 
 - _"Favor community contributions above all"_ - customers who take the time to
   contribute code to the AWS CDK get preferential treatment above all else
-- _“Don’t experiment on too much at once”_ - prioritize moving experimental 
+- _“Don’t experiment on too much at once”_ - prioritize moving experimental
   modules through the `developer-preview` and `GA` milestones. The GitHub projects
   page will include a project for every module in `experimental` stability.
 - _“Focus on what customers ask for”_ - prioritize modules based on number of
