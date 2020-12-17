@@ -60,7 +60,8 @@ required to make prioritization decisions to add L2 resources in the future.
 >
 > - Generation of the module L1 code when CFN introduces a new spec.
 > - Generation of the initial module README.
-> - Mark module as "experimental" in `package.json`.
+> - Mark module stability as "experimental" in `package.json`.
+> - Mark module maturity as "cfn-only" in `package.json`.
 >
 > The remaining activities described here need to be done manually.
 
@@ -78,18 +79,14 @@ required to make prioritization decisions to add L2 resources in the future.
 ### Ongoing activities
 
 - **Observe** - Watch KPIs to prioritize the construct library module's
-  graduation:
-  - pull requests that add the first high-level constructs are the strongest
-    signal to graduate a construct library module from stage 0 to stage 1
-    (experimental) and are prioritized first (this is a manual activity)
-  - customer "+1s" on a construct library module's tracking issue exceeding 100
-    positive reactions, are prioritized next
-  - construct library modules that accumulate 10+ feature requests, are
-    prioritized next
-
+  graduation. The [prioritization framework](#construct-prioritization-tenets)
+  will be leveraged.
 ### Exit Criteria
 
-- when the first PR for this module that introduces constructs is merged
+- **Review** - The first pull request introducing `L2 constructs` for a module
+  will have the `requires-two-approvers` label. Multiple reviewers will
+  raise the bar on the developer experience and reduce breaking changes down the road.
+- **Stability** - Module maturity will be changed to `experimental` in `package.json`.
 
 ## Stage 1 - Experimental
 
@@ -113,6 +110,13 @@ of how these GitHub artifacts are used and related to each other.
 
 ### Entry activities
 
+- **Project Board** - A [project](https://github.com/aws/aws-cdk/projects) will be created in GitHub
+  for the module
+
+  - milestones will be created for `developer-preview` and `GA` stages of maturity
+  - open bugs and feature requests will be reflected in the module's project board.
+  - The GitHub tracking issue will link to the project board.
+
 - **Identify key stakeholders** - Opportunistically recruit stakeholders outside
   the CDK team to participate in API reviews and usability studies. Potential
   stakeholders include:
@@ -123,14 +127,6 @@ of how these GitHub artifacts are used and related to each other.
     leadership),
   - solutions architects who specialize in service,
   - AWS Developer Tools developer advocates
-
-- **Update GitHub tracking issue** - List the primary use cases for the service
-  and the constructs required to satisfy them. This is an iterative process, so
-  the full set of use cases and constructs are not expected to be defined at the
-  start of this stage.
-
-  - Defining the service's "getting started" scenario in CDK code is an ideal
-    first use case to enable
 
 - **Author RFCs [optional]** - Request for comment documents are created for
   large / complex designs that require explanation and robust discussion. RFCs
@@ -171,10 +167,10 @@ of how these GitHub artifacts are used and related to each other.
 ### Exit Criteria
 
 - **Major Use Cases Addressed** - During each iteration in the experimental
-  phase, a module's Github tracking issue will accumulate a checklist of major
-  use cases. Every quarter, as part of the construct library module
-  prioritization, owners look at the checklists for their module and if most/all
-  of them are checked off, it is considered as a developer preview candidate.
+  phase, a module's Github tracking issue will accumulate a checklist of major use cases. 
+
+  - Issues tagged to the GitHub project's `developer-preview`
+  milestone have been completed.
 
   > **Note**: This does not imply 100% AWS service feature coverage, instead, it
   > means the module owner thinks we’ve implemented the minimum features
@@ -187,11 +183,9 @@ of how these GitHub artifacts are used and related to each other.
 - **Successful API review** - Conduct an API review/developer experience demo
   and invite relevant stakeholders
   - use module's README as the API review guide
-  - address any concerns about API ergonomics
-  - review all AWS Lint exceptions to ensure they are acceptable for dev preview
-  - ensure at least 90% unit test coverage for all implemented L2 constructs
+  - create issues to address concerns about API ergonomics
   - if the API/DevEx is rejected, make a list of necessary remediation tasks and
-    update the module's tracking issue
+    update the module's project board
 
 ## Stage 2 - Developer Preview
 
@@ -215,18 +209,29 @@ remains while in Developer Preview, the package name will keep the
 
   - feature requests and bugs filed against the developer preview module are
     triaged, and those that we decide to include in the module are linked in the
-    tracking issue to indicate they are in scope. All P0 issues are fixed
-    immediately, P1 issues are in scope for GA release, and P2 issues are
-    deferred until we accumulate enough feedback to change its priority.
+    tracking issue and tagged to a milestone on the GitHub project board to
+    indicate they are in scope. P1 issues are added into scope if it's determined
+    that implementation would require a breaking change.
 
-- **Quality Assurance** - Fix all P0 bugs as they are discovered and review all
-  P1 bugs, making a clearly communicated fix/defer decision for each one
+- **Quality Assurance** - review all P1 bugs, making a clearly communicated
+  fix/defer decision for each one
 
 ### Exit Criteria
 
-- **Bake time** - Modules will spend at least 3 months in developer preview to
-  accumulate sufficient usage data to gain confidence in the API’s ergonomics
-  and customer acceptance
+- **API Review** - The final API review is intended to be a checklist to review
+  signals that the module is ready for general availability (GA). It is **not**
+  intended to be another review of the API ergonomics, naming, etc. The API review
+  will examine the following:
+
+    - breaking changes that were made after `developer-preview`
+    - bake time and usage
+    - guidance issues, user feedback indicative of a gap in the developer experience
+    - feature requests and bugs opened after moving to developer preview
+
+- **Bake time** - Modules will spend time in developer preview to accumulate sufficient
+usage data to gain confidence in the API’s ergonomics and customer acceptance. The API
+review will determine whether additional bake time is needed based on usage,
+module complexity, and customer feedback.
 
 - **Usage** - Module utilization in 2,000 or more stacks is considered
   sufficient usage. We will evaluate the language distribution of module use to
@@ -359,10 +364,9 @@ modules to work on next:
 
 - _"Favor community contributions above all"_ - customers who take the time to
   contribute code to the AWS CDK get preferential treatment above all else
-- _“Don’t experiment on too much at once”_ - no more than 20% of the AWS
-  Construct Library will be experimental at any given time. For reference, on
-  1/1/2020, the construct library module breakdown = 32% (39/123) Stable, 18%
-  (22/123) Experimental, 50% (62/123) CFN-only.
+- _“Don’t experiment on too much at once”_ - prioritize moving experimental 
+  modules through the `developer-preview` and `GA` milestones. The GitHub projects
+  page will include a project for every module in `experimental` stability.
 - _“Focus on what customers ask for”_ - prioritize modules based on number of
   feature requests and +1’s on GitHub.
 - _“Finish what we’ve started”_ - prioritize modules that already have L2
@@ -428,11 +432,6 @@ scale is:
 
 ## Appendix C: Action Items
 
-- [ ] automate the creation of new tracking issues when new CFN-only modules are
-      autogenerated
-- [ ] create an example tracking issue for reference
-- [ ] update `package.json` for all CFN-only modules to 'stable'
-- [ ] update `package.json` for all modules in 'developer preview'
-- [ ] add an AWS Lint rule that checks the `package.json` maturity tag
+- [ ] automate the creation of new tracking issues and GitHub project when new
+  CFN-only modules are autogenerated
 - [ ] determine the final, easy to find, location for this document
-- [ ] update AWS CDK README to include a link to this document
