@@ -408,14 +408,13 @@ npm ERR! to accept an incorrect (and potentially broken) dependency resolution.
 npm ERR!
 ```
 
-Users can work around this be executing `npm install --force` but this is not a
+Users can work around this by executing `npm install --force` but this is not a
 behavior we want to recommend.
 
 ### Option 6: name experimental APIs with `Experimental` suffix/prefix
 
-v2 of the AWS CDK will include two major changes, it will be released as a
-monolithic package, and breaking changes will not be allowed. Both of theses
-changes share the same goal - encourage customers to declare a flexible version
+The two major changes planed for v2, monolithic package, and no more breaking
+changes, share the same goal - encourage customers to declare a flexible version
 `^`,`~` on `aws-cdk-lib`. Fixed versions are a bad practice, they prevent users
 from getting updates that includes critical fixes, security patches and more.
 The mechanism we choose to implement experimental features should adhere to the
