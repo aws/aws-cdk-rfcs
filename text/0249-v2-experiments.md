@@ -374,7 +374,7 @@ Disadvantages:
    although something is to be said for it being the same with `private` fields
    today.
 
-#### POC results:
+#### POC results
 
 Option 5 was rejected since it relies on the use of prerelease qualifiers in a
 way that does not adhere to [Sematic Versioning](https://semver.org/). According
