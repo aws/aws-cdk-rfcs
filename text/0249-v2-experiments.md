@@ -413,7 +413,7 @@ npm ERR!
 Users can work around this by executing `npm install --force` but this is not a
 behavior we want to recommend.
 
-### Option 6: name experimental APIs with `Experimental` suffix/prefix
+### Option 6: name experimental APIs with Experimental suffix/prefix
 
 The two major changes in v2, monolithic packaging, and no more breaking changes,
 share the same goal - encourage customers to declare a flexible version
