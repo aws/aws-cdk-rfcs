@@ -496,10 +496,10 @@ Note that while it might seem redundant to name the props interface as
 experimental, it is required as every new version of the `Canary` creation API
 will accept a different type of props.
 
-There are many different types of APIs for which we need to formalize the
+There are many different types of APIs for which we will need to formalize the
 experimental naming strategy, see the open questions section for more examples.
 
-**Documentation**
+#### Documentation
 
 How will different versions of an API be reflected in the AWS CDK
 documentations? One option is to only show the latest version of the API, and
@@ -510,7 +510,7 @@ making them still accessible but somewhat hidden:
 
 ![](../images/experimental-docs-mock.png)
 
-**Naming scheme alternative**
+#### Naming scheme alternatives
 
 A good naming scheme for marking experimental APIs should:
 
@@ -575,8 +575,10 @@ Disadvantages:
   assuming that experimental means "will break".
 - Cluttering the code base. Although most IDEs will mark deprecated properties
   with a ~~strikethrough~~, they will still be listed by autocomplete.
-- Naming is ugly. Many experimental APIs will result in a less aesthetic user
-  code.
+- Will force some pretty long and ugly names on our APIs. Many experimental APIs
+  will result in a less aesthetic user code.
+- Graduating a module will require a lot of code changes from our users to
+  remove the prefix/suffix.
 - A lot of deprecated code in aws-cdk-lib, possibly blowing up `aws-cdk-lib`.
   This might not be a real concern as we can reuse a lot the code between
   different version of an API.
@@ -619,7 +621,7 @@ reasons:
    users are aware that this is not the final version of the API, and its
    deprecation is expected.
 
-**Open questions**
+#### Open questions
 
 If we decide to implement option 6, we will need to formalize the experimental
 naming strategy.
@@ -669,7 +671,7 @@ Note that `cdk init` will create a project with this context value set to
 
 To avoid the manual and error-prone process of adding this check to every single
 unstable API, we will need to modify JSII so that it recognizes the
-`@xperimental` decorator, and adds this check during compilation.
+`@experimental` decorator, and adds this check during compilation.
 
 Advantages:
 
@@ -684,23 +686,6 @@ Disadvantages:
 - Since there is a single flag for all unstable code, setting it once might hide
   other instances of using unstable code, working against stated goal #1.
 - Requires changes in JSII.
-
-### Force a naming convention for unstable code
-
-We can modify `awslint` to force a certain naming convention for unstable code,
-for example to add a specific prefix or suffix to all unstable APIs.
-
-Advantages:
-
-- Should fulfill goal #1 - it will be impossible to use an unstable API by
-  accident.
-- Does not require changes in JSII, only in `awslint`.
-
-Disadvantages:
-
-- Will force some pretty long and ugly names on our APIs.
-- Graduating a module will require a lot of code changes from our customers to
-  remove the prefix/suffix.
 
 # Appendix A - why can't we break backwards compatibility in the code of mono-CDK main modules?
 
