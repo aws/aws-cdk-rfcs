@@ -380,13 +380,15 @@ Option 5 was rejected since it relies on the use of prerelease qualifiers in a
 way that does not adhere to [Sematic Versioning](https://semver.org/). According
 to the semver [specification](https://semver.org/#spec-item-11), a precedence
 between versions is calculated **only** if the **major**, **minor** and
-**patch** are equal. In the above example, the range `^2.3.0` is not satisfied
-by `2.3.1-experimental` since the patch part is not equal. This becomes even
+**patch** are equal. In the above example, the range `^1.60.0` is not satisfied
+by `1.61.0-experimental` since the minor part is not equal. This becomes even
 more problematic in npm-v7, which automatically installs `peerDependencies`.
-With npm-v7, when a consumer application declares a dependency on `aws-cdk-lib`
-version `2.3.1-experimental`, consumes a library which declares a
-`peerDependency` on version `^2.3.0`, executing `npm install` will throw an
-exception:
+With npm-v7, executing `npm install` will throw an exception when a consumer
+application declares a dependency on `aws-cdk-lib` version
+`1.61.0-experimental`, tries to consumes a library which declares a
+`peerDependency` on version `^1.60.0`. exception:
+
+`npm install` error:
 
 ```
 npm ERR! code ERESOLVE
@@ -413,16 +415,16 @@ behavior we want to recommend.
 
 ### Option 6: name experimental APIs with `Experimental` suffix/prefix
 
-The two major changes planed for v2, monolithic package, and no more breaking
-changes, share the same goal - encourage customers to declare a flexible version
-`^`,`~` on `aws-cdk-lib`. Fixed versions are a bad practice, they prevent users
-from getting updates that includes critical fixes, security patches and more.
-The mechanism we choose to implement experimental features should adhere to the
-same standard. This means that solutions such as releasing experimental features
-under a different module - `aws-cdk-lib-experimental`, or a different version
-line - `2.x.x-experimental` are not viable solutions. They might prevent users
-from declaring a fixed dependency on the `aws-cdk-lib` mainline release, but
-they mandate it in other release line we own and maintain.
+The two major changes in v2, monolithic packaging, and no more breaking changes,
+share the same goal - encourage customers to declare a flexible version
+(`^`,`~`) on `aws-cdk-lib`. Fixed versions are a bad practice, they prevent
+users from getting updates that includes critical fixes, security patches and
+more. The mechanism we choose to implement experimental features should adhere
+to the same standard. This means that solutions such as releasing experimental
+features under a different module - `aws-cdk-lib-experimental`, or a different
+version line - `2.x.x-experimental` are not viable solutions. They might prevent
+users from declaring a fixed dependency on the `aws-cdk-lib` mainline release,
+but they mandate it in other release line we own and maintain.
 
 To allow the CDK team to keep experimenting while still adhering to
 [Semantic Versioning](https://semver.org/#semantic-versioning-200), we suggest
@@ -431,40 +433,48 @@ compatibility. Experimental features will be add to `aws-cdk-lib` using a
 specific naming scheme. For example, the first experimental version of the
 `grantWrite` API will be introduced under the name `grantWriteExp_v1`, when it's
 time to introduce a breaking change to the API, `grantWriteExp_v1` will be
-deprecated and replaced with a newer version `grantWriteExp_v2`. When the API is
-finalize it will be introduce as `grantWrite`. Deprecated experimental versions
-will only be removed between major versions release.
+deprecated and replaced with a newer version - `grantWriteExp_v2`. When the API
+is finalize it will be introduce as `grantWrite`. Deprecated experimental
+versions will only be removed between major versions release.
 
 #### Implementation
 
-Experimental APIs specification:
+Experimental APIs specification in the AWS CDK docs:
 
-> API with the suffix `xxxExp_v` are experimental. Experimental APIs are safe to
-> use, and will always maintain backward compatibility between minor versions of
-> `aws-cdk-lib`. While experimental APIs will not be removed, they will be
+> APIs with the suffix `xxxExp_v` are experimental. Experimental APIs are safe
+> to use, and will always maintain backward compatibility between minor versions
+> of `aws-cdk-lib`. While experimental APIs will not be removed, they will be
 > deprecated and replaced by either a newer experimental version, e.g
 > `xxxExp_v2`, or the final version of the API. Experimental APIs allows us to
 > get new APIs in front of developers early so we can receive feedback before we
 > finalize them.
 
-**Types of experimental API**
-
-This section discuss the experimental naming scheme for different types of APIs
-and their usage.
-
-One important design question is whether "container" types, meaning types that
-contains other types, such as class, which contains properties/methods should be
-themselves be named as experimental, or whether only their properties should be
-named as experimental. Lets look at a concrete example, the `aws-synthetics`
-module. The main resource in the `aws-synthetics` module is the `Canary` class.
-As with all L2s, the `Canary` class accepts a `scope`, `id` and props -
-`CanaryProps`. If the `CanaryProps` is added as experimental -
-`CanaryPropsExp_v1` this implies the `Canary` type is also experimental, since
-it accepts an experimental type. The code for creating a new `Canary` will then
-look like this:
+In the code:
 
 ```ts
-const canary = new CanaryExp_v1(this, 'MyCanary', {
+const bucket = new Bucket(this, "MyBucket", props);
+bucket.grantWriteExp_v1(...);
+```
+
+A more complex example, the `Canary` construct from the `aws-synthetics` module.
+The `Canary` resource creation API is experimental, which means the constructor
+and Props interface are experimental:
+
+```ts
+
+export interface CanaryPropsExp_v1 {
+ ...
+}
+
+export class CanaryExp_v1 extends cdk.Resource {
+  ...
+}
+```
+
+`Canary` creation code:
+
+```ts
+new CanaryExp_v1(this, 'MyCanary', {
   test: Test.custom({
     code: synthetics.Code.fromAsset(path.join(__dirname, 'canary')),
     handler: 'index.handler',
@@ -482,60 +492,21 @@ Object canary = CanaryExp_v1.Builder.create(this, "MyCanary")
         .build();
 ```
 
-In both examples, it does not seem like there is a clear value for naming the
-`Canary` class as `CanaryExp_v1` class, in fact it makes the code less readable
-and harder to understand it's functionality. Naming the Props with `Exp_v1` does
-not provide any value as it is not visible. A better approach will be to name
-individual properties as experimental, looking at the `test` property as an
-example:
+Note that while it might seem redundant to name the props interface as
+experimental, it is required as every new version of the `Canary` creation API
+will accept a different type of props.
 
-```ts
-const canary = new Canary(this, 'MyCanary', {
-  testExp_v1: Test.custom({
-    code: synthetics.Code.fromAsset(path.join(__dirname, 'canary')),
-    handler: 'index.handler',
-  }),
-});
-```
-
-In java:
-
-```java
-Object canary = Canary.Builder.create(this, "MyCanary")
-        .testExp_v1(Test.custom(Map.of(
-                "code", synthetics.Code.fromAsset(path.join(__dirname, "canary")),
-                "handler", "index.handler")))
-        .build();
-```
-
-This also have the advantage of minimizing the code change required by the users
-as the API evolves.
-
-The `Canary` class is an example in which the contract itself is experimental,
-as oppose to an experimental implementation. An example for experimental
-implementation is the `AutoScalingGroup` class. In its implementation,
-`AutoScalingGroup` creates a `LaunchConfigurations` that is used as the recipe
-for each instance in the group. The user in not aware of the
-`LaunchConfigurations` type in the asg creation API, and it will only be
-reflected in the created resource. `LaunchConfigurations`, while still supported
-by EC2, is actively being replaced with a new type - `LaunchTemplates`, which is
-much more expressive than `LaunchConfigurations`. The two types are not
-interchangeable and a migration between them will require a replacement of the
-asg, which is a breaking change. In this case it does make sense to initially
-introduce the `AutoScalingGroup` class as experimental.
-
-While we can extract some guidelines and formalize them as we go, it seems we
-will need to decide each case according to it's characteristics.
+There are many different types of APIs for which we need to formalize the
+experimental naming strategy, see the open questions section for more examples.
 
 **Documentation**
 
-How will deprecated version of an experimental API will be reflected in our
-documentation? On one hand keeping all deprecated version will clutter our
-documentation, it might also be confusing to users and might result in them
-using an older version of an API. On the other hand, removing deprecated APIs
-from our documentation might be frustrating for users who encounter such APIs,
-either in their code or in code samples. A compromise can be to collapse all
-older version of an API, making them still accessible but somewhat hidden:
+How will different versions of an API be reflected in the AWS CDK
+documentations? One option is to only show the latest version of the API, and
+remove all deprecated versions. While this might reduce potential clutter in the
+docs, it might be frustrating for users who encounter an older version of an
+experimental API. A compromise can be to collapse all older version of an API,
+making them still accessible but somewhat hidden:
 
 ![](../images/experimental-docs-mock.png)
 
@@ -544,12 +515,12 @@ older version of an API, making them still accessible but somewhat hidden:
 A good naming scheme for marking experimental APIs should:
 
 1. Express the experimental nature.
-2. Allow expressing order between experimental version of the same API, e.g
+2. Allow expressing order between experimental versions of the same API, e.g
    `grantWriteExp_v1` is older than `grantWriteExp_v2`.
 
 **Prefix vs. Suffix**
 
-Advantage of adding the experimental addition as prefix:
+Advantages of adding the experimental addition as a prefix:
 
 1. Might be more clear that the API is experimental. All experimental APIs are
    grouped together in autocomplete.
@@ -557,23 +528,25 @@ Advantage of adding the experimental addition as prefix:
    less confusing. `grantWrite` will be visually separated than
    `exp_v1_grantWrite` and `exp_v2_grantWrite`.
 
-Advantage of adding the experimental addition as suffix:
+Advantages of adding the experimental addition as a suffix:
 
 1. Discoverability. When using the `Bucket` type in code, a user looking for a
-   way to "grant" permission on the `Bucket` is likely to type "grant" in the
+   way to "grant" permission on the `Bucket`, is likely to type "grant" in the
    IDE and look in the suggestion displayed by the autocomplete. A method that
    starts with `grant` will be listed before a method that ends with it.
-   However, most IDEs will list method that contains "grant" in either part will
+   However, most IDEs will list methods that contains "grant" in any part will
    be listed by autocomplete when a user types "grant".
 
 Alternatives:
 
 Using `v1` for visibility:
 
-- Rc_v1: release candidate.
-- Pre_v1: preview.
+- Rc_v1: for release candidate.
+- Pre_v1: for preview.
 
-**How will it look in all langues:**
+**How will it look in all languages:**
+
+> _to be completed once a naming scheme is decided_
 
 | scheme | TS  | Java | Python | .Net | Go  |
 | ------ | --- | ---- | ------ | ---- | --- |
@@ -583,13 +556,13 @@ Using `v1` for visibility:
 
 Advantages:
 
-- no breaking changes between minor versions will encourage users to declare a
-  flexible version on `aws-cdk-lib`.
-- We will still be able to push critical updates to previous experimental
-  versions of an API. For example, if we discover that `grantWrite` grants
-  overly permissive, a bug that exits in all of its experimental (deprecated)
-  predecessors, we will be able to push the fix to them as well, allowing us to
-  reach more customers.
+- Experimental APIs can be used without declaring a fixed version on
+  `aws-cdk-lib`.
+- We will be able to push critical updates to previous experimental versions of
+  an API. For example, if we discover that `grantWrite` grants overly permissive
+  permissions, and the same occur in all of its experimental (deprecated)
+  predecessors, we will be able to push the fix to them as well. This will allow
+  us to get the fix to more customers in case of a critical fix.
 - All APIs will be in `aws-cdk-lib`, preventing dependencies hell.
 - Libraries will be able to use experimental APIs without locking their
   consumers to a specific version of `aws-cdk-lib`.
@@ -597,25 +570,28 @@ Advantages:
 
 Disadvantages:
 
-- User does not have a clear motivation to update to a newer version.
+- User does not have a clear motivation to upgrade to a newer version.
 - Low adoption. Users might be worried to use an API with an experimental name,
   assuming that experimental means "will break".
 - Cluttering the code base. Although most IDEs will mark deprecated properties
   with a ~~strikethrough~~, they will still be listed by autocomplete.
-- Naming is ugly.
+- Naming is ugly. Many experimental APIs will result in a less aesthetic user
+  code.
+- A lot of deprecated code in aws-cdk-lib, possibly blowing up `aws-cdk-lib`.
+  This might not be a real concern as we can reuse a lot the code between
+  different version of an API.
 
 **How can we encourage users to upgrade to a newer version?**
 
 When a new minor version introduces a breaking change to an experimental API,
 users have a clear motivation to upgrade to the new version of the API - they
-must do so in order to upgrade to a newer version of `aws-cdk-lib`. If the API
-is only deprecated, users have no motivation to upgrade to a newer version of
-the API, even worse, they might not even be aware that a newer version is
-available. While we might not be able to encourage all users to migrate to newer
-versions we can supply tools that will improve the visibility of newer versions
-availability. One example is to add a capability to the `cdk doctor` command
-that will notify users that their CDK application is using older/deprecated
-APIs.
+must do so in order to upgrade to a newer version of the AWS CDK. If the API is
+only deprecated, users have no motivation to upgrade to a newer version of the
+API, even worse, they might not be aware that a newer version exists. One way to
+encourage users to upgrade to a newer version of an API, is to supply tools that
+will inform users. For example, we can add a capability to the `cdk doctor`
+command that will notify users that their CDK application is using deprecated
+experimental APIs.
 
 Executing `cdk doctor` will print:
 
@@ -626,21 +602,44 @@ Newer version of experimental APIs your application is using are available. You 
 To see which experimental APIs can be upgraded, execute `cdk --show-deprecated-api-usage`
 ```
 
-**If there are no breaking changes, are the API really experimental?**
+**If there are no breaking changes, are the APIs really experimental?**
 
 Given that experimental APIs are safe to use, and no breaking changes will be
-introduced, we might consider not referring to them as experimental at all, and
-simply add versioning to the API name. The first version of `grantWrite` will be
-named `grantWriteV1`, the second version will be named `grantWriteV2` and so on.
-We should still add the `experimental` addition to the API for the following
+introduced, we might consider not referring to them as experimental, and simply
+add versioning in the API name. The first version of `grantWrite` will be named
+`grantWriteV1`, the second version will be named `grantWriteV2` and so on. While
+the API will not break, we should still add `experimental` for the following
 reasons:
 
-1. **Real-estate**: `grantWrite` is a much better name than `grantWriteV3`.
+1. **Real-estate**: `grantWrite` is a much better name than `grantWriteV3` for
+   the final API.
 2. **Encourage feedback**: Declaring an API as experimental encourage the
    community to supply feedback.
 3. **Setting the right expectations**: When an API is marked as experimental
-   users know to expect that this is not the final version of the API, and its
+   users are aware that this is not the final version of the API, and its
    deprecation is expected.
+
+**Open questions**
+
+If we decide to implement option 6, we will need to formalize the experimental
+naming strategy.
+
+- Should experimental modules be named with `experimental`? e.g `aws-synthetics`
+  be named `aws-synthetics-exp-v1`, or is it sufficient that its types be named
+  as experimental, e.g `CanaryExp_v1`.
+- If a type that contains other types is experimental, is it sufficient that the
+  containing type is named as `experimental` or should its properties/methods
+  should be named as experimental as well. e.g if the `Canary` construct is
+  experimental, named `CanaryExp_v1`, should its method `createAlarm` be named
+  `createAlarmExp_v1`:
+  ```ts
+  const canary = new CanaryExp_v1(this, 'MyCanary', {
+  ...
+  });
+  canary.createAlarmExp_v1(...)
+  // or
+  canary.createAlarm(...)
+  ```
 
 ## 3. Extra unstable precautions
 
