@@ -67,7 +67,13 @@ levels of abstraction. Changing to vending the Construct Library as a monolithic
 package is one part of making that possible; we should make sure our approach to
 unstable code also takes this into account.
 
-## 3. The CDK team can still perform API experiments
+## 3. We want to encourage customers to not declare a fixed version on packages we own, and are intended to be widely used.
+
+Fixed versions are a bad practice, they prevent users from getting updates that
+includes critical fixes, security patches and more. The mechanism we choose to
+implement experimental features should adhere to the same standard.
+
+## 4. The CDK team can still perform API experiments
 
 We believe that one of the reasons for CDK's success is the ability to release
 functionality quickly into the hands of customers, to get their feedback. The
@@ -421,93 +427,63 @@ npm ERR!
 Users can work around this by executing `npm install --force` but this is not a
 behavior we want to recommend.
 
-### Option 6: name experimental APIs with Experimental suffix/prefix
+### Option 6: API Previews
 
-The two major changes in v2, monolithic packaging, and no more breaking changes,
-share the same goal - encourage customers to declare a flexible version
-(`^`,`~`) on `aws-cdk-lib`. Fixed versions are a bad practice, they prevent
-users from getting updates that includes critical fixes, security patches and
-more. The mechanism we choose to implement experimental features should adhere
-to the same standard. This means that solutions such as releasing experimental
-features under a different module - `aws-cdk-lib-experimental`, or a different
-version line - `2.x.x-experimental` are not viable solutions. They might prevent
-users from declaring a fixed dependency on the `aws-cdk-lib` mainline release,
-but they mandate it in other release line we own and maintain.
+AWS CDK v2 release notes:
 
-To allow the CDK team to keep experimenting while still adhering to
-[Semantic Versioning](https://semver.org/#semantic-versioning-200), we suggest
-experimental features will be a part of `aws-cdk-lib`, and maintain backward
-compatibility. Experimental features will be add to `aws-cdk-lib` using a
-specific naming scheme. For example, the first experimental version of the
-`grantWrite` API will be introduced under the name `grantWriteExp_v1`, when it's
-time to introduce a breaking change to the API, `grantWriteExp_v1` will be
-deprecated and replaced with a newer version - `grantWriteExp_v2`. When the API
-is finalize it will be introduce as `grantWrite`. Deprecated experimental
-versions will only be removed between major versions release.
+> Starting with version 2.0.0 of the AWS CDK, all modules and members will
+> become stable. This means that from this release, we are committed to never
+> introduce breaking changes in a non-major bump.
+>
+> #### Introducing API Previews
+>
+> One of the most common feedback we hear from customers is that they love how
+> fast new features are added to the AWS CDK, we love it to. In v1, the
+> mechanism that allowed us to add new features quickly was marking them as
+> "experimental". Experimental features were not subject to semantic versioning,
+> and we allowed breaking changes to be introduced in these APIs. This is the
+> other most common feedback we hear from customers - breaking changes are not
+> ok. To make sure we can keep adding features fast, while keeping our
+> commitment to not release breaking changes, we are introducing a new model -
+> API Previews. APIs that we want to get in front of developers early, and are
+> not yet finalized, will be added to the AWS CDK with a specific suffix:
+> `PreVx`. APIs with the preview suffix will never be removed, instead they will
+> be deprecated and replaced by either the stable version (without the suffix),
+> or by a newer preview version.
 
-#### Implementation
+> For example, assume we add the method `grantAwesomePowerPreV1`:
+>
+> ```ts
+> /**
+> This methods grants awesome powers
+> */
+> grantAwesomePowerPreV1();
+> ```
+>
+> Times goes by, we get feedback that this method will actually be much better
+> if it accept a `Principal`. Since adding a required property is a breaking
+> change, we will add `grantAwesomePowerPreV2()` and deprecate
+> `grantAwesomePowerPreV1`:
+>
+> ```ts
+> /**
+> * This methods grants awesome powers to the given principal
+> *
+> * @param grantee The principal to grant powers to
+> */
+> grantAwesomePowerPreV2(grantee: iam.IGrantable)
+>
+> /**
+> * This methods grants awesome powers
+> * @deprecated use `grantAwesomePowerPreV2`
+> */
+> grantAwesomePowerPreV1()
+> ```
 
-Experimental APIs specification in the AWS CDK docs:
+> When we decide its time to graduate the API, the latest preview version will
+> be deprecated and the final version - `grantAwesomePower` will be added.
 
-> APIs with the suffix `xxxExp_v` are experimental. Experimental APIs are safe
-> to use, and will always maintain backward compatibility between minor versions
-> of `aws-cdk-lib`. While experimental APIs will not be removed, they will be
-> deprecated and replaced by either a newer experimental version, e.g
-> `xxxExp_v2`, or the final version of the API. Experimental APIs allows us to
-> get new APIs in front of developers early so we can receive feedback before we
-> finalize them.
-
-In the code:
-
-```ts
-const bucket = new Bucket(this, "MyBucket", props);
-bucket.grantWriteExp_v1(...);
-```
-
-A more complex example, the `Canary` construct from the `aws-synthetics` module.
-The `Canary` resource creation API is experimental, which means the constructor
-and Props interface are experimental:
-
-```ts
-
-export interface CanaryPropsExp_v1 {
- ...
-}
-
-export class CanaryExp_v1 extends cdk.Resource {
-  ...
-}
-```
-
-`Canary` creation code:
-
-```ts
-new CanaryExp_v1(this, 'MyCanary', {
-  test: Test.custom({
-    code: synthetics.Code.fromAsset(path.join(__dirname, 'canary')),
-    handler: 'index.handler',
-  }),
-});
-```
-
-In java:
-
-```java
-Object canary = CanaryExp_v1.Builder.create(this, "MyCanary")
-        .test(Test.custom(Map.of(
-                "code", synthetics.Code.fromAsset(path.join(__dirname, "canary")),
-                "handler", "index.handler")))
-        .build();
-```
-
-Note that while it might seem redundant to name the props interface as
-experimental, it is required as every new version of the `Canary` creation API
-will accept a different type of props.
-
-There are many different types of APIs for which we will need to formalize the
-experimental naming strategy, see the open questions section for more examples.
-
-#### Documentation
+### Documentation
 
 How will different versions of an API be reflected in the AWS CDK
 documentations? One option is to only show the latest version of the API, and
@@ -518,25 +494,28 @@ making them still accessible but somewhat hidden:
 
 ![](../images/experimental-docs-mock.png)
 
-#### Naming scheme alternatives
+### Naming scheme alternatives
 
 A good naming scheme for marking experimental APIs should:
 
 1. Express the experimental nature.
 2. Allow expressing order between experimental versions of the same API, e.g
-   `grantWriteExp_v1` is older than `grantWriteExp_v2`.
+   `grantWritePreV2` is newer than `grantWritePreV1`.
 
-**Prefix vs. Suffix**
+#### Prefix vs. Suffix
 
-Advantages of adding the experimental addition as a prefix:
+For the sake of clarity, assume we want to add a `grantWrite` method ot the
+`Bucket` type:
+
+**Advantages of adding the experimental addition as a prefix:**
 
 1. Might be more clear that the API is experimental. All experimental APIs are
    grouped together in autocomplete.
-2. When the final API is added, the autocomplete experience will be better and
-   less confusing. `grantWrite` will be visually separated than
-   `exp_v1_grantWrite` and `exp_v2_grantWrite`.
+2. When the final API is added, the autocomplete experience will be less
+   confusing. `grantWrite` will be visually separated than `preV1GrantWrite` and
+   `preV2GrantWrite`.
 
-Advantages of adding the experimental addition as a suffix:
+**Advantages of adding the experimental addition as a suffix:**
 
 1. Discoverability. When using the `Bucket` type in code, a user looking for a
    way to "grant" permission on the `Bucket`, is likely to type "grant" in the
@@ -545,22 +524,22 @@ Advantages of adding the experimental addition as a suffix:
    However, most IDEs will list methods that contains "grant" in any part will
    be listed by autocomplete when a user types "grant".
 
-Alternatives:
+#### Alternatives:
 
 Using `v1` for visibility:
 
-- Rc_v1: for release candidate.
-- Pre_v1: for preview.
+- RcV1: for release candidate.
+- AlphaV1
 
-**How will it look in all languages:**
+**How will it look in all supported languages:**
 
 > _to be completed once a naming scheme is decided_
 
 | scheme | TS  | Java | Python | .Net | Go  |
 | ------ | --- | ---- | ------ | ---- | --- |
-| Exp_v1 |     |      |        |      |     |
+| PreV1  |     |      |        |      |     |
 
-#### Discussion
+### Discussion
 
 Advantages:
 
@@ -629,25 +608,25 @@ reasons:
    users are aware that this is not the final version of the API, and its
    deprecation is expected.
 
-#### Open questions
+### Open questions
 
 If we decide to implement option 6, we will need to formalize the experimental
 naming strategy.
 
 - Should experimental modules be named with `experimental`? e.g `aws-synthetics`
-  be named `aws-synthetics-exp-v1`, or is it sufficient that its types be named
-  as experimental, e.g `CanaryExp_v1`.
+  be named `aws-synthetics-pre-v1`, or is it sufficient that its types be named
+  as experimental, e.g `CanaryPreV1`.
 - If a type that contains other types is experimental, is it sufficient that the
   containing type is named as `experimental` or should its properties/methods
   should be named as experimental as well. e.g if the `Canary` construct is
-  experimental, named `CanaryExp_v1`, should its method `createAlarm` be named
-  `createAlarmExp_v1`:
+  experimental, named `CanaryPreV1`, should its method `createAlarm` be named
+  `createAlarmPreV1`:
 
   ```ts
-  const canary = new CanaryExp_v1(this, 'MyCanary', {
+  const canary = new CanaryPreV1(this, 'MyCanary', {
   ...
   });
-  canary.createAlarmExp_v1(...)
+  canary.createAlarmPreV1(...)
   // or
   canary.createAlarm(...)
   ```
