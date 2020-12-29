@@ -1,0 +1,5 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.proseWrap": "always",
+    "prettier.trailingComma": "all"
+}
