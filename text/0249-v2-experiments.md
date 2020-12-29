@@ -380,27 +380,35 @@ Option 5 was rejected since it relies on the use of prerelease qualifiers in a
 way that does not adhere to [Sematic Versioning](https://semver.org/). According
 to the semver [specification](https://semver.org/#spec-item-11), a precedence
 between versions is calculated **only** if the **major**, **minor** and
-**patch** are equal. In the above example, the range `^1.60.0` is not satisfied
-by `1.61.0-experimental` since the minor part is not equal. This becomes even
-more problematic in npm-v7, which automatically installs `peerDependencies`.
-With npm-v7, executing `npm install` will throw an exception when a consumer
-application declares a dependency on `aws-cdk-lib` version
-`1.61.0-experimental`, tries to consumes a library which declares a
-`peerDependency` on version `^1.60.0`. exception:
+**patch** are equal. This means that there is no way for a constructs library to
+declare a range of supported versions which include an experimental version.
+Sticking to the above example, a CDK construct library declaring a peer
+dependency on version `^1.60.0` of `aws-cdk-lib`, can not be used in a CDK
+application that declares a dependency on `aws-cdk-lib` version
+`1.61.0-experimental`. This is because the patch part in `1.60.0` and
+`1.61.0-experimental` is not equal, which means `1.61.0-experimental` does not
+satisfy `^1.60.0`. In npm versions prior to npm-v7, if `peerDependencies`
+requirements are not met, executing `npm install` would only issue a warning. In
+npm-v7, which automatically tries to install `peerDependencies`, executing
+`npm install` will throw an error.
 
-`npm install` error:
+To illustrate the user experience with npm-v7. The below is the output of
+executing `npm install` in a CDK application (`my-cdk-application`), which
+declares a dependency on a `aws-cdk-lib` version `1.61.0-experimental`, and on a
+CDK library (`my-construct-lib`) which itself declares a peer dependency on
+`aws-cdk-lib` version `^1.60.0`:
 
 ```
 npm ERR! code ERESOLVE
 npm ERR! ERESOLVE unable to resolve dependency tree
 npm ERR!
 npm ERR! While resolving: my-cdk-application@1.0.0
-npm ERR! Found: aws-cdk-lib@2.3.1-experimental
+npm ERR! Found: aws-cdk-lib@1.61.0-experimental
 npm ERR! node_modules/aws-cdk-lib
-npm ERR!   aws-cdk-lib@"2.3.1-experimental" from the root project
+npm ERR!   aws-cdk-lib"@1.61.0-experimental" from the root project
 npm ERR!
 npm ERR! Could not resolve dependency:
-npm ERR! peer aws-cdk-li@"^2.3.0" from my-construct-lib@1.6.0
+npm ERR! peer aws-cdk-li@"^1.60.0" from my-construct-lib@1.6.0
 npm ERR! node_modules/my-construct-lib
 npm ERR!   my-construct-lib@"1.6.0" from the root project
 npm ERR!
@@ -634,6 +642,7 @@ naming strategy.
   should be named as experimental as well. e.g if the `Canary` construct is
   experimental, named `CanaryExp_v1`, should its method `createAlarm` be named
   `createAlarmExp_v1`:
+
   ```ts
   const canary = new CanaryExp_v1(this, 'MyCanary', {
   ...
