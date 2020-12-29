@@ -6,10 +6,12 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 
 # Summary
 
-When CDK version `2.0` is released to General Availability (GA),
-the single monolithic Construct Library package we vend will no longer allow breaking changes in its main modules.
-Unstable modules, which include both modules that are Experimental, and in Developer Preview, will be vended separately.
-Users will not experience breaking changes in minor releases of the CDK unless they explicitly opt-in to using unstable APIs.
+When CDK version `2.0` is released to General Availability (GA), the single
+monolithic Construct Library package we vend will no longer allow breaking
+changes in its main modules. Unstable modules, which include both modules that
+are Experimental, and in Developer Preview, will be vended separately. Users
+will not experience breaking changes in minor releases of the CDK unless they
+explicitly opt-in to using unstable APIs.
 
 # Motivation
 
@@ -47,11 +49,11 @@ These are the goals of this RFC, in order from most to least important:
 
 ## 1. Using CDK APIs that don't guarantee backwards-compatibility should require clear, explicit opt-in
 
-It should be absolutely obvious to a CDK customer when they are opting in to using an API
-that might have backwards-incompatible changes in the future.
-From experience, we have determined that including that information in the `ReadMe` file of a module,
-or in the inline code documentation available in an editor/IDE,
-does not meet the criteria of "absolutely obvious".
+It should be absolutely obvious to a CDK customer when they are opting in to
+using an API that might have backwards-incompatible changes in the future. From
+experience, we have determined that including that information in the `ReadMe`
+file of a module, or in the inline code documentation available in an
+editor/IDE, does not meet the criteria of "absolutely obvious".
 
 If a customer is not aware of the stable vs unstable distinction, that means
 they're using _only_ stable APIs, and that they will not be broken with minor
@@ -59,10 +61,11 @@ version CDK releases.
 
 ## 2. We want to foster a vibrant ecosystem of third-party CDK packages
 
-In our estimation, the CDK cannot be successful without growing an expansive collection of third-party packages
-that provide reusable Constructs on various levels of abstraction.
-Changing to vending the Construct Library as a monolithic package is one part of making that possible;
-we should make sure our approach to unstable code also takes this into account.
+In our estimation, the CDK cannot be successful without growing an expansive
+collection of third-party packages that provide reusable Constructs on various
+levels of abstraction. Changing to vending the Construct Library as a monolithic
+package is one part of making that possible; we should make sure our approach to
+unstable code also takes this into account.
 
 ## 3. The CDK team can still perform API experiments
 
@@ -84,28 +87,32 @@ To achieve the goals of this RFC, we propose the following changes:
 
 ## 1. No more breaking changes in the main mono-CDK modules
 
-Because of a combination of how `aws-cdk-lib` will be depended on by third-party libraries
-(through peer dependencies), and the goals of this RFC,
-it will no longer be possible to make breaking changes to code inside `aws-cdk-lib`'s main modules.
+Because of a combination of how `aws-cdk-lib` will be depended on by third-party
+libraries (through peer dependencies), and the goals of this RFC, it will no
+longer be possible to make breaking changes to code inside `aws-cdk-lib`'s main
+modules.
 
 (See Appendix A below for a detailed explanation why that is)
 
-We will still retain the ability to mark APIs as `@experimental` in `aws-cdk-lib` main modules,
-but the meaning of that marker will change considerably compared to `1.x`.
-It will be an indication to customers that this API is still in the process of being baked,
-and it might be a bad idea (especially for more conservative customers) to use it in production yet.
-However, an API marked `@experimental` cannot ever be changed in a backwards-incompatible way;
-it can be marked `@deprecated`, but it will not be removed until the next major version of the CDK.
+We will still retain the ability to mark APIs as `@experimental` in
+`aws-cdk-lib` main modules, but the meaning of that marker will change
+considerably compared to `1.x`. It will be an indication to customers that this
+API is still in the process of being baked, and it might be a bad idea
+(especially for more conservative customers) to use it in production yet.
+However, an API marked `@experimental` cannot ever be changed in a
+backwards-incompatible way; it can be marked `@deprecated`, but it will not be
+removed until the next major version of the CDK.
 
-We will need to change the backwards-compatibility validations in our build scripts to make sure they cover `@experimental` APIs as well.
+We will need to change the backwards-compatibility validations in our build
+scripts to make sure they cover `@experimental` APIs as well.
 
 ## 2. Separate "breakable" code from mono-CDK main modules
 
-As a consequence of the above point,
-we need to move all code that doesn't guarantee backwards-compatibility out of the mono-CDK main modules.
+As a consequence of the above point, we need to move all code that doesn't
+guarantee backwards-compatibility out of the mono-CDK main modules.
 
-There a few possible options where this "breakable" code can be moved.
-They all have their advantages and disadvantages.
+There a few possible options where this "breakable" code can be moved. They all
+have their advantages and disadvantages.
 
 **Note #1**: I purposefully don't mention the issue of how should this decision
 affect the number of Git repositories the CDK project uses. I consider that an
@@ -114,10 +121,10 @@ of Git repositories is also a two-way door, unlike the package structure
 decision, which I believe cannot be changed without bumping the major version of
 CDK.
 
-**Note #2**: the options are numbered after the historical order in which they were proposed,
-not in the order they appear in the document.
-Check out Appendix C for the options with the missing numbers --
-they were considered, but discarded by the team as not viable.
+**Note #2**: the options are numbered after the historical order in which they
+were proposed, not in the order they appear in the document. Check out Appendix
+C for the options with the missing numbers -- they were considered, but
+discarded by the team as not viable.
 
 ### Option 2: separate single unstable package
 
@@ -142,26 +149,26 @@ const userPoolClient = new cognito.UserPoolClient(...);
 Advantages:
 
 1. Very explicit (customer has to add a dependency on a package with
-  "experiments" in the name and version `0.x`).
-2. It's possible for unstable modules to depend on other unstable modules
-  (see Appendix B for data on how necessary that is for the CDK currently).
+   "experiments" in the name and version `0.x`).
+2. It's possible for unstable modules to depend on other unstable modules (see
+   Appendix B for data on how necessary that is for the CDK currently).
 
 Disadvantages:
 
-1. It's not possible for stable modules to depend on unstable ones
-  (see Appendix B for data on how necessary that is for the CDK currently).
-  This has serious side implications:
+1. It's not possible for stable modules to depend on unstable ones (see Appendix
+   B for data on how necessary that is for the CDK currently). This has serious
+   side implications:
 
-    - All unstable modules that have stable dependents today will have to be
-      graduated before `v2.0` is released.
-    - Before a module is graduated, all of its dependencies need to be graduated.
-    - It will not be possible to add new dependencies on unstable modules to
-      stable modules in the future (for example, that's a common need for
-      StepFunction Tasks).
+   - All unstable modules that have stable dependents today will have to be
+     graduated before `v2.0` is released.
+   - Before a module is graduated, all of its dependencies need to be graduated.
+   - It will not be possible to add new dependencies on unstable modules to
+     stable modules in the future (for example, that's a common need for
+     StepFunction Tasks).
 
 2. Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable module around, but that
-  leads to duplicated classes.
+   mitigate this downside by keeping the old unstable module around, but that
+   leads to duplicated classes.
 
 ### Option 3: separate multiple unstable packages
 
@@ -185,55 +192,56 @@ const userPoolClient = new cognito.UserPoolClient(...);
 Advantages:
 
 1. Very explicit (customer has to add a dependency on a package with
-  "experiments" in the name and version `0.x`).
+   "experiments" in the name and version `0.x`).
 2. This is closest to the third-party CDK package experience our customers will
-  have.
+   have.
 
 Disadvantages:
 
-1. It's not possible for stable modules to depend on unstable ones
-  (see Appendix B for data on how necessary that is for the CDK currently),
-  with the same implications as above.
+1. It's not possible for stable modules to depend on unstable ones (see Appendix
+   B for data on how necessary that is for the CDK currently), with the same
+   implications as above.
 2. It's not possible for unstable modules to depend on other unstable modules
-  (see Appendix B for data on how necessary that is for the CDK currently),
-  as doing that brings us back to the dependency hell that mono-CDK was designed to solve.
+   (see Appendix B for data on how necessary that is for the CDK currently), as
+   doing that brings us back to the dependency hell that mono-CDK was designed
+   to solve.
 3. Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable package around, but that
-  leads to duplicated classes.
+   mitigate this downside by keeping the old unstable package around, but that
+   leads to duplicated classes.
 
 ### Option 5: superset/subset releases
 
-Instead of *splitting* the stable and experimental APIs into two different
-packages, we release two builds of the same source code, where the *experimental*
-build is a superset of the *stable* build.
+Instead of _splitting_ the stable and experimental APIs into two different
+packages, we release two builds of the same source code, where the
+_experimental_ build is a superset of the _stable_ build.
 
 This can be done automatically, by using jsii to strip out experimental APIs
-from the **public interface** of the stable release. The implementation
-(`.js` files) will be the same in both releases, so stable APIs in
-`aws-cdk-lib` can safely use experimental APIs internally (though not in
-their public API surfaces).
+from the **public interface** of the stable release. The implementation (`.js`
+files) will be the same in both releases, so stable APIs in `aws-cdk-lib` can
+safely use experimental APIs internally (though not in their public API
+surfaces).
 
 #### How does stripping APIs from the public work?
 
 | TypeScript            | JavaScript | Java, Python, C#, Go            |
-|-----------------------|------------|---------------------------------|
+| --------------------- | ---------- | ------------------------------- |
 | Stripped from `.d.ts` | N/A        | No bindings generated by `jsii` |
 
-In TypeScript, the compiler will prevent usage of APIs that are not
-advertised in the `.d.ts` files. Users will be able to bypass this guarantee
-by using `as any` though.
+In TypeScript, the compiler will prevent usage of APIs that are not advertised
+in the `.d.ts` files. Users will be able to bypass this guarantee by using
+`as any` though.
 
-For JavaScript, an IDE will (hopefully¹) not autocomplete APIs missing from
-the `.d.ts` files; otherwise nothing prevents users from calling them. On the
-other hand, JavaScript devs are by definition required to read the docs, so
-they can't miss the *experimental* banners displayed there.
+For JavaScript, an IDE will (hopefully¹) not autocomplete APIs missing from the
+`.d.ts` files; otherwise nothing prevents users from calling them. On the other
+hand, JavaScript devs are by definition required to read the docs, so they can't
+miss the _experimental_ banners displayed there.
 
 For jsii client languages, the bindings for experimental APIs will simply not
-exist so there's no way to work around that (though we'll have to check
-whether for example Python makes it possible to pass struct values that
-aren't in the declared API surface).
+exist so there's no way to work around that (though we'll have to check whether
+for example Python makes it possible to pass struct values that aren't in the
+declared API surface).
 
-¹) A *smart enough* IDE could discover those APIs by parsing the JavaScript
+¹) A _smart enough_ IDE could discover those APIs by parsing the JavaScript
 directly, or by doing dynamic execution and runtime inspection of objects. This
 was already being done before TypeScript existed, I did not survey the current
 landscape of IDEs to figure out which ones use what techniques to provide
@@ -241,13 +249,13 @@ autocomplete for users.
 
 #### What about experimental struct properties
 
-We also commonly use `@experimental` to indicate experimental struct
-properties for `Props` types.
+We also commonly use `@experimental` to indicate experimental struct properties
+for `Props` types.
 
 There will be code that users can write that will pass a props object that
-technically contains non-advertised, experimental properties. Without
-additional runtime support the object constructor will happily interpret the
-presence of those properties and make decisions based off of them.
+technically contains non-advertised, experimental properties. Without additional
+runtime support the object constructor will happily interpret the presence of
+those properties and make decisions based off of them.
 
 An example in TypeScript:
 
@@ -296,42 +304,45 @@ new StableConstruct(this, 'Id', {
 });
 ```
 
-We would need runtime support (`if (props.experimentalProp && IN_EXPERIMENTAL_MODE) { ... }`)
-to detect and prevent this, or accept it.
+We would need runtime support
+(`if (props.experimentalProp && IN_EXPERIMENTAL_MODE) { ... }`) to detect and
+prevent this, or accept it.
 
-The example above is for TypeScript; it obviously also holds for JavaScript, and *might*
-hold for jsii languages in certain cases.
+The example above is for TypeScript; it obviously also holds for JavaScript, and
+_might_ hold for jsii languages in certain cases.
 
 #### Vending
 
-There are a number of different ways we can choose to distinguish the two builds.
-See Appendix D for an evaluation of all the possibilities.
+There are a number of different ways we can choose to distinguish the two
+builds. See Appendix D for an evaluation of all the possibilities.
 
 - Distinguish by package name
-  - Can't be used in **pip**: there's no way to have an app that uses the experimental
-    library work with a library that uses the stable library (no way to prevent the
-    transitive dependency package with a different name from being installed).
+  - Can't be used in **pip**: there's no way to have an app that uses the
+    experimental library work with a library that uses the stable library (no
+    way to prevent the transitive dependency package with a different name from
+    being installed).
 - Distinguish by prerelease tag
-  - **NuGet**: requires that experimental version semver-sorts *after* the
+  - **NuGet**: requires that experimental version semver-sorts _after_ the
     matching stable version, otherwise it errors out and fails the restore
     operation.
   - **npm**: will always complain when trying to satisfy a stable requirement
     with an experimental version, regardless of how it sorts.
-  - **Maven**: does not recognize prerelease tags. This means that *apps* can't
-    have an open-ended version range since they might accidentally pick up experimental
-    versions (a Maven range of `[1.60.0, 2.0.0)` *will* match `1.61.0-experimental`).
-    This might not be a problem as this is rarely done in practice (since Maven doesn't
-    have a lock file, the `pom` itself serves as the lock file).
+  - **Maven**: does not recognize prerelease tags. This means that _apps_ can't
+    have an open-ended version range since they might accidentally pick up
+    experimental versions (a Maven range of `[1.60.0, 2.0.0)` _will_ match
+    `1.61.0-experimental`). This might not be a problem as this is rarely done
+    in practice (since Maven doesn't have a lock file, the `pom` itself serves
+    as the lock file).
 - Distinguish by major version
-  - Very similar to prerelease tags, except we don't depend on Package Manager's support
-    for prerelease tags; all PMs support major versions.
+  - Very similar to prerelease tags, except we don't depend on Package Manager's
+    support for prerelease tags; all PMs support major versions.
 
 Even though there are downsides, the prerelease tag is the least bad of the
 alternatives and the one that's (probably) easiest to explain.
 
-We have to work around the version ordering problem though, by making sure
-the experimental version sorts after the stable version. We can either use
-the minor or the patch version:
+We have to work around the version ordering problem though, by making sure the
+experimental version sorts after the stable version. We can either use the minor
+or the patch version:
 
 ```shell
 # Experimental uses minor bump
@@ -345,10 +356,11 @@ the minor or the patch version:
 
 Advantages:
 
-1. It's possible for stable modules to depend on unstable ones
-  (see Appendix B for data on how necessary that is for the CDK currently).
+1. It's possible for stable modules to depend on unstable ones (see Appendix B
+   for data on how necessary that is for the CDK currently).
 2. Stabilizing code will not be a breaking change for customers.
-3. Stabilizing code will be a simple operation for CDK developers (remove an annotation).
+3. Stabilizing code will be a simple operation for CDK developers (remove an
+   annotation).
 4. No additional management overhead of multiple packages.
 5. It's possible for unstable modules to depend on other unstable modules.
 
@@ -358,17 +370,19 @@ Disadvantages:
    standard, we're going to have to clearly explain it to people.
 2. Requires changes to jsii
 3. Requires changes to the docs to make switching between editions possible
-4. Protection not offered for JavaScript users, can be bypassed in TypeScript; although
-   something is to be said for it being the same with `private` fields today.
+4. Protection not offered for JavaScript users, can be bypassed in TypeScript;
+   although something is to be said for it being the same with `private` fields
+   today.
 
 ## 3. Extra unstable precautions
 
-This chapter discusses additional precautions we can choose to implement to re-inforce goal #1 above.
-These are orthogonal to the decision on how to divide the stable and unstable modules
-(meaning, we could implement any of these with each of the options above).
+This chapter discusses additional precautions we can choose to implement to
+re-inforce goal #1 above. These are orthogonal to the decision on how to divide
+the stable and unstable modules (meaning, we could implement any of these with
+each of the options above).
 
-These could be added to either `@experimental` APIs in stable modules,
-to all APIs in unstable modules, or both.
+These could be added to either `@experimental` APIs in stable modules, to all
+APIs in unstable modules, or both.
 
 ### Require a feature flag for unstable code
 
@@ -423,34 +437,35 @@ Disadvantages:
 
 # Appendix A - why can't we break backwards compatibility in the code of mono-CDK main modules?
 
-This section explains why it will not be possible to break backwards compatibility of any API inside the stable modules of mono-CDK.
+This section explains why it will not be possible to break backwards
+compatibility of any API inside the stable modules of mono-CDK.
 
-Imagine we could break backwards compatibility in the code of the  `aws-cdk-lib` main modules.
-The following scenario would then be possible:
+Imagine we could break backwards compatibility in the code of the `aws-cdk-lib`
+main modules. The following scenario would then be possible:
 
 Let's say we have a third-party library, `my-library`, that vends `MyConstruct`.
-It's considered stable by its author.
-However, inside the implementation of `MyConstruct`,
-it uses an experimental construct, `SomeExperiment`, from mono-CDK's S3 module.
-It's just an implementation detail, though; it's not reflected in the API of `MyConstruct`.
+It's considered stable by its author. However, inside the implementation of
+`MyConstruct`, it uses an experimental construct, `SomeExperiment`, from
+mono-CDK's S3 module. It's just an implementation detail, though; it's not
+reflected in the API of `MyConstruct`.
 
-`my-library` is released in version `2.0.0`,
-and it has a peer dependency on `aws-cdk-lib` version `2.10.0`
-(with a caret, so `"aws-cdk-lib": "^2.10.0"`).
+`my-library` is released in version `2.0.0`, and it has a peer dependency on
+`aws-cdk-lib` version `2.10.0` (with a caret, so `"aws-cdk-lib": "^2.10.0"`).
 
-Some time passes, enough that `aws-cdk-lib` is now in version `2.20.0`.
-A CDK customer wants to use `my-library` together with the newest and shiniest `aws-cdk-lib`,`2.20.0`,
-as they need some recently released features.
-However, incidentally, in version `2.15.0` of `aws-cdk-lib`,
-`SomeExperiment` was broken -- which is fine, it's an experimental API.
-Suddenly, the combination of `my-library` `2.0.0` and `aws-cdk-lib` `2.20.0`
-will fail for the customer at runtime,
-and there's basically no way for them to unblock themselves other than pinning to version `2.14.0` of `aws-cdk-lib`,
-which was exactly the problem mono-CDK was designed to prevent in the first place.
+Some time passes, enough that `aws-cdk-lib` is now in version `2.20.0`. A CDK
+customer wants to use `my-library` together with the newest and shiniest
+`aws-cdk-lib`,`2.20.0`, as they need some recently released features. However,
+incidentally, in version `2.15.0` of `aws-cdk-lib`, `SomeExperiment` was broken
+-- which is fine, it's an experimental API. Suddenly, the combination of
+`my-library` `2.0.0` and `aws-cdk-lib` `2.20.0` will fail for the customer at
+runtime, and there's basically no way for them to unblock themselves other than
+pinning to version `2.14.0` of `aws-cdk-lib`, which was exactly the problem
+mono-CDK was designed to prevent in the first place.
 
 # Appendix B - modules depending on unstable modules
 
-This section contains the snapshot of the interesting dependencies between Construct Library modules as of writing this document.
+This section contains the snapshot of the interesting dependencies between
+Construct Library modules as of writing this document.
 
 ## Stable modules depending on unstable modules
 
@@ -481,12 +496,15 @@ This section contains the snapshot of the interesting dependencies between Const
 
 # Appendix C - discarded solutions to problem #2
 
-These potential solutions to problem #2 were discarded by the team as not viable.
+These potential solutions to problem #2 were discarded by the team as not
+viable.
 
 ## Option 1: separate submodules of `aws-cdk-lib`
 
-In this option, we would use the namespacing features of each language to vend a separate namespace for the experimental APIs.
-The customer would have to explicitly opt-in by using a language-level import of a namespace with "experimental" in the name.
+In this option, we would use the namespacing features of each language to vend a
+separate namespace for the experimental APIs. The customer would have to
+explicitly opt-in by using a language-level import of a namespace with
+"experimental" in the name.
 
 Example using stable and unstable Cognito APIs:
 
@@ -501,28 +519,28 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 Advantages:
 
-1. It's possible for stable module to depend on unstable ones
-  (see Appendix B for data on how necessary that is for the CDK currently)
-2. It's possible for unstable modules to depend on other unstable modules
-  (see Appendix B for data on how necessary that is for the CDK currently).
+1. It's possible for stable module to depend on unstable ones (see Appendix B
+   for data on how necessary that is for the CDK currently)
+2. It's possible for unstable modules to depend on other unstable modules (see
+   Appendix B for data on how necessary that is for the CDK currently).
 
 Disadvantages:
 
 1. Might be considered less explicit, as a customer never says they want to
-  depend on a package containing unstable APIs, or with `0.x` for the version.
+   depend on a package containing unstable APIs, or with `0.x` for the version.
 2. If a third-party package depends on an unstable API in a non-obvious way (for
-  example, only in the implementation of a construct, not in its public API),
-  that might break for customers when upgrading to a version of `aws-cdk-lib`
-  that has broken that functionality compared to the `aws-cdk-lib` version the
-  third-party construct is built against (basically, the same scenario from
-  above that explains why we can no longer have unstable code in stable mono-CDK
-  modules). None of the options solve the problem of allowing third-party
-  libraries to safely depend on unstable Construct Library code; however,
-  the fact that all unstable code in this variant is shipped in
-  `aws-cdk-lib` makes this particular problem more likely to manifest itself.
+   example, only in the implementation of a construct, not in its public API),
+   that might break for customers when upgrading to a version of `aws-cdk-lib`
+   that has broken that functionality compared to the `aws-cdk-lib` version the
+   third-party construct is built against (basically, the same scenario from
+   above that explains why we can no longer have unstable code in stable
+   mono-CDK modules). None of the options solve the problem of allowing
+   third-party libraries to safely depend on unstable Construct Library code;
+   however, the fact that all unstable code in this variant is shipped in
+   `aws-cdk-lib` makes this particular problem more likely to manifest itself.
 3. Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable module around, but that
-  leads to duplicated classes in the same package.
+   mitigate this downside by keeping the old unstable module around, but that
+   leads to duplicated classes in the same package.
 
 **Verdict**: discarded because disadvantage #2 was considered a show-stopper.
 
@@ -532,8 +550,8 @@ In this option, we will fork the CDK codebase and maintain 2 long-lived
 branches: one for version `2.x`, which will be all stable, and one for version
 `3.x`, which will be all unstable.
 
-Example using stable and unstable Cognito APIs:
-(assuming the dependency on `"aws-cdk-lib"` is in version `"3.x.y"`):
+Example using stable and unstable Cognito APIs: (assuming the dependency on
+`"aws-cdk-lib"` is in version `"3.x.y"`):
 
 ```ts
 import * as cognito from 'aws-cdk-lib/aws-cognito';
@@ -545,29 +563,29 @@ const userPoolClient = new cognito.UserPoolClient(...);
 
 Advantages:
 
-1. It's possible for unstable modules to depend on other unstable modules
-  (see Appendix B for data on how necessary that is for the CDK currently).
+1. It's possible for unstable modules to depend on other unstable modules (see
+   Appendix B for data on how necessary that is for the CDK currently).
 
 Disadvantages:
 
-1. It's not possible for stable modules to depend on unstable ones (with the same
-  implications as above).
+1. It's not possible for stable modules to depend on unstable ones (with the
+   same implications as above).
 2. Does not make it obvious to customers that this is unstable (`3.x` is
-  considered stable in semantic versioning).
+   considered stable in semantic versioning).
 3. We are going from "some code is stable, some is unstable" to "all of this is
-  unstable", which seems to be against the customer feedback we're hearing
-  that's the motivation for this RFC.
-4. Two long-lived Git branches will mean constant merge-hell between the two, and
-  since `3.x` has free rein to change anything, there will be a guarantee of
-  constant conflicts between the two.
+   unstable", which seems to be against the customer feedback we're hearing
+   that's the motivation for this RFC.
+4. Two long-lived Git branches will mean constant merge-hell between the two,
+   and since `3.x` has free rein to change anything, there will be a guarantee
+   of constant conflicts between the two.
 5. Fragments the mono-CDK third-party library community into two.
 6. Very confusing when we want to release the next major version of the CDK (I
-  guess we go straight to `4.x`...?).
-7. The fact that all code in `3.x` is unstable means peer dependencies don't work
-  (see above for why).
+   guess we go straight to `4.x`...?).
+7. The fact that all code in `3.x` is unstable means peer dependencies don't
+   work (see above for why).
 8. Graduating a module to stable will be a breaking change for customers. We can
-  mitigate this downside by keeping the old unstable package around, but that
-  leads to duplicated classes between the 2 versions.
+   mitigate this downside by keeping the old unstable package around, but that
+   leads to duplicated classes between the 2 versions.
 
 **Verdict**: discarded as a worse version of option #5.
 
@@ -579,27 +597,30 @@ We have the following options to pick from:
 - Pre-release version tag
 - Different major versions
 
-We need to evaluate all of these, for each package manager, on the following criteria:
+We need to evaluate all of these, for each package manager, on the following
+criteria:
 
-- Can applications depend on an upwards unbounded range of *stable* builds? (important)
-- Can an application using the *experimental* build use a library using the *stable* build? (important)
+- Can applications depend on an upwards unbounded range of _stable_ builds?
+  (important)
+- Can an application using the _experimental_ build use a library using the
+  _stable_ build? (important)
   - Without the package manager complaining (preferably)
-- Can a library declare a tool-checked dependency on a specific *experimental* version? (preferably)
+- Can a library declare a tool-checked dependency on a specific _experimental_
+  version? (preferably)
 
-We have ruled out the requirement that an application using *stable*
-may transparently use a library using *experimental*. We will disallow this
-as it's not feasible. We're trying to achieve the following compatibility
-matrix:
+We have ruled out the requirement that an application using _stable_ may
+transparently use a library using _experimental_. We will disallow this as it's
+not feasible. We're trying to achieve the following compatibility matrix:
 
 | .                | Stable App        | Experimental App         |
-|------------------|-------------------|--------------------------|
+| ---------------- | ----------------- | ------------------------ |
 | Stable Lib       | floating versions | lib floating, app pinned |
 | Experimental Lib | -                 | pinned versions          |
 
-> NOTE: in the following sections, I'll be using the terms "stable app", "experimental app",
-> "stable lib" and "experimental lib" as stand-ins for the more accurate but much
-> longer "app that depends on stable CDK", "app that depends on experimental CDK",
-> etc.
+> NOTE: in the following sections, I'll be using the terms "stable app",
+> "experimental app", "stable lib" and "experimental lib" as stand-ins for the
+> more accurate but much longer "app that depends on stable CDK", "app that
+> depends on experimental CDK", etc.
 
 ## Different package names
 
@@ -611,20 +632,19 @@ We would vend two different package names, for example:
 The tl;dr of this section is as follows. Read below for details.
 
 | .     | Stable apps | Experimental app uses Stable lib | ...without complaints | Lib advertises Experimental |
-|-------|-------------|----------------------------------|-----------------------|-----------------------------|
+| ----- | ----------- | -------------------------------- | --------------------- | --------------------------- |
 | NPM   | yes         | with package aliases             | yes                   | no                          |
 | Maven | yes         | with excluded dependencies       | yes                   | yes                         |
 | pip   | yes         | no                               | -                     | no                          |
 | NuGet | yes         | no                               | no                    | yes                         |
 | Go    | ?           | ?                                |                       | ?                           |
 
-### NPM*
+### NPM\*
 
-In NPM-based languages (JavaScript and TypeScript), the package name appears
-in source code (in the `require()` statement). If we changed the library
-name, we wouldn't be able to use a library that uses stable code (it would
-contain `require('aws-cdk-lib')`) in an application that uses experimental
-code:
+In NPM-based languages (JavaScript and TypeScript), the package name appears in
+source code (in the `require()` statement). If we changed the library name, we
+wouldn't be able to use a library that uses stable code (it would contain
+`require('aws-cdk-lib')`) in an application that uses experimental code:
 
 ```js
 //------------- LIBRARY THAT USES STABLE ---------------
@@ -652,15 +672,15 @@ import * as cdk from 'aws-cdk-lib-experimental'; // <- locally perfectly sane
 ```
 
 Well oops. Turns out we can't have a library that depends on `aws-cdk-lib` in an
-application that uses `aws-cdk-lib-experimental`; NPM will complain about the missing
-`peerDependency`, and the `require('aws-cdk-lib')` call will just fail at runtime.
+application that uses `aws-cdk-lib-experimental`; NPM will complain about the
+missing `peerDependency`, and the `require('aws-cdk-lib')` call will just fail
+at runtime.
 
 NPM 6.9.0 (released May 2019) introduces a feature that helps with this:
-[package
-aliases](https://github.com/npm/rfcs/blob/latest/implemented/0001-package-aliases.md)
+[package aliases](https://github.com/npm/rfcs/blob/latest/implemented/0001-package-aliases.md)
 which allows installing a package under a different name, so we could install
-`aws-cdk-lib-experimental` under the name `aws-cdk-lib`. The application `package.json`
-will now look like this:
+`aws-cdk-lib-experimental` under the name `aws-cdk-lib`. The application
+`package.json` will now look like this:
 
 ```js
 //------------- APPLICATION THAT USES EXPERIMENTAL AND STABLE LIB ---------------
@@ -678,53 +698,54 @@ import * as cdk from 'aws-cdk-lib';
 
 So that's cool.
 
-What would a construct library that depends on an experimental build look
-like, and could we use that in the same application?
+What would a construct library that depends on an experimental build look like,
+and could we use that in the same application?
 
 An experimental library would declare this:
 
 ```json
 {
   "peerDependencies": {
-      "aws-cdk-lib": "1.60.0"
-      // Note: ideally you'd like to express "aws-cdk-lib-experiments": "1.60.0" here, but
-      // if you do that "npm ls" will complain about an unmet peer dependency
+    "aws-cdk-lib": "1.60.0"
+    // Note: ideally you'd like to express "aws-cdk-lib-experiments": "1.60.0" here, but
+    // if you do that "npm ls" will complain about an unmet peer dependency
   },
   "devDependencies": {
-      "aws-cdk-lib": "npm:aws-cdk-lib-experiments@1.60.0"
+    "aws-cdk-lib": "npm:aws-cdk-lib-experiments@1.60.0"
   }
 }
 ```
 
 This will all work as intended and put code in the right places.
 
-However, we lose the tool-checked dependency on experimental: from NPM's
-point of view the library depends on *stable* CDK (whereas we want it to
-declare that it depends on *experimental* CDK). It's only notes in the README
-that can inform the consumer otherwise.
+However, we lose the tool-checked dependency on experimental: from NPM's point
+of view the library depends on _stable_ CDK (whereas we want it to declare that
+it depends on _experimental_ CDK). It's only notes in the README that can inform
+the consumer otherwise.
 
 ### Maven
 
-No need to change the sources when using a stable library with an
-experimental app, as the namespaces and class names will be the same.
+No need to change the sources when using a stable library with an experimental
+app, as the namespaces and class names will be the same.
 
 Using a stable library in an experimental app can be done in two ways:
 
-* The library uses the `provided` dependency flavor (similar to `peerDependencies` in NPM).
-  Requires the app to bring the right version of CDK.
-* The app that wants to use the *experimental* build uses dependency exclusions
-  to remove the dependency on the *stable* build (looks like this is necessary for
-  every stable library individually)
+- The library uses the `provided` dependency flavor (similar to
+  `peerDependencies` in NPM). Requires the app to bring the right version of
+  CDK.
+- The app that wants to use the _experimental_ build uses dependency exclusions
+  to remove the dependency on the _stable_ build (looks like this is necessary
+  for every stable library individually)
 
 [Reference](https://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html#)
 
 ### pip
 
-No need to change the sources when using a stable library with an
-experimental app, as the namespaces and class names will be the same.
+No need to change the sources when using a stable library with an experimental
+app, as the namespaces and class names will be the same.
 
-`pip` transitively fetches from the library's `setup.py`, and there's no way
-to override that.
+`pip` transitively fetches from the library's `setup.py`, and there's no way to
+override that.
 
 Our only option around that is to have stable libraries not declare any CDK
 dependency in `setup.py`, but then we also lose the ability for libraries to
@@ -734,8 +755,8 @@ Effectively, this seems to be a no-go.
 
 ### .NET Core/NuGet
 
-No need to change the sources when using a stable library with an
-experimental app, as the namespaces and class names will be the same.
+No need to change the sources when using a stable library with an experimental
+app, as the namespaces and class names will be the same.
 
 ...pending responses from .NET SDK team...
 
@@ -750,20 +771,20 @@ We would vend the experimental build under a prerelease tag, for example:
 - `1.60.0`
 - `1.60.0-experimental`
 
-Because of semver ordering, if we use the numbering above then the `experimental`
-version will sort *before* the stable version, which may lead to problems
-because a library's dependency requirement of `^1.60.0` would *not* be satisfied
-by a version numbered `1.60.0-experimental`.
+Because of semver ordering, if we use the numbering above then the
+`experimental` version will sort _before_ the stable version, which may lead to
+problems because a library's dependency requirement of `^1.60.0` would _not_ be
+satisfied by a version numbered `1.60.0-experimental`.
 
 We could get rid of some of the ordering and warning problems by making sure the
-experimental version semver-orders *after* the stable version by making sure
-we bump some number:
+experimental version semver-orders _after_ the stable version by making sure we
+bump some number:
 
 - `aws-cdk-lib@1.60.100-experimental`
 - `aws-cdk-lib@1.61.0-experimental`
 
 | .     | Stable apps        | Experimental app uses Stable lib | ...without complaints       | Lib advertises Experimental |
-|-------|--------------------|----------------------------------|-----------------------------|-----------------------------|
+| ----- | ------------------ | -------------------------------- | --------------------------- | --------------------------- |
 | NPM   | yes                | yes                              | no                          | yes                         |
 | Maven | no but that's okay | yes                              | yes                         | yes                         |
 | pip   | yes                | yes                              | if experimental sorts later | yes                         |
@@ -772,45 +793,50 @@ we bump some number:
 
 ### NPM
 
-Can apps use stable ranges: yes, `^1.60.0` will not auto-pick `1.61.1-experimental` for downloading.
+Can apps use stable ranges: yes, `^1.60.0` will not auto-pick
+`1.61.1-experimental` for downloading.
 
-Experimental app uses stable lib: can be done, the lib only uses a `peerDependency`.
+Experimental app uses stable lib: can be done, the lib only uses a
+`peerDependency`.
 
-However, if the `peerDependency` of a library is stable (`^1.60.0`) and we're trying to satisfy it
-with an experimental version, `npm ls` will complain *regardless* of where the experimental
-version sorts with respect to the stable version.
+However, if the `peerDependency` of a library is stable (`^1.60.0`) and we're
+trying to satisfy it with an experimental version, `npm ls` will complain
+_regardless_ of where the experimental version sorts with respect to the stable
+version.
 
-It will *work*, but npm will *complain*.
+It will _work_, but npm will _complain_.
 
 ### Maven
 
-Stable ranges: no, `[1.60.0,)` *will* include `1.61.1-experimental`. However,
+Stable ranges: no, `[1.60.0,)` _will_ include `1.61.1-experimental`. However,
 this might not be an issue as `pom.xml` typically serves as the lock file and
 people will not build applications with open-ended ranges in the pom file.
 
-If we *wanted* to, we could vend as `1.60.0-experimental-SNAPSHOT`; snapshot
+If we _wanted_ to, we could vend as `1.60.0-experimental-SNAPSHOT`; snapshot
 versions will not match a range unless specifically requested. However,
 `SNAPSHOT` versions are not intended for this, they are intended to indicate
-mutability and bypass caches: every configurable time period (by default,
-every day but can be every build, and snapshots can also be disabled
-altogether) the `SNAPSHOT` version will be fetchd again, as it is assumed to
-be mutable.
+mutability and bypass caches: every configurable time period (by default, every
+day but can be every build, and snapshots can also be disabled altogether) the
+`SNAPSHOT` version will be fetchd again, as it is assumed to be mutable.
 
 Maven uses a "closest to root wins" dependency model, so the application can
 substitute an experimental version in place of the declared stable
 compatibility.
 
-It will not complain about incompatible versions unless you really *really*
-ask for diagnostics (and even then it's hard to get it to show an error).
+It will not complain about incompatible versions unless you really _really_ ask
+for diagnostics (and even then it's hard to get it to show an error).
 
 ### pip
 
-Stable ranges: yes, `>=1.60.0` will not match version `1.60.1-experimental` [ref](https://pip.pypa.io/en/stable/reference/pip_install/#pre-release-versions)
+Stable ranges: yes, `>=1.60.0` will not match version `1.60.1-experimental`
+[ref](https://pip.pypa.io/en/stable/reference/pip_install/#pre-release-versions)
 
-Experimental app uses stable lib: `pip` allows overriding transitive dependencies using `requirements.txt`.
+Experimental app uses stable lib: `pip` allows overriding transitive
+dependencies using `requirements.txt`.
 
-It will complain if the experimental version sorts before the stable version, but will NOT complain if
-the experimental version sorts after the stable version. Everything still gets installed, even if it complains.
+It will complain if the experimental version sorts before the stable version,
+but will NOT complain if the experimental version sorts after the stable
+version. Everything still gets installed, even if it complains.
 
 Example of a complaint (using a different package):
 
@@ -818,19 +844,22 @@ Example of a complaint (using a different package):
 awscli 1.18.158 has requirement s3transfer<0.4.0,>=0.3.0, but you'll have s3transfer 0.2.0 which is incompatible.
 ```
 
-(Note: when trying the PyPI testing server, the version number schema I had in mind: `X.Y.Z-experimental` is not
-accepted, nor is `X.Y-experimental` or `X.Yexp`. Ultimately I had to go for `1.60rc1`.)
+(Note: when trying the PyPI testing server, the version number schema I had in
+mind: `X.Y.Z-experimental` is not accepted, nor is `X.Y-experimental` or
+`X.Yexp`. Ultimately I had to go for `1.60rc1`.)
 
 ### NuGet
 
-PJ Pittle from the .NET team has confirmed for us that NuGet will complain and **error out** if we use:
+PJ Pittle from the .NET team has confirmed for us that NuGet will complain and
+**error out** if we use:
 
 - Library depends on CDK `>= 1.60.0`
 - App uses CDK `1.60.0-experimental`
 
 (Because of semver ordering.)
 
-The only solution seems to be to make sure that the experimental version sorts after the stable version.
+The only solution seems to be to make sure that the experimental version sorts
+after the stable version.
 
 ## Different major versions
 
@@ -845,7 +874,7 @@ Or:
 - `aws-cdk-lib@102.60.0` (100+ versions are experimental)
 
 | .     | Stable apps | Experimental app uses Stable lib | ...without complaints | Lib advertises Experimental |
-|-------|-------------|----------------------------------|-----------------------|-----------------------------|
+| ----- | ----------- | -------------------------------- | --------------------- | --------------------------- |
 | NPM   | yes         | yes                              | yes                   | yes                         |
 | Maven | yes         | yes                              | yes                   | yes                         |
 | pip   | yes         | no                               | -                     | yes                         |
@@ -854,8 +883,9 @@ Or:
 
 ### NPM
 
-Mostly like pre-release tags, except libraries using stable can explicitly declare they're usable
-with both stable and experimental ranges by using multiple `peerDependency` ranges:
+Mostly like pre-release tags, except libraries using stable can explicitly
+declare they're usable with both stable and experimental ranges by using
+multiple `peerDependency` ranges:
 
 ```json
 {
@@ -865,12 +895,13 @@ with both stable and experimental ranges by using multiple `peerDependency` rang
 }
 ```
 
-This would suppress the warning you would otherwise get for a non-compatible version.
+This would suppress the warning you would otherwise get for a non-compatible
+version.
 
 ### Maven
 
-Like pre-release tags, except we don't get the mixing in of pre-release versions with
-regular versions.
+Like pre-release tags, except we don't get the mixing in of pre-release versions
+with regular versions.
 
 ### pip
 
