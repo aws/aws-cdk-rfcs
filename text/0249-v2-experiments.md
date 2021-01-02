@@ -472,7 +472,7 @@ AWS CDK v2 release notes:
 > To make sure we can keep adding features fast, while keeping our commitment to
 > not release breaking changes, we are introducing a new model - API Previews.
 > APIs that we want to get in front of developers early, and are not yet
-> finalized, will be added to the AWS CDK with a specific suffix: `Pre`. APIs
+> finalized, will be added to the AWS CDK with a specific suffix: `PreX`. APIs
 > with the preview suffix will never be removed, instead they will be deprecated
 > and replaced by either the stable version (without the suffix), or by a newer
 > preview version. For example, assume we add the method
