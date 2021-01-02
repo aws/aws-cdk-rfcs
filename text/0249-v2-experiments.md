@@ -4,6 +4,60 @@ start date: 2020-09-08
 rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 ---
 
+- [Summary](#summary)
+- [Motivation](#motivation)
+- [Goals](#goals)
+  - [1. Using CDK APIs that don't guarantee backwards-compatibility should require clear, explicit opt-in](#1-using-cdk-apis-that-dont-guarantee-backwards-compatibility-should-require-clear-explicit-opt-in)
+  - [2. We want to foster a vibrant ecosystem of third-party CDK packages](#2-we-want-to-foster-a-vibrant-ecosystem-of-third-party-cdk-packages)
+  - [3. The CDK team can still perform API experiments](#3-the-cdk-team-can-still-perform-api-experiments)
+  - [4. Using experimental modules should be easy](#4-using-experimental-modules-should-be-easy)
+- [Proposed changes](#proposed-changes)
+  - [1. No more breaking changes in the main mono-CDK modules](#1-no-more-breaking-changes-in-the-main-mono-cdk-modules)
+  - [2. Separate "breakable" code from mono-CDK main modules](#2-separate-breakable-code-from-mono-cdk-main-modules)
+    - [Option 2: separate single unstable package](#option-2-separate-single-unstable-package)
+    - [Option 3: separate multiple unstable packages](#option-3-separate-multiple-unstable-packages)
+    - [Option 5: superset/subset releases](#option-5-supersetsubset-releases)
+      - [How does stripping APIs from the public work?](#how-does-stripping-apis-from-the-public-work)
+      - [What about experimental struct properties](#what-about-experimental-struct-properties)
+      - [Vending](#vending)
+      - [Summary](#summary-1)
+      - [POC results](#poc-results)
+    - [Option 6: API Previews](#option-6-api-previews)
+    - [Documentation](#documentation)
+    - [Naming scheme alternatives](#naming-scheme-alternatives)
+      - [Prefix vs. Suffix](#prefix-vs-suffix)
+      - [Alternatives:](#alternatives)
+    - [Discussion](#discussion)
+    - [API Previews Specifications](#api-previews-specifications)
+  - [3. Extra unstable precautions](#3-extra-unstable-precautions)
+    - [Require a feature flag for unstable code](#require-a-feature-flag-for-unstable-code)
+    - [Force a naming convention for unstable code](#force-a-naming-convention-for-unstable-code)
+- [Appendix A - why can't we break backwards compatibility in the code of mono-CDK main modules?](#appendix-a---why-cant-we-break-backwards-compatibility-in-the-code-of-mono-cdk-main-modules)
+- [Appendix B - modules depending on unstable modules](#appendix-b---modules-depending-on-unstable-modules)
+  - [Stable modules depending on unstable modules](#stable-modules-depending-on-unstable-modules)
+  - [Unstable modules depending on other unstable modules](#unstable-modules-depending-on-other-unstable-modules)
+- [Appendix C - discarded solutions to problem #2](#appendix-c---discarded-solutions-to-problem-2)
+  - [Option 1: separate submodules of `aws-cdk-lib`](#option-1-separate-submodules-of-aws-cdk-lib)
+  - [Option 4: separate V3 that's all unstable](#option-4-separate-v3-thats-all-unstable)
+- [Appendix D - Alternatives for identifying stable/experimental builds](#appendix-d---alternatives-for-identifying-stableexperimental-builds)
+  - [Different package names](#different-package-names)
+    - [NPM\*](#npm)
+    - [Maven](#maven)
+    - [pip](#pip)
+    - [.NET Core/NuGet](#net-corenuget)
+    - [Go](#go)
+  - [Prerelease tags](#prerelease-tags)
+    - [NPM](#npm-1)
+    - [Maven](#maven-1)
+    - [pip](#pip-1)
+    - [NuGet](#nuget)
+  - [Different major versions](#different-major-versions)
+    - [NPM](#npm-2)
+    - [Maven](#maven-2)
+    - [pip](#pip-2)
+    - [NuGet](#nuget-1)
+    - [Go](#go-1)
+
 # Summary
 
 When CDK version `2.0` is released to General Availability (GA), the single
@@ -67,15 +121,9 @@ levels of abstraction. Changing to vending the Construct Library as a monolithic
 package is one part of making that possible; we should make sure our approach to
 unstable code also takes this into account.
 
-## 3. We want to encourage customers to not declare a fixed version on packages we own, and are intended to be widely used.
+## 3. The CDK team can still perform API experiments
 
-Fixed versions are a bad practice, they prevent users from getting updates that
-includes critical fixes, security patches and more. The mechanism we choose to
-implement experimental features should adhere to the same standard.
-
-## 4. The CDK team can still perform API experiments
-
-We believe that one of the reasons for CDK's success is the ability to release
+We believe that one of the reasons for CDKs success is the ability to release
 functionality quickly into the hands of customers, to get their feedback. The
 ability to release experiments is crucial for that speed; if every single
 released API decision carried with it the absolute burden of being 100%
@@ -86,6 +134,11 @@ from our customers on the quality of the proposed APIs.
 For those reasons, we consider it essential for the CDK team to retain the
 capability to perform experiments with our APIs (of course, only those that are
 clearly marked as such).
+
+## 4. Using experimental modules should be easy
+
+Our development methodology is highly dependent on feedback from the community
+before finalizing APIs. To encourage users to use and provide feedback on experimental APIs,  we should make them easy to use.
 
 # Proposed changes
 
@@ -379,24 +432,40 @@ Disadvantages:
 4. Protection not offered for JavaScript users, can be bypassed in TypeScript;
    although something is to be said for it being the same with `private` fields
    today.
+5. Does not satisfy
+   [goal 4 - Using experimental modules should be easy](#4-using-experimental-modules-should-be-easy).
+   Customers that wants to use a single experimental API must pay the cost of
+   using a different version of the **entire** `aws-cdk-lib`. This is a non
+   trivial cost due to the following:
+   - Migrating to either a new major version, or a prerelease version, is a
+     process that usually includes accepting lot of breaking changes. While this
+     may not be the case for `aws-cdk-lib`, users wil be still hesitant as it is
+     the standard meaning of such migration.
+   - Users which uses the experimental version might use experimental APIs they
+     didn't intend to, similar to the experimental experience in v1.
 
 #### POC results
 
-Option 5 was rejected since it relies on the use of prerelease qualifiers in a
-way that does not adhere to [Sematic Versioning](https://semver.org/). According
-to the semver [specification](https://semver.org/#spec-item-11), a precedence
-between versions is calculated **only** if the **major**, **minor** and
-**patch** are equal. This means that there is no way for a constructs library to
-declare a range of supported versions which include an experimental version.
-Sticking to the above example, a CDK construct library declaring a peer
-dependency on version `^1.60.0` of `aws-cdk-lib`, can not be used in a CDK
-application that declares a dependency on `aws-cdk-lib` version
-`1.61.0-experimental`. This is because the patch part in `1.60.0` and
-`1.61.0-experimental` is not equal, which means `1.61.0-experimental` does not
-satisfy `^1.60.0`. In npm versions prior to npm-v7, if `peerDependencies`
-requirements are not met, executing `npm install` would only issue a warning. In
-npm-v7, which automatically tries to install `peerDependencies`, executing
-`npm install` will throw an error.
+> _Option 5 should be move to the appendices section, it is added here for the
+> purpose of minimizing the diff in the review process. It will be moved once
+> the RFC is finalized._
+
+Option 5 was rejected since there is no way to model the relationship between
+the "experimental" version and the "stable" version through semantic versioning.
+
+**prerelease qualifiers** According to the semver
+[specification](https://semver.org/#spec-item-11), a precedence between versions
+is calculated **only** if the **major**, **minor** and **patch** are equal. This
+means that there is no way for a constructs library to declare a range of
+supported versions which include an experimental version. Sticking to the above
+example, a CDK construct library declaring a peer dependency on version
+`^1.60.0` of `aws-cdk-lib`, can not be used in a CDK application that declares a
+dependency on `aws-cdk-lib` version `1.61.0-experimental`. This is because the
+patch part in `1.60.0` and `1.61.0-experimental` is not equal, which means
+`1.61.0-experimental` does not satisfy `^1.60.0`. In npm versions prior to
+npm-v7, if `peerDependencies` requirements are not met, executing `npm install`
+would only issue a warning. In npm-v7, which automatically tries to install
+`peerDependencies`, executing `npm install` will throw an error.
 
 To illustrate the user experience with npm-v7. The below is the output of
 executing `npm install` in a CDK application (`my-cdk-application`), which
@@ -424,8 +493,14 @@ npm ERR! to accept an incorrect (and potentially broken) dependency resolution.
 npm ERR!
 ```
 
-Users can work around this by executing `npm install --force` but this is not a
-behavior we want to recommend.
+Users can work around this by executing `npm install --force` which means that
+npm will not check for version compatibility at all, and therefore not an
+acceptable solution.
+
+**Separate major versions**
+
+This was rejected due to similar reasons as listed in the  disadvantages of
+[Option 4: separate V3 that's all unstable](#option-4-separate-v3-thats-all-unstable).
 
 ### Option 6: API Previews
 
@@ -435,35 +510,37 @@ AWS CDK v2 release notes:
 > become stable. This means that from this release, we are committed to never
 > introduce breaking changes in a non-major bump.
 >
-> #### Introducing API Previews
->
 > One of the most common feedback we hear from customers is that they love how
 > fast new features are added to the AWS CDK, we love it to. In v1, the
 > mechanism that allowed us to add new features quickly was marking them as
 > "experimental". Experimental features were not subject to semantic versioning,
 > and we allowed breaking changes to be introduced in these APIs. This is the
 > other most common feedback we hear from customers - breaking changes are not
-> ok. To make sure we can keep adding features fast, while keeping our
-> commitment to not release breaking changes, we are introducing a new model -
-> API Previews. APIs that we want to get in front of developers early, and are
-> not yet finalized, will be added to the AWS CDK with a specific suffix:
-> `PreVx`. APIs with the preview suffix will never be removed, instead they will
-> be deprecated and replaced by either the stable version (without the suffix),
-> or by a newer preview version.
+> ok.
+>
+> #### Introducing API Previews
+>
+> To make sure we can keep adding features fast, while keeping our commitment to
+> not release breaking changes, we are introducing a new model - API Previews.
+> APIs that we want to get in front of developers early, and are not yet
+> finalized, will be added to the AWS CDK with a specific suffix: `Pre`. APIs
+> with the preview suffix will never be removed, instead they will be deprecated
+> and replaced by either the stable version (without the suffix), or by a newer
+> preview version.
 
-> For example, assume we add the method `grantAwesomePowerPreV1`:
+> For example, assume we add the method `grantAwesomePowerPre1`:
 >
 > ```ts
 > /**
-> This methods grants awesome powers
-> */
-> grantAwesomePowerPreV1();
+>  * This methods grants awesome powers
+>  */
+> grantAwesomePowerPre1();
 > ```
 >
 > Times goes by, we get feedback that this method will actually be much better
 > if it accept a `Principal`. Since adding a required property is a breaking
-> change, we will add `grantAwesomePowerPreV2()` and deprecate
-> `grantAwesomePowerPreV1`:
+> change, we will add `grantAwesomePowerPre2()` and deprecate
+> `grantAwesomePowerPre1`:
 >
 > ```ts
 > /**
@@ -471,13 +548,13 @@ AWS CDK v2 release notes:
 > *
 > * @param grantee The principal to grant powers to
 > */
-> grantAwesomePowerPreV2(grantee: iam.IGrantable)
+> grantAwesomePowerPre2(grantee: iam.IGrantable)
 >
 > /**
 > * This methods grants awesome powers
-> * @deprecated use `grantAwesomePowerPreV2`
+> * @deprecated use `grantAwesomePowerPre2`
 > */
-> grantAwesomePowerPreV1()
+> grantAwesomePowerPre1()
 > ```
 
 > When we decide its time to graduate the API, the latest preview version will
@@ -496,26 +573,26 @@ making them still accessible but somewhat hidden:
 
 ### Naming scheme alternatives
 
-A good naming scheme for marking experimental APIs should:
+A good naming scheme for marking API previews should:
 
-1. Express the experimental nature.
-2. Allow expressing order between experimental versions of the same API, e.g
-   `grantWritePreV2` is newer than `grantWritePreV1`.
+1. Express the non-final nature.
+2. Allow expressing order between preview versions of the same API, e.g
+   `grantWritePre2` is newer than `grantWritePre1`.
 
 #### Prefix vs. Suffix
 
 For the sake of clarity, assume we want to add a `grantWrite` method ot the
 `Bucket` type:
 
-**Advantages of adding the experimental addition as a prefix:**
+**Prefix advantages:**
 
-1. Might be more clear that the API is experimental. All experimental APIs are
-   grouped together in autocomplete.
+1. Might be more clear that the API is in preview. All preview APIs are
+   grouped together in autocomplete suggestions.
 2. When the final API is added, the autocomplete experience will be less
-   confusing. `grantWrite` will be visually separated than `preV1GrantWrite` and
-   `preV2GrantWrite`.
+   confusing. `grantWrite` will be visually separated than `pre1GrantWrite` and
+   `pre2GrantWrite`.
 
-**Advantages of adding the experimental addition as a suffix:**
+**Suffix advantages:**
 
 1. Discoverability. When using the `Bucket` type in code, a user looking for a
    way to "grant" permission on the `Bucket`, is likely to type "grant" in the
@@ -526,10 +603,10 @@ For the sake of clarity, assume we want to add a `grantWrite` method ot the
 
 #### Alternatives:
 
-Using `v1` for visibility:
+Using `1` for visibility:
 
-- RcV1: for release candidate.
-- AlphaV1
+- Rc1: for release candidate.
+- Alpha1.
 
 **How will it look in all supported languages:**
 
@@ -545,15 +622,17 @@ Advantages:
 
 - Experimental APIs can be used without declaring a fixed version on
   `aws-cdk-lib`.
-- We will be able to push critical updates to previous experimental versions of
-  an API. For example, if we discover that `grantWrite` grants overly permissive
+- Since old versions of an API will only be deprecated and not removed, if needed, we will be able to push critical updates to these versions as well. For example, if we discover that `grantWrite` grants overly permissive
   permissions, and the same occur in all of its experimental (deprecated)
   predecessors, we will be able to push the fix to them as well. This will allow
   us to get the fix to more customers in case of a critical fix.
 - All APIs will be in `aws-cdk-lib`, preventing dependencies hell.
 - Libraries will be able to use experimental APIs without locking their
-  consumers to a specific version of `aws-cdk-lib`.
+  consumers to a specific version of `aws-cdk-lib` (or any other module we vend).
 - Same solution across all languages.
+- Allows finer granularity for opting-in to experimental APIs. Users who wants
+  to use a specific experimental API do not have to use either an experimental
+  version line, or an experimental module.
 
 Disadvantages:
 
@@ -572,11 +651,11 @@ Disadvantages:
 
 **How can we encourage users to upgrade to a newer version?**
 
-When a new minor version introduces a breaking change to an experimental API,
-users have a clear motivation to upgrade to the new version of the API - they
-must do so in order to upgrade to a newer version of the AWS CDK. If the API is
-only deprecated, users have no motivation to upgrade to a newer version of the
-API, even worse, they might not be aware that a newer version exists. One way to
+When a new minor version introduces a breaking change to an API, users have a
+clear motivation to upgrade to the new version of the API - they must do so in
+order to upgrade to a newer version of the AWS CDK. If the API is only
+deprecated, users have no motivation to upgrade to a newer version of the API,
+even worse, they might not be aware that a newer version exists. One way to
 encourage users to upgrade to a newer version of an API, is to supply tools that
 will inform users. For example, we can add a capability to the `cdk doctor`
 command that will notify users that their CDK application is using deprecated
@@ -587,49 +666,31 @@ Executing `cdk doctor` will print:
 ```bash
 neta@dev/my-cdk-application$ cdk doctor
 
-Newer version of experimental APIs your application is using are available. You should consider upgrading.
-To see which experimental APIs can be upgraded, execute `cdk --show-deprecated-api-usage`
+Newer versions of APIs previews your application is using are available. You should consider upgrading.
+To see which previews APIs can be upgraded, execute `cdk --show-deprecated-api-usage`
 ```
 
 **If there are no breaking changes, are the APIs really experimental?**
 
-Given that experimental APIs are safe to use, and no breaking changes will be
-introduced, we might consider not referring to them as experimental, and simply
-add versioning in the API name. The first version of `grantWrite` will be named
-`grantWriteV1`, the second version will be named `grantWriteV2` and so on. While
-the API will not break, we should still add `experimental` for the following
-reasons:
+Given that preview APIs are safe to use, and no breaking changes will be
+introduced to them, we might consider not referring to them in any special way, and if needed, simply add a version to the API name. The first version of `grantWrite` will be
+named `grantWrite`, the second version will be named `grantWriteV1` and so
+on. While a preview API will not break, we should still use a naming scheme that
+convey its non-final nature for the following reasons:
 
-1. **Real-estate**: `grantWrite` is a much better name than `grantWriteV3` for
+1. **Real-estate**: `grantWrite` is a much better name than `grantWritePre3` for
    the final API.
-2. **Encourage feedback**: Declaring an API as experimental encourage the
+2. **Encourage feedback**: Declaring an API as "in preview" encourage the
    community to supply feedback.
-3. **Setting the right expectations**: When an API is marked as experimental
-   users are aware that this is not the final version of the API, and its
-   deprecation is expected.
+3. **Setting the right expectations**: When an API in preview users are aware
+   that this is not the final version of the API, and its deprecation is
+   expected.
 
-### Open questions
 
-If we decide to implement option 6, we will need to formalize the experimental
-naming strategy.
 
-- Should experimental modules be named with `experimental`? e.g `aws-synthetics`
-  be named `aws-synthetics-pre-v1`, or is it sufficient that its types be named
-  as experimental, e.g `CanaryPreV1`.
-- If a type that contains other types is experimental, is it sufficient that the
-  containing type is named as `experimental` or should its properties/methods
-  should be named as experimental as well. e.g if the `Canary` construct is
-  experimental, named `CanaryPreV1`, should its method `createAlarm` be named
-  `createAlarmPreV1`:
+### API Previews Specifications
 
-  ```ts
-  const canary = new CanaryPreV1(this, 'MyCanary', {
-  ...
-  });
-  canary.createAlarmPreV1(...)
-  // or
-  canary.createAlarm(...)
-  ```
+
 
 ## 3. Extra unstable precautions
 
@@ -674,6 +735,23 @@ Disadvantages:
 - Since there is a single flag for all unstable code, setting it once might hide
   other instances of using unstable code, working against stated goal #1.
 - Requires changes in JSII.
+
+### Force a naming convention for unstable code
+
+We can modify `awslint` to force a certain naming convention for unstable code,
+for example to add a specific prefix or suffix to all unstable APIs.
+
+Advantages:
+
+- Should fulfill goal #1 - it will be impossible to use an unstable API by
+  accident.
+- Does not require changes in JSII, only in `awslint`.
+
+Disadvantages:
+
+- Will force some pretty long and ugly names on our APIs.
+- Graduating a module will require a lot of code changes from our customers to
+  remove the prefix/suffix.
 
 # Appendix A - why can't we break backwards compatibility in the code of mono-CDK main modules?
 
