@@ -570,13 +570,13 @@ Advantages:
 
 - Experimental APIs can be used without declaring a fixed version on
   `aws-cdk-lib`.
+- All APIs will be in `aws-cdk-lib`, preventing dependencies hell.
 - Since old versions of an API will only be deprecated and not removed, if
   needed, we will be able to push critical updates to these versions as well.
   For example, if we discover that `grantWrite` grants overly permissive
   permissions, and the same occur in all of its experimental (deprecated)
   predecessors, we will be able to push the fix to them as well. This will allow
   us to get the fix to more customers in case of a critical fix.
-- All APIs will be in `aws-cdk-lib`, preventing dependencies hell.
 - Libraries will be able to use experimental APIs without locking their
   consumers to a specific version of `aws-cdk-lib` (or any other module we
   vend).
@@ -587,15 +587,15 @@ Advantages:
 
 Disadvantages:
 
-- User does not have a clear motivation to upgrade to a newer version.
-- Low adoption. Users might be worried to use an API with an experimental name,
-  assuming that experimental means "will break".
-- Cluttering the code base. Although most IDEs will mark deprecated properties
-  with a ~~strikethrough~~, they will still be listed by autocomplete.
-- Will force some pretty long and ugly names on our APIs. Many experimental APIs
-  will result in a less aesthetic user code.
 - Graduating a module will require a lot of code changes from our users to
   remove the prefix/suffix.
+- User does not have a clear motivation to upgrade to a newer version.
+- Low adoption. Users might be hesitant to use an API with a  `PreX` in its name,
+  assuming it means "will break".
+- Cluttering the code base. Although most IDEs will mark deprecated properties
+  with a ~~strikethrough~~, they will still be listed by autocomplete.
+- Will force some pretty long and ugly names on our APIs. Many previews APIs
+  will result in a less aesthetic user code.
 - A lot of deprecated code in aws-cdk-lib, possibly blowing up `aws-cdk-lib`.
   This might not be a real concern as we can reuse a lot the code between
   different version of an API.
