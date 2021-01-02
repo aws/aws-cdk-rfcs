@@ -84,7 +84,8 @@ clearly marked as such).
 ## 4. Using experimental modules should be easy
 
 Our development methodology is highly dependent on feedback from the community
-before finalizing APIs. To encourage users to use and provide feedback on experimental APIs,  we should make them easy to use.
+before finalizing APIs. To encourage users to use and provide feedback on
+experimental APIs, we should make them easy to use.
 
 # Proposed changes
 
@@ -399,19 +400,21 @@ Disadvantages:
 Option 5 was rejected since there is no way to model the relationship between
 the "experimental" version and the "stable" version through semantic versioning.
 
-**prerelease qualifiers** According to the semver
-[specification](https://semver.org/#spec-item-11), a precedence between versions
-is calculated **only** if the **major**, **minor** and **patch** are equal. This
-means that there is no way for a constructs library to declare a range of
-supported versions which include an experimental version. Sticking to the above
-example, a CDK construct library declaring a peer dependency on version
-`^1.60.0` of `aws-cdk-lib`, can not be used in a CDK application that declares a
-dependency on `aws-cdk-lib` version `1.61.0-experimental`. This is because the
-patch part in `1.60.0` and `1.61.0-experimental` is not equal, which means
-`1.61.0-experimental` does not satisfy `^1.60.0`. In npm versions prior to
-npm-v7, if `peerDependencies` requirements are not met, executing `npm install`
-would only issue a warning. In npm-v7, which automatically tries to install
-`peerDependencies`, executing `npm install` will throw an error.
+##### Prerelease qualifiers
+
+According to the semver [specification](https://semver.org/#spec-item-11), a
+precedence between versions is calculated **only** if the **major**, **minor**
+and **patch** are equal. This means that there is no way for a constructs
+library to declare a range of supported versions which include an experimental
+version. Sticking to the above example, a CDK construct library declaring a peer
+dependency on version `^1.60.0` of `aws-cdk-lib`, can not be used in a CDK
+application that declares a dependency on `aws-cdk-lib` version
+`1.61.0-experimental`. This is because the patch part in `1.60.0` and
+`1.61.0-experimental` is not equal, which means `1.61.0-experimental` does not
+satisfy `^1.60.0`. In npm versions prior to npm-v7, if `peerDependencies`
+requirements are not met, executing `npm install` would only issue a warning. In
+npm-v7, which automatically tries to install `peerDependencies`, executing
+`npm install` will throw an error.
 
 To illustrate the user experience with npm-v7. The below is the output of
 executing `npm install` in a CDK application (`my-cdk-application`), which
@@ -443,9 +446,9 @@ Users can work around this by executing `npm install --force` which means that
 npm will not check for version compatibility at all, and therefore not an
 acceptable solution.
 
-**Separate major versions**
+##### Separate major versions
 
-This was rejected due to similar reasons as listed in the  disadvantages of
+This was rejected due to similar reasons as listed in the disadvantages of
 [Option 4: separate V3 that's all unstable](#option-4-separate-v3-thats-all-unstable).
 
 ### Option 6: API Previews
@@ -472,9 +475,8 @@ AWS CDK v2 release notes:
 > finalized, will be added to the AWS CDK with a specific suffix: `Pre`. APIs
 > with the preview suffix will never be removed, instead they will be deprecated
 > and replaced by either the stable version (without the suffix), or by a newer
-> preview version.
-
-> For example, assume we add the method `grantAwesomePowerPre1`:
+> preview version. For example, assume we add the method
+> `grantAwesomePowerPre1`:
 >
 > ```ts
 > /**
@@ -498,11 +500,11 @@ AWS CDK v2 release notes:
 >
 > /**
 > * This methods grants awesome powers
-> * @deprecated use `grantAwesomePowerPre2`
+> * @deprecated use grantAwesomePowerPre2
 > */
 > grantAwesomePowerPre1()
 > ```
-
+>
 > When we decide its time to graduate the API, the latest preview version will
 > be deprecated and the final version - `grantAwesomePower` will be added.
 
@@ -515,7 +517,7 @@ docs, it might be frustrating for users who encounter an older version of an
 experimental API. A compromise can be to collapse all older version of an API,
 making them still accessible but somewhat hidden:
 
-![](../images/experimental-docs-mock.png)
+![docs](../images/experimental-docs-mock.png)
 
 ### Naming scheme alternatives
 
@@ -532,8 +534,8 @@ For the sake of clarity, assume we want to add a `grantWrite` method ot the
 
 **Prefix advantages:**
 
-1. Might be more clear that the API is in preview. All preview APIs are
-   grouped together in autocomplete suggestions.
+1. Might be more clear that the API is in preview. All preview APIs are grouped
+   together in autocomplete suggestions.
 2. When the final API is added, the autocomplete experience will be less
    confusing. `grantWrite` will be visually separated than `pre1GrantWrite` and
    `pre2GrantWrite`.
@@ -547,7 +549,7 @@ For the sake of clarity, assume we want to add a `grantWrite` method ot the
    However, most IDEs will list methods that contains "grant" in any part will
    be listed by autocomplete when a user types "grant".
 
-#### Alternatives:
+#### Alternatives
 
 Using `1` for visibility:
 
@@ -568,13 +570,16 @@ Advantages:
 
 - Experimental APIs can be used without declaring a fixed version on
   `aws-cdk-lib`.
-- Since old versions of an API will only be deprecated and not removed, if needed, we will be able to push critical updates to these versions as well. For example, if we discover that `grantWrite` grants overly permissive
+- Since old versions of an API will only be deprecated and not removed, if
+  needed, we will be able to push critical updates to these versions as well.
+  For example, if we discover that `grantWrite` grants overly permissive
   permissions, and the same occur in all of its experimental (deprecated)
   predecessors, we will be able to push the fix to them as well. This will allow
   us to get the fix to more customers in case of a critical fix.
 - All APIs will be in `aws-cdk-lib`, preventing dependencies hell.
 - Libraries will be able to use experimental APIs without locking their
-  consumers to a specific version of `aws-cdk-lib` (or any other module we vend).
+  consumers to a specific version of `aws-cdk-lib` (or any other module we
+  vend).
 - Same solution across all languages.
 - Allows finer granularity for opting-in to experimental APIs. Users who wants
   to use a specific experimental API do not have to use either an experimental
@@ -619,10 +624,11 @@ To see which previews APIs can be upgraded, execute `cdk --show-deprecated-api-u
 **If there are no breaking changes, are the APIs really experimental?**
 
 Given that preview APIs are safe to use, and no breaking changes will be
-introduced to them, we might consider not referring to them in any special way, and if needed, simply add a version to the API name. The first version of `grantWrite` will be
-named `grantWrite`, the second version will be named `grantWriteV1` and so
-on. While a preview API will not break, we should still use a naming scheme that
-convey its non-final nature for the following reasons:
+introduced to them, we might consider not referring to them in any special way,
+and if needed, simply add a version to the API name. The first version of
+`grantWrite` will be named `grantWrite`, the second version will be named
+`grantWriteV1` and so on. While a preview API will not break, we should still
+use a naming scheme that convey its non-final nature for the following reasons:
 
 1. **Real-estate**: `grantWrite` is a much better name than `grantWritePre3` for
    the final API.
@@ -632,11 +638,7 @@ convey its non-final nature for the following reasons:
    that this is not the final version of the API, and its deprecation is
    expected.
 
-
-
 ### API Previews Specifications
-
-
 
 ## 3. Extra unstable precautions
 
