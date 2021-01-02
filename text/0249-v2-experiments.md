@@ -69,7 +69,7 @@ unstable code also takes this into account.
 
 ## 3. The CDK team can still perform API experiments
 
-We believe that one of the reasons for CDKs success is the ability to release
+We believe that one of the reasons for CDK's success is the ability to release
 functionality quickly into the hands of customers, to get their feedback. The
 ability to release experiments is crucial for that speed; if every single
 released API decision carried with it the absolute burden of being 100%
