@@ -638,7 +638,70 @@ use a naming scheme that convey its non-final nature for the following reasons:
    that this is not the final version of the API, and its deprecation is
    expected.
 
+### Modules lifecycle
+
+This section discuss adding a new modules to `aws-cdk-lib`.
+
+#### Alpha (optional)
+
+This stage is intended for modules that are in early development stage, they
+change rapidly and may incurs many breaking changes. These modules will be
+released separately from `aws-cdk-lib` and will have their own version, which
+allows for breaking changes in accordance to semver, e.g `0.x` or prerelease
+qualifiers.
+
+In order to release a module as alpha, the following conditions must be met:
+
+1. Module from `aws-cdk-lib` **can not** depend on it.
+2. Can not depend on any other alpha module<sup>\*\*</sup>.
+
+The purpose of the first condition is to prevent cyclic dependencies. To
+illustrate the purpose of the second condition lets look at an example. Assume
+we have an alpha module A, which depends on an alpha module B, graduating module
+A means it will be added to `aws-cdk-lib`, since module A depends on module B,
+it means that adding module A to `aws-cdk-lib` breaks condition 1 and creates a
+cyclic dependency. To prevent the cycle we will have to graduate B as well,
+which is not necessarily what we want. Additionally, if module B is an alpha
+module, module A will have to declare a fixed dependency on it, locking its
+consumers to the same version of module B - defeating the purpose of
+peerDependencies.
+
+> \*\* _There might be exceptions that will be considered on a per case basis_
+
+#### Beta (optional)
+
+In this stage modules are added to `aws-cdk-lib` with a preview suffix in the
+name of the module, e.g `aws-batch-beta-x`. Modules in this stage are not
+allowed to introduce any breaking changes to their API. Any non backward
+compatible change will be introduced via deprecation <sup>\*\*</sup>.
+
+> \*\* _The deprecation process will be discussed in the API previews
+> specification_
+
+#### Stable
+
+In this stage modules are added to `aws-cdk-lib` under their final name, e.g
+`aws-batch`. Addition of new APIs should follow the API previews specification.
+
+### Migrating experimental modules to V2
+
+This section covers the migration strategy of unstable modules and APIs from v1
+to v2.
+
+For each unstable module in v1 we will have to decide the lifecycle stage in
+which it will be added to v2.
+
+...
+
+_TBC: add a decision for each module; will be added after the definition will be
+approved_
+
 ### API Previews Specifications
+
+> This section will include the naming scheme for each type of API, and the API
+> evolution process.
+
+TODO
 
 ## 3. Extra unstable precautions
 
@@ -738,12 +801,8 @@ Construct Library modules as of writing this document.
 ```
 ⚠️  Stable module '@aws-cdk/aws-applicationautoscaling' depends on unstable module '@aws-cdk/aws-autoscaling-common'
 ⚠️  Stable module '@aws-cdk/aws-autoscaling' depends on unstable module '@aws-cdk/aws-autoscaling-common'
-⚠️  Stable module '@aws-cdk/aws-elasticloadbalancingv2-actions' depends on unstable module '@aws-cdk/aws-cognito'
 ⚠️  Stable module '@aws-cdk/aws-events-targets' depends on unstable module '@aws-cdk/aws-batch'
 ⚠️  Stable module '@aws-cdk/aws-lambda' depends on unstable module '@aws-cdk/aws-efs'
-⚠️  Stable module '@aws-cdk/aws-route53-patterns' depends on unstable module '@aws-cdk/aws-cloudfront'
-⚠️  Stable module '@aws-cdk/aws-route53-targets' depends on unstable module '@aws-cdk/aws-cloudfront'
-⚠️  Stable module '@aws-cdk/aws-route53-targets' depends on unstable module '@aws-cdk/aws-cognito'
 ⚠️  Stable module '@aws-cdk/aws-stepfunctions-tasks' depends on unstable module '@aws-cdk/aws-batch'
 ⚠️  Stable module '@aws-cdk/aws-stepfunctions-tasks' depends on unstable module '@aws-cdk/aws-glue'
 ```
@@ -751,12 +810,9 @@ Construct Library modules as of writing this document.
 ## Unstable modules depending on other unstable modules
 
 ```
-ℹ️️  Unstable module '@aws-cdk/aws-appsync' depends on unstable module '@aws-cdk/aws-cognito'
 ℹ️️  Unstable module '@aws-cdk/aws-backup' depends on unstable module '@aws-cdk/aws-efs'
 ℹ️️  Unstable module '@aws-cdk/aws-backup' depends on unstable module '@aws-cdk/aws-rds'
-ℹ️️  Unstable module '@aws-cdk/aws-cloudfront-origins' depends on unstable module '@aws-cdk/aws-cloudfront'
 ℹ️️  Unstable module '@aws-cdk/aws-docdb' depends on unstable module '@aws-cdk/aws-efs'
-ℹ️️  Unstable module '@aws-cdk/aws-s3-deployment' depends on unstable module '@aws-cdk/aws-cloudfront'
 ℹ️️  Unstable module '@aws-cdk/aws-ses-actions' depends on unstable module '@aws-cdk/aws-ses'
 ```
 
