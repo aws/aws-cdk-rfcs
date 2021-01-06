@@ -653,7 +653,7 @@ qualifiers.
 In order to release a module as alpha, the following conditions must be met:
 
 1. Module from `aws-cdk-lib` **can not** depend on it.
-2. Can not depend on any other alpha module<sup>\*\*</sup>.
+2. Can not depend on any other alpha module**.
 
 The purpose of the first condition is to prevent cyclic dependencies. To
 illustrate the purpose of the second condition lets look at an example. Assume
@@ -673,7 +673,7 @@ peerDependencies.
 In this stage modules are added to `aws-cdk-lib` with a preview suffix in the
 name of the module, e.g `aws-batch-beta-x`. Modules in this stage are not
 allowed to introduce any breaking changes to their API. Any non backward
-compatible change will be introduced via deprecation <sup>\*\*</sup>.
+compatible change will be introduced via deprecation**.
 
 > \*\* _The deprecation process will be discussed in the API previews
 > specification_
