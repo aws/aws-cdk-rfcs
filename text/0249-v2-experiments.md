@@ -705,8 +705,8 @@ all modules, even if they only want to upgrade a single module. For example,
 assume the uber package includes `aws-appmesh` and `aws-synthetics`, and that
 release `0.x` of the uber package includes breaking changes to both modules, a
 customer who only wants the new feature added to `aws-synthetics` now must
-accept the breaking changes to `aws-appmesh` which might include changes to both
-the code and their deployed infrastructure they are not ready to make, e.g
+accept the breaking changes to `aws-appmesh`, which might include changes to
+both the code and their deployed infrastructure they are not ready to make, e.g
 resource replacement.
 
 ### Migrating experimental modules to V2
