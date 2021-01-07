@@ -685,7 +685,7 @@ of this approach, listed in this RFC are:
 >    can mitigate this downside by keeping the old unstable package around, but
 >    that leads to duplicated classes.
 
-1 and 3 applies for both option 3 and option 2. Disadvantage 2, states that
+1 and 3 applies to both option 3 and option 2. Disadvantage 2, states that
 "doing that brings us back to the dependency hell that mono-CDK was designed to
 solve". This is not accurate, in v1, modules declared both a `peerDependency`
 and a direct dependency on other `@aws-cdk` modules, this was mainly because
