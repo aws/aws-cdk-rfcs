@@ -707,7 +707,8 @@ release `0.x` of the uber package includes breaking changes to both modules, a
 customer who only wants the new feature added to `aws-synthetics` now must
 accept the breaking changes to `aws-appmesh`, which might include changes to
 both the code and their deployed infrastructure they are not ready to make, e.g
-resource replacement.
+resource replacement. Having separate module means reduces the blast
+radius of every update.
 
 ### Migrating experimental modules to V2
 
