@@ -544,14 +544,6 @@ Using `1` for visibility:
 - Rc1: for release candidate.
 - Alpha1.
 
-**How will it look in all supported languages:**
-
-> _to be completed once a naming scheme is decided_
-
-| scheme | TS  | Java | Python | .Net | Go  |
-| ------ | --- | ---- | ------ | ---- | --- |
-| PreV1  |     |      |        |      |     |
-
 ### Discussion
 
 Advantages:
@@ -719,81 +711,9 @@ resource replacement.
 
 ### Migrating experimental modules to V2
 
-This section covers the migration strategy of unstable modules and APIs from v1
-to v2. For each unstable module in v1 we will have to decide the lifecycle stage
-in which it will be added to v2.
-
-#### Stable/Beta
-
-The modules listed below must be added to `aws-cdk-lib` as they don't meet the
-alpha [conditions](#alpha-optional). This means that they can be added as either
-[beta](#beta-optional), or [stable](#stable).
-
-| module                                                                                                                   | stage  | notes     |
-| ------------------------------------------------------------------------------------------------------------------------ | ------ | --------- |
-| [@aws-cdk/aws-s3-assets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-s3-assets)                  | stable |
-| [@aws-cdk/aws-ecr-assets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ecr-assets)                | stable |
-| [@aws-cdk/cx-api](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/cx-api)                                 | stable |
-| [@aws-cdk/region-info](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/region-info])                      | stable |
-| [@aws-cdk/aws-efs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-efs)                               | stable |
-| [@aws-cdk/aws-batch](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-batch)                           | stable |
-| [@aws-cdk/aws-glue](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-glue)                            | beta   |
-| [@aws-cdk/aws-ses](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ses)                              | beta   |
-| [@aws-cdk/aws-autoscaling-common](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-autoscaling-common) | stable |
-| [@aws-cdk/lambda-layer-awscli](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/lambda-layer-awscli])      | N/A    | Not in v2 |
-| [@aws-cdk/lambda-layer-kubectl](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/lambda-layer-kubectl)    | N/A    | Not in v2 |
-
-> _ordered by usage_
-
-The stage was decided based on the following factors:
-
-1. Module usage.
-2. The constructs library accelerated graduation research recommendation.
-3. Functionally, e.g `@aws-cdk/aws-autoscaling-common` is an integration module
-   that is not intended for direct usage.
-
-For more details on each module, see the appendix.
-
-#### Stable/Beta/Alpha
-
-The module listed below have no **dependent** modules, as such they can be
-released in either lifecycle stage with v2. While releasing a module separately
-might be tempting, it is an inferior customer experience in comparison to the
-module being added to `aws-cdk-lib`. As such we should only consider it for
-modules which are in early stage of development, and/or we forsee that their
-graduation process will include many breaking changes.
-
-| module                                                                                                                                           | Notes          |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| [@aws-cdk/aws-s3-deployment](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-s3-deployment)                                   |                |
-| [@aws-cdk/aws-appsync](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                                               |                |
-| [@aws-cdk/pipelines](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/pipelines)                                                   |                |
-| [@aws-cdk/aws-elasticloadbalancingv2-targets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-elasticloadbalancingv2-targets) |
-| [@aws-cdk/aws-lambda-nodejs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-lambda-nodejs)                                   |                |
-| [@aws-cdk/aws-eks](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks)                                                       | GA Planned     |
-| [@aws-cdk/aws-backup](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-backup)                                                 |                |
-| [@aws-cdk/aws-route53resolver](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-route53resolver)                               |                |
-| [@aws-cdk/aws-lambda-python](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-lambda-python)                                   |                |
-| [@aws-cdk/aws-docdb](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-docdb)                                                   |                |
-| [@aws-cdk/aws-appmesh](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                                               |                |
-| [@aws-cdk/aws-synthetics](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appmesh)                                            |                |
-| [@aws-cdk/aws-apigatewayv2-integrations](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                             |
-| [@aws-cdk/aws-ses-actions](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ses-actions)                                       |                |
-| [@aws-cdk/aws-amplify](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-amplify)                                               |                |
-| [@aws-cdk/aws-fsx](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-fsx)                                                       |                |
-| [@aws-cdk/aws-cloud9](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-cloud9)                                                 |
-| [@aws-cdk/aws-globalaccelerator](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-globalaccelerator)                           |                |
-| [@aws-cdk/aws-redshift](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-redshift)                                             |                |
-| [@aws-cdk/aws-chatbot](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-chatbot)                                               |                |
-| [@aws-cdk/aws-codestar](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-codestar)                                             |                |
-| [@aws-cdk/aws-ivs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ivs)                                                       |                |
-| @aws-cdk/yaml-cfn                                                                                                                                | internal usage |
-
-> _ordered by usage_
-
-Since the construct library squad has already done the research for most of the
-module, I suggest we continue the discussion over the original
-[doc](https://tiny.amazon.com/7giz8whp/quipcvY1Cons)
+Before v2 release we will need to decide the lifecycle stage of every v1
+experimental module. We will review all modules and devise a migration strategy
+in a separate doc
 
 ### API Previews Specifications
 
