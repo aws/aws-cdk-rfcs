@@ -100,18 +100,6 @@ modules.
 
 (See Appendix A below for a detailed explanation why that is)
 
-We will still retain the ability to mark APIs as `@experimental` in
-`aws-cdk-lib` main modules, but the meaning of that marker will change
-considerably compared to `1.x`. It will be an indication to customers that this
-API is still in the process of being baked, and it might be a bad idea
-(especially for more conservative customers) to use it in production yet.
-However, an API marked `@experimental` cannot ever be changed in a
-backwards-incompatible way; it can be marked `@deprecated`, but it will not be
-removed until the next major version of the CDK.
-
-We will need to change the backwards-compatibility validations in our build
-scripts to make sure they cover `@experimental` APIs as well.
-
 ## 2. Separate "breakable" code from mono-CDK main modules
 
 As a consequence of the above point, we need to move all code that doesn't
@@ -590,7 +578,7 @@ Disadvantages:
 - Graduating a module will require a lot of code changes from our users to
   remove the prefix/suffix.
 - User does not have a clear motivation to upgrade to a newer version.
-- Low adoption. Users might be hesitant to use an API with a  `PreX` in its name,
+- Low adoption. Users might be hesitant to use an API with a `PreX` in its name,
   assuming it means "will break".
 - Cluttering the code base. Although most IDEs will mark deprecated properties
   with a ~~strikethrough~~, they will still be listed by autocomplete.
@@ -653,7 +641,7 @@ qualifiers.
 In order to release a module as alpha, the following conditions must be met:
 
 1. Module from `aws-cdk-lib` **can not** depend on it.
-2. Can not depend on any other alpha module**.
+2. Can not depend on any other alpha module\*\*.
 
 The purpose of the first condition is to prevent cyclic dependencies. To
 illustrate the purpose of the second condition lets look at an example. Assume
@@ -673,7 +661,7 @@ peerDependencies.
 In this stage modules are added to `aws-cdk-lib` with a preview suffix in the
 name of the module, e.g `aws-batch-beta-x`. Modules in this stage are not
 allowed to introduce any breaking changes to their API. Any non backward
-compatible change will be introduced via deprecation**.
+compatible change will be introduced via deprecation\*\*.
 
 > \*\* _The deprecation process will be discussed in the API previews
 > specification_
@@ -683,25 +671,134 @@ compatible change will be introduced via deprecation**.
 In this stage modules are added to `aws-cdk-lib` under their final name, e.g
 `aws-batch`. Addition of new APIs should follow the API previews specification.
 
+### Multiple alpha modules VS. single module
+
+The question of whether we should release experimental modules under one package
+or as separate modules has been discussed in this RFC. See
+[Option 3](#option-3-separate-multiple-unstable-packages), and
+[option 2](#option-2-separate-single-unstable-package).
+
+I suggest we release alpha modules as separate modules
+([Option 3](#option-3-separate-multiple-unstable-packages)). The disadvantages
+of this approach, listed in this RFC are:
+
+> 1. It's not possible for stable modules to depend on unstable ones (see
+>    Appendix B for data on how necessary that is for the CDK currently), with
+>    the same implications as above.
+> 2. It's not possible for unstable modules to depend on other unstable modules
+>    (see Appendix B for data on how necessary that is for the CDK currently),
+>    as doing that brings us back to the dependency hell that mono-CDK was
+>    designed to solve.
+> 3. Graduating a module to stable will be a breaking change for customers. We
+>    can mitigate this downside by keeping the old unstable package around, but
+>    that leads to duplicated classes.
+
+1 and 3 applies for both option 3 and option 2. Disadvantage 2, states that
+"doing that brings us back to the dependency hell that mono-CDK was designed to
+solve". This is not accurate, in v1, modules declared both a `peerDependency`
+and a direct dependency on other `@aws-cdk` modules, this was mainly because
+prior to npm7 `peerDependencies` were not automatically installed. npm7 which
+does install `peerDependencies`, removes the need to declare a direct
+dependency. Additionally, alpha modules, as defined in this doc, are intended to
+be released using a versioning scheme that allows breaking changes with every
+release, as such they shouldn't be used by libraries. If a library does chooses
+to depend on an alpha module, it should declare a fixed dependency it, which
+will lock its consumer to that version.
+
+Releasing each alpha module separately has the advantage of allowing consumers
+to choose when they want to upgrade a specific module. If we release all modules
+under a single package, in which every release may include breaking changes to
+any numbers of its modules, users are force to accept the breaking changes in
+all modules, even if they only want to upgrade a single module. For example,
+assume the uber package includes `aws-appmesh` and `aws-synthetics`, and that
+release `0.x` of the uber package includes breaking changes to both modules, a
+customer who only wants the new feature added to `aws-synthetics` now must
+accept the breaking changes to `aws-appmesh` which might include changes to both
+the code and their deployed infrastructure they are not ready to make, e.g
+resource replacement.
+
 ### Migrating experimental modules to V2
 
 This section covers the migration strategy of unstable modules and APIs from v1
-to v2.
+to v2. For each unstable module in v1 we will have to decide the lifecycle stage
+in which it will be added to v2.
 
-For each unstable module in v1 we will have to decide the lifecycle stage in
-which it will be added to v2.
+#### Stable/Beta
 
-...
+The modules listed below must be added to `aws-cdk-lib` as they don't meet the
+alpha [conditions](#alpha-optional). This means that they can be added as either
+[beta](#beta-optional), or [stable](#stable).
 
-_TBC: add a decision for each module; will be added after the definition will be
-approved_
+| module                                                                                                                   | stage  | notes     |
+| ------------------------------------------------------------------------------------------------------------------------ | ------ | --------- |
+| [@aws-cdk/aws-s3-assets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-s3-assets)                  | stable |
+| [@aws-cdk/aws-ecr-assets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ecr-assets)                | stable |
+| [@aws-cdk/cx-api](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/cx-api)                                 | stable |
+| [@aws-cdk/region-info](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/region-info])                      | stable |
+| [@aws-cdk/aws-efs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-efs)                               | stable |
+| [@aws-cdk/aws-batch](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-batch)                           | stable |
+| [@aws-cdk/aws-glue](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-glue)                            | beta   |
+| [@aws-cdk/aws-ses](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ses)                              | beta   |
+| [@aws-cdk/aws-autoscaling-common](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-autoscaling-common) | stable |
+| [@aws-cdk/lambda-layer-awscli](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/lambda-layer-awscli])      | N/A    | Not in v2 |
+| [@aws-cdk/lambda-layer-kubectl](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/lambda-layer-kubectl)    | N/A    | Not in v2 |
+
+> _ordered by usage_
+
+The stage was decided based on the following factors:
+
+1. Module usage.
+2. The constructs library accelerated graduation research recommendation.
+3. Functionally, e.g `@aws-cdk/aws-autoscaling-common` is an integration module
+   that is not intended for direct usage.
+
+For more details on each module, see the appendix.
+
+#### Stable/Beta/Alpha
+
+The module listed below have no **dependent** modules, as such they can be
+released in either lifecycle stage with v2. While releasing a module separately
+might be tempting, it is an inferior customer experience in comparison to the
+module being added to `aws-cdk-lib`. As such we should only consider it for
+modules which are in early stage of development, and/or we forsee that their
+graduation process will include many breaking changes.
+
+| module                                                                                                                                           | Notes          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| [@aws-cdk/aws-s3-deployment](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-s3-deployment)                                   |                |
+| [@aws-cdk/aws-appsync](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                                               |                |
+| [@aws-cdk/pipelines](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/pipelines)                                                   |                |
+| [@aws-cdk/aws-elasticloadbalancingv2-targets](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-elasticloadbalancingv2-targets) |
+| [@aws-cdk/aws-lambda-nodejs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-lambda-nodejs)                                   |                |
+| [@aws-cdk/aws-eks](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-eks)                                                       | GA Planned     |
+| [@aws-cdk/aws-backup](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-backup)                                                 |                |
+| [@aws-cdk/aws-route53resolver](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-route53resolver)                               |                |
+| [@aws-cdk/aws-lambda-python](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-lambda-python)                                   |                |
+| [@aws-cdk/aws-docdb](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-docdb)                                                   |                |
+| [@aws-cdk/aws-appmesh](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                                               |                |
+| [@aws-cdk/aws-synthetics](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appmesh)                                            |                |
+| [@aws-cdk/aws-apigatewayv2-integrations](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-appsync)                             |
+| [@aws-cdk/aws-ses-actions](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ses-actions)                                       |                |
+| [@aws-cdk/aws-amplify](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-amplify)                                               |                |
+| [@aws-cdk/aws-fsx](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-fsx)                                                       |                |
+| [@aws-cdk/aws-cloud9](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-cloud9)                                                 |
+| [@aws-cdk/aws-globalaccelerator](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-globalaccelerator)                           |                |
+| [@aws-cdk/aws-redshift](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-redshift)                                             |                |
+| [@aws-cdk/aws-chatbot](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-chatbot)                                               |                |
+| [@aws-cdk/aws-codestar](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-codestar)                                             |                |
+| [@aws-cdk/aws-ivs](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-ivs)                                                       |                |
+| @aws-cdk/yaml-cfn                                                                                                                                | internal usage |
+
+> _ordered by usage_
+
+Since the construct library squad has already done the research for most of the
+module, I suggest we continue the discussion over the original
+[doc](https://tiny.amazon.com/7giz8whp/quipcvY1Cons)
 
 ### API Previews Specifications
 
 > This section will include the naming scheme for each type of API, and the API
 > evolution process.
-
-TODO
 
 ## 3. Extra unstable precautions
 
