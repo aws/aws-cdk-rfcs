@@ -685,30 +685,34 @@ of this approach, listed in this RFC are:
 >    can mitigate this downside by keeping the old unstable package around, but
 >    that leads to duplicated classes.
 
-1 and 3 applies to both option 3 and option 2. Disadvantage 2, states that
-"doing that brings us back to the dependency hell that mono-CDK was designed to
-solve". This is not accurate, in v1, modules declared both a `peerDependency`
-and a direct dependency on other `@aws-cdk` modules, this was mainly because
-prior to npm7 `peerDependencies` were not automatically installed. npm7 which
-does install `peerDependencies`, removes the need to declare a direct
-dependency. Additionally, alpha modules, as defined in this doc, are intended to
-be released using a versioning scheme that allows breaking changes with every
-release, as such they shouldn't be used by libraries. If a library does chooses
-to depend on an alpha module, it should declare a fixed dependency it, which
-will lock its consumer to that version.
+1 and 3 applies to both option 3 and option 2. Condition 2 of the
+[alpha](#alpha-optional) stage definition already state that unstable modules
+may not depend on each other.
 
 Releasing each alpha module separately has the advantage of allowing consumers
 to choose when they want to upgrade a specific module. If we release all modules
 under a single package, in which every release may include breaking changes to
-any numbers of its modules, users are force to accept the breaking changes in
+any numbers of its modules, users are forced to accept the breaking changes in
 all modules, even if they only want to upgrade a single module. For example,
 assume the uber package includes `aws-appmesh` and `aws-synthetics`, and that
 release `0.x` of the uber package includes breaking changes to both modules, a
 customer who only wants the new feature added to `aws-synthetics` now must
 accept the breaking changes to `aws-appmesh`, which might include changes to
 both the code and their deployed infrastructure they are not ready to make, e.g
-resource replacement. Having separate module means reduces the blast
-radius of every update.
+resource replacement. Having separate module means reduces the blast radius of
+every update.
+
+A note about the statement in disadvantage 2: "doing that brings
+us back to the dependency hell that mono-CDK was designed to solve". This is not
+accurate, in v1, modules declared both a `peerDependency` and a direct
+dependency on other `@aws-cdk` modules, this was mainly because prior to npm7
+`peerDependencies` were not automatically installed. npm7 which does install
+`peerDependencies`, removes the need to declare a direct dependency.
+Additionally, alpha modules, as defined in this doc, are intended to be released
+using a versioning scheme that allows breaking changes with every release, as
+such they shouldn't be used by libraries. If a library does chooses to depend on
+an alpha module, it should declare a fixed dependency it, which will lock its
+consumer to that version.
 
 ### Migrating experimental modules to V2
 
