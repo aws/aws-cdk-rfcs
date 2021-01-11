@@ -44,6 +44,8 @@ The advantages of vending as one module:
 1. Easy for unstable module to depend on other unstable modules.
 2. Easier solution from a build tools perspective. A single separate monorepo,
    using the same tools from our main repo.
+3. Easier for community contributors to create new L2s. No need to create a new
+   repo.
 
 The advantages of vending as separate modules:
 
