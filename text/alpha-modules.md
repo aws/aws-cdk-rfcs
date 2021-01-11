@@ -57,7 +57,7 @@ The advantages of vending as separate modules:
    consuming. These breaking changes might include change to an already deployed
    infrastructure, e.g resource replacement, which users will be hesitant to
    accept. By separating to individual modules, we reduce the blast radius of
-   every update. This was meticulously described in this
+   every update. This was meticulously described in this PR
    [comment](https://github.com/aws/aws-cdk-rfcs/pull/279#discussion_r553846887):
 
 > **If we decide to break APIs between releases, then monopackaging is worse
@@ -137,5 +137,5 @@ incorrectly. The reason we used dependencies in v1 was usability, if we hadn't,
 users would have been forced to install hundreds of `peerDependencies`
 themselves. This is mitigated by npm7, which auto install `peerDependencies`.
 Additionally, it is unlikely that post v2 we will release hundreds of unstable
-modules, so even for pre npm7 users, installing `peerDependencies` is
+modules, so even for pre npm7 users, installing `peerDependencies` will be
 manageable.
