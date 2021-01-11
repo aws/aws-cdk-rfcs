@@ -54,7 +54,7 @@ const WebsiteBucket = () => (
   <Bucket src="./public" />
 )
 
-const MyCloudFrontDistribution = (
+const MyCloudFrontDistribution = () => (
   <CloudFrontDistribution>
     <Origins>
       <DefaultOrigin oai="true">
