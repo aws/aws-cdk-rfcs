@@ -268,7 +268,7 @@ a library, `peerDependencies` will not. This subject has been discussed in
 length during the RFC review, you can read more in this
 [comment](https://github.com/aws/aws-cdk-rfcs/pull/279#discussion_r553581183).
 
-**Migrating experimental modules to V2**
+#### Migrating experimental modules to V2
 
 Before v2 release we will need to decide the lifecycle stage of every v1
 experimental module. We will review all modules and devise a migration strategy
