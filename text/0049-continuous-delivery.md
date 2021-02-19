@@ -366,7 +366,7 @@ and does not require deep knowledge of the application structure, besides the
 set of accounts and regions into which the app needs to be deployed.
 
 The current implementation only provisions an S3 bucket, but in order to be able
-to continuously deploy CDK stacks that use asses, we will need the following
+to continuously deploy CDK stacks that use assets, we will need the following
 resources **in each AWS environment (account + region)**:
 
 For publishing:
