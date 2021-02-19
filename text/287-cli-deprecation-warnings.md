@@ -30,6 +30,17 @@ you will receive a warning when performing any CLI operation that performs synth
   This API will be removed in the next major release
 ```
 
+### Contributing guide
+
+To deprecate any element (class, interface, property, function, etc.)
+in the CDK, you need to make two changes:
+
+1. Add a `@deprecated` tag to the documentation block of the element.
+2. Add a `@deprecated` decorator (from the `@aws-cdk/core` module) to the element itself.
+
+(There is a linter rule that makes sure both elements are always present,
+in case you add one, but forget the other)
+
 ## FAQ
 
 ### What are we launching today?
@@ -57,7 +68,7 @@ We are doing this to help customers have a smoother migration from `V1` to `V2` 
 
 ### Why should we _not_ do this?
 
-I see two reasons why we might not want to implement this feature:
+I see three reasons why we might not want to implement this feature:
 
 1. Deprecated elements are already highlighted by virtually any editor/IDE.
   In my experience, customers are diligent in moving away from deprecated APIs,
@@ -65,6 +76,12 @@ I see two reasons why we might not want to implement this feature:
 2. We risk overloading customers with warnings,
   training them to ignore our output if there's too much of it.
   A warning must be read in order to be effective, after all.
+3. Depending on the exact solution chosen
+  (see discussion below),
+  we might not be able to distinguish from the user's code using a deprecated API,
+  and from our own libraries using deprecated APIs.
+  Which means a user might get warnings that they will be unable to get rid of
+  (because they're coming from code that they don't control).
 
 ### What changes are required to enable this change?
 
@@ -106,28 +123,67 @@ I think it's worth it to talk about what solutions we _don't_ want,
 as that will strongly inform how we approach the problem.
 
 I think we can rule out any solution that requires parsing the customer's source code in search for usages of deprecated elements.
-The downsides of this approach include:
+While this approach has many interesting advantages:
+
+* Allows us to discover some tricky deprecated elements,
+  like enum values, or deprecated types used only in type declarations,
+  that will be difficult to do with only runtime reporting.
+* Would prevent reporting warnings for deprecated usages outside the customer's code
+  (for example, in our own libraries).
+
+While those advantages are considerable,
+I still think the downsides outweigh them:
 
 * We would have to write a separate parser for each language supported by the CDK.
 * This additional parsing could have an adverse impact on the performance of CDK commands.
+* It's not obvious this analysis can even be performed at all in the case of dynamically-typed languages like JavaScript or Python.
 
 If we agree that we don't want the above solution,
 then the only avenue we have left is injecting some extra code in the deprecated elements during compilation of the TypeScript code into JavaScript.
-There are two ways we can do that: through JSII, or purely through the TypeScript compiler.
+There are two ways we can do that: through the TypeScript compiler directly,
+or by modifying JSII (which is discussed as an alternative below).
 
-##### 2.1. Modifying JSII
+##### 2.1. TypeScript decorators
 
-We could modify JSII to add a capability to it that allows injecting some code when compiling every deprecated element.
+We can use [TypeScript decorators](https://www.typescriptlang.org/docs/handbook/decorators.html)
+to enhance the runtime JavaScript code with our custom logic.
+We can add an `awslint` rule that enforces that every element with the `@deprecated`
+JSDoc tag also needs to have the `@deprecated` decorator present.
+While decorators are still considered an experimental feature,
+our init templates and JSII enable them in `tsconfig.json`,
+which means the vast majority of our customers will have them enabled as well.
+
+The main advantage of this solution is that changes are needed only in the CDK project.
+
+### Is this a breaking change?
+
+No.
+
+### What are the drawbacks of this solution?
+
+1. It won't be possible to reliably get the module the deprecated element belongs to
+  (only the name of the element) --
+  the decorator is simply a JavaScript function defined in `core`,
+  and doesn't have (easy) access to the information on what module a given object it's called on belongs to.
+2. TypeScript does not allow decorators on interfaces
+  (neither on the interface directly, nor on any of its properties).
+  This means we will not be able to register warnings for structs, or struct properties.
+
+### What alternative solutions did you consider?
+
+The alternative solution to `2.1` is to modify JSII to add a capability to it that allows injecting some code when compiling every deprecated element.
 It would involve writing a TypeScript transform,
 that adds some code whenever the deprecated element is accessed.
 Nick did a similar change in PR [#2348](https://github.com/aws/jsii/pull/2348)
 to add runtime version information to all JSII-compiled classes.
 
-Advantages:
+Advantages of this solution:
 
-* Doing it in JSII wil make it easy to record the module the given element is in.
+* Doing it in JSII will make it easy to record the module the given element is in.
+* Doing it in JSII allows this functionality to be used by other JSII projects,
+  like `cdk8s`, or `cdktf`.
 
-Disadvantages:
+Disadvantages of this solution:
 
 * Because the code adding the warning for the deprecated elements will be CDK-specific,
   it will be pretty awkward to correctly pass what exactly that code should be from CDK to JSII
@@ -138,44 +194,9 @@ Disadvantages:
   (merging a JSII PR, waiting for a release, updating CDK to use the new version, etc.),
   which typically lengthens the total development time.
 
-##### 2.2. TypeScript decorators
-
-We can use [TypeScript decorators](https://www.typescriptlang.org/docs/handbook/decorators.html)
-to enhance the runtime JavaScript code with our custom logic.
-We can add an `awslint` rule that enforces that every element with the `@deprecated`
-JSDoc tag also needs to have the `@deprecated` decorator present.
-While decorators are still considered an experimental feature,
-our init templates and JSII enable them in `tsconfig.json`,
-which means the vast majority of our customers will have them enabled as well.
-
-Advantages:
-
-* Changes are needed only in the CDK project.
-
-Disadvantages:
-
-* It won't be possible to reliably get the module the deprecated element belongs to
-  (only its name).
-
-**My recommendation**: TypeScript decorators.
-
-### Is this a breaking change?
-
-No.
-
-### What are the drawbacks of this solution?
-
-The drawback of this solution is that we will overwhelm our customers with warnings,
-and train them to ignore the output of `cdk` commands because of that.
-
-### What alternative solutions did you consider?
-
-The alternative is to do nothing,
-and rely on editors/IDEs to warn customers of using deprecated features.
-
 ### What is the high level implementation plan?
 
-The high-level implementation plan depends on the method chosen:
+The high-level implementation plan depends on the solution chosen:
 
 1. If we decide to modify JSII,
   we will have to start with a PR to that project first,
