@@ -72,9 +72,9 @@ package launchtype
 type LaunchType string
 
 const (
-	LaunchType_EC2          LaunchType = "EC2"
-	LaunchType_FARGATE      LaunchType = "FARGATE"
-	LaunchType_THIRD_OPTION LaunchType = "THIRD_OPTION"
+ LaunchType_EC2          LaunchType = "EC2"
+ LaunchType_FARGATE      LaunchType = "FARGATE"
+ LaunchType_THIRD_OPTION LaunchType = "THIRD_OPTION"
 )
 ```
 
@@ -498,45 +498,45 @@ to be used as the parameter for the constructor, preserving the naming around th
 package ecs
 
 type IBaseServiceOptions interface {
-	GetCluster() ICluster
-	GetDesiredCount() *int
-	GetServiceName() *string
-	GetMaxHealthyPercent() *int
-	GetMinHealthyPercent() *int
-	GetHealthCheckGracePeriod() *Duration
-	GetCloudMapOptions() CloudMapOptions
-	GetPropagateTags() PropagatedTagSource
-	GetEnableECSManagedTags() *bool
-	GetDeploymentController() DeploymentController
+ GetCluster() ICluster
+ GetDesiredCount() *int
+ GetServiceName() *string
+ GetMaxHealthyPercent() *int
+ GetMinHealthyPercent() *int
+ GetHealthCheckGracePeriod() *Duration
+ GetCloudMapOptions() CloudMapOptions
+ GetPropagateTags() PropagatedTagSource
+ GetEnableECSManagedTags() *bool
+ GetDeploymentController() DeploymentController
 }
 
 type BaseServiceOptions struct {
-	Cluster                ICluster
-	DesiredCount           *int
-	ServiceName            *string
-	MaxHealthyPercent      *int
-	MinHealthyPercent      *int
-	HealthCheckGracePeriod *Duration
-	CloudMapOptions        CloudMapOptions
-	PropagateTags          PropagatedTagSource
-	EnableECSManagedTags   *bool
-	DeploymentController   DeploymentController
+ Cluster                ICluster
+ DesiredCount           *int
+ ServiceName            *string
+ MaxHealthyPercent      *int
+ MinHealthyPercent      *int
+ HealthCheckGracePeriod *Duration
+ CloudMapOptions        CloudMapOptions
+ PropagateTags          PropagatedTagSource
+ EnableECSManagedTags   *bool
+ DeploymentController   DeploymentController
 }
 
 // NOTE: Here, baseServiceOptions is almost identical to BaseServiceOptions,
 // however we refrain from using the same type in order to avoid the risk of
 // mis-use -- users should always invoke NewBaseServiceOptions & use the result.
 type baseServiceOptions struct {
-	cluster                ICluster
-	desiredCount           *int
-	serviceName            *string
-	maxHealthyPercent      *int
-	minHealthyPercent      *int
-	healthCheckGracePeriod *Duration
-	cloudMapOptions        CloudMapOptions
-	propagateTags          PropagatedTagSource
-	enableECSManagedTags   *bool
-	deploymentController   DeploymentController
+ cluster                ICluster
+ desiredCount           *int
+ serviceName            *string
+ maxHealthyPercent      *int
+ minHealthyPercent      *int
+ healthCheckGracePeriod *Duration
+ cloudMapOptions        CloudMapOptions
+ propagateTags          PropagatedTagSource
+ enableECSManagedTags   *bool
+ deploymentController   DeploymentController
 }
 
 func (b *baseServiceOptions) GetCluster() ICluster    { return b.cluster }
@@ -545,18 +545,18 @@ func (b *baseServiceOptions) GetServiceName() *string { return b.serviceName }
 // etc...
 
 func NewBaseServiceOptions(args BaseServiceOptions) IBaseServiceOptions {
-	return &baseServiceOptions{
-		cluster:                args.Cluster,
-		desiredCount:           args.DesiredCount,
-		serviceName:            args.ServiceName,
-		maxHealthyPercent:      args.MaxHealthyPercent,
-		minHealthyPercent:      args.MinHealthyPercent,
-		healthCheckGracePeriod: args.HealthCheckGracePeriod,
-		cloudMapOptions:        args.CloudMapOptions,
-		propagateTags:          args.PropagateTags,
-		enableECSManagedTags:   args.EnableECSManagedTags,
-		deploymentController:   args.DeploymentController,
-	}
+ return &baseServiceOptions{
+  cluster:                args.Cluster,
+  desiredCount:           args.DesiredCount,
+  serviceName:            args.ServiceName,
+  maxHealthyPercent:      args.MaxHealthyPercent,
+  minHealthyPercent:      args.MinHealthyPercent,
+  healthCheckGracePeriod: args.HealthCheckGracePeriod,
+  cloudMapOptions:        args.CloudMapOptions,
+  propagateTags:          args.PropagateTags,
+  enableECSManagedTags:   args.EnableECSManagedTags,
+  deploymentController:   args.DeploymentController,
+ }
 }
 
 type IBaseServiceProps interface {
