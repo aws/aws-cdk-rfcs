@@ -319,7 +319,12 @@ type IBaseServiceProps interface {
 }
 ```
 
-However, for the corresponding structs, we can take one of three approaches.
+However, for the corresponding structs, we can take one of four approaches:
+
+1. Embedding parent structs
+1. Flattening struct properties, with interface
+1. Providing a struct constructor
+1. **Recommended:** Flattening struct properties, without interface
 
 ##### Approach 1: embedding parent structs
 
@@ -608,6 +613,92 @@ NewBaseService(scope, "ID", NewBaseServiceProps(BaseServiceProps{
     Cluster: cluster,
 }))
 ```
+
+#### Approach 4 (Recommended): flattening props fields, without interface
+
+Go structs are the natural way to represent jsii structs (the fact they are named the same is no coincidence). All previous approaches attempt to
+preserve properties of their TypeScript interface counterparts: immutability (they cannot be modified once created) and subsitutability (a child
+struct can be passed where it's parent type is expected).
+
+However, maintaining those properties is unlikely to be necessary in go:
+
+- if structs are always passed by-value, mutations of a struct performed by a function that received it will never be visible to the caller,
+  effectively maintaining the immutability from the point of view of the caller
+- code that has a child struct instance, and needs to provide this to a call that accepts a super-type of it can copy from it's instance to create
+  the super-type instance "manually" (although a helper function can be provided on the child struct to convert it to any of it's parent types to
+  reduce the burden on the user)
+
+Consequently, the simplest possible generated code is the following:
+
+```go
+package ecs
+
+// Note: no interfaces are defined for these, ever!
+
+type BaseServiceOptions struct {
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+}
+
+type BaseServiceProps struct {
+    // Flattened properties generated from extended interface (i.e. Base ServiceOptions)
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+
+    // Fields introduced by BaseServiceProps
+    LaunchType          LaunchType
+}
+
+// Optional - we can reduce boilerplate for conversion of BaseServiceProps -> BaseServiceOptions:
+func (b BaseServiceProps) ToBaseServiceOptions() BaseServiceOptions {
+    return BaseServiceOptions{
+        Cluster:                b.Cluster,
+        DesiredCount:           b.DesiredCount,
+        ServiceName:            b.ServiceName,
+        MaxHealthyPercent:      b.MaxHealthyPercent,
+        MinHealthyPercent:      b.MinHealthyPercent,
+        HealthCheckGracePeriod: b.HealthCheckGracePeriod,
+        CloudMapOptions:        b.CloudMapOptions,
+        PropagateTags:          b.PropagateTags,
+        EnableECSManagedTags:   b.EnableECSManagedTags,
+        DeploymentController:   b.DeploymentController,
+    }
+}
+```
+
+And the usage would simply be:
+
+```go
+// in package ecs, the struct is passed by value:
+func TakesBaseServiceProps(props BaseServiceProps) { /* ... */ }
+
+// User code:
+ecs.TakesBaseServiceProps(ecs.BaseServiceProps{
+    ServiceName:       "myService",
+    MaxHealthyPercent: 100,
+    MinHealthyPercent: 50,
+    LaunchType: "EC2",
+})
+```
+
+Since there are no interfaces to be implemented here, whenever the `@jsii/kernel` decides to pass a struct by-reference, the properties of the object
+will be eagerly fetched, and a struct value initialized with those directly. Such values are never proxied away to JavaScript.
 
 ### Notes/Concerns
 
