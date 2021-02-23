@@ -54,7 +54,13 @@ export enum LaunchType {
   /**
    * The service will be launched using the FARGATE launch type
    */
-  FARGATE = 'FARGATE'
+  FARGATE = 'FARGATE',
+
+  /**
+   * A third option (made up for the sake of the exercise - many enum constants
+   * have underscores in their names).
+   */
+  THIRD_OPTION = 'THIRD_OPTION',
 }
 ```
 
@@ -66,29 +72,37 @@ package launchtype
 type LaunchType string
 
 const (
-    LaunchTypeEC2     LaunchType = "EC2"
-    LaunchTypeFARGATE LaunchType = "FARGATE"
+	LaunchType_EC2          LaunchType = "EC2"
+	LaunchType_FARGATE      LaunchType = "FARGATE"
+	LaunchType_THIRD_OPTION LaunchType = "THIRD_OPTION"
 )
 ```
 
 *_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/master/service/ecs/api.go#L20410-L20416) handles
 enums.
 
+### Possible Extensions
+
 We could also add some utility functions to make the API a little neater:
 
 ```go
 func EC2() LaunchType {
-    return LaunchTypeEC2
+    return LaunchType_EC2
 }
 
 func FARGATE() LaunchType {
-    return LaunchTypeFARGATE
+    return LaunchType_FARGATE
+}
+
+func THIRD_OPTION() LaunchType {
+    return LauncType_THIRD_OPTION
 }
 
 func Values() []LaunchType {
     return []LaunchType{
-        LaunchTypeEC2,
-        LaunchTypeFARGATE,
+        LaunchType_EC2,
+        LaunchType_FARGATE,
+        LaunchType_THIRD_OPTION,
     }
 }
 ```
@@ -99,7 +113,8 @@ playground](https://play.golang.org/p/olztr74OKsk))
 ```go
 fmt.Println(launchtype.EC2()) // => "EC2"
 fmt.Println(launchtype.FARGATE()) // => "FARGATE"
-fmt.Println(launchtype.Values()) // => [EC2 FARGATE]
+fmt.Println(launchtype.THIRD_OPTION()) // => "THIRD_OPTION"
+fmt.Println(launchtype.Values()) // => [EC2 FARGATE THIRD_OPTION]
 ```
 
 ## Interfaces
@@ -738,7 +753,7 @@ datatype interfaces). Instance methods would be declared in the generated interf
 Static methods, on the other hand, would be generated as package-level functions. Since there could be multiple classes within a package, there is not
 a good way to namespace a static function in an idiomatic way (e.g. `ClassName.StaticMethod()`); to ensure that static methods maintain the
 characteristic of not requiring a concrete receiver while still ensuring some kind of namespacing, the proposal is to add the class name is a prefix
-to the top-level function. These methods would not be included in the corresponding interface.
+to the top-level function, and separating with a `_` to avoid namespace conflicts. These methods would not be included in the corresponding interface.
 
 Similarly, static properties would be generated as a function at the package level with the same prefixing as with static methods. This way, we can
 still delegate calls to the jsii runtime to get the static property value.
@@ -809,18 +824,19 @@ func (g *greeter) Greet() (result string) {
 }
 
 // static method
-func GreeterFoo() (result string) {
+func Greeter_Foo() (result string) {
     jsii.StaticInvoke("example.Greeter", "foo", []interface{}, &result)
     return
 }
 
-// static property
-func GreeterHello() string {
+// static property getter
+func Greeter_GetHello() string {
     jsii.StaticGet("example.Greeter", "hello", &result)
     return
 }
 
-func GreeterSetHello(hello string) {
+// static property setter
+func Greeter_SetHello(hello string) {
     jsii.StaticSet("example.Greeter", "hello", hello)
 }
 
