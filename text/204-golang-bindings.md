@@ -171,8 +171,8 @@ type ISecurityGroup interface {
     IResource
     IPeer
 
-    GetSecurityGroupId() string
-    GetAllowAllOutbound() bool
+    SecurityGroupId() string
+    AllowAllOutbound() bool
     AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
     AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
 }
@@ -790,8 +790,8 @@ import "jsii"
 
 // The interface represents the class in the API.
 type Greeter interface {
-    Greet()       string
-    GetGreeting() string
+    Greet()    string
+    Greeting() string
 }
 
 // The struct is the concrete implementation for the type. This is a JS object
@@ -811,7 +811,7 @@ func NewGreeter(message string) Greeter {
     return g
 }
 
-func (g *greeter) GetGreeting() (result string) {
+func (g *greeter) Greeting() (result string) {
     // Getting the property from the JS process
     jsii.Get(g, "greeting", &result)
     return
@@ -830,7 +830,7 @@ func Greeter_Foo() (result string) {
 }
 
 // static property getter
-func Greeter_GetHello() string {
+func Greeter_Hello() string {
     jsii.StaticGet("example.Greeter", "hello", &result)
     return
 }
@@ -883,9 +883,11 @@ In Go:
 ```go
 package animal
 
+import "jsii"
+
 // Base class as interface
 type Animal interface {
-    GetName() string
+    Name() string
 
     Move(distance int64)
     isAnimal() // private method saftey check
@@ -893,19 +895,23 @@ type Animal interface {
 
 // Base class implementation
 type animal struct {
-    Name string
+    // So this is not 0-wodth
+    _ byte // padding
 }
 
 func NewAnimal(name string) Animal {
-    return &animal{name}
+    a := &animal{}
+    jsii.Create(a, "example.Animal", []interface{}{name})
+    return a
 }
 
-func (a *animal) GetName() string {
-    return a.Name
+func (a *animal) Name() (result string) {
+    jsii.Get(a, "name", &result)
+    return
 }
 
 func (a *animal) Move(distance int64) {
-    fmt.Printf("%s moved %vm.\n", a.Name(), distance)
+    jsii.InvokeVoid(a, "move", []interface{}{distance})
 }
 
 // Child class
@@ -919,12 +925,8 @@ type snake struct {
 }
 
 func NewSnake(name string) Snake {
-    a := NewAnimal{name}  // or ExtendAnimal, to avoid introspection for super calls later
+    a := NewAnimal(name)  // or ExtendAnimal, to avoid introspection for super calls later
     return &snake{a}
-}
-
-func (s *snake) Name() string {
-    return s.name  // inherits `name` property from `Animal`
 }
 
 func (s *snake) Move(distance int64) {
@@ -984,13 +986,13 @@ Go struct (derived from TS class) with embedded struct (derived from TS datatype
 type ICluster interface {
     IResource
 
-    GetClusterName()              string
-    GetClusterArn()               string
-    GetVpc()                      ec2.IVpc
-    GetConnections()              ec2.Connections
-    GetHasEc2Capacity()           bool
-    GetDefaultCloudMapNamespace() cloudmap.INamespace
-    GetAutoscalingGroup()         autoscaling.IAutoScalingGroup
+    ClusterName()              string
+    ClusterArn()               string
+    Vpc()                      ec2.IVpc
+    Connections()              ec2.Connections
+    HasEc2Capacity()           bool
+    DefaultCloudMapNamespace() cloudmap.INamespace
+    AutoscalingGroup()         autoscaling.IAutoScalingGroup
 }
 
 // Generated interface for Cluster class
@@ -1006,13 +1008,13 @@ type cluster struct {
 }
 
 // Public getter on public property
-func (c *cluster) GetClusterName() (result string) {
+func (c *cluster) ClusterName() (result string) {
     jsii.Get(c, "clusterName", &result)
     return
 }
 
 // Public getter on private property
-func (c *cluster) GetHasEc2Capacity() (result bool) {
+func (c *cluster) HasEc2Capacity() (result bool) {
     jsii.Get(c, "hasEc2Capacity", &result)
     return
 }
