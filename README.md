@@ -16,7 +16,6 @@ future state of the libraries and to discover projects for contribution.
 \#|Title|Owner|Status
 ---|-----|-----|------
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0079-cdk-2.0.md)|[@nija-at](https://github.com/nija-at)|👷 implementing
-[192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|👷 implementing
 [204](https://github.com/aws/aws-cdk-rfcs/issues/204)|[Go language bindings - Code Generation](https://github.com/aws/aws-cdk-rfcs/blob/master/text/204-golang-bindings.md)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👷 implementing
 [253](https://github.com/aws/aws-cdk-rfcs/issues/253)|[CDK Metadata v2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0253-cdk-metadata-v2.md)||👍 approved
 [193](https://github.com/aws/aws-cdk-rfcs/issues/193)|[Fixing of type unions](https://github.com/aws/aws-cdk-rfcs/pull/194)|[@RomainMuller](https://github.com/RomainMuller)|⏰ final comments
@@ -80,7 +79,7 @@ future state of the libraries and to discover projects for contribution.
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
 [201](https://github.com/aws/aws-cdk-rfcs/issues/201)|[Construct scope relocation](https://github.com/aws/aws-cdk-rfcs/issues/201)||💡 proposed
-[217](https://github.com/aws/aws-cdk-rfcs/issues/217)|[Alternative Infrastructure Providers](https://github.com/aws/aws-cdk-rfcs/issues/217)||💡 proposed
+[217](https://github.com/aws/aws-cdk-rfcs/issues/217)|[Alternative Infrastructure Providers](https://github.com/aws/aws-cdk-rfcs/issues/217)|[@ccfife](https://github.com/ccfife)|💡 proposed
 [219](https://github.com/aws/aws-cdk-rfcs/issues/219)|[ECS Patterns Service Builder](https://github.com/aws/aws-cdk-rfcs/issues/219)||💡 proposed
 [229](https://github.com/aws/aws-cdk-rfcs/issues/229)|[Construct library pattern for metrics](https://github.com/aws/aws-cdk-rfcs/issues/229)||💡 proposed
 [230](https://github.com/aws/aws-cdk-rfcs/issues/230)|[Construct library pattern for grants](https://github.com/aws/aws-cdk-rfcs/issues/230)||💡 proposed
@@ -96,15 +95,16 @@ future state of the libraries and to discover projects for contribution.
 [282](https://github.com/aws/aws-cdk-rfcs/issues/282)|[CDK Pipelines security posture change approvals](https://github.com/aws/aws-cdk-rfcs/issues/282)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
-[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)|[@eladb](https://github.com/eladb)|✅ done
+[36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)||✅ done
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|[Release from a "release" branch](https://github.com/aws/aws-cdk-rfcs/issues/37)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
-[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)|[@eladb](https://github.com/eladb)|✅ done
+[55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)||✅ done
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[CI/CD Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0095-cognito-construct-library)|[@nija-at](https://github.com/nija-at)|✅ done
 [107](https://github.com/aws/aws-cdk-rfcs/issues/107)|[Publish a Construct Library Module Lifecycle document](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md)|[@ccfife](https://github.com/ccfife)|✅ done
 [110](https://github.com/aws/aws-cdk-rfcs/issues/110)|[CLI Compatibility Strategy](https://github.com/aws/aws-cdk-rfcs/blob/master/text/00110-cli-framework-compatibility-strategy.md)|[@iliapolo](https://github.com/iliapolo)|✅ done
 [171](https://github.com/aws/aws-cdk-rfcs/issues/171)|[CloudFront Module Redesign](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0171-cloudfront-redesign.md)|[@njlynch](https://github.com/njlynch)|✅ done
+[192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
@@ -117,6 +117,7 @@ future state of the libraries and to discover projects for contribution.
 [232](https://github.com/aws/aws-cdk-rfcs/issues/232)|[Construct library pattern for resources that need IAM roles](https://github.com/aws/aws-cdk-rfcs/issues/232)||❓unknown
 [233](https://github.com/aws/aws-cdk-rfcs/issues/233)|[Using Custom Types with CDK](https://github.com/aws/aws-cdk-rfcs/issues/233)||❓unknown
 [246](https://github.com/aws/aws-cdk-rfcs/issues/246)|[[lambda] Package Docker asset as a lambda layer](https://github.com/aws/aws-cdk-rfcs/issues/246)||❓unknown
+[287](https://github.com/aws/aws-cdk-rfcs/issues/287)|[CDK CLI should warn when using deprecated APIs](https://github.com/aws/aws-cdk-rfcs/pull/290)|[@skinny85](https://github.com/skinny85)|❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
