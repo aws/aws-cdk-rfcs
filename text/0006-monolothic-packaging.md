@@ -290,7 +290,7 @@ import (
 
 app := awscdk.NewApp()
 stack := awscdk.NewStack(app, "MyStack");
-bucket := awscdk.aws_s3.NewBucket(stack, "MyBucket")
+bucket := awscdk.awss3.NewBucket(stack, "MyBucket")
 
 app.Synth();
 ```
