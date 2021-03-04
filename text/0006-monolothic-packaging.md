@@ -297,16 +297,17 @@ app.Synth();
 
 Migration path:
 
-Go users who will migrate from 1.x to 2.0 will only need to change their import (and `go.mod` "require" clause) 
+Go users who will migrate from 1.x to 2.0 will only need to change their import (and `go.mod` "require" clause)
 from `github.com/aws/aws-cdk-go/awscdk` to `github.com/aws/aws-cdk-go/awscdk/v2`.
 
 This will be achieved in the following way:
+
 - 1.x releases will publish `monocdk` under the module name `awscdk`
 - 2.x releases will publish `aws-cdk-lib` under the module name `awscdk`.
 
 Open issues:
-- The current go code generator does not support specifying a module name, only the repository name (tracked https://github.com/aws/jsii/issues/2632).
-
+- The current go code generator does not support specifying a module name, only the repository name 
+  (tracked via [aws/jsii#2632](https://github.com/aws/jsii/issues/2632)).
 
 ## Issues with Specific Modules
 
