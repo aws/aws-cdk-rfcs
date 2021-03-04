@@ -306,7 +306,8 @@ This will be achieved in the following way:
 - 2.x releases will publish `aws-cdk-lib` under the module name `awscdk`.
 
 Open issues:
-- The current go code generator does not support specifying a module name, only the repository name 
+
+- The current go code generator does not support specifying a module name, only the repository name
   (tracked via [aws/jsii#2632](https://github.com/aws/jsii/issues/2632)).
 
 ## Issues with Specific Modules
