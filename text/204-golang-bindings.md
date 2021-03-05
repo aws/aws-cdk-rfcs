@@ -54,7 +54,13 @@ export enum LaunchType {
   /**
    * The service will be launched using the FARGATE launch type
    */
-  FARGATE = 'FARGATE'
+  FARGATE = 'FARGATE',
+
+  /**
+   * A third option (made up for the sake of the exercise - many enum constants
+   * have underscores in their names).
+   */
+  THIRD_OPTION = 'THIRD_OPTION',
 }
 ```
 
@@ -66,29 +72,37 @@ package launchtype
 type LaunchType string
 
 const (
-    LaunchTypeEc2     LaunchType = "EC2"
-    LaunchTypeFargate LaunchType = "FARGATE"
+ LaunchType_EC2          LaunchType = "EC2"
+ LaunchType_FARGATE      LaunchType = "FARGATE"
+ LaunchType_THIRD_OPTION LaunchType = "THIRD_OPTION"
 )
 ```
 
 *_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/master/service/ecs/api.go#L20410-L20416) handles
 enums.
 
+### Possible Extensions
+
 We could also add some utility functions to make the API a little neater:
 
 ```go
 func EC2() LaunchType {
-    return LaunchTypeEc2
+    return LaunchType_EC2
 }
 
-func Fargate() LaunchType {
-    return LaunchTypeFargate
+func FARGATE() LaunchType {
+    return LaunchType_FARGATE
+}
+
+func THIRD_OPTION() LaunchType {
+    return LauncType_THIRD_OPTION
 }
 
 func Values() []LaunchType {
     return []LaunchType{
-        LaunchTypeEc2,
-        LaunchTypeFargate,
+        LaunchType_EC2,
+        LaunchType_FARGATE,
+        LaunchType_THIRD_OPTION,
     }
 }
 ```
@@ -98,8 +112,9 @@ playground](https://play.golang.org/p/olztr74OKsk))
 
 ```go
 fmt.Println(launchtype.EC2()) // => "EC2"
-fmt.Println(launchtype.Fargate()) // => "FARGATE"
-fmt.Println(launchtype.Values()) // => [EC2 FARGATE]
+fmt.Println(launchtype.FARGATE()) // => "FARGATE"
+fmt.Println(launchtype.THIRD_OPTION()) // => "THIRD_OPTION"
+fmt.Println(launchtype.Values()) // => [EC2 FARGATE THIRD_OPTION]
 ```
 
 ## Interfaces
@@ -156,10 +171,16 @@ type ISecurityGroup interface {
     IResource
     IPeer
 
-    GetSecurityGroupId() string
-    GetAllowAllOutbound() bool
+    SecurityGroupId() string
+    AllowAllOutbound() bool
     AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
     AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
+}
+
+// Concrete implementation for jsii proxy values.
+type iSecurityGroup struct {
+    IResource
+    IPeer
 }
 ```
 
@@ -174,7 +195,7 @@ single Go struct that corresponds to a datatype interface (see last bullet point
 
 #### Case 1: Typescript struct/datatype interface (no extensions)
 
-In the case of a simple a datatype interface (`HealthCheck`) without extensions, we would generate both a Go struct (HealthCheck), which would hold
+In the case of a simple a datatype interface (`HealthCheck`) without extensions, we would generate both a Go struct (`HealthCheck`), which would hold
 the properties of the original typescript interface as public members, and a Go interface (`IHealthCheck`) that defines getter methods for each
 property that would be implemented by the corresponding struct (jsii datatype properties always are readonly, so there are no setter methods
 generated). Since Go does not allow a struct to have exported members with the same name as an interface method, we would have to prefix the interface
@@ -216,11 +237,11 @@ type IHealthCheck interface{
 }
 
 type HealthCheck struct {
-    Command []string
-    Interval cdk.Duration;
-    Retries int
+    Command     []string
+    Interval    cdk.Duration;
+    Retries     int
     StartPeriod cdk.Duration;
-    Timeout cdk.Duration;
+    Timeout     cdk.Duration;
 }
 
 // See NOTE below
@@ -294,7 +315,7 @@ The interface generated for the jsii struct being extended would be **embedded**
 ```go
 package ecs
 
-type BaseServiceOptionsIface interface {
+type IBaseServiceOptions interface {
     GetCluster()                ICluster
     GetDesiredCount()           *int
     GetServiceName()            *string
@@ -307,13 +328,20 @@ type BaseServiceOptionsIface interface {
     GetDeploymentController()   DeploymentController
 }
 
-type BaseServicePropsIface interface {
-    BaseServiceOptionsIface  // embeddeded interface
+type IBaseServiceProps interface {
+    IBaseServiceOptions  // embeddeded interface
     GetLaunchType()             LaunchType
 }
 ```
 
-However, for the corresponding structs, we can take one of two approaches:
+However, for the corresponding structs, we can take one of four approaches:
+
+1. Embedding parent structs
+1. Flattening struct properties, with interface
+1. Providing a struct constructor
+1. **Recommended:** Flattening struct properties, without interface
+
+##### Approach 1: embedding parent structs
 
 the first is to embed the extended struct into the extending struct:
 (See: [Go playground example](https://play.golang.org/p/Dcww2kYR_Qx)).
@@ -345,21 +373,21 @@ func (p BaseServiceProps) GetLaunchType() string     { return p.LaunchType }
 
 
 // example function that takes the embedding interface
-func TakesBaseServicePropsIface(props BaseServicePropsIface) {
+func TakesIBaseServiceProps(props IBaseServiceProps) {
     fmt.Printf("Class: %T\nValue:%+[1]v", props)
 }
 ```
 
 This allows the embedding struct (here, `BaseServiceProps`) to "inherit" all the methods defined in the embedded interface
-(`BaseServiceOptionsIFace`) automatically.
+(`IBaseServiceOptions`) automatically.
 
 The advantages of this approach are:
 
-- there would be less boilerplate, since `BaseServiceProps` would not need to re-implement the methods defined in `BaseServiceOptionsIface`.
+- there would be less boilerplate, since `BaseServiceProps` would not need to re-implement the methods defined in `IBaseServiceOptions`.
 - any changes to the extended interface would automatically be inherited by the extending interface.
 
 The main disadvantage of embedding is that instantiating the struct would require knowledge of which properties are inherited from the embedded
-struct, i.e.:
+struct (at least until [golang/go#9859](https://github.com/golang/go/issues/9859) is accepted and implemented), i.e.:
 
 ```go
 serviceProps := ecs.BaseServiceProps{
@@ -371,8 +399,10 @@ serviceProps := ecs.BaseServiceProps{
     LaunchType: "EC2",
 }
 
-ecs.TakesBaseServicePropsIface(serviceProps)
+ecs.TakesIBaseServiceProps(serviceProps)
 ```
+
+##### Approach 2: flattening struct properties
 
 The second approach is not to embed the struct, but **flatten** all the properties inherited from the extended interface.
 (See: [Go playground example](https://play.golang.org/p/ioL4XRpjETA)).
@@ -413,7 +443,7 @@ func (o BaseServiceOptions) GetMinHealthyPercent() int { return o.MinHealthyPerc
 
 // ... etc
 
-// Generated interface methods inherited from BaseServiceOptionsIface
+// Generated interface methods inherited from IBaseServiceOptions
 func (p BaseServiceProps) GetServiceName() string    { return p.ServiceName }
 func (p BaseServiceProps) GetMaxHealthyPercent() int { return p.MaxHealthyPercent }
 func (p BaseServiceProps) GetMinHealthyPercent() int { return p.MinHealthyPercent }
@@ -432,7 +462,7 @@ serviceProps := ecs.BaseServiceProps{
     LaunchType: "EC2",
 }
 
-ecs.TakesBaseServicePropsIface(serviceProps)
+ecs.TakesIBaseServiceProps(serviceProps)
 ```
 
 The disadvantage is that there is much more boilerplate generated to implement the inherited methods, and any change to the inherited interface would
@@ -443,34 +473,266 @@ wrappers, e.g.
 
 ```go
 // custom method that takes wrapped interface
-func myCustomMethod(props CustomServicePropsIface) {...}
+func myCustomMethod(props ICustomServiceProps) {...}
 
 // Option 1 - embed the generated struct
-type CustomServicePropsIface interface {
-    BaseServiceOptionsIface
+type ICustomServiceProps interface {
+    IBaseServiceOptions
 }
 
-// Option 2 - wrapper that takes subset of methods defined in BaseServiceOptionsIface
-type CustomServicePropsIface interface {
+// Option 2 - wrapper that takes subset of methods defined in IBaseServiceOptions
+type ICustomServiceProps interface {
     GetServiceName() string
     GetMaxHealthyPercent() int
     GetMinHealthyPercent() int
 }
 ```
 
+##### Approach 3: providing a struct constructor
+
+The last option is effectively a mix of approach 1 and 2: the struct is represented by its interface on any API, and the interface is implemented
+by a go struct that embeds parent structs. A constructor is provided to "hide" the embedding layout from the user, while a flattened struct is emitted
+to be used as the parameter for the constructor, preserving the naming around the initialization:
+
+```go
+package ecs
+
+type IBaseServiceOptions interface {
+ GetCluster() ICluster
+ GetDesiredCount() *int
+ GetServiceName() *string
+ GetMaxHealthyPercent() *int
+ GetMinHealthyPercent() *int
+ GetHealthCheckGracePeriod() *Duration
+ GetCloudMapOptions() CloudMapOptions
+ GetPropagateTags() PropagatedTagSource
+ GetEnableECSManagedTags() *bool
+ GetDeploymentController() DeploymentController
+}
+
+type BaseServiceOptions struct {
+ Cluster                ICluster
+ DesiredCount           *int
+ ServiceName            *string
+ MaxHealthyPercent      *int
+ MinHealthyPercent      *int
+ HealthCheckGracePeriod *Duration
+ CloudMapOptions        CloudMapOptions
+ PropagateTags          PropagatedTagSource
+ EnableECSManagedTags   *bool
+ DeploymentController   DeploymentController
+}
+
+// NOTE: Here, baseServiceOptions is almost identical to BaseServiceOptions,
+// however we refrain from using the same type in order to avoid the risk of
+// mis-use -- users should always invoke NewBaseServiceOptions & use the result.
+type baseServiceOptions struct {
+ cluster                ICluster
+ desiredCount           *int
+ serviceName            *string
+ maxHealthyPercent      *int
+ minHealthyPercent      *int
+ healthCheckGracePeriod *Duration
+ cloudMapOptions        CloudMapOptions
+ propagateTags          PropagatedTagSource
+ enableECSManagedTags   *bool
+ deploymentController   DeploymentController
+}
+
+func (b *baseServiceOptions) GetCluster() ICluster    { return b.cluster }
+func (b *baseServiceOptions) GetDesiredCount() *int   { return b.desiredCount }
+func (b *baseServiceOptions) GetServiceName() *string { return b.serviceName }
+// etc...
+
+func NewBaseServiceOptions(args BaseServiceOptions) IBaseServiceOptions {
+ return &baseServiceOptions{
+  cluster:                args.Cluster,
+  desiredCount:           args.DesiredCount,
+  serviceName:            args.ServiceName,
+  maxHealthyPercent:      args.MaxHealthyPercent,
+  minHealthyPercent:      args.MinHealthyPercent,
+  healthCheckGracePeriod: args.HealthCheckGracePeriod,
+  cloudMapOptions:        args.CloudMapOptions,
+  propagateTags:          args.PropagateTags,
+  enableECSManagedTags:   args.EnableECSManagedTags,
+  deploymentController:   args.DeploymentController,
+ }
+}
+
+type IBaseServiceProps interface {
+    IBaseServiceOptions  // embeddeded interface
+    GetLaunchType()             LaunchType
+}
+
+type BaseServiceProps struct {
+    // Flattened properties generated from extended interface (i.e. Base ServiceOptions)
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+    // New properties introduced by BaseServiceProps
+    LaunchType             LaunchType
+}
+
+type baseServiceProps struct {
+    // NOTE: This could be baseServiceOptions, when both structs are defined in
+    // the same package. This could offer a marginal performance improvement,
+    // and perhaps a slightly more compact memory layout... Opting out of it
+    // on the other hand (as is done below), ensures the code path is always the
+    // same, regardless of the package layout.
+    IBaseServiceOptions // Embedded supertype
+
+    launchType             LaunchType
+}
+
+// Don't have to re-implement parent methods, as these are promoted from the
+// anonymous embed.
+func (b *baseServiceProps) GetLaunchType() { return b.launchType }
+
+func NewBaseServiceProps(args BaseServiceProps) IBaseServiceProps {
+    return &baseServiceProps{
+        IBaseServiceOptions: NewBaseServiceOptions(BaseServiceOptions{
+            Cluster:                args.Cluster,
+            DesiredCount:           args.DesiredCount,
+            ServiceName:            args.ServiceName,
+            MaxHealthyPercent:      args.MaxHealthyPercent,
+            MinHealthyPercent:      args.MinHealthyPercent,
+            HealthCheckGracePeriod: args.HealthCheckGracePeriod,
+            CloudMapOptions:        args.CloudMapOptions,
+            PropagateTags:          args.PropagateTags,
+            EnableECSManagedTags:   args.EnableECSManagedTags,
+            DeploymentController:   args.DeploymentController,
+        }),
+        launchType: args.LaunchType,
+    }
+}
+```
+
+The advantage of this approach is that adding a new optional property to a super struct no longer results in a breaking change (the field will be
+absent from the subtype until it is re-generated against the new parent), as the embedding technique guarantees methods are promoted from the
+supertype. It also guarantees immutability of built instances, as the actual implementation is not exported.
+
+The inconvenient is that this adds relatively heavy boilerplate around use of structs, where the name of the struct is repeated twice in sequence.
+This could lead to some user confusion (at least until the suer becomes familiar with this idiom). A typical call would look like so:
+
+```go
+// Pretending one can instantiate the BaseService construct directly
+NewBaseService(scope, "ID", NewBaseServiceProps(BaseServiceProps{
+    // Note: optional fields omitted (as a user could decide to do)
+    Cluster: cluster,
+}))
+```
+
+#### Approach 4 (Recommended): flattening props fields, without interface
+
+Go structs are the natural way to represent jsii structs (the fact they are named the same is no coincidence). All previous approaches attempt to
+preserve properties of their TypeScript interface counterparts: immutability (they cannot be modified once created) and subsitutability (a child
+struct can be passed where it's parent type is expected).
+
+However, maintaining those properties is unlikely to be necessary in go:
+
+- if structs are always passed by-value, mutations of a struct performed by a function that received it will never be visible to the caller,
+  effectively maintaining the immutability from the point of view of the caller
+- code that has a child struct instance, and needs to provide this to a call that accepts a super-type of it can copy from it's instance to create
+  the super-type instance "manually" (although a helper function can be provided on the child struct to convert it to any of it's parent types to
+  reduce the burden on the user)
+
+Consequently, the simplest possible generated code is the following:
+
+```go
+package ecs
+
+// Note: no interfaces are defined for these, ever!
+
+type BaseServiceOptions struct {
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+}
+
+type BaseServiceProps struct {
+    // Flattened properties generated from extended interface (i.e. Base ServiceOptions)
+    Cluster                ICluster
+    DesiredCount           *int
+    ServiceName            *string
+    MaxHealthyPercent      *int
+    MinHealthyPercent      *int
+    HealthCheckGracePeriod *Duration
+    CloudMapOptions        CloudMapOptions
+    PropagateTags          PropagatedTagSource
+    EnableECSManagedTags   *bool
+    DeploymentController   DeploymentController
+
+    // Fields introduced by BaseServiceProps
+    LaunchType          LaunchType
+}
+
+// Optional - we can reduce boilerplate for conversion of BaseServiceProps -> BaseServiceOptions:
+func (b BaseServiceProps) ToBaseServiceOptions() BaseServiceOptions {
+    return BaseServiceOptions{
+        Cluster:                b.Cluster,
+        DesiredCount:           b.DesiredCount,
+        ServiceName:            b.ServiceName,
+        MaxHealthyPercent:      b.MaxHealthyPercent,
+        MinHealthyPercent:      b.MinHealthyPercent,
+        HealthCheckGracePeriod: b.HealthCheckGracePeriod,
+        CloudMapOptions:        b.CloudMapOptions,
+        PropagateTags:          b.PropagateTags,
+        EnableECSManagedTags:   b.EnableECSManagedTags,
+        DeploymentController:   b.DeploymentController,
+    }
+}
+```
+
+And the usage would simply be:
+
+```go
+// in package ecs, the struct is passed by value:
+func TakesBaseServiceProps(props BaseServiceProps) { /* ... */ }
+
+// User code:
+ecs.TakesBaseServiceProps(ecs.BaseServiceProps{
+    ServiceName:       "myService",
+    MaxHealthyPercent: 100,
+    MinHealthyPercent: 50,
+    LaunchType: "EC2",
+})
+```
+
+Since there are no interfaces to be implemented here, whenever the `@jsii/kernel` decides to pass a struct by-reference, the properties of the object
+will be eagerly fetched, and a struct value initialized with those directly. Such values are never proxied away to JavaScript.
+
 ### Notes/Concerns
 
 * Like the AWS Go SDK, we can use pointers to primitive types to simulate that fields are optional (i.e. allow null values rather than default "empty"
   values for each type, which are not nullable). However, this might result in a less than ideal developer experience. Another option is to use a
-wrapper type for optional values.
-* Generated Go interfaces corresponding to a datatype interface would need a suffix, e.g. Iface, in order to disambiguate it from the struct. This is
-  a bit verbose, and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead) if the interface name is what will
-primarily be used by the customer.
+  wrapper type for optional values.
+* Generated Go interfaces corresponding to a datatype interface would need a name addendum, e.g. I prefix of Iface suffix, in order to disambiguate
+  it from the struct name. This can be confusing (I prefix makes structs and behavioral interfaces similarly named on APIs) or a bit verbose (Iface
+  suffix), and it may be worth considering switching the naming (i.e. adding a suffix to the struct instead), as the interface name is what will
+  primarily be used by the customer.
+* As the `@jsii/kernel` may decide to pass a data type by-reference (and not by-value), either a concrete struct needs to be implemented that does
+  the correct call forwarding to `@jsii/kernel` via the runtime library, or the de-serialization procedure must eagerly read all properties from the
+  received reference, and intialize a value correctly.
 * The alternative to having to implement both a struct and interface is simply translating the datatype interface into a struct. This option has the
   added advantage of having a more streamlined API, rather than having to convert each property into a getter method and having to call those methods
-to access data fields. However, this is not a viable option since in order to pass them as arguments to functions, structs would have to be
-structurally typed, which is not the case for Go structs. The only way to satisfy the structural typing requirements of argments is through
-interfaces.
+  to access data fields. However, this is not a viable option since in order to pass them as arguments to functions, structs would have to be
+  structurally typed (for otherwise, the user code is coupled to the embedding layout of structs, which would make certain backwards-compatible code
+  changes in the TypeScript library result in source-breaking changes in go), which is not the case for Go structs. The only way to satisfy the
+  structural typing requirements of argments is through interfaces.
 
 ## Classes
 
@@ -491,7 +753,7 @@ datatype interfaces). Instance methods would be declared in the generated interf
 Static methods, on the other hand, would be generated as package-level functions. Since there could be multiple classes within a package, there is not
 a good way to namespace a static function in an idiomatic way (e.g. `ClassName.StaticMethod()`); to ensure that static methods maintain the
 characteristic of not requiring a concrete receiver while still ensuring some kind of namespacing, the proposal is to add the class name is a prefix
-to the top-level function. These methods would not be included in the corresponding interface.
+to the top-level function, and separating with a `_` to avoid namespace conflicts. These methods would not be included in the corresponding interface.
 
 Similarly, static properties would be generated as a function at the package level with the same prefixing as with static methods. This way, we can
 still delegate calls to the jsii runtime to get the static property value.
@@ -524,39 +786,58 @@ In Go: ([Go playground example](https://play.golang.org/p/T20xlddRo6A))
 ```go
 package greeter
 
-type GreeterIface interface {
-    Greet() string
-    GetGreeting() string
+import "jsii"
+
+// The interface represents the class in the API.
+type Greeter interface {
+    Greet()    string
+    Greeting() string
 }
 
-type Greeter struct {
-    Greeting string
+// The struct is the concrete implementation for the type. This is a JS object
+// proxy.
+type greeter struct {
+    // We need padding to ensure the struct is not 0-width, otherwise object
+    // identity is impossible to verify (if the struct occupies no memory, any
+    // object allocated right after an instance of it will share the exact same
+    // memory address).
+    _ byte // padding
 }
 
-func NewGreeter(message string) *Greeter {
-    return &Greeter{message}
+func NewGreeter(message string) Greeter {
+    g := &Greeter{}
+    // Creating the backing instance in the JS process
+    jsii.Create(g, "example.Greeter", []interface{}{message})
+    return g
 }
 
-func (g *Greeter) GetGreeting() string {
-    return g.Greeting
+func (g *greeter) Greeting() (result string) {
+    // Getting the property from the JS process
+    jsii.Get(g, "greeting", &result)
+    return
 }
 
-func (g *Greeter) Greet() string {
-    return fmt.Sprintf("Hello, %+s", g.Greeting)
+func (g *greeter) Greet() (result string) {
+    // Invoking the method in the JS process
+    jsii.Invoke(g, "greet", []interface{}{}, &result)
+    return
 }
 
 // static method
-func GreeterFoo() string {
-    return fmt.Sprintf("foo");
+func Greeter_Foo() (result string) {
+    jsii.StaticInvoke("example.Greeter", "foo", []interface{}, &result)
+    return
 }
 
-// static property
-func GreeterHello() string {
-    return "hello"; // this will actually be a call to jsii.StaticGet
+// static property getter
+func Greeter_Hello() string {
+    jsii.StaticGet("example.Greeter", "hello", &result)
+    return
 }
 
-func GreeterSetHello() {
-    // this will actually be a call to jsii.StaticSet
+// static property setter
+func Greeter_SetHello(hello string) {
+    jsii.StaticSet("example.Greeter", "hello", hello)
 }
 
 // usage
@@ -602,51 +883,53 @@ In Go:
 ```go
 package animal
 
+import "jsii"
+
 // Base class as interface
-type AnimalIface interface {
-    GetName() string
+type Animal interface {
+    Name() string
 
     Move(distance int64)
     isAnimal() // private method saftey check
 }
 
 // Base class implementation
-type Animal struct {
-    Name string
+type animal struct {
+    // So this is not 0-wodth
+    _ byte // padding
 }
 
-func NewAnimal(name string) AnimalIface {
-    return &Animal{name}
+func NewAnimal(name string) Animal {
+    a := &animal{}
+    jsii.Create(a, "example.Animal", []interface{}{name})
+    return a
 }
 
-func (a *Animal) GetName() string {
-    return a.Name
+func (a *animal) Name() (result string) {
+    jsii.Get(a, "name", &result)
+    return
 }
 
-func (a *Animal) Move(distance int64) {
-    fmt.Printf("%s moved %vm.\n", a.Name(), distance)
+func (a *animal) Move(distance int64) {
+    jsii.InvokeVoid(a, "move", []interface{}{distance})
 }
 
 // Child class
-type SnakeIface interface {
-  AnimalIface
+type Snake interface {
+  Animal
 }
 
 // Snake class would be customer-defined extension of Animal
-type Snake struct {
+type snake struct {
     Animal
 }
 
-func NewSnake(name string) SnakeIface {
-    a := NewAnimal{name}  // or ExtendAnimal, to avoid introspection for super calls later
-    return &Snake{a}
+func NewSnake(name string) Snake {
+    a := NewAnimal(name)  // or ExtendAnimal, to avoid introspection for super calls later
+    return &snake{a}
 }
 
-func (s *Snake) Name() string {
-    return s.name  // inherits `name` property from `Animal`
-}
-
-func (s *Snake) Move(distance int64) {
+func (s *snake) Move(distance int64) {
     fmt.Printf("Slithering...\n")
     // how to look up Animal.Move to delegate to the node runtime? Use JSII-reflect
     s.Animal.Move(distance)
@@ -703,44 +986,37 @@ Go struct (derived from TS class) with embedded struct (derived from TS datatype
 type ICluster interface {
     IResource
 
-    GetClusterName()              string
-    GetClusterArn()               string
-    GetVpc()                      ec2.IVpc
-    GetConnections()              ec2.Connections
-    GetHasEc2Capacity()           bool
-    GetDefaultCloudMapNamespace() cloudmap.INamespace
-    GetAutoscalingGroup()         autoscaling.IAutoScalingGroup
+    ClusterName()              string
+    ClusterArn()               string
+    Vpc()                      ec2.IVpc
+    Connections()              ec2.Connections
+    HasEc2Capacity()           bool
+    DefaultCloudMapNamespace() cloudmap.INamespace
+    AutoscalingGroup()         autoscaling.IAutoScalingGroup
 }
 
 // Generated interface for Cluster class
-type ClusterIface interface {
+type Cluster interface {
+    Resource
     ICluster
 }
 
 // Generated struct for Cluster class
-type Cluster struct {
+type cluster struct {
     Resource
     ICluster
-
-    Connections ec2.Connections
-    Vpc         ec2.IVpc
-    ClusterArn  string
-    ClusterName string
-
-    // private properties
-    defaultCloudMapNamespace cloudmap.INamespace
-    hasEc2Capacity           bool
-    autoscalingGroup         autoscaling.IAutoScalingGroup
 }
 
 // Public getter on public property
-func (c *Cluster) GetClusterName() string {
-    return c.ClusterName
+func (c *cluster) ClusterName() (result string) {
+    jsii.Get(c, "clusterName", &result)
+    return
 }
 
 // Public getter on private property
-func (c *Cluster) GetHasEc2Capacity() bool {
-    return c.hasEc2Capacity
+func (c *cluster) HasEc2Capacity() (result bool) {
+    jsii.Get(c, "hasEc2Capacity", &result)
+    return
 }
 
 // ...etc
