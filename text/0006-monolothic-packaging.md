@@ -209,15 +209,24 @@ Migration path:
 
 ### Java
 
-Package name:
+Maven package name:
 
 - **Group ID**: `software.amazon.awscdk`
 - **Artifact ID**: `aws-cdk-lib`
 
+Source:
+
+- **Package name**: `software.amazon.awscdk.*`
+  - We configure `software.amazon.awscdk.core` as module name in the root package
+    `aws-cdk-lib/package.json` for maximum compatibility with v1 class names
+    (as the classes previously in the `core` submodule have moved there). Doing
+    so will not negatively affect subpackages, which will still have their own
+    independent module names like `software.amazon.awscdk.services.s3`.
+
 Usage:
 
 ```java
-import software.amazon.awscdk.core.Stack; // hopefully (see "remaining work")
+import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.ec2.Vpc;
 ```
 
@@ -226,12 +235,6 @@ Migration path:
 - Update `pom.xml` and replace all existing dependencies with the monolithic
   module.
 - No change required in source files
-
-Open issues:
-
-- Will core types will have to go under `software.amazon.awscdk` instead of
-  `software.amazon.awscdk.core`? This depends if submodule renaming will support
-  specifying the per-language names for the root module.
 
 ### .NET
 
@@ -252,14 +255,18 @@ using Amazon.CDK.AWS.S3;
 Package name:
 
 - **dist-name**: `aws-cdk-lib`
-- **module name**: `aws_cdk` (same as v1 to encourage easier migration)
+- **module name**: `aws_cdk`
+  - We configure `aws_cdk.core` as module name in the root package
+    `aws-cdk-lib/package.json` for maximum compatibility with v1 class names
+    (as the classes previously in the `core` submodule have moved there). Doing
+    so will not negatively affect subpackages, which will still have their own
+    independent module names like `aws_cdk.aws_s3`.
 
 Usage:
 
 ```py
 from aws_cdk import (
-    Stack,
-    Construct,
+    core,
     aws_lambda,
     aws_dynamodb,
     aws_events,
@@ -271,8 +278,7 @@ Migration path:
 
 - All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and
   replaced with `aws-cdk-lib`.
-- Classes that used to be imported from `aws_cdk.core` will now be imported from `aws_cdk`.
-- No other changes.
+- No other source changes.
 
 ### Go
 
@@ -465,14 +471,6 @@ General recommendations:
       report analytics at the construct level.
 - [ ] **Reference documentation** needs to also support submodules/namespaces
       and use the submodule's README file.
-- [ ] **Submodule renaming**: to preserve imports in some languages (i.e.
-      Java/.NET), we need to be able to explicitly specify the "coordinates" of
-      submodules in each language. For example, the S3 module is exported under
-      the `aws_s3` module in mono-cdk, but we want it's types to be defined
-      under the `software.amazon.awscdk.services.s3` Java package, so we need a
-      way to specify this mapping somehow. This might be a problem for the
-      "core" types which are exported without a submodule in the mono-cdk, but
-      in Java they are currently under `software.amazon.awscdk.core`.
 - [ ] Add module size protection during build.
 - [ ] Determine if we want to include the `-patterns` modules in monocdk or
       leave those as separate libraries (I lead towards separate libraries).
