@@ -279,6 +279,38 @@ Open issues:
 - Should we use `aws_cdk` as the module name to preserve compatibility or rename
   to `aws_cdk_lib`?
 
+### Go
+
+Usage:
+
+```go
+import (
+    "github.com/aws/aws-cdk-go/awscdk"
+    s3 "github.com/aws/aws-cdk-go/awscdk/awss3"
+)
+
+app := awscdk.NewApp()
+stack := awscdk.NewStack(app, "MyStack");
+bucket := s3.NewBucket(stack, "MyBucket")
+
+app.Synth();
+```
+
+Migration path:
+
+Go users who will migrate from 1.x to 2.0 will only need to change their import (and `go.mod` "require" clause)
+from `github.com/aws/aws-cdk-go/awscdk` to `github.com/aws/aws-cdk-go/awscdk/v2`.
+
+This will be achieved in the following way:
+
+- 1.x releases will publish `monocdk` under the module name `awscdk`
+- 2.x releases will publish `aws-cdk-lib` under the module name `awscdk`.
+
+Open issues:
+
+- The current go code generator does not support specifying a module name, only the repository name
+  (tracked via [aws/jsii#2632](https://github.com/aws/jsii/issues/2632)).
+
 ## Issues with Specific Modules
 
 ### cx-api, cloud-assembly-schema and asset-schema
