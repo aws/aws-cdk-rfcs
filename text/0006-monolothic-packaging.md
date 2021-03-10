@@ -251,14 +251,15 @@ using Amazon.CDK.AWS.S3;
 
 Package name:
 
-- **dist-name**: `aws-cdk-lib` or `aws-cdk`
-- **module name**: `aws_cdk` or `aws_cdk_lib` (to preserve current usage?)
+- **dist-name**: `aws-cdk-lib`
+- **module name**: `aws_cdk` (same as v1 to encourage easier migration)
 
 Usage:
 
 ```py
 from aws_cdk import (
-    core,
+    Stack,
+    Construct,
     aws_lambda,
     aws_dynamodb,
     aws_events,
@@ -270,14 +271,8 @@ Migration path:
 
 - All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and
   replaced with `aws-cdk-lib`.
-- No change in code usage, unless we decide to rename the module to
-  `aws_cdk_lib`.
-
-Open issues:
-
-- Should we use `aws-cdk-lib` or `aws-cdk` as the distName?
-- Should we use `aws_cdk` as the module name to preserve compatibility or rename
-  to `aws_cdk_lib`?
+- Classes that used to be imported from `aws_cdk.core` will now be imported from `aws_cdk`.
+- No other changes.
 
 ### Go
 
