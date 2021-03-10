@@ -194,6 +194,7 @@ Usage:
 ```ts
 // core imports
 import { Stack, App } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
 
 // submodule imports
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -206,6 +207,7 @@ Migration path:
 - Update `package.json` and remove all dependencies on `@aws-cdk/xyz` and add
   `aws-cdk-lib`.
 - Replace `"@aws-cdk"` with `"aws-cdk-lib"` in all source files.
+- Replace all references to `Construct`
 
 ### Java
 
@@ -228,13 +230,14 @@ Usage:
 ```java
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.ec2.Vpc;
+import software.constructs.Construct;
 ```
 
 Migration path:
 
 - Update `pom.xml` and replace all existing dependencies with the monolithic
   module.
-- No change required in source files
+- All references to `Construct` will need to be changed to a new import.
 
 ### .NET
 
@@ -248,7 +251,12 @@ Usage:
 ```csharp
 using Amazon.CDK;
 using Amazon.CDK.AWS.S3;
+using Constructs;
 ```
+
+Migration path:
+
+- All references to `Construct` will need to be changed to a new import.
 
 ### Python
 
@@ -272,13 +280,14 @@ from aws_cdk import (
     aws_events,
     aws_events_targets,
 )
+from constructs import Construct
 ```
 
 Migration path:
 
 - All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and
   replaced with `aws-cdk-lib`.
-- No other source changes.
+- All references to `Construct` will need to be changed to a new import.
 
 ### Go
 
