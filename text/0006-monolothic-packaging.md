@@ -286,11 +286,12 @@ Usage:
 ```go
 import (
     "github.com/aws/aws-cdk-go/awscdk"
+    s3 "github.com/aws/aws-cdk-go/awscdk/awss3"
 )
 
 app := awscdk.NewApp()
 stack := awscdk.NewStack(app, "MyStack");
-bucket := awscdk.awss3.NewBucket(stack, "MyBucket")
+bucket := s3.NewBucket(stack, "MyBucket")
 
 app.Synth();
 ```
