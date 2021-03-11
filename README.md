@@ -75,10 +75,12 @@ future state of the libraries and to discover projects for contribution.
 [139](https://github.com/aws/aws-cdk-rfcs/issues/139)|["fromLookup" for additional resources](https://github.com/aws/aws-cdk-rfcs/issues/139)||💡 proposed
 [159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||💡 proposed
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
+[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)||💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
 [201](https://github.com/aws/aws-cdk-rfcs/issues/201)|[Construct scope relocation](https://github.com/aws/aws-cdk-rfcs/issues/201)||💡 proposed
 [217](https://github.com/aws/aws-cdk-rfcs/issues/217)|[Alternative Infrastructure Providers](https://github.com/aws/aws-cdk-rfcs/issues/217)|[@ccfife](https://github.com/ccfife)|💡 proposed
 [219](https://github.com/aws/aws-cdk-rfcs/issues/219)|[ECS Patterns Service Builder](https://github.com/aws/aws-cdk-rfcs/issues/219)||💡 proposed
+[223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Improvements to Lambda Development Experience](https://github.com/aws/aws-cdk-rfcs/issues/223)||💡 proposed
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||💡 proposed
 [229](https://github.com/aws/aws-cdk-rfcs/issues/229)|[Construct library pattern for metrics](https://github.com/aws/aws-cdk-rfcs/issues/229)||💡 proposed
 [230](https://github.com/aws/aws-cdk-rfcs/issues/230)|[Construct library pattern for grants](https://github.com/aws/aws-cdk-rfcs/issues/230)||💡 proposed
@@ -112,10 +114,6 @@ future state of the libraries and to discover projects for contribution.
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Experiment with Resource Provider in TypeScript](https://github.com/aws/aws-cdk-rfcs/pull/170)||❓unknown
-[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[Simplify working with logical IDs when refactoring CDK code](https://github.com/aws/aws-cdk-rfcs/issues/162)||❓unknown
-[223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Better experience when developing lambda functions in the cdk](https://github.com/aws/aws-cdk-rfcs/issues/223)||❓unknown
-[226](https://github.com/aws/aws-cdk-rfcs/issues/226)|[Context provider for cross-account CFN stack outputs](https://github.com/aws/aws-cdk-rfcs/issues/226)|[@skinny85](https://github.com/skinny85)|❓unknown
-[233](https://github.com/aws/aws-cdk-rfcs/issues/233)|[Using Custom Types with CDK](https://github.com/aws/aws-cdk-rfcs/issues/233)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
