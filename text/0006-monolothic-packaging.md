@@ -194,6 +194,7 @@ Usage:
 ```ts
 // core imports
 import { Stack, App } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
 
 // submodule imports
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -206,32 +207,37 @@ Migration path:
 - Update `package.json` and remove all dependencies on `@aws-cdk/xyz` and add
   `aws-cdk-lib`.
 - Replace `"@aws-cdk"` with `"aws-cdk-lib"` in all source files.
+- Replace all references to `Construct`
 
 ### Java
 
-Package name:
+Maven package name:
 
 - **Group ID**: `software.amazon.awscdk`
 - **Artifact ID**: `aws-cdk-lib`
 
+Source:
+
+- **Package name**: `software.amazon.awscdk.*`
+  - We configure `software.amazon.awscdk.core` as module name in the root package
+    `aws-cdk-lib/package.json` for maximum compatibility with v1 class names
+    (as the classes previously in the `core` submodule have moved there). Doing
+    so will not negatively affect subpackages, which will still have their own
+    independent module names like `software.amazon.awscdk.services.s3`.
+
 Usage:
 
 ```java
-import software.amazon.awscdk.core.Stack; // hopefully (see "remaining work")
+import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.ec2.Vpc;
+import software.constructs.Construct;
 ```
 
 Migration path:
 
 - Update `pom.xml` and replace all existing dependencies with the monolithic
   module.
-- No change required in source files
-
-Open issues:
-
-- Will core types will have to go under `software.amazon.awscdk` instead of
-  `software.amazon.awscdk.core`? This depends if submodule renaming will support
-  specifying the per-language names for the root module.
+- All references to `Construct` will need to be changed to a new import.
 
 ### .NET
 
@@ -245,14 +251,24 @@ Usage:
 ```csharp
 using Amazon.CDK;
 using Amazon.CDK.AWS.S3;
+using Constructs;
 ```
+
+Migration path:
+
+- All references to `Construct` will need to be changed to a new import.
 
 ### Python
 
 Package name:
 
-- **dist-name**: `aws-cdk-lib` or `aws-cdk`
-- **module name**: `aws_cdk` or `aws_cdk_lib` (to preserve current usage?)
+- **dist-name**: `aws-cdk-lib`
+- **module name**: `aws_cdk`
+  - We configure `aws_cdk.core` as module name in the root package
+    `aws-cdk-lib/package.json` for maximum compatibility with v1 class names
+    (as the classes previously in the `core` submodule have moved there). Doing
+    so will not negatively affect subpackages, which will still have their own
+    independent module names like `aws_cdk.aws_s3`.
 
 Usage:
 
@@ -264,20 +280,14 @@ from aws_cdk import (
     aws_events,
     aws_events_targets,
 )
+from constructs import Construct
 ```
 
 Migration path:
 
 - All `aws-cdk.xxx` dependencies will be removed from `requirements.txt` and
   replaced with `aws-cdk-lib`.
-- No change in code usage, unless we decide to rename the module to
-  `aws_cdk_lib`.
-
-Open issues:
-
-- Should we use `aws-cdk-lib` or `aws-cdk` as the distName?
-- Should we use `aws_cdk` as the module name to preserve compatibility or rename
-  to `aws_cdk_lib`?
+- All references to `Construct` will need to be changed to a new import.
 
 ### Go
 
@@ -470,14 +480,6 @@ General recommendations:
       report analytics at the construct level.
 - [ ] **Reference documentation** needs to also support submodules/namespaces
       and use the submodule's README file.
-- [ ] **Submodule renaming**: to preserve imports in some languages (i.e.
-      Java/.NET), we need to be able to explicitly specify the "coordinates" of
-      submodules in each language. For example, the S3 module is exported under
-      the `aws_s3` module in mono-cdk, but we want it's types to be defined
-      under the `software.amazon.awscdk.services.s3` Java package, so we need a
-      way to specify this mapping somehow. This might be a problem for the
-      "core" types which are exported without a submodule in the mono-cdk, but
-      in Java they are currently under `software.amazon.awscdk.core`.
 - [ ] Add module size protection during build.
 - [ ] Determine if we want to include the `-patterns` modules in monocdk or
       leave those as separate libraries (I lead towards separate libraries).
