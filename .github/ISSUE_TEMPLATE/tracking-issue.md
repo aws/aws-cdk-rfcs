@@ -5,26 +5,15 @@ title: proposal title
 labels: management/tracking, status/proposed
 ---
 
-<!-- fill out PR ID and core team champion when known -->
-
-|PR|Champion|
-|--|--------|
-|# |        |
-
 ## Description
 
-<!-- Short description of the proposed feature. Save the details for the RFC document. -->
+<!-- Short description of the proposed feature -->
 
-## Progress
+## Working Backwards
 
-<!-- indicates the state of the proposal -->
-<!-- see readme for information on rfc lifecycle -->
+<!-- Present this feature/change to users as if it was already been implemented -->
 
-- [x] Tracking Issue Created
-- [ ] RFC PR Created <!-- add link to above table when available -->
-- [ ] Core Team Member Assigned <!-- add username to above table when known -->
-- [ ] Initial Approval / Final Comment Period
-- [ ] Ready For Implementation
-    <!-- add list of issues needed for implementing the proposal here -->
-    - [ ] implementation issue 1
-- [ ] Resolved <!-- implementation complete and merged -->
+## Roles
+
+* **Driver** (drives the proposal to completion): @user
+* **Approver(s)**: (assigned by CDK team)
