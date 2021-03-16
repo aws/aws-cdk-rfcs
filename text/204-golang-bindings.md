@@ -128,6 +128,9 @@ how typescript interfaces use extends.
 
 Interfaces can be used as fields on structs as way to encapsulate behavior and facilitate testing.
 
+See [optional values and pointer types](#optional-values-and-pointer-types) for more information about the usage of pointer to literals the usage of
+related helper functions.
+
 ### Typescript Interfaces
 
 Typescript Interfaces are types (similar to type aliases) which have *methods* and *properties*. They can *extend* other interfaces or other
@@ -171,10 +174,10 @@ type ISecurityGroup interface {
     IResource
     IPeer
 
-    SecurityGroupId() string
-    AllowAllOutbound() bool
-    AddIngressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
-    AddEgressRule(peer: IPeer, connect: Port, description: *string, remoteRule: *boolean)
+    SecurityGroupId() *string
+    AllowAllOutbound() *bool
+    AddIngressRule(peer: IPeer, connect: *Port, description: *string, remoteRule: *boolean)
+    AddEgressRule(peer: IPeer, connect: *Port, description: *string, remoteRule: *boolean)
 }
 
 // Concrete implementation for jsii proxy values.
@@ -229,27 +232,27 @@ Go translation (Run example in the [Go playground](https://play.golang.org/p/o84
 package ecs
 
 type IHealthCheck interface{
-   GetCommand() []string
-   GetInterval() cdk.Duration;
-   GetRetries() int
-   GetStartPeriod() cdk.Duration;
-   GetTimeout() cdk.Duration;
+   GetCommand() *[]*string
+   GetInterval() cdk.Duration
+   GetRetries() *int
+   GetStartPeriod() cdk.Duration
+   GetTimeout() cdk.Duration
 }
 
 type HealthCheck struct {
-    Command     []string
-    Interval    cdk.Duration;
-    Retries     int
-    StartPeriod cdk.Duration;
-    Timeout     cdk.Duration;
+    Command     *[]*string
+    Interval    cdk.Duration
+    Retries     *float64
+    StartPeriod cdk.Duration
+    Timeout     cdk.Duration
 }
 
 // See NOTE below
-func (h HealthCheck) GetCommand() []string {
-    return append([]string{}, h.Command...)
+func (h HealthCheck) GetCommand() *[]*string {
+    return append(*[]*string{}, h.Command...)
 }
 
-func (h HealthCheck) GetRetries() int {
+func (h HealthCheck) GetRetries() *float64 {
     return h.Retries
 }
 
@@ -265,7 +268,7 @@ func (h HealthCheck) GetTimeout() cdk.Duration {
     return h.Timeout
 }
 
-func renderHealthCheck(hc HealthCheck) cfntaskdefinition.HealthCheckProperty {
+func renderHealthCheck(hc HealthCheck) CfnTaskDefinition.HealthCheckProperty {
     return CfnTaskDefintion.HealthCheckProperty{
         Command:     hc.GetCommand(),
         Interval:    hc.GetInterval(),
@@ -354,22 +357,22 @@ type BaseServiceOptions struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
 }
 type BaseServiceProps struct {
     BaseServiceOptions  // embedded (anonymous) field
-    LaunchType          LaunchType
+    LaunchType          *LaunchType
 }
 
 func (o BaseServiceOptions) Cluster() ICluster { return o.Cluster }
-func (o BaseServiceOptions) DesiredCount() int { return o.DesiredCount }
+func (o BaseServiceOptions) DesiredCount() *int { return o.DesiredCount }
 // ... etc
 
 // BaseServiceProps does not have to re-implement all the methods above
-func (p BaseServiceProps) GetLaunchType() string     { return p.LaunchType }
+func (p BaseServiceProps) GetLaunchType() *string     { return p.LaunchType }
 
 
 // example function that takes the embedding interface
@@ -392,14 +395,14 @@ struct (at least until [golang/go#9859](https://github.com/golang/go/issues/9859
 ```go
 serviceProps := ecs.BaseServiceProps{
     BaseServiceOptions{
-        ServiceName:       "myService",
-        MaxHealthyPercent: 100,
-        MinHealthyPercent: 50,
+        ServiceName:       jsii.String("myService"),
+        MaxHealthyPercent: jsii.Number(100),
+        MinHealthyPercent: jsii.Number(50),
     },
-    LaunchType: "EC2",
+    LaunchType: jsii.String("EC2"),
 }
 
-ecs.TakesIBaseServiceProps(serviceProps)
+ecs.TakesIBaseServiceProps(&serviceProps)
 ```
 
 ##### Approach 2: flattening struct properties
@@ -415,10 +418,10 @@ type BaseServiceOptions struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
 }
 
 type BaseServiceProps struct {
@@ -429,25 +432,25 @@ type BaseServiceProps struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
 
     LaunchType          LaunchType
 }
 
-func (o BaseServiceOptions) GetServiceName() string    { return o.ServiceName }
-func (o BaseServiceOptions) GetMaxHealthyPercent() int { return o.MaxHealthyPercent }
-func (o BaseServiceOptions) GetMinHealthyPercent() int { return o.MinHealthyPercent }
+func (o BaseServiceOptions) GetServiceName() *string    { return o.ServiceName }
+func (o BaseServiceOptions) GetMaxHealthyPercent() *float64 { return o.MaxHealthyPercent }
+func (o BaseServiceOptions) GetMinHealthyPercent() *float64 { return o.MinHealthyPercent }
 
 // ... etc
 
 // Generated interface methods inherited from IBaseServiceOptions
-func (p BaseServiceProps) GetServiceName() string    { return p.ServiceName }
-func (p BaseServiceProps) GetMaxHealthyPercent() int { return p.MaxHealthyPercent }
-func (p BaseServiceProps) GetMinHealthyPercent() int { return p.MinHealthyPercent }
-func (p BaseServiceProps) GetLaunchType() string     { return p.LaunchType }
+func (p BaseServiceProps) GetServiceName() *string    { return p.ServiceName }
+func (p BaseServiceProps) GetMaxHealthyPercent() *float64 { return p.MaxHealthyPercent }
+func (p BaseServiceProps) GetMinHealthyPercent() *float64 { return p.MinHealthyPercent }
+func (p BaseServiceProps) GetLaunchType() *string     { return p.LaunchType }
 
 // ... etc
 ```
@@ -456,13 +459,13 @@ This approach would allow for properties to be passed to a function in a flatten
 
 ```go
 serviceProps := ecs.BaseServiceProps{
-    ServiceName:       "myService",
-    MaxHealthyPercent: 100,
-    MinHealthyPercent: 50,
-    LaunchType: "EC2",
+    ServiceName:       jsii.String("myService"),
+    MaxHealthyPercent: jsii.Number(100),
+    MinHealthyPercent: jsii.Number(50),
+    LaunchType: jsii.String("EC2"),
 }
 
-ecs.TakesIBaseServiceProps(serviceProps)
+ecs.TakesIBaseServiceProps(&serviceProps)
 ```
 
 The disadvantage is that there is much more boilerplate generated to implement the inherited methods, and any change to the inherited interface would
@@ -482,9 +485,9 @@ type ICustomServiceProps interface {
 
 // Option 2 - wrapper that takes subset of methods defined in IBaseServiceOptions
 type ICustomServiceProps interface {
-    GetServiceName() string
-    GetMaxHealthyPercent() int
-    GetMinHealthyPercent() int
+    GetServiceName() *string
+    GetMaxHealthyPercent() *float64
+    GetMinHealthyPercent() *float64
 }
 ```
 
@@ -504,10 +507,10 @@ type IBaseServiceOptions interface {
  GetMaxHealthyPercent() *int
  GetMinHealthyPercent() *int
  GetHealthCheckGracePeriod() *Duration
- GetCloudMapOptions() CloudMapOptions
- GetPropagateTags() PropagatedTagSource
+ GetCloudMapOptions() *CloudMapOptions
+ GetPropagateTags() *PropagatedTagSource
  GetEnableECSManagedTags() *bool
- GetDeploymentController() DeploymentController
+ GetDeploymentController() *DeploymentController
 }
 
 type BaseServiceOptions struct {
@@ -517,10 +520,10 @@ type BaseServiceOptions struct {
  MaxHealthyPercent      *int
  MinHealthyPercent      *int
  HealthCheckGracePeriod *Duration
- CloudMapOptions        CloudMapOptions
- PropagateTags          PropagatedTagSource
+ CloudMapOptions        *CloudMapOptions
+ PropagateTags          *PropagatedTagSource
  EnableECSManagedTags   *bool
- DeploymentController   DeploymentController
+ DeploymentController   *DeploymentController
 }
 
 // NOTE: Here, baseServiceOptions is almost identical to BaseServiceOptions,
@@ -533,10 +536,10 @@ type baseServiceOptions struct {
  maxHealthyPercent      *int
  minHealthyPercent      *int
  healthCheckGracePeriod *Duration
- cloudMapOptions        CloudMapOptions
- propagateTags          PropagatedTagSource
+ cloudMapOptions        *CloudMapOptions
+ propagateTags          *PropagatedTagSource
  enableECSManagedTags   *bool
- deploymentController   DeploymentController
+ deploymentController   *DeploymentController
 }
 
 func (b *baseServiceOptions) GetCluster() ICluster    { return b.cluster }
@@ -544,18 +547,19 @@ func (b *baseServiceOptions) GetDesiredCount() *int   { return b.desiredCount }
 func (b *baseServiceOptions) GetServiceName() *string { return b.serviceName }
 // etc...
 
-func NewBaseServiceOptions(args BaseServiceOptions) IBaseServiceOptions {
+func NewBaseServiceOptions(args *BaseServiceOptions) IBaseServiceOptions {
+ argsstrct := *args
  return &baseServiceOptions{
-  cluster:                args.Cluster,
-  desiredCount:           args.DesiredCount,
-  serviceName:            args.ServiceName,
-  maxHealthyPercent:      args.MaxHealthyPercent,
-  minHealthyPercent:      args.MinHealthyPercent,
-  healthCheckGracePeriod: args.HealthCheckGracePeriod,
-  cloudMapOptions:        args.CloudMapOptions,
-  propagateTags:          args.PropagateTags,
-  enableECSManagedTags:   args.EnableECSManagedTags,
-  deploymentController:   args.DeploymentController,
+  cluster:                argsstrct.Cluster,
+  desiredCount:           argsstrct.DesiredCount,
+  serviceName:            argsstrct.ServiceName,
+  maxHealthyPercent:      argsstrct.MaxHealthyPercent,
+  minHealthyPercent:      argsstrct.MinHealthyPercent,
+  healthCheckGracePeriod: argsstrct.HealthCheckGracePeriod,
+  cloudMapOptions:        argsstrct.CloudMapOptions,
+  propagateTags:          argsstrct.PropagateTags,
+  enableECSManagedTags:   argsstrct.EnableECSManagedTags,
+  deploymentController:   argsstrct.DeploymentController,
  }
 }
 
@@ -572,10 +576,10 @@ type BaseServiceProps struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
     // New properties introduced by BaseServiceProps
     LaunchType             LaunchType
 }
@@ -595,21 +599,22 @@ type baseServiceProps struct {
 // anonymous embed.
 func (b *baseServiceProps) GetLaunchType() { return b.launchType }
 
-func NewBaseServiceProps(args BaseServiceProps) IBaseServiceProps {
+func NewBaseServiceProps(args *BaseServiceProps) IBaseServiceProps {
+    argsstrct := *args
     return &baseServiceProps{
         IBaseServiceOptions: NewBaseServiceOptions(BaseServiceOptions{
-            Cluster:                args.Cluster,
-            DesiredCount:           args.DesiredCount,
-            ServiceName:            args.ServiceName,
-            MaxHealthyPercent:      args.MaxHealthyPercent,
-            MinHealthyPercent:      args.MinHealthyPercent,
-            HealthCheckGracePeriod: args.HealthCheckGracePeriod,
-            CloudMapOptions:        args.CloudMapOptions,
-            PropagateTags:          args.PropagateTags,
-            EnableECSManagedTags:   args.EnableECSManagedTags,
-            DeploymentController:   args.DeploymentController,
+            Cluster:                argsstrct.Cluster,
+            DesiredCount:           argsstrct.DesiredCount,
+            ServiceName:            argsstrct.ServiceName,
+            MaxHealthyPercent:      argsstrct.MaxHealthyPercent,
+            MinHealthyPercent:      argsstrct.MinHealthyPercent,
+            HealthCheckGracePeriod: argsstrct.HealthCheckGracePeriod,
+            CloudMapOptions:        argsstrct.CloudMapOptions,
+            PropagateTags:          argsstrct.PropagateTags,
+            EnableECSManagedTags:   argsstrct.EnableECSManagedTags,
+            DeploymentController:   argsstrct.DeploymentController,
         }),
-        launchType: args.LaunchType,
+        launchType: argsstrct.LaunchType,
     }
 }
 ```
@@ -623,9 +628,9 @@ This could lead to some user confusion (at least until the suer becomes familiar
 
 ```go
 // Pretending one can instantiate the BaseService construct directly
-NewBaseService(scope, "ID", NewBaseServiceProps(BaseServiceProps{
+NewBaseService(scope, _jsii_.String("ID"), NewBaseServiceProps(&BaseServiceProps{
     // Note: optional fields omitted (as a user could decide to do)
-    Cluster: cluster,
+    Cluster: &cluster,
 }))
 ```
 
@@ -657,10 +662,10 @@ type BaseServiceOptions struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
 }
 
 type BaseServiceProps struct {
@@ -671,10 +676,10 @@ type BaseServiceProps struct {
     MaxHealthyPercent      *int
     MinHealthyPercent      *int
     HealthCheckGracePeriod *Duration
-    CloudMapOptions        CloudMapOptions
-    PropagateTags          PropagatedTagSource
+    CloudMapOptions        *CloudMapOptions
+    PropagateTags          *PropagatedTagSource
     EnableECSManagedTags   *bool
-    DeploymentController   DeploymentController
+    DeploymentController   *DeploymentController
 
     // Fields introduced by BaseServiceProps
     LaunchType          LaunchType
@@ -701,14 +706,14 @@ And the usage would simply be:
 
 ```go
 // in package ecs, the struct is passed by value:
-func TakesBaseServiceProps(props BaseServiceProps) { /* ... */ }
+func TakesBaseServiceProps(props &BaseServiceProps) { /* ... */ }
 
 // User code:
-ecs.TakesBaseServiceProps(ecs.BaseServiceProps{
-    ServiceName:       "myService",
-    MaxHealthyPercent: 100,
-    MinHealthyPercent: 50,
-    LaunchType: "EC2",
+ecs.TakesBaseServiceProps(&ecs.BaseServiceProps{
+    ServiceName:       jsii.String("myService"),
+    MaxHealthyPercent: jsii.Number(100),
+    MinHealthyPercent: jsii.Number(50),
+    LaunchType: jsii.String("EC2"),
 })
 ```
 
@@ -790,8 +795,8 @@ import "jsii"
 
 // The interface represents the class in the API.
 type Greeter interface {
-    Greet()    string
-    Greeting() string
+    Greet()    *string
+    Greeting() *string
 }
 
 // The struct is the concrete implementation for the type. This is a JS object
@@ -804,46 +809,46 @@ type greeter struct {
     _ byte // padding
 }
 
-func NewGreeter(message string) Greeter {
-    g := &Greeter{}
+func NewGreeter(message *string) Greeter {
+    g := &greeter{}
     // Creating the backing instance in the JS process
     jsii.Create(g, "example.Greeter", []interface{}{message})
     return g
 }
 
-func (g *greeter) Greeting() (result string) {
+func (g *greeter) Greeting() (result *string) {
     // Getting the property from the JS process
     jsii.Get(g, "greeting", &result)
     return
 }
 
-func (g *greeter) Greet() (result string) {
+func (g *greeter) Greet() (result *string) {
     // Invoking the method in the JS process
     jsii.Invoke(g, "greet", []interface{}{}, &result)
     return
 }
 
 // static method
-func Greeter_Foo() (result string) {
+func Greeter_Foo() (result *string) {
     jsii.StaticInvoke("example.Greeter", "foo", []interface{}, &result)
     return
 }
 
 // static property getter
-func Greeter_Hello() string {
+func Greeter_Hello() *string {
     jsii.StaticGet("example.Greeter", "hello", &result)
     return
 }
 
 // static property setter
-func Greeter_SetHello(hello string) {
+func Greeter_SetHello(hello *string) {
     jsii.StaticSet("example.Greeter", "hello", hello)
 }
 
 // usage
-g := greeter.NewGreeter("world")
-fmt.Println(g.Greet()) // "Hello, world"
-fmt.Println(greeter.GreeterFoo()) // "foo"
+g := greeter.NewGreeter(jsii.String("world"))
+fmt.Println(*g.Greet()) // "Hello, world"
+fmt.Println(*greeter.GreeterFoo()) // "foo"
 ```
 
 ### Case 2: Extending a Base class
@@ -887,9 +892,9 @@ import "jsii"
 
 // Base class as interface
 type Animal interface {
-    Name() string
+    Name() *string
 
-    Move(distance int64)
+    Move(distance *float64)
     isAnimal() // private method saftey check
 }
 
@@ -899,18 +904,18 @@ type animal struct {
     _ byte // padding
 }
 
-func NewAnimal(name string) Animal {
+func NewAnimal(name *string) Animal {
     a := &animal{}
     jsii.Create(a, "example.Animal", []interface{}{name})
     return a
 }
 
-func (a *animal) Name() (result string) {
+func (a *animal) Name() (result *string) {
     jsii.Get(a, "name", &result)
     return
 }
 
-func (a *animal) Move(distance int64) {
+func (a *animal) Move(distance *float64) {
     jsii.InvokeVoid(a, "move", []interface{}{distance})
 }
 
@@ -924,22 +929,22 @@ type snake struct {
     Animal
 }
 
-func NewSnake(name string) Snake {
+func NewSnake(name *string) Snake {
     a := NewAnimal(name)  // or ExtendAnimal, to avoid introspection for super calls later
     return &snake{a}
 }
 
-func (s *snake) Move(distance int64) {
+func (s *snake) Move(distance *float64) {
     fmt.Printf("Slithering...\n")
     // how to look up Animal.Move to delegate to the node runtime? Use JSII-reflect
     s.Animal.Move(distance)
 }
 
 // usage:
-dumpling := NewAnimal("Dumpling the Dog")
-dumpling.Move(5)
+dumpling := NewAnimal(_jsii_.String("Dumpling the Dog"))
+dumpling.Move(_jsii_.Number(5))
 
-sam := NewSnake("Sammy the Python")
+sam := NewSnake(_jsii_.String("Sammy the Python"))
 sam.Move(10)
 
 // Dumpling the Dog moved 5m.
@@ -986,11 +991,11 @@ Go struct (derived from TS class) with embedded struct (derived from TS datatype
 type ICluster interface {
     IResource
 
-    ClusterName()              string
-    ClusterArn()               string
+    ClusterName()              *string
+    ClusterArn()               *string
     Vpc()                      ec2.IVpc
     Connections()              ec2.Connections
-    HasEc2Capacity()           bool
+    HasEc2Capacity()           *bool
     DefaultCloudMapNamespace() cloudmap.INamespace
     AutoscalingGroup()         autoscaling.IAutoScalingGroup
 }
@@ -1008,13 +1013,13 @@ type cluster struct {
 }
 
 // Public getter on public property
-func (c *cluster) ClusterName() (result string) {
+func (c *cluster) ClusterName() (result *string) {
     jsii.Get(c, "clusterName", &result)
     return
 }
 
 // Public getter on private property
-func (c *cluster) HasEc2Capacity() (result bool) {
+func (c *cluster) HasEc2Capacity() (result *bool) {
     jsii.Get(c, "hasEc2Capacity", &result)
     return
 }
@@ -1026,6 +1031,189 @@ func (c *cluster) HasEc2Capacity() (result bool) {
 
 These should be able to be handled much in the same way as regular classes, by generating an interface and a struct. The struct generation is still
 necessary in this case because method implementations can actually be defined on abstract classes in Typescript.
+
+## Optional Values and Pointer Types
+
+Go doesn't have 'nullable' types. This presents an issue when transpiling various typescript types to Go. Particularly, this is an issue for methods with
+optional arguments and interfaces/structs/classes with optional fields. The accepted solution for this in Go, is to use a pointer to the corresponding
+type, as pointers can be `nil`. This is used in the aws and github go sdks.
+
+For example:
+
+```typescript
+// A JSII struct with an optional readonly property.
+export interface OptionalPropertyProps {
+  readonly optionalString?: string;
+}
+
+// A JSII class with an optional property
+export class MyClass {
+  public readonly optionalString?: string;
+  
+  // constructor function has an optional argument
+  public constructor(props: OptionalPropertyProps) {
+    this.optionalString = props.optionalString;
+  }
+
+  // A method accepting an optional argument and returning a nullable type
+  public static someStatic(arg?: string): string? {
+    return arg;
+  }
+}
+```
+
+This allows construction like so:
+
+```typescript
+const hasString = new MyClass({ optionalString: "I have a string!" });
+const notSoMuch = new MyClass({});
+
+console.log(hasString); // =>"I have a string"!
+console.log(notSoMuch); // =>undefined
+console.log(MyClass.SomeStatic("returns a string")); // =>"returns a string"
+console.log(MyClass.SomeStatic()); // =>undefined
+```
+
+In order to represent this in Go, we use pointers for all types.
+
+```go
+type OptionlPropertyProps struct {
+  OptionalString *string
+}
+
+type myClassStruct struct {
+}
+
+type MyClass Interface {
+  OptionalString() *string
+}
+
+func NewMyClass(props *OptionalPropertyProps) MyClass {
+  // magic jsii client implementation
+  return &myClassStruct{}
+}
+
+func MyClass_SomeStatic(arg *string) *string {
+  // magic jsii client implementation
+  return arg
+}
+
+// OptionalString is nil
+myStruct := OptionalPropertyProps{}
+myClass := NewMyClass(&myStruct)
+fmt.Println(myClass.OptionalString()) // =>nil
+```
+
+All method arguments, return types, behavioral interface fields, and struct fields need to be pointer types. In cases where a type is a Go interface,
+ie a jsii generated class or behavioral interface, these are already pointer types, as interfaces dictate method signatures for pointer receivers.
+
+```go
+type MyJsiiInterface interface {
+  Property() *string
+}
+
+type MyJsiiStruct struct {
+  IProperty MyJsiiInterface
+}
+```
+
+### Downsides
+
+This is annoying for users when passing simple values to structs or class methods. This can be mitigated by providing the user with convenience
+functions to allow them to continue to define these values inline.
+
+```go
+// You have to allocate a variable here in order to address it via `&`
+myOptionalString := "string"
+myStruct := OptionalPropertyProps{OptionalString: &myOptionalString}
+
+// Now using a helper function with signature string -> *string
+myStruct := OptionalPropertyProps{OptionalString: jsii.String("string")}
+
+type SomeStructSlice {
+  MySlice: *[]*string
+}
+// Complex types can be addressed without allocation as they are already pointers
+myStruct := SomeStructSlice{MySlice: &[]*string{jsii.String("string")}}
+```
+
+Additionally, users will have to always check returned values for nil pointers before dereferencing them.
+
+```go
+myStruct := OptionalPropertyProps{}
+myClass := NewMyClass(&myStruct)
+// I want to access the string value
+fmt.Println(*myClass.OptionalString()) // =>Panics!
+
+// Good and safe
+if myClass.OptionalString() != nil {
+  fmt.Println(*myClass.OptionalString()) // =>Panics!
+}
+```
+
+Essentially every type that the user passes to or receives from the JSII runtime will have to be a pointer type. We can't only make
+optional values pointers because then when a required value became optional in TS, this causes a type change in the generated go code which requires
+a code change. This means many non-breaking changes to the TS source would require major version bumps to the generated go modules. The inverse is
+also true, an output value, IE a method's return value, cannot be changed from nullable to non-nullable, as this would break consumers.
+
+With these downsides, it still seems like this is the most idiomatic route to take. Go users are familiar with using pointer types in this way from other
+popular modules. Additionally, it is the only strategy we can identify that allows us to maintain JSII's versioning compatibility strategy.
+
+### Explored Alternatives
+
+1. Don't use pointers.
+
+When a variable is allocated in Go and not specified, it is immediately initialized as that types zero value. Since the jsii runtime relies on type reflection
+in order to serialize and deserialize values between Go and JSON, an unset string is indistinguishable from the user explicitly passing "". In go, you
+can leave out struct fields during construction and this may appear to be what the user wants, but they won't actually be setting the unspecified
+properties to `nil`.
+
+```go
+type OptionlPropertyProps struct {
+  OptionalString string
+}
+
+myStruct := OptionalPropertyProps{}
+fmt.Println(myStruct.OptionalString == "") // =>true
+```
+
+2. Wrapper Types
+
+Specifying a wrapper type to express nullability would allow users to explicitly pass `nil` values, but the ergonomics are unwieldy and not what Go users
+expect. Additionally the lack of generics means we would have to generate these wrappers for every single generated type for the user to have compile
+time type checking.
+
+```go
+type OptionalString struct {
+  val string
+  // bool zero value is true so this is slightly more convenient
+  // than `isNil`
+  isDefined bool
+}
+
+// Some convenience method to make construction easier
+func NewOptionalString(val string) OptionalString {
+  return OptionalString {
+    val: val,
+    isDefined: true,
+  }
+}
+
+type OptionlPropertyProps struct {
+  OptionalString OptionalString
+}
+```
+
+We could define custom serialization and deserialization functionality for passing these optional values over the wire, and provide convenience
+functions for construction and dereferencing them, but the main hurdle is that every field, function argument, and return value would have to be
+these `OptionalX` types in order to maintain compatibility with JSII versioning. If we only used these types to describe fields we knew were optional,
+then when a required struct field changed to optional in typescript, this would change the generated type of the field in Go. This is a backwards
+incompatible change in generated code caused by a non-breaking change in the typescript source.
+
+3. Use Pointers Only for Optional Types
+
+This has the same issue as the wrapper types above, changing a property from required to optional would result in that properties type in Go changing,
+requiring code changes in the consuming Go application.
 
 ## Other considerations
 
