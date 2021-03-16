@@ -25,27 +25,29 @@ you will receive a warning when performing any CLI operation that performs synth
 (`cdk synth`, `cdk diff`, `cdk deploy`, etc.) that looks similar to:
 
 ```
-[Warning at /TestStack/IncludeTemplate] The API @aws-cdk/core.CfnInclude is deprecated:
+[WARNING] The API @aws-cdk/core.CfnInclude is deprecated:
   please use the CfnInclude class from the cloudformation-include module instead.
   This API will be removed in the next major release
 ```
 
+There are also two environment variables you can set to change the behavior of this feature:
+
+* Setting the environment variable `CDK_DEPRECATED_IGNORE` will silence these warnings
+  (they will no longer be printed to the console).
+
+* Setting the environment variable `CDK_DEPRECATED_ERROR` will instead fail with an exception when any deprecated element is used.
+
 ### Contributing guide
 
-To deprecate any element (class, interface, property, function, etc.)
-in the CDK, you need to make two changes:
-
-1. Add a `@deprecated` tag to the documentation block of the element.
-2. Add a `@deprecated` decorator (from the `@aws-cdk/core` module) to the element itself.
-
-(There is a linter rule that makes sure both elements are always present,
-in case you add one, but forget the other)
+To deprecate an element (class, interface, property, function, etc.) in the CDK,
+you need to add the `@deprecated` JSDoc tag to the documentation block of that element.
+This will change the generated JavaScript code to make it emit a warning to the standard error stream whenever that element is invoked.
 
 ## FAQ
 
 ### What are we launching today?
 
-In the newest release of the AWS CDK command-line interface,
+In the newest release of the AWS CDK Construct Library,
 any usage of a deprecated element  (class, interface, property, function)
 in your CDK code will result in a warning being printed in the console output.
 
@@ -59,6 +61,13 @@ which we strongly recommend,
 you will have to handle all the warnings that this feature emits,
 as all deprecated elements in `V1` will be removed from `V2`,
 and thus no longer available to be used by your code.
+
+If you want to make sure your code does not use any deprecated APIs,
+and thus is ready for migrating to CDK `V2`,
+you can set the `CDK_DEPRECATED_ERROR` environment variable,
+which will make any CDK command that invokes synthesis
+(`cdk synth`, `cdk deploy`, `cdk diff`, etc.)
+fail with an exception if any deprecated element is used.
 
 ## Internal FAQ
 
@@ -85,65 +94,58 @@ I see three reasons why we might not want to implement this feature:
 
 ### What changes are required to enable this change?
 
-One of the core tenets behind this RFC is that we want to avoid the need to add any code to the deprecated elements manually.
-Just deprecating the element should automatically trigger the warnings,
-without requiring any other code changes to the element being deprecated.
-
 There are two high-level components of this change:
 
-#### 1. Communication between the framework and the CLI
+#### 1. Changes to JSII
 
-Since we want to show the warnings when the CLI invokes synthesis,
-we need to communicate between the framework (where those deprecated usages happen)
-and the CLI (where the warnings will be shown).
-The natural way to do that is through the Cloud Assembly.
+We will add a feature to JSII that adds the warning code to the emitted JavaScript for deprecated elements.
+It will be off by default, and will have to be activated explicitly to take effect.
+We will also add two options to the JSII CLI that allow passing the names of the environment variables used for,
+respectively, silencing the warnings, and turning the warnings into errors.
 
-We already have a facility for adding messages to the construct tree's metadata
-(through the Node class in the `constructs` library),
-which are then [collected into the Stack Cloud Assembly artifact type](https://github.com/aws/aws-cdk/blob/34a921b9667402b6d90731f1fd9e3de1ef27f8bf/packages/%40aws-cdk/core/lib/stack-synthesizers/_shared.ts#L63-L101),
-which the [CLI later renders](https://github.com/aws/aws-cdk/blob/34a921b9667402b6d90731f1fd9e3de1ef27f8bf/packages/aws-cdk/lib/api/cxapp/cloud-assembly.ts#L175-L216).
-We should in all likelihood re-use that mechanism.
+#### 2. Using the changed JSII
 
-Note, however, that that requires access to the construct tree,
-which we don't necessarily have in a trivial way from all contexts
-(for example, for an access to a deprecated property of a struct interface).
-Which means we will need to add some mechanism to `core`
-that allows elements to register warnings with without necessarily having access to a construct,
-and which then will be gathered by synthesis and added to the resulting Cloud Assembly
-(parented below a certain construct, perhaps the `App`?).
-This also means we most likely won't be able to link the usage of the deprecated element to a particular `Stack`
-that it was used in.
+Once we have modified JSII and released a new version of it,
+we will need to use it in the CDK.
+We will have to start compiling CDK with the new option turned on,
+and also set the two additional options mentioned above to be
+`CDK_DEPRECATED_IGNORE` and `CDK_DEPRECATED_ERROR`, respectively.
 
-#### 2. Adding metadata when using deprecated elements
+We should also modify our CDK test infrastructure to run with the `CDK_DEPRECATED_ERROR` option turned on by default,
+unless a test is explicitly checking a deprecated API as a regression test,
+in which case we should add an API for turning that option off for those tests.
 
-The second element of this change is to actually add the appropriate metadata when any deprecated element is used.
+### Is this a breaking change?
 
-Before we dive into the possible solutions,
-I think it's worth it to talk about what solutions we _don't_ want,
-as that will strongly inform how we approach the problem.
+No.
 
-I think we can rule out any solution that requires parsing the customer's source code in search for usages of deprecated elements.
-While this approach has many interesting advantages:
+### What are the drawbacks of this solution?
 
-* Allows us to discover some tricky deprecated elements,
-  like enum values, or deprecated types used only in type declarations,
-  that will be difficult to do with only runtime reporting.
-* Would prevent reporting warnings for deprecated usages outside the customer's code
-  (for example, in our own libraries).
+1. Requires changes to JSII.
+2. Does not allow distinguishing between the customer using deprecated APIs,
+  and the library code using deprecated APIs.
+  We can alleviate this problem by turning on the `CDK_DEPRECATED_ERROR` environment variable by default in our tests,
+  which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
+3. We won't be able to register warnings for accessing deprecated static constants
+  (this includes enums).
 
-While those advantages are considerable,
-I still think the downsides outweigh them:
+### What alternative solutions did you consider?
 
-* We would have to write a separate parser for each language supported by the CDK.
-* This additional parsing could have an adverse impact on the performance of CDK commands.
-* It's not obvious this analysis can even be performed at all in the case of dynamically-typed languages like JavaScript or Python.
+There are many alternatives that were considered,
+but were, for various reasons, discarded:
 
-If we agree that we don't want the above solution,
-then the only avenue we have left is injecting some extra code in the deprecated elements during compilation of the TypeScript code into JavaScript.
-There are two ways we can do that: through the TypeScript compiler directly,
-or by modifying JSII (which is discussed as an alternative below).
+#### 1. Manual code for emitting the warnings
 
-##### 2.1. TypeScript decorators
+Instead of modifying JSII,
+we could simply write the code inside the TypeScript APIs "manually",
+emitting warnings for any deprecated elements being used.
+
+This has the advantage of being the simplest solution,
+but has been discarded because of the large effort,
+and the fact that there's no way for us to verify that code has been added
+(and added correctly).
+
+#### 2. TypeScript decorators
 
 We can use [TypeScript decorators](https://www.typescriptlang.org/docs/handbook/decorators.html)
 to enhance the runtime JavaScript code with our custom logic.
@@ -155,56 +157,67 @@ which means the vast majority of our customers will have them enabled as well.
 
 The main advantage of this solution is that changes are needed only in the CDK project.
 
-### Is this a breaking change?
+Disadvantages of this solution:
 
-No.
-
-### What are the drawbacks of this solution?
-
-1. It won't be possible to reliably get the module the deprecated element belongs to
-  (only the name of the element) --
-  the decorator is simply a JavaScript function defined in `core`,
+1. It won't be possible to reliably get the module the deprecated element belongs to (only the name of the element) --
+  the decorator is simply a JavaScript function defined in `@aws-cdk/core`,
   and doesn't have (easy) access to the information on what module a given object it's called on belongs to.
-2. TypeScript does not allow decorators on interfaces
-  (neither on the interface directly, nor on any of its properties).
+2. TypeScript does not allow decorators on interfaces (neither on the interface directly, nor on any of its properties).
   This means we will not be able to register warnings for structs, or struct properties.
+3. We won't be able to register warnings for accessing deprecated static constants
+   (this includes enums).
 
-### What alternative solutions did you consider?
+#### 3. Rely on language-specific deprecation warning mechanisms
 
-The alternative solution to `2.1` is to modify JSII to add a capability to it that allows injecting some code when compiling every deprecated element.
-It would involve writing a TypeScript transform,
-that adds some code whenever the deprecated element is accessed.
-Nick did a similar change in PR [#2348](https://github.com/aws/jsii/pull/2348)
-to add runtime version information to all JSII-compiled classes.
+JSII emits deprecated elements with the correct language-specific mechanisms in place
+(for example, the `@Deprecated` annotation for Java).
+We could simply piggyback on those,
+instead of writing our own.
 
 Advantages of this solution:
 
-* Doing it in JSII will make it easy to record the module the given element is in.
-* Doing it in JSII allows this functionality to be used by other JSII projects,
-  like `cdk8s`, or `cdktf`.
+1. Minimal development effort on our side.
 
 Disadvantages of this solution:
 
-* Because the code adding the warning for the deprecated elements will be CDK-specific,
-  it will be pretty awkward to correctly pass what exactly that code should be from CDK to JSII
-  (and, additionally, that code will most likely be slightly different for each type --
-  class, method, property, etc. --
-  of deprecated element we support).
-* Requires coordination between the JSII and CDK projects
-  (merging a JSII PR, waiting for a release, updating CDK to use the new version, etc.),
-  which typically lengthens the total development time.
+1. Just deprecated warnings in the IDE can be missed by developers
+  (especially as more APIs get deprecated).
+2. The experience with TypeScript properties is currently pretty bad
+  (the property is struck through when selecting it,
+  but not after that!).
+3. There is nothing out of the box for this in Python
+  (we would have to write our own decorator).
+
+#### 4. Parse the customer's code
+
+We could create a parser and type-checker for each language the CDK supports,
+and use that to discover any cases of using deprecated elements.
+
+Advantages of this solution:
+
+1. Allows us to discover some tricky deprecated elements,
+  like enum values, or deprecated types used only in type declarations,
+  that will be difficult to do with only runtime reporting.
+2. Would prevent reporting warnings for deprecated usages outside the customer's code
+  (for example, in our own libraries).
+
+Disadvantages of this solution:
+
+1. We would have to write a separate parser and type-checker for each language supported by the CDK.
+2. This additional parsing could have an adverse impact on the performance of CDK commands.
+3. It's not obvious this analysis can even be performed at all in the case of dynamically-typed languages like JavaScript or Python
 
 ### What is the high level implementation plan?
 
-The high-level implementation plan depends on the solution chosen:
+The high-level implementation plan is:
 
-1. If we decide to modify JSII,
-  we will have to start with a PR to that project first,
-  then update CDK to the latest JSII after it's released,
-  and then work on the CDK side after that.
+1. Make the changes in JSII
+  (will probably be a single PR),
+  and release a new version once those are merged in.
 
-2. If we decide to go with TypeScript decorators,
-  all of the changes should fit comfortably in a single PR to the CDK project.
+2. Set the new option during building CDK,
+  make sure the tests use `CDK_DEPRECATED_ERROR`,
+  and provide an API for tests to opt-out of that on a case-by-case basis.
 
 ### Are there any open issues that need to be addressed later?
 
