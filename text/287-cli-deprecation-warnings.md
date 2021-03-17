@@ -30,12 +30,14 @@ you will receive a warning when performing any CLI operation that performs synth
   This API will be removed in the next major release
 ```
 
-There are also two environment variables you can set to change the behavior of this feature:
+There is also an environment variable `CDK_DEPRECATED` that you can use to change the behavior of this feature:
 
-* Setting the environment variable `CDK_DEPRECATED_IGNORE` will silence these warnings
-  (they will no longer be printed to the console).
-
-* Setting the environment variable `CDK_DEPRECATED_ERROR` will instead fail with an exception when any deprecated element is used.
+* Setting that environment variable to the value `ignore` will silence these warnings
+  (they will no longer be printed to the stderr stream).
+* Setting that environment variable to the value `error` will instead fail with an exception when any deprecated element is used.
+* Setting that environment variable to the value `warn` is the same as the default behavior
+  (the warnings will be printed to the stderr stream,
+  but will not cause errors).
 
 ### Contributing guide
 
@@ -64,7 +66,7 @@ and thus no longer available to be used by your code.
 
 If you want to make sure your code does not use any deprecated APIs,
 and thus is ready for migrating to CDK `V2`,
-you can set the `CDK_DEPRECATED_ERROR` environment variable,
+you can set the `CDK_DEPRECATED` environment variable to the value `error`,
 which will make any CDK command that invokes synthesis
 (`cdk synth`, `cdk deploy`, `cdk diff`, etc.)
 fail with an exception if any deprecated element is used.
@@ -99,17 +101,18 @@ There are two high-level components of this change:
 #### 1. Changes to JSII
 
 We will add a feature to JSII that adds the warning code to the emitted JavaScript for deprecated elements.
-It will be off by default, and will have to be activated explicitly to take effect.
-We will also add two options to the JSII CLI that allow passing the names of the environment variables used for,
-respectively, silencing the warnings, and turning the warnings into errors.
+It will be off by default, and will have to be activated explicitly to affect the emitted JavaScript code.
+We will also add an option to the JSII CLI that allows passing the name of the environment variable used for
+silencing the warnings, and turning the warnings into errors
+(the `CDK_DEPRECATED` variable mentioned above -
+it can't be just `CDK_DEPRECATED` by default, as JSII does not have any knowledge of CDK!).
 
 #### 2. Using the changed JSII
 
 Once we have modified JSII and released a new version of it,
 we will need to use it in the CDK.
 We will have to start compiling CDK with the new option turned on,
-and also set the two additional options mentioned above to be
-`CDK_DEPRECATED_IGNORE` and `CDK_DEPRECATED_ERROR`, respectively.
+and also set the new JSII CLI option mentioned above to `CDK_DEPRECATED`.
 
 We should also modify our CDK test infrastructure to run with the `CDK_DEPRECATED_ERROR` option turned on by default,
 unless a test is explicitly checking a deprecated API as a regression test,
@@ -126,8 +129,11 @@ No.
   and the library code using deprecated APIs.
   We can alleviate this problem by turning on the `CDK_DEPRECATED_ERROR` environment variable by default in our tests,
   which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
-3. We won't be able to register warnings for accessing deprecated static constants
-  (this includes enums).
+3. Adding emitting warnings for accessing deprecated static constants
+  (including enums) will require huge changes to the emitted JavaScript
+  (changing from a field to a `static` getter).
+4. We only report APIs actually hit during a particular execution of the code
+  (while missing statically declared but not actually invoked deprecated elements).
 
 ### What alternative solutions did you consider?
 
@@ -166,6 +172,8 @@ Disadvantages of this solution:
   This means we will not be able to register warnings for structs, or struct properties.
 3. We won't be able to register warnings for accessing deprecated static constants
    (this includes enums).
+4. We only report APIs actually hit during a particular execution of the code
+   (while missing statically declared but not actually invoked deprecated elements).
 
 #### 3. Rely on language-specific deprecation warning mechanisms
 
@@ -177,16 +185,21 @@ instead of writing our own.
 Advantages of this solution:
 
 1. Minimal development effort on our side.
+2. Compared to runtime analysis, allows listing of all deprecated API usages in the code base,
+  not the just ones that happen to be executed during a particular run.
 
 Disadvantages of this solution:
 
 1. Just deprecated warnings in the IDE can be missed by developers
   (especially as more APIs get deprecated).
-2. The experience with TypeScript properties is currently pretty bad
-  (the property is struck through when selecting it,
-  but not after that!).
+2. TypeScript currently does not properly detect deprecation of properties in object literals,
+   and deprecation of properties (props) is very important for our project.
+   Even though it will properly detect them while autocompleting,
+   and there is an issue about it on the TypeScript bug tracker,
+   we cannot rely on them fixing this in a reasonable time frame.
 3. There is nothing out of the box for this in Python
-  (we would have to write our own decorator).
+  (we would have to change JSII and write our own decorator
+  which would have the same disadvantages as the TypeScript decorators solution).
 
 #### 4. Parse the customer's code
 
@@ -200,6 +213,8 @@ Advantages of this solution:
   that will be difficult to do with only runtime reporting.
 2. Would prevent reporting warnings for deprecated usages outside the customer's code
   (for example, in our own libraries).
+3. Compared to runtime analysis, allows listing of all deprecated API usages in the code base,
+  not the just ones that happen to be executed during a particular run.
 
 Disadvantages of this solution:
 
@@ -214,11 +229,26 @@ The high-level implementation plan is:
 1. Make the changes in JSII
   (will probably be a single PR),
   and release a new version once those are merged in.
+  Effort estimate (development + code review): 2 weeks.
 
 2. Set the new option during building CDK,
   make sure the tests use `CDK_DEPRECATED_ERROR`,
   and provide an API for tests to opt-out of that on a case-by-case basis.
+  Effort estimate (development + code review): 1 week.
 
 ### Are there any open issues that need to be addressed later?
 
 No.
+
+### Are there any things that need to be paid attention to during implementation?
+
+1. We need to check all arguments of all functions that have struct types,
+  and add code checking whether any of the deprecated struct properties have been passed.
+  This must include doing this recursively for nested structs as well.
+2. It's very likely internal (starting with `_`)
+  API elements should be excluded from emitting these warnings.
+3. It would be ideal if each API element only emitted the warning once ,
+  when it was first invoked - as opposed to doing it every time it was invoked.
+4. The message displayed in the console should include the deprecation message specified in the code.
+5. If a class is deprecated, the warnings should most likely be added to every API element of that class,
+  whether that element is explicitly deprecated or not.
