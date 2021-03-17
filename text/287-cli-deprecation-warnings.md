@@ -79,7 +79,7 @@ We are doing this to help customers have a smoother migration from `V1` to `V2` 
 
 ### Why should we _not_ do this?
 
-I see three reasons why we might not want to implement this feature:
+I see four reasons why we might not want to implement this feature:
 
 1. Deprecated elements are already highlighted by virtually any editor/IDE.
   In my experience, customers are diligent in moving away from deprecated APIs,
@@ -93,6 +93,14 @@ I see three reasons why we might not want to implement this feature:
   and from our own libraries using deprecated APIs.
   Which means a user might get warnings that they will be unable to get rid of
   (because they're coming from code that they don't control).
+4. Depending on the exact solution chosen
+  (see discussion below),
+  there might be edge cases where something is deprecated,
+  but we won't be able to report a particular pattern of its usage.
+  Some examples include:
+    * Using deprecated types only in type declarations.
+    * Static constants (which includes enums).
+    * Deprecated elements declared in the code, but not actually executed during synthesis.
 
 ### What changes are required to enable this change?
 
@@ -104,7 +112,7 @@ We will add a feature to JSII that adds the warning code to the emitted JavaScri
 It will be off by default, and will have to be activated explicitly to affect the emitted JavaScript code.
 We will also add an option to the JSII CLI that allows passing the name of the environment variable used for
 silencing the warnings, and turning the warnings into errors
-(the `CDK_DEPRECATED` variable mentioned above -
+(the `CDK_DEPRECATED` environment variable mentioned above -
 it can't be just `CDK_DEPRECATED` by default, as JSII does not have any knowledge of CDK!).
 
 #### 2. Using the changed JSII
@@ -114,9 +122,11 @@ we will need to use it in the CDK.
 We will have to start compiling CDK with the new option turned on,
 and also set the new JSII CLI option mentioned above to `CDK_DEPRECATED`.
 
-We should also modify our CDK test infrastructure to run with the `CDK_DEPRECATED_ERROR` option turned on by default,
-unless a test is explicitly checking a deprecated API as a regression test,
-in which case we should add an API for turning that option off for those tests.
+We should also modify our CDK test infrastructure to run with the `CDK_DEPRECATED`
+environment variable set to `error` by default,
+to prevent our own code from using deprecated APIs which would cause warnings to be shown to users.
+We should come up with a nice API that allows individual tests that are explicitly checking deprecated API(s)
+as regression tests to make the value of that environment variable `ignore` easily.
 
 ### Is this a breaking change?
 
@@ -127,7 +137,7 @@ No.
 1. Requires changes to JSII.
 2. Does not allow distinguishing between the customer using deprecated APIs,
   and the library code using deprecated APIs.
-  We can alleviate this problem by turning on the `CDK_DEPRECATED_ERROR` environment variable by default in our tests,
+  We can alleviate this problem by making the value of the `CDK_DEPRECATED` environment variable `error` by default in our tests,
   which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
 3. Adding emitting warnings for accessing deprecated static constants
   (including enums) will require huge changes to the emitted JavaScript
@@ -198,7 +208,7 @@ Disadvantages of this solution:
    and there is an issue about it on the TypeScript bug tracker,
    we cannot rely on them fixing this in a reasonable time frame.
 3. There is nothing out of the box for this in Python
-  (we would have to change JSII and write our own decorator
+  (we would have to change JSII and write our own decorator,
   which would have the same disadvantages as the TypeScript decorators solution).
 
 #### 4. Parse the customer's code
@@ -220,7 +230,7 @@ Disadvantages of this solution:
 
 1. We would have to write a separate parser and type-checker for each language supported by the CDK.
 2. This additional parsing could have an adverse impact on the performance of CDK commands.
-3. It's not obvious this analysis can even be performed at all in the case of dynamically-typed languages like JavaScript or Python
+3. It's not obvious this analysis can even be performed at all in the case of dynamically-typed languages like JavaScript or Python.
 
 ### What is the high level implementation plan?
 
@@ -232,7 +242,7 @@ The high-level implementation plan is:
   Effort estimate (development + code review): 2 weeks.
 
 2. Set the new option during building CDK,
-  make sure the tests use `CDK_DEPRECATED_ERROR`,
+  make sure the tests use `CDK_DEPRECATED` set to `error`,
   and provide an API for tests to opt-out of that on a case-by-case basis.
   Effort estimate (development + code review): 1 week.
 
