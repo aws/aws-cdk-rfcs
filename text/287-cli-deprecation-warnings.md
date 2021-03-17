@@ -30,14 +30,35 @@ you will receive a warning when performing any CLI operation that performs synth
   This API will be removed in the next major release
 ```
 
-There is also an environment variable `CDK_DEPRECATED` that you can use to change the behavior of this feature:
+There is also an environment variable `DEPRECATED` that you can use to change the behavior of this feature:
 
-* Setting that environment variable to the value `ignore` will silence these warnings
+* Setting that environment variable to the value `quiet` will silence these warnings
   (they will no longer be printed to the stderr stream).
 * Setting that environment variable to the value `error` will instead fail with an exception when any deprecated element is used.
 * Setting that environment variable to the value `warn` is the same as the default behavior
   (the warnings will be printed to the stderr stream,
   but will not cause errors).
+
+#### When exactly will this warning be shown?
+
+In general, this warning will be shown when executing any member
+(by which I mean function (static or standalone), constructor, method,
+or field (static or instance))
+from the AWS CDK Construct Library that is either:
+
+* Deprecated itself;
+* Belongs to a class or interface that is deprecated;
+* Has an argument that is of an interface type with a deprecated property,
+  and that property has been passed when calling the member.
+
+In particular, this means the warnings will not be printed for:
+
+* Any elements in your own code which are either explicitly deprecated,
+  or override any deprecated members from the Construct Library.
+* Any code that invokes deprecated members,
+  but that is itself not actually invoked when running CDK synthesis.
+* Using any deprecated members without actually invoking them
+  (for example, using a deprecated type only in a type declaration).
 
 ### Contributing guide
 
@@ -66,7 +87,7 @@ and thus no longer available to be used by your code.
 
 If you want to make sure your code does not use any deprecated APIs,
 and thus is ready for migrating to CDK `V2`,
-you can set the `CDK_DEPRECATED` environment variable to the value `error`,
+you can set the `DEPRECATED` environment variable to the value `error`,
 which will make any CDK command that invokes synthesis
 (`cdk synth`, `cdk deploy`, `cdk diff`, etc.)
 fail with an exception if any deprecated element is used.
@@ -110,23 +131,18 @@ There are two high-level components of this change:
 
 We will add a feature to JSII that adds the warning code to the emitted JavaScript for deprecated elements.
 It will be off by default, and will have to be activated explicitly to affect the emitted JavaScript code.
-We will also add an option to the JSII CLI that allows passing the name of the environment variable used for
-silencing the warnings, and turning the warnings into errors
-(the `CDK_DEPRECATED` environment variable mentioned above -
-it can't be just `CDK_DEPRECATED` by default, as JSII does not have any knowledge of CDK!).
 
 #### 2. Using the changed JSII
 
 Once we have modified JSII and released a new version of it,
-we will need to use it in the CDK.
-We will have to start compiling CDK with the new option turned on,
-and also set the new JSII CLI option mentioned above to `CDK_DEPRECATED`.
+we will need to use it in the CDK,
+and start compiling CDK with the new option turned on.
 
-We should also modify our CDK test infrastructure to run with the `CDK_DEPRECATED`
+We should also modify our CDK test infrastructure to run with the `DEPRECATED`
 environment variable set to `error` by default,
 to prevent our own code from using deprecated APIs which would cause warnings to be shown to users.
 We should come up with a nice API that allows individual tests that are explicitly checking deprecated API(s)
-as regression tests to make the value of that environment variable `ignore` easily.
+as regression tests to make the value of that environment variable `quiet` easily.
 
 ### Is this a breaking change?
 
@@ -137,7 +153,7 @@ No.
 1. Requires changes to JSII.
 2. Does not allow distinguishing between the customer using deprecated APIs,
   and the library code using deprecated APIs.
-  We can alleviate this problem by making the value of the `CDK_DEPRECATED` environment variable `error` by default in our tests,
+  We can alleviate this problem by making the value of the `DEPRECATED` environment variable `error` by default in our tests,
   which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
 3. Adding emitting warnings for accessing deprecated static constants
   (including enums) will require huge changes to the emitted JavaScript
@@ -242,7 +258,7 @@ The high-level implementation plan is:
   Effort estimate (development + code review): 2 weeks.
 
 2. Set the new option during building CDK,
-  make sure the tests use `CDK_DEPRECATED` set to `error`,
+  make sure the tests use the `DEPRECATED` environment variable set to `error`,
   and provide an API for tests to opt-out of that on a case-by-case basis.
   Effort estimate (development + code review): 1 week.
 
