@@ -155,11 +155,9 @@ No.
   and the library code using deprecated APIs.
   We can alleviate this problem by making the value of the `DEPRECATED` environment variable `error` by default in our tests,
   which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
-3. Adding emitting warnings for accessing deprecated static constants
-  (including enums) will require huge changes to the emitted JavaScript
-  (changing from a field to a `static` getter).
-4. We only report APIs actually hit during a particular execution of the code
-  (while missing statically declared but not actually invoked deprecated elements).
+3. We only report APIs actually hit during a particular execution of the code
+  (while missing statically declared but not actually invoked deprecated elements -
+  note though that IDEs/editors still warn about them).
 
 ### What alternative solutions did you consider?
 
@@ -216,8 +214,10 @@ Advantages of this solution:
 
 Disadvantages of this solution:
 
-1. Just deprecated warnings in the IDE can be missed by developers
-  (especially as more APIs get deprecated).
+1. TypeScript in VSCode (our most popular language/IDE combination)
+   does not by default show a complete list of deprecated API usages:
+   it will only show strikethroughs on identifiers you happen to be looking at.
+   Getting a complete list of deprecated APIs requires installing and configuring `eslint`.
 2. TypeScript currently does not properly detect deprecation of properties in object literals,
    and deprecation of properties (props) is very important for our project.
    Even though it will properly detect them while autocompleting,
