@@ -101,7 +101,8 @@ future state of the libraries and to discover projects for contribution.
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic Access of CDK CLI Capabilities](https://github.com/aws/aws-cdk-rfcs/issues/300)||💡 proposed
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||💡 proposed
 [308](https://github.com/aws/aws-cdk-rfcs/issues/308)|[CLI displays advisories](https://github.com/aws/aws-cdk-rfcs/issues/308)||💡 proposed
-[309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store from cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
+[309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
+[313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
