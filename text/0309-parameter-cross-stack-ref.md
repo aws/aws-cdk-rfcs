@@ -42,7 +42,6 @@ new values
 
 ## Internal FAQ
 
-
 ### Why are we doing this?
 
 Prevent stacks being export locked and unable to update
@@ -59,7 +58,6 @@ A feature flag which changes the what gets returned when requesting a value from
 
 Yes
 
-
 ### What are the drawbacks of this solution?
 
 Tight coupling means the resources you are dependent on wont go away, in some instances
@@ -70,13 +68,10 @@ this behavior prevents breaking consumers.
 Adding extra methods for storing and retrieving parameters from standardized paths, but
 this requires a lot of overhead when developing apps
 
-
 ### What is the high level implementation plan?
 
 Add a feature flag, when the flag is enabled create a parameter and return a parameter for the consuming stack
 
-
 ### Are there any open issues that need to be addressed later?
 
 ## Appendix
-
