@@ -266,7 +266,7 @@ to the application, with the following configuration properties:
 
 Name         | Description
 -------------|------------------------------------------------------------------
-`dsnName`    | The DNS name to use for hosting the Construct Hub instance
+`dnsName`    | The DNS name to use for hosting the Construct Hub instance
 `pathPrefix` | The URL prefix for the Construct Hub hosting
 
 It exposes the following attributes, to allow integrations to operate correctly:
