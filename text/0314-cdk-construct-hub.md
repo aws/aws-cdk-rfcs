@@ -3,7 +3,7 @@ rfc pr: [#314](https://github.com/aws/aws-cdk-rfcs/pull/314)
 tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 ---
 
-# CDK Construct Hub
+# Construct Hub
 
 A community-driven hub for discovering and sharing CDK constructs.
 
@@ -17,25 +17,25 @@ constructs and provides a centralized documentation experience for those. CDK
 Construct Hub automatically indexes custom construct libraries as soon as they
 are published, without requiring any additional effort from the author. The AWS
 CDK makes it easy for customers to build applications by raising the level of
-abstraction of infrastructure components, and CDK Construct Hub makes it easy to
+abstraction of infrastructure components, and Construct Hub makes it easy to
 discover, use and share custom-made constructs. To get started with CDK
-Construct Hub, visit [awscdk.io](https://awscdk.io/).
+Construct Hub, visit `${TBD}`.
 
-CDK Construct Hub offers an integrated search experience, allowing customers to
+Construct Hub offers an integrated search experience, allowing customers to
 easily find the right construct for their need. The built-in multi-language
 documentation helps customers understand what features are available, and learn
 how to correctly use the constructs in their chosen programming language.
 
-The CDK Construct Hub itself is developed as an open-source construct: members
+The Construct Hub itself is developed as an open-source construct: members
 of CDK community can freely participate in the development of the service.
 Customers with specific needs are also able to deploy a private instance of the
-CDK Construct Hub, and integrate it with their package management solution.
+Construct Hub, and integrate it with their package management solution.
 
 ## FAQ
 
 ### What are we launching today?
 
-CDK Construct Hub is a new website that makes it easy for developers to
+Construct Hub is a new website that makes it easy for developers to
 discover, use, and share CDK constructs that encapsulate cloud infrastructure
 patterns. The community has already published hundreds of CDK constructs on the
 public registries like npmjs.com, PyPI, Maven Central, and NuGet. However those
@@ -44,23 +44,23 @@ centralized search tools sufficient for developers to easily find the cloud
 infrastructure patterns they are looking for, in the programming language they
 want to use.
 
-CDK Construct Hub automatically indexes all CDK construct libraries published to
+Construct Hub automatically indexes all CDK construct libraries published to
 the various general purpose package managers, so that developers have a single
 place to search for constructs, regardless of preferred programming language or
 provisioning engine. Developers will find constructs published by AWS, partners,
 and individual developers. CDK Constuct Hub also generates unified documentation
 for the constructs in all supported programming languages.
 
-CDK Construct Hub is also available as a deploymable CDK construct library, so
+Construct Hub is also available as a deploymable CDK construct library, so
 that enterprises and users with specific needs can host a private instance of
 the catalog, making interally developed constructs easier for teams to find.
-Just like the public instance of CDK Construct Hub scans public repositories for
-construct libraries, the private CDK Construct Hub instance can be configured to
+Just like the public instance of Construct Hub scans public repositories for
+construct libraries, the private Construct Hub instance can be configured to
 scan private repositories like AWS CodeArtifact, JFrog Artifactory, and others.
 
 ### Why should I use this feature?
 
-The CDK Construct Hub is a centralized place that helps discover and share
+The Construct Hub is a centralized place that helps discover and share
 custom-made constructs compatible with the AWS Cloud Development Kit (CDK), CDK
 for Kubernetes (CDK8s), or CDK for Terraform (CDK-Tf). It shortens the time it
 takes to ship cloud applications by allowing developers to discover constructs
@@ -68,18 +68,18 @@ that address their infrastructure requirements, and provides a unified
 cross-language documentation experience to help developers integrate those
 constructs into their application.
 
-Customers can also deploy a private instance of CDK Construct Hub to facilitate
+Customers can also deploy a private instance of Construct Hub to facilitate
 sharing infrastructure abstractions published to a private package registry
 within the organization.
 
-### Where can I find the CDK Construct Hub?
+### Where can I find the Construct Hub?
 
-The public instance of CDK Construct Hub is at: [awscdk.io](https://awscdk.io/).
+The public instance of Construct Hub is at: `${TBD}`.
 
-### How do I publish a package to CDK Construct Hub?
+### How do I publish a package to Construct Hub?
 
 Packages published to the public npm registry (npmjs.com) are automatically
-indexed by the public instance of CDK Construct Hub as long as they meet the
+indexed by the public instance of Construct Hub as long as they meet the
 following prerequisites:
 
 1. Cross-language support has been configured correctly using [jsii]
@@ -87,17 +87,17 @@ following prerequisites:
 
 [jsii]: https://aws.github.io/jsii
 
-### Can I opt packages out of the public instance of CDK Construct Hub?
+### Can I opt packages out of the public instance of Construct Hub?
 
 There is currently no self-service way to un-list a package from the CDK
 Construct Hub. If you would like your package to be removed from the public
-instance of CDK Construct Hub, please file an issue in GitHub. You will be
+instance of Construct Hub, please file an issue in GitHub. You will be
 required to prove ownership of the package(s) you are requesting un-listing for.
 
-### Can I trust all constructs listed on CDK Construct Hub?
+### Can I trust all constructs listed on Construct Hub?
 
-CDK Construct Hub does not perform a comprehensive audit of packages it indexes.
-You should not trust packages found via the CDK Construct Hub any differently
+Construct Hub does not perform a comprehensive audit of packages it indexes.
+You should not trust packages found via the Construct Hub any differently
 from packages found via other package search tools or registries, such as
 npmjs.com, Maven Central, PyPI, NuGet, etc.
 
@@ -107,7 +107,7 @@ npmjs.com, Maven Central, PyPI, NuGet, etc.
 
 > [Example rendering](#rendering-landing-page)
 
-The landing page for the CDK Construct Hub includes a search bar that allows
+The landing page for the Construct Hub includes a search bar that allows
 developers to search for constructs that solve their use-case using relevant
 keywords, and optionally filtering on a specific programming language and CDK
 flavor (AWS CDK / CDK8s / CDK-Tf).
@@ -144,7 +144,7 @@ relevant form for the currently selected language.
 
 ### Support
 
-The CDK Construct Hub offers ways for customers to engage maintainers about
+The Construct Hub offers ways for customers to engage maintainers about
 various problems, including the following:
 
 - A malicious package was identified
@@ -153,7 +153,7 @@ various problems, including the following:
 
 When a contact request originates from a package detail page, the customer is
 guided to the package's issue tracker or public repository if their issue is
-with the package itself (and not about it's listing in CDK Construct Hub).
+with the package itself (and not about it's listing in Construct Hub).
 
 ## Technical Design
 
@@ -161,7 +161,7 @@ with the package itself (and not about it's listing in CDK Construct Hub).
 
 #### Overview
 
-The CDK Construct Hub is a relatively simple static web application. While the
+The Construct Hub is a relatively simple static web application. While the
 dataset it exposes (all CDK Construct Libraries) may be relatively fast moving,
 there is no necessity for newly published packages (or versions thereof) to be
 indexed and presented on the application particularly quickly. A consistency
@@ -177,9 +177,9 @@ detail pages.
 
 #### Back-End
 
-1. The back-end for CDK Construct Hub starts with a custom-built event source,
+1. The back-end for Construct Hub starts with a custom-built event source,
    which implements the logic necessary to detect new packages that are relevant
-   to the CDK Construct Hub, and sends messages to an SQS queue for further
+   to the Construct Hub, and sends messages to an SQS queue for further
    processing. Notifications have the following attributes:
 
    Name        | Description
@@ -187,6 +187,10 @@ detail pages.
    `assembly`  | The `.jsii` assembly included in the package
    `time`      | The timestamp at which the version was created
    `integrity` | An integirity check for the complete record
+
+   In cases where the `assembly` object is too large, it may be staged in S3
+   instead of being sent directly as part of the message payload. In such cases,
+   the `assembly` field contains an S3 URI instead of a JSON object.
 
 1. A Lambda function then picks up messages from the SQS queue and prepares the
    artifacts consumed by the front-end application, stored in a dedicated S3
@@ -245,15 +249,43 @@ pipeline.
 
    - If a different language (than JavaScript) is selected, the
      `assembly-${lang}.json` object is fetched instead, providing the relevant
-     documentation elements.
+     documentation elements. In the event that object is not available yet, a
+     message will be displayed instead, instructing the user to try again later.
 
 [react]: https://reactjs.org
+
+#### Construct Packaging
+
+The Construct Hub is to be created as a reusable construct, including all
+necessary components of the application. The public instance of CDK Construct
+Hub will simply be an AWS-Managed instance of that, which feeds from packages
+published to the [npm registry](https://npmjs.com).
+
+It will expose a simple API: a `ConstructHub` class will be the main entry point
+to the application, with the following configuration properties:
+
+Name         | Description
+-------------|------------------------------------------------------------------
+`dsnName`    | The DNS name to use for hosting the Construct Hub instance
+`pathPrefix` | The URL prefix for the Construct Hub hosting
+
+It exposes the following attributes, to allow integrations to operate correctly:
+
+Name                | Description
+--------------------|-------------------------------------------------------------------------------
+`ingestionQueueUrl` | The URL of the SQS queue where ingestion messages should be sent
+`ingestionRoleArn`  | The IAM role used to process input payloads (and read S3 staged objects)
+`ingestionDlqArn`   | The ARN of the ingestion pipeline's dead letter queue
 
 ### Are there any open issues that need to be addressed later?
 
 - When the catalog becomes too large to be convenient to process in-memory on
   the client-side, it may need to be sharded, or the search feature may need to
-  be re-done as a dynamic back-end service.
+  be re-done as a dynamic back-end service. A prototype shows that 409 packages
+  amount to about `913,86 KiB` of un-compressed JSON-encoded data, which reduces
+  to `71.53 KiB` when compressed using the `gzip` algorithm. This means each
+  package would consume about `2.23 KiB` of un-compressed data, and results in
+  an additional `0.17 KiB` to effectively transfer.
 
 - Generation of per-language documentation may become prohibitively expensive,
   and it may be interesting to only generate language-specific documentation
