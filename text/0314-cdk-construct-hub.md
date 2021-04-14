@@ -5,21 +5,21 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 
 # Construct Hub
 
-A community-driven hub for discovering and sharing CDK constructs.
+A community-driven hub for discovering and sharing construct libraries.
 
 ## Working Backwards
 
 ### PRESS RELEASE
 
-Today, Amazon Web Services Inc., an Amazon company, announced the CDK Construct
-Hub, a service that makes it easy to find AWS Cloud Development Kit (CDK)
-constructs and provides a centralized documentation experience for those. CDK
-Construct Hub automatically indexes custom construct libraries as soon as they
-are published, without requiring any additional effort from the author. The AWS
-CDK makes it easy for customers to build applications by raising the level of
-abstraction of infrastructure components, and Construct Hub makes it easy to
-discover, use and share custom-made constructs. To get started with CDK
-Construct Hub, visit `${TBD}`.
+Today, Amazon Web Services Inc., an Amazon company, announced the Construct Hub,
+a service that makes it easy to find constructs (including AWS CDK,
+CDK8s, CDKtf, Projen, ...) libraries and provides a centralized documentation
+experience for those. Construct Hub automatically indexes custom construct
+libraries as soon as they are published, without requiring any additional effort
+from the author. The AWS CDK makes it easy for customers to build applications
+by raising the level of abstraction of infrastructure components, and Construct
+Hub makes it easy to discover, use and share custom-made constructs. To get
+started with Construct Hub, visit `${TBD}`.
 
 Construct Hub offers an integrated search experience, allowing customers to
 easily find the right construct for their need. The built-in multi-language
@@ -27,29 +27,29 @@ documentation helps customers understand what features are available, and learn
 how to correctly use the constructs in their chosen programming language.
 
 The Construct Hub itself is developed as an open-source construct: members
-of CDK community can freely participate in the development of the service.
-Customers with specific needs are also able to deploy a private instance of the
-Construct Hub, and integrate it with their package management solution.
+of constructs community can freely participate in the development of the
+service. Customers with specific needs are also able to deploy a private
+instance of the Construct Hub, and integrate it with their package management
+solution.
 
 ## FAQ
 
 ### What are we launching today?
 
-Construct Hub is a new website that makes it easy for developers to
-discover, use, and share CDK constructs that encapsulate cloud infrastructure
-patterns. The community has already published hundreds of CDK constructs on the
-public registries like npmjs.com, PyPI, Maven Central, and NuGet. However those
-are distributed repositories, managed by numerous organizations, and lack
-centralized search tools sufficient for developers to easily find the cloud
-infrastructure patterns they are looking for, in the programming language they
-want to use.
+Construct Hub is a new website that makes it easy for developers to discover,
+use, and share constructs. The community has already published hundreds of CDK,
+CDK8s, CDKtf, projen, ... constructs on the public registries like npmjs.com,
+PyPI, Maven Central, and NuGet. However those are distributed repositories,
+managed by numerous organizations, and lack centralized search tools sufficient
+for developers to easily find the cloud infrastructure patterns they are looking
+for, in the programming language they want to use.
 
-Construct Hub automatically indexes all CDK construct libraries published to
-the various general purpose package managers, so that developers have a single
-place to search for constructs, regardless of preferred programming language or
+Construct Hub automatically indexes all construct libraries published to the
+various general purpose package managers, so that developers have a single place
+to search for constructs, regardless of preferred programming language or
 provisioning engine. Developers will find constructs published by AWS, partners,
-and individual developers. CDK Constuct Hub also generates unified documentation
-for the constructs in all supported programming languages.
+and individual developers. Constuct Hub also generates unified documentation for
+the constructs in all supported programming languages.
 
 Construct Hub is also available as a deploymable CDK construct library, so
 that enterprises and users with specific needs can host a private instance of
@@ -62,11 +62,11 @@ scan private repositories like AWS CodeArtifact, JFrog Artifactory, and others.
 
 The Construct Hub is a centralized place that helps discover and share
 custom-made constructs compatible with the AWS Cloud Development Kit (CDK), CDK
-for Kubernetes (CDK8s), or CDK for Terraform (CDKtf). It shortens the time it
-takes to ship cloud applications by allowing developers to discover constructs
-that address their infrastructure requirements, and provides a unified
-cross-language documentation experience to help developers integrate those
-constructs into their application.
+for Kubernetes (CDK8s), CDK for Terraform (CDKtf), and other constructs domains
+such as Projen. It shortens the time it takes to ship cloud applications by
+allowing developers to discover constructs that address their infrastructure
+requirements, and provides a unified cross-language documentation experience to
+help developers integrate those constructs into their application.
 
 Customers can also deploy a private instance of Construct Hub to facilitate
 sharing infrastructure abstractions published to a private package registry
@@ -89,10 +89,10 @@ following prerequisites:
 
 ### Can I opt packages out of the public instance of Construct Hub?
 
-There is currently no self-service way to un-list a package from the CDK
-Construct Hub. If you would like your package to be removed from the public
-instance of Construct Hub, please file an issue in GitHub. You will be
-required to prove ownership of the package(s) you are requesting un-listing for.
+There is currently no self-service way to un-list a package from the Construct
+Hub. If you would like your package to be removed from the public instance of
+Construct Hub, please file an issue in GitHub. You will be required to prove
+ownership of the package(s) you are requesting un-listing for.
 
 ### Can I trust all constructs listed on Construct Hub?
 
@@ -109,8 +109,8 @@ npmjs.com, Maven Central, PyPI, NuGet, etc.
 
 The landing page for the Construct Hub includes a search bar that allows
 developers to search for constructs that solve their use-case using relevant
-keywords, and optionally filtering on a specific programming language and CDK
-flavor (AWS CDK / CDK8s / CDKtf).
+keywords, and optionally filtering on a specific programming language and
+constructs domain (AWS CDK / CDK8s / CDKtf / Projen / ...).
 
 It may also feature a short-list of packages, selected based on popularity or
 latest release date.
@@ -162,7 +162,7 @@ with the package itself (and not about it's listing in Construct Hub).
 #### Overview
 
 The Construct Hub is a relatively simple static web application. While the
-dataset it exposes (all CDK Construct Libraries) may be relatively fast moving,
+dataset it exposes (all Construct Libraries) may be relatively fast moving,
 there is no necessity for newly published packages (or versions thereof) to be
 indexed and presented on the application particularly quickly. A consistency
 window between a couple of hours and a day is probably acceptable.
@@ -265,8 +265,8 @@ pipeline.
 #### Construct Packaging
 
 The Construct Hub is to be created as a reusable construct, including all
-necessary components of the application. The public instance of CDK Construct
-Hub will simply be an AWS-Managed instance of that, which feeds from packages
+necessary components of the application. The public instance of Construct Hub
+will simply be an AWS-Managed instance of that, which feeds from packages
 published to the [npm registry](https://npmjs.com).
 
 It will expose a simple API: a `ConstructHub` class will be the main entry point
