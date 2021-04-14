@@ -62,7 +62,7 @@ scan private repositories like AWS CodeArtifact, JFrog Artifactory, and others.
 
 The Construct Hub is a centralized place that helps discover and share
 custom-made constructs compatible with the AWS Cloud Development Kit (CDK), CDK
-for Kubernetes (CDK8s), or CDK for Terraform (CDK-Tf). It shortens the time it
+for Kubernetes (CDK8s), or CDK for Terraform (CDKtf). It shortens the time it
 takes to ship cloud applications by allowing developers to discover constructs
 that address their infrastructure requirements, and provides a unified
 cross-language documentation experience to help developers integrate those
@@ -110,7 +110,7 @@ npmjs.com, Maven Central, PyPI, NuGet, etc.
 The landing page for the Construct Hub includes a search bar that allows
 developers to search for constructs that solve their use-case using relevant
 keywords, and optionally filtering on a specific programming language and CDK
-flavor (AWS CDK / CDK8s / CDK-Tf).
+flavor (AWS CDK / CDK8s / CDKtf).
 
 It may also feature a short-list of packages, selected based on popularity or
 latest release date.
