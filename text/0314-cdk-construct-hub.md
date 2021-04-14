@@ -211,6 +211,14 @@ detail pages.
 
    [SemVer]: https://semver.org/spec/v2.0.0.html
 
+   In order to ensure consistency of the contents of the `versions.json` object,
+   a DynamoDB Table is used to contain the current authoritative state of
+   assemblies. Since this data is only used as a form of distributed locking
+   mechanism, the table is configured with a Time-to-Live setting that ensures
+   data is automatically purged out of the table when no longer useful. The
+   contents of the `assembly.json` files remains the source of truth for indexed
+   packages.
+
 1. A series of Lambda functions prepare language-specific assembly files for
    each configured language, with adjusted naming conventions, and updated
    sample code fragments, and proceeds to store those at:
@@ -276,6 +284,53 @@ Name                | Description
 `ingestionQueueUrl` | The URL of the SQS queue where ingestion messages should be sent
 `ingestionRoleArn`  | The IAM role used to process input payloads (and read S3 staged objects)
 `ingestionDlqArn`   | The ARN of the ingestion pipeline's dead letter queue
+
+#### Monitoring & Operations
+
+The `ConstructHub` construct will provision a CloudWatch dashboard and a set
+of alarms to help have an overview of the system's operational health:
+
+- **CloudFront Distribution**:
+  - `Sum` of `Requests`: total traffic served by the website
+  - `Average` of `TotalErrorRate`: error responses are a bad customer experience
+    + Alarm when `> 3%` for `5 minutes`
+  - `Average` of `4xxErrorRate`: errors caused by a bad request
+    + Alarm when `> 3%` for `5 minutes`
+  - `Average` of `5xxErrorRate`: errors caused by a server error
+    + Alarm when `> 1%` for `5 minutes`
+
+- **S3 Buckets**:
+  - `Maximum` of `BucketSizeBytes`: gives a sense of storage cost
+  - `Maximum` of `NumberOfObjects`: gives a sense of storage cost
+
+- **Lambda Functions**:
+  - `Sum` of `Invocations`: gives a sense of scale
+  - `Sum` of `Errors`: when functions crash during execution, or time out
+    + Alarm when `> 1` for `5 minutes`
+  - `Sum` of `Throttles`: when functions cannot start due to concurrency limits
+    + Alarm when `> 1` for `3 consecutive 5 minutes intervals`
+  - `Maximum` of `ConcurrentExecutions` (per-function **and** account-wide):
+    gives insight into scaling limits. Alarm indicates a limit increase should
+    be requested to AWS Support
+    + Alarm when `≥ 80% of account limit` for `6 consecutive 5 minutes intervals`
+  - `Maximum`, `p99` and `p90` of `Duration`
+    + Alarm when `Maximum` is `≥ 80% of timeout` for
+      `3 consecutive 5 minutes intervals`
+
+- **SQS Queues**:
+  - `Maximum` of `ApproximateAgeOfOldestMessage`: gives a sense of whether the
+    message processing thoughput is adequate or not (and whether a backlog is
+    accumulating)
+    + Alarm when `> 3600` for `5 minutes`
+  - `Maximum` of `ApproximateNumberOfMessagesNotVisible`: gives a sense of how
+    many messages are currently "in-flight"
+  - `Maximum` of `ApproximateNumberOfMessagesVisible`: gives a sense of how many
+    messages are pending processing.
+
+- **DynamoDB Tables**:
+  - `Sum` of `ReadThrottleEvents` and `WriteThrottleEvents`: determines when the
+    table no longer scales with the workload
+    + Alarm when `> 1` for `3 consecutive 5 minutes intervals`
 
 ### Are there any open issues that need to be addressed later?
 
