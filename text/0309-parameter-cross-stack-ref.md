@@ -48,7 +48,17 @@ Prevent stacks being export locked and unable to update
 
 ### Why should we _not_ do this?
 
-Exports lock resources for a reason. In some cases exports may be preferred
+Exports lock resources for a reason. In some cases exports may be preferred.
+
+For example: 
+- Resources may be temporarily unavailable while being replaced causing 
+errors for downstream consumers. 
+
+- If a stack outside of the app consumes the parameter, there is no tracking, so if the provider
+stack is torn down, other stacks may unexpectedly break.
+
+- For resources that have a more persistent lifecycle (VPCs, Subnets, etc) export locks are
+generally a non-issue
 
 ### What changes are required to enable this change?
 
