@@ -153,7 +153,9 @@ various problems, including the following:
 
 When a contact request originates from a package detail page, the customer is
 guided to the package's issue tracker or public repository if their issue is
-with the package itself (and not about it's listing in Construct Hub).
+with the package itself (and not about it's listing in Construct Hub). The
+routing is based on metadata configured on the package itself, through the bug
+tracker URL, repository URL, and homepage URL.
 
 ## Technical Design
 
@@ -331,6 +333,11 @@ of alarms to help have an overview of the system's operational health:
   - `Sum` of `ReadThrottleEvents` and `WriteThrottleEvents`: determines when the
     table no longer scales with the workload
     + Alarm when `> 1` for `3 consecutive 5 minutes intervals`
+
+All alarms are exposed out of the construct, such that operators are able to
+configure customized actions to react to metrics going out-of-band, including
+integrations with external (sometimes private) notification software (such as
+Pager Duty, etc...).
 
 ### Are there any open issues that need to be addressed later?
 
