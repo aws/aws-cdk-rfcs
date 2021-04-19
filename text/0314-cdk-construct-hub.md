@@ -131,12 +131,14 @@ information:
 
 - Package name, tags, and description
 - Overview of publishing information (author, version, license, etc...)
-  - Where possible, links to the source repository, issue tracker, etc...
+  - Where possible, links to the source repository, issue tracker, etc... based
+    on information registered in the `.jsii` assembly file.
 - Install instructions
 - Available languages
 - Package's documentation
   - Rendered content of the package's `README.md`
-  - API reference documentation, in all supported languages
+  - API reference documentation, in all supported languages (only the version
+    for the currently selected language is displayed)
 
 The list of available languages is also a selector: upon clicking a language,
 the installation instructions and documentation automatically switch to the
@@ -145,7 +147,8 @@ relevant form for the currently selected language.
 ### Support
 
 The Construct Hub offers ways for customers to engage maintainers about
-various problems, including the following:
+various problems, including the following (actually routed to GitHub issue
+templates):
 
 - A malicious package was identified
 - Incorrectly rendered documentation
@@ -158,6 +161,10 @@ routing is based on metadata configured on the package itself, through the bug
 tracker URL, repository URL, and homepage URL.
 
 ## Technical Design
+
+### Overview
+
+![Architecture Diagram](../images/cdk-construct-hub/architecture-diagram.png)
 
 ### What is the high level implementation plan?
 
@@ -194,6 +201,12 @@ detail pages.
    instead of being sent directly as part of the message payload. In such cases,
    the `assembly` field contains an S3 URI instead of a JSON object.
 
+   Construct Hub comes with a built-in integration function that listents to
+   changes on the [npmjs.com registry](https://skimdb.npmjs.com/registry)
+   database. Operators of private instances are able to interface with other
+   package registries (including private ones), such as CodeArtifact
+   repositories, etc.
+
 1. A Lambda function then picks up messages from the SQS queue and prepares the
    artifacts consumed by the front-end application, stored in a dedicated S3
    bucket using the following key format:
@@ -219,7 +232,12 @@ detail pages.
    mechanism, the table is configured with a Time-to-Live setting that ensures
    data is automatically purged out of the table when no longer useful. The
    contents of the `assembly.json` files remains the source of truth for indexed
-   packages.
+   packages. The object schema for the DynamoDB table is described in [appendix
+   "DynamoDB Object Schema"](#dynamodb-object-schema)
+
+   The operator of private instances can provide an optional SNS topic which
+   will be notified once the information for a new package version is ready to
+   be browsed.
 
 1. A series of Lambda functions prepare language-specific assembly files for
    each configured language, with adjusted naming conventions, and updated
@@ -264,6 +282,9 @@ pipeline.
 
 [react]: https://reactjs.org
 
+The details of URLs to be configrued in CloudFront is available in [appendix
+"CloudFront URLs"](#cloudfront-urls).
+
 #### Construct Packaging
 
 The Construct Hub is to be created as a reusable construct, including all
@@ -274,10 +295,13 @@ published to the [npm registry](https://npmjs.com).
 It will expose a simple API: a `ConstructHub` class will be the main entry point
 to the application, with the following configuration properties:
 
-Name         | Description
--------------|------------------------------------------------------------------
-`dnsName`    | The DNS name to use for hosting the Construct Hub instance
-`pathPrefix` | The URL prefix for the Construct Hub hosting
+Name           | Description
+---------------|--------------------------------------------------------------------------------------------------------
+`dnsName`      | The DNS name to use for hosting the Construct Hub instance
+`pathPrefix`   | The URL prefix for the Construct Hub hosting
+`contactUrls`  | An object describing the URLs to use for contacting operators (e.g: GitHub issue templates)
+`enableNpmFeed`| Whether the NPM registry integration should be enabled (optional, defaults to enabled)
+`updatesTopic` | An SNS topic where new package notifications will be sent (optional, defaults to none)
 
 It exposes the following attributes, to allow integrations to operate correctly:
 
@@ -290,7 +314,10 @@ Name                | Description
 #### Monitoring & Operations
 
 The `ConstructHub` construct will provision a CloudWatch dashboard and a set
-of alarms to help have an overview of the system's operational health:
+of alarms to help have an overview of the system's operational health. As much
+as possible those monitoring characteristics should be encoded in the form of
+common patterns that can be applied in other contexts than the Construct Hub
+(e.g: these could be made into a dedicated constructs library):
 
 - **CloudFront Distribution**:
   - `Sum` of `Requests`: total traffic served by the website
@@ -318,6 +345,9 @@ of alarms to help have an overview of the system's operational health:
   - `Maximum`, `p99` and `p90` of `Duration`
     + Alarm when `Maximum` is `≥ 80% of timeout` for
       `3 consecutive 5 minutes intervals`
+  - All Lambda functions are paired with a dead-letter queue, such that "poison
+    pill" messages are side-lined for investigation
+    + Alarm when the queue is non-empty
 
 - **SQS Queues**:
   - `Maximum` of `ApproximateAgeOfOldestMessage`: gives a sense of whether the
@@ -327,7 +357,7 @@ of alarms to help have an overview of the system's operational health:
   - `Maximum` of `ApproximateNumberOfMessagesNotVisible`: gives a sense of how
     many messages are currently "in-flight"
   - `Maximum` of `ApproximateNumberOfMessagesVisible`: gives a sense of how many
-    messages are pending processing.
+    messages are pending processing
 
 - **DynamoDB Tables**:
   - `Sum` of `ReadThrottleEvents` and `WriteThrottleEvents`: determines when the
@@ -370,3 +400,56 @@ Pager Duty, etc...).
 > Note: the actual page design may differ.
 
 ![Package Detail Page](../images/cdk-construct-hub/detail-page.png)
+
+### CloudFront URLs
+
+There are two buckets backing the CloudFront distribution that serves the
+Construct Hub:
+
+1. The React application bucket, which we will refer to as `react-bucket` in
+   this document,
+1. The packages information bucket, which we will refer to as `packages-bucket`
+   in this document.
+
+As the application is entirely static, all URLs described in this document only
+support the `HEAD`, `GET`, and possibly `OPTIONS` HTTP verbs. All URLs are to be
+prefixed with the configured `pathPrefix` value, if one was provided.
+
+URL                 | Description                                                 | Source
+--------------------|-------------------------------------------------------------|------------------
+`/`                 | The React application's entry point (`index.html`)          | `react-bucket`
+`/assets/*`         | Assets that are part of the React application (CSS, JS, ...)| `react-bucket`
+`/data/*`           | The data files maintained by the back-end application       | `packages-bucket`
+
+### DynamoDB Object Schema
+
+Objects in DynamoDB are designed in such a way that mutations are exclusively
+additive: once an object has been created in the table, subsequent updates
+should only add new attributes, but should not mutate attributes that are
+already set. Which attributes are set on an object can then be used to represent
+the state of the object through the ingestion pipeline.
+
+Audit fields such as `updated_at` are an exception to the "additive only" rule,
+as these are to be updated each time a record is touched.
+
+Property                | Description
+------------------------|-----------------------------------------------------------------------------------------------
+`package_id` (Hash Key) | The name and major version (`<name>@<major>`) of the major package line being tracked
+`version` (Range Key)   | The full version number for a given package, as specified in the `.jsii` assembly
+`created_at`            | The timestamp at which this version was created (`ISO-8601` format, UTC time zone)
+`updated_at`            | The timestamp of the last update to this object (`ISO-8601` format, UTC time zone)
+`assembly_key`          | Set once the `assembly.json` object has been created in the package data bucket
+`translated_<lang>_key` | Set once the transliterated documentation for `<lang>` is ready in the package data bucket
+`<stage>_errors`        | Whenever one of the transformation `<stage>`stages fails, the execution ID is added to this list
+
+For each `package_id`, a second object is maintained in the same table, with
+`version` set to `latest`. That object is used to track the latest known version
+for the given `package_id`, and has the following schema:
+
+Property                | Description
+------------------------|-----------------------------------------------------------------------------------------------
+`package_id` (Hash Key) | The name and major version (`<name>@<major>`) of the major package line being tracked
+`version` (Range Key)   | Always `latest`
+`created_at`            | The timestamp at which this version was created (`ISO-8601` format, UTC time zone)
+`updated_at`            | The timestamp of the last update to this object (`ISO-8601` format, UTC time zone)
+`resolved_version`      | The latest version indexed for this `package_id`, according to [SemVer] rules
