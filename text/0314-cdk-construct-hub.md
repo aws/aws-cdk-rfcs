@@ -186,10 +186,10 @@ detail pages.
 
 #### Back-End
 
-1. The back-end for Construct Hub starts with a custom-built event source,
-   which implements the logic necessary to detect new packages that are relevant
-   to the Construct Hub, and sends messages to an SQS queue for further
-   processing. Notifications have the following attributes:
+1. **Package Discovery:** The back-end for Construct Hub starts with a custom
+   built event source, which implements the logic necessary to detect new
+   packages that are relevant to the Construct Hub, and sends messages to an SQS
+   queue for further processing. Notifications have the following attributes:
 
    Name        | Description
    ------------|----------------------------------------------------------------
@@ -207,9 +207,9 @@ detail pages.
    package registries (including private ones), such as CodeArtifact
    repositories, etc.
 
-1. A Lambda function then picks up messages from the SQS queue and prepares the
-   artifacts consumed by the front-end application, stored in a dedicated S3
-   bucket using the following key format:
+1. **Ingestion:** A Lambda function then picks up messages from the SQS queue
+   and prepares the artifacts consumed by the front-end application, stored in a
+   dedicated S3 bucket using the following key format:
    `assemblies/${assembly.name}/v${assembly.version}/assembly.json`
 
    This function validates the contents of the `assembly` to ensure the message
@@ -239,22 +239,23 @@ detail pages.
    will be notified once the information for a new package version is ready to
    be browsed.
 
-1. A series of Lambda functions prepare language-specific assembly files for
-   each configured language, with adjusted naming conventions, and updated
-   sample code fragments, and proceeds to store those at:
+1. **Doc-Gen:** A series of Lambda functions prepare language-specific assembly
+   files for each configured language, with adjusted naming conventions, and
+   updated sample code fragments, and proceeds to store those at:
    `assemblies/${assembly.name}/v${assembly.version}/assembly-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
    the [jsii project][jsii].
 
    [jsii]: https://aws.github.io/jsii
 
-1. A Lambda function keeps the `latest.json` object updated with the last 20
-   package versions indexed (according to the `time` field reported by the
-   ingestion component).
+1. **Latest Updater:** A Lambda function keeps the `latest.json` object updated
+   with the last 20 package versions indexed (according to the `time` field
+   reported by the ingestion component).
 
-1. A Lambda function keeps the `catalog.json` object updated with the latest
-   versions of each package's major version lines, which backs the websites'
-   search page. The object may be sharded if it becomes too large.
+1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
+   updated with the latest versions of each package's major version lines, which
+   backs the websites' search page. The object may be sharded if it becomes too
+   large.
 
 #### Front-End
 
@@ -453,3 +454,182 @@ Property                | Description
 `created_at`            | The timestamp at which this version was created (`ISO-8601` format, UTC time zone)
 `updated_at`            | The timestamp of the last update to this object (`ISO-8601` format, UTC time zone)
 `resolved_version`      | The latest version indexed for this `package_id`, according to [SemVer] rules
+
+### API Contracts
+
+#### "Package Discovery" Function
+
+The *package discovery* function receives no particular input. It is triggered
+by a recurring trigger, external event source (such as a webhook, etc...), and
+should be built specifically to bridge this input event to the relevant output
+format.
+
+The result of the *package discovery* function is pumping discovered packages
+through an SNS topic. Each notification's schema corresponds to the *Ingestion*
+function's input.
+
+#### "Ingestion" Function
+
+The input to the *Ingestion* function is a JSON object corresponding to the
+following TypeScript interface:
+
+```ts
+import { Assembly } from '@jsii/spec';
+
+export interface IngestionInput {
+  /**
+   * A unique identifier for the origin that notified about this package
+   * version. This may be a UUID generated per-origin. This identifier is used
+   * by the front-end application to determine appropriate package installation
+   * instructions (e.g: supporting private package registries).
+   */
+  readonly origin: string;
+
+  /**
+   * The contents of the .jsii assembly file that has been disocered and is
+   * submitted for injestion in the Construct Hub.
+   */
+  readonly assembly: Assembly;
+
+  /**
+   * The timestamp at which the version has been created in the package
+   * registry. When the object is in JSON form, this is encoded as an ISO-8601
+   * timestamp, preferrably using the UTC time zone.
+   */
+  readonly time: Date;
+
+  /**
+   * A standardized checksum of the `assembly` and `time` fields formatted in
+   * some canonical form. The checksum is encoded as a string with the following
+   * format: `<algorithm>-<base64-encoded-hash>`.
+   *
+   * @example "sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"
+   */
+  readonly integrity: string;
+}
+```
+
+The *Ingestion* function produces no output, but inserts (or updates) items in
+the DynamoDB Table, according to the schema defined in [DynamoDB Object
+Schema](#dynamodb-object-schema). It also creates the `assembly.json` object,
+which is a full copy of the `.jsii` assembly object.
+
+#### "Doc-Gen" Function
+
+The *Doc-Gen* function is triggered from DynamoDB Table stream events that
+include the "New" image.
+
+It produces no particular output, but creates or updates the relevant object
+in the S3 Bucket that contains package information:
+
+```ts
+import { Assembly } from '@jsii/spec';
+
+export type TransliteratedAssembly = Assembly;
+```
+
+#### "Latest Updater" Function
+
+The *Latest Updater* function is triggered from DynamoDB Table stream events
+that include the "New" image.
+
+It produces no particular output, but creates or updates the relevant object
+in the S3 Bucket that contains package information:
+
+```ts
+import { AssemblyTargets } from '@jsii/spec';
+
+export interface LatestPackages {
+  /**
+   * An array containing the set of the last few packages that were indexed in
+   * the Construct Hub.
+   */
+  readonly packages: readonly PackageInfo[];
+
+  /**
+   * The timestamp of the latest update to this object. When the object is in
+   * JSON form, this is encoded as an ISO-8601 timestamp, preferrably using the
+   * UTC time zone.
+   */
+  readonly updatedAt: Date;
+}
+
+export interface PackageInfo {
+  /**
+   * The name of the assembly.
+   */
+  readonly name: string;
+
+  /**
+   * The major version of this assembly, according to SemVer.
+   */
+  readonly majorVersion: number;
+
+  /**
+   * The complete SemVer version string for this package, including pre-release
+   * identifiers, but excluding additional metadata (everything starting at `+`,
+   * if there is any).
+   */
+  readonly version: string;
+
+  /**
+   * The SPDX license identifier for the package's license.
+   */
+  readonly license: string;
+
+  /**
+   * The list of keywords configured on the package.
+   */
+  readonly keywords: readonly string[];
+
+  /**
+   * The author of the package.
+   */
+  readonly author: {
+    readonly name: string;
+    readonly email?: string;
+    readonly url?: string;
+  };
+
+  /**
+   * The list of languages configured on the package, and the corresponding
+   * configuration.
+   */
+  readonly languages: AssemblyTargets;
+
+  /**
+   * The timestamp at which this version was created.
+   */
+  readonly time: Date;
+
+  /**
+   * The description of the package.
+   */
+  readonly description?: string;
+}
+```
+
+#### "Catalog Builder" Function
+
+The *Catalog Builder* function is triggered from DynamoDB Table stream events
+that include the "New" image.
+
+It produces no particular output, but creates or updates the relevant object
+in the S3 Bucket that contains package information:
+
+```ts
+export interface Catalog {
+  /**
+   * All packages tracked in this catalog object. The `PackageInfo` structure is
+   * identical to that of the `LatestPackages` object.
+   */
+  readonly packages: readonly PackageInfo[];
+
+  /**
+   * The timestamp of the latest update to this object. When the object is in
+   * JSON form, this is encoded as an ISO-8601 timestamp, preferrably using the
+   * UTC time zone.
+   */
+  readonly updatedAt: Date;
+}
+```
