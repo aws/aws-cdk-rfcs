@@ -115,13 +115,6 @@ With this:
 import { Construct } from 'constructs';
 ```
 
-Additionally, The `node` property in `Construct` is now called `construct`. This
-means, for example, order to find the `path` of a construct `foo`, use:
-
-```ts
-foo.construct.path; // instead of `foo.node.path`
-```
-
 ---
 
 The following table summarizes the API changes between 1.x and 2.x. The
@@ -136,7 +129,6 @@ migration strategies for each change.
 | `@aws-cdk/core.IConstruct`                                                           | `constructs.IConstruct`                                                                    |
 | `@aws-cdk/core.ConstructOrder`                                                       | `constructs.ConstructOrder`                                                                |
 | `@aws-cdk/core.ConstructNode`                                                        | `constructs.Node`                                                                          |
-| `myConstruct.node`                                                                   | `myConstruct.construct`                                                                    |
 | `myConstruct.node.applyAspect(aspect)`                                               | `Aspects.of(myConstruct).add(aspect)`                                                      |
 | `@aws-cdk/core.IDependable`                                                          | `constructs.IDependable`                                                                   |
 | `@aws-cdk/core.DependencyTrait`                                                      | `constructs.Dependable`                                                                    |
@@ -145,8 +137,8 @@ migration strategies for each change.
 | `myConstruct.addMetadata()`                                                          | Stack trace not attached by default                                                        |
 | `ConstructNode.prepareTree()`,`node.prepare()`,`onPrepare()`,`prepare()`             | Not supported, use aspects instead                                                         |
 | `ConstructNode.synthesizeTree()`,`node.synthesize()`,`onSynthesize()`,`synthesize()` | Not supported                                                                              |
-| `myConstruct.onValidate()`,`myConstruct.validate()`hooks                             | Implement `constructs.IValidation` and call `myConstruct.construct.addValidation()`instead |
-| `ConstructNode.validate(node)`                                                       | `myConstruct.construct.validate()`                                                         |
+| `myConstruct.onValidate()`,`myConstruct.validate()`hooks                             | Implement `constructs.IValidation` and call `myConstruct.node.addValidation()`instead      |
+| `ConstructNode.validate(node)`                                                       | `myConstruct.node.validate()`                                                              |
 
 ### 00-DEPENDENCY: Declare a dependency on "constructs"
 
@@ -232,10 +224,10 @@ If you need to implement `IDependable`:
 - `c.node.dependencies` is now **non-transitive** and returns only the
   dependencies added to the current node.
 
-The method `c.construct.addDependency(otherConstruct)` **did not change** and
+The method `c.node.addDependency(otherConstruct)` **did not change** and
 can be used as before.
 
-> You can use the new `c.construct.dependencyGraph` to access a rich object
+> You can use the new `c.node.dependencyGraph` to access a rich object
 > model for reflecting on the node's dependency graph.
 
 See
@@ -266,13 +258,13 @@ it will now be `Default/Foo/Bar`).
 
 ### 05-METADATA-TRACES: Stack traces no longer attached to metadata by default
 
-For performance reasons, the `c.construct.addMetadata()` method will _not_
+For performance reasons, the `c.node.addMetadata()` method will _not_
 attach stack traces to metadata entries. Stack traces will still be associated
 with all `CfnResource` constructs and can also be added to custom metadata using
 the `stackTrace` option:
 
 ```ts
-c.construct.addMetadata(key, value, { stackTrace: true });
+c.node.addMetadata(key, value, { stackTrace: true });
 ```
 
 See
@@ -322,7 +314,7 @@ hook, please post a comment on
 
 ### 08-VALIDATION: The `validate()` hook is now `node.addValidation()`
 
-To add validation logic to a construct, use `c.construct.addValidation()` method
+To add validation logic to a construct, use `c.node.addValidation()` method
 instead of overriding a protected `validate()` method:
 
 Before:
@@ -342,7 +334,7 @@ class MyConstruct extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.construct.addValidation({ validate: () => ['validation-error'] });
+    this.node.addValidation({ validate: () => ['validation-error'] });
   }
 }
 ```
