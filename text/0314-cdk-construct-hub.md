@@ -281,10 +281,39 @@ pipeline.
      documentation elements. In the event that object is not available yet, a
      message will be displayed instead, instructing the user to try again later.
 
+
+   URL                                                       | Description
+   ----------------------------------------------------------|----------------------------------------------------------
+   `<root>/packages[/@<scope>]/<name>`                       | Redirects to the latest known version of `[@scope/]name`
+   `<root>/packages[/@<scope>]/<name>/v/<version>`           | The overview of `[@scope/]name` at `version`
+   `<root>/packages[/@<scope>]/<name>/v/<version>/docs`      | The documentation (`README.md`) of `[@scope/]name` at `version`
+   `<root>/packages[/@<scope>]/<name>/v/<version>/docs/<FQN>`| The documentation for type `FQN` in `[@scope/]name` at `version`
+
+   - When a `<version>` parameter is only a prefix of a SemVer version number,
+     the URL redirects to the latest known version in that line (e.g: `/v/1`
+     would redirect to `/v/1.2.3`, and `/v/1.1` would redirect to `/v/1.1.9`)
+   - A query parameter (e.g: `?lang=go`) may be added to anchor a documentation
+     page (under the `/docs` scope) on a particular language.
+
 [react]: https://reactjs.org
 
 The details of URLs to be configrued in CloudFront is available in [appendix
 "CloudFront URLs"](#cloudfront-urls).
+
+#### Website Analytics
+
+An analytics solutions will be designed to enable monitoring the success and
+use-cases of the platform. A stream of URLs hit by users will be collected,
+including search terms used by users. That data will be completely anonymous,
+and an opaque identifier will be used to enable approximating "unique visitor"
+counts, etc. No cross-site tracking will be performed.
+
+If IP addresses are fed into the analyitics service, these will not be
+persisted, but may instead be mapped to a coarse-grained location (e.g:
+country).
+
+Legal review will be necessary to determine if the dataset implies compliance
+requirements for GDPR, CCPA, and similar consumer privacy regulations.
 
 #### Construct Packaging
 
