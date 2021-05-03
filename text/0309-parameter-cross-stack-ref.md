@@ -50,9 +50,9 @@ Prevent stacks being export locked and unable to update
 
 Exports lock resources for a reason. In some cases exports may be preferred.
 
-For example: 
-- Resources may be temporarily unavailable while being replaced causing 
-errors for downstream consumers. 
+For example:
+
+- Resources may be temporarily unavailable while being replaced causing errors for downstream consumers.
 
 - If a stack outside of the app consumes the parameter, there is no tracking, so if the provider
 stack is torn down, other stacks may unexpectedly break.
