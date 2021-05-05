@@ -108,7 +108,7 @@ consider vendoring in that functionality into our codebase
 in cases when we deem that appropriate.
 
 This will be most crucial, but most difficult, to perform in the CDK CLI code,
-and can require large changes that might affect the functionality of the CLI in the extreme case. 
+and can require large changes that might affect the functionality of the CLI in the extreme case.
 
 ### 2. Freeze the list of allowed third-party dependencies
 
