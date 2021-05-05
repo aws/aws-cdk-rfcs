@@ -19,7 +19,8 @@ it also requires correctly managing those dependencies, in particular:
 
 ### Dependencies
 
-Right now, our released packages bundle all of their dependencies.
+Right now, our released packages effectively bundle all of their dependencies
+(except if you use the CLI packages with [Yarn](https://yarnpkg.com) - see below).
 
 #### CLIs
 
@@ -31,13 +32,21 @@ for the details).
 At build time of these packages,
 we generate an `npm-shrinkwrap.json` file with the exact version of each dependency
 (including transitive ones).
-This means a customer installing those packages in a given version will always get all of their dependencies in a specific version
+This means a customer installing those packages using `npm` in a given version will always get all of their dependencies in a specific version
 (the one defined in `npm-shrinkwrap.json`) as well.
+
+**Note**: the Yarn package manager ignores the `npm-shrinkwrap.json` file,
+which means for customers using it, they will not be pinned to specific versions,
+and instead will get the latest versions as defined in the `package.json` file of the installed package.
+We could enforce a rule to always use pinned dependencies there,
+but it doesn't protect us from our dependencies using ranges,
+so it's probably not worth it.
+The best we can do here is call out Yarn explicitly in our docs
+(publishing `yarn.lock` files with our packages will not do anything).
 
 #### Framework
 
-In our framework packages, we have a much smaller dependency closure,
-roughly equal to:
+In our framework packages, we have a much smaller dependency closure, equal to:
 
 - `yaml@1.10.2`, which has 0 dependencies
 - `semver@7.3.5`, which depends on `lru-cache@6.0.0`, which depends on `yalist@4.0.0`
@@ -55,7 +64,8 @@ This is a JSII requirement
 For framework libraries in non-Node languages,
 the only extra dependencies
 (in addition to the bundled Node ones)
-are generally only the appropriate JSII runtime.
+are generally only the appropriate JSII runtime,
+plus its dependencies (like Jackson for Java).
 These are updated separately, and are easier for customers to manage,
 as non-Node package managers make it easy to override the version of a transitive dependency
 like the JSII runtime in case a security vulnerability is found in it.
@@ -87,15 +97,18 @@ there's nothing we can do to change this situation.
 
 I suggest we take the following actions:
 
-### 1. Perform a full audit of all third-party dependencies CDK uses
+### 1. Perform a full investigation of all third-party dependencies CDK uses
 
 Our goal should be to minimize the number of third-party dependencies we use.
-I suggest we perform an audit of all CDK code,
+I suggest we perform an investigation of all CDK code,
 and when we determine that a given dependency is only used for a small part of the capabilities it offers,
 like a single function,
 consider vendoring in that functionality into our codebase
 (of course, with the proper license and attribution/copyright)
 in cases when we deem that appropriate.
+
+This will be most crucial, but most difficult, to perform in the CDK CLI code,
+and can require large changes that might affect the functionality of the CLI in the extreme case. 
 
 ### 2. Freeze the list of allowed third-party dependencies
 
