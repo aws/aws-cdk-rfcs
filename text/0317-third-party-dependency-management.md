@@ -1,5 +1,5 @@
 ---
-rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after you've already created the PR
+rfc pr: [#319](https://github.com/aws/aws-cdk-rfcs/pull/319)
 tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/317
 ---
 
