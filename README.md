@@ -25,6 +25,7 @@ future state of the libraries and to discover projects for contribution.
 [18](https://github.com/aws/aws-cdk-rfcs/issues/18)|[Open Context Providers](https://github.com/aws/aws-cdk-rfcs/pull/167)|[@ddneilson](https://github.com/ddneilson)|✍️ review
 [77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/pull/266)||✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
+[317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)|[@skinny85](https://github.com/skinny85)|✍️ review
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/issues/1)||💡 proposed
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Support for CloudFormation Resource Imports](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|💡 proposed
@@ -102,6 +103,7 @@ future state of the libraries and to discover projects for contribution.
 [308](https://github.com/aws/aws-cdk-rfcs/issues/308)|[CLI displays advisories](https://github.com/aws/aws-cdk-rfcs/issues/308)||💡 proposed
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
 [313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
+[322](https://github.com/aws/aws-cdk-rfcs/issues/322)|[CDK Pipelines Updated API](https://github.com/aws/aws-cdk-rfcs/issues/322)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
@@ -118,7 +120,6 @@ future state of the libraries and to discover projects for contribution.
 [192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
-[317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)|[@skinny85](https://github.com/skinny85)|❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
