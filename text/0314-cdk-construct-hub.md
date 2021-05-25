@@ -1,6 +1,6 @@
 ---
 rfc pr: [#314](https://github.com/aws/aws-cdk-rfcs/pull/314)
-tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
+tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/324
 ---
 
 # Construct Hub
