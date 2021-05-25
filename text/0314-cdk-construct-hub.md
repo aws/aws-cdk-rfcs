@@ -250,12 +250,18 @@ detail pages.
 
 1. **Latest Updater:** A Lambda function keeps the `latest.json` object updated
    with the last 20 package versions indexed (according to the `time` field
-   reported by the ingestion component).
+   reported by the ingestion component). S3 Object Versioning will be used to
+   ensure concurrent updates to the content result in a consistent end state,
+   by listing object versions before and after updating the `latest.json` object
+   and performing the necessary corrections if needed.
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
    backs the websites' search page. The object may be sharded if it becomes too
-   large.
+   large. S3 Object Versioning will be used to ensure concurrent updates to the
+   content result in a consistent end state, by listing object versions before
+   and after updating the `catalog.json` object and performing the necessary
+   corrections if needed.
 
 #### Front-End
 
