@@ -287,7 +287,6 @@ pipeline.
      documentation elements. In the event that object is not available yet, a
      message will be displayed instead, instructing the user to try again later.
 
-
    URL                                                       | Description
    ----------------------------------------------------------|----------------------------------------------------------
    `<root>/packages[/@<scope>]/<name>`                       | Redirects to the latest known version of `[@scope/]name`
