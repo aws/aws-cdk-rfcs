@@ -227,13 +227,13 @@ detail pages.
    [SemVer]: https://semver.org/spec/v2.0.0.html
 
    In order to ensure consistency of the contents of the `versions.json` object,
-   a DynamoDB Table is used to contain the current authoritative state of
-   assemblies. Since this data is only used as a form of distributed locking
-   mechanism, the table is configured with a Time-to-Live setting that ensures
-   data is automatically purged out of the table when no longer useful. The
-   contents of the `assembly.json` files remains the source of truth for indexed
-   packages. The object schema for the DynamoDB table is described in [appendix
-   "DynamoDB Object Schema"](#dynamodb-object-schema)
+   its content will always be generated from the live inventory of objects in S3
+   (and not incrementally using the update trigger event), and the last event
+   timestamp will be written in an object metadata attribute. The S3 Bucket will
+   have object versioning enabled, and once a new version of the `versions.json`
+   object has been created, its metadata will be checked against any previous
+   versions of the object, and the "current" version will be set to the one with
+   the latest event timestamp if needed.
 
    The operator of private instances can provide an optional SNS topic which
    will be notified once the information for a new package version is ready to
@@ -327,7 +327,7 @@ to the application, with the following configuration properties:
 
 Name           | Description
 ---------------|--------------------------------------------------------------------------------------------------------
-`dnsName`      | The DNS name to use for hosting the Construct Hub instance
+`hostedZone`   | The Route53 Hosted Zone to use for hosting the Construct Hub instance
 `pathPrefix`   | The URL prefix for the Construct Hub hosting
 `contactUrls`  | An object describing the URLs to use for contacting operators (e.g: GitHub issue templates)
 `enableNpmFeed`| Whether the NPM registry integration should be enabled (optional, defaults to enabled)
@@ -389,11 +389,6 @@ common patterns that can be applied in other contexts than the Construct Hub
   - `Maximum` of `ApproximateNumberOfMessagesVisible`: gives a sense of how many
     messages are pending processing
 
-- **DynamoDB Tables**:
-  - `Sum` of `ReadThrottleEvents` and `WriteThrottleEvents`: determines when the
-    table no longer scales with the workload
-    + Alarm when `> 1` for `3 consecutive 5 minutes intervals`
-
 All alarms are exposed out of the construct, such that operators are able to
 configure customized actions to react to metrics going out-of-band, including
 integrations with external (sometimes private) notification software (such as
@@ -451,39 +446,6 @@ URL                 | Description                                               
 `/assets/*`         | Assets that are part of the React application (CSS, JS, ...)| `react-bucket`
 `/data/*`           | The data files maintained by the back-end application       | `packages-bucket`
 
-### DynamoDB Object Schema
-
-Objects in DynamoDB are designed in such a way that mutations are exclusively
-additive: once an object has been created in the table, subsequent updates
-should only add new attributes, but should not mutate attributes that are
-already set. Which attributes are set on an object can then be used to represent
-the state of the object through the ingestion pipeline.
-
-Audit fields such as `updated_at` are an exception to the "additive only" rule,
-as these are to be updated each time a record is touched.
-
-Property                | Description
-------------------------|-----------------------------------------------------------------------------------------------
-`package_id` (Hash Key) | The name and major version (`<name>@<major>`) of the major package line being tracked
-`version` (Range Key)   | The full version number for a given package, as specified in the `.jsii` assembly
-`created_at`            | The timestamp at which this version was created (`ISO-8601` format, UTC time zone)
-`updated_at`            | The timestamp of the last update to this object (`ISO-8601` format, UTC time zone)
-`assembly_key`          | Set once the `assembly.json` object has been created in the package data bucket
-`translated_<lang>_key` | Set once the transliterated documentation for `<lang>` is ready in the package data bucket
-`<stage>_errors`        | Whenever one of the transformation `<stage>`stages fails, the execution ID is added to this list
-
-For each `package_id`, a second object is maintained in the same table, with
-`version` set to `latest`. That object is used to track the latest known version
-for the given `package_id`, and has the following schema:
-
-Property                | Description
-------------------------|-----------------------------------------------------------------------------------------------
-`package_id` (Hash Key) | The name and major version (`<name>@<major>`) of the major package line being tracked
-`version` (Range Key)   | Always `latest`
-`created_at`            | The timestamp at which this version was created (`ISO-8601` format, UTC time zone)
-`updated_at`            | The timestamp of the last update to this object (`ISO-8601` format, UTC time zone)
-`resolved_version`      | The latest version indexed for this `package_id`, according to [SemVer] rules
-
 ### API Contracts
 
 #### "Package Discovery" Function
@@ -538,18 +500,15 @@ export interface IngestionInput {
 }
 ```
 
-The *Ingestion* function produces no output, but inserts (or updates) items in
-the DynamoDB Table, according to the schema defined in [DynamoDB Object
-Schema](#dynamodb-object-schema). It also creates the `assembly.json` object,
-which is a full copy of the `.jsii` assembly object.
+The *Ingestion* function produces no output, but creates the `assembly.json`
+object, which is a full copy of the `.jsii` assembly object.
 
 #### "Doc-Gen" Function
 
-The *Doc-Gen* function is triggered from DynamoDB Table stream events that
-include the "New" image.
+The *Doc-Gen* function is triggered from S3 object update events.
 
 It produces no particular output, but creates or updates the relevant object
-in the S3 Bucket that contains package information:
+in the S3 Bucket that contains transliterated package information:
 
 ```ts
 import { Assembly } from '@jsii/spec';
@@ -559,11 +518,10 @@ export type TransliteratedAssembly = Assembly;
 
 #### "Latest Updater" Function
 
-The *Latest Updater* function is triggered from DynamoDB Table stream events
-that include the "New" image.
+The *Latest Updater* function is triggered from S3 Object update events.
 
-It produces no particular output, but creates or updates the relevant object
-in the S3 Bucket that contains package information:
+It produces no particular output, but creates or updates the `latest.json`
+object in the S3 Bucket with the following content:
 
 ```ts
 import { AssemblyTargets } from '@jsii/spec';
@@ -640,11 +598,10 @@ export interface PackageInfo {
 
 #### "Catalog Builder" Function
 
-The *Catalog Builder* function is triggered from DynamoDB Table stream events
-that include the "New" image.
+The *Catalog Builder* function is triggered from S3 object update stream events.
 
-It produces no particular output, but creates or updates the relevant object
-in the S3 Bucket that contains package information:
+It produces no particular output, but creates or updates the `catalog.json`
+object in the S3 Bucket that contains the full package list:
 
 ```ts
 export interface Catalog {
