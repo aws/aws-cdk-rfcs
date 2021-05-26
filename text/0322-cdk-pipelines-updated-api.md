@@ -22,12 +22,14 @@ The final API for CDK Pipelines is finally here. Compared to the previous API:
 - For simple use cases, you no longer need to manage CodePipeline Artifacts: artifact management is implicit
   as objects that produce artifacts can be used to reference them.
 
-Best of all: your old code--even though it uses no longer recommended idioms--still continues to work, so you
-can upgrade to the new style at your own pace.
-
 The following:
 
 ```ts
+import { SecretValue } from '@aws-cdk/core';
+import * as codepipeline from '@aws-cdk/aws-codepipeline';
+import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
+import * as cdkp from '@aws-cdk/pipelines';
+
 const sourceArtifact = new codepipeline.Artifact();
 const cloudAssemblyArtifact = new codepipeline.Artifact('CloudAsm');
 const integTestArtifact = new codepipeline.Artifact('IntegTests');
@@ -59,17 +61,13 @@ const pipeline = new cdkp.CdkPipeline(this, 'Pipeline', {
   }),
 });
 
-const stage = pipeline.addApplicationStage(new MyStage(this, 'PreProd', {
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-}));
+const stage = new MyStage(this, 'PreProd', {
+  env: { account: '12345', region: 'us-east-1' },
+});
 stage.addActions(
   new cdkp.ShellScriptAction({
-    actionName: 'UseSource',
-    commands: [
-      // Comes from source
-      'cat README.md',
-    ],
-    additionalArtifacts: [sourceArtifact],
+    commands: ['node ./integ-tests'],
+    additionalArtifacts: [integTestArtifact],
   }),
 );
 ```
@@ -77,72 +75,96 @@ stage.addActions(
 Becomes:
 
 ```ts
-const source = cdkp.Source.gitHub('OWNER/REPO');
+import * as rollout from '@aws-cdk/rollout';
 
-const pipeline = new cdkp.CdkPipeline(this, 'Pipeline', {
-  synthAction: cdkp.Build.standardNpmSynth({
-    input: source,
-    projectName: 'MyServicePipeline-synth',
-    additionalOutputs: [
-      { directory: 'test', name: 'tests' },
-    ],
+const pipeline = new rollout.Rollout(this, 'Pipeline', {
+  build: rollout.Build.shellScript({
+    input: rollout.CodePipelineSource.gitHub('OWNER/REPO'),
+    commands: ['npm ci', 'npm run build'],
+    additionalOutputs: {
+      tests: rollout.AdditionalOutput.fromDirectory('test'),
+    }
   }),
+  backend: new rollout.AwsCodePipelineBackend(),
 });
 
 const stage = new MyStage(this, 'PreProd', {
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  env: { account: '12345', region: 'us-east-1' },
 });
 pipeline.addApplicationStage(stage, {
   approvals: [
-    cdkp.Approval.shellScript({
-      input: source,
-      commands: ['cat README.md'],
+    rollout.Approval.shellScript({
+      input: pipeline.build.additionalOutput('tests'),
+      commands: ['node ./integ-tests'],
     }),
   ],
 });
 ```
 
-The biggest changes are: we are layering our own classes over the primitive CodePipeline API
-(`Source.gitHub` instead of `codepipeline_actions.GitHubSourceAction`) with improved ergonomics
-and defaults, and we are making artifacts implicit.
+### How we customize CodeBuild projects, and other things that are AWS-specific?
 
-> The biggest change we want to make but don't have an answer for at time of this writing is how to give users the
-> ability to tweak every individual part of every indiviual CodeBuild project that gets generated.
+AWS-specific customizations are passed as parameters to the Backend class:
 
-All other changes are mostly related to the internals of how the library is implemented and
-how pipeline customizations will work. Most important changes to the internals:
+```
+const pipeline = new rollout.Rollout(this, 'Pipeline', {
+  build: rollout.Build.shellScript({
+    input: rollout.CodePipelineSource.gitHub('OWNER/REPO'),
+    commands: ['npm ci', 'npm run build', 'npx cdk synth'],
+    environment: {
+      NPM_CONFIG_UNSAFE_PERM: 'true',
+    },
+  }),
+  backend: new rollout.AwsCodePipelineBackend({
+    pipeline,
+    pipelineName: 'MyPipeline',
+    vpc,
+    subnetSelection: { subnetType: ec2.SubnetType.PRIVATE },
+    crossAccountKeys: true,
+    buildEnvironment: {
+      image: codebuild.CodeBuildImage.AWS_STANDARD_6,
+      privilegedMode: true,
+    },
+    buildCaching: true,
+    cdkCliVersion: '1.2.3',
+    selfMutating: false,
+    pipelineUsesDockerAssets: true,
+    dockerAssetBuildPrefetch: true,
+    dockerCredentials: {
+      '': rollout.DockerCredentials.fromSecretsManager('my-dockerhub-login'),
+      '111111.dkr.ecr.us-east-2.amazonaws.com': rollout.DockerCredentials.standardEcrCredentials(),
+    },
+    buildTestReports: {
+      SurefireReports: {
+        baseDirectory: 'target/surefire-reports',
+        files: ['**/*'],
+      }
+    },
+  }),
+});
+```
 
-- Knowledge of the steps necessary to deploy a CDK app and how those steps are rendered to
-  AWS CodePipeline will be separated out from each other.
-- The library will work by mutating an in-memory model of the deployment workflow (as opposed
-  to manipulating the `@aws-cdk/aws-codepipeline` constructs directly), and only when the
-  manipulation is done will we render everything out to CodePipeline constructs.
-
-These aspects will impact how quickly the feature can be ported to other backends. The porting itself is out of scope
-for now.
-
-## Internal FAQ
+## Implementation FAQ
 
 ### How will this work?
 
 The library will be organized into 3 layers:
 
 ```
-┌────────────────┬────────────────┬───────────────────────┐
-│                │                │   Build.shellScript   │
-│  CdkPipeline   │ Source.gitHub  │    (Vpc, CodeBuild    │
-│                │(SecretsManager)│     testing, IAM)     │
-│                │                │                       │
-├────────────────┴────────────────┴───────────────────────┤
-│                                                         │
-│            Workflow core + CDK app knowledge            │
-│   (steps, dependencies, translate CDK app into steps)   │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│            Render to CodePipeline/CodeBuild             │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────┬────────────────┬───────────────────────┐
+│                  │                │    Generic actions    │
+│     Backend,     │    Rollout     │                       │
+│ backend-specific │                │   Build.shellScript   │
+│sources & actions │                │                       │
+│   ┌──────────────┴────────────────┴───────────────────────┤
+│   │                                                       │
+│   │           Workflow core + CDK app knowledge           │
+│   │  (steps, dependencies, translate CDK app into steps)  │
+│   │                                                       │
+│   └───────────────────────────────────────────────────────┤
+│                                                           │
+│                  Render to CodePipeline/CodeBuild         │
+│                                                           │
+└───────────────────────────────────────────────────────────┘
 ```
 
 The **middle** layer has facilities to build and manipulate an abstract workflow, which features concepts like *steps*,
@@ -151,21 +173,20 @@ The **middle** layer has facilities to build and manipulate an abstract workflow
 The **bottom** layer renders the generic workflow to a specific CI/CD runner.  In the CDK Pipelines case, a CodePipeline
 with a set of CodeBuild projects and CloudFormation Actions.
 
-The **top** layer is the one the user interacts with. It is specialized to the backend that will be used to render out
-the final pipeline, and so can deal in concepts that are familiar to the user and offer all the backend-specific customizations
-users might want (Most commonly: source customizations such as credentials coming from AWS SecretsManager, and CodeBuild customizations
-like VPC bindings, specific additional IAM permissions, enabling CodeBuild test reporting, customizing Log Groups, etc).
+The **top** layer is the one the user interacts with. It is has generic classes (that apply for any backend), as well as
+backend-specific classes, so can deal in concepts that are familiar to the user and offer all the backend-specific
+customizations users might want (Most commonly: source customizations such as credentials coming from AWS
+SecretsManager, and backend-specific customizations such as CodeBuild VPC bindings, specific additional IAM permissions,
+enabling CodeBuild test reporting, customizing Log Groups, etc). The user may inject backend-specific actions for even
+more control.
 
 ### How will we port to another backend?
 
 What is the work to implement different backends for CDK deployments (like, for example, GitHub Actions)?
 
 * Obviously, we need to replace layer 3
-* We will also need to replace layer 1. This is also pretty obvious: for other backends, the set of
-  supported Sources will be different, how we specify credentials will be different, the customizations offered
-  will be different. The most natural API will be one that maps closely to the platform we're targeting.
-  The `CdkPipeline` class (which currently takes `codepipeline.IAction`s, and `IPipeline`s, and will continue to do so
-  for backwards compatibility) will also be reimplemented. For example, to a class like `CdkAppWorkflow`.
+* We may need to add some new backend-specific components to layer 1 (such as new sources, or other new kinds of
+  backend-specific actions).
 
 We will gain efficiency from the fact that the reimplementation will not contain business logic: it will
 mostly be mapping types and properties between the different levels. All the knowledge about the structure
@@ -179,28 +200,6 @@ some slight enhanced expressiveness and customizability to the API.
 
 With a little additional effort, we can make the new API additive and have the old one continue to work,
 giving people the opportunity to switch over to the new API at their own pace.
-
-### How will we stay backwards compatible?
-
-Right now, the parts that are too limiting are the parts that are directly re-exposed from the `aws-codepipeline`
-library. For example, the fact that the synth needs to be a `codepipeline.IAction`.
-
-What we'll do is type testing to switch between old and new behavior. Conceptually:
-
-```ts
-interface IModernSynthAction implements codepipeline.IAction {
-  // Or whatever the signature ends up being
-  public addToPipelineModern(pipeline: CdkPipeline): AddResult;
-}
-
-if (isModernSynthAction(props.synthAction)) {
-  // New behavior
-  props.synthAction.addToPipelineModern(this);
-} else {
-  // Wrapper class for legacy behavior
-  new LegacySynthAction(props.synthAction).addToPipelineModern(this);
-}
-```
 
 ### How do we render deployments out across backends?
 
