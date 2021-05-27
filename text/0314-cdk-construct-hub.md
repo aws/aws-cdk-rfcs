@@ -191,15 +191,18 @@ detail pages.
    packages that are relevant to the Construct Hub, and sends messages to an SQS
    queue for further processing. Notifications have the following attributes:
 
-   Name        | Description
-   ------------|----------------------------------------------------------------
-   `assembly`  | The `.jsii` assembly included in the package
-   `time`      | The timestamp at which the version was created
-   `integrity` | An integirity check for the complete record
+   Name          | Description
+   --------------|--------------------------------------------------------------
+   `assemblyUri` | The URL to an S3 Object containing the `.jsii` assembly included in the package
+   `time`        | The timestamp at which the version was created
+   `integrity`   | An integirity check for the complete record
 
-   In cases where the `assembly` object is too large, it may be staged in S3
-   instead of being sent directly as part of the message payload. In such cases,
-   the `assembly` field contains an S3 URI instead of a JSON object.
+   The Construct Hub will have permissions to read from (and, if applicable, to
+   decrypt) the S3 bucket that is used to hold the object denoted by
+   `assemblyUri`. That bucket may have a Lifecycle configuration that cleans up
+   objects after a few days, as objects need not be retained there after they
+   have been successfully ingested by the Construct Hub (which will own and
+   maintain a copy of this artifact).
 
    Construct Hub comes with a built-in integration function that listents to
    changes on the [npmjs.com registry](https://skimdb.npmjs.com/registry)
@@ -216,24 +219,26 @@ detail pages.
    was well-formed. In case the message is found to be incoherent, it is sent to
    a dead-letter queue and an alarm is triggered.
 
-   It also creates or updates the `assemblies/${assembly.name}/versions.json`
-   object, which contains a list of all versions ever indexed for the package,
-   matched to the versions' current status (`deprecated`, `latest`, ...):
+   - Optionally (this information may not be necessary, in particular for the
+     minimal viable product), it also creates or updates the
+     `assemblies/${assembly.name}/versions.json` object, which contains a list of
+     all versions ever indexed for the package, matched to the versions' current
+     status (`deprecated`, `latest`, ...):
 
-   Name        | Description
-   ------------|----------------------------------------------------------------
-   `v${major}` | All versions part of this major version stream, and their status
+     Name        | Description
+     ------------|----------------------------------------------------------------
+     `v${major}` | All versions part of this major version stream, and their status
 
-   [SemVer]: https://semver.org/spec/v2.0.0.html
+     [SemVer]: https://semver.org/spec/v2.0.0.html
 
-   In order to ensure consistency of the contents of the `versions.json` object,
-   its content will always be generated from the live inventory of objects in S3
-   (and not incrementally using the update trigger event), and the last event
-   timestamp will be written in an object metadata attribute. The S3 Bucket will
-   have object versioning enabled, and once a new version of the `versions.json`
-   object has been created, its metadata will be checked against any previous
-   versions of the object, and the "current" version will be set to the one with
-   the latest event timestamp if needed.
+     In order to ensure consistency of the contents of the `versions.json`
+     object, its content will always be generated from the live inventory of
+     objects in S3 (and not incrementally using the update trigger event), and
+     the last event timestamp will be written in an object metadata attribute.
+     The S3 Bucket will have object versioning enabled, and once a new version
+     of the `versions.json` object has been created, its metadata will be
+     checked against any previous versions of the object, and the "current"
+     version will be set to the one with the latest event timestamp if needed.
 
    The operator of private instances can provide an optional SNS topic which
    will be notified once the information for a new package version is ready to
@@ -247,6 +252,11 @@ detail pages.
    the [jsii project][jsii].
 
    [jsii]: https://aws.github.io/jsii
+
+   - Alternatively, this work wan be pushed up-front to package build time, by
+     baking this feature into the `jsii` compiler directly. This would have the
+     benefits of simplifying the processing, as all necessary dependencies are
+     necessarily present during `jsii` compilation phase.
 
 1. **Latest Updater:** A Lambda function keeps the `latest.json` object updated
    with the last 20 package versions indexed (according to the `time` field
@@ -399,6 +409,19 @@ configure customized actions to react to metrics going out-of-band, including
 integrations with external (sometimes private) notification software (such as
 Pager Duty, etc...).
 
+#### Cost of Operation
+
+In order for organizations to confidently deploy their own instance of the
+Construct Hub, they will need to be provided with an estimated cost of operation
+for the website, that includes:
+
+- Infrastructure cost
+- Operations cost (monitoring, operator hours, ...)
+
+High-level estiamtes will be provided based on our experience from hosting the
+public instance of Construct Hub, and will be assessed in relation to the number
+of packages ingested, etc...
+
 ### Are there any open issues that need to be addressed later?
 
 - When the catalog becomes too large to be convenient to process in-memory on
@@ -482,10 +505,11 @@ export interface IngestionInput {
   readonly origin: string;
 
   /**
-   * The contents of the .jsii assembly file that has been disocered and is
-   * submitted for injestion in the Construct Hub.
+   * The URL to an S3 object that holds the contents of the .jsii assembly file
+   * that has been discovered and is submitted for injestion in the Construct
+   * Hub.
    */
-  readonly assembly: Assembly;
+  readonly assemblyUri: URL;
 
   /**
    * The timestamp at which the version has been created in the package
@@ -495,9 +519,10 @@ export interface IngestionInput {
   readonly time: Date;
 
   /**
-   * A standardized checksum of the `assembly` and `time` fields formatted in
-   * some canonical form. The checksum is encoded as a string with the following
-   * format: `<algorithm>-<base64-encoded-hash>`.
+   * A standardized checksum of the contents of the S3 object denoted by
+   * `assemblyUri` and `time` field formatted in some canonical form. The
+   * checksum is encoded as a string with the following format:
+   * `<algorithm>-<base64-encoded-hash>`.
    *
    * @example "sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"
    */
