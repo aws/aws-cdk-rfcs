@@ -122,7 +122,7 @@ When a search is performed using the search bar in the landing page (or in the
 header of all other pages), a list of relevant results is displayed as tiles,
 similar to the short-list of packages shown on the landing page.
 
-The results grid includes the following elemnts about returned packages:
+The results grid includes the following elements about returned packages:
 
 - Name
 - Short description (truncated to fit if needed)
