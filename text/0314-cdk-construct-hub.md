@@ -214,7 +214,7 @@ detail pages.
 1. **Ingestion:** A Lambda function then picks up messages from the SQS queue
    and prepares the artifacts consumed by the front-end application, stored in a
    dedicated S3 bucket using the following key format:
-   `assemblies/${assembly.name}/v${assembly.version}/assembly.json`
+   `packages/${assembly.name}/v${assembly.version}/assembly.json`
 
    This function validates the contents of the `assembly` to ensure the message
    was well-formed. In case the message is found to be incoherent, it is sent to
@@ -222,7 +222,7 @@ detail pages.
 
    - Optionally (this information may not be necessary, in particular for the
      minimal viable product), it also creates or updates the
-     `assemblies/${assembly.name}/versions.json` object, which contains a list of
+     `packages/${assembly.name}/versions.json` object, which contains a list of
      all versions ever indexed for the package, matched to the versions' current
      status (`deprecated`, `latest`, ...):
 
@@ -248,7 +248,7 @@ detail pages.
 1. **Doc-Gen:** A series of Lambda functions prepare language-specific assembly
    files for each configured language, with adjusted naming conventions, and
    updated sample code fragments, and proceeds to store those at:
-   `assemblies/${assembly.name}/v${assembly.version}/assembly-${lang}.json`.
+   `packages/${assembly.name}/v${assembly.version}/assembly-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
    the [jsii project][jsii].
 
