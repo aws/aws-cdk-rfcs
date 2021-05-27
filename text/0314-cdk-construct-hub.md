@@ -175,7 +175,10 @@ The Construct Hub is a relatively simple static web application. While the
 dataset it exposes (all construct libraries) may be relatively fast moving,
 there is no necessity for newly published packages (or versions thereof) to be
 indexed and presented on the application particularly quickly. A consistency
-window between a couple of hours and a day is probably acceptable.
+window between a couple of hours and a day is probably acceptable. The Construct
+Hub however strives to maintain a 10 minutes SLA between the moment a new
+package is published in a monitored registry and the moment it's information is
+ready to browse on the website.
 
 A simple data pipeline will ingest package publication events created by a
 source-specific adapter (e.g: by polling on the CouchDB instance replica for the
@@ -189,12 +192,16 @@ detail pages.
 
 1. **Package Discovery:** The back-end for Construct Hub starts with a custom
    built event source, which implements the logic necessary to detect new
-   packages that are relevant to the Construct Hub, and sends messages to an SQS
-   queue for further processing. Notifications have the following attributes:
+   packages that are relevant to the Construct Hub (packages that contain a
+   `.jsii` assembly files and have a dependency on the `constructs` package),
+   determines additional metadata to be recorded with the package-version (such
+   as the constructs domain it targets), then sends messages to an SQS queue for
+   further processing. Notifications have the following attributes:
 
    Name          | Description
    --------------|--------------------------------------------------------------
    `assemblyUri` | The URL to an S3 Object containing the `.jsii` assembly included in the package
+   `metadata`    | Metadata assigned by the discovery function to the package (key-value pairs)
    `time`        | The timestamp at which the version was created
    `integrity`   | An integirity check for the complete record
 
@@ -259,13 +266,6 @@ detail pages.
      benefits of simplifying the processing, as all necessary dependencies are
      necessarily present during `jsii` compilation phase.
 
-1. **Latest Updater:** A Lambda function keeps the `latest.json` object updated
-   with the last 20 package versions indexed (according to the `time` field
-   reported by the ingestion component). S3 Object Versioning will be used to
-   ensure concurrent updates to the content result in a consistent end state,
-   by listing object versions before and after updating the `latest.json` object
-   and performing the necessary corrections if needed.
-
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
    backs the websites' search page. The object may be sharded if it becomes too
@@ -273,6 +273,21 @@ detail pages.
    content result in a consistent end state, by listing object versions before
    and after updating the `catalog.json` object and performing the necessary
    corrections if needed.
+
+The data stored in the S3 bucket is going to be served by a CloudFront
+distribution using the following URLs:
+
+URL                                                    | Description
+-------------------------------------------------------|------------------------
+`<root>/catalog[.json]`                                | The full catalog document
+`<root>/latest[.json]`                                 | The list of "recent" items
+`<root>/packages[/<@scope>]/<name>/v/<version>`        | Default (TypeScript) assembly for `[<@scope>/]<name>` at `<version>`
+`<root>/packages[/<@scope>]/<name>/v/<version>/<lang>` | Transliterated assembly for `[<@scope>/]<name>` at `<version>` in `<lang>`
+
+That CloudFront distribution may use a different domain from the website. For
+example the public instance of Construct Hub hosts these under
+`api.constructs.dev`. In cases where a different subdomain is not desirable,
+a distinct URL path prefix can be used instead (e.g: `domain.tld/api/`).
 
 #### Front-End
 
@@ -282,12 +297,12 @@ edge locations close to any customer, and binding together the static assets
 that compose the application and the data objects maintained by the back-end
 pipeline.
 
-1. The landing page asynchronously loads the `latest.json` object to render the
+1. The landing page asynchronously loads the `catalog.json` object to render the
    "latest" tiles, containing the short-list of packages that changed most
    recently.
 
-1. The search feature asynchronously loads the `catalog.json` object, and
-   performs client-side filtering to prepare search results.
+1. The search feature asynchronously loads the `catalog.json` object if needed,
+   and performs client-side filtering to prepare search results.
 
 1. Package detail pages fetch the relevant `assembly.json` object from the
    assembly store, and renders the detail page using information contained
@@ -547,86 +562,6 @@ in the S3 Bucket that contains transliterated package information:
 import { Assembly } from '@jsii/spec';
 
 export type TransliteratedAssembly = Assembly;
-```
-
-#### "Latest Updater" Function
-
-The *Latest Updater* function is triggered from S3 Object update events.
-
-It produces no particular output, but creates or updates the `latest.json`
-object in the S3 Bucket with the following content:
-
-```ts
-import { AssemblyTargets } from '@jsii/spec';
-
-export interface LatestPackages {
-  /**
-   * An array containing the set of the last few packages that were indexed in
-   * the Construct Hub.
-   */
-  readonly packages: readonly PackageInfo[];
-
-  /**
-   * The timestamp of the latest update to this object. When the object is in
-   * JSON form, this is encoded as an ISO-8601 timestamp, preferrably using the
-   * UTC time zone.
-   */
-  readonly updatedAt: Date;
-}
-
-export interface PackageInfo {
-  /**
-   * The name of the assembly.
-   */
-  readonly name: string;
-
-  /**
-   * The major version of this assembly, according to SemVer.
-   */
-  readonly majorVersion: number;
-
-  /**
-   * The complete SemVer version string for this package, including pre-release
-   * identifiers, but excluding additional metadata (everything starting at `+`,
-   * if there is any).
-   */
-  readonly version: string;
-
-  /**
-   * The SPDX license identifier for the package's license.
-   */
-  readonly license: string;
-
-  /**
-   * The list of keywords configured on the package.
-   */
-  readonly keywords: readonly string[];
-
-  /**
-   * The author of the package.
-   */
-  readonly author: {
-    readonly name: string;
-    readonly email?: string;
-    readonly url?: string;
-  };
-
-  /**
-   * The list of languages configured on the package, and the corresponding
-   * configuration.
-   */
-  readonly languages: AssemblyTargets;
-
-  /**
-   * The timestamp at which this version was created.
-   */
-  readonly time: Date;
-
-  /**
-   * The description of the package.
-   */
-  readonly description?: string;
-}
 ```
 
 #### "Catalog Builder" Function
