@@ -293,8 +293,8 @@ URL                                                    | Description
 -------------------------------------------------------|------------------------
 `<root>/catalog[.json]`                                | The full catalog document
 `<root>/latest[.json]`                                 | The list of "recent" items
-`<root>/packages[/<@scope>]/<name>/v/<version>`        | Default (TypeScript) assembly for `[<@scope>/]<name>` at `<version>`
-`<root>/packages[/<@scope>]/<name>/v/<version>/<lang>` | Transliterated assembly for `[<@scope>/]<name>` at `<version>` in `<lang>`
+`<root>/packages[/a<scope>]/<name>/v/<version>`        | Default (TypeScript) assembly for `[a<scope>/]<name>` at `<version>`
+`<root>/packages[/a<scope>]/<name>/v/<version>/<lang>` | Transliterated assembly for `[a<scope>/]<name>` at `<version>` in `<lang>`
 
 That CloudFront distribution may use a different domain from the website. For
 example the public instance of Construct Hub hosts these under
