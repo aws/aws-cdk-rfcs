@@ -348,39 +348,11 @@ country).
 Legal review will be necessary to determine if the dataset implies compliance
 requirements for GDPR, CCPA, and similar consumer privacy regulations.
 
-#### Construct Packaging
+#### Monitoring & Alarming
 
-The Construct Hub is to be created as a reusable construct, including all
-necessary components of the application. The public instance of Construct Hub
-will simply be an AWS-Managed instance of that, which feeds from packages
-published to the [npm registry](https://npmjs.com).
-
-It will expose a simple API: a `ConstructHub` class will be the main entry point
-to the application, with the following configuration properties:
-
-Name           | Description
----------------|--------------------------------------------------------------------------------------------------------
-`hostedZone`   | The Route53 Hosted Zone to use for hosting the Construct Hub instance
-`pathPrefix`   | The URL prefix for the Construct Hub hosting
-`contactUrls`  | An object describing the URLs to use for contacting operators (e.g: GitHub issue templates)
-`enableNpmFeed`| Whether the NPM registry integration should be enabled (optional, defaults to enabled)
-`updatesTopic` | An SNS topic where new package notifications will be sent (optional, defaults to none)
-
-It exposes the following attributes, to allow integrations to operate correctly:
-
-Name                | Description
---------------------|-------------------------------------------------------------------------------
-`ingestionQueueUrl` | The URL of the SQS queue where ingestion messages should be sent
-`ingestionRoleArn`  | The IAM role used to process input payloads (and read S3 staged objects)
-`ingestionDlqArn`   | The ARN of the ingestion pipeline's dead letter queue
-
-#### Monitoring & Operations
-
-The `ConstructHub` construct will provision a CloudWatch dashboard and a set
-of alarms to help have an overview of the system's operational health. As much
-as possible those monitoring characteristics should be encoded in the form of
-common patterns that can be applied in other contexts than the Construct Hub
-(e.g: these could be made into a dedicated constructs library):
+Private instances of the Construct Hub are managed by their owners/operators.
+The Construct Hub provides built-in monitoring and alarming support to
+facilitate operating a private instance. This includes the following elements:
 
 - **CloudFront Distribution**:
   - `Sum` of `Requests`: total traffic served by the website
@@ -421,6 +393,39 @@ common patterns that can be applied in other contexts than the Construct Hub
     many messages are currently "in-flight"
   - `Maximum` of `ApproximateNumberOfMessagesVisible`: gives a sense of how many
     messages are pending processing
+
+#### Construct Packaging
+
+The Construct Hub is to be created as a reusable construct, including all
+necessary components of the application. The public instance of Construct Hub
+will simply be an AWS-Managed instance of that, which feeds from packages
+published to the [npm registry](https://npmjs.com).
+
+It will expose a simple API: a `ConstructHub` class will be the main entry point
+to the application, with the following configuration properties:
+
+Name           | Description
+---------------|--------------------------------------------------------------------------------------------------------
+`hostedZone`   | The Route53 Hosted Zone to use for hosting the Construct Hub instance
+`pathPrefix`   | The URL prefix for the Construct Hub hosting
+`contactUrls`  | An object describing the URLs to use for contacting operators (e.g: GitHub issue templates)
+`enableNpmFeed`| Whether the NPM registry integration should be enabled (optional, defaults to enabled)
+`updatesTopic` | An SNS topic where new package notifications will be sent (optional, defaults to none)
+
+It exposes the following attributes, to allow integrations to operate correctly:
+
+Name                | Description
+--------------------|-------------------------------------------------------------------------------
+`ingestionQueueUrl` | The URL of the SQS queue where ingestion messages should be sent
+`ingestionRoleArn`  | The IAM role used to process input payloads (and read S3 staged objects)
+`ingestionDlqArn`   | The ARN of the ingestion pipeline's dead letter queue
+
+#### Monitoring & Operations
+
+The `ConstructHub` construct will provision a CloudWatch dashboard and a set
+of alarms to help have an overview of the system's operational health. As much
+as possible those monitoring characteristics should be encoded in the form of
+common patterns that can be applied in other contexts than the Construct Hub.
 
 All alarms are exposed out of the construct, such that operators are able to
 configure customized actions to react to metrics going out-of-band, including
