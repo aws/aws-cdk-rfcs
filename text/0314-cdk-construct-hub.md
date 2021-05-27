@@ -579,8 +579,7 @@ object in the S3 Bucket that contains the full package list:
 ```ts
 export interface Catalog {
   /**
-   * All packages tracked in this catalog object. The `PackageInfo` structure is
-   * identical to that of the `LatestPackages` object.
+   * All packages tracked in this catalog object.
    */
   readonly packages: readonly PackageInfo[];
 
@@ -590,5 +589,65 @@ export interface Catalog {
    * UTC time zone.
    */
   readonly updatedAt: Date;
+}
+
+export interface PackageInfo {
+  /**
+   * The name of the assembly.
+   */
+  readonly name: string;
+
+  /**
+   * The major version of this assembly, according to SemVer.
+   */
+  readonly majorVersion: number;
+
+  /**
+   * The complete SemVer version string for this package's major version stream,
+   * including pre-release identifiers, but excluding additional metadata
+   * (everything starting at `+`, if there is any).
+   */
+  readonly version: string;
+
+  /**
+   * The SPDX license identifier for the package's license.
+   */
+  readonly license: string;
+
+  /**
+   * The list of keywords configured on the package.
+   */
+  readonly keywords: readonly string[];
+
+  /**
+   * Metadata assigned by the discovery function to the latest release of this
+   * package's major version stream, if any.
+   */
+  readonly metadata?: { readonly [key: string]: string };
+
+  /**
+   * The author of the package.
+   */
+  readonly author: {
+    readonly name: string;
+    readonly email?: string;
+    readonly url?: string;
+  };
+
+  /**
+   * The list of languages configured on the package, and the corresponding
+   * configuration.
+   */
+  readonly languages: AssemblyTargets;
+
+  /**
+   * The timestamp at which this version was created.
+   */
+  readonly time: Date;
+
+  /**
+   * The description of the package.
+   */
+  readonly description?: string;
 }
 ```
