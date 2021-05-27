@@ -113,13 +113,25 @@ keywords, and optionally filtering on a specific programming language and
 constructs domain (AWS CDK / CDK8s / CDKtf / Projen / ...).
 
 It may also feature a short-list of packages, selected based on popularity or
-latest release date.
+latest release date. The format of that list is the same as the format of search
+results.
 
 ### Search Results Page
 
 When a search is performed using the search bar in the landing page (or in the
 header of all other pages), a list of relevant results is displayed as tiles,
 similar to the short-list of packages shown on the landing page.
+
+The results grid includes the following elemnts about returned packages:
+
+- Name
+- Short description (truncated to fit if needed)
+- Author name
+- Publish date
+- Latest version
+
+In the future, it may also include quality or popularity indications such as
+the number of downloads of that package.
 
 ### Package Detail Page
 
