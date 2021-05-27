@@ -12,14 +12,14 @@ A community-driven hub for discovering and sharing construct libraries.
 ### PRESS RELEASE
 
 Today, Amazon Web Services Inc., an Amazon company, announced the Construct Hub,
-a service that makes it easy to find constructs (including AWS CDK,
+a website that makes it easy to find constructs (including AWS CDK,
 CDK8s, CDKtf, Projen, ...) libraries and provides a centralized documentation
 experience for those. Construct Hub automatically indexes custom construct
 libraries as soon as they are published, without requiring any additional effort
 from the author. The AWS CDK makes it easy for customers to build applications
 by raising the level of abstraction of infrastructure components, and Construct
 Hub makes it easy to discover, use and share custom-made constructs. To get
-started with Construct Hub, visit `${TBD}`.
+started with Construct Hub, visit `https://constructs.dev`.
 
 Construct Hub offers an integrated search experience, allowing customers to
 easily find the right construct for their need. The built-in multi-language
@@ -74,7 +74,7 @@ within the organization.
 
 ### Where can I find the Construct Hub?
 
-The public instance of Construct Hub is at: `${TBD}`.
+The public instance of Construct Hub is at: `https://constructs.dev`.
 
 ### How do I publish a package to Construct Hub?
 
@@ -153,6 +153,7 @@ templates):
 - A malicious package was identified
 - Incorrectly rendered documentation
 - Package un-listing request
+- Offensive content
 
 When a contact request originates from a package detail page, the customer is
 guided to the package's issue tracker or public repository if their issue is
@@ -171,7 +172,7 @@ tracker URL, repository URL, and homepage URL.
 #### Overview
 
 The Construct Hub is a relatively simple static web application. While the
-dataset it exposes (all Construct Libraries) may be relatively fast moving,
+dataset it exposes (all construct libraries) may be relatively fast moving,
 there is no necessity for newly published packages (or versions thereof) to be
 indexed and presented on the application particularly quickly. A consistency
 window between a couple of hours and a day is probably acceptable.
@@ -181,7 +182,7 @@ source-specific adapter (e.g: by polling on the CouchDB instance replica for the
 [npmjs.com registry](https://skimdb.npmjs.com/registry)), and produce static
 artifacts the website is based off of. This pipeline is in particular
 responsible for extracting the `.jsii` assembly file from the npm packages, and
-to prefetch all information necessary to back the webiste's search and package
+to prefetch all information necessary to back the website's search and package
 detail pages.
 
 #### Back-End
@@ -204,7 +205,7 @@ detail pages.
    have been successfully ingested by the Construct Hub (which will own and
    maintain a copy of this artifact).
 
-   Construct Hub comes with a built-in integration function that listents to
+   Construct Hub comes with a built-in integration function that listens to
    changes on the [npmjs.com registry](https://skimdb.npmjs.com/registry)
    database. Operators of private instances are able to interface with other
    package registries (including private ones), such as CodeArtifact
@@ -253,7 +254,7 @@ detail pages.
 
    [jsii]: https://aws.github.io/jsii
 
-   - Alternatively, this work wan be pushed up-front to package build time, by
+   - Alternatively, this work can be pushed up-front to package build time, by
      baking this feature into the `jsii` compiler directly. This would have the
      benefits of simplifying the processing, as all necessary dependencies are
      necessarily present during `jsii` compilation phase.
@@ -308,7 +309,9 @@ pipeline.
      the URL redirects to the latest known version in that line (e.g: `/v/1`
      would redirect to `/v/1.2.3`, and `/v/1.1` would redirect to `/v/1.1.9`)
    - A query parameter (e.g: `?lang=go`) may be added to anchor a documentation
-     page (under the `/docs` scope) on a particular language.
+     page (under the `/docs` scope) on a particular language. If that parameter
+     is not specified, the users' last selected language (or *TypeScript*) will
+     be used.
 
 [react]: https://reactjs.org
 
