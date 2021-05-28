@@ -273,10 +273,18 @@ detail pages.
 
    [jsii]: https://aws.github.io/jsii
 
-   - Alternatively, this work can be pushed up-front to package build time, by
-     baking this feature into the `jsii` compiler directly. This would have the
-     benefits of simplifying the processing, as all necessary dependencies are
-     necessarily present during `jsii` compilation phase.
+   - The **Doc-Gen** functions run asynchronously, and the transliterated
+     assembly eventually becomes available. If the object is not available yet,
+     the web UI should present the user with a message inviting them to come
+     again later (in an hour or two, etc...).
+
+   - The overall time to process each language is monitored, and in case a
+     specific package-language pair consistently fails processing, it is
+     notified to a dead-letter queue for engineer investigation.
+
+   - Optionally, tools may be made available to allow livrary developers to
+     pre-compute transliterated assemblies for their libraries, so that these
+     are immediately available as they packages are indexed.
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
