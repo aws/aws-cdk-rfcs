@@ -175,6 +175,14 @@ tracker URL, repository URL, and homepage URL.
 
 ## Technical Design
 
+### Design Tenets
+
+- The initial version of Construct Hub is a static website
+  - It is served entirely by CloudFront
+  - All content served is strictly read-only
+- Search happens client-side, based off a single catalog object
+- Analytics will be handled by a third-party solution
+
 ### Overview
 
 ![Architecture Diagram](../images/cdk-construct-hub/architecture-diagram.png)
