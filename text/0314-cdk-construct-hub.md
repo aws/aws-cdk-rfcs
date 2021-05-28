@@ -241,7 +241,7 @@ detail pages.
 1. **Ingestion:** A Lambda function then picks up messages from the SQS queue
    and prepares the artifacts consumed by the front-end application, stored in a
    dedicated S3 bucket using the following key format:
-   `packages/${assembly.name}/v${assembly.version}/assembly.json`
+   `packages/${assembly.name}/v${assembly.version}/package.json`
 
    This function validates the contents of the `assembly` to ensure the message
    was well-formed. In case the message is found to be incoherent, it is sent to
@@ -332,12 +332,12 @@ pipeline.
 1. The search feature asynchronously loads the `catalog.json` object if needed,
    and performs client-side filtering to prepare search results.
 
-1. Package detail pages fetch the relevant `assembly.json` object from the
+1. Package detail pages fetch the relevant `package.json` object from the
    assembly store, and renders the detail page using information contained
    therein.
 
    - If a different language (than JavaScript) is selected, the
-     `assembly-${lang}.json` object is fetched instead, providing the relevant
+     `package-${lang}.json` object is fetched instead, providing the relevant
      documentation elements. In the event that object is not available yet, a
      message will be displayed instead, instructing the user to try again later.
 
@@ -489,7 +489,7 @@ of packages ingested, etc...
 
 - Generated documentation will eventually benefit from cross-linking API
   elements across indexed libraries. All the necessary information is present
-  (the `assembly.json` object includes a `dependencies` section).
+  (the `package.json` object includes a `dependencies` section).
 
 ## Appendix
 
@@ -581,8 +581,41 @@ export interface IngestionInput {
 }
 ```
 
-The *Ingestion* function produces no output, but creates the `assembly.json`
-object, which is a full copy of the `.jsii` assembly object.
+The *Ingestion* function produces no output, but creates the `package.json`
+object, which has the following schema:
+
+```ts
+import { Assembly } from '@jsii/spec';
+
+export interface IndexedPackage {
+  /**
+   * The name of the package.
+   */
+  readonly name: string;
+
+  /**
+   * The version of the package.
+   */
+  readonly version: string;
+
+  /**
+   * The `.jsii` assembly for the package.
+   */
+  readonly assembly: Assembly;
+
+  /**
+   * The timestamp at which the package version was created.
+   */
+  readonly createdAt: Date;
+
+  /**
+   * Metadata associated by the discovery function to the package.
+   */
+  readonly metadata?: { readonly [key: string]: string };
+
+  // This interface may be extended with additional fields in the future.
+}
+```
 
 #### "Doc-Gen" Function
 
