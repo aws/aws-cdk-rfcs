@@ -22,6 +22,9 @@ The final API for CDK Pipelines is finally here. Compared to the previous API:
 - For simple use cases, you no longer need to manage CodePipeline Artifacts: artifact management is implicit
   as objects that produce artifacts can be used to reference them.
 
+
+### Examples
+
 The following:
 
 ```ts
@@ -75,25 +78,25 @@ stage.addActions(
 Becomes:
 
 ```ts
-import * as rollout from '@aws-cdk/rollout';
+import * as cdkp from '@aws-cdk/pipelines';
 
-const pipeline = new rollout.Rollout(this, 'Pipeline', {
-  build: rollout.Build.shellScript({
-    input: rollout.CodePipelineSource.gitHub('OWNER/REPO'),
+const pipeline = new cdkp.Pipeline(this, 'Pipeline', {
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
     commands: ['npm ci', 'npm run build'],
     additionalOutputs: {
-      tests: rollout.AdditionalOutput.fromDirectory('test'),
+      tests: cdkp.AdditionalOutput.fromDirectory('test'),
     }
   }),
-  backend: new rollout.AwsCodePipelineBackend(),
+  backend: new cdkp.AwsCodePipelineBackend(),
 });
 
 const stage = new MyStage(this, 'PreProd', {
   env: { account: '12345', region: 'us-east-1' },
 });
-pipeline.addApplicationStage(stage, {
-  approvals: [
-    rollout.Approval.shellScript({
+pipeline.addCdkStage(stage, {
+  after: [
+    new cdkp.ShellScriptAction({
       input: pipeline.build.additionalOutput('tests'),
       commands: ['node ./integ-tests'],
     }),
@@ -101,45 +104,254 @@ pipeline.addApplicationStage(stage, {
 });
 ```
 
-### How we customize CodeBuild projects, and other things that are AWS-specific?
+### Splitting definition and backend
 
-AWS-specific customizations are passed as parameters to the Backend class:
+It is helpful if there is a clearly defined moment in time when the pipeline definition is ready to be rendered.
 
+There are various ways to organize this, each pretty much isomorphic to one another.
+
+OPTION 1
+
+Clear split of definition and instantiation. Very much like StepFunctions.
+
+```ts
+const pipelineDefinition = new cdkp.PipelineDefinition({
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
+    ...
+  }),
+});
+pipelineDefinition.addCdkStage(...);
+pipelineDefinition.addCdkStage(...);
+
+new cdkp.CodePipelineBackend(this, 'Pipeline', {
+  pipelineDefinition: pipelineDefinition,
+});
 ```
-const pipeline = new rollout.Rollout(this, 'Pipeline', {
-  build: rollout.Build.shellScript({
-    input: rollout.CodePipelineSource.gitHub('OWNER/REPO'),
+
+OPTION 2
+
+Automatic rendering moment.
+
+```ts
+const pipeline = new cdkp.Pipeline(this, 'Pipeline', {
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
+    ...
+  }),
+  backend: new cdkp.CodePipelineBackend({
+    ...backendOptions
+}),
+});
+pipeline.addCdkStage(...);
+pipeline.addCdkStage(...);
+
+pipeline.render();  // <-- can be automatically called if not called at `prepare()` time.
+```
+
+OPTION 3 (syntactic sugar over OPTIONS 1 or 2)
+
+Backend-specific syntactic sugar for people that definitely only need one backend.
+
+```ts
+const pipeline = new cdkp.CodePipeline(this, 'Pipeline', {
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
+    ...
+  }),
+  ...backendOptions
+});
+pipeline.addCdkStage(...);
+pipeline.addCdkStage(...);
+
+pipeline.render();  // <-- can be automatically called if not called at `prepare()` time.
+```
+
+Advantages of options 2, 3 are that `render()` can be implicit if necessary, and so cannot
+be accidentally forgotten.
+
+Recommendation: we implement options 1 and 3.
+
+### Waves
+
+Deploying multiple applications in parallel is done by adding waves:
+
+```ts
+const def = new cdkp.PipelineDefinition({
+  build: new cdkp.CdkBuild({ ... }),
+  waves: [
+    {
+      waveName: '...',
+      stages: [
+        {
+          stageName?: '...',
+          stage: new MyAppStage(...),
+          after: [...],
+        }
+      ],
+    },
+  ],
+});
+def.addCdkStage(new MyAppStage(...));
+
+const wave = def.addWave('asdf', {
+  stages: [...],
+});
+wave.addCdkStage(new MyAppStage(...));
+```
+
+### Validations
+
+Waves and Stages can be decorated with `before` and `after` actions, intended for validations
+and checks.
+
+```ts
+const def = new cdkp.PipelineDefinition({
+  build: new cdkp.CdkBuild({ ... }),
+});
+def.addCdkStage(new MyAppStage('Beta', ...));
+
+const wave = def.addWave('Prod', {
+  before: [
+    new cdkp.ManualApprovalAction('Promote Beta to Prod'),
+  ],
+});
+
+wave.addCdkStage(new MyAppStage(...), {
+  after: [
+    new cdkp.ShellScriptAction('Validate', {
+      commands: [
+        'curl -Ssf https://mywebsite.com/ping',
+      ],
+    }),
+  ],
+});
+```
+
+### Using additional artifacts
+
+To clearly distinguish them from Stack Outputs, we will call artifacts "file sets". They
+can be consumed and produced by build actions and shell actions, and are always
+about whole directories:
+
+```ts
+const pipeline = new cdkp.PipelineDefinition({
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
+    additionalInputs: {
+      'subdir': cdkp.CodePipelineSource.gitHub('OWNER2/REPO2'),
+      '../side-dir': someStep,
+    },
+    commands: ['npm ci', 'npm run build'],
+    additionalOutputs: {
+      tests: cdkp.AdditionalOutput.fromDirectory('test'),
+    }
+  }),
+});
+
+pipeline.addCdkStage(stage, {
+  after: [
+    new cdkp.ShellScriptAction({
+      input: pipeline.additionalBuildOutput('tests'),
+      commands: ['node ./integ-tests'],
+      output: cdkp.AdditionalOutput.fromDirectory('./test-results'),
+    }),
+  ],
+});
+```
+
+### Using Stack Outputs
+
+Stack outputs are useful in validations:
+
+```ts
+const cdkStage = new MyAppStage(...);
+wave.addCdkStage(cdkStage, {
+  after: [
+    new cdkp.ShellScriptAction('Validate', {
+      environmentVariablesFromStackOutputs: {
+        ENDPOINT_URL: cdkp.StackOutput.fromCfnOutput(cdkStage.endpointUrl),
+      },
+      commands: [
+        'curl -Ssf $ENDPOINT_URL',
+      ],
+    }),
+  ],
+});
+```
+
+### CodeBuild-specific customizations
+
+AWS-specific customizations are passed as parameters to the Backend class for the well-defined
+CodeBuild projects (build, self-update, assets, ...)
+
+```ts
+const def = new cdkp.PipelineDefinition({
+  build: new cdkp.CdkBuild({
+    input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
     commands: ['npm ci', 'npm run build', 'npx cdk synth'],
     environment: {
       NPM_CONFIG_UNSAFE_PERM: 'true',
     },
   }),
-  backend: new rollout.AwsCodePipelineBackend({
-    pipeline,
-    pipelineName: 'MyPipeline',
-    vpc,
-    subnetSelection: { subnetType: ec2.SubnetType.PRIVATE },
-    crossAccountKeys: true,
-    buildEnvironment: {
-      image: codebuild.CodeBuildImage.AWS_STANDARD_6,
-      privilegedMode: true,
+});
+def.addCdkStage(...);
+def.addCdkStage(...);
+
+new cdkp.CodePipeline(this, 'Pipeline', {
+  definition: def,
+  pipeline,
+  pipelineName: 'MyPipeline',
+  vpc,
+  subnetSelection: { subnetType: ec2.SubnetType.PRIVATE },
+  crossAccountKeys: true,
+  buildEnvironment: {
+    image: codebuild.CodeBuildImage.AWS_STANDARD_6,
+    privilegedMode: true,
+  },
+  assetBuildEnvironment: {
+    environmentVariables: {
+      SECRET: { type: codebuild.EnvironmentVariableType.SECRETS_MANAGER, value: 'arn:aws:...:my-secret' },
     },
-    buildCaching: true,
-    cdkCliVersion: '1.2.3',
-    selfMutating: false,
-    pipelineUsesDockerAssets: true,
-    dockerAssetBuildPrefetch: true,
-    dockerCredentials: {
-      '': rollout.DockerCredentials.fromSecretsManager('my-dockerhub-login'),
-      '111111.dkr.ecr.us-east-2.amazonaws.com': rollout.DockerCredentials.standardEcrCredentials(),
-    },
-    buildTestReports: {
-      SurefireReports: {
-        baseDirectory: 'target/surefire-reports',
-        files: ['**/*'],
-      }
-    },
-  }),
+    additionalDockerBuildArgs: ['SECRET'],
+  },
+  buildCaching: true,
+  cdkCliVersion: '1.2.3',
+  selfMutating: false,
+  pipelineUsesDockerAssets: true,
+  dockerAssetBuildPrefetch: true,
+  dockerCredentials: {
+    '': cdkp.DockerCredentials.fromSecretsManager('my-dockerhub-login'),
+    '111111.dkr.ecr.us-east-2.amazonaws.com': cdkp.DockerCredentials.standardEcrCredentials(),
+  },
+  buildTestReports: {
+    SurefireReports: {
+      baseDirectory: 'target/surefire-reports',
+      files: ['**/*'],
+    }
+  },
+});
+```
+
+If there are "anonymous" shellscript actions (as validation steps) that need to be customized, they
+can be customized by substituting a specialized subclass:
+
+```ts
+def.addCdkStage(..., {
+  after: [
+    new cdkp.CodeBuildAction({
+      environmentVariablesFromStackOutputs: {
+        ENDPOINT_URL: cdkp.StackOutput.fromCfnOutput(cdkStage.endpointUrl),
+      },
+      commands: [
+        'curl -Ssf $ENDPOINT_URL',
+      ],
+      buildEnvironment: {
+        computeType: codebuild.ComputeType.MEDIUM,
+        buildImage: codebuild.CodeBuildImage.fromAsset('./fancy-curl-image'),
+      },
+    }),
+  ],
 });
 ```
 
@@ -147,50 +359,55 @@ const pipeline = new rollout.Rollout(this, 'Pipeline', {
 
 ### How will this work?
 
-The library will be organized into 3 layers:
+The library will be organized into 2 layers and a backwards compatibility layer:
 
 ```
-┌──────────────────┬────────────────┬───────────────────────┐
-│                  │                │    Generic actions    │
-│     Backend,     │    Rollout     │                       │
-│ backend-specific │                │   Build.shellScript   │
-│sources & actions │                │                       │
-│   ┌──────────────┴────────────────┴───────────────────────┤
-│   │                                                       │
-│   │           Workflow core + CDK app knowledge           │
-│   │  (steps, dependencies, translate CDK app into steps)  │
-│   │                                                       │
-│   └───────────────────────────────────────────────────────┤
-│                                                           │
-│                  Render to CodePipeline/CodeBuild         │
-│                                                           │
-└───────────────────────────────────────────────────────────┘
+         ┌────────────────────────────┐
+         │                            │
+   C     │        CdkPipeline         │
+         │                            │
+         ├──────────────────┬─────────┴──────┬───────────────────────┐
+         │                  │                │                       │
+         │     Backend,     │  Definition,   │    Generic actions    │
+   2     │ backend-specific │    Pipeline    │                       │
+         │sources & actions │                │                       │
+         │                  └────────────────┴───────────────────────┤
+         │                                                           │
+         │                                                           │
+   1     │             Render to CodePipeline/CodeBuild              │
+         │                                                           │
+         └───────────────────────────────────────────────────────────┘
 ```
 
-The **middle** layer has facilities to build and manipulate an abstract workflow, which features concepts like *steps*,
-*dependencies*, *artifacts*, and knows how to translate a CDK app into a sequence of backend-agnostic steps.
+Layer 1 takes a Pipeline definition and renders it to a specific CI/CD runner.  In the CDK Pipelines case, a
+CodePipeline with a set of CodeBuild projects and CloudFormation Actions. Backends operate by doing a lot
+of type testing of the objects at level 2, and should be erroring out if they encounter classes they're not
+prepared to deal with.
 
-The **bottom** layer renders the generic workflow to a specific CI/CD runner.  In the CDK Pipelines case, a CodePipeline
-with a set of CodeBuild projects and CloudFormation Actions.
+Layer 2 layer is a mutable object graph that represents user intent and provides Cloud Assembly parsing. It has methods
+for things like querying what assets would be required to deploy a certain stage, which the backend can query
+to make decisions on. Crucially, level 1 does not contain any logic that helps with deciding what it means to
+publish assets, or how things should be ordered. All these kinds of decisions are left to the backend.
+*dependencies*, *artifacts*. Some backend-specific classes are offered at this layer as well, notably sources
+and escape hatches that allow injecting arbitrary data that only makes sense to a specific backend.
 
-The **top** layer is the one the user interacts with. It is has generic classes (that apply for any backend), as well as
-backend-specific classes, so can deal in concepts that are familiar to the user and offer all the backend-specific
-customizations users might want (Most commonly: source customizations such as credentials coming from AWS
-SecretsManager, and backend-specific customizations such as CodeBuild VPC bindings, specific additional IAM permissions,
-enabling CodeBuild test reporting, customizing Log Groups, etc). The user may inject backend-specific actions for even
-more control.
+Layer 3 is a backwards compatibility layer so we don't break existing customers, *implemented in terms of*
+the rest of the framework.
 
 ### How will we port to another backend?
 
 What is the work to implement different backends for CDK deployments (like, for example, GitHub Actions)?
 
-* Obviously, we need to replace layer 3
-* We may need to add some new backend-specific components to layer 1 (such as new sources, or other new kinds of
+* Obviously, we need to add something new at layer 1
+* We may need to add some new backend-specific components to layer 2 (such as new sources, or other new kinds of
   backend-specific actions).
 
-We will gain efficiency from the fact that the reimplementation will not contain business logic: it will
-mostly be mapping types and properties between the different levels. All the knowledge about the structure
-and order of deploying CDK apps will be located in layer 2, and is reused.
+Code sharing between backend implementations may happen naturally (as long as they are implemented in the
+same library), but the framework does not provide provisions for that from the start.
+
+That is, the CodePipeline implementation will naturally use a nested graph library with topological
+sort internally to provide its functionality. Any other backends might reuse this graph library, or do something
+completely different as they choose.
 
 ### Why will we stay backwards compatible?
 
@@ -201,95 +418,12 @@ some slight enhanced expressiveness and customizability to the API.
 With a little additional effort, we can make the new API additive and have the old one continue to work,
 giving people the opportunity to switch over to the new API at their own pace.
 
-### How do we render deployments out across backends?
-
-In the middle layer, a stack deployments gets represented as nested state machines,
-like this:
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│                          DeployStack                          │
-│                                                               │
-│     ┌────────────────────┐         ┌────────────────────┐     │
-│     │                    │         │                    │     │
-│     │  CreateChangeSet   │────────▶│  ExecuteChangeSet  │     │
-│     │                    │         │                    │     │
-│     └────────────────────┘         └────────────────────┘     │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
-```
-
-A backend rendered has the choice to either:
-
-* Recognize a `DeployStack` state and render that out to a `cdk deploy` command (or something
-  else appropriate); or
-* Recognize the individual `CreateChangeSet` and `ExecuteChangeSet` states and render those
-  out either to CodePipeline actions or `aws cloudformation change-change-set` CLI commands,
-  as may be appropriate.
-
-### How do approval workflows work?
-
-Every `Approval` step will be handed a reference to the workflow of the application
-being deployed, as well as to an empty "approval" workflow. It can then choose to
-add new actions and dependencies to any of those workflows.
-
-In the most common case, it will add things like "shell script" actions to the approval workflow; but it might also
-choose to add actions before "Deploy" (`Approval.securityChanges()`), or it might choose to add actions *in between*
-`CreateChangeSet` and `DeployChangeSet` pairs.
-
-The actions it adds may be generic (from level 2), translatable into any backend and so
-the approval workflow is reusable, or they may be backend-specific and only apply to
-one specific backend.
-
-```
-┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
-                                                   App
-│┌────────────────────────────────────────────────────┐          ┌───────────────────────────────────┐  │
- │                       Deploy                       │          │              Approve              │
-││                                                    │          │                                   │  │
- │ ┌────────────────────┐    ┌────────────────────┐   │          │                                   │
-││ │       Stack1       │    │       Stack2       │   │          │                                   │  │
- │ │                    │    │                    │   │          │                                   │
-││ │  ┌────┐    ┌────┐  │    │  ┌────┐    ┌────┐  │   │─────────▶│                                   │  │
- │ │  │ C  │───▶│ E  │  │───▶│  │ C  │───▶│ E  │  │   │          │                                   │
-││ │  └────┘    └────┘  │    │  └────┘    └────┘  │   │          │                                   │  │
- │ │                    │    │                    │   │          │                                   │
-││ └────────────────────┘    └────────────────────┘   │          │                                   │  │
- │                                                    │          │                                   │
-│└────────────────────────────────────────────────────┘          └───────────────────────────────────┘  │
- ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
-```
-
 ### How will asset publishing work?
 
-Similar to how approval workflows work, the asset publishing strategy can be configured
-with a callback which can manipulate the workflow as desired. This allows for easy switching
-between:
-
-* Prepublish all assets in individual CodeBuild projects
-* Prepublish all assets in one CodeBuild project
-* Publish assets just before each app deployment
-* Publish initial assets as usual but afterwards wait for ECR replication to finish
-
-### What are the generic primitives?
-
-In the middle layer, the following types of actions/states exist:
-
-* ShellScript
-  - May have concepts like shell commands, Docker image, IAM permissions it should
-    be possible to assume
-  - Renders to CodeBuild for CodePipeline, a Step in GitHub Actions
-* Manual Approval
-  - They GitHub Actions renderer may reject this type of action, and that is okay.
-* Create ChangeSet
-* Execute ChangeSet
-  - With or without capturing outputs (backend may reject capturing outputs if it cannot implement that)
-
-In addition to these, a specific implementation may add backend-specific actions.
-So for example, a `CodePipelineAction` can hold any `codepipeline.IAction`, which
-can be added into the graph to do whatever. The CodePipeline renderer would render
-those out, while any other backend would reject them. This is our "escape hatch" from
-level 1 down to level 3.
+Asset publishing is up to the specific backend. There is no telling whether backends might want to use the `prepublish
+assets → create changeset → execute changeset` strategy that the CodePipeline implementation will use, or choose to just
+run `cdk deploy` instead. Hence, the framework can and will not provide any help, other than allowing to
+query the set of assets that would be required for a certain deployment.
 
 ### Why are we doing this?
 
@@ -301,9 +435,6 @@ to work with other deployment backends like GitHub Actions.
 ### Why should we _not_ do this?
 
 Maybe generalizing to multiple deployment backends is too speculative, and we shouldn't be spending effort on it.
-
-Maybe leaving a specialized API at level 1 is not generic enough, and we'll end up reimplementing substantial amounts of
-code anyway, wasting the effort generalizing.
 
 In any case, our current front-end API is a bit awkward and can do with some optimizing (it's not as minimal and
 humanist as we prefer our CDK APIs to be), and the internals need some reworking to address bits of
