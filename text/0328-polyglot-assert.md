@@ -33,7 +33,7 @@ to users in all CDK supported languages.
 > All beta symbols are suffixed with the `Beta<n>`. When we have backwards
 > incompatible change, we will create a new symbol with a `Beta<n+1>` suffix
 > and deprecate the `Beta<n>` symbol.
-----
+---
 This module allows asserting the contents of CloudFormation templates.
 
 To run assertions based on a CDK `Stack`, start off with -
@@ -151,7 +151,7 @@ import { assertv2 as assert } from 'aws-cdk-lib';
 ```
 
 Read more about `aws-cdk-lib` at
-https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme.
+<https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme>.
 
 ### Why are all the APIs suffixed with the `Beta1` suffix?
 
@@ -190,9 +190,9 @@ The implementation of this module would simply be a scaffold around the existing
 To build this scaffold, we will 'vendor in' the libraries `assert-internal`,
 `cloudformation-diff` and `cfnspec`.
 
-See [Appendix A](#appendix-a) for the design and rationale.
+See [Appendix A](#appendix-a---detailed-design) for the design and rationale.
 
-Prototype / Implementation: https://github.com/aws/aws-cdk/pull/14952.
+Prototype / Implementation: <https://github.com/aws/aws-cdk/pull/14952>.
 
 ### Is this a breaking change?
 
@@ -228,7 +228,7 @@ This is not a breaking change.
 
 ### What alternative solutions did you consider?
 
-See [Appendix B](#appendix-b) for alternatives.
+See [Appendix B](#appendix-b---alternatives) for alternatives.
 
 ### What is the high level implementation plan?
 
@@ -245,7 +245,7 @@ The implementation plan is fairly simple.
 
 ## Appendix A - Detailed Design
 
-### Key Requirement
+### Key Requirement
 
 The **key requirement** for the design choices is *dogfooding*.
 The new assert APIs must be usable from within the AWS CDK, and over time,
@@ -266,7 +266,7 @@ must be part of the AWS CDK monorepo.
 ### Dependencies
 
 The main dependencies of the new assert module are the existing `assert` module,
-which in turn mainly depend on `cloudformation-diff` and `cfnspec`. 
+which in turn mainly depend on `cloudformation-diff` and `cfnspec`.
 The latter two are required to display human readable diffs, around what resources
 are different and how IAM permissions have changed.
 
