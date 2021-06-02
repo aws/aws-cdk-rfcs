@@ -41,14 +41,14 @@ To run assertions based on a CDK `Stack`, start off with -
 ```ts
 const stack = new cdk.Stack(...)
 ...
-const assert = TemplateAssertionsBeta1.fromStackBeta1(stack);
+const assert = TemplateAssertionsBeta1.fromStack(stack);
 ```
 
 Alternatively, assertions can be run on an existing CloudFormation template -
 
 ```ts
 const template = fs.readFileSync('/path/to/template/file');
-const assert = TemplateAssertionsBeta1.fromTemplateBeta1(template);
+const assert = TemplateAssertionsBeta1.fromTemplate(template);
 ```
 
 #### Full Template Match
@@ -101,7 +101,7 @@ assert.assertResourceBeta1('Foo::Bar', {
   Properties: { Foo: 'Bar' },
   DependsOn: [ 'Waldo', 'Fred' ],
 }, {
-  part: ResourcePartBeta1.COMPLETE_BETA1,
+  part: ResourcePartBeta1.COMPLETE,
 });
 ```
 
