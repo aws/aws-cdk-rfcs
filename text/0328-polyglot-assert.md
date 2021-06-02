@@ -226,6 +226,22 @@ This is not a breaking change.
    assertions.assertResource('Foo::Bar', { ... });
    ```
 
+### What are the mitigations and/or long term plans to address these concerns?
+
+Once this module reaches general availability, we will deprecate the old 'assert'
+module. At that point, all of its source code can now be made as part of the new
+'assert' module.
+
+The dependencies on 'cloudformation-diff' and 'cfnspec' will need to be carefully
+evaluated and a decision made on whether to lift-and-shift the relevant code, or
+to move these out of the monorepo as independent modules.
+
+Friendly interfaces for popular testing frameworks such as jest, nunit, junit, etc.
+can be built as separate modules specific to those languages (not jsii modules)
+on top of the new 'assert' library.
+If necessary, this can be owned and maintained by the CDK team, but probably more
+suited for the community to pick up and build as third party modules.
+
 ### What alternative solutions did you consider?
 
 See [Appendix B](#appendix-b---alternatives) for alternatives.
@@ -239,9 +255,7 @@ The implementation plan is fairly simple.
 
 ### Are there any open issues that need to be addressed later?
 
-> Describe any major open issues that this RFC did not take into account. Once
-> the RFC is approved, create GitHub issues for these issues and update this RFC
-> of the project board with these issue IDs.
+None.
 
 ## Appendix A - Detailed Design
 
