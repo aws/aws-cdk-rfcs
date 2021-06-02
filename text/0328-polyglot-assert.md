@@ -7,14 +7,14 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/328
 
 The `@aws-cdk/assert` module is only available to javascript users.
 
-The new polyglot assert module - `@aws-cdk/assertv2` - provides the same set of functionalities
-to users in all CDK supported languages.
+The new polyglot assert module - `@aws-cdk/assertions` - provides the same set of
+functionalities to users in all CDK supported languages.
 
 ## Working Backwards
 
 ### CHANGELOG
 
-**feat:** announcing assertv2: the assert library is now available in all CDK supported languages.
+**feat:** announcing assertions: the assert library is now available in all CDK supported languages.
 
 ### README
 
@@ -41,14 +41,14 @@ To run assertions based on a CDK `Stack`, start off with -
 ```ts
 const stack = new cdk.Stack(...)
 ...
-const inspect = StackAssertionsBeta1.fromStackBeta1(stack);
+const assert = TemplateAssertionsBeta1.fromStackBeta1(stack);
 ```
 
 Alternatively, assertions can be run on an existing CloudFormation template -
 
 ```ts
-const file = '/path/to/file';
-const inspect = StackAssertionsBeta1.fromTemplateFileBeta1(file);
+const template = fs.readFileSync('/path/to/template/file');
+const assert = TemplateAssertionsBeta1.fromTemplateBeta1(template);
 ```
 
 #### Full Template Match
@@ -57,7 +57,7 @@ The simplest assertion would be to assert that the template matches a given
 template.
 
 ```ts
-inspect.assertMatchTemplateBeta1({
+assert.assertMatchTemplateBeta1({
   Resources: {
     Type: 'Foo::Bar',
     Properties: {
@@ -73,7 +73,7 @@ This module allows asserting the number of resources of a specific type found
 in a template.
 
 ```ts
-inspect.assertResourceCountBeta1('Foo::Bar', 2);
+assert.assertResourceCountBeta1('Foo::Bar', 2);
 ```
 
 #### Resource Matching
@@ -85,7 +85,7 @@ The following code asserts that the `Properties` section of a resource of type
 `Foo::Bar` contains the specified properties -
 
 ```ts
-inspect.assertResourceBeta1('Foo::Bar', {
+assert.assertResourceBeta1('Foo::Bar', {
   Foo: 'Bar',
   Baz: 5,
   Qux: [ 'Waldo', 'Fred' ],
@@ -97,7 +97,7 @@ which can be used to verify things other sections like `DependsOn`, `Metadata`,
 `DeletionProperty`, etc.
 
 ```ts
-inspect.assertResourceBeta1('Foo::Bar', {
+assert.assertResourceBeta1('Foo::Bar', {
   Properties: { Foo: 'Bar' },
   DependsOn: [ 'Waldo', 'Fred' ],
 }, {
@@ -109,7 +109,7 @@ inspect.assertResourceBeta1('Foo::Bar', {
 
 ### What are we launching today?
 
-Today, we are launching a new jsii module called `@aws-cdk/assertv2`, that allows
+Today, we are launching a new jsii module called `@aws-cdk/assertions`, that allows
 CDK users to run assertions on the synthesized CloudFormation template.
 
 This module is available to users in all CDK supported languages.
@@ -130,13 +130,13 @@ languages available today and any that we will support in the future.
 
 This module is available in the languages as per the table below -
 
-| Language              | Pkg Manager | Package                                     |
-| --------------------- | ------------|-------------------------------------------- |
-| typescript/javascript | npm         | `@aws-cdk/assertv2`                         |
-| Java                  | Maven       | `software.amazon.awscdk.assertv2`           |
-| Python                | PyPI        | `aws-cdk.assertv2`                          |
-| .NET                  | NuGet       | `Amazon.CDK.AssertV2`                       |
-| Go                    | -           | `github.com/aws/aws-cdk-go/awscdk/assertv2` |
+| Language              | Pkg Manager | Package                                       |
+| --------------------- | ------------|---------------------------------------------- |
+| typescript/javascript | npm         | `@aws-cdk/assertions`                         |
+| Java                  | Maven       | `software.amazon.awscdk.assertions`           |
+| Python                | PyPI        | `aws-cdk.assertions`                          |
+| .NET                  | NuGet       | `Amazon.CDK.Assertions`                       |
+| Go                    | -           | `github.com/aws/aws-cdk-go/awscdk/assertions` |
 
 ### Is this feature available in the AWS CDK v2?
 
@@ -147,7 +147,7 @@ In CDKv2, this module will be available as part of `aws-cdk-lib`.
 The import statement you will need to use is -
 
 ```ts
-import { assertv2 as assert } from 'aws-cdk-lib';
+import { assertions } from 'aws-cdk-lib';
 ```
 
 Read more about `aws-cdk-lib` at
@@ -182,7 +182,7 @@ None.
 ### What changes are required to enable this change?
 
 The high level design is to create a new jsii module in the AWS CDK monorepo -
-`@aws-cdk/assertv2` - that exposes the APIs proposed above.
+`@aws-cdk/assertions` - that exposes the APIs proposed above.
 
 The implementation of this module would simply be a scaffold around the existing
 `assert` library.
@@ -207,9 +207,10 @@ This is not a breaking change.
    Instead, the design 'vendors in' these dependencies, i.e., copies over
    the source code and rewrites imports, thereby increasing tech debt.
 
-2. Any new feature or bug fix to the new assert module needs to be performed
-   both in the old assert module and new. This can lead to weird/complicated
-   implementation, since they both follow different design patterns.
+2. Any new feature or bug fix to the new assert module that require changes
+   to the API needs to be performed both in the old assert module and new.
+   This can lead to weird/complicated implementation, since they both follow
+   different design patterns.
 
 3. The 'jest' friendly interfaces that were previously available are no longer
    available.
@@ -222,7 +223,7 @@ This is not a breaking change.
    will now have to use
 
    ```ts
-   const assertions = StackAssertions.fromStack(stack);
+   const assertions = TemplateAssertions.fromStack(stack);
    assertions.assertResource('Foo::Bar', { ... });
    ```
 
