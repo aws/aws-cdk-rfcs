@@ -30,9 +30,9 @@ functionalities to users in all CDK supported languages.
 
 > NOTE: This module contains *beta APIs*.
 >
-> All beta symbols are suffixed with the `Beta<n>`. When we have backwards
-> incompatible change, we will create a new symbol with a `Beta<n+1>` suffix
-> and deprecate the `Beta<n>` symbol.
+> Some of the symbols in the APIs are suffixed with the `Beta<n>`.
+> When we have backwards incompatible change, we will create a new
+> symbol with a `Beta<n+1>` suffix and deprecate the `Beta<n>` symbol.
 ---
 This module allows asserting the contents of CloudFormation templates.
 
@@ -57,7 +57,7 @@ The simplest assertion would be to assert that the template matches a given
 template.
 
 ```ts
-assert.assertMatchTemplateBeta1({
+assert.assertTemplateMatches({
   Resources: {
     Type: 'Foo::Bar',
     Properties: {
@@ -73,7 +73,7 @@ This module allows asserting the number of resources of a specific type found
 in a template.
 
 ```ts
-assert.assertResourceCountBeta1('Foo::Bar', 2);
+assert.assertResourceCountIs('Foo::Bar', 2);
 ```
 
 #### Resource Matching
@@ -85,7 +85,7 @@ The following code asserts that the `Properties` section of a resource of type
 `Foo::Bar` contains the specified properties -
 
 ```ts
-assert.assertResourceBeta1('Foo::Bar', {
+assert.assertHasResource('Foo::Bar', {
   Foo: 'Bar',
   Baz: 5,
   Qux: [ 'Waldo', 'Fred' ],
@@ -97,7 +97,7 @@ which can be used to verify things other sections like `DependsOn`, `Metadata`,
 `DeletionProperty`, etc.
 
 ```ts
-assert.assertResourceBeta1('Foo::Bar', {
+assert.assertHasResource('Foo::Bar', {
   Properties: { Foo: 'Bar' },
   DependsOn: [ 'Waldo', 'Fred' ],
 }, {
@@ -153,7 +153,7 @@ import { assertions } from 'aws-cdk-lib';
 Read more about `aws-cdk-lib` at
 <https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme>.
 
-### Why are all the APIs suffixed with the `Beta1` suffix?
+### Why are the APIs suffixed with the `BetaX` suffix?
 
 We have promised that there will be no backwards incompatible or breaking changes
 to our APIs in `aws-cdk-lib` as part of the AWS CDK v2.
