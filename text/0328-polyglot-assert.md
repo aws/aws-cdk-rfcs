@@ -39,16 +39,56 @@ This module allows asserting the contents of CloudFormation templates.
 To run assertions based on a CDK `Stack`, start off with -
 
 ```ts
+// In typescript
+import { Stack } from '@aws-cdk/core';
+import { TemplateAssertionsBeta1 } from '@aws-cdk/assertions';
+
 const stack = new cdk.Stack(...)
 ...
 const assert = TemplateAssertionsBeta1.fromStack(stack);
 ```
 
+```java
+// In Java
+import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.assertions.TemplateAssertionsBeta1;
+
+Stack stack = new Stack(...)
+...
+TemplateAssertionsBeta1 assert = TemplateAssertionsBeta1.fromStack(stack);
+```
+
+```py
+# In Python
+from aws_cdk import (core, assertions)
+
+stack = core.Stack(...)
+...
+assertion = assertions.TemplateAssertionsBeta1.fromStack(stack)
+```
+
 Alternatively, assertions can be run on an existing CloudFormation template -
 
 ```ts
+// In typescript
 const template = fs.readFileSync('/path/to/template/file');
 const assert = TemplateAssertionsBeta1.fromTemplate(template);
+```
+
+```java
+// In Java
+import com.google.commons.io.Files; // using Google Guava. Use any utility of your choice
+
+String template = Files.readString("/path/to/template/file");
+TemplateAssertionsBeta1 assert = TemplateAssertionsBeta1.fromTemplate(template);
+```
+
+```py
+# In Python
+with open('/path/to/template/file', 'r') as file:
+  template = file.readlines().join('')
+...
+assertion = assertions.TemplateAssertionsBeta1.fromTemplate(template)
 ```
 
 #### Full Template Match
@@ -57,6 +97,7 @@ The simplest assertion would be to assert that the template matches a given
 template.
 
 ```ts
+// In typescript
 assert.assertTemplateMatches({
   Resources: {
     Type: 'Foo::Bar',
@@ -67,13 +108,59 @@ assert.assertTemplateMatches({
 });
 ```
 
+```java
+// In Java, using text blocks and Gson
+import com.google.gson.Gson;
+
+String json = """
+  {
+    "Resources": {
+      "Type": "Foo::Bar",
+      "Properties": {
+        "Baz": false
+      }
+    }
+  } """;
+
+Map expected = new Gson().fromJson(json, Map.class);
+assert.assertTemplateMatches(expected);
+```
+
+```py
+# In Python
+import json
+
+expected = """
+  {
+    "Resources": {
+      "Type": "Foo::Bar",
+      "Properties": {
+        "Baz": false
+      }
+    }
+  } """
+
+assertion.assertTemplateMatches(json.loads(expected))
+```
+
 #### Counting Resources
 
 This module allows asserting the number of resources of a specific type found
 in a template.
 
 ```ts
+// In typescript
 assert.assertResourceCountIs('Foo::Bar', 2);
+```
+
+```java
+// In Java
+assert.assertResourceCountIs("Foo::Bar", 2);
+```
+
+```py
+# In Python
+assertion.assertResourceCountIs('Foo::Bar', 2)
 ```
 
 #### Resource Matching
@@ -85,6 +172,7 @@ The following code asserts that the `Properties` section of a resource of type
 `Foo::Bar` contains the specified properties -
 
 ```ts
+// In typescript
 assert.assertHasResource('Foo::Bar', {
   Foo: 'Bar',
   Baz: 5,
@@ -92,17 +180,76 @@ assert.assertHasResource('Foo::Bar', {
 });
 ```
 
+```java
+// In Java, using text blocks and Gson
+import com.google.gson.Gson;
+
+String json = """
+  {
+    "Foo": "Bar",
+    "Baz": 5,
+    "Qux": [ "Waldo", "Fred" ],
+  } """;
+
+Map expected = new Gson().fromJson(json, Map.class);
+assert.assertHasResource("Foo::Bar", expected);
+```
+
+```py
+# In Python
+import json
+
+expected = """
+  {
+    "Foo": "Bar",
+    "Baz": 5,
+    "Qux": [ "Waldo", "Fred" ],
+  } """;
+
+assertion.assertHasResource('Foo::Bar', json.loads(expected))
+```
+
 The same method allows asserting the complete definition of the 'Resource'
 which can be used to verify things other sections like `DependsOn`, `Metadata`,
 `DeletionProperty`, etc.
 
 ```ts
+// In typescript
 assert.assertHasResource('Foo::Bar', {
   Properties: { Foo: 'Bar' },
   DependsOn: [ 'Waldo', 'Fred' ],
 }, {
   part: ResourcePartBeta1.COMPLETE,
 });
+```
+
+```java
+// In Java, using text blocks and Gson
+import com.google.gson.Gson;
+
+String json = """
+  {
+    "Properties": { "Foo": "Bar" },
+    "DependsOn": [ "Waldo", "Fred" ],
+  } """;
+
+Map expected = new Gson().fromJson(json, Map.class);
+assert.assertHasResource("Foo::Bar", expected,
+  new AssertResourceOptionsBeta1.Builder().part(ResourcePartBeta1.COMPLETE).build());
+```
+
+```py
+# In Python
+import json
+
+expected = """
+  {
+    "Properties": { "Foo": "Bar" },
+    "DependsOn": [ "Waldo", "Fred" ],
+  } """;
+
+assertion.assertHasResource('Foo::Bar', json.loads(expected),
+  assertion.AssertResourceOptionsBeta1(part=ResourcePartBeta1.COMPLETE))
 ```
 
 ## FAQ
