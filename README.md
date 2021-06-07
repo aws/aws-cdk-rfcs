@@ -287,7 +287,7 @@ digraph states {
 3. **Final Comment Period** - The shepherd has approved the RFC PR, and announces
    that the RFC enters a period for final comments before it will be approved (~1wk).
    At this stage, if major issues are raised, the RFC may return to **Review**.
-4. **Approved** - The RFC PR is approved and merged to `master`, and the RFC is nonw
+4. **Approved** - The RFC PR is approved and merged to `master`, and the RFC is now
    ready to be implemented.
 5. **Planning** - A PR is created with the **Implementation Plan** section of the RFC.
 6. **Implementing** - Implemetation plan is approved and merged and the RFC is actively
