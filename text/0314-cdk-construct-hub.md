@@ -241,7 +241,7 @@ detail pages.
 1. **Ingestion:** A Lambda function then picks up messages from the SQS queue
    and prepares the artifacts consumed by the front-end application, stored in a
    dedicated S3 bucket using the following key format:
-   `packages/${assembly.name}/v${assembly.version}/package.json`
+   `packages/${assembly.name}/v${assembly.version}/assembly.json`
 
    This function validates the contents of the `assembly` to ensure the message
    was well-formed. In case the message is found to be incoherent, it is sent to
@@ -332,8 +332,8 @@ pipeline.
 1. The search feature asynchronously loads the `catalog.json` object if needed,
    and performs client-side filtering to prepare search results.
 
-1. Package detail pages fetch the relevant `package.json` object from the
-   assembly store, and renders the detail page using information contained
+1. Package detail pages fetch the relevant `assembly.json` object from the
+   package store, and renders the detail page using information contained
    therein.
 
    - If a different language (than JavaScript) is selected, the
@@ -489,7 +489,7 @@ of packages ingested, etc...
 
 - Generated documentation will eventually benefit from cross-linking API
   elements across indexed libraries. All the necessary information is present
-  (the `package.json` object includes a `dependencies` section).
+  (the `assembly.json` object includes a `dependencies` section).
 
 ## Appendix
 
@@ -581,7 +581,7 @@ export interface IngestionInput {
 }
 ```
 
-The *Ingestion* function produces no output, but creates the `package.json`
+The *Ingestion* function produces no output, but creates the `assembly.json`
 object, which has the following schema:
 
 ```ts
