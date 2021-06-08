@@ -51,7 +51,7 @@ provisioning engine. Developers will find constructs published by AWS, partners,
 and individual developers. Constuct Hub also generates unified documentation for
 the constructs in all supported programming languages.
 
-Construct Hub is also available as a deploymable CDK construct library, so
+Construct Hub is also available as a deployable CDK construct library, so
 that enterprises and users with specific needs can host a private instance of
 the catalog, making interally developed constructs easier for teams to find.
 Just like the public instance of Construct Hub scans public repositories for
