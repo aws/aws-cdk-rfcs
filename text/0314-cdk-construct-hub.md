@@ -220,14 +220,14 @@ detail pages.
 
    Name          | Description
    --------------|--------------------------------------------------------------
-   `assemblyUri` | The URL to an S3 Object containing the `.jsii` assembly included in the package
+   `tarballUri`  | The URL to an S3 Object containing the npm package's `.tgz` bundle
    `metadata`    | Metadata assigned by the discovery function to the package (key-value pairs)
    `time`        | The timestamp at which the version was created
    `integrity`   | An integirity check for the complete record
 
    The Construct Hub will have permissions to read from (and, if applicable, to
    decrypt) the S3 bucket that is used to hold the object denoted by
-   `assemblyUri`. That bucket may have a Lifecycle configuration that cleans up
+   `tarballUri`. That bucket may have a Lifecycle configuration that cleans up
    objects after a few days, as objects need not be retained there after they
    have been successfully ingested by the Construct Hub (which will own and
    maintain a copy of this artifact).
@@ -241,11 +241,12 @@ detail pages.
 1. **Ingestion:** A Lambda function then picks up messages from the SQS queue
    and prepares the artifacts consumed by the front-end application, stored in a
    dedicated S3 bucket using the following key format:
-   `packages/${assembly.name}/v${assembly.version}/assembly.json`
+   - Package tarball: `packages/${assembly.name}/v${assembly.version}/package.tgz`
+   - `.jsii` assembly: `packages/${assembly.name}/v${assembly.version}/assembly.json`
 
-   This function validates the contents of the `assembly` to ensure the message
-   was well-formed. In case the message is found to be incoherent, it is sent to
-   a dead-letter queue and an alarm is triggered.
+   This function validates the contents of the `.jsii` assembly file found in the
+   `package.tgz` bundle to ensure the message was well-formed. In case the message
+   is found to be incoherent, it is sent to a dead-letter queue and an alarm is triggered.
 
    - Optionally (this information may not be necessary, in particular for the
      minimal viable product), it also creates or updates the
@@ -556,11 +557,11 @@ export interface IngestionInput {
   readonly origin: string;
 
   /**
-   * The URL to an S3 object that holds the contents of the .jsii assembly file
-   * that has been discovered and is submitted for injestion in the Construct
-   * Hub.
+   * The URL to an S3 object that holds the contents of the npm package `.tgz`
+   * bundle that has been discovered and is submitted for injestion in the
+   * Construct Hub.
    */
-  readonly assemblyUri: URL;
+  readonly packageUri: URL;
 
   /**
    * The timestamp at which the version has been created in the package
@@ -571,7 +572,7 @@ export interface IngestionInput {
 
   /**
    * A standardized checksum of the contents of the S3 object denoted by
-   * `assemblyUri` and `time` field formatted in some canonical form. The
+   * `packageUri` and `time` field formatted in some canonical form. The
    * checksum is encoded as a string with the following format:
    * `<algorithm>-<base64-encoded-hash>`.
    *
