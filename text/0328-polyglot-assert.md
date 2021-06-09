@@ -18,40 +18,24 @@ functionalities to users in all CDK supported languages.
 
 ### README
 
-<!--BEGIN STABILITY BANNER-->
-
----
-
-![cdk-constructs: Stable](https://img.shields.io/badge/cdk--constructs-stable-success.svg?style=for-the-badge)
-
----
-
-<!--END STABILITY BANNER-->
-
-> NOTE: This module contains *beta APIs*.
->
-> Some of the symbols in the APIs are suffixed with the `Beta<n>`.
-> When we have backwards incompatible change, we will create a new
-> symbol with a `Beta<n+1>` suffix and deprecate the `Beta<n>` symbol.
----
 This module allows asserting the contents of CloudFormation templates.
 
 To run assertions based on a CDK `Stack`, start off with -
 
 ```ts
 import { Stack } from '@aws-cdk/core';
-import { TemplateAssertionsBeta1 } from '@aws-cdk/assertions';
+import { TemplateAssertions } from '@aws-cdk/assertions';
 
 const stack = new cdk.Stack(...)
 ...
-const assert = TemplateAssertionsBeta1.fromStack(stack);
+const assert = TemplateAssertions.fromStack(stack);
 ```
 
 Alternatively, assertions can be run on an existing CloudFormation template -
 
 ```ts
 const template = fs.readFileSync('/path/to/template/file');
-const assert = TemplateAssertionsBeta1.fromTemplate(template);
+const assert = TemplateAssertions.fromTemplate(template);
 ```
 
 #### Full Template Match
@@ -171,7 +155,7 @@ assert.assertHasResource('Foo::Bar', {
   Properties: { Foo: 'Bar' },
   DependsOn: [ 'Waldo', 'Fred' ],
 }, {
-  part: ResourcePartBeta1.COMPLETE,
+  part: ResourcePart.COMPLETE,
 });
 ```
 
@@ -187,7 +171,7 @@ String json = """
 
 Map expected = new Gson().fromJson(json, Map.class);
 assert.assertHasResource("Foo::Bar", expected,
-  new AssertResourceOptionsBeta1.Builder().part(ResourcePartBeta1.COMPLETE).build());
+  new AssertResourceOptions.Builder().part(ResourcePart.COMPLETE).build());
 ```
 
 ```py
@@ -201,7 +185,7 @@ expected = """
   } """;
 
 assertion.assert_has_resource('Foo::Bar', json.loads(expected),
-  assertion.AssertResourceOptionsBeta1(part=ResourcePartBeta1.COMPLETE))
+  assertion.AssertResourceOptions(part=ResourcePart.COMPLETE))
 ```
 
 ## FAQ
@@ -239,33 +223,24 @@ This module is available in the languages as per the table below -
 
 ### Is this feature available in the AWS CDK v2?
 
-This module is available in both the AWS CDK v1 and v2, just like all of our other
-modules.
+This module is available in both the AWS CDK v2, just like the other CDK modules.
 
-In CDKv2, this module will be available as part of `aws-cdk-lib`.
-The import statement you will need to use is -
+Initially, this will be an experimental module. During this period, this module
+will be available under the package name `@aws-cdk/assertions` (or as identified
+in the table above) with the versioning scheme - `2.0.0-alpha.X` (or `0.x.y`,
+decided in a different RFC).
+
+Once this module is generally available, it will be available as part of `aws-cdk-lib`,
+and the import statement you will need to use is -
 
 ```ts
 import { assertions } from 'aws-cdk-lib';
 ```
 
 Read more about `aws-cdk-lib` at
-<https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme>.
-
-### Why are the APIs suffixed with the `BetaX` suffix?
-
-We have promised that there will be no backwards incompatible or breaking changes
-to our APIs in `aws-cdk-lib` as part of the AWS CDK v2.
-
-However, this module is still under development and is a developer preview release,
-where we are collecting feedback from users and performing necessary improvements.
-
-When an API needs to be modified in backwards incompatible ways, we will create a
-new API with a new suffix (`Beta2`, etc.). The old APIs will continue to be work but
-will be marked as deprecated.
-
-When the module is ready for prime time, we will publish the APIs without the 'Beta'
-suffix and mark all 'Beta' APIs as deprecated.
+<https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme> and about the
+CDK module lifecycle at
+<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md>.
 
 ## Internal FAQ
 
@@ -325,6 +300,12 @@ This is not a breaking change.
    const assertions = TemplateAssertions.fromStack(stack);
    assertions.assertResource('Foo::Bar', { ... });
    ```
+
+4. With the current solution, the `@aws-cdk/assertions` module must be part
+   of the monocdk. It cannot be reorganized and released as-is into a
+   separate repository.
+
+   See [Appendix A](#appendix-a---detailed-design) for more details.
 
 ### What are the mitigations and/or long term plans to address these concerns?
 
@@ -402,8 +383,10 @@ are published as a separate module. There is a strict requirement imposed by the
 `aws-cdk-lib` packaging mechanism that it cannot depend on any of the experimental
 modules.
 
-To adhere to these constraints, the new assert module is marked as 'stable' and
-we will use the experimental API feature, i.e., suffix all APIs with `Beta<n>`.
+The 'assertion' module will be marked as 'experimental' and released as any other
+experimental API.
+This 'assertion' module would only be a `devDependencies` from other CDK modules,
+and hence will not be recognized as a dependenecy of `aws-cdk-lib`.
 
 ## Appendix B - Alternatives
 
