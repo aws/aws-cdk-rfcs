@@ -39,7 +39,6 @@ This module allows asserting the contents of CloudFormation templates.
 To run assertions based on a CDK `Stack`, start off with -
 
 ```ts
-// In typescript
 import { Stack } from '@aws-cdk/core';
 import { TemplateAssertionsBeta1 } from '@aws-cdk/assertions';
 
@@ -48,47 +47,11 @@ const stack = new cdk.Stack(...)
 const assert = TemplateAssertionsBeta1.fromStack(stack);
 ```
 
-```java
-// In Java
-import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.assertions.TemplateAssertionsBeta1;
-
-Stack stack = new Stack(...)
-...
-TemplateAssertionsBeta1 assert = TemplateAssertionsBeta1.fromStack(stack);
-```
-
-```py
-# In Python
-from aws_cdk import (core, assertions)
-
-stack = core.Stack(...)
-...
-assertion = assertions.TemplateAssertionsBeta1.fromStack(stack)
-```
-
 Alternatively, assertions can be run on an existing CloudFormation template -
 
 ```ts
-// In typescript
 const template = fs.readFileSync('/path/to/template/file');
 const assert = TemplateAssertionsBeta1.fromTemplate(template);
-```
-
-```java
-// In Java
-import com.google.commons.io.Files; // using Google Guava. Use any utility of your choice
-
-String template = Files.readString("/path/to/template/file");
-TemplateAssertionsBeta1 assert = TemplateAssertionsBeta1.fromTemplate(template);
-```
-
-```py
-# In Python
-with open('/path/to/template/file', 'r') as file:
-  template = file.readlines().join('')
-...
-assertion = assertions.TemplateAssertionsBeta1.fromTemplate(template)
 ```
 
 #### Full Template Match
@@ -140,7 +103,7 @@ expected = """
     }
   } """
 
-assertion.assertTemplateMatches(json.loads(expected))
+assertion.assert_template_matches(json.loads(expected))
 ```
 
 #### Counting Resources
@@ -149,18 +112,7 @@ This module allows asserting the number of resources of a specific type found
 in a template.
 
 ```ts
-// In typescript
 assert.assertResourceCountIs('Foo::Bar', 2);
-```
-
-```java
-// In Java
-assert.assertResourceCountIs("Foo::Bar", 2);
-```
-
-```py
-# In Python
-assertion.assertResourceCountIs('Foo::Bar', 2)
 ```
 
 #### Resource Matching
@@ -206,7 +158,7 @@ expected = """
     "Qux": [ "Waldo", "Fred" ],
   } """;
 
-assertion.assertHasResource('Foo::Bar', json.loads(expected))
+assertion.assert_has_resource('Foo::Bar', json.loads(expected))
 ```
 
 The same method allows asserting the complete definition of the 'Resource'
@@ -248,7 +200,7 @@ expected = """
     "DependsOn": [ "Waldo", "Fred" ],
   } """;
 
-assertion.assertHasResource('Foo::Bar', json.loads(expected),
+assertion.assert_has_resource('Foo::Bar', json.loads(expected),
   assertion.AssertResourceOptionsBeta1(part=ResourcePartBeta1.COMPLETE))
 ```
 
