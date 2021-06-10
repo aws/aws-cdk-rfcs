@@ -77,17 +77,14 @@ assert.assertTemplateMatches(expected);
 # In Python
 import json
 
-expected = """
-  {
-    "Resources": {
-      "Type": "Foo::Bar",
-      "Properties": {
-        "Baz": false
-      }
+assertion.assert_template_matches({
+  'Resources': {
+    'Type': 'Foo::Bar',
+    'Properties': {
+      'Baz': False
     }
-  } """
-
-assertion.assert_template_matches(json.loads(expected))
+  }
+})
 ```
 
 #### Counting Resources
@@ -135,14 +132,11 @@ assert.assertHasResource("Foo::Bar", expected);
 # In Python
 import json
 
-expected = """
-  {
-    "Foo": "Bar",
-    "Baz": 5,
-    "Qux": [ "Waldo", "Fred" ],
-  } """;
-
-assertion.assert_has_resource('Foo::Bar', json.loads(expected))
+assertion.assert_has_resource('Foo::Bar', {
+  'Foo': 'Bar',
+  'Baz': 5,
+  'Qux': [ 'Waldo', 'Fred' ],
+})
 ```
 
 The same method allows asserting the complete definition of the 'Resource'
