@@ -41,5 +41,5 @@ Short description of the proposed feature:
 
 ---
 
-> Driver is responsible drive the RFC according to this checklist, and apply the
+> Driver is responsible to progress the RFC according to this checklist, and apply the
 relevant labels to this issue so that the RFC table in README gets updated.
