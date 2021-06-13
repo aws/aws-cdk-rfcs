@@ -178,7 +178,7 @@ When the issue is created, it is required to fill in the following information:
 
 ### 2. Identify roles and responsibilities
 
-Each RFC has a __driver__, __approver(s)__ and __stakeholders__. 
+Each RFC has a __driver__, __approver(s)__ and __stakeholders__.
 
 The __driver__ is the person responsible to drive this RFC to completion. This
 does __not__ mean that the driver must be the person actually doing all the
@@ -210,7 +210,7 @@ happened,
 
 ### 4. Write RFC document and implement prototype
 
-The next step is to write the first revision of the RFC document itself. 
+The next step is to write the first revision of the RFC document itself.
 
 **Document**: Use the file [0000-template.md](./0000-template.md) as a template
 and put your new RFC under `text/NNNN-name.md` (where `NNNN` is your tracking
@@ -242,12 +242,12 @@ feedback.
 
 This is where the fun begins. Once you start receiving feedback on your pull request,
 iterate on your document. Take time to read the comments, understand where people are coming
-from, respond politely and iterate. 
+from, respond politely and iterate.
 
 A few tips:
 
 - If you decide to resolve a comment without addressing it, take the time to explain.
-- Try to understand where people are coming from. If a comment seems off, ask folks to elaborate and 
+- Try to understand where people are coming from. If a comment seems off, ask folks to elaborate and
   describe their use case or provide concrete examples.
 - Work with your approver(s): if there are disagreements, @mention them in a comment and ask them
   to provide their opinion.
@@ -296,8 +296,6 @@ Throughout this process, update the tracking issue:
 ## State Diagram
 
 The following state diagram describes the RFC process:
-
-<a id="diagram"></a>
 
 ![rfc-states](./images/lifecycle.png)
 

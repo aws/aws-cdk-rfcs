@@ -2,7 +2,7 @@
 
 > One sentence: brief description of the feature from a user perspective.
 
-* Tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
+* Tracking issue: [#NNN](https://github.com/aws/aws-cdk-rfcs/issues/NNN)
 * Author(s): @alias, @alias, ...
 * Approver(s): @alias, @alias, ...
 
@@ -12,17 +12,20 @@
 > feature was already released and we are publishing its CHANGELOG, README and
 > optionally a PRESS RELEASE. This is the most important section of your RFC.
 > It's a powerful thought exercise which will challenge you to truly think about
-> this feature from a user's point of view. 
-
+> this feature from a user's point of view.
+>
 > Choose *one or more* of the options below:
+>
 > * **CHANGELOG**: Write the changelog entry for this feature in conventional form
 > (e.g. `feat(eks): cluster tags`). If this change includes a breaking change,
 > include a `BREAKING CHANGE` clause with information on how to migrate. If
 > migration is complicated, refer to a fictional GitHub issue and add its
 > contents here.
+>
 > * **README**: If this is a new feature, write the README section which describes
 > this new feature. It should describe the feature and walk users through usage
 > examples and description of the various options and behavior.
+>
 > * **PRESS RELEASE**: If this is a major feature (~6 months of work), write the
 > press release which announces this feature. The press release is a single page
 > that includes 7 paragraphs: (1) summary, (2) problem, (3) solution, (4) leader
