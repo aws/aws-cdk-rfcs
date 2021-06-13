@@ -1,11 +1,12 @@
----
-rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after you've already created the PR
-tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
----
-
 # [TITLE]
 
 > One sentence: brief description of the feature from a user perspective.
+
+Administration:
+
+* Tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
+* Author(s): 
+* Approver(s):
 
 ## Working Backwards
 
