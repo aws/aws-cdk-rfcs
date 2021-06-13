@@ -144,13 +144,16 @@ issue and ask.
 
 ## RFC Process
 
-To kick off an RFC process, simply create a [new tracking issue] and follow the instructions in the template. The issue includes a checklist of the various
+To kick off an RFC process, simply create a [new tracking issue] and follow the
+instructions in the template. The issue includes a checklist of the various
 stages an RFC goes through.
+
+[new tracking issue]: https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=management%2Ftracking%2C+status%2Fproposed&template=tracking-issue.md&title=proposal+title
 
 This section describes each stage in detail, so you can refer to it for
 guidance.
 
-### Create a tracking issue
+### 1. Create a tracking issue
 
 Each RFC has a GitHub issue that tracks it from start to finish. The issue is
 the hub for conversations, community signal (+1s) and the issue number is used
@@ -160,9 +163,11 @@ as the unique identifier of this RFC.
 the RFC table above or in the issue list of this repo. If there is a relevant
 RFC, collaborate on that existing RFC, based on its current stage.
 
-Our tracking issue template includes a checklist of all the steps an RFC goes
+Our [tracking issue template] includes a checklist of all the steps an RFC goes
 through and it's the driver's responsibility to update the checklist and assign
 the correct label to on the RFC throughout the process.
+
+[tracking issue template]: https://github.com/aws/aws-cdk-rfcs/blob/master/.github/ISSUE_TEMPLATE/tracking-issue.md
 
 When the issue is created, it is required to fill in the following information:
 
@@ -171,7 +176,7 @@ When the issue is created, it is required to fill in the following information:
 3. **Proposed by**: fill in the GitHub alias of the person who proposed the idea
    under "Proposed by".
 
-### Identify roles and responsibilities
+### 2. Identify roles and responsibilities
 
 Each RFC has a __driver__, __approver(s)__ and __stakeholders__. 
 
@@ -190,7 +195,7 @@ various stages of the process.
 
 The driver is responsible to update the **Roles** table in the tracking issue.
 
-### Organize a kick-off meeting
+### 3. Organize a kick-off meeting
 
 Before diving into writing the RFC, is it highly recommended to organize a
 kick-off meeting that includes the driver, approver(s) and stakeholders. The
@@ -203,7 +208,7 @@ Use the tracking issue to record any ideas and decisions from the kick-off
 meeting and update the issue checklist to indicate that the kick-off meeting has
 happened,
 
-### Write RFC document and implement prototype
+### 4. Write RFC document and implement prototype
 
 The next step is to write the first revision of the RFC document itself. 
 
@@ -223,7 +228,7 @@ water".
 Submit the RFC document as a pull request in this repo and start collecting
 feedback.
 
-### Invite community to review
+### 5. Invite community to review
 
 The whole point of the RFC is to get feedback ("request for comments"). Once you
 have an initial version submitted as a pull request, it is time to reach out to
@@ -233,7 +238,7 @@ Use the [cdk.dev](https://cdk.dev) Slack workspace, Twitter and any other
 relevant forum to publish your RFC and ask the community to provide their
 feedback.
 
-### Iterate on the RFC document
+### 6. Iterate on the RFC document
 
 This is where the fun begins. Once you start receiving feedback on your pull request,
 iterate on your document. Take time to read the comments, understand where people are coming
@@ -254,7 +259,7 @@ A few tips:
   agreement about that. We oftentimes update an RFC doc a few times during the
   implementation.
 
-### Final Comments Period
+### 7. Final Comments Period
 
 At some point, you've reached consensus about most issues that were brought up
 during the review period. In consultation with the approvers, a driver can
@@ -264,14 +269,14 @@ announce that the RFC enters "final comments period", which means that within a
 Add a comment on the RFC pull request and tracking issue that the RFC entered
 this stage so that all relevant stakeholders will be notified.
 
-### Obtain final approval
+### 8. Obtain final approval
 
 Once the final comments period is over, and the author has made final edits, the
 RFC can be approved by the approvers and merged into the repository.
 
 NOTE: only RFCs that were approved by approvers should be merged.
 
-### Implement the new feature
+### 9. Implementation
 
 For large changes, we highly recommend creating an implementation plan which
 lists all the tasks required. In many cases, large implementation  should be
