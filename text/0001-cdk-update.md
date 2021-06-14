@@ -3,9 +3,10 @@ rfc pr: [#335](https://github.com/aws/aws-cdk-rfcs/pull/335)
 tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/1
 ---
 
-# CDK Update
+# Faster personal CDK deployments
 
-Rapid and automatic updates for code-only changes to CDK application stacks.
+Shorten the development iteration speed -- the "edit-compile-test" loop -- for
+CDK applications.
 
 ## Working Backwards
 
@@ -15,22 +16,24 @@ Rapid and automatic updates for code-only changes to CDK application stacks.
 
 ### README
 
-The `cdk update` command accelerates the asset deployments for your CDK
-application during development by inspecting the assets in your application,
-identifying those that can be updated in-place without a full CDK deployment,
-and doing so. It can either do this as an interactive command or by running
-continuously and monitoring the input files.
+The `cdk update` command accelerates the edit-compile-test loop for your CDK
+application during development by inspecting the assets and stack resources in
+your application, identifying those that can be updated in-place without a full
+CloudFormation stack udpate, and doing so using AWS service APIs directly. It
+can either do this as an interactive command or by running continuously and
+monitoring the input files.
 
 For supported construct types (see list, below) the update command will identify
-assets whose content has changed since the publication of the CDK, assemble them
-from sources if necessary, and then publish them to their asset storage medium.
-It will then use AWS SDK commands to directly modify the CDK resources to use
-the new asset paths. The update command acts on one or more stacks in the
-application, and will only perform the shortcut if all changes are updateable.
+assets whose content has changed since the last time the CDK application was
+deployed, and then publish them to their asset storage medium. It will then use
+AWS SDK commands to directly modify the CDK resources to use the new asset
+paths. The update command acts on one or more stacks in the application, and
+will only perform the shortcut if all changes are updateable.
 
 A stack is "updateable" if the stack is explicitly marked as updateable, and it
-contains any assets supported by the update process. At this time, only Lambda
-and ECS images are supported, and so any stack with one of those is updateable.
+contains resources supported by the update process. At this time, only Lambda
+Functions and ECS Services are supported, however more resource types will be
+added to this list in the future.
 
 At a high level, `update` operates by reading the current state of the stack,
 performing a stack diff on it, and if the stack is different only in resources
@@ -134,6 +137,11 @@ images.
   - image assets
 - ECS
   - image assets
+
+#### Future Support Plans
+
+- StepFunctions
+- API Gateway models
 
 ### PRESS RELEASE
 
@@ -284,10 +292,3 @@ monitoring the inputs of assets for changes.
   to support asset construction directly.
 - Direct support for monitoring container repositories for changes (possibly via
   polling) instead of only supporting local rebuild.
-
-## Appendix
-
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
