@@ -197,7 +197,7 @@ The driver is responsible to update the **Roles** table in the tracking issue.
 
 ### 3. Organize a kick-off meeting
 
-Before diving into writing the RFC, is it highly recommended to organize a
+Before diving into writing the RFC, it is highly recommended to organize a
 kick-off meeting that includes the driver, approver(s) and stakeholders. The
 goal of the meeting is to discuss the feature, its scope and general direction
 for implementation.
