@@ -9,7 +9,7 @@
 ## Working Backwards
 
 > This section should contain one or more "artifacts from the future", as if the
-> feature was already released and we are publishing its CHANGELOG, README and
+> feature was already released and we are publishing its CHANGELOG, README, CONTRIBUTING.md and
 > optionally a PRESS RELEASE. This is the most important section of your RFC.
 > It's a powerful thought exercise which will challenge you to truly think about
 > this feature from a user's point of view.
