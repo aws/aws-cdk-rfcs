@@ -211,8 +211,6 @@ the capability.
 
 ### What changes are required to enable this change?
 
-This RFC requires two changes:
-
 1. An implementation of the `cdk deploy --accelerated` command in the CDK
    toolkit that can examine the Application stacks for updates that can be
    applied and apply them.
@@ -275,3 +273,13 @@ monitoring the inputs of assets for changes.
   to support asset construction directly.
 - Direct support for monitoring container repositories for changes (possibly via
   polling) instead of only supporting local rebuild.
+
+# How do we keep production from being affected by CDK accelerate?
+
+CDK accelerate uses the AWS IAM access controls already in place in your account
+to maintain the safety of your production deployments. The interface to CDK
+accelerate requires the developer to specify the stacks that they will be
+deploying explicitly, so by default it is affecting only the developer's stacks,
+and when a production stack is defined it is up to the AWS account administrator
+to ensure that the interactive developer's roles do not have modification access
+to the accelerated resources.
