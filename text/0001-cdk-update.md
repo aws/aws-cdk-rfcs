@@ -20,7 +20,7 @@ CDK applications.
 The `cdk deploy --accelerated` ("CDK accelerate") command accelerates the
 edit-compile-test loop for your CDK application during development by inspecting
 the assets and stack resources in your application, identifying those that can
-be updated in-place without a full CloudFormation stack udpate, and doing so
+be updated in-place without a full CloudFormation stack update, and doing so
 using AWS service APIs directly. It can either do this as an interactive command
 or by running continuously and monitoring the input files.
 
