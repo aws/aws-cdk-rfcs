@@ -15,6 +15,23 @@ CDK applications.
 - feat(cli): implement `cdk deploy --accelerated` and
   `cdk deploy --accelerated --watch`
 
+### Help
+
+```
+cdk deploy --help
+
+    --accelerated[=only|auto|no]   Perform an accelerated deployment of the stack.
+                                (`--accelerated=only` will fail if there are
+                                non-accelerated updates)
+    -w --watch   Watch for file changes and deploy any updates. Implies
+                 --accelerated=auto if --accelerated is not specified.
+
+Examples:
+    cdk deploy -w
+    cdk deploy --accelerated
+    cdk deploy --accelerated=only --watch
+```
+
 ### README
 
 The `cdk deploy --accelerated` ("CDK accelerate") command accelerates the
@@ -25,23 +42,14 @@ using AWS service APIs directly. It can either do this as an interactive command
 or by running continuously and monitoring the input files.
 
 For supported construct types (see list, below) the update command will identify
-assets whose content has changed since the last time the CDK application was
-deployed, and then publish them to their asset storage medium. It will then use
-AWS SDK commands to directly modify the CDK resources to use the new asset
-paths. The update command acts on one or more stacks in the application, and
-will only perform the shortcut if all changes are updateable.
+assets or other stack resources that have changed since the last time the CDK
+application was deployed, and update them in-place according to their types.
+Assets will be uploaded to their storage medium. The CDK will then use AWS SDK
+commands to directly modify the stack resources in-place to synchronize them
+with your local code. The accelerate command can act on one or more stacks in
+the application.
 
-A stack is "updateable" if the stack is explicitly marked as updateable, and it
-contains resources supported by the update process. At this time, only Lambda
-Functions and ECS Services are supported, however more resource types will be
-added to this list in the future.
-
-At a high level, `accelerate` operates by reading the current state of the
-stack, performing a stack diff on it, and if the stack is different only in
-resources supported by update plugins, running those in lieu of a full
-deployment.
-
-#### Running Update
+#### Usage
 
 To run a one-shot update, you can invoke the `cdk deploy --accelerated` command
 on some or all of your stacks:
@@ -165,7 +173,8 @@ interactive update, and then using `cdk deploy --accelerated` instead of
 ### What are we launching today?
 
 The `cdk deploy --accelerated` and `cdk deploy --accelerated --watch` commands,
-with support for rapid update of Lambda function code and Fargate images.
+with support for rapid update of Lambda function code, images for ECS and
+Fargate task definitions, and AWS StepFunction workflows.
 
 ### Why should I use this feature?
 
@@ -178,6 +187,13 @@ should use this feature.
 To an extent, yes, but there are caveats. In order to update the lambda code you
 will need to run your build process to create the jar or executable that you are
 uploading as lambda code.
+
+### Does this feature work with `aws-lambda-go` for compiled Lambdas?
+
+Yes, if your lambda is defined by an `aws-lambda-go`, `aws-lambda-python`, or
+`aws-lambda-nodejs` construct, the accelerate and watch capabilities will work
+within those source trees to automatically deploy changes to your code as you
+make it.
 
 ### What about "other resource type"?
 
@@ -214,10 +230,9 @@ the capability.
 1. An implementation of the `cdk deploy --accelerated` command in the CDK
    toolkit that can examine the Application stacks for updates that can be
    applied and apply them.
-2. An expansion of the CDK asset model to include optional construction process
-   metadata and construction input metadata. This is required to allow CDK to
-   identify input changes to the asset, reconstruct it from the defined
-   processes, and then publish it to the necessary AWS service.
+2. The CDK toolkit must be able to query a CDK resource for the set of
+   filesystem resources it must monitor for the `--watch` operation, and run a
+   filesystem monitor for that.
 
 ### Is this a breaking change?
 
@@ -231,9 +246,9 @@ No, it is not.
 - The update model requires the AWS account used to publish the stack to also
   have sufficient permissions to update the underlying resources, rather than
   simply requiring the account to have CloudFormation access.
-- Runtimes that require compilation or assembly -- Go or Java lambdas, docker
-  images -- do not benefit from the `--watch` support as naturally, and require
-  some manual steps.
+- Runtimes that require compilation or assembly -- Java lambdas, docker images
+  -- do not benefit from the `--watch` support as naturally, and require some
+  manual steps.
 - updating Lambda functions that are using aliases and provisioned concurrency
   can take several minutes to switch over between the two versions.
 
@@ -254,21 +269,20 @@ off of information in the CDK `App` context.
 ### What is the high level implementation plan?
 
 We will start from the prototype CDK update command that identifies the Lambda
-resources and then publishes them using the CDK toolkit. We will expand it to
-generalize it to use a simple plugin model to define the update mechanism, which
-will allow for ECS support in addition to Lambda support.
+resources and then publishes them using the CDK toolkit.
+
+We will propose updates to the initial CDK constructs that are capable of
+accelerated deployment and make those changes to the CDK.
 
 Additionally, a `--watch` flag and a file watcher will be added to support
-monitoring the inputs of assets for changes.
+monitoring the inputs of stack resources for changes.
 
 ### Are there any open issues that need to be addressed later?
 
-- This RFC requires changes that may affect
-  [rfc-0092 - cdk assets](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md),
-  as it entails changes to the asset model to support asset transformation and
-  sources.
 - This RFC can be extended to add support for further pluggable asset and update
-  targets.
+  targets. The accelerate capabilities are attached to the CDK constructs, not
+  the CDK CLI toolkit, so any CDK construct that can perform accelerated
+  deployment can implement that capability in whatever manner is appropriate.
 - This RFC will be enhanced significantly when the CDK asset model is enriched
   to support asset construction directly.
 - Direct support for monitoring container repositories for changes (possibly via
