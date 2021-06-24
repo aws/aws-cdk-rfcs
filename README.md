@@ -219,9 +219,13 @@ implementation.
 
 Our experience shows that such a meeting can save a lot of time and energy.
 
-Use the tracking issue to record any ideas and decisions from the kick-off
-meeting and update the issue checklist to indicate that the kick-off meeting has
-happened,
+Use the RFC tracking issue to record some initial API and design ideas and
+collect early feedback and use cases as a preparation for the kick off meeting.
+You can start the meeting by letting participants obtaining context from the
+tracking issue.
+
+At the end of the meeting, record any ideas and decisions in the tracking issue
+and update the checklist to indicate that the kick-off meeting has happened.
 
 ### 4. Write RFC document and implement prototype
 

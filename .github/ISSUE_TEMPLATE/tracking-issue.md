@@ -18,10 +18,12 @@ Short description of the proposed feature.
 | API Bar Raiser      | @alias
 | Stakeholders        | @alias, @alias, @alias
 
+> See [RFC Process](https://github.com/aws/aws-cdk-rfcs#rfc-process) for details
+
 ## Workflow
 
 - [x] Tracking issue created (label: `status/proposed`)
-- [ ] API Bar Raiser assigned
+- [ ] API Bar Raiser assigned (ping us at [#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) if needed)
 - [ ] Kick off meeting
 - [ ] RFC pull request created (label: `status/review`)
 - [ ] Community reach out (via Slack and/or Twitter)
