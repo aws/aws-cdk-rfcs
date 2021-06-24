@@ -155,7 +155,7 @@ guidance.
 
 ### 1. Create a tracking issue
 
-Each RFC has a GitHub issue that tracks it from start to finish. The issue is
+Each RFC has a GitHub issue which tracks it from start to finish. The issue is
 the hub for conversations, community signal (+1s) and the issue number is used
 as the unique identifier of this RFC.
 
@@ -176,31 +176,46 @@ When the issue is created, it is required to fill in the following information:
 3. **Proposed by**: fill in the GitHub alias of the person who proposed the idea
    under "Proposed by".
 
-### 2. Identify roles and responsibilities
+### 2. API Bar Raiser
 
-Each RFC has a __driver__, __approver(s)__ and __stakeholders__.
+The public API of a feature represents the surface through which users interact
+with it, and we want to make sure these APIs are consistent, ergonomic and
+designed based on the intent and the mental model of our users. Additionally,
+once we announce that a feature is "stable" (1.0, GA, etc) any breaking change
+to its public API will require releasing a new major version, so we think of API
+decisions as "one way doors".
 
-The __driver__ is the person responsible to drive this RFC to completion. This
-does __not__ mean that the driver must be the person actually doing all the
-work, but it is the person responsible to get the RFC through the finish line.
+For each RFC, the core team will assign an **API Bar Raiser** who reviews and
+approves any public API of the feature. API Bar Raisers have veto rights on
+API-related design decisions, such as naming, structure, options, CLI commands
+and others.
 
-__Approvers__ are the people that have the authority to approve the RFC and any
-subsequent changes to it. Approvers have the final word if we cannot reach
-consensus.
+After an RFC is proposed, the core team will assign it an API Bar Raiser using a
+tiering model generally based on the size of the user base that will likely get
+exposed to the feature. As a general rule, the more "significant" the change is,
+we will assign a bar raiser with a wider and longer-term context of the project.
 
-__Stakeholders__ are people (internal/external) who may be impacted by this RFC
-or work on similar domains or projects. The goal is to make sure that
-stakeholders have an opportunity to influence the direction of the RFC in
-various stages of the process.
+API Bar Raisers are required to **sign off** on the **Working Backwards**
+section of your RFC, so we encourage to engage with them early in the process to
+make sure you are aligned on how the API should be designed.
 
-The driver is responsible to update the **Roles** table in the tracking issue.
+The API Bar Raiser is called out in the RFC tracking issue and in the RFC
+document itself. Feel free to reach us at the
+[#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) channel in the
+[cdk.dev](https://cdk.dev) slack workspace if you need a bar raiser assigned to
+your RFC.
+
+> The engineering solution proposed in an RFC does not need require approval
+> beyond the normal pull request approval model (e.g. a core team member needs
+> to approve the RFC PR and any subsequent changes to it).
 
 ### 3. Organize a kick-off meeting
 
 Before diving into writing the RFC, it is highly recommended to organize a
-kick-off meeting that includes the driver, approver(s) and stakeholders. The
-goal of the meeting is to discuss the feature, its scope and general direction
-for implementation.
+kick-off meeting that includes the API Bar Raiser and any stakeholders that
+might be interested in this RFC or can contribute ideas and direction. The goal
+of the meeting is to discuss the feature, its scope and general direction for
+implementation.
 
 Our experience shows that such a meeting can save a lot of time and energy.
 
@@ -216,7 +231,8 @@ The next step is to write the first revision of the RFC document itself.
 and put your new RFC under `text/NNNN-name.md` (where `NNNN` is your tracking
 issue number).
 
-Follow the template. It includes useful guidance and tips on how to write a good RFC.
+Follow the template. It includes useful guidance and tips on how to write a good
+RFC.
 
 **Prototype**: in many cases, it is useful to develop a prototype or even start
 coding the actual implementation while you are writing the RFC document. Take
@@ -240,41 +256,51 @@ feedback.
 
 ### 6. Iterate on the RFC document
 
-This is where the fun begins. Once you start receiving feedback on your pull request,
-iterate on your document. Take time to read the comments, understand where people are coming
-from, respond politely and iterate.
+This is where the fun begins. Once you start receiving feedback on your pull
+request, iterate on your document. Take time to read the comments, understand
+where people are coming from, respond politely and iterate.
 
 A few tips:
 
-- If you decide to resolve a comment without addressing it, take the time to explain.
-- Try to understand where people are coming from. If a comment seems off, ask folks to elaborate and
-  describe their use case or provide concrete examples.
-- Work with your approver(s): if there are disagreements, @mention them in a comment and ask them
-  to provide their opinion.
-- Be patient: it sometimes takes time for an RFC to converge. Our experience shows that some ideas
-  need to "bake" and solutions oftentimes emerge via a healthy debate. We've had RFCs that took
-  months to resolve.
+- If you decide to resolve a comment without addressing it, take the time to
+  explain.
+- Try to understand where people are coming from. If a comment seems off, ask
+  folks to elaborate and describe their use case or provide concrete examples.
+- Work with your API bar raiser: if there are disagreements, @mention them in a
+  comment and ask them to provide their opinion.
+- Be patient: it sometimes takes time for an RFC to converge. Our experience
+  shows that some ideas need to "bake" and solutions oftentimes emerge via a
+  healthy debate. We've had RFCs that took months to resolve.
 - Not everything must be resolved in the first revision. It is okay to leave
   some things to resolve later. Make sure to capture them clearly and have an
   agreement about that. We oftentimes update an RFC doc a few times during the
   implementation.
 
-### 7. Final Comments Period
+### 7. API Bar Raiser Sign-off
+
+Before you can merge your RFC, you will need the API Bar Raiser to sign off on
+the **Working Backwards** section of your document.
+
+To record this sign-off, the bar raiser will add a comment to your RFC PR
+indicating that the working backwards section looks good to them (LGTM) and will
+update the RFC doc to check the "sign off" box in the working backwards section
+(see template).
+
+### 8. Final Comments Period
 
 At some point, you've reached consensus about most issues that were brought up
-during the review period. In consultation with the approvers, a driver can
-announce that the RFC enters "final comments period", which means that within a
-~week, if no major concerns are raised, the RFC will be approved and merged.
+during the review period, and you are ready to merge. To allow "last call" on
+feedback, the author can announce that the RFC enters "final comments period",
+which means that within a ~week, if no major concerns are raised, the RFC will
+be approved and merged.
 
-Add a comment on the RFC pull request and tracking issue that the RFC entered
-this stage so that all relevant stakeholders will be notified.
+Add a comment on the RFC pull request, tracking issue (and possibly slack/email
+if relevant) that the RFC entered this stage so that all relevant stakeholders
+will be notified.
 
-### 8. Obtain final approval
-
-Once the final comments period is over, and the author has made final edits, the
-RFC can be approved by the approvers and merged into the repository.
-
-NOTE: only RFCs that were approved by approvers should be merged.
+Once the final comments period is over, seek an approval of one of the core team
+members, and you can merge your PR to the main branch. This will move your RFC
+to the "approved" state.
 
 ### 9. Implementation
 

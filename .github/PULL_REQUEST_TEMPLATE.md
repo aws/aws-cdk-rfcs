@@ -1,5 +1,8 @@
-* Tracking issue: #
+ONE-LINE DESCRIPTION (from TRACKING ISSUE)
+
+* Tracking issue: #NNN
 * [Rendered version](/my-branch/text/xxxx.md)
+* API Bar Raiser: @user
 
 ---
 
