@@ -454,7 +454,7 @@ records will be backed up in their original format.
 Data can be transformed before being delivered to destinations. There are two types of
 data processing for delivery streams: record transformation with AWS Lambda, and record
 format conversion using a schema stored in an AWS Glue table. If both types of data
-processing are configured, then the Lambda transofmration is perfromed first. By default,
+processing are configured, then the Lambda transformation is performed first. By default,
 no data processing occurs.
 
 ### Data transformation with AWS Lambda
