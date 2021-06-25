@@ -26,12 +26,12 @@ destinations.
 
 # Amazon Kinesis Data Firehose Construct Library
 
-This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
-project. It allows you to create Kinesis Data Firehose delivery streams. Firehose is a
-service for fully-managed delivery of real-time streaming data to storage services such as
-Amazon S3, Amazon Redshift, Amazon Elasticsearch, Splunk, or any custom HTTP endpoint or
-third-party services such as Datadog, Dynatrace, LogicMonitor, MongoDB, New Relic, and
-Sumo Logic.
+[Amazon Kinesis Data Firehose](https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html)
+is a service for fully-managed delivery of real-time streaming data to storage services
+such as Amazon S3, Amazon Redshift, Amazon Elasticsearch, Splunk, or any custom HTTP
+endpoint or third-party services such as Datadog, Dynatrace, LogicMonitor, MongoDB, New
+Relic, and Sumo Logic. This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
+project. It allows you to create Kinesis Data Firehose delivery streams.
 
 ## Creating a Delivery Stream
 
@@ -69,8 +69,9 @@ constructing a delivery stream:
 
 ```ts fixture=with-destination
 import * as kinesis from '@aws-cdk/aws-kinesis';
-const sourceStream = new kinesis.Stream(stack, 'Source Stream');
-new firehose.DeliveryStream(stack, 'Delivery Stream', {
+
+const sourceStream = new kinesis.Stream(this, 'Source Stream');
+new DeliveryStream(this, 'Delivery Stream', {
   sourceStream: sourceStream,
   destination: destination,
 });
@@ -103,24 +104,29 @@ for the implementations of these destinations.
 
 ### S3
 
+Creating a delivery stream with an S3 bucket destination:
+
 ```ts
 import * as s3 from '@aws-cdk/aws-s3';
-import * as firehose from '@aws-cdk/aws-kinesisfirehose';
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 
 const bucket = new s3.Bucket(this, 'Bucket');
 
-const s3Destination = new firehosedestinations.S3Destination({
+const s3Destination = new destinations.S3({
   bucket: bucket,
 });
-new firehose.DeliveryStream(this, 'Delivery Stream', {
+
+new DeliveryStream(this, 'Delivery Stream', {
   destination: s3Destination,
 });
 ```
 
-S3 supports custom dynamic prefixes:
+The S3 destination also supports custom dynamic prefixes. `prefix` will be used for
+files successfully delivered to Amazon S3. `errorOutputPrefix` will be added to
+failed records before writing them to S3.
 
 ```ts fixture=with-bucket
-const s3Destination = new firehosedestinations.S3Destination({
+const s3Destination = new destinations.S3({
   bucket: bucket,
   prefix: 'myFirehose/DeliveredYear=!{timestamp:yyyy}/anyMonth/rand=!{firehose:random-string}',
   errorOutputPrefix: 'myFirehoseFailures/!{firehose:error-output-type}/!{timestamp:yyyy}/anyMonth/!{timestamp:dd}',
@@ -133,14 +139,14 @@ See: [Custom S3 Prefixes](https://docs.aws.amazon.com/firehose/latest/dev/s3-pre
 
 ```ts
 import * as es from '@aws-cdk/aws-elasticsearch';
-import * as firehose from '@aws-cdk/aws-kinesisfirehose';
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 
 const domain = new es.Domain(this, 'Domain', {
   version: es.ElasticsearchVersion.V7_1,
 });
 
-new firehose.DeliveryStream(this, 'Delivery Stream', {
-  destination: new ElasticsearchDestination({
+const deliveryStream = new DeliveryStream(this, 'Delivery Stream', {
+  destination: new destinations.Elasticsearch({
     domain: domain,
     indexName: 'myindex',
   }),
@@ -158,7 +164,7 @@ schema will be created within the provided database.
 
 ```ts
 import * as ec2 from '@aws-cdk/aws-ec2';
-import * as firehose from '@aws-cdk/aws-kinesisfirehose';
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 import * as redshift from '@aws-cdk/aws-redshift';
 import { Duration, Size } from '@aws-cdk/core';
 
@@ -176,7 +182,7 @@ const cluster = new redshift.Cluster(this, 'Cluster', {
   publiclyAccessible: true,
 });
 
-const redshiftDestination = new RedshiftDestination({
+const redshiftDestination = new destinations.Redshift({
   cluster: cluster,
   user: {
     username: 'firehose',
@@ -191,7 +197,7 @@ const redshiftDestination = new RedshiftDestination({
   ],
   copyOptions: 'json \'auto\'',
 });
-new firehose.DeliveryStream(this, 'Delivery Stream', {
+new DeliveryStream(this, 'Delivery Stream', {
   destination: redshiftDestination,
 });
 ```
@@ -224,32 +230,34 @@ layer. Firehose manages keys and cryptographic operations so that sources and de
 do not need to, as the data is encrypted and decrypted at the boundaries of the Firehose
 service. By default, delivery streams do not have SSE enabled.
 
-The Key Management Service (KMS) Customer Managed Key (CMK) used for SSE can either be AWS-owned or
-customer-managed. AWS-owned CMKs are keys that an AWS service (in this case Firehose) owns
-and manages for use in multiple AWS accounts. As a customer, you cannot view, use, track, or manage
-these keys, and you are not charged for their use. On the other hand,
-customer-managed CMKs are keys that are created and owned within a your account and
-managed entirely by the you. As a customer, you are responsible for managing access, rotation,
-aliases, and deletion for these keys, and you are changed for their use. See: [Customer master keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys)
+The Key Management Service (KMS) Customer Managed Key (CMK) used for SSE can either be
+AWS-owned or customer-managed. AWS-owned CMKs are keys that an AWS service (in this case
+Firehose) owns and manages for use in multiple AWS accounts. As a customer, you cannot
+view, use, track, or manage these keys, and you are not charged for their use. On the
+other hand, customer-managed CMKs are keys that are created and owned within your account
+and managed entirely by you. As a customer, you are responsible for managing access,
+rotation, aliases, and deletion for these keys, and you are changed for their use. See:
+[Customer master keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys)
 in the *KMS Developer Guide*.
 
 ```ts fixture=with-destination
+import * as kms from '@aws-cdk/aws-kms';
+
 // SSE with an AWS-owned CMK
-new firehose.DeliveryStream(stack, 'Delivery Stream AWS Owned', {
-  encryption: firehose.StreamEncryption.AWS_OWNED,
+new DeliveryStream(this, 'Delivery Stream AWS Owned', {
+  encryption: StreamEncryption.AWS_OWNED,
   destination: destination,
 });
 
 // SSE with an customer-managed CMK that is created automatically by the CDK
-new firehose.DeliveryStream(stack, 'Delivery Stream Implicit Customer Managed', {
-  encryption: firehose.StreamEncryption.CUSTOMER_MANAGED,
+new DeliveryStream(this, 'Delivery Stream Implicit Customer Managed', {
+  encryption: StreamEncryption.CUSTOMER_MANAGED,
   destination: destination,
 });
 
 // SSE with an customer-managed CMK that is explicitly specified
-import * as kms from '@aws-cdk/aws-kms';
-const key = new kms.Key(stack, 'Key');
-new firehose.DeliveryStream(stack, 'Delivery Stream Explicit Customer Managed', {
+const key = new kms.Key(this, 'Key');
+new DeliveryStream(this, 'Delivery Stream Explicit Customer Managed'', {
   encryptionKey: key,
   destination: destination,
 });
@@ -273,23 +281,28 @@ delivery streams via logs and metrics.
 
 ### Logs
 
-Firehose will send logs to CloudWatch when data trasformation or data delivery fails. You
-can provide a specific log group to specify where the CDK will create the log streams
-where log events from Firehose will be sent. Logging for delivery streams is enabled by
-default.
+Firehose will send logs to CloudWatch when data transformation or data delivery fails.
+The CDK will enable logging by default and create a CloudWatch LogGroup and LogStream for
+your Delivery Stream.
+
+You can provide a specific log group to specify where the CDK will create the log streams
+where log events from Firehose will be sent:
 
 ```ts fixture=with-destination
-// Logging enabled with a log group that is automatically created by the CDK
-new firehose.DeliveryStream(stack, 'Delivery Stream Implicit Log Group', {
-  logging: true,
+import * as logs from '@aws-cdk/aws-logs';
+
+const logGroup = new logs.LogGroup(this, 'Log Group');
+new DeliveryStream(this, 'Delivery Stream', {
+  logGroup: logGroup,
   destination: destination,
 });
+```
 
-// Logging enabled with a log group that is explicitly specified
-import * as logs from '@aws-cdk/aws-logs';
-const logGroup = new logs.LogGroup(stack, 'Log Group');
-new firehose.DeliveryStream(stack, 'Delivery Stream Explicit Log Group', {
-  logGroup: logGroup,
+Logging can also be disabled:
+
+```ts fixture=with-destination
+new DeliveryStream(this, 'Delivery Stream', {
+  loggingEnabled: false,
   destination: destination,
 });
 ```
@@ -321,11 +334,11 @@ import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 const incomingBytesPercentOfLimit = new cloudwatch.MathExpression({
   expression: 'incomingBytes / 300 / bytePerSecLimit',
   usingMetrics: {
-    incomingBytes: deliveryStream.metricIncomingBytes({ statistic: 'sum' }),
+    incomingBytes: deliveryStream.metricIncomingBytes({ statistic: cloudwatch.Statistic.SUM }),
     bytePerSecLimit: deliveryStream.metric('BytesPerSecondLimit'),
   },
 });
-new Alarm(stack, 'Alarm', {
+new Alarm(this, 'Alarm', {
   metric: incomingBytesPercentOfLimit,
   threshold: 0.9,
   evaluationPeriods: 3,
@@ -338,18 +351,18 @@ in the *Firehose Developer Guide*.
 ## Compression
 
 Firehose can automatically compress your data when it is delivered to S3 as either a final
-or an intermediary destination. Supported compression formats are: gzip, Snappy,
+or an intermediary/backup destination. Supported compression formats are: gzip, Snappy,
 Hadoop-compatible Snappy, and ZIP, except for Redshift destinations, where Snappy
 (regardless of Hadoop-compatibility) and ZIP are not supported. By default, data is
 delivered to S3 without compression.
 
 ```ts fixture=with-bucket
 // Compress data delivered to S3 using Snappy
-const s3Destination = new firehosedestinations.S3Destination({
-  compression: firehose.Compression.SNAPPY,
+const s3Destination = new destinations.S3({
+  compression: Compression.SNAPPY,
   bucket: bucket,
 });
-new firehose.DeliveryStream(stack, 'Delivery Stream', {
+new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
 });
 ```
@@ -359,19 +372,20 @@ new firehose.DeliveryStream(stack, 'Delivery Stream', {
 Firehose buffers incoming data before delivering to the specified destination. Firehose
 will wait until the amount of incoming data has exceeded some threshold (the "buffer
 size") or until the time since the last data delivery occurred exceeds some threshold (the
-"buffer interval"), whichever happens first. You can configure these threshold based on
+"buffer interval"), whichever happens first. You can configure these thresholds based on
 the capabilities of the destination and your use-case. By default, the buffer size is 3
 MiB and the buffer interval is 1 minute.
 
 ```ts fixture=with-bucket
 // Increase the buffer interval and size to 5 minutes and 3 MiB, respectively
 import * as cdk from '@aws-cdk/core';
-const s3Destination = new firehosedestinations.S3Destination({
+
+const s3Destination = new destinations.S3({
   bufferingInterval: cdk.Duration.minutes(5),
   bufferingSize: cdk.Size.mebibytes(8),
   bucket: bucket,
 });
-new firehose.DeliveryStream(stack, 'Delivery Stream', {
+new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
 });
 ```
@@ -380,16 +394,19 @@ new firehose.DeliveryStream(stack, 'Delivery Stream', {
 
 Firehose can be configured to backup data to S3 that it attempted to deliver to the
 configured destination. Backed up data can be all the data that Firehose attempted to
-deliver or just data that Firehose failed to deliver (not available for Redshift and S3
-destinations). CDK can create a new S3 bucket where it will back up data or you can
-provide a bucket where data will be backed up. You can also provide prefix under which
+deliver or just data that Firehose failed to deliver (Redshift and S3 destinations can
+only backup all data). CDK can create a new S3 bucket where it will back up data or you
+can provide a bucket where data will be backed up. You can also provide prefix under which
 Firehose will place backed-up data within the bucket. By default, source data is not
 backed up to S3.
 
 ```ts fixture=with-domain
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
+import * as s3 from '@aws-cdk/aws-s3';
+
 // Enable backup of all source records (to an S3 bucket created by CDK)
-new firehose.DeliveryStream(this, 'Delivery Stream All', {
-  destination: new ElasticsearchDestination({
+const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All', {
+  destination: new destinations.Elasticsearch({
     domain: domain,
     indexName: 'myindex',
     backup: BackupMode.ALL,
@@ -397,8 +414,8 @@ new firehose.DeliveryStream(this, 'Delivery Stream All', {
 });
 
 // Enable backup of only the source records that Firehose failed to deliver (to an S3 bucket created by CDK)
-new firehose.DeliveryStream(this, 'Delivery Stream Failed', {
-  destination: new ElasticsearchDestination({
+const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup Failed', {
+  destination: new destinations.Elasticsearch({
     domain: domain,
     indexName: 'myindex',
     backup: BackupMode.FAILED,
@@ -406,10 +423,9 @@ new firehose.DeliveryStream(this, 'Delivery Stream Failed', {
 });
 
 // Explicitly provide an S3 bucket to which all source records will be backed up
-import * as s3 from '@aws-cdk/aws-s3';
-const backupBucket = new s3.Bucket(stack, 'Bucket');
-new firehose.DeliveryStream(this, 'Delivery Stream All Explicit Bucket', {
-  destination: new ElasticsearchDestination({
+const backupBucket = new s3.Bucket(this, 'Bucket');
+const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Bucket', {
+  destination: new destinations.Elasticsearch({
     domain: domain,
     indexName: 'myindex',
     backupBucket: backupBucket,
@@ -417,8 +433,8 @@ new firehose.DeliveryStream(this, 'Delivery Stream All Explicit Bucket', {
 });
 
 // Explicitly provide an S3 prefix under which all source records will be backed up
-new firehose.DeliveryStream(this, 'Delivery Stream All Explicit Prefix', {
-  destination: new ElasticsearchDestination({
+const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Prefix', {
+  destination: new destinations.Elasticsearch({
     domain: domain,
     indexName: 'myindex',
     backup: BackupMode.ALL,
@@ -426,6 +442,9 @@ new firehose.DeliveryStream(this, 'Delivery Stream All Explicit Prefix', {
   }),
 });
 ```
+
+If any Data Processing or Transformation is configured on your Delivery Stream, the source
+records will be backed up in their original format.
 
 ## Data Processing/Transformation
 
@@ -435,9 +454,7 @@ record format conversion using a schema stored in an AWS Glue table. If both typ
 processing are configured, then the Lambda transofmration is perfromed first. By default,
 no data processing occurs.
 
-This feature has not been completed (see #1234).
-
-### Record transformation with AWS Lambda
+### Data transformation with AWS Lambda
 
 To transform the data, Firehose will call a Lambda function that you provide and deliver
 the data returned in lieu of the source record. The function must return a result that
@@ -451,16 +468,15 @@ contains records in a specific format, including the following fields:
 The data is buffered up to 1 minute and up to 3 MiB by default before being sent to the
 function, but can be configured using `bufferInterval` and `bufferSize` in the processor
 configuration (see: [Buffering](#buffering)). If the function invocation fails due to a
-network timeout or because of hitting a invocation limit, the invocation is retried 3
-times by default, but can be configured using `retries` in the processor configuration. By
-default, no data processing occurs.
+network timeout or because of hitting an invocation limit, the invocation is retried 3
+times by default, but can be configured using `retries` in the processor configuration.
 
 ```ts fixture=with-bucket
 // Provide a Lambda function that will transform records before delivery, with custom
 // buffering and retry configuration
 import * as cdk from '@aws-cdk/core';
 import * as lambda from '@aws-cdk/aws-lambda';
-const lambdaFunction = new lambda.Function(stack, 'Processor', {
+const lambdaFunction = new lambda.Function(this, 'Processor', {
   runtime: lambda.Runtime.NODEJS_12_X,
   handler: 'index.handler',
   code: lambda.Code.fromAsset(path.join(__dirname, 'process-records')),
@@ -474,7 +490,7 @@ const s3Destination = new firehosedestinations.S3Destination({
   }],
   bucket: bucket,
 });
-new firehose.DeliveryStream(stack, 'Delivery Stream', {
+new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
 });
 ```
@@ -512,13 +528,11 @@ const myGlueTable = new glue.Table(this, 'MyGlueTable', {
   tableName: 'myGlueTable',
 });
 
-
 new DeliveryStream(this, 'Delivery Stream', {
   destination: new destinations.S3({
     dataFormatConversionConfiguration: {
       schema: myGlueTable,
       inputFormat: destinations.InputFormat.OPENX_JSON
-      // Might be able to nix this property and infer it from the glue table
       outputFormat: destinations.OuputFormat.PARQUET
     },
   }),
@@ -527,6 +541,84 @@ new DeliveryStream(this, 'Delivery Stream', {
 
 See: [Converting Input Record Format](https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html)
 in the *Firehose Developer Guide*.
+
+## Permission Grants
+
+IAM roles, users or groups which need to be able to work with delivery streams should be
+granted IAM permissions.
+
+Any object that implements the `IGrantable` interface (has an associated principal) can be
+granted permissions to a delivery stream by calling:
+
+- `grantRead(principal)` - grants the principal read access
+- `grantWrite(principal)` - grants the principal write permissions to a Stream
+- `grantReadWrite(principal)` - grants principal read and write permissions
+
+Grant `read` access to a delivery stream by calling the `grantRead()` method.
+
+```ts fixture=with-delivery-stream
+import * as iam from '@aws-cdk/aws-iam';
+const lambdaRole = new iam.Role(this, 'Role', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+}
+
+// give the role permissions to read information about the delivery stream
+deliveryStream.grantRead(lambdaRole);
+```
+
+The following read permissions are provided to a service principal by the `grantRead()` method:
+
+- `firehose:DescribeDeliveryStream`
+- `firehose:ListDeliveryStreams`
+- `firehose:ListTagsForDeliveryStream`
+
+#### Write Permissions
+
+Grant `write` permissions to a delivery stream is provided by calling the `grantWrite()` method.
+
+```ts fixture=with-delivery-stream
+import * as iam from '@aws-cdk/aws-iam';
+const lambdaRole = new iam.Role(this, 'Role', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+  description: 'Example role...',
+}
+
+// give the role permissions to modify the delivery stream
+deliveryStream.grantWrite(lambdaRole);
+```
+
+The following write permissions are provided to a service principal by the `grantWrite()` method:
+
+- `firehose:DeleteDeliveryStream`
+- `firehose:PutRecord`
+- `firehose:PutRecordBatch`
+- `firehose:StartDeliveryStreamEncryption`
+- `firehose:StopDeliveryStreamEncryption`
+- `firehose:UpdateDestination`
+
+#### Custom Permissions
+
+You can add any set of permissions to a delivery stream by calling the `grant()` method.
+
+```ts fixture=with-delivery-stream
+import * as iam from '@aws-cdk/aws-iam';
+const user = new iam.User(this, 'User');
+
+// give user permissions to update destination
+deliveryStream.grant(user, 'firehose:UpdateDestination');
+```
+
+---
+
+# Amazon Kinesis Firehose Destinations Library
+
+This library provides constructs for adding destinations to a Kinesis Firehose delivery stream.
+Destinations can be added by specifying the `destination` prop when creating a delivery stream.
+
+See Kinesis Firehose module README for usage examples.
+
+If further customization is required, use `HttpDestination` from this package or implement
+`firehose.IDestination`.
 
 ---
 
@@ -736,7 +828,7 @@ No.
   properties that are common to multiple destinations are specified in the
   destination instead of on the delivery stream, since this is how the API
   organizes it. Because the delivery stream only allows a single destination,
-  modelling these common properties on the delivery stream itself would reduce
+  modeling these common properties on the delivery stream itself would reduce
   the amount of configuration each destination implementation would need to
   manage. Practically, this would look like moving every property in
   `DestinationProps` into `DeliveryStreamProps`, as well as exposing hooks in
