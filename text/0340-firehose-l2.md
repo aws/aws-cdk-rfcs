@@ -550,13 +550,14 @@ granted IAM permissions.
 Any object that implements the `IGrantable` interface (has an associated principal) can be
 granted permissions to a delivery stream by calling:
 
-- `grantRead(principal)` - grants the principal read access
-- `grantWrite(principal)` - grants the principal write permissions to a Stream
-- `grantReadWrite(principal)` - grants principal read and write permissions
+- `grantRead(principal)` - grants the principal read access to the control plane
+- `grantWrite(principal)` - grants the principal write access to the control plane
+- `grantWriteData(principal)` - grants the principal write access to the data plane
+- `grantFullAccess(principal)` - grants principal full access to the delivery stream
 
-### Read Permissions
+### Control Plane Read Permissions
 
-Grant `read` access to a delivery stream by calling the `grantRead()` method.
+Grant `read` access to the control plane of a delivery stream by calling the `grantRead()` method.
 
 ```ts fixture=with-delivery-stream
 import * as iam from '@aws-cdk/aws-iam';
@@ -564,7 +565,7 @@ const lambdaRole = new iam.Role(this, 'Role', {
   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
 }
 
-// give the role permissions to read information about the delivery stream
+// Give the role permissions to read information about the delivery stream
 deliveryStream.grantRead(lambdaRole);
 ```
 
@@ -574,29 +575,45 @@ The following read permissions are provided to a service principal by the `grant
 - `firehose:ListDeliveryStreams`
 - `firehose:ListTagsForDeliveryStream`
 
-### Write Permissions
+### Control Plane Write Permissions
 
-Grant `write` permissions to a delivery stream is provided by calling the `grantWrite()` method.
+Grant `write` access to the control plane of a delivery stream by calling the `grantWrite()` method.
 
 ```ts fixture=with-delivery-stream
 import * as iam from '@aws-cdk/aws-iam';
 const lambdaRole = new iam.Role(this, 'Role', {
   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-  description: 'Example role...',
 }
 
-// give the role permissions to modify the delivery stream
+// Give the role permissions to modify the delivery stream
 deliveryStream.grantWrite(lambdaRole);
 ```
 
 The following write permissions are provided to a service principal by the `grantWrite()` method:
 
 - `firehose:DeleteDeliveryStream`
-- `firehose:PutRecord`
-- `firehose:PutRecordBatch`
 - `firehose:StartDeliveryStreamEncryption`
 - `firehose:StopDeliveryStreamEncryption`
 - `firehose:UpdateDestination`
+
+### Data Plane Write Permissions
+
+Grant `write` access to the data plane of a delivery stream by calling the `grantWriteData()` method.
+
+```ts fixture=with-delivery-stream
+import * as iam from '@aws-cdk/aws-iam';
+const lambdaRole = new iam.Role(this, 'Role', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+}
+
+// Give the role permissions to write data to the delivery stream
+deliveryStream.grantWriteData(lambdaRole);
+```
+
+The following write permissions are provided to a service principal by the `grantWriteData()` method:
+
+- `firehose:PutRecord`
+- `firehose:PutRecordBatch`
 
 ### Custom Permissions
 
@@ -700,8 +717,13 @@ we have fairly robust prototypes already implemented.
     readonly deliveryStreamArn: string;
     readonly deliveryStreamName: string;
     grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
-     // Grant identity permission to write data to the stream (PutRecord/Batch)
+    // Grant permission to describe the stream
+    grantRead(grantee: iam.IGrantable): iam.Grant;
+    // Grant permission to modify the stream
     grantWrite(grantee: iam.IGrantable): iam.Grant;
+    // Grant permission to write data to the stream
+    grantWriteData(grantee: iam.IGrantable): iam.Grant;
+    grantFullAccess(grantee: iam.IGrantable): iam.Grant;
     metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     // Some canned metrics as well like `metricBackupToS3DataFreshness`
   }
