@@ -47,6 +47,7 @@ new DeliveryStream(this, 'Delivery Stream', {
 ```
 
 The above example creates the following resources:
+
 - An S3 bucket
 - A Kinesis Data Firehose Delivery Stream with Direct PUT as the source and CloudWatch
   error logging turned on.
