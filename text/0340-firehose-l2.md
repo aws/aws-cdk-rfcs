@@ -129,9 +129,6 @@ const s3Destination = new firehosedestinations.S3Destination({
 
 See: [Custom S3 Prefixes](https://docs.aws.amazon.com/firehose/latest/dev/s3-prefixes.html) in the *Firehose Developer Guide*.
 
-S3 supports converting record formats when delivering:
-See: [Converting Input Record Format](https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html) in the *Firehose Developer Guide*.
-
 ### Elasticsearch
 
 ```ts
@@ -432,10 +429,19 @@ new firehose.DeliveryStream(this, 'Delivery Stream All Explicit Prefix', {
 
 ## Data Processing/Transformation
 
-Firehose supports transforming data before delivering it to destinations. To transform the
-data, Firehose will call a Lambda function that you provide and deliver the data returned
-in lieu of the source record. The function must return a result that contains records in a
-specific format, including the following fields:
+Firehose supports transforming data before delivering it to destinations. There are two
+types of data processing for Delivery Streams: record transformation with AWS Lambda, and
+record format conversion using a schema stored in an AWS Glue table. If both types of data
+processing are configured, then the Lambda transofmration is perfromed first. By default,
+no data processing occurs.
+
+This feature has not been completed (see #1234).
+
+### Record transformation with AWS Lambda
+
+To transform the data, Firehose will call a Lambda function that you provide and deliver
+the data returned in lieu of the source record. The function must return a result that
+contains records in a specific format, including the following fields:
 
 - `recordId` -- the ID of the input record that corresponds the results.
 - `result` -- the status of the transformation of the record: "Ok" (success), "Dropped"
@@ -476,7 +482,51 @@ new firehose.DeliveryStream(stack, 'Delivery Stream', {
 See: [Data Transformation](https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html)
 in the *Firehose Developer Guide*.
 
-This feature has not been completed (see #1234).
+### Record format conversion using AWS Glue
+
+Amazon Kinesis Data Firehose can convert the format of your input data from JSON to
+[Apache Parquet](https://parquet.apache.org/) or [Apache ORC](https://orc.apache.org/)
+before storing the data in Amazon S3. This allows you to change the format of your data
+records without writing any Lambda code, but you must use S3 as your destination.
+
+```ts
+import * as glue from '@aws-cdk/aws-glue';
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
+
+const myGlueDb = new glue.Database(this, 'MyGlueDatabase',{
+  databaseName: 'MyGlueDatabase',
+});
+const myGlueTable = new glue.Table(this, 'MyGlueTable', {
+  columns: [{
+    name: 'firstname',
+    type: glue.Schema.STRING,
+  }, {
+    name: 'lastname',
+    type: glue.Schema.STRING,
+  }, {
+    name: 'age',
+    type: glue.Schema.INTEGER,
+  }],
+  dataFormat: glue.DataFormat.PARQUET,
+  database: myGlueDb,
+  tableName: 'myGlueTable',
+});
+
+
+new DeliveryStream(this, 'Delivery Stream', {
+  destination: new destinations.S3({
+    dataFormatConversionConfiguration: {
+      schema: myGlueTable,
+      inputFormat: destinations.InputFormat.OPENX_JSON
+      // Might be able to nix this property and infer it from the glue table
+      outputFormat: destinations.OuputFormat.PARQUET
+    },
+  }),
+});
+```
+
+See: [Converting Input Record Format](https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html)
+in the *Firehose Developer Guide*.
 
 ---
 
