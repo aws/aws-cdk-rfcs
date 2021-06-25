@@ -1,6 +1,6 @@
 ---
-rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after you've already created the PR
-tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/340
+rfc pr: [#342](https://github.com/aws/aws-cdk-rfcs/pull/342)
+tracking issue: [#340](https://github.com/aws/aws-cdk-rfcs/issues/340)
 ---
 
 # Kinesis Data Firehose Delivery Stream L2
