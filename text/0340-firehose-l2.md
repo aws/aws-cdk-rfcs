@@ -670,8 +670,9 @@ functional application with no manual effort.
 
 ### Why should we _not_ do this?
 
-The Firehose API seems somewhat immature and implementing an L2 on top of the
-current L1 may be setting us up for changes in the future. See: “alternative
+We are not confident that the service API is fully set in stone and implementing an L2 on
+top of the current L1 may be setting us up for changes in the future. We are reaching out
+to the service team to get their input and plans for the service. See: “alternative
 solutions”, below, for concrete details.
 
 It’s a large effort (3 devs * 1 week) to invest in a module when we have other
