@@ -33,21 +33,67 @@ Amazon S3, Amazon Redshift, Amazon Elasticsearch, Splunk, or any custom HTTP end
 third-party services such as Datadog, Dynatrace, LogicMonitor, MongoDB, New Relic, and
 Sumo Logic.
 
-The simplest specification of a delivery stream is to create an implementation of
-`IDestination` and provide it to the constructor of the delivery stream. Supported
-destinations are covered [below](#destinations).
+## Creating a Delivery Stream
+
+In order to create a Delivery Stream, you must specify a destination. An S3 bucket can be
+used as a destination. More supported destinations are covered [below](#destinations).
+
 ```ts
-const destination: firehose.IDestination = (void '...', {
-  bind(_scope: Construct, _options: firehose.DestinationBindOptions): firehose.DestinationConfig {
-    return {
-      properties: {},
-    };
-  }
+import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
+
+new DeliveryStream(this, 'Delivery Stream', {
+  destination: new destinations.S3(),
 });
-new firehose.DeliveryStream(this, 'Delivery Stream', {
+```
+
+The above example creates the following resources:
+- An S3 bucket
+- A Kinesis Data Firehose Delivery Stream with Direct PUT as the source and CloudWatch
+  error logging turned on.
+- An IAM role which gives Kinesis Data Firehose permission to write to your S3 bucket.
+
+## Sources
+
+Firehose supports two main methods of sourcing input data: Kinesis Data Streams and via a
+"direct put".
+
+See: [Sending Data to a Delivery Stream](https://docs.aws.amazon.com/firehose/latest/dev/basic-write.html)
+in the *Firehose Developer Guide*.
+
+### Kinesis Data Stream
+
+Firehose can read directly from a Kinesis data stream as a consumer of the data stream.
+Configure this behaviour by providing a data stream in the `sourceStream` property when
+constructing a delivery stream:
+
+```ts fixture=with-destination
+import * as kinesis from '@aws-cdk/aws-kinesis';
+const sourceStream = new kinesis.Stream(stack, 'Source Stream');
+new firehose.DeliveryStream(stack, 'Delivery Stream', {
+  sourceStream: sourceStream,
   destination: destination,
 });
 ```
+
+### Direct Put
+
+If a source data stream is not provided, then Firehose assumes data will be provided via
+"direct put", ie., by using a `PutRecord` or `PutRecordBatch` API call. There are a number
+of ways of doing so, such as:
+
+- Kinesis Agent: a standalone Java application that monitors and delivers files while
+  handling file rotation, checkpointing, and retries. See: [Writing to Firehose Using Kinesis Agent](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-agents.html)
+  in the *Firehose Developer Guide*.
+- Firehose SDK: a general purpose solution that allows you to deliver data to Firehose
+  from anywhere using Java, .NET, Node.js, Python, or Ruby. See: [Writing to Firehose Using the AWS SDK](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-sdk.html)
+  in the *Firehose Developer Guide*.
+- CloudWatch Logs: subscribe to a log group and receive filtered log events directly into
+  Firehose. See: [logs-destinations](../aws-logs-destinations).
+- Eventbridge: add Firehose as an event rule target to send events to a delivery stream
+  based on the rule filtering. See: [events-targets](../aws-events-targets).
+- SNS: add Firehose as a subscription to send all notifications from the topic to a
+  delivery stream. See: [sns-subscriptions](../aws-sns-subscriptions).
+- IoT: add an action to an IoT rule to send various IoT information to a delivery stream
 
 ## Destinations
 
@@ -71,6 +117,7 @@ new firehose.DeliveryStream(this, 'Delivery Stream', {
 ```
 
 S3 supports custom dynamic prefixes:
+
 ```ts fixture=with-bucket
 const s3Destination = new firehosedestinations.S3Destination({
   bucket: bucket,
@@ -78,6 +125,7 @@ const s3Destination = new firehosedestinations.S3Destination({
   errorOutputPrefix: 'myFirehoseFailures/!{firehose:error-output-type}/!{timestamp:yyyy}/anyMonth/!{timestamp:dd}',
 });
 ```
+
 See: [Custom S3 Prefixes](https://docs.aws.amazon.com/firehose/latest/dev/s3-prefixes.html) in the *Firehose Developer Guide*.
 
 S3 supports converting record formats when delivering:
@@ -169,48 +217,6 @@ This integration has not been completed (see #1234).
 
 [HTTP request/response schema]: https://docs.aws.amazon.com/firehose/latest/dev/httpdeliveryrequestresponse.html
 
-## Sources
-
-Firehose supports two main methods of sourcing input data: Kinesis Data Streams and via a
-"direct put".
-
-See: [Sending Data to a Delivery Stream](https://docs.aws.amazon.com/firehose/latest/dev/basic-write.html)
-in the *Firehose Developer Guide*.
-
-### Kinesis Data Stream
-
-Firehose can read directly from a Kinesis data stream as a consumer of the data stream.
-Configure this behaviour by providing a data stream in the `sourceStream` property when
-constructing a delivery stream:
-
-```ts fixture=with-destination
-import * as kinesis from '@aws-cdk/aws-kinesis';
-const sourceStream = new kinesis.Stream(stack, 'Source Stream');
-new firehose.DeliveryStream(stack, 'Delivery Stream', {
-  sourceStream: sourceStream,
-  destination: destination,
-});
-```
-
-### Direct Put
-
-If a source data stream is not provided, then Firehose assumes data will be provided via
-"direct put", ie., by using a `PutRecord` or `PutRecordBatch` API call. There are a number
-of ways of doing so, such as:
-- Kinesis Agent: a standalone Java application that monitors and delivers files while
-  handling file rotation, checkpointing, and retries. See: [Writing to Firehose Using Kinesis Agent](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-agents.html)
-  in the *Firehose Developer Guide*.
-- Firehose SDK: a general purpose solution that allows you to deliver data to Firehose
-  from anywhere using Java, .NET, Node.js, Python, or Ruby. See: [Writing to Firehose Using the AWS SDK](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-sdk.html)
-  in the *Firehose Developer Guide*.
-- CloudWatch Logs: subscribe to a log group and receive filtered log events directly into
-  Firehose. See: [logs-destinations](../aws-logs-destinations).
-- Eventbridge: add Firehose as an event rule target to send events to a delivery stream
-  based on the rule filtering. See: [events-targets](../aws-events-targets).
-- SNS: add Firehose as a subscription to send all notifications from the topic to a
-  delivery stream. See: [sns-subscriptions](../aws-sns-subscriptions).
-- IoT: add an action to an IoT rule to send various IoT information to a delivery stream
-
 ## Server-side Encryption
 
 Enabling server-side encryption (SSE) requires Firehose to encrypt all data sent to
@@ -261,7 +267,6 @@ stream will cause an error).
 
 See: [Data Protection](https://docs.aws.amazon.com/firehose/latest/dev/encryption.html) in
 the *Firehose Developer Guide*.
-
 
 ## Monitoring
 
@@ -430,10 +435,12 @@ Firehose supports transforming data before delivering it to destinations. To tra
 data, Firehose will call a Lambda function that you provide and deliver the data returned
 in lieu of the source record. The function must return a result that contains records in a
 specific format, including the following fields:
+
 - `recordId` -- the ID of the input record that corresponds the results.
 - `result` -- the status of the transformation of the record: "Ok" (success), "Dropped"
   (not processed intentionally), or "ProcessingFailed" (not processed due to an error).
 - `data` -- the transformed data, Base64-encoded.
+
 The data is buffered up to 1 minute and up to 3 MiB by default before being sent to the
 function, but can be configured using `bufferInterval` and `bufferSize` in the processor
 configuration (see: [Buffering](#buffering)). If the function invocation fails due to a
@@ -518,7 +525,6 @@ integrated, avoiding days of debugging errors. We have leveraged custom
 resources in order to perform a one-click deployment that creates an immediately
 functional application with no manual effort.
 
-
 ### Why should we _not_ do this?
 
 The Firehose API seems somewhat immature and implementing an L2 on top of the
@@ -534,6 +540,7 @@ we have fairly robust prototypes already implemented.
 #### Design
 
 - `IDeliveryStream` -- interface for created and imported delivery streams
+
   ```ts
   interface IDeliveryStream extends
       // Since DeliveryStream will extend Resource
@@ -553,8 +560,10 @@ we have fairly robust prototypes already implemented.
     // Some canned metrics as well like `metricBackupToS3DataFreshness`
   }
   ```
+
 - `DeliveryStreamProps` -- configuration for creating a `DeliveryStream`
-  ```
+
+  ```ts
   interface DeliveryStreamProps {
     // The destination that this delivery stream will deliver data to.
     readonly destination: IDestination;
@@ -570,10 +579,12 @@ we have fairly robust prototypes already implemented.
     readonly encryptionKey?: kms.IKey;
   }
   ```
+
 - `IDestination` -- interface that destinations will implement to create
   resources as needed and produce configuration that is injected into the
   DeliveryStream definition
-  ```
+
+  ```ts
   // Output of IDestination bind method
   interface DestinationConfig {
     // Schema-less properties that will be injected directly into `CfnDeliveryStream`.
@@ -588,9 +599,11 @@ we have fairly robust prototypes already implemented.
     bind(scope: Construct, options: DestinationBindOptions): DestinationConfig;
   }
   ```
+
 - `DestinationBase` -- abstract base destination class with some helper
   props/methods
-  ```
+
+  ```ts
   // Compression method for data delivered to S3
   enum Compression { GZIP, HADOOP_SNAPPY, SNAPPY, UNCOMPRESSED, ZIP }
   // Not yet fully-fleshed out
