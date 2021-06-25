@@ -554,6 +554,8 @@ granted permissions to a delivery stream by calling:
 - `grantWrite(principal)` - grants the principal write permissions to a Stream
 - `grantReadWrite(principal)` - grants principal read and write permissions
 
+### Read Permissions
+
 Grant `read` access to a delivery stream by calling the `grantRead()` method.
 
 ```ts fixture=with-delivery-stream
@@ -572,7 +574,7 @@ The following read permissions are provided to a service principal by the `grant
 - `firehose:ListDeliveryStreams`
 - `firehose:ListTagsForDeliveryStream`
 
-#### Write Permissions
+### Write Permissions
 
 Grant `write` permissions to a delivery stream is provided by calling the `grantWrite()` method.
 
@@ -596,7 +598,7 @@ The following write permissions are provided to a service principal by the `gran
 - `firehose:StopDeliveryStreamEncryption`
 - `firehose:UpdateDestination`
 
-#### Custom Permissions
+### Custom Permissions
 
 You can add any set of permissions to a delivery stream by calling the `grant()` method.
 
