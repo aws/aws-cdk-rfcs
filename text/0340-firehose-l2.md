@@ -547,7 +547,12 @@ in the *Kinesis Data Firehose Developer Guide*.
 
 ### Specifying an IAM role
 
-The DeliveryStream class automatically creates an IAM role with all the minimum necessary permissions for Kinesis Data Firehose to access the resources referenced by your delivery stream. For example: an Elasticsearch domain, a Redshift cluster, a backup or destination S3 bucket, a Lambda data transformer, an AWS Glue table schema, etc. If you wish, you may specify your own IAM role. It must have the correct permissions, or delivery stream creation or data delivery may fail.
+The DeliveryStream class automatically creates an IAM role with all the minimum necessary
+permissions for Kinesis Data Firehose to access the resources referenced by your delivery
+stream. For example: an Elasticsearch domain, a Redshift cluster, a backup or destination
+S3 bucket, a Lambda data transformer, an AWS Glue table schema, etc. If you wish, you may
+specify your own IAM role. It must have the correct permissions, or delivery stream
+creation or data delivery may fail.
 
 ```ts
 import * as iam from '@aws-cdk/aws-iam';
@@ -564,7 +569,8 @@ new DeliveryStream(stack, 'MyDeliveryStream', {
 });
 ```
 
-See [Controlling Access](https://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html) in the *Kinesis Data Firehose Developer Guide*.
+See [Controlling Access](https://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html)
+in the *Kinesis Data Firehose Developer Guide*.
 
 ## Permission Grants
 
