@@ -906,6 +906,14 @@ No.
   team launches that feature. However, this would be significantly
   future-proofing the API at the expense of confusing users that would
   reasonably assume that multiple destinations are currently supported.
+- Allowing the user to create or use separate IAM roles for each aspect of the
+  delivery stream. This would mean that in a complex delivery stream using AWS
+  Lambda transformation, AWS Glue record conversion, S3 Backup, and a destination,
+  that the user could specify a separate IAM role for Firehose to access each of
+  those resources. We chose to only use one role for this design, because it will
+  be simpler for the user. While the API is in the experimental stage, we will
+  solicit customer feedback to find out if customers want to have more fine grained
+  control over the permissions for their delivery stream.
 
 ### What is the high level implementation plan?
 
