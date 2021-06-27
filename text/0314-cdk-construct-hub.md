@@ -303,9 +303,7 @@ detail pages.
 
   `packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
 
-  > For more information on this, see the [Backend X Frontend Compatiblity] section.
-
-  [Backend X Frontend Compatiblity]: https://reactjs.org
+  > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
