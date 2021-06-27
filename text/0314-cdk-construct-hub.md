@@ -274,7 +274,7 @@ detail pages.
    be browsed.
 
 1. **Doc-Gen:** A Lambda function prepares language-specific documentation definition
-   filess for each configured language, with adjusted naming conventions, and
+   files for each configured language, with adjusted naming conventions, and
    updated sample code fragments, and proceeds to store those at:
    `packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
@@ -282,7 +282,7 @@ detail pages.
 
    [jsii]: https://aws.github.io/jsii
 
-   > Since documentation for each language can be generated is isolation, we can consider parallelizing this function in the future.
+   > Since documentation for each language can be generated in isolation, we can consider parallelizing this function in the future.
 
    - The **Doc-Gen** functions run asynchronously, and the documentation definition
      eventually becomes available. If the object is not available yet,
@@ -411,62 +411,13 @@ If a breaking change is detected, we enforce that the next version to be release
 
 Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file, while still maintaining support for all earlier versions.
 
-To achieve this, we implement a simple heristic in the front-end to fetch the appropriate version.
+To achieve this, we implement the following heristic in the front-end to fetch and render the appropriate version:
 
-```ts
-// the latest version we support is derived from the docgen dependency
-const LATEST_SUPPORTED = parseMajor(require('node_modules/construct-hub-docgen/package.json'));
+1. Try fetching the latest supported version (its the version of `construct-hub-docgen` that the front-end depends on)
+2. If doesn't exist yet, fetch earlier versions until success.
+3. Based on the fetched version, render the appropriate compoenent version.
 
-// so we first try the latest
-let version = LATEST_SUPPORTED;
-let ok = false;
-
-while (!ok) {
-  ok = fetch(`packages/.../docs-${language}.${version}.json`);
-  if (!ok) {
-    // version isn't available yet (still backfilling...)
-    // so lets try earlier ones
-    version = version - 1;
-  }
-}
-```
-
-One the correct version is determined, we pass it to the render function, which chooses the correct compoenent.
-
-```ts
-export function render(version: number) {
-  switch (version) {
-    case LATEST_SUPPRORTED:
-      return (<PackageDocs></PackageDocs>);
-    case 1:
-      return (<PackageDocsV1></PackageDocsV1>);
-    break:
-      throw new Error(`Unsupported docs version: ${version}`);
-  }
-}
-```
-
-In this scenario, the latest major version is `2`, and the front-end supports both `1` and `2`.
-When major version `3` is introduced, `<PackageDocs>` is copied over to `<PackageDocsV2>`, and `<PackageDocs>` is changed with the code to support major version `3`.
-
-```ts
-export function render(version: number) {
-  switch (version) {
-    case LATEST_SUPPRORTED:
-      return (<PackageDocs></PackageDocs>);
-    case 2:
-      return (<PackageDocsV2></PackageDocsV2>);
-    case 1:
-      return (<PackageDocsV1></PackageDocsV1>);
-    break:
-      throw new Error(`Unsupported docs version: ${version}`);
-  }
-}
-```
-
-This way, we only have to actively maintain the latest version of the `<PackageDocs>` component.
-
-By implementing the above mechanism, we can freely push changes to both front-end and backend, letting each of them deploy in its own independant cadence.
+By implementing the above mechanism, we can freely push changes independantly to both front-end and backend, letting each of them deploy in its own cadence.
 
 #### Website Analytics
 
