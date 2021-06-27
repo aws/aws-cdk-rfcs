@@ -400,7 +400,6 @@ Package documentation is created by the **Doc-Gen** function, which produces a J
 Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema. This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
 
 To that end, we create a dedicated package, called `construct-hub-docgen`, which will define this schema, and provide an API to produce it.
-
 The version of the schema file will be derived from the major version of the package.
 Every time a change is made to the schema, we automatically detect what type of change has been made. (i.e breaking or not)
 
@@ -412,15 +411,60 @@ If a breaking change is detected, we enforce that the next version to be release
 
 Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file, while still maintaining support for all earlier versions.
 
-```ts
-const schemaVersion = parseMajor(require('node_modules/construct-hub-docgen/package.json').version)
-```
-
-> i.e: the latest schema version the front-end should support is the version of `construct-hub-docgen` it depends on.
+To achieve this, we implement a simple heristic in the front-end to fetch the appropriate version.
 
 ```ts
-switch (schema)
+// the latest version we support is derived from the docgen dependency
+const LATEST_SUPPORTED = parseMajor(require('node_modules/construct-hub-docgen/package.json'));
+
+// so we first try the latest
+let version = LATEST_SUPPORTED;
+let ok = false;
+
+while (!ok) {
+  ok = fetch(`packages/.../docs-${language}.${version}.json`);
+  if (!ok) {
+    // version isn't available yet (still backfilling...)
+    // so lets try earlier ones
+    version = version - 1;
+  }
+}
 ```
+
+One the correct version is determined, we pass it to the render function, which chooses the correct compoenent.
+
+```ts
+export function render(version: number) {
+  switch (version) {
+    case LATEST_SUPPRORTED:
+      return (<PackageDocs></PackageDocs>);
+    case 1:
+      return (<PackageDocsV1></PackageDocsV1>);
+    break:
+      throw new Error(`Unsupported docs version: ${version}`);
+  }
+}
+```
+
+In this scenario, the latest major version is `2`, and the front-end supports both `1` and `2`.
+When major version `3` is introduced, `<PackageDocs>` is copied over to `<PackageDocs2>`, and `<PackageDocs>` is changed with the code to support major version `3`.
+
+```ts
+export function render(version: number) {
+  switch (version) {
+    case LATEST_SUPPRORTED:
+      return (<PackageDocs></PackageDocs>);
+    case 2:
+      return (<PackageDocsV2></PackageDocsV2>);
+    case 1:
+      return (<PackageDocsV1></PackageDocsV1>);
+    break:
+      throw new Error(`Unsupported docs version: ${version}`);
+  }
+}
+```
+
+With this mechanism, we only have to actively maintain the latest version of the `<PackageDocs>` component.
 
 #### Website Analytics
 
