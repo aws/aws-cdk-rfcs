@@ -447,7 +447,7 @@ export function render(version: number) {
 ```
 
 In this scenario, the latest major version is `2`, and the front-end supports both `1` and `2`.
-When major version `3` is introduced, `<PackageDocs>` is copied over to `<PackageDocs2>`, and `<PackageDocs>` is changed with the code to support major version `3`.
+When major version `3` is introduced, `<PackageDocs>` is copied over to `<PackageDocsV2>`, and `<PackageDocs>` is changed with the code to support major version `3`.
 
 ```ts
 export function render(version: number) {
@@ -464,7 +464,9 @@ export function render(version: number) {
 }
 ```
 
-With this mechanism, we only have to actively maintain the latest version of the `<PackageDocs>` component.
+This way, we only have to actively maintain the latest version of the `<PackageDocs>` component.
+
+By implementing the above mechanism, we can freely push changes to both front-end and backend, letting each of them deploy in its own independant cadence.
 
 #### Website Analytics
 
