@@ -372,7 +372,8 @@ The details of URLs to be configrued in CloudFront is available in [appendix
 
 #### Backend X Frontend Compatibility
 
-As described earlier, the front-end application consumes artifacts that are stored on the backend. Since these artifacts are subject to change, we need to define a mechanism by which the front-end is able to detect and operate on various versions of them.
+As described earlier, the front-end application consumes artifacts that are stored on the backend. Since these artifacts are subject to change,
+we need to define a mechanism by which the front-end is able to detect and operate on various versions of them.
 
 As a general guideline, we *prefer to show an older version, than to show nothing at all*.
 To be more concrete, older versions of the artifacts should still be available for consumption by older consumers.
@@ -393,9 +394,12 @@ Specicially, we describe how to implement this compatibility model for each type
 
 ##### Package Documentation
 
-Package documentation is created by the **Doc-Gen** function, which produces a JSON definition file: `packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+Package documentation is created by the **Doc-Gen** function, which produces a JSON definition file:
 
-Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema. This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
+`packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+
+Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema.
+This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
 
 To that end, we create a dedicated package, called `construct-hub-docgen`, which will define this schema, and provide an API to produce it.
 The version of the schema file will be derived from the major version of the package.
@@ -403,11 +407,13 @@ Every time a change is made to the schema, we automatically detect what type of 
 
 > This can be done by using either [json-schema-diff](https://www.npmjs.com/package/json-schema-diff), or [jsii-diff](https://github.com/aws/jsii/tree/main/packages/jsii-diff).
 
-If a breaking change is detected, we enforce that the next version to be released will include a major version bump. (i.e the commit was accompanied with a *BREAKING CHANGE:* notice)
+If a breaking change is detected, we enforce that the next version to be released will include a major version bump.
+(i.e the commit was accompanied with a *BREAKING CHANGE:* notice)
 
 > This can be done by storing the version prior to the bump, and comparing with the one after.
 
-Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file, while still maintaining support for all earlier versions.
+Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file,
+while still maintaining support for all earlier versions.
 
 To achieve this, we implement the following heristic in the front-end to fetch and render the appropriate version:
 
