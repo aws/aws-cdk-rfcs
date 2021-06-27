@@ -417,6 +417,8 @@ To achieve this, we implement the following heristic in the front-end to fetch a
 2. If doesn't exist yet, fetch earlier versions until success.
 3. Based on the fetched version, render the appropriate compoenent version.
 
+> Note that even though we support all versions, we only have to actively maintain the latest one.
+
 By implementing the above mechanism, we can freely push changes independantly to both front-end and backend, letting each of them deploy in its own cadence.
 
 #### Website Analytics
