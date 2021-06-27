@@ -273,7 +273,7 @@ detail pages.
    will be notified once the information for a new package version is ready to
    be browsed.
 
-1. **Doc-Gen:** A Lambda function prepares language-specific documentation definition
+1. **Doc-Gen:** A series of Lambda functions prepare language-specific documentation definition
    files for each configured language, with adjusted naming conventions, and
    updated sample code fragments, and proceeds to store those at:
    `packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`.
@@ -281,8 +281,6 @@ detail pages.
    the [jsii project][jsii], as well as custom code for generating language specific API references.
 
    [jsii]: https://aws.github.io/jsii
-
-   > Since documentation for each language can be generated in isolation, we can consider parallelizing this function in the future.
 
    - The **Doc-Gen** functions run asynchronously, and the documentation definition
      eventually becomes available. If the object is not available yet,
@@ -405,7 +403,7 @@ Every time a change is made to the schema, we automatically detect what type of 
 
 > This can be done by using either [json-schema-diff](https://www.npmjs.com/package/json-schema-diff), or [jsii-diff](https://github.com/aws/jsii/tree/main/packages/jsii-diff).
 
-If a breaking change is detected, we enforce that the next version to be released will include a major version bump. (i.e the commit was accompanied with a 'BREAKING CHANGE' notice)
+If a breaking change is detected, we enforce that the next version to be released will include a major version bump. (i.e the commit was accompanied with a *BREAKING CHANGE:* notice)
 
 > This can be done by storing the version prior to the bump, and comparing with the one after.
 
