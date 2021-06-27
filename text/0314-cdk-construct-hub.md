@@ -273,17 +273,19 @@ detail pages.
    will be notified once the information for a new package version is ready to
    be browsed.
 
-1. **Doc-Gen:** A series of Lambda functions prepare language-specific assembly
-   files for each configured language, with adjusted naming conventions, and
+1. **Doc-Gen:** A Lambda function prepares language-specific documentation definition
+   filess for each configured language, with adjusted naming conventions, and
    updated sample code fragments, and proceeds to store those at:
-   `packages/${assembly.name}/v${assembly.version}/assembly-${lang}.json`.
+   `packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
-   the [jsii project][jsii].
+   the [jsii project][jsii], as well as custom code for generating language specific API references.
 
    [jsii]: https://aws.github.io/jsii
 
-   - The **Doc-Gen** functions run asynchronously, and the transliterated
-     assembly eventually becomes available. If the object is not available yet,
+   > Since documentation for each language can be generated is isolation, we can consider parallelizing this function in the future.
+
+   - The **Doc-Gen** functions run asynchronously, and the documentation definition
+     eventually becomes available. If the object is not available yet,
      the web UI should present the user with a message inviting them to come
      again later (in an hour or two, etc...).
 
@@ -294,6 +296,16 @@ detail pages.
    - Optionally, tools may be made available to allow livrary developers to
      pre-compute transliterated assemblies for their libraries, so that these
      are immediately available as they packages are indexed.
+
+  To ensure compatiblity between the schema of the definition, and the consuming
+  code (i.e the front-end application), the stored file will contain its version as
+  part of the file name:
+
+  `packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+
+  > For more information on this, see the [Backend X Frontend Compatiblity] section.
+
+  [Backend X Frontend Compatiblity]: https://reactjs.org
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
@@ -361,6 +373,56 @@ pipeline.
 
 The details of URLs to be configrued in CloudFront is available in [appendix
 "CloudFront URLs"](#cloudfront-urls).
+
+#### Backend X Frontend Compatibility
+
+As described earlier, the front-end application consumes artifacts that are stored on the backend. Since these artifacts are subject to change, we need to define a mechanism by which the front-end is able to detect and operate on various versions of them.
+
+As a general guideline, we *prefer to show an older version, than to show nothing at all*.
+To be more concrete, older versions of the artifacts should still be available for consumption by older consumers.
+
+To that end, we propose a generic mechanism to apply to all artifact types:
+
+Every artifact will comply to the [SemVer](https://semver.org/spec/v2.0.0.html) specification and include its major version as a suffix to the file name.
+Each time a breaking change is performed, an additional file is stored. For example:
+
+- `<some-artifact.v1.json>`
+- `<some-artifact.v2.json>`
+
+This way, old consumers are free to operate on `v1`, while newer consumers can operate on `v2`.
+
+> Note that non breaking changes don't require consumer changes, so we don't have to encode minor/patch versions.
+
+Specicially, we describe how to implement this compatibility model for each type of artifact.
+
+##### Package Documentation
+
+Package documentation is created by the **Doc-Gen** function, which produces a JSON definition file: `packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+
+Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema. This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
+
+To that end, we create a dedicated package, called `construct-hub-docgen`, which will define this schema, and provide an API to produce it.
+
+The version of the schema file will be derived from the major version of the package.
+Every time a change is made to the schema, we automatically detect what type of change has been made. (i.e breaking or not)
+
+> This can be done by using either [json-schema-diff](https://www.npmjs.com/package/json-schema-diff), or [jsii-diff](https://github.com/aws/jsii/tree/main/packages/jsii-diff).
+
+If a breaking change is detected, we enforce that the next version to be released will include a major version bump. (i.e the commit was accompanied with a 'BREAKING CHANGE' notice)
+
+> This can be done by storing the version prior to the bump, and comparing with the one after.
+
+Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file, while still maintaining support for all earlier versions.
+
+```ts
+const schemaVersion = parseMajor(require('node_modules/construct-hub-docgen/package.json').version)
+```
+
+> i.e: the latest schema version the front-end should support is the version of `construct-hub-docgen` it depends on.
+
+```ts
+switch (schema)
+```
 
 #### Website Analytics
 
