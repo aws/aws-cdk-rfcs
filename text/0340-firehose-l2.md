@@ -721,8 +721,8 @@ effort.
 
 We are not confident that the service API is fully set in stone and implementing an L2 on
 top of the current L1 may be setting us up for changes in the future. We are reaching out
-to the service team to get their input and plans for the service. See: “alternative
-solutions”, below, for concrete details.
+to the service team to get their input and plans for the service. See: alternative
+solutions 2, 3, and 4, below, for concrete details.
 
 It’s a large effort (3 devs * 1 week) to invest in a module when we have other pressing
 projects. However, the bulk of the effort has been spent already since we have fairly
