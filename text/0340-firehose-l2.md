@@ -558,10 +558,12 @@ creation or data delivery may fail.
 import * as iam from '@aws-cdk/aws-iam';
 import * as s3 from '@aws-cdk/aws-iam';
 
-const role = new iam.Role(stack, 'MyRole');
-const bucket = new s3.bucket(stack, 'MyBucket');
+const role = new iam.Role(this, 'Role', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+}
+const bucket = new s3.Bucket(stack, 'Bucket');
 bucket.grantWrite(role);
-new DeliveryStream(stack, 'MyDeliveryStream', {
+new DeliveryStream(stack, 'Delivery Stream', {
   destination: new destinations.S3({
     bucket: bucket,
   }),
