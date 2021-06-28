@@ -864,62 +864,57 @@ No.
 
 ### What alternative solutions did you consider?
 
-- Placing destinations into the core module instead of creating a separate
-  module, since a delivery stream can’t exist without a destination.
-  We followed the common pattern of placing service integrations (where one
-  service provides an interface that multiple other services implement) into a
-  separate module. In contrast to many of the other modules that follow this
-  pattern, a delivery stream cannot be created without some destination, as the
-  destination is a key element of the service. It could be argued that these
-  destinations should be treated as first-class and co-located with the delivery
-  stream itself. However, this is similar to SNS, where a topic doesn’t have
-  much meaning without a subscription and yet service integrations for
-  subscriptions are still located in a separate module.
-- Hoist common configuration/resources such as logging, data transformation, and
-  backup to the delivery stream level
-  Currently, we follow the service API closely in the hierarchical sense: many
-  properties that are common to multiple destinations are specified in the
-  destination instead of on the delivery stream, since this is how the API
-  organizes it. Because the delivery stream only allows a single destination,
-  modeling these common properties on the delivery stream itself would reduce
-  the amount of configuration each destination implementation would need to
-  manage. Practically, this would look like moving every property in
-  `DestinationProps` into `DeliveryStreamProps`, as well as exposing hooks in
-  `DestinationBindOptions` to allow destinations to call configuration-creating
-  functions during binding.  Some downsides of making this change: moving away
-  from the service API may confuse customers who have previously used it to
-  create a delivery stream; if delivery streams support multiple destinations in
-  the future then configuration will not be flexible per-destination.
-- Provide a more generic interface for data transformers instead of requiring a
-  Lambda function.
-  The data transformation API seems to indicate future support for processors
-  that are not Lambda functions ([ProcessingConfiguration.Processor](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-kinesisfirehose-deliverystream-processor.html)
-  is quite generic, with the only processor type currently supported as
-  “Lambda”). However, our DataProcessor requires a lambda.IFunction, tying our
-  API to Lambda as the only supported processor and requiring a breaking change
-  to support a different processor type. We could work around this by creating a
-  class instead that has static methods for each possible processor type (ie.,
-  `static fromFunction(lambdaFunction: lambda.IFunction, options: ProcessorOptions): Processor`
-  ). This may be too complex for a change that we are not confident will occur.
-- Allow multiple destinations to be provided to the delivery stream.
-  While the console UI only allows a single destination to be configured per
-  delivery stream, the horizontal model of the service API and the fact that a
-  call to DescribeDeliveryStream returns an array of destinations seems to
-  indicate that the service team may support multiple destinations in the
-  future. To that end, we could modify `DeliveryStreamProps` to accept an array of
-  destinations (instead of a single destination, as is the case currently) and
-  simply throw an error if multiple destinations are provided until the service
-  team launches that feature. However, this would be significantly
-  future-proofing the API at the expense of confusing users that would
-  reasonably assume that multiple destinations are currently supported.
-- Allowing the user to create or use separate IAM roles for each aspect of the
-  delivery stream. This would mean that in a complex delivery stream using AWS
-  Lambda transformation, AWS Glue record conversion, S3 Backup, and a destination,
-  that the user could specify a separate IAM role for Firehose to access each of
-  those resources. We chose to only use one role for this design, because it will
-  be simpler for the user. While the API is in the experimental stage, we will
-  solicit customer feedback to find out if customers want to have more fine grained
-  control over the permissions for their delivery stream.
+1. Placing destinations into the core module instead of creating a separate module, since
+   a delivery stream can’t exist without a destination.  We followed the common pattern of
+   placing service integrations (where one service provides an interface that multiple
+   other services implement) into a separate module. In contrast to many of the other
+   modules that follow this pattern, a delivery stream cannot be created without some
+   destination, as the destination is a key element of the service. It could be argued
+   that these destinations should be treated as first-class and co-located with the
+   delivery stream itself. However, this is similar to SNS, where a topic doesn’t have
+   much meaning without a subscription and yet service integrations for subscriptions are
+   still located in a separate module.
+2. Hoist common configuration/resources such as logging, data transformation, and backup
+   to the delivery stream level Currently, we follow the service API closely in the
+   hierarchical sense: many properties that are common to multiple destinations are
+   specified in the destination instead of on the delivery stream, since this is how the
+   API organizes it. Because the delivery stream only allows a single destination,
+   modeling these common properties on the delivery stream itself would reduce the amount
+   of configuration each destination implementation would need to manage. Practically,
+   this would look like moving every property in `DestinationProps` into
+   `DeliveryStreamProps`, as well as exposing hooks in `DestinationBindOptions` to allow
+   destinations to call configuration-creating functions during binding.  Some downsides
+   of making this change: moving away from the service API may confuse customers who have
+   previously used it to create a delivery stream; if delivery streams support multiple
+   destinations in the future then configuration will not be flexible per-destination.
+3. Provide a more generic interface for data transformers instead of requiring a Lambda
+   function.  The data transformation API seems to indicate future support for processors
+   that are not Lambda functions; [ProcessingConfiguration.Processor](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-kinesisfirehose-deliverystream-processor.html)
+   is quite generic, with the only processor type currently supported as “Lambda”.
+   However, our DataProcessor requires a lambda.IFunction, tying our API to Lambda as the
+   only supported processor and requiring a breaking change to support a different
+   processor type. We could work around this by creating a class instead that has static
+   methods for each possible processor type (ie., `static fromFunction(lambdaFunction:
+   lambda.IFunction, options: ProcessorOptions): Processor`). This may be too complex for
+   a change that we are not confident will occur.
+4. Allow multiple destinations to be provided to the delivery stream.  While the console
+   UI only allows a single destination to be configured per delivery stream, the
+   horizontal model of the service API and the fact that a call to DescribeDeliveryStream
+   returns an array of destinations seems to indicate that the service team may support
+   multiple destinations in the future. To that end, we could modify `DeliveryStreamProps`
+   to accept an array of destinations (instead of a single destination, as is the case
+   currently) and simply throw an error if multiple destinations are provided until the
+   service team launches that feature. However, this would be significantly
+   future-proofing the API at the expense of confusing users that would reasonably assume
+   that multiple destinations are currently supported.
+5. Allowing the user to create or use separate IAM roles for each aspect of the delivery
+   stream. This would mean that in a complex delivery stream using AWS Lambda
+   transformation, AWS Glue record conversion, S3 Backup, and a destination, that the user
+   could specify a separate IAM role for Firehose to access each of those resources. We
+   chose to only use one role for this design, because it will be simpler for the
+   user. While the API is in the experimental stage, we will solicit customer feedback to
+   find out if customers want to have more fine grained control over the permissions for
+   their delivery stream.
 
 ### What is the high level implementation plan?
 
