@@ -90,16 +90,16 @@ so, such as:
   from anywhere using Java, .NET, Node.js, Python, or Ruby. See: [Writing to Kinesis Data Firehose Using the AWS SDK](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-sdk.html)
   in the *Kinesis Data Firehose Developer Guide*.
 - CloudWatch Logs: subscribe to a log group and receive filtered log events directly into
-  a delivery stream. See: [logs-destinations](../aws-logs-destinations).
+  a delivery stream. See: [logs-destinations](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-logs-destinations-readme.html).
 - Eventbridge: add an event rule target to send events to a delivery stream based on the
-  rule filtering. See: [events-targets](../aws-events-targets).
+  rule filtering. See: [events-targets](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-events-targets-readme.html).
 - SNS: add a subscription to send all notifications from the topic to a delivery
-  stream. See: [sns-subscriptions](../aws-sns-subscriptions).
+  stream. See: [sns-subscriptions](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-sns-subscriptions-readme.html).
 - IoT: add an action to an IoT rule to send various IoT information to a delivery stream
 
 ## Destinations
 
-The following destinations are supported. See [@aws-cdk/aws-kinesisfirehose-destinations](../aws-kinesisfirehose-destinations)
+The following destinations are supported. See [kinesisfirehose-destinations](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-kinesisfirehose-destinations-readme.html)
 for the implementations of these destinations.
 
 ### S3
