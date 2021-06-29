@@ -296,7 +296,7 @@ detail pages.
      are immediately available as they packages are indexed.
 
   To ensure compatiblity between the schema of the definition, and the consuming
-  code (i.e the front-end application), the stored file will contain its version in the `version` feild of the schema.
+  code (i.e the front-end application), the stored file will contain its version in the `version` field of the schema.
 
   > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
 
@@ -419,8 +419,11 @@ If a breaking change is detected, we enforce that the next version to be release
 
 > This can be done by storing the version prior to the bump, and comparing with the one after.
 
-When a new major version of the schema is released, it is automatically picked up and deployed to the backend. Since the schema is overidden, this will break the front-end because the version supporting the new schema hasn't been deployed yet.
-We cannot afford this, which means we must enforce a deployment order in this scenario, by which the backend is deployed **only after** the front-end supporting it is deployed.
+When a new major version of the schema is released, it is automatically picked up and
+deployed to the backend. Since the schema is overidden, this will break the front-end
+because the version supporting the new schema hasn't been deployed yet.
+We cannot afford this, which means we must enforce a deployment order in this scenario,
+by which the backend is deployed **only after** the front-end supporting it is deployed.
 
 We can enforce this by employing the following mechanism:
 
@@ -429,12 +432,20 @@ We can enforce this by employing the following mechanism:
 
 When a new version of `construct-hub-docgen` is released (e.g `2.0.0`):
 
-- If the backend picks up this version first, the resolved version in the closure will be `2.0.0`. This will conflict with the version that the front-end requires, and thus fail at install time.
-- If the front-end picks up this version first, it will be updated and a new version will be released that depends on `2.0.0`. At this point, when backend dependencies are upgraded, both `construct-hub-docgen`, and the front-end itself are upgraded, which is the desired outcome.
+- If the backend picks up this version first, the resolved version in the closure
+will be `2.0.0`. This will conflict with the version that the front-end requires,
+and thus fail at install time.
+- If the front-end picks up this version first, it will be updated and a new version
+will be released that depends on `2.0.0`. At this point, when backend dependencies
+are upgraded, both `construct-hub-docgen`, and the front-end itself are upgraded,
+which is the desired outcome.
 
-> In addition, so that don't rely on `npm` behavior to reject this change, we can write a unit test that compares the schema version being used by the front-end, and compare it to the one being used by the backend, they have to match.
+> In addition, so that don't rely on `npm` behavior to reject this change,
+we can write a unit test that compares the schema version being used by the front-end,
+to the one being used by the backend, they have to match.
 
-This mechanism enforces that when the backend picks up a new version major of the schema, it will have to pick up a new version of the front-end that supports it.
+This mechanism enforces that when the backend picks up a new version major of the schema,
+it will have to pick up a new version of the front-end that supports it.
 
 From this point on, we just need to make sure we deploy the front-end first in the CDK application.
 
