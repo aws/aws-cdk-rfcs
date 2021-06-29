@@ -296,10 +296,7 @@ detail pages.
      are immediately available as they packages are indexed.
 
   To ensure compatiblity between the schema of the definition, and the consuming
-  code (i.e the front-end application), the stored file will contain its version as
-  part of the file name:
-
-  `packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+  code (i.e the front-end application), the stored file will contain its version in the `version` feild of the schema.
 
   > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
 
@@ -375,28 +372,38 @@ The details of URLs to be configrued in CloudFront is available in [appendix
 As described earlier, the front-end application consumes artifacts that are stored on the backend. Since these artifacts are subject to change,
 we need to define a mechanism by which the front-end is able to detect and operate on various versions of them.
 
-As a general guideline, we *prefer to show an older version, than to show nothing at all*.
-To be more concrete, older versions of the artifacts should still be available for consumption by older consumers.
-
 To that end, we propose a generic mechanism to apply to all artifact types:
 
-Every artifact will comply to the [SemVer](https://semver.org/spec/v2.0.0.html) specification and include its major version as a suffix to the file name.
-Each time a breaking change is performed, an additional file is stored. For example:
+Every artifact will comply to the [SemVer](https://semver.org/spec/v2.0.0.html) specification
+and include its major version in the `version` field of the schema:
 
-- `<some-artifact.v1.json>`
-- `<some-artifact.v2.json>`
+```json
+{
+  "version": "v1",
+  ...
+}
+```
 
-This way, old consumers are free to operate on `v1`, while newer consumers can operate on `v2`.
+```json
+{
+  "version": "v2",
+  ...
+}
+```
 
-> Note that non breaking changes don't require consumer changes, so we don't have to encode minor/patch versions.
+Every time a change in the artifact occurs, the contents of the artifact is replaced with the new version.
+This means that at any given point in time, the artifact can either be in its new version, or the old one.
 
-Specicially, we describe how to implement this compatibility model for each type of artifact.
+As a general guideline, we *prefer displaying an older version of an artifact, than to display nothing at all.*.
+To that end, the front-end application will have to support displaying all versions of the artifact.
+
+Specifically, we describe how to implement this for each type of artifact.
 
 ##### Package Documentation
 
 Package documentation is created by the **Doc-Gen** function, which produces a JSON definition file:
 
-`packages/${assembly.name}/v${assembly.version}/docs-${lang}.v1.json`
+`packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`
 
 Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema.
 This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
@@ -412,18 +419,32 @@ If a breaking change is detected, we enforce that the next version to be release
 
 > This can be done by storing the version prior to the bump, and comparing with the one after.
 
-Naturaly, every time a breaking change occurs, the front-end application will have to request and render a different schema file,
-while still maintaining support for all earlier versions.
+When a new major version of the schema is released, it is automatically picked up and deployed to the backend. Since the schema is overidden, this will break the front-end because the version supporting the new schema hasn't been deployed yet.
+We cannot afford this, which means we must enforce a deployment order in this scenario, by which the backend is deployed **only after** the front-end supporting it is deployed.
 
-To achieve this, we implement the following heristic in the front-end to fetch and render the appropriate version:
+We can enforce this by employing the following mechanism:
 
-1. Try fetching the latest supported version (its the version of `construct-hub-docgen` that the front-end depends on)
-2. If doesn't exist yet, fetch earlier versions until success.
-3. Based on the fetched version, render the appropriate compoenent version.
+- The front-end declares a `peerDepenedency` on `construct-hub-docgen`. (e.g `^1.0.0`)
+- The backend declares a `devDependency` on `construct-hub-docgen` (e.g `1.0.0`)
 
-> Note that even though we support all versions, we only have to actively maintain the latest one.
+When a new version of `construct-hub-docgen` is released (e.g `2.0.0`):
 
-By implementing the above mechanism, we can freely push changes independantly to both front-end and backend, letting each of them deploy in its own cadence.
+- If the backend picks up this version first, the resolved version in the closure will be `2.0.0`. This will conflict with the version that the front-end requires, and thus fail at install time.
+- If the front-end picks up this version first, it will be updated and a new version will be released that depends on `2.0.0`. At this point, when backend dependencies are upgraded, both `construct-hub-docgen`, and the front-end itself are upgraded, which is the desired outcome.
+
+> In addition, so that don't rely on `npm` behavior to reject this change, we can write a unit test that compares the schema version being used by the front-end, and compare it to the one being used by the backend, they have to match.
+
+This mechanism enforces that when the backend picks up a new version major of the schema, it will have to pick up a new version of the front-end that supports it.
+
+From this point on, we just need to make sure we deploy the front-end first in the CDK application.
+
+In order for the front-end to support multiple versions of the schema, it will have to:
+
+1. Fetch the schema from `/../docs-{lang}.json`
+2. Extract the version field.
+3. Based on the version, render the appropriate component.
+
+> The front-end will have to preserve the code for rendering all component versions, but will only have to actively maintain the latest one.
 
 #### Website Analytics
 
