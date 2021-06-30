@@ -409,7 +409,7 @@ Since the front-end fetches and parses this file, we'd like for it to operate on
 This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
 
 To that end, we create a dedicated package, called `construct-hub-docgen`, which will define this schema, and provide an API to produce it.
-The version of the schema file will be derived from the major version of the package.
+The version of the schema file will be the version of the package.
 Every time a change is made to the schema, we automatically detect what type of change has been made. (i.e breaking or not)
 
 > This can be done by using either [json-schema-diff](https://www.npmjs.com/package/json-schema-diff), or [jsii-diff](https://github.com/aws/jsii/tree/main/packages/jsii-diff).
