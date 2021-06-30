@@ -392,7 +392,9 @@ and include its major version in the `version` field of the schema:
 ```
 
 Every time a change in the artifact occurs, the contents of the artifact is replaced with the new version.
-Since artifacts are created in a long running background process, the new version may not be available immediately. This in turn means that at any given point in time, the artifact can either be in its new version, or an older one.
+Since artifacts are created in a long running background process, the new version
+may not be available immediately. This in turn means that at any given point in time,
+the artifact can either be in its new version, or an older one.
 
 As a general guideline, we *prefer displaying an older version of an artifact, than to display nothing at all.*.
 To that end, the front-end application will have to support displaying all versions of the artifact.
