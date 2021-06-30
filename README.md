@@ -150,8 +150,8 @@ help.
 
 ## RFC Process
 
-To kick off an RFC process, simply create a [new tracking issue] and follow the
-instructions in the template. The issue includes a checklist of the various
+To start an RFC process, create a [new tracking issue] and follow the
+instructions in the issue template. It includes a checklist of the various
 stages an RFC goes through.
 
 [new tracking issue]: https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=management%2Ftracking%2C+status%2Fproposed&template=tracking-issue.md&title=proposal+title
@@ -218,6 +218,9 @@ kick-off meeting that includes the API Bar Raiser and any stakeholders that
 might be interested in this RFC or can contribute ideas and direction. The goal
 of the meeting is to discuss the feature, its scope and general direction for
 implementation.
+
+If you are not part of the CDK team at Amazon, reach out to us via [#aws-cdk-rfcs]
+and we will help to organize the kick-off meeting.
 
 Our experience shows that such a meeting can save a lot of time and energy.
 
