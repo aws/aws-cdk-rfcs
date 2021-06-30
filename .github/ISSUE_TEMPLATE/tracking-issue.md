@@ -14,7 +14,7 @@ Short description of the proposed feature.
 | Role                | User
 |---------------------|------------------------------
 | Proposed by         | @alias
-| Author              | @alias
+| Author(s)           | @alias, @alias, @alias
 | API Bar Raiser      | @alias
 | Stakeholders        | @alias, @alias, @alias
 
