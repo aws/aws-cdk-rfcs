@@ -295,10 +295,10 @@ detail pages.
      pre-compute transliterated assemblies for their libraries, so that these
      are immediately available as they packages are indexed.
 
-  To ensure compatiblity between the schema of the definition, and the consuming
-  code (i.e the front-end application), the stored file will contain its version in the `version` field of the schema.
+   To ensure compatiblity between the schema of the definition, and the consuming
+   code (i.e the front-end application), the stored file will contain its version in the `version` field of the schema.
 
-  > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
+   > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
@@ -392,7 +392,7 @@ and include its major version in the `version` field of the schema:
 ```
 
 Every time a change in the artifact occurs, the contents of the artifact is replaced with the new version.
-This means that at any given point in time, the artifact can either be in its new version, or the old one.
+Since artifacts are created in a long running background process, the new version may not be available immediately. This in turn means that at any given point in time, the artifact can either be in its new version, or an older one.
 
 As a general guideline, we *prefer displaying an older version of an artifact, than to display nothing at all.*.
 To that end, the front-end application will have to support displaying all versions of the artifact.
