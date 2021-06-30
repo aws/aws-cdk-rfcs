@@ -1,6 +1,6 @@
 # {RFC_TITLE}
 
-* **Original Author:**: @{AUTHOR}
+* **Original Author(s):**: @{AUTHOR}
 * **Tracking Issue**: #{TRACKING_ISSUE}
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
