@@ -394,7 +394,7 @@ and include its major version in the `version` field of the schema:
 Every time a change in the artifact occurs, the contents of the artifact is replaced with the new version.
 Since artifacts are created in a long running background process, the new version
 may not be available immediately. This in turn means that at any given point in time,
-the artifact can either be in its new version, or an older one.
+the artifact can either be in its new version, or **any** of its older ones.
 
 As a general guideline, we *prefer displaying an older version of an artifact, than to display nothing at all.*.
 To that end, the front-end application will have to support displaying all versions of the artifact.
@@ -410,7 +410,7 @@ Package documentation is created by the **Doc-Gen** function, which produces a J
 Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema.
 This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
 
-To that end, we create a dedicated package, called `construct-hub-docgen`, which will define this schema, and provide an API to produce it.
+To that end, we will extend [`jsii-docgen`](https://github.com/cdklabs/jsii-docgen) to define this schema, and provide an API to produce it.
 The version of the schema file will be the version of the package.
 Every time a change is made to the schema, we automatically detect what type of change has been made. (i.e breaking or not)
 
@@ -429,17 +429,17 @@ by which the backend is deployed **only after** the front-end supporting it is d
 
 We can enforce this by employing the following mechanism:
 
-- The front-end declares a `peerDepenedency` on `construct-hub-docgen`. (e.g `^1.0.0`)
-- The backend declares a `devDependency` on `construct-hub-docgen` (e.g `1.0.0`)
+- The front-end declares a `peerDepenedency` on `jsii-docgen`. (e.g `^1.0.0`)
+- The backend declares a `devDependency` on `jsii-docgen` (e.g `1.0.0`)
 
-When a new version of `construct-hub-docgen` is released (e.g `2.0.0`):
+When a new major version of `jsii-docgen` is released (e.g `2.0.0`):
 
 - If the backend picks up this version first, the resolved version in the closure
 will be `2.0.0`. This will conflict with the version that the front-end requires,
 and thus fail at install time.
 - If the front-end picks up this version first, it will be updated and a new version
 will be released that depends on `2.0.0`. At this point, when backend dependencies
-are upgraded, both `construct-hub-docgen`, and the front-end itself are upgraded,
+are upgraded, both `jsii-docgen`, and the front-end itself are upgraded,
 which is the desired outcome.
 
 > In addition, so that don't rely on `npm` behavior to reject this change,
