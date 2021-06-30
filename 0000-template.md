@@ -1,4 +1,8 @@
-# [#NNN](http://github.com/aws/aws-cdk-rfcs/issues/NNN) [TITLE]
+# {RFC_TITLE}
+
+* **Original Author:**: @{AUTHOR}
+* **Tracking Issue**: #{TRACKING_ISSUE}
+* **API Bar Raiser**: @{BAR_RAISER_USER}
 
 > Write one sentence which is a brief description of the feature from a user
 > perspective ("impact on users").
@@ -29,15 +33,13 @@
 >   leader quote, (5) user experience, (6) customer testimonial and (7) one
 >   sentence call to action.
 
-
-
 > Once the API Bar Raiser signed-off on this RFC, tick the box below:
 
 ```
 [ ] Signed-off by API Bar Raiser @xxxxx
 ```
 
-## Frequently Asked Questions
+## Public FAQ
 
 > This section should include answers to questions readers will likely ask about
 > this release. Similar to the "working backwards", this section should be
@@ -74,7 +76,7 @@
 > Is there a way to address this use case with the current product? What are the
 > downsides of implementing this feature?
 
-### What changes are required to enable this change?
+### What is the technical solution (design) of this feature?
 
 > Briefly describe the high-level design approach for implementing this feature.
 >

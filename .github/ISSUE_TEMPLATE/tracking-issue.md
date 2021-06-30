@@ -23,11 +23,12 @@ Short description of the proposed feature.
 ## Workflow
 
 - [x] Tracking issue created (label: `status/proposed`)
-- [ ] API Bar Raiser assigned (ping us at [#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) if needed)
+- [ ] API bar raiser assigned (ping us at
+  [#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) if needed)
 - [ ] Kick off meeting
-- [ ] RFC pull request created (label: `status/review`)
+- [ ] RFC pull request submitted (label: `status/review`)
 - [ ] Community reach out (via Slack and/or Twitter)
-- [ ] API Bar Raiser signed-off
+- [ ] API signed-off (label `api-approved` applied to pull request)
 - [ ] Final comments period (label: `status/final-comments-period`)
 - [ ] Approved and merged (label: `status/approved`)
 - [ ] Execution plan submitted (label: `status/planning`)

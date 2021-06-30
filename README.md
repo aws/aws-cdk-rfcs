@@ -132,15 +132,21 @@ CDK team at AWS. *Request for Comments* means a request for discussion and
 oversight about the future of the project from maintainers, contributors and
 users.
 
-**When to submit an RFC?** Anyone can submit an RFC for *any* change, big or
-small, if they wish to obtain early feedback before they dive into
-implementation. In some cases, especially for major features, the core team will
-require that an RFC will be submitted. Quite often, even changes that seem
-obvious and simple can be significantly improved once a wider group of
-interested people have a chance to weigh in.
+**When should I write an RFC?** The CDK team proactively decides to write RFCs
+on major features or complex changes that we feel require that extra vetting.
+However, the process is designed to be as lightweight as needed and can be used
+to request feedback on any change. Quite often, even changes that seem obvious
+and simple at first sight can be significantly improved once a wider group of
+interested and experienced people have a chance to weigh in.
 
-> If you're not sure whether your change requires an RFC, feel free to create an
-issue and ask.
+**Who should submit an RFC?** An RFC can be submitted by anyone. In most cases,
+RFCs are authored by CDK maintainers, but contributors are more than welcome to
+submit RFCs. 
+
+If you are a **contributor** and you wish to write an RFC, please contact the
+core team at the [#aws-cdk-rfcs] to make sure someone from the core team can
+sponsor your work. Otherwise, there is a good chance we won't have bandwidth to
+help.
 
 ## RFC Process
 
@@ -153,7 +159,7 @@ stages an RFC goes through.
 This section describes each stage in detail, so you can refer to it for
 guidance.
 
-### 1. Create a tracking issue
+### 1. Tracking Issue
 
 Each RFC has a GitHub issue which tracks it from start to finish. The issue is
 the hub for conversations, community signal (+1s) and the issue number is used
@@ -178,38 +184,34 @@ When the issue is created, it is required to fill in the following information:
 
 ### 2. API Bar Raiser
 
+Reach us via [#aws-cdk-rfcs] to get an "API Bar Raiser" assigned to your RFC.
+
+For each RFC, CDK leadership will assign an **API Bar Raiser** who reviews and
+approves the public API of the feature. API Bar Raisers have veto rights on
+API-related design decisions, such as naming, structure, options, CLI commands
+and others. 
+
 The public API of a feature represents the surface through which users interact
 with it, and we want to make sure these APIs are consistent, ergonomic and
 designed based on the intent and the mental model of our users. Additionally,
 once we announce that a feature is "stable" (1.0, GA, etc) any breaking change
-to its public API will require releasing a new major version, so we think of API
-decisions as "one way doors".
+to its public API will require releasing a new major version, so we like think
+of API decisions as "one way doors".
 
-For each RFC, the core team will assign an **API Bar Raiser** who reviews and
-approves any public API of the feature. API Bar Raisers have veto rights on
-API-related design decisions, such as naming, structure, options, CLI commands
-and others.
+API Bar Raisers will be assigned using a tiering model which is generally based
+on the size of the user base that will likely get exposed to the feature. As a
+general rule, the more "significant" the feature is, we will assign a bar raiser
+with a wider and longer-term context of the project.
 
-After an RFC is proposed, the core team will assign it an API Bar Raiser using a
-tiering model generally based on the size of the user base that will likely get
-exposed to the feature. As a general rule, the more "significant" the change is,
-we will assign a bar raiser with a wider and longer-term context of the project.
+To merge an RFC, a [sign-off](#6-api-sign-off) from the bar raiser is required
+on the public API of the feature, so we encourage to engage with them early in
+the process to make sure you are aligned on how the API should be designed.
 
-API Bar Raisers are required to **sign off** on the **Working Backwards**
-section of your RFC, so we encourage to engage with them early in the process to
-make sure you are aligned on how the API should be designed.
-
-The API Bar Raiser is called out in the RFC tracking issue and in the RFC
-document itself. Feel free to reach us at the
-[#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) channel in the
-[cdk.dev](https://cdk.dev) slack workspace if you need a bar raiser assigned to
-your RFC.
-
-> The engineering solution proposed in an RFC does not need require approval
+> NOTE: The technical solution proposed in an RFC *does not* require approval
 > beyond the normal pull request approval model (e.g. a core team member needs
 > to approve the RFC PR and any subsequent changes to it).
 
-### 3. Organize a kick-off meeting
+### 3. Kick-off
 
 Before diving into writing the RFC, it is highly recommended to organize a
 kick-off meeting that includes the API Bar Raiser and any stakeholders that
@@ -219,50 +221,50 @@ implementation.
 
 Our experience shows that such a meeting can save a lot of time and energy.
 
-Use the RFC tracking issue to record some initial API and design ideas and
-collect early feedback and use cases as a preparation for the kick off meeting.
-You can start the meeting by letting participants obtaining context from the
-tracking issue.
+You can use the tracking issue to record some initial API and design ideas and
+collect early feedback and use cases as a preparation for the kick-off meeting
+and RFC document itself. You can start the meeting by letting participants
+obtaining context from the tracking issue.
 
 At the end of the meeting, record any ideas and decisions in the tracking issue
 and update the checklist to indicate that the kick-off meeting has happened.
 
-### 4. Write RFC document and implement prototype
+### 4. RFC Document
 
 The next step is to write the first revision of the RFC document itself.
 
-**Document**: Use the file [0000-template.md](./0000-template.md) as a template
-and put your new RFC under `text/NNNN-name.md` (where `NNNN` is your tracking
-issue number).
+Create a file under `text/NNNN-name.md` based off of the template under
+[`0000-template.md`](./0000-template.md) (where `NNNN` is your tracking issue
+number). Follow the template. It includes useful guidance and tips on how to
+write a good RFC.
 
-Follow the template. It includes useful guidance and tips on how to write a good
-RFC.
+**What should be included in an RFC?** The purpose of an RFC is to reduce
+ambiguity and risk and get approval for public-facing interfaces (APIs), which
+are "one-way doors" after the feature is released. Another way to think about it
+is that the goal and contents of the document should allow us to create a
+*high-confidence* implementation plan for a feature or a change.
 
-**Prototype**: in many cases, it is useful to develop a prototype or even start
-coding the actual implementation while you are writing the RFC document. Take
-into account that you may need to throw your code away or refactor it
-substantially, but our experience shows that good RFCs are the ones who dive
-into the details. A prototype is great way to make sure your design "holds
-water".
+In many cases, it is useful to develop a **prototype** or even start coding the
+actual implementation while you are writing the RFC document. Take into account
+that you may need to throw your code away or refactor it substantially, but our
+experience shows that good RFCs are the ones who dive into the details. A
+prototype is great way to make sure your design "holds water".
 
-Submit the RFC document as a pull request in this repo and start collecting
-feedback.
+### 5. Feedback
 
-### 5. Invite community to review
+Once you have an initial version of your RFC document (it is completely fine to
+submit an unfinished RFC to get initial feedback), submit it as a pull request
+against this repo and start collecting feedback.
 
-The whole point of the RFC is to get feedback ("request for comments"). Once you
-have an initial version submitted as a pull request, it is time to reach out to
-the community and any relevant stakeholders and solicit their feedback.
+Contact the CDK core team at [#aws-cdk-rfcs] (or via email/Slack if you are part
+of the core team) and reach out to the public and Amazon internal communities
+via various Slack channels in [cdk.dev](https://cdk.dev), Twitter and any other
+relevant forum.
 
-Use the [cdk.dev](https://cdk.dev) Slack workspace, Twitter and any other
-relevant forum to publish your RFC and ask the community to provide their
-feedback.
-
-### 6. Iterate on the RFC document
-
-This is where the fun begins. Once you start receiving feedback on your pull
-request, iterate on your document. Take time to read the comments, understand
-where people are coming from, respond politely and iterate.
+This is the likely going to be the longest part of your RFC process, and where
+most of the feedback is collected. Some RFCs resolve quickly and some can take
+months (!!). *Take into account at least 1-2 weeks to allow community and
+stakeholders to provide their feedback.*
 
 A few tips:
 
@@ -280,17 +282,23 @@ A few tips:
   agreement about that. We oftentimes update an RFC doc a few times during the
   implementation.
 
-### 7. API Bar Raiser Sign-off
+### 6. API Sign-off
 
-Before you can merge your RFC, you will need the API Bar Raiser to sign off on
-the **Working Backwards** section of your document.
+Before you can merge your RFC, you will need the API Bar Raiser to sign-off on
+the public API of your feature. This is will normally be described under the
+**Working Backwards** section of your RFC.
 
-To record this sign-off, the bar raiser will add a comment to your RFC PR
-indicating that the working backwards section looks good to them (LGTM) and will
-update the RFC doc to check the "sign off" box in the working backwards section
-(see template).
+To sign-off, the API bar raiser will add the **api-approved** label to the RFC
+pull request.
 
-### 8. Final Comments Period
+Once the API was signed-off, update your RFC document and add a `[x]` the
+relevant location in the RFC document. For example:
+
+```
+[x] Signed-off by API Bar Raiser @foobar
+```
+
+### 7. Final Comments Period
 
 At some point, you've reached consensus about most issues that were brought up
 during the review period, and you are ready to merge. To allow "last call" on
@@ -306,7 +314,7 @@ Once the final comments period is over, seek an approval of one of the core team
 members, and you can merge your PR to the main branch. This will move your RFC
 to the "approved" state.
 
-### 9. Implementation
+### 8. Implementation
 
 For large changes, we highly recommend creating an implementation plan which
 lists all the tasks required. In many cases, large implementation  should be
@@ -385,3 +393,5 @@ RFC process], [React RFC process], and [Ember RFC process]
 [rust rfc process]: https://github.com/rust-lang/rfcs
 [react rfc process]: https://github.com/reactjs/rfcs
 [ember rfc process]: https://github.com/emberjs/rfcs
+
+[#aws-cdk-rfcs]: https://cdk-dev.slack.com/archives/C025ZFGMUCD
