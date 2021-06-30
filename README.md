@@ -141,7 +141,7 @@ interested and experienced people have a chance to weigh in.
 
 **Who should submit an RFC?** An RFC can be submitted by anyone. In most cases,
 RFCs are authored by CDK maintainers, but contributors are more than welcome to
-submit RFCs. 
+submit RFCs.
 
 If you are a **contributor** and you wish to write an RFC, please contact the
 core team at the [#aws-cdk-rfcs] to make sure someone from the core team can
@@ -189,7 +189,7 @@ Reach us via [#aws-cdk-rfcs] to get an "API Bar Raiser" assigned to your RFC.
 For each RFC, CDK leadership will assign an **API Bar Raiser** who reviews and
 approves the public API of the feature. API Bar Raisers have veto rights on
 API-related design decisions, such as naming, structure, options, CLI commands
-and others. 
+and others.
 
 The public API of a feature represents the surface through which users interact
 with it, and we want to make sure these APIs are consistent, ergonomic and

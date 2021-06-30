@@ -33,7 +33,9 @@
 >   leader quote, (5) user experience, (6) customer testimonial and (7) one
 >   sentence call to action.
 
-> Once the API Bar Raiser signed-off on this RFC, tick the box below:
+Ticking the box below indicates that the public API of this RFC has been
+signed-off by the API bar raiser (the `api-approved` label was applied to the
+RFC pull request):
 
 ```
 [ ] Signed-off by API Bar Raiser @xxxxx
