@@ -273,17 +273,17 @@ detail pages.
    will be notified once the information for a new package version is ready to
    be browsed.
 
-1. **Doc-Gen:** A series of Lambda functions prepare language-specific assembly
+1. **Doc-Gen:** A series of Lambda functions prepare language-specific documentation definition
    files for each configured language, with adjusted naming conventions, and
    updated sample code fragments, and proceeds to store those at:
-   `packages/${assembly.name}/v${assembly.version}/assembly-${lang}.json`.
+   `packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
-   the [jsii project][jsii].
+   the [jsii project][jsii], as well as custom code for generating language specific API references.
 
    [jsii]: https://aws.github.io/jsii
 
-   - The **Doc-Gen** functions run asynchronously, and the transliterated
-     assembly eventually becomes available. If the object is not available yet,
+   - The **Doc-Gen** functions run asynchronously, and the documentation definition
+     eventually becomes available. If the object is not available yet,
      the web UI should present the user with a message inviting them to come
      again later (in an hour or two, etc...).
 
@@ -294,6 +294,11 @@ detail pages.
    - Optionally, tools may be made available to allow livrary developers to
      pre-compute transliterated assemblies for their libraries, so that these
      are immediately available as they packages are indexed.
+
+   To ensure compatiblity between the schema of the definition, and the consuming
+   code (i.e the front-end application), the stored file will contain its version in the `version` field of the schema.
+
+   > For more information on this, see the [Backend X Frontend Compatiblity](#backend-x-frontend-compatibility) section.
 
 1. **Catalog Builder:** A Lambda function keeps the `catalog.json` object
    updated with the latest versions of each package's major version lines, which
@@ -361,6 +366,98 @@ pipeline.
 
 The details of URLs to be configrued in CloudFront is available in [appendix
 "CloudFront URLs"](#cloudfront-urls).
+
+#### Backend X Frontend Compatibility
+
+As described earlier, the front-end application consumes artifacts that are stored on the backend. Since these artifacts are subject to change,
+we need to define a mechanism by which the front-end is able to detect and operate on various versions of them.
+
+To that end, we propose a generic mechanism to apply to all artifact types:
+
+Every artifact will comply to the [SemVer](https://semver.org/spec/v2.0.0.html) specification
+and include its major version in the `version` field of the schema:
+
+```json
+{
+  "version": "v1",
+  ...
+}
+```
+
+```json
+{
+  "version": "v2",
+  ...
+}
+```
+
+Every time a change in the artifact occurs, the contents of the artifact is replaced with the new version.
+Since artifacts are created in a long running background process, the new version
+may not be available immediately. This in turn means that at any given point in time,
+the artifact can either be in its new version, or **any** of its older ones.
+
+As a general guideline, we *prefer displaying an older version of an artifact, than to display nothing at all.*.
+To that end, the front-end application will have to support displaying all versions of the artifact.
+
+Specifically, we describe how to implement this for each type of artifact.
+
+##### Package Documentation
+
+Package documentation is created by the **Doc-Gen** function, which produces a JSON definition file:
+
+`packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`
+
+Since the front-end fetches and parses this file, we'd like for it to operate on type safe interfaces that describe the schema.
+This will ensure that breaking changes will manifest as compile time errors, and force us to handle them.
+
+To that end, we will extend [`jsii-docgen`](https://github.com/cdklabs/jsii-docgen) to define this schema, and provide an API to produce it.
+The version of the schema file will be the version of the package.
+Every time a change is made to the schema, we automatically detect what type of change has been made. (i.e breaking or not)
+
+> This can be done by using either [json-schema-diff](https://www.npmjs.com/package/json-schema-diff), or [jsii-diff](https://github.com/aws/jsii/tree/main/packages/jsii-diff).
+
+If a breaking change is detected, we enforce that the next version to be released will include a major version bump.
+(i.e the commit was accompanied with a *BREAKING CHANGE:* notice)
+
+> This can be done by storing the version prior to the bump, and comparing with the one after.
+
+When a new major version of the schema is released, it is automatically picked up and
+deployed to the backend. Since the schema is overidden, this will break the front-end
+because the version supporting the new schema hasn't been deployed yet.
+We cannot afford this, which means we must enforce a deployment order in this scenario,
+by which the backend is deployed **only after** the front-end supporting it is deployed.
+
+We can enforce this by employing the following mechanism:
+
+- The front-end declares a `peerDepenedency` on `jsii-docgen`. (e.g `^1.0.0`)
+- The backend declares a `devDependency` on `jsii-docgen` (e.g `1.0.0`)
+
+When a new major version of `jsii-docgen` is released (e.g `2.0.0`):
+
+- If the backend picks up this version first, the resolved version in the closure
+will be `2.0.0`. This will conflict with the version that the front-end requires,
+and thus fail at install time.
+- If the front-end picks up this version first, it will be updated and a new version
+will be released that depends on `2.0.0`. At this point, when backend dependencies
+are upgraded, both `jsii-docgen`, and the front-end itself are upgraded,
+which is the desired outcome.
+
+> In addition, so that don't rely on `npm` behavior to reject this change,
+we can write a unit test that compares the schema version being used by the front-end,
+to the one being used by the backend, they have to match.
+
+This mechanism enforces that when the backend picks up a new version major of the schema,
+it will have to pick up a new version of the front-end that supports it.
+
+From this point on, we just need to make sure we deploy the front-end first in the CDK application.
+
+In order for the front-end to support multiple versions of the schema, it will have to:
+
+1. Fetch the schema from `/../docs-{lang}.json`
+2. Extract the version field.
+3. Based on the version, render the appropriate component.
+
+> The front-end will have to preserve the code for rendering all component versions, but will only have to actively maintain the latest one.
 
 #### Website Analytics
 
