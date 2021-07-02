@@ -44,7 +44,7 @@ import * as s3 from '@aws-cdk/aws-s3';
 
 const bucket = new s3.Bucket(this, 'Bucket');
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.S3(bucket),
+  destinations: [new destinations.S3(bucket)],
 });
 ```
 
@@ -75,7 +75,7 @@ import * as kinesis from '@aws-cdk/aws-kinesis';
 const sourceStream = new kinesis.Stream(this, 'Source Stream');
 new DeliveryStream(this, 'Delivery Stream', {
   sourceStream: sourceStream,
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -117,7 +117,7 @@ const bucket = new s3.Bucket(this, 'Bucket');
 const s3Destination = new destinations.S3(bucket);
 
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: s3Destination,
+  destinations: [s3Destination],
 });
 ```
 
@@ -145,9 +145,11 @@ const domain = new es.Domain(this, 'Domain', {
 });
 
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.Elasticsearch(domain, {
-    indexName: 'myindex',
-  }),
+  destinations: [
+    new destinations.Elasticsearch(domain, {
+      indexName: 'myindex',
+    }),
+  ],
 });
 ```
 
@@ -195,7 +197,7 @@ const redshiftDestination = new destinations.Redshift(cluster, {
   copyOptions: 'json \'auto\'',
 });
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: redshiftDestination,
+  destinations: [redshiftDestination],
 });
 ```
 
@@ -244,20 +246,20 @@ import * as kms from '@aws-cdk/aws-kms';
 // SSE with an AWS-owned CMK
 new DeliveryStream(this, 'Delivery Stream AWS Owned', {
   encryption: StreamEncryption.AWS_OWNED,
-  destination: destination,
+  destinations: [destination],
 });
 
 // SSE with an customer-managed CMK that is created automatically by the CDK
 new DeliveryStream(this, 'Delivery Stream Implicit Customer Managed', {
   encryption: StreamEncryption.CUSTOMER_MANAGED,
-  destination: destination,
+  destinations: [destination],
 });
 
 // SSE with an customer-managed CMK that is explicitly specified
 const key = new kms.Key(this, 'Key');
 new DeliveryStream(this, 'Delivery Stream Explicit Customer Managed'', {
   encryptionKey: key,
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -292,7 +294,7 @@ import * as logs from '@aws-cdk/aws-logs';
 const logGroup = new logs.LogGroup(this, 'Log Group');
 new DeliveryStream(this, 'Delivery Stream', {
   logGroup: logGroup,
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -301,7 +303,7 @@ Logging can also be disabled:
 ```ts fixture=with-destination
 new DeliveryStream(this, 'Delivery Stream', {
   loggingEnabled: false,
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -360,7 +362,7 @@ const s3Destination = new destinations.S3(bucket, {
   compression: Compression.SNAPPY,
 });
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -382,7 +384,7 @@ const s3Destination = new destinations.S3(bucket, {
   bufferingSize: cdk.Size.mebibytes(8),
 });
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -405,36 +407,44 @@ import * as s3 from '@aws-cdk/aws-s3';
 
 // Enable backup of all source records (to an S3 bucket created by CDK)
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All', {
-  destination: new destinations.Elasticsearch(domain, {
-    indexName: 'myindex',
-    backup: BackupMode.ALL,
-  }),
+  destinations: [
+    new destinations.Elasticsearch(domain, {
+      indexName: 'myindex',
+      backup: BackupMode.ALL,
+    }),
+  ],
 });
 
 // Enable backup of only the source records that failed to deliver (to an S3 bucket created by CDK)
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup Failed', {
-  destination: new destinations.Elasticsearch(domain, {
-    indexName: 'myindex',
-    backup: BackupMode.FAILED,
-  }),
+  destinations: [
+    new destinations.Elasticsearch(domain, {
+      indexName: 'myindex',
+      backup: BackupMode.FAILED,
+    }),
+  ],
 });
 
 // Explicitly provide an S3 bucket to which all source records will be backed up
 const backupBucket = new s3.Bucket(this, 'Bucket');
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Bucket', {
-  destination: new destinations.Elasticsearch(domain, {
-    indexName: 'myindex',
-    backupBucket: backupBucket,
-  }),
+  destinations: [
+    new destinations.Elasticsearch(domain, {
+      indexName: 'myindex',
+      backupBucket: backupBucket,
+    }),
+  ],
 });
 
 // Explicitly provide an S3 prefix under which all source records will be backed up
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Prefix', {
-  destination: new destinations.Elasticsearch(domain, {
-    indexName: 'myindex',
-    backup: BackupMode.ALL,
-    backupPrefix: 'mybackup',
-  }),
+  destinations: [
+    new destinations.Elasticsearch(domain, {
+      indexName: 'myindex',
+      backup: BackupMode.ALL,
+      backupPrefix: 'mybackup',
+    }),
+  ],
 });
 ```
 
@@ -485,7 +495,7 @@ const s3Destination = new destinations.S3(bucket, {
   processors: [lambdaProcessor],
 });
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: destination,
+  destinations: [destination],
 });
 ```
 
@@ -523,13 +533,15 @@ const myGlueTable = new glue.Table(this, 'MyGlueTable', {
 });
 
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.S3(bucket, {
-    dataFormatConversionConfiguration: {
-      schema: myGlueTable,
-      inputFormat: destinations.InputFormat.OPENX_JSON
-      outputFormat: destinations.OuputFormat.PARQUET
-    },
-  }),
+  destinations: [
+    new destinations.S3(bucket, {
+      dataFormatConversionConfiguration: {
+        schema: myGlueTable,
+        inputFormat: destinations.InputFormat.OPENX_JSON
+        outputFormat: destinations.OuputFormat.PARQUET
+      },
+    }),
+  ],
 });
 ```
 
@@ -553,7 +565,7 @@ const role = new iam.Role(this, 'Role', {
 }
 bucket.grantWrite(role);
 new DeliveryStream(stack, 'Delivery Stream', {
-  destination: new destinations.S3(bucket),
+  destinations: [new destinations.S3(bucket)],
   role: role,
 });
 ```
@@ -607,6 +619,12 @@ const myDestinationResource = {
 /// !show
 myDestinationResource.grantWrite(deliveryStream);
 ```
+
+## Multiple destinations
+
+Though the delivery stream allows specifying an array of destinations, only one
+destination per delivery stream is currently allowed. This limitation is enforced at
+compile time and will throw an error.
 
 ---
 
@@ -706,7 +724,7 @@ robust prototypes already implemented.
   ```ts
   interface DeliveryStreamProps {
     // The destination that this delivery stream will deliver data to.
-    readonly destination: IDestination;
+    readonly destinations: IDestination[];
     // Auto-generated by CFN
     readonly deliveryStreamName?: string;
     // Can source data from Kinesis, if not provided will use API to produce data
@@ -851,6 +869,7 @@ No.
    may confuse customers who have previously used it to create a delivery stream; if
    delivery streams support multiple destinations in the future then configuration will
    not be flexible per-destination.
+   *Rejected*: supporting multiple destinations.
 3. Provide a more generic interface for data transformers instead of requiring a Lambda
    function.
    The data transformation API seems to indicate future support for processors that are
@@ -862,7 +881,7 @@ No.
    methods for each possible processor type (ie., `static fromFunction(lambdaFunction:
    lambda.IFunction, options: ProcessorOptions): Processor`). This may be too complex for
    a change that we are not confident will occur.
-   *Implemented.*
+   *Implemented*.
 4. Allow multiple destinations to be provided to the delivery stream.
    While the console UI only allows a single destination to be configured per delivery
    stream, the horizontal model of the service API and the fact that a call to
@@ -873,6 +892,7 @@ No.
    destinations are provided until the service team launches that feature. However, this
    would be significantly future-proofing the API at the expense of confusing users that
    would reasonably assume that multiple destinations are currently supported.
+   *Implemented*.
 5. Allow the user to create or use separate IAM roles for each aspect of the delivery
    stream.
    This would mean that in a complex delivery stream using AWS Lambda transformation, AWS
