@@ -618,8 +618,7 @@ creating a delivery stream.
 
 See Amazon Kinesis Data Firehose module README for usage examples.
 
-If further customization is required, use `HttpDestination` from this package or implement
-`firehose.IDestination`.
+For non-AWS service destinations, use `HttpDestination`.
 
 ---
 
