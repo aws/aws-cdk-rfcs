@@ -40,9 +40,11 @@ used as a destination. More supported destinations are covered [below](#destinat
 
 ```ts
 import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
+import * as s3 from '@aws-cdk/aws-s3';
 
+const bucket = new s3.Bucket(this, 'Bucket');
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.S3(),
+  destination: new destinations.S3(bucket),
 });
 ```
 
@@ -112,9 +114,7 @@ import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 
 const bucket = new s3.Bucket(this, 'Bucket');
 
-const s3Destination = new destinations.S3({
-  bucket: bucket,
-});
+const s3Destination = new destinations.S3(bucket);
 
 new DeliveryStream(this, 'Delivery Stream', {
   destination: s3Destination,
@@ -126,8 +126,7 @@ successfully delivered to S3. `errorOutputPrefix` will be added to failed record
 writing them to S3.
 
 ```ts fixture=with-bucket
-const s3Destination = new destinations.S3({
-  bucket: bucket,
+const s3Destination = new destinations.S3(bucket, {
   prefix: 'myFirehose/DeliveredYear=!{timestamp:yyyy}/anyMonth/rand=!{firehose:random-string}',
   errorOutputPrefix: 'myFirehoseFailures/!{firehose:error-output-type}/!{timestamp:yyyy}/anyMonth/!{timestamp:dd}',
 });
@@ -146,8 +145,7 @@ const domain = new es.Domain(this, 'Domain', {
 });
 
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.Elasticsearch({
-    domain: domain,
+  destination: new destinations.Elasticsearch(domain, {
     indexName: 'myindex',
   }),
 });
@@ -182,8 +180,7 @@ const cluster = new redshift.Cluster(this, 'Cluster', {
   publiclyAccessible: true,
 });
 
-const redshiftDestination = new destinations.Redshift({
-  cluster: cluster,
+const redshiftDestination = new destinations.Redshift(cluster, {
   user: {
     username: 'firehose',
   },
@@ -358,9 +355,8 @@ delivered to S3 without compression.
 
 ```ts fixture=with-bucket
 // Compress data delivered to S3 using Snappy
-const s3Destination = new destinations.S3({
+const s3Destination = new destinations.S3(bucket, {
   compression: Compression.SNAPPY,
-  bucket: bucket,
 });
 new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
@@ -380,10 +376,9 @@ buffer size is 3 MiB and the buffer interval is 1 minute.
 // Increase the buffer interval and size to 5 minutes and 3 MiB, respectively
 import * as cdk from '@aws-cdk/core';
 
-const s3Destination = new destinations.S3({
+const s3Destination = new destinations.S3(bucket, {
   bufferingInterval: cdk.Duration.minutes(5),
   bufferingSize: cdk.Size.mebibytes(8),
-  bucket: bucket,
 });
 new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
@@ -409,8 +404,7 @@ import * as s3 from '@aws-cdk/aws-s3';
 
 // Enable backup of all source records (to an S3 bucket created by CDK)
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All', {
-  destination: new destinations.Elasticsearch({
-    domain: domain,
+  destination: new destinations.Elasticsearch(domain, {
     indexName: 'myindex',
     backup: BackupMode.ALL,
   }),
@@ -418,8 +412,7 @@ const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All', {
 
 // Enable backup of only the source records that failed to deliver (to an S3 bucket created by CDK)
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup Failed', {
-  destination: new destinations.Elasticsearch({
-    domain: domain,
+  destination: new destinations.Elasticsearch(domain, {
     indexName: 'myindex',
     backup: BackupMode.FAILED,
   }),
@@ -428,8 +421,7 @@ const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup Failed',
 // Explicitly provide an S3 bucket to which all source records will be backed up
 const backupBucket = new s3.Bucket(this, 'Bucket');
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Bucket', {
-  destination: new destinations.Elasticsearch({
-    domain: domain,
+  destination: new destinations.Elasticsearch(domain, {
     indexName: 'myindex',
     backupBucket: backupBucket,
   }),
@@ -437,8 +429,7 @@ const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Expl
 
 // Explicitly provide an S3 prefix under which all source records will be backed up
 const deliveryStream = new DeliveryStream(this, 'Delivery Stream Backup All Explicit Prefix', {
-  destination: new destinations.Elasticsearch({
-    domain: domain,
+  destination: new destinations.Elasticsearch(domain, {
     indexName: 'myindex',
     backup: BackupMode.ALL,
     backupPrefix: 'mybackup',
@@ -484,14 +475,13 @@ const lambdaFunction = new lambda.Function(this, 'Processor', {
   handler: 'index.handler',
   code: lambda.Code.fromAsset(path.join(__dirname, 'process-records')),
 });
-const s3Destination = new firehosedestinations.S3Destination({
+const s3Destination = new destinations.S3(bucket, {
   processors: [{
     lambdaFunction: lambdaFunction,
     bufferingInterval: cdk.Duration.minutes(5),
     bufferingSize: cdk.Size.mebibytes(5),
     retries: 5,
   }],
-  bucket: bucket,
 });
 new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
@@ -508,7 +498,7 @@ Kinesis Data Firehose can convert the format of your input data from JSON to
 before storing the data in S3. This allows you to change the format of your data
 records without writing any Lambda code, but you must use S3 as your destination.
 
-```ts
+```ts fixture=with-bucket
 import * as glue from '@aws-cdk/aws-glue';
 import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 
@@ -532,7 +522,7 @@ const myGlueTable = new glue.Table(this, 'MyGlueTable', {
 });
 
 new DeliveryStream(this, 'Delivery Stream', {
-  destination: new destinations.S3({
+  destination: new destinations.S3(bucket, {
     dataFormatConversionConfiguration: {
       schema: myGlueTable,
       inputFormat: destinations.InputFormat.OPENX_JSON
@@ -554,19 +544,15 @@ S3 bucket, a Lambda data transformer, an AWS Glue table schema, etc. If you wish
 specify your own IAM role. It must have the correct permissions, or delivery stream
 creation or data delivery may fail.
 
-```ts
+```ts fixture=with-bucket
 import * as iam from '@aws-cdk/aws-iam';
-import * as s3 from '@aws-cdk/aws-iam';
 
 const role = new iam.Role(this, 'Role', {
   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
 }
-const bucket = new s3.Bucket(stack, 'Bucket');
 bucket.grantWrite(role);
 new DeliveryStream(stack, 'Delivery Stream', {
-  destination: new destinations.S3({
-    bucket: bucket,
-  }),
+  destination: new destinations.S3(bucket),
   role: role,
 });
 ```
@@ -835,7 +821,7 @@ robust prototypes already implemented.
     readonly backupBufferSize?: Size;
   }
   abstract class DestinationBase implements IDestination {
-     constructor(protected readonly props: DestinationProps = {}) {}
+    constructor(protected readonly props: DestinationProps = {}) {}
     abstract bind(scope: Construct, options: DestinationBindOptions): DestinationConfig;
      // Helper methods that subclasses can use to create common config
     protected createLoggingOptions(...): CfnDeliveryStream.CloudWatchLoggingOptionsProperty | undefined;
