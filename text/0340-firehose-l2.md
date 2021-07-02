@@ -536,7 +536,7 @@ new DeliveryStream(this, 'Delivery Stream', {
 See: [Converting Input Record Format](https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html)
 in the *Kinesis Data Firehose Developer Guide*.
 
-### Specifying an IAM role
+## Specifying an IAM role
 
 The DeliveryStream class automatically creates an IAM role with all the minimum necessary
 permissions for Kinesis Data Firehose to access the resources referenced by your delivery
@@ -561,63 +561,18 @@ new DeliveryStream(stack, 'Delivery Stream', {
 See [Controlling Access](https://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html)
 in the *Kinesis Data Firehose Developer Guide*.
 
-## Permission Grants
+## Granting application access to a delivery stream
 
 IAM roles, users or groups which need to be able to work with delivery streams should be
 granted IAM permissions.
 
-Any object that implements the `IGrantable` interface (has an associated principal) can be
-granted permissions to a delivery stream by calling:
+Any object that implements the `IGrantable` interface (ie., has an associated principal)
+can be granted permissions to a delivery stream by calling:
 
-- `grantRead(principal)` - grants the principal read access to the control plane
-- `grantWrite(principal)` - grants the principal write access to the control plane
-- `grantWriteData(principal)` - grants the principal write access to the data plane
-- `grantFullAccess(principal)` - grants principal full access to the delivery stream
-
-### Control Plane Read Permissions
-
-Grant `read` access to the control plane of a delivery stream by calling the `grantRead()` method.
-
-```ts fixture=with-delivery-stream
-import * as iam from '@aws-cdk/aws-iam';
-const lambdaRole = new iam.Role(this, 'Role', {
-  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-}
-
-// Give the role permissions to read information about the delivery stream
-deliveryStream.grantRead(lambdaRole);
-```
-
-The following read permissions are provided to a service principal by the `grantRead()` method:
-
-- `firehose:DescribeDeliveryStream`
-- `firehose:ListDeliveryStreams`
-- `firehose:ListTagsForDeliveryStream`
-
-### Control Plane Write Permissions
-
-Grant `write` access to the control plane of a delivery stream by calling the `grantWrite()` method.
-
-```ts fixture=with-delivery-stream
-import * as iam from '@aws-cdk/aws-iam';
-const lambdaRole = new iam.Role(this, 'Role', {
-  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-}
-
-// Give the role permissions to modify the delivery stream
-deliveryStream.grantWrite(lambdaRole);
-```
-
-The following write permissions are provided to a service principal by the `grantWrite()` method:
-
-- `firehose:DeleteDeliveryStream`
-- `firehose:StartDeliveryStreamEncryption`
-- `firehose:StopDeliveryStreamEncryption`
-- `firehose:UpdateDestination`
-
-### Data Plane Write Permissions
-
-Grant `write` access to the data plane of a delivery stream by calling the `grantWriteData()` method.
+- `grantPutRecords(principal)` - grants the principal the ability to put records onto the
+  delivery stream
+- `grant(principal, ...actions)` - grants the principal permission to a custom set of
+  actions
 
 ```ts fixture=with-delivery-stream
 import * as iam from '@aws-cdk/aws-iam';
@@ -626,24 +581,31 @@ const lambdaRole = new iam.Role(this, 'Role', {
 }
 
 // Give the role permissions to write data to the delivery stream
-deliveryStream.grantWriteData(lambdaRole);
+deliveryStream.grantPutRecords(lambdaRole);
 ```
 
-The following write permissions are provided to a service principal by the `grantWriteData()` method:
+The following write permissions are provided to a service principal by the `grantPutRecords()` method:
 
 - `firehose:PutRecord`
 - `firehose:PutRecordBatch`
 
-### Custom Permissions
+## Granting a delivery stream access to a resource
 
-You can add any set of permissions to a delivery stream by calling the `grant()` method.
+Conversely to the above, Kinesis Data Firehose requires permissions in order for delivery
+streams to interact with resources that you own. For example, if an S3 bucket is specified
+as a destination of a delivery stream, the delivery stream must be granted permissions to
+put and get objects from the bucket. When using the built-in AWS service destinations
+found in the `@aws-cdk/aws-kinesisfirehose-destinations` module, the CDK grants the
+permissions automatically. However, custom or third-party destinations may require custom
+permissions. In this case, use the delivery stream as an `IGrantable`, as follows:
 
 ```ts fixture=with-delivery-stream
-import * as iam from '@aws-cdk/aws-iam';
-const user = new iam.User(this, 'User');
-
-// give user permissions to update destination
-deliveryStream.grant(user, 'firehose:UpdateDestination');
+/// !hide
+const myDestinationResource = {
+  grantWrite(grantee: IGrantable) {}
+}
+/// !show
+myDestinationResource.grantWrite(deliveryStream);
 ```
 
 ---
@@ -734,13 +696,7 @@ robust prototypes already implemented.
     readonly deliveryStreamArn: string;
     readonly deliveryStreamName: string;
     grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
-    // Grant permission to describe the stream
-    grantRead(grantee: iam.IGrantable): iam.Grant;
-    // Grant permission to modify the stream
-    grantWrite(grantee: iam.IGrantable): iam.Grant;
-    // Grant permission to write data to the stream
-    grantWriteData(grantee: iam.IGrantable): iam.Grant;
-    grantFullAccess(grantee: iam.IGrantable): iam.Grant;
+    grantPutRecords(grantee: iam.IGrantable): iam.Grant;
     metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     // Some canned metrics as well like `metricBackupToS3DataFreshness`
   }
