@@ -869,7 +869,6 @@ No.
    may confuse customers who have previously used it to create a delivery stream; if
    delivery streams support multiple destinations in the future then configuration will
    not be flexible per-destination.
-   *Rejected*: supporting multiple destinations.
 3. Provide a more generic interface for data transformers instead of requiring a Lambda
    function.
    The data transformation API seems to indicate future support for processors that are
