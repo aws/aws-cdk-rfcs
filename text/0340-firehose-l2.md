@@ -476,13 +476,13 @@ const lambdaFunction = new lambda.Function(this, 'Processor', {
   handler: 'index.handler',
   code: lambda.Code.fromAsset(path.join(__dirname, 'process-records')),
 });
+const lambdaProcessor = new LambdaFunctionProcessor(lambdaFunction, {
+  bufferingInterval: cdk.Duration.minutes(5),
+  bufferingSize: cdk.Size.mebibytes(5),
+  retries: 5,
+});
 const s3Destination = new destinations.S3(bucket, {
-  processors: [{
-    lambdaFunction: lambdaFunction,
-    bufferingInterval: cdk.Duration.minutes(5),
-    bufferingSize: cdk.Size.mebibytes(5),
-    retries: 5,
-  }],
+  processors: [lambdaProcessor],
 });
 new DeliveryStream(this, 'Delivery Stream', {
   destination: destination,
@@ -740,23 +740,42 @@ robust prototypes already implemented.
   }
   ```
 
+- `IProcessor` -- interface that data processors will implement to grant permissions and
+  produce configuration that will be injected into the destination definition
+
+  ```ts
+  // Generic configuration for processors
+  interface DataProcessorProps {
+    // Length of time delivery stream will buffer data before passing to the processor
+    readonly bufferInterval?: Duration;
+    // Size of the buffer
+    readonly bufferSize?: Size;
+    // Number of times Firehose will retry the processor invocation due to network timeout or invocation limits
+    readonly retries?: number;
+  }
+  // The key-value pair that identifies the underlying processor resource.
+  // Directly from the CFN spec, example: { parameterName: 'LambdaArn', parameterValue: lambdaFunction.functionArn }
+  interface DataProcessorIdentifier {
+    readonly parameterName: string;
+    readonly parameterValue: string;
+  }
+  // Output of the IDataProcessor bind method, note the extension
+  interface DataProcessorConfig extends DataProcessorProps {
+    // The type of the underlying processor resource.
+    readonly processorType: string;
+    readonly processorIdentifier: DataProcessorIdentifier;
+  }
+  interface IDataProcessor {
+    bind(deliveryStream: IDeliveryStream): DataProcessorConfig;
+  }
+  ```
+
 - `DestinationBase` -- abstract base destination class with some helper
   props/methods
 
   ```ts
   // Compression method for data delivered to S3
   enum Compression { GZIP, HADOOP_SNAPPY, SNAPPY, UNCOMPRESSED, ZIP }
-  // Not yet fully-fleshed out
-  interface DataProcessor {
-     // Function that will be called to do data processing
-    readonly lambdaFunction: lambda.IFunction;
-    // Length of time delivery stream will buffer data before sending to processor
-    readonly bufferInterval?: Duration;
-    // Size of buffer
-    readonly bufferSize?: Size;
-    // Number of retries for networking failures or invocation limits
-    readonly retries?: number;
-  }
   interface DestinationProps {
      // Whether failure logging should be enabled
      readonly logging?: boolean;
@@ -764,7 +783,7 @@ robust prototypes already implemented.
     readonly logGroup?: logs.ILogGroup;
     // Data transformation to convert data before delivering
     // Should probably just be a singleton
-    readonly processors?: DataProcessor[];
+    readonly processors?: IDataProcessor[];
     // Whether to backup all source records, just failed records, or none
     readonly backup?: BackupMode;
     // Specific bucket to use for backup
@@ -773,7 +792,7 @@ robust prototypes already implemented.
     readonly backupPrefix?: string;
     // Length of time delivery stream will buffer data before backing up
     readonly backupBufferInterval?: Duration;
-    // Size of buffer
+    // Size of the buffer
     readonly backupBufferSize?: Size;
   }
   abstract class DestinationBase implements IDestination {
