@@ -222,10 +222,11 @@ This integration has not been completed (see #1234).
 
 Enabling server-side encryption (SSE) requires Kinesis Data Firehose to encrypt all data
 sent to delivery stream when it is stored at rest. This means that data is encrypted
-before being written to the storage layer and decrypted after it is received from the
-storage layer. The service manages keys and cryptographic operations so that sources and
-destinations do not need to, as the data is encrypted and decrypted at the boundaries of
-the service. By default, delivery streams do not have SSE enabled.
+before being written to the service's internal storage layer and decrypted after it is
+received from the internal storage layer. The service manages keys and cryptographic
+operations so that sources and destinations do not need to, as the data is encrypted and
+decrypted at the boundaries of the service (ie., before the data is delivered to a
+destination). By default, delivery streams do not have SSE enabled.
 
 The Key Management Service (KMS) Customer Managed Key (CMK) used for SSE can either be
 AWS-owned or customer-managed. AWS-owned CMKs are keys that an AWS service (in this case
