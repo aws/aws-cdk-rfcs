@@ -263,13 +263,18 @@ new DeliveryStream(this, 'Delivery Stream Explicit Customer Managed'', {
 });
 ```
 
-If a Kinesis data stream is configured as the source of a delivery stream, Kinesis Data
-Firehose no longer stores data at rest and all encryption is handled by Kinesis Data
-Streams. Kinesis Data Firehose receives unencrypted data from Kinesis Data Streams,
-buffers the data in memory, and sends the data to destinations without ever writing the
-unencrypted data at rest. Practically, this means that SSE should be specified on the
-Kinesis data stream when it is used as the source of a delivery stream (and specifying SSE
-on the delivery stream will cause an error).
+When you configure a Kinesis data stream as the data source of a Kinesis Data Firehose
+delivery stream, Kinesis Data Firehose no longer stores the data at rest. Instead, the
+data is stored in the data stream. When you send data from your data producers to your
+data stream, Kinesis Data Streams encrypts your data before storing the data at rest. When
+your Kinesis Data Firehose delivery stream reads the data from your data stream, Kinesis
+Data Streams first decrypts the data and then sends it to Kinesis Data Firehose. Kinesis
+Data Firehose buffers the data in memory then delivers it to your destinations without
+storing the unencrypted data at rest.
+
+Practically, this means that SSE should be specified on the Kinesis data stream when it is
+used as the source of a delivery stream. Specifying SSE on the delivery stream that has a
+data stream as its source will cause an error.
 
 See: [Data Protection](https://docs.aws.amazon.com/firehose/latest/dev/encryption.html) in
 the *Kinesis Data Firehose Developer Guide*.
