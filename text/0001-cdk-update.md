@@ -269,10 +269,27 @@ off of information in the CDK `App` context.
 ### What is the high level implementation plan?
 
 We will start from the prototype CDK update command that identifies the Lambda
-resources and then publishes them using the CDK toolkit.
+resources and then publishes them using the CDK toolkit, and extend that to
+implement support for ECR images associated with ECS and Fargate tasks, API
+Gateway definitions, and Step Function workflows. Those will be implemented
+directly in the toolkit code as part of the launch for the feature. The toolkit
+implementation will be designed to conform to an interface that provides:
 
-We will propose updates to the initial CDK constructs that are capable of
-accelerated deployment and make those changes to the CDK.
+- Watchable filesystem resources
+- A way of updating the watchable resource list
+- A method for determining whether the construct can be updated in place
+- A method for updating the construct in place
+
+If changes to the CDK constructs are necessary to implement the accelerated
+development process, we will make those changes as well. In the longer term we
+must lay the groundwork for moving the logic defining the update process into
+the Construct library, which implies a design for passing these values by way of
+the Cloud Assembly.
+
+We will implement a filesystem watcher for the CDK toolkit that works on one or
+more directory trees, watching for changes. It will base its watch list on the
+set of files indicated by the toolkit, and update them when those responses
+change.
 
 Additionally, a `--watch` flag and a file watcher will be added to support
 monitoring the inputs of stack resources for changes.
