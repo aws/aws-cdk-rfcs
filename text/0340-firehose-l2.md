@@ -29,12 +29,22 @@ destinations.
 is a service for fully-managed delivery of real-time streaming data to storage services
 such as Amazon S3, Amazon Redshift, Amazon Elasticsearch, Splunk, or any custom HTTP
 endpoint or third-party services such as Datadog, Dynatrace, LogicMonitor, MongoDB, New
-Relic, and Sumo Logic. This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
-project. It allows you to create Kinesis Data Firehose delivery streams.
+Relic, and Sumo Logic.
 
-## Creating a Delivery Stream
+Kinesis Data Firehose delivery streams are distinguished from Kinesis data streams in
+their models of consumtpion. Whereas consumers read from a data stream by actively pulling
+data from the stream, a delivery stream pushes data to its destination on a regular
+cadence. This means that data streams are intended to have consumers that do on-demand
+processing, like AWS Lambda or Amazon EC2. On the other hand, delivery streams are
+intended to have destinations that are sources for offline processing and analytics, such
+as Amazon S3 and Amazon Redshift.
 
-In order to create a Delivery Stream, you must specify a destination. An S3 bucket can be
+This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
+project. It allows you to define Kinesis Data Firehose delivery streams.
+
+## Defining a Delivery Stream
+
+In order to define a Delivery Stream, you must specify a destination. An S3 bucket can be
 used as a destination. More supported destinations are covered [below](#destinations).
 
 ```ts
