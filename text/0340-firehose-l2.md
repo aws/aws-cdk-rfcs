@@ -47,7 +47,7 @@ new DeliveryStream(this, 'Delivery Stream', {
 });
 ```
 
-The above example creates the following resources:
+The above example implicitly defines the following resources:
 
 - An S3 bucket
 - A Kinesis Data Firehose delivery stream with Direct PUT as the source and CloudWatch
@@ -105,7 +105,7 @@ for the implementations of these destinations.
 
 ### S3
 
-Creating a delivery stream with an S3 bucket destination:
+Defining a delivery stream with an S3 bucket destination:
 
 ```ts
 import * as s3 from '@aws-cdk/aws-s3';
@@ -636,7 +636,7 @@ compile time and will throw an error.
 
 This library provides constructs for adding destinations to a Amazon Kinesis Data Firehose
 delivery stream.  Destinations can be added by specifying the `destination` prop when
-creating a delivery stream.
+defining a delivery stream.
 
 See Amazon Kinesis Data Firehose module README for usage examples.
 
@@ -706,7 +706,7 @@ robust prototypes already implemented.
 
 ### What is the technical solution (design) of this feature?
 
-- `IDeliveryStream` -- interface for created and imported delivery streams
+- `IDeliveryStream` -- interface for defined and imported delivery streams
 
   ```ts
   interface IDeliveryStream extends
@@ -727,7 +727,7 @@ robust prototypes already implemented.
   }
   ```
 
-- `DeliveryStreamProps` -- configuration for creating a `DeliveryStream`
+- `DeliveryStreamProps` -- configuration for defining a `DeliveryStream`
 
   ```ts
   interface DeliveryStreamProps {
@@ -863,7 +863,7 @@ above may have drawbacks, as detailed below in "alternative solutions".
    We followed the common pattern of placing service integrations (where one service
    provides an interface that multiple other services implement) into a separate
    module. In contrast to many of the other modules that follow this pattern, a delivery
-   stream cannot be created without some destination, as the destination is a key element
+   stream cannot be defined without some destination, as the destination is a key element
    of the service. It could be argued that these destinations should be treated as
    first-class and co-located with the delivery stream itself. However, this is similar to
    SNS, where a topic doesn’t have much meaning without a subscription and yet service
@@ -905,8 +905,7 @@ above may have drawbacks, as detailed below in "alternative solutions".
    would be significantly future-proofing the API at the expense of confusing users that
    would reasonably assume that multiple destinations are currently supported.
    *Implemented*.
-5. Allow the user to create or use separate IAM roles for each aspect of the delivery
-   stream.
+5. Allow the user to use separate IAM roles for each aspect of the delivery stream.
    This would mean that in a complex delivery stream using AWS Lambda transformation, AWS
    Glue record conversion, S3 Backup, and a destination, that the user could specify a
    separate IAM role for Firehose to access each of those resources. We chose to only use
