@@ -326,7 +326,7 @@ limit of records per second (indicating data is flowing into your delivery strea
 than it is configured to process).
 
 CDK provides methods for accessing delivery stream metrics with default configuration,
-such as `metricIncomingBytes`, and `metricIncomingRecords` (see [`IDeliveryStream`](../lib/delivery-stream.ts)
+such as `metricIncomingBytes`, and `metricIncomingRecords` (see [`IDeliveryStream`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-kinesisfirehose.IDeliveryStream.html)
 for a full list). CDK also provides a generic `metric` method that can be used to produce
 metric configurations for any metric provided by Kinesis Data Firehose; the configurations
 are pre-populated with the correct dimensions for the delivery stream.
