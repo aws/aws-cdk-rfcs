@@ -1,9 +1,8 @@
----
-rfc pr: [#342](https://github.com/aws/aws-cdk-rfcs/pull/342)
-tracking issue: [#340](https://github.com/aws/aws-cdk-rfcs/issues/340)
----
-
 # Amazon Kinesis Data Firehose Delivery Stream L2
+
+* **Original Author(s):**: @BenChaimberg, @madeline-k, @otaviomacedo
+* **Tracking Issue**: #340
+* **API Bar Raiser**: @rix0rrr
 
 The `aws-kinesisfirehose` construct library allows you to create Amazon Kinesis
 Data Firehose delivery streams and destinations with just a few lines of
@@ -645,7 +644,15 @@ For non-AWS service destinations, use `HttpDestination`.
 
 ---
 
-## FAQ
+Ticking the box below indicates that the public API of this RFC has been
+signed-off by the API bar raiser (the `api-approved` label was applied to the
+RFC pull request):
+
+```
+[ ] Signed-off by API Bar Raiser @xxxxx
+```
+
+## Public FAQ
 
 ### What are we launching today?
 
@@ -699,9 +706,7 @@ It’s a large effort (3 devs * 1 week) to invest in a module when we have other
 projects. However, the bulk of the effort has been spent already since we have fairly
 robust prototypes already implemented.
 
-### What changes are required to enable this change?
-
-#### Design
+### What is the technical solution (design) of this feature?
 
 - `IDeliveryStream` -- interface for created and imported delivery streams
 
@@ -847,6 +852,11 @@ robust prototypes already implemented.
 ### Is this a breaking change?
 
 No.
+
+### What are the drawbacks of this solution?
+
+No problems or risks of implementing this feature as a whole, though the design outlined
+above may have drawbacks, as detailed below in "alternative solutions".
 
 ### What alternative solutions did you consider?
 
