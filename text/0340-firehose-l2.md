@@ -658,7 +658,7 @@ Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
-- [ ] Signed-off by API Bar Raiser @rix0rrr
+- [X] Signed-off by API Bar Raiser @rix0rrr
 
 ## Public FAQ
 
