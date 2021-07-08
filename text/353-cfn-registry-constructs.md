@@ -16,7 +16,7 @@ makes it easier to use public CloudFormation extensions in your CDK apps.
 For example, let's say I want to define a GitHub repository using the `TF::GitHub::Repository` resource:
 
 ```ts
-import { Repository } from '@cdk-cloudformation-extensions/tf-github';
+import { Repository } from '@cdk-cloudformation-extensions/tf-github-repository';
 
 new Repository(this, 'MyRepo', {
   name: 'my-repo',
@@ -25,13 +25,14 @@ new Repository(this, 'MyRepo', {
 });
 ```
 
-For each namespace (e.g. `TF::GitHub` in the above example) in 
-the public CloudFormation Registry, a library is available under 
-the scope `@cdk-cloudformation-extensions/NAMESPACE`. This library
-includes construct libraries for all the types in that namespace.
+For each type (e.g. `TF::GitHub::Repository` in the above example) in 
+the public CloudFormation Registry, a module is available under 
+the scope `@cdk-cloudformation-extensions/NAMESPACE-TYPE`. This library
+includes a construct class and all the relevant data types for this
+type.
 
-New versions of all modules are released daily and include the 
-latest versions of all constructs.
+The module version corresponds to the version of the type schema
+in the public registry.
 
 ---
 
