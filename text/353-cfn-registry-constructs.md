@@ -194,6 +194,8 @@ export class Cluster extends CfnResource {
   }
 }
 
+// ---------------- output of json2jsii:
+
 /**
  * A resource that creates Amazon Elastic Kubernetes Service (Amazon EKS) clusters.
  *
@@ -459,5 +461,4 @@ export interface KubernetesApiAccessEntry {
   readonly groups?: string[];
 
 }
-```
 ```
