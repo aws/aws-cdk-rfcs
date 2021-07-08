@@ -1,4 +1,4 @@
-# {RFC_TITLE}
+# Constructs for Public CloudFormation Extensions
 
 * **Original Author(s):**: @eladb
 * **Tracking Issue**: #353
