@@ -23,8 +23,7 @@ Short description of the proposed feature.
 ## Workflow
 
 - [x] Tracking issue created (label: `status/proposed`)
-- [ ] API bar raiser assigned (ping us at
-  [#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) if needed)
+- [ ] API bar raiser assigned (ping us at [#aws-cdk-rfcs](https://cdk-dev.slack.com/archives/C025ZFGMUCD) if needed)
 - [ ] Kick off meeting
 - [ ] RFC pull request submitted (label: `status/review`)
 - [ ] Community reach out (via Slack and/or Twitter)
