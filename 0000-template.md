@@ -33,6 +33,8 @@
 >   leader quote, (5) user experience, (6) customer testimonial and (7) one
 >   sentence call to action.
 
+---
+
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
@@ -96,16 +98,16 @@ RFC pull request):
 > Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
 > changes and the migration path.
 
-### What are the drawbacks of this solution?
-
-> Describe any problems/risks that can be introduced if we implement this RFC.
-
 ### What alternative solutions did you consider?
 
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-### What is the high level implementation plan?
+### What are the drawbacks of this solution?
+
+> Describe any problems/risks that can be introduced if we implement this RFC.
+
+### What is the high-level project plan?
 
 > Describe your plan on how to deliver this feature from prototyping to GA.
 > Especially think about how to "bake" it in the open and get constant feedback
