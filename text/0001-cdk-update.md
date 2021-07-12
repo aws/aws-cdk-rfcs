@@ -12,19 +12,19 @@ CDK applications.
 
 ### CHANGELOG
 
-- feat(cli): implement `cdk deploy --accelerated` and
-  `cdk deploy --watch`
+- feat(cli): implement `cdk deploy --accelerated` and `cdk deploy --watch`
 
 ### Help
 
 ```
 cdk deploy --help
 
-    --accelerated[=only|auto|no]   Perform an accelerated deployment of the stack.
-                                (`--accelerated=only` will fail if there are
-                                non-accelerated updates)
     -w --watch   Watch for file changes and deploy any updates. Implies
                  --accelerated=auto if --accelerated is not specified.
+
+    --accelerated[=only|auto|no|ask]   Perform an accelerated deployment of the stack.
+        (`--accelerated=only` will fail if there are non-accelerated updates). The
+        default value is "only".
 
 Examples:
     cdk deploy -w
@@ -51,56 +51,10 @@ the application.
 
 #### Usage
 
-To perform an accelerated deployment, you can invoke the `cdk deploy --accelerated` command
-on some or all of your stacks:
-
-```
-$ cdk deploy --accelerated ApplicationStack
-Checking stack ApplicationStack for possible accelerated update
- * LambdaFunction[AppFunction]: File asset changed
-ApplicationStack can be updated
-1/1 stacks can be updated:
-Updating LambdaFunction in ApplicationStack
-...
-Update complete!
-```
-
-If the update is to an attribute of the stack that cannot be updated, the
-command will offer to perform a full deployment:
-
-```
-$ cdk deploy --accelerated ApplicationStack
-Checking stack ApplicationStack for possible accelerated update
- * LambdaFunction[Appfunction]: Function data changed
-ApplicationStack has changes that can not be rapidly updated.
-Perform a full deployment of ApplicationStack? [Y/n]: Y
-Deploying ApplicationStack
-...
-Done!
-```
-
-When multiple stacks are provided, update only occurs if all pending changes are
-suitable for update. Otherwise, a full deployment is done:
-
-```
-$ cdk deploy --accelerated ApplicationStack DataStack
-Checking stack ApplicationStack for possible accelerated update
- * LambdaFunction[Appfunction]: Function data changed
-ApplicationStack has changes that can not be rapidly updated.
-Checking stack DataStack for possible accelerated update
- * LambdaFunction[StreamFunction]: File asset changed
-DataStack can be updated
-1/2 stacks can be updated: Perform a full deployment? [Y/n]? Y
-Deploying ApplicationStack
-...
-Deploying DataStack
-...
-Done!
-```
-
-In addition to running in a one shot mode, the `cdk deploy --accelerated`
-command also has a `--watch` command line option that enable it to monitor the
-assets on disk and perform an update when they change.
+The simplest use case for CDK accelerate is `cdk deploy --watch`. This mode of
+operation will identify the files that can affect the resources being watched,
+monitor them for changes, and perform the fastest supported form of deployment
+on the stacks that change, as they change.
 
 ```
 $ cdk deploy --accelerated --watch ApplicationStack DataStack
@@ -122,10 +76,63 @@ asset is a zip file, then the update will fire whenever that changes. The
 existing docker asset builder will be used to watch for changes in local docker
 images.
 
+In addition to the monitoring mode, it is possible to perform one-shot
+accelerated deployments on some or all of the stacks in the CDK application:
+
+```
+$ cdk deploy --accelerated ApplicationStack
+Checking stack ApplicationStack for possible accelerated update
+ * LambdaFunction[AppFunction]: File asset changed
+ApplicationStack can be updated
+1/1 stacks can be updated:
+Updating LambdaFunction in ApplicationStack
+...
+Update complete!
+```
+
+If the update is to an attribute of the stack that cannot be updated, the
+command can offer to perform a full deployment if `--accelerated=ask`:
+
+```
+$ cdk deploy --accelerated=ask ApplicationStack
+Checking stack ApplicationStack for possible accelerated update
+ * LambdaFunction[Appfunction]: Function data changed
+ApplicationStack has changes that can not be rapidly updated.
+Perform a full deployment of ApplicationStack? [Y/n]: Y
+Deploying ApplicationStack
+...
+Done!
+```
+
+When multiple stacks are provided, update only occurs if all pending changes are
+suitable for update. Otherwise, a full deployment is done:
+
+```
+$ cdk deploy --accelerated=auto ApplicationStack DataStack
+Checking stack ApplicationStack for possible accelerated update
+ * LambdaFunction[Appfunction]: Function data changed
+ApplicationStack has changes that can not be rapidly updated.
+Checking stack DataStack for possible accelerated update
+ * LambdaFunction[StreamFunction]: File asset changed
+DataStack can be updated
+1/2 stacks can be accelerated, automatically performing a full deployment.
+Deploying ApplicationStack
+...
+Deploying DataStack
+...
+Done!
+```
+
+In addition to running in a one shot mode, the `cdk deploy --accelerated`
+command also has a `--watch` command line option that enable it to monitor the
+assets on disk and perform an update when they change.
+
 #### Resource Support
 
 - AWS Lambda `Function`
   - file and directory assets
+- StepFunction
+  - Workflow definitions
 - AWS Fargate
   - image assets
 - ECS
@@ -133,48 +140,15 @@ images.
 
 #### Future Support Plans
 
-- StepFunctions
 - API Gateway models
-
-### PRESS RELEASE
-
-DATE - AWS announces the `cdk deploy --accelerated` command for the AWS CDK
-toolkit. The `accelerate` command allows CDK application developers to rapidly
-update code within their CDK application when no other AWS resources are
-changing, bypassing the more correct, but time consuming, stack update
-procedure.
-
-The CDK toolkit uses CloudFormation under the hood to manage changes to AWS
-resources, which safely updates resources. This update process is slow, however,
-and during development it performs safety checks that add overhead to developer
-workflows. Those delays are interposed between every change a developer makes,
-and over the course of a product may add hours to the total development time.
-
-The `cdk deploy --accelerated` command provides a way to bypass those checks
-when working in development, directly updating the code in Lambda functions and
-ECS services without a full CDK deployment. When the `accelerate` command can
-identify that all changes in the stack have shortcut support, it will directly
-publish the assets to AWS and then modify the underlying CDK resources directly.
-
-> Using CDK accelerate dramatically improves our development iteration speed for
-> Lambda functions. It cuts down the change-deploy-test cycle to seconds, where
-> it was minutes before with a full cdk deploy each time. Unlike some other
-> solutions, it actually updates our function running on AWS, which means there
-> are no problems with the Lambda behaving differently during testing, and then
-> in production - Adam Ruka, developer
-
-Any CDK users who are deploying code to Lambda functions or containers on ECS or
-Fargate can take advantage of this tool today, by configuring their stacks for
-interactive update, and then using `cdk deploy --accelerated` instead of
-`cdk deploy`.
 
 ## FAQ
 
 ### What are we launching today?
 
-The `cdk deploy --accelerated` and `cdk deploy --accelerated --watch` commands,
-with support for rapid update of Lambda function code, images for ECS and
-Fargate task definitions, and AWS StepFunction workflows.
+The `cdk deploy --watch` and `cdk deploy --accelerated` command features, with
+support for rapid update of Lambda function code, images for ECS and Fargate
+task definitions, and AWS StepFunction workflows.
 
 ### Why should I use this feature?
 
@@ -222,17 +196,17 @@ to shortcircuit the safe CloudFormation deployment process. If a user runs CDK
 update on their production stack, it can perform updates without adequate stack
 update safety checks. Releasing a public tool with instant update capability
 into the CDK may not be the right way to make this functionality public. To
-mitigate this, `accelerate` only runs on stacks that have explicitly opted in to
-the capability.
+mitigate this, `accelerate` only runs on explicitly selected stacks, and does
+not support the `--all` flag.
 
 ### What changes are required to enable this change?
 
-1. An implementation of the `cdk deploy --accelerated` command in the CDK
-   toolkit that can examine the Application stacks for updates that can be
-   applied and apply them.
-2. The CDK toolkit must be able to query a CDK resource for the set of
-   filesystem resources it must monitor for the `--watch` operation, and run a
-   filesystem monitor for that.
+1. An implementation of the `cdk deploy --accelerated` command in the CDK CLI
+   that can examine the Application stacks for updates that can be applied and
+   apply them.
+2. The CDK CLI must be able to query a CDK resource for the set of filesystem
+   resources it must monitor for the `--watch` operation, and run a filesystem
+   monitor for that.
 
 ### Is this a breaking change?
 
@@ -269,10 +243,10 @@ off of information in the CDK `App` context.
 ### What is the high level implementation plan?
 
 We will start from the prototype CDK update command that identifies the Lambda
-resources and then publishes them using the CDK toolkit, and extend that to
+resources and then publishes them using the CDK CLI, and extend that to
 implement support for ECR images associated with ECS and Fargate tasks, API
 Gateway definitions, and Step Function workflows. Those will be implemented
-directly in the toolkit code as part of the launch for the feature. The toolkit
+directly in the CLI code as part of the launch for the feature. The CLI
 implementation will be designed to conform to an interface that provides:
 
 - Watchable filesystem resources
@@ -286,10 +260,9 @@ must lay the groundwork for moving the logic defining the update process into
 the Construct library, which implies a design for passing these values by way of
 the Cloud Assembly.
 
-We will implement a filesystem watcher for the CDK toolkit that works on one or
-more directory trees, watching for changes. It will base its watch list on the
-set of files indicated by the toolkit, and update them when those responses
-change.
+We will implement a filesystem watcher for the CDK CLI that works on one or more
+directory trees, watching for changes. It will base its watch list on the set of
+files indicated by the CLI, and update them when those responses change.
 
 Additionally, a `--watch` flag and a file watcher will be added to support
 monitoring the inputs of stack resources for changes.
@@ -298,8 +271,8 @@ monitoring the inputs of stack resources for changes.
 
 - This RFC can be extended to add support for further pluggable asset and update
   targets. The accelerate capabilities are attached to the CDK constructs, not
-  the CDK CLI toolkit, so any CDK construct that can perform accelerated
-  deployment can implement that capability in whatever manner is appropriate.
+  the CDK CLI, so any CDK construct that can perform accelerated deployment can
+  implement that capability in whatever manner is appropriate.
 - This RFC will be enhanced significantly when the CDK asset model is enriched
   to support asset construction directly.
 - Direct support for monitoring container repositories for changes (possibly via
