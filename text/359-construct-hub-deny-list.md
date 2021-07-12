@@ -33,10 +33,29 @@ new ConstructHub(this, 'ConstrucHub', {
 });
 ```
 
-The keys are package names and may also include specific version numbers. 
+The keys are package names and may also include specific version numbers.
 If a version is not specified (e.g.`boombam`), then all versions of a specific module are denied. 
 The value of each entry includes metadata which will be emitted in the ingestion log and in the future displayed in the 
 "where is my package" page for publisher diagnostics.
+
+```ts
+interface DenyListEntry {
+  /** The reason why this package/version is denied */
+  readonly reason?: string;
+  
+  /** The user name that signed-off on the deny list entry */
+  readonly user?: string;
+  
+  /** The time this package was added */
+  readonly date?: Date;
+  
+  /** An internal reference to an issue or ticket that tracks this deny list entry */
+  readonly ref: string;
+}
+```
+
+The only required field is `ref` as in some cases it won't be possible to publish information
+about a deny list entry, but we need some way to track it internally.
 
 ---
 
