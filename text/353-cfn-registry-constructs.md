@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @eladb
 * **Tracking Issue**: #353
-* **API Bar Raiser**: TBD
+* **API Bar Raiser**: @rix0rrr
 
 A set of construct libraries which includes generated constructs for all CloudFormation 
 resources and modules published to the public CloudFormation Registry.
@@ -175,7 +175,9 @@ reason about the project structure and publishing workflows using code.
 
 ### What is the high level implementation plan?
 
-TBD
+- [ ] Implement [`cdk-import`](https://github.com/cdklabs/cdk-import) as a command-line tool that generates L1 constructs for registry extensions.
+- [ ] Create a mono-repo-style project using projen that utilizes `cdk-import` to generate a module for each registry resource.
+
 
 ### Are there any open issues that need to be addressed later?
 
