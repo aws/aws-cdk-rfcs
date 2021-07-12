@@ -80,9 +80,9 @@ The deny list will be modeled through strongly-typed API of the `ConstructHub`.
 3. The "discovery" and "ingestion" lambda functions will retrieve this file for each request, and will consult the 
    deny list for every package. If an incoming package is in the deny list, it will be skipped and a log entry will 
    be emitted with the deny information.
-4. The "inventory" process will retrieve the deny list and will filter out all denied package from inventory. 
-   Statistics about denied package will also be included in the inventory metrics.
-5. We will add a trigger to the "catalog-builder" for object deletion so when a denied package is deleted from 
+4. The "inventory" process will retrieve the deny list and will emit a metric that includes the number of deny
+   list entries in the list for monitoring purposes.
+6. We will add a trigger to the "catalog-builder" for object deletion so when a denied package is deleted from 
    the packages bucket, the catalog will be rebuilt without that package.
 
 ### Is this a breaking change?
@@ -113,15 +113,25 @@ the package to be removed. But since the SLA we declared for removing a package 
 tradeoff. If in the future we will want to add support for "quick removal" we can always add an additional mechanism that
 will temporarily block a package.
 
+Another potential drawback (albeit it could be preceived as a feature) is that packages denied in the public hub (or any 
+hub instance for that matter) will still be allowed in other hubs until they are explicitly 
+added to the deny list there. That might actually be the desired behavior (e.g. local deployment may 
+want to show a package that is blocked in the public hub), but it should be communicated that if a 
+package is reported and denied from the public hub, it will still appear in private hubs unless it is 
+explicitly denied there.
+
 ### What is the high level implementation plan?
 
-Project plan TBD.
+- [ ] Add `denyList` option to `ConstructHub` and upload to an S3 bucket.
+- [ ] Filter denied packages in "discovery"
+- [ ] Filter denied packages in "ingestion"
+- [ ] Add deny list count to "inventory"
+- [ ] Create deny-list handler - triggered by updates to the deny list and deletes existing packages
+- [ ] Update catalog builder when objects are deleted
+- [ ] Move "report abuse" email address to `ConstructHub` API so it's configurable in private instances
+- [ ] Update documentation to indicate that deny list (and report abuse) is instance-specific
 
 ### Are there any open issues that need to be addressed later?
 
-* [ ] Packages denied in the public hub will still be allowed in private hubs until they are explicitly 
-      added to the deny list there. That might actually be the desired behavior (e.g. local deployment may 
-      want to show a package that is blocked in the public hub), but it should be communicated that if a 
-      package is reported and denied from the public hub, it will still appear in private hubs unless it is explicitly denied there.
 * [ ] @NetaNir can you elaborate on this please? "(Security-requirement) "Alert when a specific package owner 
       is hitting the deny list protection far more then normal."
