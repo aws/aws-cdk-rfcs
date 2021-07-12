@@ -13,7 +13,7 @@ CDK applications.
 ### CHANGELOG
 
 - feat(cli): implement `cdk deploy --accelerated` and
-  `cdk deploy --accelerated --watch`
+  `cdk deploy --watch`
 
 ### Help
 
@@ -51,7 +51,7 @@ the application.
 
 #### Usage
 
-To run a one-shot update, you can invoke the `cdk deploy --accelerated` command
+To perform an accelerated deployment, you can invoke the `cdk deploy --accelerated` command
 on some or all of your stacks:
 
 ```
