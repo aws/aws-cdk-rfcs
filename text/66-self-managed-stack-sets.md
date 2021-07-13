@@ -4,6 +4,7 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/66
 ---
 
 # CDK Self Managed Stack Set Support
+
 As a CDK user, I would like to define stack set infrastructure through native CDK constructs and create/update self-managed stack sets through CDK deploy command.
 
 * **Original Author(s):** @linsona
@@ -13,124 +14,143 @@ As a CDK user, I would like to define stack set infrastructure through native CD
 ## Working Backwards
 
 ### CHANGELOG
-- feat(core): New Stack Set core type 
-- feat(assembly): New stack set artifcat type and schema
-- feat(cli): ```cdk deploy``` collects and creates/updates stack set 
-- feat(lib): API Calls/Logic for create/update stack sets
+
+- core: New Stack Set core type 
+- assembly: New stack set artifcat type and schema
+- cli: `cdk deploy` collects and creates/updates stack set 
+- lib: API Calls/Logic for create/update stack sets
 
 ### README
-The ```cdk.StackSet``` construct in CDK defines AWS resources in a stack set and stack set configuration/deployment preferences. This is different from the ```cdk.CfnStackSet``` construct which creates a CFN stack that deploys a CFN stack set. The ```cdk.StackSet``` construct creates the stack set directly if it does not exist, or updates a stack set and existing stack set instances while monitoring the stack set operation.
+
+The `cdk.StackSet` construct in CDK defines AWS resources in a stack set and stack set
+ configuration/deployment preferences. This is different from the `cdk.CfnStackSet` construct which creates a CloudFormation stack that deploys a CloudFormation stack set. The `cdk.StackSet` construct creates the stack set directly if it does not exist, or updates a stack set and existing stack set instances while monitoring the stack set operation.
 
 #### Usage
+
 To define a stack set, extend the core construct `StackSet`. Then define AWS resources in the same way as defining resources for stacks. Compared to the `Stack` construct, the `StackSet` core construct has different props specific to StackSets. The props define stack set configurations and operation preferences for when updates occur.
 
 **Example:**
 ```ts
-class POCStackSet extends cdk.StackSet {
-    constructor(scope: cdk.App, id: string, props: cdk.StackSetProps = {}) {
+import * as cdk from '@aws-cdk/core';
+import * as iam from '@aws-cdk/aws-iam';
+
+class PocStackSet extends cdk.StackSet {
+    constructor(scope: cdk.Construct, id: string, props?: cdk.StackSetProps) {
         super(scope, id, props);
 
-        new Role(this, 'ExampleRole', {
-          assumedBy: new ServicePrincipal('s3.amazonaws.com')
+        new iam.Role(this, 'ExampleRole', {
+          assumedBy: new iam.ServicePrincipal('s3.amazonaws.com')
         });
     }
 }
-new POCStackSet(app, 'poc-stack-set',
-    {
-        faultTolerancePercentage: 10,
-        maxConcurrentPercentage: 10,
-        regionConcurrencyType: 'PARALLEL'
-        .
-        .
-        .
-     }
-);
+
+new PocStackSet(app, 'poc-stack-set', {
+  faultTolerancePercentage: 10,
+  maxConcurrentPercentage: 10,
+  regionConcurrencyType: 'PARALLEL'
+  //...
+});
 ```
 
 **Deployment:**
 
-To deploy the stack set, the CLI command remains the same: ```cdk deploy```. If the stack set **does not exist**, then CDK will create the stack set directly in CFN. If the stack set **does exist**, then the stack set itself will be updated as well as all **existing** stack set instances. Stack sets instances are added to the stack set outside of the CDK context.
+To deploy the stack set, the CLI command remains the same: `cdk deploy poc-stack-set`. If the stack set **does not exist**, then CDK will create the stack set directly in CloudFormation. If the stack set **does exist**, then the stack set itself will be updated as well as all **existing** stack set instances. Stack sets instances are added to the stack set outside of the CDK context.
 
 ## FAQ
 
 ### What are we launching today?
+
 The core construct StackSet, which will enable users to define and deploy stack sets directly from CDK.
 
 ### Why should I use this feature?
-This core constuct directly creates a CFN stack set directly vs. provisioning a single stack that deploys a stack set. The deployment also updates the stack set, updates existing stack set instances, and monitors the stack set operation.
+
+This core constuct directly creates a CloudFormation stack set vs. provisioning a single stack that deploys a stack set. The deployment also updates the stack set, updates existing stack set instances, and monitors the stack set operation.
 
 ### What is supported?
+
 * Self Manged Stack Sets
-  * Create, Update, Update Existing Stack Set Instances
-* File Assets Management
+  * Create, Update, and Update Existing Stack Set Instances directly through CDK
 
 ### What is not supported?
+
 * Service Managed Stack Sets
 * Stack Set Instance Add/Remove through CDK
 * Stack Set deletion
-* Docker Assets
+* CDK Assets (CDK File Assets/CDK Docker Assets)
+  * More information on CDK asset management and complexities described in the [File Assets Management](#4-file-assets-management) section.
 
 ## Internal FAQ
+
 ### Why are we doing this?
-CDK does not support the creation and updating of CFN stack sets directly, only through an intermediate single stack. This would also enable customers with existing stack sets to utlize CDK to update in the future.
+
+Today, CDK does not support the creation and updating of CloudFormation stack sets directly. This solution would also enable deploying to existing stack sets with low effort.
+
+CDK does provide the `cdk.CFNStackSet` construct, which could accomplish similar behavior. The difference is that the `cdk.CFNStackSet` construct provisions a single CloudFormation stack with the resource type `AWS::CloudFormation::StackSet`, and then the stack provisions the actual stack set. This requires a 1:1 mapping of parameters and tags that need to be passed from the stack to the stack set. Customer can deploy to existing stack sets, but requires some migration steps for importing an existing stack set into the resource `AWS::CloudFormation::StackSet` before before being able to use `cdk.CFNStackSet`.
 
 ### Why should we _not_ do this?
-CDK does provide the ```cdk.CFNStackSet``` construct, but requires an intermediate single stack to deploy the stack set which does not monitor stack set operations on update.
+
+We might not want to do this since CDK does provide the `cdk.CFNStackSet` construct, which could accomplish similar behavior. The intermdiate stack may not be ideal for some customers, and may require large migration effort for customers who manage many stacksets.
 
 ### What changes are required to enable this change?
-Changes are required since CDK currently does not have the concept/logic of deploying stack sets directly.
+
+To enable this feature, we would need to introduce a new StackSet construct for customers to extend, a new assembly/artifact type for the Cloud Assembly, stack set synthesizer, and deployment code that creates/updates stack sets using AWS CloudFormation APIs.
 
 ### Is this a breaking change?
-No - this change does not require customers with existing apps to update code to consume the new CDK version.
+
+No.
 
 ### What are the drawbacks of this solution?
+
 The handling of file assets is more complex than a normal stack CDK app since stack set instances are deployed independently from CDK context and exist in different accounts and regions. This is dicussed more in the design details.
 
 ### What alternative solutions did you consider?
-An alternative is the usage of ```cdk.CFNStackSet```, which is not ideal for customers with existing stack sets or need to monitor stack set operations during updates.
+
+An alternative is the usage of `cdk.CFNStackSet`, which is not ideal for customers with existing stack sets since there is significant migration effort.
 
 ### What is the high level implementation plan?
-At a high level, the implementation will be done in two phases:
-* Bootstrapless StackSet
-  * Create StackSet core construct
-  * Create StackSet artifact type for manifest
-  * Create Bootstrapless StackSet Synthesizer
-  * Update CLI to collect StackSet artifact types in addition to Stacks
-* StackSet with file asset support
-  * Create Process for bootstrapping to enable file asset support
-  * Create StackSet Synthesizer for stack sets that inclue file assets
+* Create StackSet core construct
+* Create StackSet artifact type in the Cloud Assembly
+* Create Bootstrapless StackSet Synthesizer
+* Update CLI to collect StackSet artifact types in addition to Stacks
 
 ### Are there any open issues that need to be addressed later?
-* Docker asset management
+
+* CDK asset management
 * Future support for service managed stack sets
+* CDK Pipelines
 
 ---
 # Implemenation Details
 
 # Requirements
+
 ## In Scope Features
+
 * Create Self-Managed Stack Set
-  * This should create the stack set directly, as opposed to the [CfnStackSet](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-cloudformation.CfnStackSet.html) construct which creates a CFN stack that deploys a stack set
+  * This should create the stack set directly, as opposed to the [CfnStackSet](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-cloudformation.CfnStackSet.html) construct which creates a CloudFormation stack that deploys a stack set
 * Update Self-Managed Stack Set
   * Update includes updating **all existing** stack set instances 
   * Set Operation Preference Configuration
-* File Assets Management
 
 ## Out of Scope Features
+
 * Delete Self-Managed Stack Set
 * Service Managed Stack Set
 * Add/Remove stack set instances through CDK
 * Update to only specific stack set instances
 * Stack Set Instance Level Parameter Overrides
+* CDK Assets (CDK File Assets/CDK Docker Assets)
+  * More information on CDK asset management and complexities described in the [File Assets Management](#4-file-assets-management) section.
 
 ## Assumptions
+
 * Management Account contains Stack Set administration role and child accounts contains Stack Set execution role for enabling stack set operations
   * https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs-self-managed.html
 
 ## Non-Functional Requirements
+
 * Implementation does not incur breaking changes for existing users or future feature implementation
   * I.e Current CDK users should not have to convert any other CDK app implementations to accommodate for changes implemented in this design
-
 
 * Implementation is extensible for future features such as:
   * Self-managed Stack Sets
@@ -138,7 +158,9 @@ At a high level, the implementation will be done in two phases:
   * Additional asset management
 
 # Design
+
 ## Design Overview:
+
 * [1] [CLI Integration - Stack/Stack Set Collection](#1-cli-integration---stackstack-set-collection)
   * CLI user experience and how stack/stack sets will be collected under the hood
 * [2] [Construct Changes (CDK app) - Stack Set Artifact Type Synthesis](#2-construct-changes-cdk-app---stack-set-artifact-type-synthesis)
@@ -150,31 +172,34 @@ At a high level, the implementation will be done in two phases:
     * Primitives added for making API calls to create/update stack sets
     * Branching between deploying stacks vs stack sets
 * [4] [File Assets Management](#4-file-assets-management)
-  * How file assets are defined
-  * How bootstrapping works with stack sets
-  * How file assets are made available to accounts “unmanaged” by CDK and in regions that the stack set deploys to
+  * CDK Asset Management Complexities
+  * How file assets can be defined
+  * How bootstrapping could work with stack sets
+  * How file assets could be made available to accounts “unmanaged” by CDK and in regions that the stack set deploys to
 
 ## [1] CLI Integration - Stack/Stack Set Collection
+
 ## High Level CLI/Deploy Flow
+
 ![Architecture Diagram](../images/self-managed-stack-sets/high_level_cli_deploy_flow.jpg)
 1. CLI calls list/synth/deploy
 1. Subprocess invokes CDK App
-    1. StackSet construct generates template and artifact is added to manifest as a new artifact type
-1. CLI reads manifest
+1. StackSet construct generates template and artifact is added to Cloud Assembly as a new artifact type
+1. CLI reads Cloud Assembly
 1. CLI deploys to AWS environment
 
 ### Supported Commands:
+
 * cdk diff
 * cdk synth
 * cdk deploy
 * cdk list
 
 ### [1.1] Commands/flags for stack sets
+
 At a high-level, the flow for stacks vs stack sets are nearly identical with a few different configuration parameters and end deployment logic.
 
-**Option 1**: Commands will remain the same and perform actions for both stack/stack sets **(Preferred)**
-
-In this option, the commands can be ran as the are today, and under the hood logic will be branched based on artifact type.
+Commands can be ran as the are today, and under the hood logic will be branched based on artifact type.
 
 * **Pros**:
   * Unified customer experience for deploying infrastructure
@@ -183,27 +208,18 @@ In this option, the commands can be ran as the are today, and under the hood log
   * Risk of breaking current stacks flow
   * Under the hood, there will need to be some branching logic between types and changes to stacks collection since the current code is tightly tied to stack artifact types
 
-**Option 2:** Add Separate commands or flag to distinguish between stacks/stack sets
-
-* **Pros**:
-  * Isolates stack sets to its own flows -- less risk of breaking stacks flow
-* **Cons**:
-  * Odd user experience since the user will need to think about when to use commands for stack vs stack sets
-  * Some code duplication, since the stack set flow is nearly identical, with some differences in input parameters
-  * Commands will need to be ran twice if the CDK app contains both stacks/stack sets
-
 ### [1.2] CDK Stack/Stack Set Retrieval
-CLI commands retrieve stacks from the manifest. The same logic is necessary for a new stack set artifact type, but they are typed for only for *CloudFormationStackArtifact* objects.
 
-**Option 1:** Convert retrieval functions to generics **(Preferred)**
+CLI commands retrieve stacks from the Cloud Assembly. The same logic is necessary for a new stack set artifact type, but they are typed for only for *CloudFormationStackArtifact* objects.
 
-In this option, a new abstract class *CloudFormationArtifact* would be created which *CloudFormationStackArtifact (current)* and *CloudFormationStackSetArtifact (new)* will inherit. Then in the CloudAssembly convert to functions to generics based on the *CloudFormationArtifact* type.
+A new abstract class **CloudFormationArtifact** would be created which **CloudFormationStackArtifact (current)** and **CloudFormationStackSetArtifact (new)** will inherit. Then in the CloudAssembly convert to functions to generics based on the **CloudFormationArtifact** type.
 
 * **Pros**:
     * Less code duplication
     * Less risk of differences in retrieval if updates are made to CloudAssembly for stack/stack set retrieval
 * **Cons**:
     * Risk of breaking of how stacks work today
+
 * Example:
 ```ts
 private selectTopLevelStacks<T extends cxapi.CloudFormationArtifact>(stacks: T[],
@@ -215,17 +231,13 @@ private selectTopLevelStacks<T extends cxapi.CloudFormationArtifact>(stacks: T[]
     throw new Error('No stack found in the main cloud assembly. Use "list" to print manifest');
   }
 }
-``` 
-**Option 2:** Duplicate cloud assembly functions explicitly for stack sets
-
-* **Pros**:
-  * Isolates code for stack vs stack sets, so less risk of breaking stack flows
-* **Cons**:
-  * Code duplication and more risk of diff between nearly identical functions
+```
 
 ## [2] Construct Changes (CDK app) - Stack Set Artifact Type Synthesis
-### [2.1] CDK Artifacts/Manifest
-CDK CLI reads the manifest file after a CDK app is invoked (or directly from a previously generated manifest), and utilizes those directives in the manifest to build Artifact objects for deployment actions. The manifest should include all assets to be deployed as well as configurations on how those assets should be deployed. A new artifact should be created and added to the manifest:
+
+### [2.1] CDK Artifacts/Cloud Assembly
+
+CDK CLI reads the Cloud Assembly after a CDK app is invoked (or directly from a previously generated Cloud Assembly), and utilizes those directives in the Cloud Assembly to build Artifact objects for deployment actions. The Cloud Assembly should include all assets to be deployed as well as configurations on how those assets should be deployed. A new artifact should be created and added to the Cloud Assembly:
 
 **CloudFormationStackSetArtifact**
 * **[Type](https://github.com/aws/aws-cdk/blob/5a6fa7fa17a5dce5e429eed4ebfe2dbbac3d6d07/packages/%40aws-cdk/cloud-assembly-schema/lib/cloud-assembly/schema.ts#L17)**: “aws:cloudformation:stack-set”
@@ -249,37 +261,38 @@ References:
 * https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/cloud-assembly-schema/schema/cloud-assembly.schema.json
 
 ### [2.2] CDK Stack Set Construct
+
 Users should be able to to define infrastructure resources in the same way today. AWS infrastructure constructs and synthesis logic are tightly coupled with the “core.Stack” type, where they must be created the the scope of “core.Stack” or utilize “core.Stack” types in logic. Adding a new Stack Set core construct that generates templates in that same way as Stack may require a large amount of refactoring.
 
-**Option 1:** Create a new core.StackSet construct that extends Stack or Abstract Class that StackSet/Stack inherit from **(Preferred)**
+Create a new core.StackSet construct that extends Stack or Abstract Class that StackSet/Stack inherit from
 
 **Example Usage:**
 ```ts
-class POCStackSet extends cdk.StackSet {
-    constructor(scope: cdk.App, id: string, props: cdk.StackSetProps = {}) {
+import * as cdk from '@aws-cdk/core';
+import * as iam from '@aws-cdk/aws-iam';
+
+class PocStackSet extends cdk.StackSet {
+    constructor(scope: cdk.Construct, id: string, props?: cdk.StackSetProps) {
         super(scope, id, props);
 
-        new Role(this, 'ExampleRole', {
-          assumedBy: new ServicePrincipal('s3.amazonaws.com')
+        new iam.Role(this, 'ExampleRole', {
+          assumedBy: new iam.ServicePrincipal('s3.amazonaws.com')
         });
     }
 }
-new POCStackSet(app, 'poc-stack-set',
-    {
-        faultTolerancePercentage: 10,
-        maxConcurrentPercentage: 10,
-        regionConcurrencyType: 'PARALLEL'
-        .
-        .
-        .
-     }
-);
+
+new PocStackSet(app, 'poc-stack-set', {
+  faultTolerancePercentage: 10,
+  maxConcurrentPercentage: 10,
+  regionConcurrencyType: 'PARALLEL'
+  //...
+});
 ```
 **Synthesis Flow:**
 
 ![Architecture Diagram](../images/self-managed-stack-sets/cdk_stack_set_construct_synth_flow_option_1.jpg)
 * User extends the core StackSet construct, and defines infrastructure resources
-* A new synthesizer adds the new stack set artifact type to the manifest
+* A new synthesizer adds the new stack set artifact type to the Cloud Assembly
 * Condition should include “isStackSet” for the app to call synthesize on stack set types:
     *  https://github.com/aws/aws-cdk/blob/a760173feaf70af51f0cec4140b4c8124a2c6aed/packages/%40aws-cdk/core/lib/private/synthesis.ts#L157
 
@@ -291,75 +304,37 @@ new POCStackSet(app, 'poc-stack-set',
     * Potentially Large/Complex changes to overall system (Everything that utilizes Stack type may need to be converted)
     * Potentially some areas where stacks/stack-sets do not share same properties, so branch logic required
 
-**Option 2:** Create a normal “core.Stack“ construct and pass to a new ”core.StackSet“ construct
-Instead of Stack Set construct generating the templates, a normal Stack construct will generate the template and the output will be used by the Stack Set construct.
-
-**Example Usage:**
-```ts
-const stackDef = new StackPOC(app, 'stack-poc', 
-  {synthesizer: new DefaultStackSynthesizer()});
-const stackSet = new cdk.StackSet(app, 'stack-set-poc',
-  {
-    stack: stackDef,
-    faultTolerancePercentage: 10,
-    maxConcurrentPercentage: 10,
-    regionConcurrencyType: 'PARALLEL'
-    .
-    .
-    .
-  }
-);
-```
-**Synthesis Flow:**
-
-![Architecture Diagram](../images/self-managed-stack-sets/cdk_stack_set_construct_synth_flow_option_2.jpg)
-* User defines infrastructure through a normal stack construct
-  * Templates are generated and added to the manifest as normal
-
-
-* The stack is passed to a new core construct called “core.StackSet“
-* “core.StackSet“ utilizes a new synthesizer called DefaultStackSetSynthesizer
-* DefaultStackSetSynthesizer will add the new artifact type to the manifest along with the stack set properties
-  * Template files will be referenced from the stack that was passed into the construct
-  * Condition should include “isStackSet” for the app to call synthesize on stack set types:
-    *  https://github.com/aws/aws-cdk/blob/a760173feaf70af51f0cec4140b4c8124a2c6aed/packages/%40aws-cdk/core/lib/private/synthesis.ts#L157
-
-* **Pros**:
-    * No modification required for other other core constructs that reference Stack types or how the resource tree is built.
-        * Ex. “Stack.of()” > 500 References, synthesizeTree function, etc.
-    * Unexpected bugs only affect stack sets, and not current users of stacks
-
-
-* **Cons**:
-  * Odd user experience for CDK where a stack construct is passed to a stack set construct
-  * A stack will exist in the manifest that should not be deployed, so you can’t run --all 
-    * We could create another synthesizer for “StackDefinitions“ that is either a new artifact type or skips emitting to the manifest. Potentially also skip deployment of stacks referenced in stack sets.
-  * Potential unknown bugs of reusing a stack template generated for a specific environment in a stack set that should be environment agnostic
-
 ## [3] CLI Changes - Deployment of Stack Set
+
 ### General Flow
+
 ![Architecture Diagram](../images/self-managed-stack-sets/stack_set_deployment_flow.jpg)
 * User executes cdk deploy
-* Stacks and Stack Sets are collected from the manifest
+* Stacks and Stack Sets are collected from the Cloud Assembly
 * Branch between deploying stack vs stack set
 * Prepare deployment and assets
 * Make API calls to deploy stack sets
 
 ### [3.1] cdk.ts Changes
+
 This is the initial entry point for the CLI. Both stacks and stack sets will utilize this the same deploy commands without branching. 
 
 ### [3.2] cdktoolkit.ts Changes
-This package is responsible for collecting the stacks and assets from the manifest. Changes:
+
+This file is responsible for collecting the stacks and assets from the Cloud Assembly. Changes:
 * The deploy command will need to include a call described in section 1.2 to also retrieve stack sets
-  * const stacksSets = await this.selectStackSetssForDeploy(options.selector, options.exclusively);
+  * const stacksSets = await this.selectStackSetsForDeploy(options.selector, options.exclusively);
 * From this point, the flow will branch between stacks and stack sets.
 
 ### [3.2] cloudformation-deployments.ts Changes
-This package is responsible for preparing the deployment, orchestrating asset publishing, and infrastructure deployment. Changes:
 
-* New function for orchestrating asset deployment and infrastructure deployment for stack sets. More on asset deployment describe in the Lambda assets section.
+This file is responsible for preparing the deployment, orchestrating asset publishing, and infrastructure deployment. Changes:
+
+* New function for orchestrating asset deployment and infrastructure deployment for stack sets. 
+More on asset deployment describe in the Lambda assets section below.
 
 ### [3.3] deploy-stack-set.ts
+
 This will be a new file which will contain the logic and api calls for deploying stack sets. Stack sets differ not only in API calls, but also a few service caveats:
 * No concept of change sets
 * Stack Set Operation Management
@@ -375,15 +350,16 @@ This will be a new file which will contain the logic and api calls for deploying
 * Wait for the update stack set operation to complete
 
 ## [4] File Assets Management
-In a normal stack deployment, artifacts are defined within specific AWS resource constructs such as lambda or just the assets construct in general. They are published to S3 and referenced in the generated template by parameters (LegacyStackSynthesizer) or direct injection (DefaultStackSynthesizer). For Stack Sets, the same behavior is ideal, but there are a few more caveats:
+This iteration will not include CDK Asset management, but this doc will describe the complexities involved and potential implementation. The first iteration of Stack Set support should keep this in mind for future integration.
+
+In a normal stack deployment, artifacts are defined within specific AWS resource constructs such as lambda or just the assets construct in general. They are published to S3 and referenced in the generated template by parameters (LegacyStackSynthesizer) or direct injection (DefaultStackSynthesizer). For Stack Sets, the same behavior is ideal, but there are a few more complexities:
 
 * Permissions for stack set child accounts to access assets
 * Assets in S3 must exist in every region the stack set deploys to
 * The generated template must contain generic S3 references for account/region since the same template should be used across all child accounts (cdk-<>-assets-${AWS::AccountId}-${AWS::Region})
-* In Scope:
-  * File Assets
 
 ### High Level Architecture
+
 ![Architecture Diagram](../images/self-managed-stack-sets/file_asset_high_level_arch.jpg)
 * Before Deploy:
   * Deploy custom bootstrap infrastructure to all regions or regions stack set will be deploying to in management account
@@ -397,6 +373,7 @@ In a normal stack deployment, artifacts are defined within specific AWS resource
 CDK apps that utilize assets require “Bootstrap” infrastructure for storing and publishing assets. This can either be done using the cdk bootstrap command which will deploy a default stack with all the required infrastructure or a customized template. 
 
 ### Permissions
+
 Since stack set instances are deployed outside the CDK context and can be deployed to “external” accounts, child accounts need permissions to retrieving assets from the centralized staging bucket in the management account. This can be achieved by adding a bucket policy to the staging buckets:
 
 ```json
@@ -427,9 +404,10 @@ Ref:
 * https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html#bootstrapping-customizing
 
 ### Multi-Region Bootstrapping
-When an S3 Asset such as Lambda code is referenced in CFN, the S3 asset must exist in the same region the stack is being deployed to. This means all regions a stack set deploys to, the region in the management account must also be bootstrapped. Users can either deploy these individually to each region, or create a stack set that deploys the customized template to each region.
 
-When creating the stack construct that is passed into the stack set construct described in section 2.2, the DefaultStackSynthesizer also needs to be modified with the file asset bucket name. This configures file asset references in the CFN template to reference non-aws account specific buckets. I.e. When stack set instances are deployed, they will reference buckets in the central account.
+When an S3 Asset such as Lambda code is referenced in CloudFormation, the S3 asset must exist in the same region the stack is being deployed to. This means all regions a stack set deploys to, the region in the management account must also be bootstrapped. Users can either deploy these individually to each region, or create a stack set that deploys the customized template to each region.
+
+When creating the stack construct that is passed into the stack set construct described in section 2.2, the DefaultStackSynthesizer also needs to be modified with the file asset bucket name. This configures file asset references in the CloudFormation template to reference non-aws account specific buckets. I.e. When stack set instances are deployed, they will reference buckets in the central account.
 
 ```ts
 const stackDef = new cdk.Stack(app,
@@ -457,10 +435,11 @@ const stackSet = new cdk.StackSet(app, 'stack-set-poc',
   * **Pros**:
     * Cross account permission isn’t required
   * **Cons**:
-    * For stack sets, the adding/removing of stack set instances may be orchestrated outside of CDK context. This is especially true to service managed stack sets, where instances are added asynchronously by CFN service.
+    * For stack sets, the adding/removing of stack set instances may be orchestrated outside of CDK context. This is especially true to service managed stack sets, where instances are added asynchronously by CloudFormation service.
     * CDK needs knowledge and access to every child account, and at that point, user should just deploy as cdk single stacks and orchestrate multiple accounts from cdk vs stack sets
 
 ### [4.2] Asset Publishing
+
 After bootstrapping the management account, the necessary infrastructure exists to store assets. The next step is publishing assets. As discussed in section 3, the “deployStackSet“ function in “cloudformation-deployments.ts“ is responsible for deploying assets. In a normal stack, assets are deployed to the single account and region specified in the CDK app or shell variables. For stack sets, they should be deployed to the account where the stack set exists, but also all regions that the stack set deploys to.
 
 **Option 1:** Copy from local environment to all regions **(Preferred)**
@@ -487,15 +466,6 @@ Instead of publishing assets directly to every regional staging bucket, assets a
   * Potential for replication lag since it is asynchronous. Most of the time it will replicate within seconds, but has an 99.99% 15 min SLA. A mitigation to this is making API calls to verify objects have been replicated before moving on.
   * New regions will need to manually copy latest artifacts over. Bucket replication only works when new objects are added, and when deploy is ran, the asset will not be re-upload if it already exists
 
-# Implementation Plan
-* Phase 1
-  * Implement Stack Set artifact type/schema
-  * Implement Stack Set core construct
-  * Implement Stack Set synthesizer
-  * Implement Stack Set deployment functions
-  * End of this phase, user should be able to define a stack set in CDK and create/Update stack set
-* Phase 2
-  * Add File Asset support
 
 
 
