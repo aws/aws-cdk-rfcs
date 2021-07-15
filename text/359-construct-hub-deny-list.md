@@ -16,46 +16,16 @@ To add a package to the deny list, add it to the `denyList` option when defining
 
 ```ts
 new ConstructHub(this, 'ConstrucHub', {
-  denyList: {
-    '@aws-cdk/aws-eks@1.44.0': {
-      reason: 'Security issue.',
-      user: 'eladb',
-      date: new Date('2021-07-11T12:57:48.693Z'),
-      ref: 'T123333322',
-    },
-    'boombam', {
-      reason: 'Copyright violation',
-      user: 'theadmin',
-      date: new Date('2033-07-11T12:57:48.693Z'),
-      ref: 'T137838738383',
-    },
+  denyList: [
+    { package: '@aws-cdk/aws-eks', version: '1.44.0', reason: 'Security issue.' },
+    { package: 'boombam', reason: 'Copyright violation' },
   }
 });
 ```
 
-The keys are package names and may also include specific version numbers.
-If a version is not specified (e.g.`boombam`), then all versions of a specific module are denied. 
-The value of each entry includes metadata which will be emitted in the ingestion log and in the future displayed in the 
-"where is my package" page for publisher diagnostics.
-
-```ts
-interface DenyListEntry {
-  /** The reason why this package/version is denied */
-  readonly reason?: string;
-  
-  /** The user name that signed-off on the deny list entry */
-  readonly user?: string;
-  
-  /** The time this package was added */
-  readonly date?: Date;
-  
-  /** An internal reference to an issue or ticket that tracks this deny list entry */
-  readonly ref: string;
-}
-```
-
-The only required field is `ref` as in some cases it won't be possible to publish information
-about a deny list entry, but we need some way to track it internally.
+Each entry in `denyList` is a rule that packages are matched against. Packages can match against
+name + version or just name (and all versions). `reason` is currently just emitted to logs
+if we run into a denied package.
 
 ---
 
@@ -64,7 +34,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[x] Signed-off by API Bar Raiser @RomainMuller
 ```
 
 ## Public FAQ
@@ -90,8 +60,9 @@ This is a security and legal requirement for the Construct Hub.
 
 The deny list will be modeled through strongly-typed API of the `ConstructHub`.
 
-1. During deployment, we will use `BucketDeployment` in order to upload this list into a file in an S3 bucket.
-2. We will trigger a lambda function every time the deny list file is created/updated. This lambda function will 
+1. During deployment, we will use `BucketDeployment` in order to upload this list into a file in an S3 bucket dedicated
+   for the deny list.
+3. We will trigger a lambda function every time the deny list file is created/updated. This lambda function will 
    iterate over the packages in the deny list and will delete any objects from the packages s3 bucket that match a 
    denied package. The object key prefix will be based on the deny entry key (name + version or just name). 
    We currently assume this process will fit into a single lambda execution given we will issue an S3 ListObjects 
