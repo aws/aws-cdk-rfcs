@@ -36,24 +36,27 @@ To enable the use of self managed stack sets two roles must exist:
 * **Stack Set Administration Role:** Role in the parent account, which is used by CloudFormation to assume the stack set execution role in the child account.
 * **Stack Set Execution Role:** Role in the child accounts, which allows the stack set administration role in parent account to assume,
 and perform the stack set instance deployment.
-* CDK bootstrap provides default stack set roles,
-otherwise customers can manually create these roles and specify them explicitly them while defining CDK stack sets
 
-Using CDK Bootstrap to provision default cdk stack set roles:
+There are a few methods to creating the stack set roles:
 
-* Parent Account:
-  * Using the parent account credentials and region, run `cdk bootstrap`
-  * Specific stack sets resources in bootstrap:
-    * A staging bucket to store templates larger than 50kb
-    * A default stack set administration role
-      * `cdk-${Qualifier}-stack-set-admin-role-{AWS::AccountId}-${AWS::Region}`
-      * Ex. cdk-hnb659fds-stack-set-admin-role-111111111111-us-east-1
-* Child Accounts:
-  * Using the child account credentials and region, run `cdk bootstrap --trust <parent account id>`
-  * Specific stack sets resources in bootstrap:
-    * A default stack set execution role
-      * `cdk-${Qualifier}-stack-set-exec-role-{AWS::AccountId}-${AWS::Region}`
-      * Ex. cdk-hnb659fds-stack-set-exec-role-222222222222-us-east-1
+1. CDK Bootstrap with default stack set roles
+   1. Bootstrap Parent Account
+      1. `cdk bootstrap aws://11111111111/us-east-1`
+   1. Bootstrap Child Account
+      1. `cdk bootstrap aws://22222222222/us-east-1 --trust 11111111111 --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess`
+      1. **Note:** The child account should be bootstrapped to the same region where the parent account is bootstrapped.
+   1. Specifying custom qualifier:
+      1. `cdk bootstrap aws://11111111111/us-east-1 --qualifier xyz`
+      1. `cdk bootstrap aws://22222222222/us-east-1
+            --trust 11111111111
+            --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess
+            --qualifier xyz`
+      1. Qualifier must match in both the parent and child accounts
+1. Manually Create Roles
+   1. AWS Guide: [Grant self-managed permissions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs-self-managed.html)
+      1. The AWS documentation will guide you through creating the Stack Set Administration role for the parent account,
+      and the Stack Set Execution roles for the child accounts.
+   1. The administration role and execution role name should be specified as part of the StackSet properties
 
 #### Usage
 
@@ -78,8 +81,17 @@ class PocStackSet extends cdk.StackSet {
     }
 }
 
-// Using default cdk bootstrap stack set roles
-new PocStackSet(app, 'poc-stack-set', {
+// Using default cdk bootstrap stack set roles and default qualifier
+new PocStackSet(app, 'poc-stack-set-1', {
+  faultTolerancePercentage: 10,
+  maxConcurrentPercentage: 10,
+  regionConcurrencyType: cdk.StackSetRegionConcurrency.PARALLEL,
+  //...
+});
+
+// Using default cdk bootstrap stack set roles with custom qualifier
+new PocStackSet(app, 'poc-stack-set-2', {
+  synthesizer: new cdk.StackSetSynthesizer({ qualifier: 'xyz' }),
   faultTolerancePercentage: 10,
   maxConcurrentPercentage: 10,
   regionConcurrencyType: cdk.StackSetRegionConcurrency.PARALLEL,
@@ -87,7 +99,7 @@ new PocStackSet(app, 'poc-stack-set', {
 });
 
 // Using customized stack set roles
-new PocStackSet(app, 'poc-stack-set', {
+new PocStackSet(app, 'poc-stack-set-3', {
   administrationRoleArn: 'arn:aws:iam::111111111111:role/AWSCloudFormationStackSetAdministrationRole',
   executionRoleName: 'AWSCloudFormationStackSetExecutionRole',
   faultTolerancePercentage: 10,
@@ -194,3 +206,73 @@ An alternative is the usage of `cdk.CfnStackSet`, which is not ideal for custome
 * Future support for service managed stack sets
 * Future support for delete stack set
 * CDK Pipelines
+
+## Appendix
+
+### CDK Bootstrap Template Addition
+
+To support stack sets,
+a stack set administration role should be created in the parent account and a stack set execution role should be created in the child accounts.
+To make this process easier, default roles have been added to the default bootstrap template. (Bootstrapping steps describe in the README section).
+
+```yaml
+  # ...
+  CloudFormationStackSetAdministrationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+        Version: '2012-10-17'
+      RoleName:
+        Fn::Sub: cdk-${Qualifier}-stack-set-admin-role-${AWS::AccountId}-${AWS::Region}
+  CloudFormationStackSetAdministrationRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Resource:
+              - Fn::Sub: "arn:aws:iam::*:role/cdk-${Qualifier}-stack-set-exec-role-${AWS::Region}"
+            Effect: Allow
+        Version: '2012-10-17'
+      Roles:
+        - Ref: CloudFormationStackSetAdministrationRole
+      PolicyName:
+        Fn::Sub: cdk-${Qualifier}-stack-set-admin-role-policy-${AWS::Region}
+  CloudFormationStackSetExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::GetAtt: CloudFormationStackSetAdministrationRole.Arn
+          - Fn::If:
+              - HasTrustedAccounts
+              - Action: sts:AssumeRole
+                Effect: Allow
+                Principal:
+                  AWS:
+                    Ref: TrustedAccounts
+              - Ref: AWS::NoValue
+      ManagedPolicyArns:
+        Fn::If:
+          - HasCloudFormationExecutionPolicies
+          - Ref: CloudFormationExecutionPolicies
+          - Fn::If:
+            - HasTrustedAccounts
+            # The CLI will prevent this case from occurring
+            - Ref: AWS::NoValue
+            # The CLI will advertise that we picked this implicitly
+            - - Fn::Sub: "arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess"
+      RoleName:
+        Fn::Sub: cdk-${Qualifier}-stack-set-exec-role-${AWS::Region}
+  # ...
+```
