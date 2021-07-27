@@ -36,62 +36,27 @@ For CloudWatch Logs, the user can configure their rule body via these fields:
 3. `Contribution`: Specifies the contributor within the log groups the rule will analyze. 
 4. `AggregateOn`: Specifies whether to aggregate the report based on count of occurrences of the field specified in `ValueOf` (specified in the Contribution) or to aggregate the report based on the sum of the values of the field specified in `ValueOf`.
 
-> The rule body is a string expression. To create them and to ensure similarity within the CloudWatch package, it was decided to use "fromXxx" 
-> notation as to make them similar to how one makes [AlarmRules](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-cloudwatch/lib/alarm-rule.ts). 
-
 Users can develop rule bodies for version 1 CloudWatch Logs using the `fromRuleBody` method as seen below:
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     LogGroupNames: //some log groups,
-    LogFormat: LogFormats.JSON, //optional, default is JSON
+    LogFormat: LogFormats.JSON, //optional, default is CLF if 'Fields' field is defined. Otherwise is JSON
     Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM
+    AggregateOn: Aggregates.SUM //optional, default is SUM if 'ValueOf' field is defined in the Contribution. Otherwiese is COUNT
  });
 ```
 
 ## Adding Log Groups Insight Rule Bodies
 
-One can add log groups to an Insight Rule Body either by manually entering their names as a string array into the LogGroupNames field of the CloudWatchLogV1RuleBody interface or use the `InsightsRuleBodyLogGroups.fromLogGroups()` method to add log group names or [LogGroups L2 Constructs](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-logs.LogGroup.html). 
+One can add log groups to an Insight Rule Body either by entering the log group names in a string array. Wild card expressions are supported as well. 
 
-Adding log groups by name manually is shown below. Using this method, one can only input a string array.
+Adding log groups by name is shown below. 
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
-    LogFormat: LogFormats.JSON, //optional, default is JSON
-    Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM
- });
-```
-
-Adding log groups by name using the `InsightsRuleBodyLogGroups.fromLogGroups()` is shown below:
-
-```typescript
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: InsightsRuleBodyLogGroups.fromLogGroups(
-        ["Interesting-Group-1", "Very-Interesting-Group-2"]
-        ),
-    LogFormat: LogFormats.JSON, //optional, default is JSON
-    Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM
- });
-```
-
-
-Adding log groups via the [LogGroups L2 Construct](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-logs.LogGroup.html) using the `InsightsRuleBodyLogGroups.fromLogGroups()`:
-
-```typescript
-const logGroup1 = new LogGroup(this, 'loggy1', {...});
-const logGroup2 = new LogGroup(this, 'loggy2', {...});
-
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: InsightsRuleBodyLogGroups.fromLogGroups(
-        [logGroup1, logGroup2]
-        ),
-    LogFormat: LogFormats.JSON, //optional, default is JSON
-    Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM
+    //...
  });
 ```
 
@@ -101,17 +66,17 @@ CLF log events do not have names for the fields like JSON does. To provide the f
 
 For convenience and better readability, the user can configure an optional `Fields` field to provide an alias for CLF field locations. 
 
-For example, if the first field in the user’s CLF log event is the IpAddress, they can create an alias to make it read as such. 
+Furthemore, if the `Fields` is defined, the log format will be inferred to be CLF. 
+
+In the below example, the user can create an alias 'IpAddress' for the data in at index 1 of the log group.
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: ["CLF-group-1"],
-    LogFormat: LogFormats.CLF,
+    //...
     Fields: {
         1: "IpAddress"
     },
-    Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM
+    //...
  });
 ```
 
@@ -154,89 +119,68 @@ These are all followed by the values these operators will compare against.
 `GreaterThan`, `LessThan`, `EqualTo`, and `NotEqualTo` accept a single numerical value. 
 `IsPresent` accept either boolean true or false. 
 
-The three methods to create a filter are to use the `InsightsRuleBodyFilter.fromString()` method, `InsightsRuleBodyFilter.fromJSON()` method, or the `InsightsRuleBodyFilter.fromFilter()` method.
+To add a filter to a CloudWatch logs contribution, the user will use the `CloudWatchLogsV1Filter.fromFilter()` method, which will take in a ` ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding operation and input. 
 
-For the first two methods, example code is shown below:
+An example is shown below:
 ```typescript
-let filterString = '{"Match": "$.httpMethod", "In": [ "PUT" ] }'; 
-let filterJSON =  {"Match": "$.BytesRecieved", "GreaterThan": 1000 };
-
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
         //...
         Contribution: {
             Keys: //...
             ValueOf: //...
             Filters: [
-                InsightsRuleBodyFilter.fromString(filterString),
-                InsightsRuleBodyFilter.fromJSON(filterJSON),
+                CloudWatchLogsV1Filter.fromFilter({
+                    match: '$.httpMethod',
+                    operationAndInput: {
+                        StartsWith: ['PUT', 'POST']
+                    }
+                })
             ],
         //...
     })
 ```
 
-For the last method, `InsightsRuleBodyFilter.fromFilter()` takes in an `IInsightsRuleBodyFilter`. Users can create this either through initializing an interface or using a `InsightsRuleBodyFilterBuilder` via `InsightsRuleBodyFilter.makeFilterBuilder()`, which accepts the Match field in the constructor and has all the possible operations as methods that accept the operand as an input. 
-
-The initialization method is shown below:
+In addition, users can use the `CloudWatchLogsV1FilterOperationFunctions` class to leverage autocompletion and typechecking when creating the `operationAndInput` field as shown below:
 ```typescript
-
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
         //...
         Contribution: {
             Keys: //...
             ValueOf: //...
             Filters: [
-                {
-                    match: "$.httpMethod",
-                    operator: InsightsRuleBodyFilterOperations.IN,
-                    operand: ["PUT"],
-                },   
+                CloudWatchLogsV1Filter.fromFilter({
+                    match: '$.httpMethod',
+                    operationAndInput: CloudWatchLogsV1FilterOperationFunctions.startsWith('PUT', 'POST'),
+                })
             ],
         //...
     })
 ```
-With the filter builder method shown below:
-```typescript
-//here, "$.httpMethod" is the match value, "IN" is the operation, and '["PUT"]' is the operand  
-let filter = InsightsRuleBodyFilter.makeFilterBuilder("$.httpMethod").In(["PUT"]).toFilter();
-
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-        //...
-        Contribution: {
-            Keys: //...
-            ValueOf: //...
-            Filters: [
-                InsightsRuleBodyFilter.fromFilter(filter),
-            ],
-        //...
-    })
-```
-
 
 ## Sample Initialization for a Rule with a CloudWatchLog Rule Body
 
 Below is an example initialization of a CloudWatch log rule. 
 
 ```typescript
-const filter = InsightsRuleBodyFilter.makeFilterBuilder("$.httpMethod").In(["PUT"]).toFilter();
-const logGroup1 = new LogGroup(this, 'loggy1', {...});
+import * as cdk from '@aws-cdk/core';
+import { CloudWatchLogsV1Filter, InsightRule, CloudWatchLogsV1RuleBody, CloudWatchLogsV1FilterOperationFunctions } from '../lib';
 
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: InsightsRuleBodyLogGroups.fromLogGroups([logGroup1]),
-    LogFormat: LogFormats.JSON,
-    Contribution: {
-        Keys: ["$.ip"],
-        ValueOf: "$.requestBytes",
-        Filters: [
-            InsightsRuleBodyFilter.fromFilter(filter),
-        ],
-        AggregateOn: Aggregates.SUM
- });
- 
-const rule = new InsightRule(this, "Insight-fulRule", {
-    RuleName: "Insight-fulName",
-    RuleBody: ruleBody,
-    RuleState: RuleStates.ENABLED
- };
+new InsightRule(stack, 'myRadRule', {
+  insightRuleName: 'veryCoolRule',
+  insightRuleBody: CloudWatchLogsV1RuleBody.fromRuleBody({
+    logGroupNames: ['/aws/lambda/*'],
+    contribution: {
+      keys: ['$.requestId'],
+      valueof: '$.BytesRecieved',
+      filters: [
+        CloudWatchLogsV1Filter.fromFilter({
+          match: '$.httpMethod',
+          operationAndInput: CloudWatchLogsV1FilterOperationFunctions.startsWith('PUT'),
+        }),
+      ],
+    },
+  }),
+});
 ```
 
 ## Importing CloudWatchLog Rules from Files
@@ -244,54 +188,28 @@ const rule = new InsightRule(this, "Insight-fulRule", {
 One can also load a CloudWatch log rule from a file using `CloudWatchLogV1RuleBody.fromFile()` method, which takes in the filepath as the input. This will also verify that the rule body in the file is valid. 
 
 ```typescript
+import * as cdk from '@aws-cdk/core';
+import { InsightRule } from '../lib';
+
 const rule = new InsightRule(this, "Insight-fulRule", {
     RuleName: "Insight-fulName",
-    RuleBody: CloudWatchLogV1RuleBody.fromFile('rule.txt'),
+    RuleBody: CloudWatchLogV1RuleBody.fromFile('rule.json'),
     RuleState: RuleStates.ENABLED
  };
 ```
 
-# Rule Bodies from Strings
+# Custom Rule Bodies
 
-One can also manually input the rule body as a string either manually or using `StringRuleBody.fromRuleBody()`. Rule bodies inputting this way will not be validated by the CDK. 
+One can also manually input a custom the rule body using `CustomRuleBody.fromRuleBody()`. Rule bodies inputted this way will not provided any defaults or be validated by the CDK. 
 
-Example of manual entry is shown below:
+An example of using `CustomRuleBody.fromRuleBody()` is shown below:
 ```typescript
+import * as cdk from '@aws-cdk/core';
+import { InsightRule } from '../lib';
+
 const rule = new InsightsRule(this, "rule", {
     RuleName: "Insight-fulRule",
-    RuleBody: JSON.stringify({
-            Schema: {
-                Name: "CloudWatchLogRule",
-                Version: 1
-            },
-            LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
-            LogFormat: LogFormats.JSON,
-            Contribution: {
-                Keys: ["$.ip"],
-                ValueOf: "$.requestBytes",
-                Filters: [
-                        {
-                            Match: "$.httpMethod",
-                            In: [
-                                "Put",
-                            ]
-                        },
-                        {
-                            Match: "$.BytesRecieved",
-                            GreaterThan: 1000
-                        }
-                    ]
-            },
-            AggregateOn: "SUM"
-        }),
-    RuleState: InsightsRuleStates.ENABLED
-);
-```
-An example of using `StringRuleBody.fromRuleBody()` is shown below:
-```typescript
-const rule = new InsightsRule(this, "rule", {
-    RuleName: "Insight-fulRule",
-    RuleBody: JSON.stringify({
+    RuleBody: CustomRuleBody.fromRuleBody({
             Schema: {
                 Name: "CloudWatchLogRule",
                 Version: 1
@@ -320,62 +238,16 @@ const rule = new InsightsRule(this, "rule", {
 );
 ```
 
-Furthermore, one can also get a string rule body from a file using `StringRuleBody.fromFile()` as seen below:
+Furthermore, one can also get a string rule body from a file using `CustomRuleBody.fromFile()` as seen below:
 ```typescript
 const rule = new InsightRule(this, "Insight-fulRule", {
     RuleName: "Insight-fulName",
-    RuleBody: StringRuleBody.fromFile('rule.txt'),
+    RuleBody: CustomRuleBody.fromFile('rule.txt'),
     RuleState: RuleStates.ENABLED
  };
 ```
 Differing from the file method in CloudWatchLogs, this rule will not be validated. 
 
-
-# Rule Bodies from JSON
-One can also input their rule body as JSON using `JSONRuleBody.fromRuleBody()` or from a json file using `JSONRuleBody.fromFile()`. Rule bodies inputting this way will not be validated by the CDK. 
-
-From JSON:
-```typescript
-const rule = new InsightsRule(this, "rule", {
-    RuleName: "Insight-fulRule",
-    RuleBody: JSONRuleBody.fromRuleBody({
-            Schema: {
-                Name: "CloudWatchLogRule",
-                Version: 1
-            },
-            LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
-            LogFormat: LogFormats.JSON,
-            Contribution: {
-                Keys: ["$.ip"],
-                ValueOf: "$.requestBytes",
-                Filters: [
-                        {
-                            Match: "$.httpMethod",
-                            In: [
-                                "Put",
-                            ]
-                        },
-                        {
-                            Match: "$.BytesRecieved",
-                            GreaterThan: 1000
-                        }
-                    ]
-            }),
-            AggregateOn: "SUM"
-        },
-    RuleState: InsightsRuleStates.ENABLED
-);
-```
-
-From a file:
-```typescript
-const rule = new InsightsRule(this, "rule", {
-    RuleName: "Insight-fulRule",
-    RuleBody: JSONRuleBody.fromFile("rule.json"),
-    RuleState: InsightsRuleStates.ENABLED
-);
-```
-Differing from the file method in CloudWatchLogs, this rule will not be validated. 
 
 # Importing Rules
 
