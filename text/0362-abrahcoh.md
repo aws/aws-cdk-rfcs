@@ -177,7 +177,7 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     })
 ```
 
-Furthermore, to add multiple filters, the user can use the `CloudWatchLogsV1Filter.allOf()` method as 
+Furthermore, to add multiple filters, the user can use the `CloudWatchLogsV1Filter.allOf()` method as
 shown below:
 
 ```typescript
