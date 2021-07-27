@@ -15,7 +15,7 @@ By creating a construct library for Contributor Insights Rules, users will be ab
 The rule will specify the rule name, the rule body, and its state.
 
 Using the CDK, a new rule can be created as part of the stack using the construct’s constructor.
-You may specify the ruleState if one desires to disable the rule or explicitly enable it. 
+You may specify the ruleState if one desires to disable the rule or explicitly enable it.
 Otherwise, it will be enabled by default.
 
 ```typescript
@@ -28,12 +28,11 @@ const rule = new InsightsRule(this, 'insight-fulName', {
 
 # Rule Body
 
-Rule bodies define what data the rule will analyze and how it will analyze it. Further information on fields can be found in the 
+Rule bodies define what data the rule will analyze and how it will analyze it. Further information on fields can be found in the
 [Contributor Insights Rule Syntax documentation](https://docs.amazonaws.cn/en_us/AmazonCloudWatch/latest/monitoring/ContributorInsights-RuleSyntax.html).
 There are multiple ways to either import or create a Contributor Insights rule body.
 
 ## Rule Bodies for CloudWatch Logs
-
 
 For CloudWatch Logs, the user can configure their rule body via these fields:
 
@@ -51,7 +50,7 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     LogGroupNames: //some log groups,
     LogFormat: LogFormats.JSON, //optional, default is CLF if 'Fields' field is defined. Otherwise is JSON
     Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM //optional, default is SUM if 'ValueOf' field is defined in the Contribution. 
+    AggregateOn: Aggregates.SUM //optional, default is SUM if 'ValueOf' field is defined in the Contribution.
                                 //Otherwise is COUNT
  });
 ```
@@ -136,7 +135,7 @@ These are all followed by the values these operators will compare against.
 `IsPresent` accept either boolean true or false.
 
 To add a filter to a CloudWatch logs contribution, the user will use the `CloudWatchLogsV1Filter.fromFilter()` method,
-which will take in a ` ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding
+which will take in a `ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding
 operation and input.
 
 An example is shown below:
@@ -184,10 +183,10 @@ Below is an example initialization of a CloudWatch log rule.
 
 ```typescript
 import * as cdk from '@aws-cdk/core';
-import { CloudWatchLogsV1Filter, 
-    InsightRule, 
-    CloudWatchLogsV1RuleBody, 
-    CloudWatchLogsV1FilterOperationFunctions 
+import { CloudWatchLogsV1Filter,
+    InsightRule,
+    CloudWatchLogsV1RuleBody,
+    CloudWatchLogsV1FilterOperationFunctions
     } from '../lib';
 
 new InsightRule(stack, 'myRadRule', {
@@ -276,13 +275,12 @@ const rule = new InsightRule(this, "Insight-fulRule", {
  };
 ```
 
-Differing from the file method in CloudWatchLogs, this rule will not be validated. 
-
+Differing from the file method in CloudWatchLogs, this rule will not be validated.
 
 # Importing Rules
 
 Any rule that has been created outside of a stack can be imported into the CDK app. Importing a rule allows for it
-to be used in other parts of the CDK app that reference an `IInsightRule`. However, imported rules have limited configuration. 
+to be used in other parts of the CDK app that reference an `IInsightRule`. However, imported rules have limited configuration.
 As a rule of thumb, none of the properties that are a part of the `AWS::CloudWatch::InsightRule` CloudFormation resource can be configured.
 
 Rules can be imported either by providing the Insight Rule name, via the `InsightRule.fromInsightRuleName()` API or
@@ -296,7 +294,6 @@ const insightfulRule = InsightsRule.fromInsightRuleName(
     'amazing-rule',
     'us-east-1:lots_of_numbers'
  );
- 
  
 const veryInsightfulRule = InsightsRule.fromInsightRuleArn(
     stack,
@@ -317,7 +314,7 @@ In this example, we are providing dashboards read permissions to an Insight Rule
 const dashboard = new DashBoard(this, 'amazing-dashboard', {...});
 const rule = new InsightRule(this, 'amazing-rule', {...});
 
-rule.grantRead(dashboard) 
+rule.grantRead(dashboard)
 ```
 
 ---
@@ -352,7 +349,7 @@ users can spend hours debugging their rules only to find there was a spacing iss
 
 By implementing the L2 Construct for Contributor Insights rules, users can create rules for CloudWatch
 logs leveraging their IDEs to significantly reduce errors and development time. Furthermore, if errors are to occur,
-elborate error reporting from the CDK will drastically reduce error correction time will overall 
+elborate error reporting from the CDK will drastically reduce error correction time will overall
 lead to a better user experience.
 
 Lastly, users wishing to integrate Contributor Insights rules with their log group constructs and dashboards
