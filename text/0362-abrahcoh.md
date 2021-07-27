@@ -294,7 +294,7 @@ const insightfulRule = InsightsRule.fromInsightRuleName(
     'amazing-rule',
     'us-east-1:lots_of_numbers'
  );
- 
+
 const veryInsightfulRule = InsightsRule.fromInsightRuleArn(
     stack,
     'most-amazing-rule',
