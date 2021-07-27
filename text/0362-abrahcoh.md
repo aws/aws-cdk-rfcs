@@ -177,6 +177,31 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     })
 ```
 
+Furthermore, to add multiple filters, the user can use the `CloudWatchLogsV1Filter.allOf()` method as 
+shown below:
+
+```typescript
+const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
+        //...
+        Contribution: {
+            Keys: //...
+            ValueOf: //...
+            Filters: CloudWatchLogsV1Filter.allOf(
+              {
+                match: '$.httpMethod',
+                operationAndInput: CloudWatchLogsV1FilterOperationFunctions.in('PUT'),
+              },
+              {
+                match: '$.BytesRecieved',
+                operationAndInput: {
+                        GreaterThan: 0
+                    }
+              },
+        ),
+        //...
+    })
+```
+
 ## Sample Initialization for a Rule with a CloudWatchLog Rule Body
 
 Below is an example initialization of a CloudWatch log rule.
