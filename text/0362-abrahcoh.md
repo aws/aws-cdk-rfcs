@@ -315,14 +315,14 @@ Differing from the file method in CloudWatchLogs, this rule will not be validate
 CloudWatch provides a metric math function `INSIGHT_RULE_METRIC(ruleName, metricName)` that allows a user to graph
 specific metrics from their insight rule. The metric names and there corresponding description are below:
 
-    1. `UniqueContributors` — the number of unique contributors for each data point.
-    2. `MaxContributorValue` — the value of the top contributor for each data point.
-       The identity of the contributor might change for each data point in the graph.
-    3. `SampleCount` — the number of data points matched by the rule.
-    4. `Sum` — the sum of the values from all contributors during the time period represented by that data point.
-    5. `Minimum` — the minimum value from a single observation during the time period represented by that data point.
-    6. `Maximum` — the maximum value from a single observation during the time period represented by that data point.
-    7. `Average` — the average value from all contributors during the time period represented by that data point.
+1. `UniqueContributors` — the number of unique contributors for each data point.
+2. `MaxContributorValue` — the value of the top contributor for each data point.
+    The identity of the contributor might change for each data point in the graph.
+3. `SampleCount` — the number of data points matched by the rule.
+4. `Sum` — the sum of the values from all contributors during the time period represented by that data point.
+5. `Minimum` — the minimum value from a single observation during the time period represented by that data point.
+6. `Maximum` — the maximum value from a single observation during the time period represented by that data point.
+7. `Average` — the average value from all contributors during the time period represented by that data point.
 
 These are described in further detail in the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-GraphReportData.html)
 
