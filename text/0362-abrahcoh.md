@@ -138,6 +138,9 @@ To add a filter to a CloudWatch logs contribution, the user will use the `CloudW
 which will take in a `ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding
 operation and input.
 
+> Note: the name 'operationAndInput' is primarily a placeholder until a better idea comes up. 
+> Maybe just 'operation' would be sufficient
+
 An example is shown below:
 
 ```typescript
@@ -179,6 +182,11 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
 
 Furthermore, to add multiple filters, the user can use the `CloudWatchLogsV1Filter.allOf()` method as
 shown below:
+
+> Note: using 'allOf' was chosen to be similar to how multiple alarm rules are made. As every filter
+> is combined via a logical AND operator, it was chosen to use a similar syntax for filters.
+> Doing a logical OR operation is not available yet; however, when/if it does, one would follow
+> a similar pattern as the alarm rules and use a function like 'anyOf'
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
@@ -301,6 +309,56 @@ const rule = new InsightRule(this, "Insight-fulRule", {
 ```
 
 Differing from the file method in CloudWatchLogs, this rule will not be validated.
+
+# Using Insight Rule Metric Math Functions 
+
+CloudWatch provides a metric math function `INSIGHT_RULE_METRIC(ruleName, metricName)` that allows a user to graph
+specific metrics from their insight rule. The metric names and there corresponding description are below:
+
+    1. `UniqueContributors` — the number of unique contributors for each data point.
+    2. `MaxContributorValue` — the value of the top contributor for each data point.
+       The identity of the contributor might change for each data point in the graph.
+    3. `SampleCount` — the number of data points matched by the rule.
+    4. `Sum` — the sum of the values from all contributors during the time period represented by that data point.
+    5. `Minimum` — the minimum value from a single observation during the time period represented by that data point.
+    6. `Maximum` — the maximum value from a single observation during the time period represented by that data point.
+    7. `Average` — the average value from all contributors during the time period represented by that data point.
+
+These are described in further detail in the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-GraphReportData.html)
+
+Users can use the metric math function through methods provided in the `InsightRule` class. These methods
+will return `MathExpression` objects one can use in graph widgets.
+
+To illustrate the use of these functions and to show all their definitions, see the below example where
+these functions are used to create a graph that shows all of these metrics and are added onto a dashboard:
+
+> Note: The method names were chosen as to be exactly as the names given in the documentation
+> For some functions, like sum(), it may be better to be more descriptive, like contributorValueSum()
+
+```typescript
+import * as cloudwatch from '../lib';
+
+const rule = new cloudwatch.InsightRule(...);
+
+const graph = new cloudwatch.GraphWidget({
+  left: [
+    rule.sum(),
+    rule.maximum(),
+    rule.uniqueContributors(),
+    rule.sampleCount(),
+    rule.minimum(),
+    rule.average(),
+    rule.maxContributorValue(),
+  ],
+  title: 'cool-graph',
+});
+
+const dash = new cloudwatch.Dashboard(stack, 'cool-dash', {
+  dashboardName: 'my-cool-dashboard',
+});
+
+dash.addWidgets(graph);
+```
 
 # Importing Rules
 
