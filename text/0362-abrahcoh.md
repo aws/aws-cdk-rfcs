@@ -138,7 +138,7 @@ To add a filter to a CloudWatch logs contribution, the user will use the `CloudW
 which will take in a `ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding
 operation and input.
 
-> Note: the name 'operationAndInput' is primarily a placeholder until a better idea comes up. 
+> Note: the name 'operationAndInput' is primarily a placeholder until a better idea comes up.
 > Maybe just 'operation' would be sufficient
 
 An example is shown below:
@@ -310,7 +310,7 @@ const rule = new InsightRule(this, "Insight-fulRule", {
 
 Differing from the file method in CloudWatchLogs, this rule will not be validated.
 
-# Using Insight Rule Metric Math Functions 
+# Using Insight Rule Metric Math Functions
 
 CloudWatch provides a metric math function `INSIGHT_RULE_METRIC(ruleName, metricName)` that allows a user to graph
 specific metrics from their insight rule. The metric names and there corresponding description are below:
