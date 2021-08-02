@@ -360,6 +360,53 @@ const dash = new cloudwatch.Dashboard(stack, 'cool-dash', {
 dash.addWidgets(graph);
 ```
 
+In addition, these capabilities are compatible with alarms. In the below example, we make an alarm that goes off
+when the number of unique contributors for this rule goes beyond 5:
+
+```typescript
+import * as cloudwatch from '../lib';
+
+const app = ...
+const stack = ...
+
+const rule = new cloudwatch.InsightRule(...);
+const alarm = new cloudwatch.Alarm(stack, 'asd', {
+  metric: rule.uniqueContributors(),
+  threshold: 5,
+  evaluationPeriods: //...
+});
+```
+
+Users can use these alarms to make alarm widgets and add those to dashboards as well.
+
+# Insight Widget
+
+Users can use Insight Widgets to graph there Insight rules on dashboards.
+
+These can be configured with the following properties:
+1. `rule`: This is the insight rule the widget will be based upon. Required.
+2. `maxContributorCount`: The max number of contributors to show in the widget. Default is 10.
+3. `orderBy`: How to order the contributors. Default is by sum.
+4. `leftYAxis`: These are a `YAxisProps` interface, One can the min and max axis values. Default is no min or max.
+5. `legendPosition`: Position of the legend. Default is on the bottom.
+
+An example of using the widget with a dashboard is shown below:
+
+```typescript
+import * as cloudwatch from '../lib';
+
+const app = ...
+const stack = ...
+
+const rule = new cloudwatch.InsightRule(...);
+const ruleWidget = new cloudwatch.InsightRuleWidget({
+    rule: rule,
+)};
+
+const dash = ...
+dash.addWidgets(ruleWidget);
+```
+
 # Importing Rules
 
 Any rule that has been created outside of a stack can be imported into the CDK app. Importing a rule allows for it
