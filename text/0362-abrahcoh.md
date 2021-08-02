@@ -384,6 +384,7 @@ Users can use these alarms to make alarm widgets and add those to dashboards as 
 Users can use Insight Widgets to graph there Insight rules on dashboards.
 
 These can be configured with the following properties:
+
 1. `rule`: This is the insight rule the widget will be based upon. Required.
 2. `maxContributorCount`: The max number of contributors to show in the widget. Default is 10.
 3. `orderBy`: How to order the contributors. Default is by sum.
@@ -432,21 +433,6 @@ const veryInsightfulRule = InsightsRule.fromInsightRuleArn(
  );
 ```
 
-# Access Control
-
-At the moment, only dashboards read data from Contributor Insights Rules.
-Furthermore, no public services write to Contributor Insights rules.
-
-To grant another service read permissions to an Insight Rule, one would use the `grantRead()` function.
-In this example, we are providing dashboards read permissions to an Insight Rule.
-
-```typescript
-const dashboard = new DashBoard(this, 'amazing-dashboard', {...});
-const rule = new InsightRule(this, 'amazing-rule', {...});
-
-rule.grantRead(dashboard)
-```
-
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -461,7 +447,7 @@ RFC pull request):
 
 ### What are we launching today?
 
-The two modules insight-rule.ts and insight-rule-body.ts will be added to the CloudWatch package.
+TODO
 
 ### Why should I use this feature?
 
