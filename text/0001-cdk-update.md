@@ -3,7 +3,7 @@ rfc pr: [#335](https://github.com/aws/aws-cdk-rfcs/pull/335)
 tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/1
 ---
 
-# CDK Accelerate
+# CDK Watch and Hotswap
 
 Shorten the development iteration speed -- the "edit-compile-test" loop -- for
 CDK applications.
@@ -12,7 +12,7 @@ CDK applications.
 
 ### CHANGELOG
 
-- feat(cli): implement `cdk deploy --accelerated` and `cdk deploy --watch`
+- feat(cli): implement `cdk deploy --hotswap` and `cdk deploy --watch`
 
 ### Help
 
@@ -20,21 +20,21 @@ CDK applications.
 cdk deploy --help
 
     -w --watch   Watch for file changes and deploy any updates. Implies
-                 --accelerated=auto if --accelerated is not specified.
+                 --hotswap=auto if --hotswap is not specified.
 
-    --accelerated[=only|auto|no|ask]   Perform an accelerated deployment of the stack.
-        (`--accelerated=only` will fail if there are non-accelerated updates). The
+    --hotswap[=only|auto|no|ask]   Perform a hotswap deployment of the stack.
+        (`--hotswap=only` will fail if there are non-hotswap updates). The
         default value is "only".
 
 Examples:
     cdk deploy -w
-    cdk deploy --accelerated
-    cdk deploy --accelerated=only --watch
+    cdk deploy --hotswap
+    cdk deploy --hotswap=only --watch
 ```
 
 ### README
 
-The `cdk deploy --accelerated` ("CDK accelerate") command accelerates the
+The `cdk deploy --hotswap` command improves the speed of the
 edit-compile-test loop for your CDK application during development by inspecting
 the assets and stack resources in your application, identifying those that can
 be updated in-place without a full CloudFormation stack update, and doing so
@@ -46,22 +46,22 @@ assets or other stack resources that have changed since the last time the CDK
 application was deployed, and update them in-place according to their types.
 Assets will be uploaded to their storage medium. The CDK will then use AWS SDK
 commands to directly modify the stack resources in-place to synchronize them
-with your local code. The accelerate command can act on one or more stacks in
+with your local code. The hotswap option can act on one or more stacks in
 the application.
 
 #### Usage
 
-The simplest use case for CDK accelerate is `cdk deploy --watch`. This mode of
+The simplest use case for CDK hotswap is `cdk deploy --watch`. This mode of
 operation will identify the files that can affect the resources being watched,
 monitor them for changes, and perform the fastest supported form of deployment
 on the stacks that change, as they change.
 
 ```
-$ cdk deploy --accelerated --watch ApplicationStack DataStack
-Checking stack ApplicationStack for possible accelerated update
+$ cdk deploy --hotswap --watch ApplicationStack DataStack
+Checking stack ApplicationStack for possible hotswap update
  * LambdaFunction[Appfunction]: No Changes
 ApplicationStack can *not* be updated
-Checking stack DataStack for possible accelerated update
+Checking stack DataStack for possible hotswap update
  * LambdaFunction[StreamFunction]: No Changes
 
 Watching stack inputs for changes:
@@ -77,11 +77,11 @@ existing docker asset builder will be used to watch for changes in local docker
 images.
 
 In addition to the monitoring mode, it is possible to perform one-shot
-accelerated deployments on some or all of the stacks in the CDK application:
+hotswap deployments on some or all of the stacks in the CDK application:
 
 ```
-$ cdk deploy --accelerated ApplicationStack
-Checking stack ApplicationStack for possible accelerated update
+$ cdk deploy --hotswap ApplicationStack
+Checking stack ApplicationStack for possible hotswap update
  * LambdaFunction[AppFunction]: File asset changed
 ApplicationStack can be updated
 1/1 stacks can be updated:
@@ -91,11 +91,11 @@ Update complete!
 ```
 
 If the update is to an attribute of the stack that cannot be updated, the
-command can offer to perform a full deployment if `--accelerated=ask`:
+command can offer to perform a full deployment if `--hotswap=ask`:
 
 ```
-$ cdk deploy --accelerated=ask ApplicationStack
-Checking stack ApplicationStack for possible accelerated update
+$ cdk deploy --hotswap=ask ApplicationStack
+Checking stack ApplicationStack for possible hotswap update
  * LambdaFunction[Appfunction]: Function data changed
 ApplicationStack has changes that can not be rapidly updated.
 Perform a full deployment of ApplicationStack? [Y/n]: Y
@@ -108,14 +108,14 @@ When multiple stacks are provided, update only occurs if all pending changes are
 suitable for update. Otherwise, a full deployment is done:
 
 ```
-$ cdk deploy --accelerated=auto ApplicationStack DataStack
-Checking stack ApplicationStack for possible accelerated update
+$ cdk deploy --hotswap=auto ApplicationStack DataStack
+Checking stack ApplicationStack for possible hotswap update
  * LambdaFunction[Appfunction]: Function data changed
 ApplicationStack has changes that can not be rapidly updated.
-Checking stack DataStack for possible accelerated update
+Checking stack DataStack for possible hotswap update
  * LambdaFunction[StreamFunction]: File asset changed
 DataStack can be updated
-1/2 stacks can be accelerated, automatically performing a full deployment.
+1/2 stacks can be hotswap, automatically performing a full deployment.
 Deploying ApplicationStack
 ...
 Deploying DataStack
@@ -123,7 +123,7 @@ Deploying DataStack
 Done!
 ```
 
-In addition to running in a one shot mode, the `cdk deploy --accelerated`
+In addition to running in a one shot mode, the `cdk deploy --hotswap`
 command also has a `--watch` command line option that enable it to monitor the
 assets on disk and perform an update when they change.
 
@@ -146,7 +146,7 @@ assets on disk and perform an update when they change.
 
 ### What are we launching today?
 
-The `cdk deploy --watch` and `cdk deploy --accelerated` command features, with
+The `cdk deploy --watch` and `cdk deploy --hotswap` command features, with
 support for rapid update of Lambda function code, images for ECS and Fargate
 task definitions, and AWS StepFunction workflows.
 
@@ -165,7 +165,7 @@ uploading as lambda code.
 ### Does this feature work with `aws-lambda-go` for compiled Lambdas?
 
 Yes, if your lambda is defined by an `aws-lambda-go`, `aws-lambda-python`, or
-`aws-lambda-nodejs` construct, the accelerate and watch capabilities will work
+`aws-lambda-nodejs` construct, the hotswap and watch capabilities will work
 within those source trees to automatically deploy changes to your code as you
 make it.
 
@@ -185,7 +185,7 @@ since each code change currently requires a CloudFormation stack update to apply
 new code, _or_ manually introducing drift to the application by inspecting the
 stack and manipulating the resources directly.
 
-The CDK accelerate tool will allow the CDK to handle the resource changes rather
+The CDK hotswap option will allow the CDK to handle the resource changes rather
 than this manual process, introducing some implicit safety and reducing the
 manual labor of the update.
 
@@ -196,12 +196,12 @@ to shortcircuit the safe CloudFormation deployment process. If a user runs CDK
 update on their production stack, it can perform updates without adequate stack
 update safety checks. Releasing a public tool with instant update capability
 into the CDK may not be the right way to make this functionality public. To
-mitigate this, `accelerate` only runs on explicitly selected stacks, and does
+mitigate this, `--hotswap` only runs on explicitly selected stacks, and does
 not support the `--all` flag.
 
 ### What changes are required to enable this change?
 
-1. An implementation of the `cdk deploy --accelerated` command in the CDK CLI
+1. An implementation of the `cdk deploy --hotswap` command in the CDK CLI
    that can examine the Application stacks for updates that can be applied and
    apply them.
 2. The CDK CLI must be able to query a CDK resource for the set of filesystem
@@ -228,7 +228,7 @@ No, it is not.
 
 ### What alternative solutions did you consider?
 
-We considered SAM accelerate for a similar purpose, but SAM covers a relatively
+We considered "SAM Accelerate" for a similar purpose, but SAM covers a relatively
 small set of possible application structures in AWS, while CDK is intended to
 address the whole set of them.
 
@@ -236,7 +236,7 @@ We also considered introspecting the CDK model ourselves, but concluded that
 there was little value in reinventing the wheel, so to speak, when CDK already
 had all of the information we'd need to deliver this.
 
-For identifying stacks that are subject to accelerated deployment, we are
+For identifying stacks that are subject to hotswap deployment, we are
 considering defining a full "Personal Development Stack" model, possibly based
 off of information in the CDK `App` context.
 
@@ -254,7 +254,7 @@ implementation will be designed to conform to an interface that provides:
 - A method for determining whether the construct can be updated in place
 - A method for updating the construct in place
 
-If changes to the CDK constructs are necessary to implement the accelerated
+If changes to the CDK constructs are necessary to implement the hotswap
 development process, we will make those changes as well. In the longer term we
 must lay the groundwork for moving the logic defining the update process into
 the Construct library, which implies a design for passing these values by way of
@@ -270,20 +270,20 @@ monitoring the inputs of stack resources for changes.
 ### Are there any open issues that need to be addressed later?
 
 - This RFC can be extended to add support for further pluggable asset and update
-  targets. The accelerate capabilities are attached to the CDK constructs, not
-  the CDK CLI, so any CDK construct that can perform accelerated deployment can
+  targets. The hotswap capabilities are attached to the CDK constructs, not
+  the CDK CLI, so any CDK construct that can perform hotswap deployment can
   implement that capability in whatever manner is appropriate.
 - This RFC will be enhanced significantly when the CDK asset model is enriched
   to support asset construction directly.
 - Direct support for monitoring container repositories for changes (possibly via
   polling) instead of only supporting local rebuild.
 
-# How do we keep production from being affected by CDK accelerate?
+# How do we keep production from being affected by CDK hotswap?
 
-CDK accelerate uses the AWS IAM access controls already in place in your account
+CDK hotswap uses the AWS IAM access controls already in place in your account
 to maintain the safety of your production deployments. The interface to CDK
-accelerate requires the developer to specify the stacks that they will be
+hotswap requires the developer to specify the stacks that they will be
 deploying explicitly, so by default it is affecting only the developer's stacks,
 and when a production stack is defined it is up to the AWS account administrator
 to ensure that the interactive developer's roles do not have modification access
-to the accelerated resources.
+to the hotswap resources.
