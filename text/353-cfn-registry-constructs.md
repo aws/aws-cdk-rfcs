@@ -207,6 +207,6 @@ version of the resource they use, we determined that the best approach is to pub
 
 ### Are there any open issues that need to be addressed later?
 
-* __Property name conversion__: `json2jsii` converts field names to camelCase to adhere with naming typescript naming conventions.
+* ~__Property name conversion__~ (resolved by [cdklabs/json2jsii#480](https://github.com/cdklabs/json2jsii/pull/480)): `json2jsii` converts field names to camelCase to adhere with naming typescript naming conventions.
   This means that we need to map field names back when we define the `CfnResource`. I think we might want to add a
   feature to `json2jsii` that will generate conversion functions that can be used to convert back data types to the original schema.
