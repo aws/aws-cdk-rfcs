@@ -130,7 +130,6 @@ of packages, which opens the way for an increased pace of innovation in the
 - The `@jsii/spec` package guarantees all releases of packages in the
   constellation remain inter-operable going forward.
 
-
 ### Why should I use this feature?
 
 The new versioning strategy allows developers to have greater control over the
