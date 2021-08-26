@@ -3,13 +3,17 @@ rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after
 tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/249
 ---
 
-# [CDKv2 Experimental APIs]
+# CDKv2 Experiments
 
 As part of the CDK v2 release, the CDK is adopting a new method of creating, developing, and releasing new L2
 constructs. CDK v1 intermixed stable modules and constructs alongside experimental constructs, confusing customers and
-breaking semver semantics. For CDK v2, the main CDK artifact (`aws-cdk-lib`) will contain only stable, consistent APIs
+breaking semver semantics. 
+
+For CDK v2, the main CDK artifact (`aws-cdk-lib`) will contain only stable, consistent APIs
 and constructs that adhere to backwards compatibility. Customers can consume any APIs from `aws-cdk-lib` and have
-confidence that no breaking changes will be introduced (without a major version bump). When a new service module is
+confidence that no breaking changes will be introduced (without a major version bump). 
+
+All current and new CDK modules
 being developed — and not yet stable — it will be released as its own separate artifact, and versioned appropriately
 according to semver.
 
@@ -92,7 +96,7 @@ The following is a hypothetical snippet from the CDK v2 Release Notes:
 
 The following is a snippet from the Developer Guide targeted at how to install and use the new alpha modules:
 
-> **Installing Experimental CDK Modules**
+> **Installing the Alpha CDK Modules**
 >
 > Experimental CDK modules are denoted with an alpha identifier, to clearly identify them as pre-production. The following examples will walk
 > through installing the module for a hypothetical AWS service called FooBar.
@@ -217,6 +221,8 @@ separate Changelog (`CHANGELOG.v2.alpha.md`) will be created to track all change
 * **unstable-newbar:** answer to life has off-by-one error ([#999991](https://github.com/aws/aws-cdk/issues/15313)) (0ddba11), closes [#999990](https://github.com/aws/aws-cdk/issues/999990)
 ```
 
+**Github Release Notes:**
+
 The release notes (e.g., <https://github.com/aws/aws-cdk/releases/tag/v2.0.0-rc.19>) for each release will contain
 pointers to both Changelogs.
 
@@ -246,7 +252,7 @@ cases, experimental modules have dependencies on each other (e.g., `aws-apigatew
 No, unlike CDK v1 independent modules, the v2 experimental modules do not need to exactly match each other or the main
 aws-cdk-lib. Each experimental module declares a dependency on a minimum version of aws-cdk-lib required for it to
 function; as long as that requirement is satisfied, different versions can be installed. For example, you may have
-`aws-cdk-lib@2.4.0` installed with `@aws-cdk/foobar-alpha@2.2.0-alpha` and `@aws-cdk/fizzbuzz-alpha@2.3.1-alpha`.
+`aws-cdk-lib@2.4.0` installed with `@aws-cdk/foobar-alpha@2.2.0-alpha.0` and `@aws-cdk/fizzbuzz-alpha@2.3.1-alpha.0`.
 
 ### *Can I safely update an experimental module without receiving breaking changes?*
 
