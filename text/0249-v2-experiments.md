@@ -29,9 +29,9 @@ experimental modules.
 
 The following is a hypothetical snippet from the CDK v2 Release Notes:
 
-> Starting with version 2.0.0 of the AWS CDK, all modules and members will
-> become stable. This means that from this release, we are committed to never
-> introduce breaking changes in a non-major bump.
+> Starting with version 2.0.0 of the AWS CDK, all modules and members vended
+> as part of the main CDK library (`aws-cdk-lib`) will always be stable; we are
+> committing to never introduce breaking changes in a non-major bump.
 >
 > One of the most common feedback we hear from customers is that they love how
 > fast new features are added to the AWS CDK, we love it to. In v1, the
@@ -86,8 +86,8 @@ The following is a hypothetical snippet from the CDK v2 Release Notes:
 >
 > Writing the perfect API is hard, some APIs will require many iterations of
 > breaking changes before they can be finalized, others may need a long bake
-> time, and some both. This is especially true when writing a new L2. To that end,
-> new services and L2s that are potentially unstable will be initially released
+> time, and some both. This is especially true when writing new constructs.
+> To that end, new services and L2s will be initially released
 > as independent modules, each with their own prerelease versions. When an
 > alpha module is ready for prime time it will be added to `aws-cdk-lib`. Check
 > out our contribution guide for more details.
@@ -183,11 +183,20 @@ The following is a snippet from the Developer Guide targeted at how to install a
 >   "github.com/aws/aws-cdk-go/awscdk/awsfoobaralpha"
 > )
 > ```
+>
+> **Versioning**
+>
+> Alpha modules are released separately from `aws-cdk-lib`, but their versioning mirrors that of `aws-cdk-lib`.
+> For each release of `aws-cdk-lib` (e.g., `2.x.y`), the latest version of all of the alpha modules will also be
+> released, with a corresponding `alpha` pre-release version (e.g., `2.x.y-alpha.0`). Generally, using versions
+> of alpha modules that match the `aws-cdk-lib` version ensures compatibility; however, you can also use a newer
+> version of `aws-cdk-lib` than the version of the alpha modules, allowing you to get new features from `aws-cdk-lib`
+> without needing to also take on new (potentially breaking) changes from the alpha modules.
 
 ### CHANGELOG & Release Notes
 
 The main V2 Changelog (`CHANGELOG.v2.md`) will include only changes from stable modules, in the standard format. A
-separate Changelog (`CHANGELOG.v2.alpha.md`) will be created to track all changes to unstable modules.
+separate Changelog (`CHANGELOG.v2.alpha.md`) will be created to track all changes to alpha modules.
 
 **CHANGELOG.v2.md:**
 
@@ -210,15 +219,15 @@ separate Changelog (`CHANGELOG.v2.alpha.md`) will be created to track all change
 ## [2.1.0-alpha.0](https://github.com/aws/aws-cdk/compare/v2.0.0-alpha.0...v2.1.0-alpha.0) (2022-01-01)
 
 ### BREAKING CHANGES
-* **unstable-newbar:** default answer to life, universe and everything changed from 41 to 42.
+* **newbar:** default answer to life, universe and everything changed from 41 to 42.
 
 ### Features
 
-* **unstable-newbar:** add support for adding foos ([#999999](https://github.com/aws/aws-cdk/issues/999999)) (b01dface), closes [#999998](https://github.com/aws/aws-cdk/issues/999998)
+* **newbar:** add support for adding foos ([#999999](https://github.com/aws/aws-cdk/issues/999999)) (b01dface), closes [#999998](https://github.com/aws/aws-cdk/issues/999998)
 
 ### Bug Fixes
 
-* **unstable-newbar:** answer to life has off-by-one error ([#999991](https://github.com/aws/aws-cdk/issues/15313)) (0ddba11), closes [#999990](https://github.com/aws/aws-cdk/issues/999990)
+* **newbar:** answer to life has off-by-one error ([#999991](https://github.com/aws/aws-cdk/issues/15313)) (0ddba11), closes [#999990](https://github.com/aws/aws-cdk/issues/999990)
 ```
 
 **Github Release Notes:**
@@ -275,6 +284,12 @@ linked to from our GitHub artifacts (see <https://github.com/aws/aws-cdk/release
 We rely on the V2 tags to determine the differences that are part of this release. We do not add tags specifically for
 the alpha modules, as the versioning for alpha modules is always incremented at the same time as the V2 versions.
 
+### *Where will the V2 Changelogs be stored?*
+
+The existing `CHANGELOG.v2.md` Changelog, at the root of the repo, will remain unchanged. The new `CHANGELOG.v2.alpha.md`
+file will be stored alongside it, also at the root of the repo. Both Changelogs will only be present on the `v2-main`
+branch of the repo.
+
 ## Appendix
 
 ### Appendix A: Goals
@@ -299,7 +314,7 @@ These are the goals of this RFC, in order from most to least important:
     collection of third-party packages that provide reusable Constructs on various
     levels of abstraction. Changing to vending the Construct Library as a monolithic
     package is one part of making that possible; we should make sure our approach to
-    unstable code also takes this into account.
+    alpha modules and new experimental code also takes this into account.
 
 1. The CDK team can still perform API experiments
 

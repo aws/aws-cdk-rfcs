@@ -6,6 +6,12 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 
 # Summary
 
+**⚠️ NOTE:** This RFC is expired and has been superceded by
+<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.md>.
+This document is retained for historical context.
+
+---
+
 When CDK version `2.0` is released to General Availability (GA), the single
 monolithic Construct Library package we vend will no longer allow breaking
 changes in its main modules. The purpose of this RFC is to discuss the
