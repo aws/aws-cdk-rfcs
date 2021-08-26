@@ -190,7 +190,7 @@ For each stack, we will encode additional two IAM roles:
 
 This is the recommended setup for cross-account CloudFormation deployments.
 
-### Assets
+### Assets
 
 Users can reference "assets" within their CDK app. Assets represent artifacts
 produced from local files and used by the app at runtime. The CDK currently
