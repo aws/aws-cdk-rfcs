@@ -7,11 +7,11 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/249
 
 As part of the CDK v2 release, the CDK is adopting a new method of creating, developing, and releasing new L2
 constructs. CDK v1 intermixed stable modules and constructs alongside experimental constructs, confusing customers and
-breaking semver semantics. 
+breaking semver semantics.
 
 For CDK v2, the main CDK artifact (`aws-cdk-lib`) will contain only stable, consistent APIs
 and constructs that adhere to backwards compatibility. Customers can consume any APIs from `aws-cdk-lib` and have
-confidence that no breaking changes will be introduced (without a major version bump). 
+confidence that no breaking changes will be introduced (without a major version bump).
 
 All current and new CDK modules
 being developed — and not yet stable — it will be released as its own separate artifact, and versioned appropriately
@@ -23,7 +23,7 @@ In addition, this RFC introduces a new standard method for previewing new APIs w
 
 Given the breadth of this change, several Working Backwards artifacts are presented here, each targeting a different
 aspect of the customer experience when consuming experimental APIs from either `aws-cdk-lib` or one of the new
-experimental modules.
+alpha modules.
 
 ### Release Notes
 
@@ -46,23 +46,23 @@ The following is a hypothetical snippet from the CDK v2 Release Notes:
 > To make sure we can keep adding features fast, while keeping our commitment to
 > not release breaking changes, we are introducing a new model - API Previews.
 > APIs that we want to get in front of developers early, and are not yet
-> finalized, will be added to the AWS CDK with a specific suffix: `PreX`. APIs
+> finalized, will be added to the AWS CDK with a specific suffix: `BetaX`. APIs
 > with the preview suffix will never be removed, instead they will be deprecated
 > and replaced by either the stable version (without the suffix), or by a newer
 > preview version. For example, assume we add the method
-> `grantAwesomePowerPre1`:
+> `grantAwesomePowerBeta1`:
 >
 > ```ts
 > /**
 >  * This methods grants awesome powers
 >  */
-> grantAwesomePowerPre1();
+> grantAwesomePowerBeta1();
 > ```
 >
 > Times goes by, we get feedback that this method will actually be much better
 > if it accept a `Principal`. Since adding a required property is a breaking
-> change, we will add `grantAwesomePowerPre2()` and deprecate
-> `grantAwesomePowerPre1`:
+> change, we will add `grantAwesomePowerBeta2()` and deprecate
+> `grantAwesomePowerBeta1`:
 >
 > ```ts
 > /**
@@ -70,13 +70,13 @@ The following is a hypothetical snippet from the CDK v2 Release Notes:
 > *
 > * @param grantee The principal to grant powers to
 > */
-> grantAwesomePowerPre2(grantee: iam.IGrantable)
+> grantAwesomePowerBeta2(grantee: iam.IGrantable)
 >
 > /**
 > * This methods grants awesome powers
-> * @deprecated use grantAwesomePowerPre2
+> * @deprecated use grantAwesomePowerBeta2
 > */
-> grantAwesomePowerPre1()
+> grantAwesomePowerBeta1()
 > ```
 >
 > When we decide its time to graduate the API, the latest preview version will
@@ -98,7 +98,7 @@ The following is a snippet from the Developer Guide targeted at how to install a
 
 > **Installing the Alpha CDK Modules**
 >
-> Experimental CDK modules are denoted with an alpha identifier, to clearly identify them as pre-production. The following examples will walk
+> Alpha CDK modules are denoted with an alpha identifier, to clearly identify them as pre-production. The following examples will walk
 > through installing the module for a hypothetical AWS service called FooBar.
 >
 > *Typescript/Javascript*
@@ -134,10 +134,10 @@ The following is a snippet from the Developer Guide targeted at how to install a
 > *Go*
 >
 > ```sh
-> go get github.com/aws/aws-cdk-go/awscdk/awsfoobaralpha
+> go get github.com/aws/aws-cdk-go/awscdk/v2/awsfoobaralpha
 > ```
 >
-> **Using the Experimental CDK Modules**
+> **Using the Alpha CDK Modules**
 >
 > The following examples show how to import the FooBar service into your code. Imports for the core library and S3 are shown for comparison.
 >
@@ -179,8 +179,8 @@ The following is a snippet from the Developer Guide targeted at how to install a
 > ```go
 > import (
 >   "github.com/aws/aws-cdk-go/awscdk"
->   "github.com/aws/aws-cdk-go/awscdk/awss3"
->   "github.com/aws/aws-cdk-go/awscdk/awsfoobaralpha"
+>   "github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+>   "github.com/aws/aws-cdk-go/awscdk/v2/awsfoobaralpha"
 > )
 > ```
 >
@@ -232,49 +232,67 @@ separate Changelog (`CHANGELOG.v2.alpha.md`) will be created to track all change
 
 **Github Release Notes:**
 
-The release notes (e.g., <https://github.com/aws/aws-cdk/releases/tag/v2.0.0-rc.19>) for each release will contain
-pointers to both Changelogs.
+The release notes (e.g., <https://github.com/aws/aws-cdk/releases/tag/v2.0.0-rc.19>) for each release will contain the combined notes for both
+stable and alpha modules, clearly delineated.
 
 ```md
-## [2.1.0]
-* `aws-cdk-lib`: [CHANGELOG.v2.md](https://github.com/aws/aws-cdk/blob/v2-main/CHANGELOG.v2.md)
-* alpha modules (2.1.0-alpha.0): [CHANGELOG.v2.alpha.md](https://github.com/aws/aws-cdk/blob/v2-main/CHANGELOG.v2.alpha.md)
+# [v2.1.0]
+---
+## aws-cdk-lib
+### Features
+* **bar:** new fizzbuzz support ([#999999](https://github.com/aws/aws-cdk/issues/999999)) (b01dface), closes [#999998](https://github.com/aws/aws-cdk/issues/999998)
+* **foo:** more buzzing on the fizzes  ([#999994](https://github.com/aws/aws-cdk/issues/999999)) (deadb33f), closes [#999993](https://github.com/aws/aws-cdk/issues/999993)
+
+### Bug Fixes
+* **core:** transmorgrifier sometimes clones subject ([#999991](https://github.com/aws/aws-cdk/issues/15313)) (0ddba11), closes [#999990](https://github.com/aws/aws-cdk/issues/999990)
+
+--
+## Alpha Modules (v2.1.0-alpha.0)
+### BREAKING CHANGES
+* **newbar:** default answer to life, universe and everything changed from 41 to 42.
+
+### Features
+* **newbar:** add support for adding foos ([#999999](https://github.com/aws/aws-cdk/issues/999999)) (b01dface), closes [#999998](https://github.com/aws/aws-cdk/issues/999998)
+
+### Bug Fixes
+* **newbar:** answer to life has off-by-one error ([#999991](https://github.com/aws/aws-cdk/issues/15313)) (0ddba11), closes [#999990](https://github.com/aws/aws-cdk/issues/999990)
 ```
 
 ## FAQ
 
-### *Can I take a dependency on just a single experimental module?*
+### *Can I take a dependency on just a single alpha module?*
 
-Yes! Each of the experimental modules are independently published and versioned, so you can install and use only the
-experimental module(s) you need for your infrastructure. All other modules (via aws-cdk-lib) will offer stable APIs that
+Yes! Each of the alpha modules are independently published and versioned, so you can install and use only the
+alpha module(s) you need for your infrastructure. All other modules (via `aws-cdk-lib`) will offer stable APIs that
 will not change in backwards-incompatible ways.
 
 ### *Can I mix module versions (i.e., upgrade only one)?*
 
-Yes, since each experimental module is its own published package, each can be separately upgraded. You can upgrade to
-receive new features in one module without needing to upgrade other unrelated experimental modules. Note that in some
-cases, experimental modules have dependencies on each other (e.g., `aws-apigatewayv2` and
+Yes, since each alpha module is its own published package, each can be separately upgraded. You can upgrade to
+receive new features in one module without needing to upgrade other unrelated alpha modules.
+
+Note that in some cases, alpha modules have dependencies on each other (e.g., `aws-apigatewayv2` and
 `aws-apigatewayv2-integrations`); in these cases both modules may need to be upgraded simultaneously.
 
-### *Do the experimental modules need to be at the same version as aws-cdk-lib?*
+### *Do the alpha modules need to be at the same version as aws-cdk-lib?*
 
-No, unlike CDK v1 independent modules, the v2 experimental modules do not need to exactly match each other or the main
-aws-cdk-lib. Each experimental module declares a dependency on a minimum version of aws-cdk-lib required for it to
+No, unlike CDK v1 independent modules, the v2 alpha modules do not need to exactly match each other or the main
+aws-cdk-lib. Each alpha module declares a dependency on a minimum version of aws-cdk-lib required for it to
 function; as long as that requirement is satisfied, different versions can be installed. For example, you may have
 `aws-cdk-lib@2.4.0` installed with `@aws-cdk/foobar-alpha@2.2.0-alpha.0` and `@aws-cdk/fizzbuzz-alpha@2.3.1-alpha.0`.
 
-### *Can I safely update an experimental module without receiving breaking changes?*
+### *Can I safely update an alpha module without receiving breaking changes?*
 
-Not automatically. Check the CHANGELOG for notices of breaking changes to the experimental modules.
+Not automatically. Check the CHANGELOG for notices of breaking changes to the alpha modules.
 
-### *Where can I view the docs for the experimental modules?*
+### *Where can I view the docs for the alpha modules?*
 
-The docs for the experimental modules are available on the CDK API documentation website,
+The docs for the alpha modules are available on the CDK API documentation website,
 <https://docs.aws.amazon.com/cdk/api/latest/>.
 
 ### *Where can I see what’s changed for each of the modules?*
 
-An aggregated Changelog is published for all of the experimental modules, located alongside the primary Changelog, and
+An aggregated Changelog is published for all of the alpha modules, located alongside the primary Changelog, and
 linked to from our GitHub artifacts (see <https://github.com/aws/aws-cdk/releases>).
 
 ## Internal FAQ
@@ -304,10 +322,6 @@ These are the goals of this RFC, in order from most to least important:
     file of a module, or in the inline code documentation available in an
     editor/IDE, does not meet the criteria of "absolutely obvious".
 
-    If a customer is not aware of the stable vs unstable distinction, that means
-    they're using _only_ stable APIs, and that they will not be broken with minor
-    version CDK releases.
-
 1. We want to foster a vibrant ecosystem of third-party CDK packages
 
     In our estimation, the CDK cannot be successful without growing an expansive
@@ -330,8 +344,14 @@ These are the goals of this RFC, in order from most to least important:
     capability to perform experiments with our APIs (of course, only those that are
     clearly marked as such).
 
-1. Using experimental modules should be easy
+1. Using alpha modules should be easy
 
     Our development methodology is highly dependent on feedback from the community
     before finalizing APIs. To encourage users to use and provide feedback on
     experimental APIs, we should make them easy to use.
+
+### Appendix B: Previous RFC
+
+This is the second version of this RFC. A previous version was reviewed and approved, and can be found here:
+<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.expired.md>.
+The original version is more implementation- and trade-off focused, whereas this RFC focused on the working-backwards artifacts.
