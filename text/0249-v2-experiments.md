@@ -308,6 +308,14 @@ The existing `CHANGELOG.v2.md` Changelog, at the root of the repo, will remain u
 file will be stored alongside it, also at the root of the repo. Both Changelogs will only be present on the `v2-main`
 branch of the repo.
 
+### *What is the relationship between the aws-cdk-lib version and alpha module versions?*
+
+At publishing time, the alpha modules will be given a dependency on the current (corresponding) `aws-cdk-lib` version.
+For example, `@aws-cdk/aws-foobar-alpha@2.2.0-alpha.0` will have a dependency on `aws-cdk-lib@2.2.0`. This automatic
+version bump is the simplest to implement and requires the lowest amount of extra testing infrastructure to verify
+correctness. The alternative -- manually bumping the dependent `aws-cdk-lib` version based on a set of criteria --
+was deemed too complex to be feasible.
+
 ## Appendix
 
 ### Appendix A: Goals
