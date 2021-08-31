@@ -7,28 +7,6 @@
 CDK app developers and construct library authors can write integration
 tests that can be run locally or in their CI/CD pipeline.
 
-## Requirements
-
-It's useful to begin this RFC by talking about the requirements for CDK app integration testing.
-
-As a CDK app developer, I must be able to,
-
-1. Write tests that specifies (my) CDK app or stack(s) and execute a set of assertions against the deployed stack(s).
-   * Assertions are typically a series of API calls to AWS services,
-     but can be any "script" executed in a well defined environment.
-1. Execute the above tests both locally (given AWS credentials) and as part of my CI/CD pipeline,
-   including CDK Pipelines.
-1. Execute the above tests in "snapshot mode", so as to visually determine the impact of a given change.
-   * In this mode, the stacks and assertions are not actually deployed. Instead, the CDK app is synthesized and the
-     generated cloud assembly is compared against an existing snapshot.
-1. Execute the above tests in "update mode", so as to verify that updating an existing app is successful.
-   * In this mode, a previous (snapshotted) version of the CDK app is first deployed, followed by the new changes.
-1. Write tests in the same language as my CDK app.
-
-Additionally,
-
-1. Tests must clean up all artifacts created in the AWS account during its run at the end of its execution.
-
 ## Working Backwards - README.md
 
 ### contest
