@@ -7,22 +7,50 @@
 CDK app developers and construct library authors can write integration
 tests that can be run locally or in their CI/CD pipeline.
 
+## Requirements
+
+It's useful to begin this RFC by talking about the requirements for CDK app integration testing.
+
+As a CDK app developer, I must be able to,
+
+1. Write tests that specifies (my) CDK app or stack(s) and execute a set of assertions against the deployed stack(s).
+   * Assertions are typically a series of API calls to AWS services,
+     but can be any "script" executed in a well defined environment.
+1. Execute the above tests both locally (given AWS credentials) and as part of my CI/CD pipeline,
+   including CDK Pipelines.
+1. Execute the above tests in "snapshot mode", so as to visually determine the impact of a given change.
+   * In this mode, the stacks and assertions are not actually deployed. Instead, the CDK app is synthesized and the
+     generated cloud assembly is compared against an existing snapshot.
+1. Execute the above tests in "update mode", so as to verify that updating an existing app is successful.
+   * In this mode, a previous (snapshotted) version of the CDK app is first deployed, followed by the new changes.
+1. Write tests in the same language as my CDK app.
+
+Additionally,
+
+1. Tests must clean up all artifacts created in the AWS account during its run at the end of its execution.
+
 ## Working Backwards - README.md
 
-### CDK Integration Testing
+### contest
 
-🧑‍💻 Write integration tests for your CDK apps and execute them on AWS as part of your CI pipeline.
+🌩️ `contest` tests can verify that your CDK app can be deployed successfully on AWS with the desired resources.
+
+🤖 `contest` tests can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
+
+🕰️ `contest` tests can verify that your CDK app can be updated from a previous version of the app.
+
+🧑‍💻 Write `contest` tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
 
 #### Getting Started
 
-> Installation instructions: TBD
+> TBD: Installation instructions
 
 #### Writing Tests
 
-Let's start with a hypothetical CDK stack that defines an AWS Lambda Function which
-records each invoke into an S3 object in a defined bucket.
+Let's start with the below CDK construct that creates an artifact repository in an S3 bucket,
+and notifies of new artifacts to an SQS queue.
 
 ```ts
 // repo.ts
@@ -31,7 +59,6 @@ import { Bucket, EventType, IBucket } from '@aws-cdk/aws-s3';
 import { IQueue, Queue } from '@aws-cdk/aws-sqs';
 import { SqsDestination } from '@aws-cdk/aws-s3-notifications';
 
-// Set up a private artifact repository
 export class ArtifactRepo extends Construct {
   public readonly artifacts: IBucket;
   public readonly publishNotifs: IQueue;
@@ -48,15 +75,16 @@ export class ArtifactRepo extends Construct {
 }
 ```
 
-The following test invokes the lambda function and asserts that the expected
-object with contents exists.
+The following integ test invokes puts an object in the S3 bucket and verifies the message in the SQS queue.
 
 ```ts
+// repo.contest.ts
 import { ArtifactRepo } from './records';
+import { Test } from '@aws-cdk/contest';
 
 const repo = new ArtifactRepo(app, 'RequestRecord');
 
-const repoTest = IntegrationTest.forConstruct(repo); // TBF: Module and class name
+const repoTest = Test.forConstruct(repo);
 
 repoTest.assertAws.
   s3.putObject({ bucket: stack.artifacts, key: '...', body: '...' });
@@ -68,15 +96,14 @@ repoTest.assertAws.
 
 #### Assertions
 
-This module comes packaged with a set of high level assertions that are commonly used
-when writing tests with the AWS CDK.
+`contest` comes packaged with a set of commonly used high level assertions.
 
 * `assertAws`: execute AWS service APIs and assert the response.
 * `invokeLambda`: invoke an AWS lambda function and assert the response.
 * `curlApi`: Execute the 'curl' command on an API endpoint. Used typically to test API Gateway resources.
 
-By default, these assertions will check that the underlying call succeeds. That behavior can be modified
-to verify the response or to verify error.
+By default, these assertions will check that the underlying call succeeds. That behavior can be extended
+to also include verification of the response.
 
 ```ts
 test.assertAws(
@@ -88,17 +115,28 @@ test.invokeLambda(...).throws({ ... });
 ```
 
 The `invokeLambda` API is a special and powerful option.
-Besides invoking lambda functions defined in your application, it can be used to
-run custom actions and assertions in the test.
+Besides invoking lambda functions defined in the CDK construct under test, it can be used to invoke
+lambda functions defined in your test. This mechanism enables user defined assertions as Lambda functions.
 
-For example, with `ArtifactRepo`, the test may include a lambda function that verifies
-by installing an artifact from this repository.
+> TODO: Explain later that assertions are modeled as CFN custom resources.
 
-> TODO: Explain that assertions are constructs / custom resources.
+#### Test Execution
+
+`contest` tests can be written in any of the CDK supported languages.
+
+NOTE: If your project also contains unit tests, consider separating these from `contest` tests,
+using separate targets (separate `script` in a node project, separate Maven phase in a Java project, etc.).
+
+Tests are executed within an AWS account; hence its credentials are required during test execution.
+
+> TODO: Expand on credentials requirements
+
+<!--
 
 #### TBD
 
-- Running tests
+- Reporting
+- Revisit custom assertions
 - Snapshots
 - construct library / app upgrades.
 - Run nightly/regularly.
