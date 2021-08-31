@@ -48,7 +48,7 @@ Users can develop rule bodies for version 1 CloudWatch Logs using the `fromRuleB
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     LogGroupNames: //some log groups,
-    LogFormat: LogFormats.JSON, //optional, default is CLF if 'Fields' field is defined. Otherwise is JSON
+    LogFormat: CloudWatchLogFormats.JSON, //optional, default is CLF if 'Fields' field is defined. Otherwise is JSON
     Contribution: //some contribution,
     AggregateOn: Aggregates.SUM //optional, default is SUM if 'ValueOf' field is defined in the Contribution.
                                 //Otherwise is COUNT
@@ -134,14 +134,14 @@ These are all followed by the values these operators will compare against.
 `GreaterThan`, `LessThan`, `EqualTo`, and `NotEqualTo` accept a single numerical value.
 `IsPresent` accept either boolean true or false.
 
+The operator and operator input field are referred to in this library as a `condition`.
+
 To add a filter to a CloudWatch logs contribution, the user will use the `CloudWatchLogsV1Filter.fromFilter()` method,
-which will take in a `ICloudWatchLogV1RuleBodyFilter`. Users will enter in the `Match` value and the corresponding
-operation and input.
+which will take in a `CloudWatchLogV1RuleBodyFilterProps`. Users will enter in the `Match` value and the corresponding
+`condition`.
 
-> Note: the name 'operationAndInput' is primarily a placeholder until a better idea comes up.
-> Maybe just 'operation' would be sufficient
-
-An example is shown below:
+Users can use the `CloudWatchLogsV1FilterCondition` class to leverage autocompletion and
+typechecking when creating the `condition` field as shown below:
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
@@ -152,28 +152,7 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
             Filters: [
                 CloudWatchLogsV1Filter.fromFilter({
                     match: '$.httpMethod',
-                    operationAndInput: {
-                        StartsWith: ['PUT', 'POST']
-                    }
-                })
-            ],
-        //...
-    })
-```
-
-In addition, users can use the `CloudWatchLogsV1FilterOperationFunctions` class to leverage autocompletion and
-typechecking when creating the `operationAndInput` field as shown below:
-
-```typescript
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-        //...
-        Contribution: {
-            Keys: //...
-            ValueOf: //...
-            Filters: [
-                CloudWatchLogsV1Filter.fromFilter({
-                    match: '$.httpMethod',
-                    operationAndInput: CloudWatchLogsV1FilterOperationFunctions.startsWith('PUT', 'POST'),
+                    condition: CloudWatchLogsV1FilterCondition.startsWith('PUT', 'POST'),
                 })
             ],
         //...
@@ -197,13 +176,11 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
             Filters: CloudWatchLogsV1Filter.allOf(
               {
                 match: '$.httpMethod',
-                operationAndInput: CloudWatchLogsV1FilterOperationFunctions.in('PUT'),
+                condition: CloudWatchLogsV1FilterCondition.in('PUT'),
               },
               {
                 match: '$.BytesRecieved',
-                operationAndInput: {
-                        GreaterThan: 0
-                    }
+                condition: CloudWatchLogsV1FilterCondition.greaterThan(0),
               },
         ),
         //...
@@ -219,7 +196,7 @@ import * as cdk from '@aws-cdk/core';
 import { CloudWatchLogsV1Filter,
     InsightRule,
     CloudWatchLogsV1RuleBody,
-    CloudWatchLogsV1FilterOperationFunctions
+    CloudWatchLogsV1FilterCondition
     } from '../lib';
 
 new InsightRule(stack, 'myRadRule', {
@@ -232,7 +209,7 @@ new InsightRule(stack, 'myRadRule', {
       filters: [
         CloudWatchLogsV1Filter.fromFilter({
           match: '$.httpMethod',
-          operationAndInput: CloudWatchLogsV1FilterOperationFunctions.startsWith('PUT'),
+          condition: CloudWatchLogsV1FilterCondition.startsWith('PUT'),
         }),
       ],
     },
@@ -275,7 +252,7 @@ const rule = new InsightsRule(this, "rule", {
                 Version: 1
             },
             LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
-            LogFormat: LogFormats.JSON,
+            LogFormat: CloudWatchLogFormats.JSON,
             Contribution: {
                 Keys: ["$.ip"],
                 ValueOf: "$.requestBytes",
