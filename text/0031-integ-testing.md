@@ -11,13 +11,13 @@ tests that can be run locally or in their CI/CD pipeline.
 
 ### contest
 
-🌩️ `contest` tests can verify that your CDK app can be deployed successfully on AWS with the desired resources.
+🌩️ contest tests can verify that your CDK app can be deployed successfully on AWS with the desired resources.
 
-🤖 `contest` tests can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
+🤖 contest tests can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
-🕰️ `contest` tests can verify that your CDK app can be updated from a previous version of the app.
+🕰️ contest tests can verify that your CDK app can be updated from a previous version of the app.
 
-🧑‍💻 Write `contest` tests in any CDK supported language, and execute them as part of your CI pipeline.
+🧑‍💻 Write contest tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
 
@@ -98,16 +98,17 @@ lambda functions defined in your test. This mechanism enables user defined asser
 
 > TODO: Explain later that assertions are modeled as CFN custom resources.
 
-#### Test Execution
+#### Test Execution & Reporting
 
-`contest` tests can be written in any of the CDK supported languages.
+contest tests can be written in the same programming language as your CDK project.
 
-NOTE: If your project also contains unit tests, consider separating these from `contest` tests,
-using separate targets (separate `script` in a node project, separate Maven phase in a Java project, etc.).
+Execute contest test can be executed by running the `contest` CLI. Each contest test case will be in its
+own file.
+By default, the CLI will look for files named `*.contest.*` and execute them.
+See [configuration](#configuration) *[TODO]* on how to change this.
 
-Tests are executed within an AWS account; hence its credentials are required during test execution.
-
-> TODO: Expand on credentials requirements
+Once all the tests are executed, a test report is printed to the console detailing any deployment and
+assertion failures.
 
 <!--
 
