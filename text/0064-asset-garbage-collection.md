@@ -34,7 +34,7 @@ Examples:
 
 The `cdk gc` command reduces the size of your s3 asset bucket and your ecr asset 
 repository by identifying and deleting orphaned assets. The command will enter the
-specified environment or all environments in the CDK app and determine assets that can be safely deleted. Only assets that are no longer referenced by a CDK template are deleted. You can also list orphaned assets using the `--list` option or filter for a specific type of asset using `--type`.
+specified environment or all environments in the CDK app and determine assets that are no longer referenced and can be safely deleted. You can also list orphaned assets using the `--list` option or filter for a specific type of asset using `--type`.
 
 
 #### Usage:
