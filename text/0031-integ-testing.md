@@ -21,10 +21,6 @@ tests that can be run locally or in their CI/CD pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
 
-### Getting Started
-
-> TBD: Installation instructions
-
 ### Writing Tests
 
 contest tests can be written in the same programming language as your CDK project.
@@ -76,7 +72,7 @@ repoTest.assertAws.
 
 ### Assertions
 
-`contest` comes packaged with a set of commonly used high level assertions.
+`contest` comes canned with a set of commonly used high level assertions.
 
 * `assertAws`: execute AWS service APIs and assert the response.
 * `invokeLambda`: invoke an AWS lambda function and assert the response.
@@ -94,12 +90,36 @@ test.invokeLambda(...).returns({ ... });
 test.invokeLambda(...).throws({ ... });
 ```
 
-The `invokeLambda` API is a special and powerful option.
-Besides invoking lambda functions defined in the CDK construct under test, it can be used to invoke
-lambda functions defined in your test. This mechanism enables user defined assertions as Lambda functions.
+When canned assertions are insufficient, `contest` also provides a mechanism to write custom assertions.
+Custom assertions are simply AWS Lambda Functions, and in the CDK, these are any construct that implements `IFunction`.
 
-**Implementation Note:** All canned and custom contest assertions are modeled as AWS CloudFormation custom resources.
-They are executed in the AWS account as part of deployment, after the stack or construct under test has been deployed.
+```ts
+import { Code, Function, Runtime } from '@aws-cdk/aws-lambda';
+
+// Checks that a standard header is present in the given S3 object
+class StdHeaderAssertion extends Function {
+  constructor(scope: Construct, id: string, props: StdHeaderAssertionProps) {
+    super(scope, id, {
+      code: Code.fromAsset('./standard-header-assertion.js'),
+      runtime: Runtime.NODEJS_12_X,
+      env: {
+        BUCKET_NAME: props.bucket.bucketName,
+        KEY: props.bucket.key
+      },
+    });
+  }
+}
+```
+
+The assertion passes or fails based on the success or failure of the Lambda's handler code.
+In both cases, it can also return an optional message, that will be made available in the test result.
+
+To invoke this assertion, you can simply use the `invokeLambda()` API -
+
+```ts
+const hdrAssertion = new StdHeaderAssertion(...);
+test.invokeLambda(hdrAssertion);
+```
 
 ### Test Execution & Report
 
@@ -130,12 +150,9 @@ Detailed test results are available in a file, usually at `contest.out/results-x
 
 #### TBD
 
-- Reporting
 - In the pipeline
-- Revisit custom assertions
 - Snapshots
 - construct library / app upgrades.
-- Run nightly/regularly.
 
 -->
 
@@ -230,9 +247,8 @@ See [Appendix A](#appendix-a---test-execution) for alternatives on test executio
 
 ### Are there any open issues that need to be addressed later?
 
-> Describe any major open issues that this RFC did not take into account. Once
-> the RFC is approved, create GitHub issues for these issues and update this RFC
-> of the project board with these issue IDs.
+The RFC does not describe the experience of using contest in CDK Pipelines.
+This needs to be incorporated later.
 
 ## Appendix A - Test Execution
 
@@ -264,6 +280,8 @@ When a test completes, it will then destroy the stack, before proceeding to run 
 At the end of the run, the CLI will download the detailed test results from AWS Logs to the
 location `contest.out/results-xxx`.
 
+> TBD: Lifecycle of the log group, log stream
+
 ### Alternatives
 
 Instead of adding a new CLI subcommand and updated init templates, we could look to reuse
@@ -272,3 +290,11 @@ This would imply a simpler and a more familiar experience of writing tests.
 
 However, to achieve this effectively, the test cases will need to deploy the app it defines.
 We do not have a way to deploy CDK applications programmatically.
+
+## Appendix B - Assertions
+
+All contest assertions are AWS Lambda functions at their core. Each assertion is associated to an
+AWS CloudFormation custom resource. They all use a single provider.
+
+This provider simply invokes the lambda function specified by the assertion, collects its results
+and writes them into a pre-configured log stream in AWS Logs associated with this test run.
