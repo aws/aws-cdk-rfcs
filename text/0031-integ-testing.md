@@ -78,7 +78,8 @@ repoTest.assertAws.
 
 * `assertAws`: execute AWS service APIs and assert the response.
 * `invokeLambda`: invoke an AWS lambda function and assert the response.
-* `curlApi`: Execute the 'curl' command on an API endpoint. Used typically to test API Gateway resources.
+* `httpRequest`: Execute an HTTP request against an API endpoint and assert the response.
+  Used typically to test API Gateway resources.
 
 By default, these assertions will check that the underlying call succeeds. That behavior can be extended
 to also include verification of the response.
@@ -148,12 +149,36 @@ The following applies to a CDK project in javascript that uses Node.js -
 As each test is completed, a one line summary of its pass/fail is printed to console.
 Detailed test results are available in a file, usually at `contest.out/results-xxx`.
 
+### Snapshot Testing
+
+On first run of a contest test, a snapshot will be produced that *must be checked into source tree*.
+This is a snapshot of the [cloud assembly] containing both the CDK app (being tested) and the test's
+assertions. The snapshot will be placed at a folder relative to the test file.
+
+```
+test
+├── repo.contest.ts
+└── repo.contest.snap
+    ├── manifest.json
+    ├── RepoStack.template.json
+    ├── ...
+    └── ...
+```
+
+On subsequent runs of this test - via `cdk contest` - if the synthesized cloud assembly matches the
+snapshot, then a full deployment and assertions will be skipped and the test will be considered to
+have passed. This behaviour can be overridden with the `--ignore-snapshots` flag.
+
+However, when the synthesized cloud assembly does not match the snapshot, the test will be executed
+in full and the snapshot updated. As before, the updates must be checked into the source tree.
+
+[cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
+
 <!--
 
 #### TBD
 
 - In the pipeline
-- Snapshots
 - construct library / app upgrades.
 - clean up
 - authoring experience - interplay with 'cdk watch'
@@ -195,6 +220,23 @@ RFC pull request):
 ### Why should I use this feature?
 
 > Describe use cases that are addressed by this feature.
+
+### Why are all my contest snapshots sometimes invalidated when I upgrade to a newer CDK version?
+
+This usually happens when your CDK app depends on an asset that is bundled as part of the AWS CDK.
+Learn more about [assets].
+
+Assets bundled as part of the CDK can change when there is a bug fix or a new feature added to the
+asset. When an asset changes, its fingerprint (hash) stored in the CloudFormation template also changes.
+
+With such changes, it is best to re-run all your tests in full (as is the default by `cdk contest`)
+to ensure that all of the new changes do not have any unintended impact to your application.
+
+Rarely, the AWS CDK will change the synthesized template in backwards compatible ways, such as,
+changing the order of properties, or setting a property to its default. 
+As stated previously, it is still safer to run all tests with invalidated snapshots.
+
+[assets]: https://docs.aws.amazon.com/cdk/latest/guide/assets.html
 
 ## Internal FAQ
 
