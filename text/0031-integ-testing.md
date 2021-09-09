@@ -9,7 +9,7 @@ tests that can be run locally or in their CI/CD pipeline.
 
 ## Working Backwards - README.md
 
-### contest
+### contest *[name not final]*
 
 🌩️ contest tests can verify that your CDK app can be deployed successfully on AWS with the desired resources.
 
@@ -20,6 +20,8 @@ tests that can be run locally or in their CI/CD pipeline.
 🧑‍💻 Write contest tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
+
+🧹 contest will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
 
 ### Writing Tests
 
@@ -153,6 +155,8 @@ Detailed test results are available in a file, usually at `contest.out/results-x
 - In the pipeline
 - Snapshots
 - construct library / app upgrades.
+- clean up
+- authoring experience - interplay with 'cdk watch'
 
 -->
 
@@ -252,7 +256,7 @@ This needs to be incorporated later.
 
 ## Appendix A - Test Execution
 
-### Implementation
+### Design
 
 A project set up for contest will have the `contest` section in its `cdk.json`.
 In the case of a javascript CDK app:
@@ -294,7 +298,41 @@ We do not have a way to deploy CDK applications programmatically.
 ## Appendix B - Assertions
 
 All contest assertions are AWS Lambda functions at their core. Each assertion is associated to an
-AWS CloudFormation custom resource. They all use a single provider.
+AWS CloudFormation custom resource with a single provider.
 
-This provider simply invokes the lambda function specified by the assertion, collects its results
-and writes them into a pre-configured log stream in AWS Logs associated with this test run.
+This provider simply invokes the lambda function attached with the assertion, collect results
+and write them into a pre-configured log stream in AWS Logs associated with this test run.
+
+### Alternatives
+
+Alternatively, we can run these assertions from the test runner as part of test execution.
+In this approach, the developer machine or the CI server will interact with the deployed CDK app
+to execute the assertions.
+
+The proposed approach is better than this alternative for the following reasons.
+
+The proposed solution allows for users, typically enterprise users, to test "private" resources,
+such as a lambda function in a private vpc. With this alternative, the resource will need to be
+exposed to the developer machine and/or CI server.
+
+This type of testing being proposed here involves deploying and cleaning up AWS resources via
+CloudFormation stacks for each test. This is time intensive. A combined snapshot of the CDK app
+and assertions, taken once, provides a high level of confidence that the test does not need to be
+re-run. A fresh snapshot is taken every time the CDK app or any of the assertions in the test
+changes.
+Since the proposed solution models the assertions as AWS CDK constructs, the synthesized [cloud
+assembly] functions as a full and effective snapshot.
+This alternative, on the other hand, will require inventing an effective snapshotting solution.
+
+The proposed solution also provides a consistent execution environment for tests - the [AWS Lambda
+base images] and the ability to [modify the environment][Modifying runtime environment] via
+extensions and layers.
+As an example, if an assertion depends on the `sed` utility. OSX ships by default with BSD sed,
+while Linux ships with GNU sed, which have subtly different behaviours and option switches.
+In the proposed solution, the assertion will either use the `sed` utility in the Lambda base
+image or bring its own via Lambda Layers.
+If this is not accounted for, this alternative will cause the assertion to behave inconsistently.
+
+[cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
+[AWS Lambda base images]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-images.html
+[Modifying runtime environment]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-modify.html
