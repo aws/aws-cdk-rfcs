@@ -102,7 +102,15 @@ unutilized assets.
 
 `cdk gc` will look at all the deployed, healthy stacks in the environment and trace the
 assets that are being referenced by these stacks. All assets that are not reached via
-tracing can be safely deleted.
+tracing **and** are older than 30 days can be safely deleted.
+
+The 30 day requirement acts as a safety margin for CloudFormation rollbacks. For example,
+if we deploy a change to a stack, the previous assets will no longer be traced. If we
+wanted to rollback to the previous version after running `cdk gc` with no time requirement
+those assets would not exist. In a regular `cdk deploy` cycle the CDK CLI can re-upload the
+assets but that is not true for Continuous Deployment systems. Waiting 30 days before any
+assets are deleted alleviates this concern for pessimistic CI/CD scenarios and allows for
+safe interperability.
 
 ## Internal FAQ
 
@@ -141,8 +149,11 @@ No.
 
 ### What alternative solutions did you consider?
 
-> Briefly describe alternative approaches that you considered. If there are
-> hairy details, include them in an appendix.
+Eventually, a zero-touch solution where garbage collection makes scheduled runs in the
+background is what users would want. However, `cdk gc` would be the building block for the
+automated garbage collection, so it makes sense to start with a CLI experience and iterate
+from there. After `cdk gc` stabilizes, we can vend a construct that runs periodically and
+at some point add this to the bootstrapping stack.
 
 ### What are the drawbacks of this solution?
 
