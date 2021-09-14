@@ -15,8 +15,6 @@ tests that can be run locally or in their CI/CD pipeline.
 
 🤖 contest tests can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
-🕰️ contest tests can verify that your CDK app can be updated from a previous version of the app.
-
 🧑‍💻 Write contest tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
@@ -58,39 +56,44 @@ The following integ test invokes puts an object in the S3 bucket and verifies th
 ```ts
 // repo.contest.ts
 import { ArtifactRepo } from './records';
-import { Test } from '@aws-cdk/contest';
+import { AwsAssertionCall, AwsAssertion, Test } from '@aws-cdk/contest';
 
 const repo = new ArtifactRepo(app, 'RequestRecord');
 
 const repoTest = Test.forConstruct(repo);
 
-repoTest.assertAws.
-  s3.putObject({ bucket: stack.artifacts, key: '...', body: '...' });
+new AwsAssertion(repoTest, 'RepoPutObject', {
+  request: AwsAssertionCall.S3.putObject({ bucket: stack.artifacts, key: '...', body: '...' })
+});
 
-repoTest.assertAws.
-  sqs.receiveMessage({ queue: stack.publishNotifs })
-     .returns({ Messages: [ ... ] });
+new AwsAssertion(repoTest, 'MessageReceived', {
+  request: AwsAssertionCall.Sqs.receiveMessage({ queue: stack.publishNotifs }),
+  returns: { Messages: [...] }
+});
 ```
 
 ### Assertions
 
 `contest` comes canned with a set of commonly used high level assertions.
 
-* `assertAws`: execute AWS service APIs and assert the response.
-* `invokeLambda`: invoke an AWS lambda function and assert the response.
-* `httpRequest`: Execute an HTTP request against an API endpoint and assert the response.
+* `AwsAssertion`: execute AWS service APIs and assert the response.
+* `InvokeLambda`: invoke an AWS Lambda Function and assert its response.
+* `HttpRequest`: Execute an HTTP request against an API endpoint and assert the response.
   Used typically to test API Gateway resources.
 
 By default, these assertions will check that the underlying call succeeds. That behavior can be extended
 to also include verification of the response.
 
 ```ts
-test.assertAws(
-  s3.getObject({ ... }).returns({ Data: ... });
-);
+new AwsAssertion(test, 'GetObject', {
+  request: AwsAssertionCall.S3.getObject({ ... }),
+  returns: { Data: ... },
+});
 
-test.invokeLambda(...).returns({ ... });
-test.invokeLambda(...).throws({ ... });
+new InvokeLambda(test, 'Invoke', {
+  lambda: functionArn,
+  throws: ...
+});
 ```
 
 When canned assertions are insufficient, `contest` also provides a mechanism to write custom assertions.
@@ -149,7 +152,7 @@ The following applies to a CDK project in javascript that uses Node.js -
 As each test is completed, a one line summary of its pass/fail is printed to console.
 Detailed test results are available in a file, usually at `contest.out/results-xxx`.
 
-### Snapshot Testing
+### Test snapshots
 
 On first run of a contest test, a snapshot will be produced that *must be checked into source tree*.
 This is a snapshot of the [cloud assembly] containing both the CDK app (being tested) and the test's
@@ -174,14 +177,20 @@ in full and the snapshot updated. As before, the updates must be checked into th
 
 [cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
 
+
+### Developing Tests
+
+> TBD
+
 <!--
 
 #### TBD
 
 - In the pipeline
-- construct library / app upgrades.
 - clean up
 - authoring experience - interplay with 'cdk watch'
+- Test output in a standard protocol
+- Can we support standard test frameworks
 
 -->
 
@@ -203,14 +212,6 @@ RFC pull request):
 ```
 
 ## Public FAQ
-
-> This section should include answers to questions readers will likely ask about
-> this release. Similar to the "working backwards", this section should be
-> written in a language as if the feature is now released.
->
-> The template includes a some common questions, feel free to add any questions
-> that might be relevant to this feature or omit questions that you feel are not
-> applicable.
 
 ### What are we launching today?
 
@@ -240,13 +241,6 @@ As stated previously, it is still safer to run all tests with invalidated snapsh
 
 ## Internal FAQ
 
-> The goal of this section is to help decide if this RFC should be implemented.
-> It should include answers to questions that the team is likely ask. Contrary
-> to the rest of the RFC, answers should be written "in the present" and
-> likely discuss design approach, implementation plans, alternative considered
-> and other considerations that will help decide if this RFC should be
-> implemented.
-
 ### Why are we doing this?
 
 > What is the motivation for this change?
@@ -267,16 +261,13 @@ As stated previously, it is still safer to run all tests with invalidated snapsh
 
 ### Is this a breaking change?
 
-> If the answer is no. Otherwise:
->
-> Describe what ways did you consider to deliver this without breaking users?
->
-> Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
-> changes and the migration path.
+We are releasing a new module for testing. This question is not applicable.
 
 ### What alternative solutions did you consider?
 
 See [Appendix A](#appendix-a---test-execution) for alternatives on test execution.
+
+See [Appendix B](#appendix-b---assertions) for alternatives on assertions design.
 
 ### What are the drawbacks of this solution?
 
@@ -326,30 +317,47 @@ When a test completes, it will then destroy the stack, before proceeding to run 
 At the end of the run, the CLI will download the detailed test results from AWS Logs to the
 location `contest.out/results-xxx`.
 
-> TBD: Lifecycle of the log group, log stream
+The major downside to this solution is that it is re-inventing another test execution mechanism.
+
+Users will now need to learn how to organize contest tests, learn how to execute it and read
+results. We are not leveraging existing "well known" test frameworks.
+
+Although this looks basic today, as the scope of contest expands and more features are added,
+the contest test execution mechanism will likely have to re-implement features that are
+already present in most popular testing frameworks today.
+
+The proposal does not produce the test report in any known format, and this is going to lead
+to poor integration with reporting tools and parsers.
 
 ### Alternatives
 
 Instead of adding a new CLI subcommand and updated init templates, we could look to reuse
 existing testing frameworks, such as, jest for Node.js, junit for Java, etc.
-This would imply a simpler and a more familiar experience of writing tests.
+This would imply a simpler and a more familiar experience of writing tests. It also integrates
+well with existing tooling such as standard test report generation, test parallelism, etc.
 
-However, to achieve this effectively, the test cases will need to deploy the app it defines.
-We do not have a way to deploy CDK applications programmatically.
+To achieve this, we will need to provide a jsii module that can deploy and destroy AWS CDK
+applications. Currently, this is available only via the AWS CDK CLI.
+
+> TBD: To be explored
 
 ## Appendix B - Assertions
 
-All contest assertions are AWS Lambda functions at their core. Each assertion is associated to an
-AWS CloudFormation custom resource with a single provider.
+All contest assertions are AWS Lambda functions at their core and uses AWS CloudFormation
+[custom resources] to execute these during deployment.
 
-This provider simply invokes the lambda function attached with the assertion, collect results
-and write them into a pre-configured log stream in AWS Logs associated with this test run.
+contest ships with a single custom resource provider and every call to an assertion
+provisions a new CloudFormation custom resource using this provider. Every assertion is a
+lambda function.
+
+The provider backing this custom resource simply invokes the lambda function attached to the
+assertion with parameters specific to that instance, collect results and write them into a
+pre-configured log stream in AWS Logs associated with this test run.
 
 ### Alternatives
 
-Alternatively, we can run these assertions from the test runner as part of test execution.
-In this approach, the developer machine or the CI server will interact with the deployed CDK app
-to execute the assertions.
+Alternatively, the test runner executes these assertions locally. Either the developer machine
+or the CI server will interact directly with the deployed CDK app to execute the assertions.
 
 The proposed approach is better than this alternative for the following reasons.
 
@@ -375,6 +383,9 @@ In the proposed solution, the assertion will either use the `sed` utility in the
 image or bring its own via Lambda Layers.
 If this is not accounted for, this alternative will cause the assertion to behave inconsistently.
 
+> TBD: Document the downsides of the proposed approach
+
+[AWS CloudFormation custom resources]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 [cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
 [AWS Lambda base images]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-images.html
 [Modifying runtime environment]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-modify.html
