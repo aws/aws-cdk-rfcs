@@ -9,21 +9,21 @@ tests that can be run locally or in their CI/CD pipeline.
 
 ## Working Backwards - README.md
 
-### `@aws-cdk/app-test`
+### `@aws-cdk/apptest`
 
-🌩️ app-test can verify that your CDK app can be deployed successfully on AWS with the desired resources.
+🌩️ apptest can verify that your CDK app can be deployed successfully on AWS with the desired resources.
 
-🤖 app-test can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
+🤖 apptest can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
 🧑‍💻 Write tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
 
-🧹 app-test will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
+🧹 apptest will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
 
 ### Writing Tests
 
-Tests that use app-test can be written in the same programming language as your CDK project.
+Tests that use apptest can be written in the same programming language as your CDK project.
 
 Let's start with the below CDK construct that creates an artifact repository in an S3 bucket,
 and notifies of new artifacts to an SQS queue.
@@ -56,7 +56,7 @@ The following integ test invokes puts an object in the S3 bucket and verifies th
 ```ts
 // repo.apptest.ts
 import { ArtifactRepo } from './records';
-import { AwsAssertionCall, AwsAssertion, Test } from '@aws-cdk/app-test';
+import { AwsAssertionCall, AwsAssertion, Test } from '@aws-cdk/apptest';
 
 const repo = new ArtifactRepo(app, 'RequestRecord');
 
@@ -70,11 +70,13 @@ new AwsAssertion(repoTest, 'MessageReceived', {
   request: AwsAssertionCall.Sqs.receiveMessage({ queue: stack.publishNotifs }),
   returns: { Messages: [...] }
 });
+
+repoTest.run();
 ```
 
 ### Assertions
 
-`app-test` comes canned with a set of commonly used high level assertions.
+`apptest` comes canned with a set of commonly used high level assertions.
 
 * `AwsAssertion`: execute AWS service APIs and assert the response.
 * `InvokeLambda`: invoke an AWS Lambda Function and assert its response.
@@ -96,7 +98,7 @@ new InvokeLambda(test, 'Invoke', {
 });
 ```
 
-When canned assertions are insufficient, `app-test` also provides a mechanism to write custom assertions.
+When canned assertions are insufficient, `apptest` also provides a mechanism to write custom assertions.
 Custom assertions are simply AWS Lambda Functions, and in the CDK, these are any construct that implements `IFunction`.
 
 ```ts
@@ -127,35 +129,12 @@ const hdrAssertion = new StdHeaderAssertion(...);
 test.invokeLambda(hdrAssertion);
 ```
 
-### Test Execution & Report
-
-To execute your app-test suite, you need to simply run `cdk app-test` using the standard AWS CDK CLI.
-
-For projects that were created prior to the introduction of app-test, or were not created using `cdk init`,
-a section for `app-test` will need to be added to the `cdk.json` file of your project.
-The following applies to a CDK project in javascript that uses Node.js -
-
-```json
-{
-  "app-test": {
-    "exec": "node {}",
-    "testRegex": "**/*.apptest.js"
-  }
-}
-```
-
-- The `testRegex` is the glob pattern to find app-test test files.
-- The `exec` key specifies the binary that should be invoked to synthesize a app-test test.
-  The `{}` placeholder is required. This will be replaced by each file resolved by the `testRegex` glob.
-
-`cdk app-test` will begin by discovering files and executing them one by one.
-As each test is completed, a one line summary of its pass/fail is printed to console.
-Detailed test results are available in a file, usually at `app-test.out/results-xxx`.
+> RFC Note: See [Appendix A](#appendix-a---assertions) for details on the underlying design.
 
 ### Test snapshots
 
-On first run of a app-test test, a snapshot will be produced that *must be checked into source tree*.
-This is a snapshot of the [cloud assembly] containing both the CDK app (being tested) and the test's
+On first run of a apptest test, a snapshot will be produced that *must be checked into source tree*.
+This is a snapshot of the [cloud assembly] containing both the CDK app (being tested) and the test
 assertions. The snapshot will be placed at a folder relative to the test file.
 
 ```
@@ -168,17 +147,38 @@ test
     └── ...
 ```
 
-On subsequent runs of this test - via `cdk app-test` - if the synthesized cloud assembly matches the
-snapshot, then a full deployment and assertions will be skipped and the test will be considered to
-have passed. This behaviour can be overridden with the `--ignore-snapshots` flag.
+On subsequent runs of this test, if the synthesized cloud assembly matches the
+snapshot, apptest will skip deployment and will not run any assertions. The test will be considered
+to have passed. This behaviour can be overridden either by setting the `ignoreSnapshot` option for
+individual tests or by setting the `CDK_APPTEST_IGNORE_SNAPSHOT` environment variable and will apply
+to all tests executed in that environment.
 
 However, when the synthesized cloud assembly does not match the snapshot, the test will be executed
-in full and the snapshot updated. As before, the updates must be checked into the source tree.
+in full and the snapshot will be updated. As before, the changes to the snapshots must be checked into
+the source tree.
 
 [cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
 
+### Test Execution & Report
 
-### Developing Tests
+The `apptest` suite can be executed via any standard test runner available in the programming
+language of your choice - jest for javascript or typescript, junit for Java, pytest for Python, etc.
+
+As shown in the above section, it is recommended to use the `apptest` suffix to your test files
+to differentiate them from unit and other kinds of tests - `xxx.apptest.ts` in a typescript
+project, `xxx.apptest.java` for Java project, etc.
+
+This setup will enable defining a separate script that runs the apptest suite - npm script,
+Ant target, Maven phase, etc. - by using `*.apptest.*` as the file filter in your test runner.
+
+The test will be executed when the `run()` method is called on the `apptest.Test` class.
+
+Test reports can be easily generated from the reporting mechanisms already available via these
+test runners.
+
+> RFC Note: See [Appendix B](#appendix-b---test-execution) for details on this design.
+
+### Developing & Debugging Tests
 
 > TBD
 
@@ -189,8 +189,6 @@ in full and the snapshot updated. As before, the updates must be checked into th
 - In the pipeline
 - clean up
 - authoring experience - interplay with 'cdk watch'
-- Test output in a standard protocol
-- Can we support standard test frameworks
 
 -->
 
@@ -215,14 +213,17 @@ RFC pull request):
 
 ### What are we launching today?
 
-> What exactly are we launching? Is this a new feature in an existing module? A
-> new module? A whole framework? A change in the CLI?
+We are launch a new AWS CDK module, named `apptest`, that enables customers to write integration
+tests as part of their CDK app, and execute them on their developer machines or on a CI server
+as part of their continuous deployment.
+
+These integration tests
 
 ### Why should I use this feature?
 
 > Describe use cases that are addressed by this feature.
 
-### Why are all my app-test snapshots sometimes invalidated when I upgrade to a newer CDK version?
+### Why are all my apptest snapshots sometimes invalidated when I upgrade to a newer CDK version?
 
 This usually happens when your CDK app depends on an asset that is bundled as part of the AWS CDK.
 Learn more about [assets].
@@ -230,7 +231,7 @@ Learn more about [assets].
 Assets bundled as part of the CDK can change when there is a bug fix or a new feature added to the
 asset. When an asset changes, its fingerprint (hash) stored in the CloudFormation template also changes.
 
-With such changes, it is best to re-run all your tests in full (as is the default by `cdk app-test`)
+With such changes, it is best to re-run all your tests in full (as is the default by `cdk apptest`)
 to ensure that all of the new changes do not have any unintended impact to your application.
 
 Rarely, the AWS CDK will change the synthesized template in backwards compatible ways, such as,
@@ -265,9 +266,9 @@ We are releasing a new module for testing. This question is not applicable.
 
 ### What alternative solutions did you consider?
 
-See [Appendix A](#appendix-a---test-execution) for alternatives on test execution.
+See [Appendix A](#appendix-a---assertions) for alternatives on assertions design.
 
-See [Appendix B](#appendix-b---assertions) for alternatives on assertions design.
+See [Appendix B](#appendix-b---test-execution) for alternatives on test execution.
 
 ### What are the drawbacks of this solution?
 
@@ -284,77 +285,30 @@ See [Appendix B](#appendix-b---assertions) for alternatives on assertions design
 
 ### Are there any open issues that need to be addressed later?
 
-The RFC does not describe the experience of using app-test in CDK Pipelines.
+The RFC does not describe the experience of using apptest in CDK Pipelines.
 This needs to be incorporated later.
 
-## Appendix A - Test Execution
+## Appendix A - Assertions
 
-### Design
-
-A project set up for app-test will have the `app-test` section in its `cdk.json`.
-In the case of a javascript CDK app:
-
-```json
-{
-  "app-test": {
-    "exec": "node {}",
-    "testRegex": "**/*.apptest.js"
-  }
-}
-```
-
-The app-test suite for a project is executed by running `cdk app-test`.
-
-When invoked, it will discover all app-test test cases using the `testRegex` provided and,
-for each match will run synthesis using the `exec` command.
-
-All synthesized CDK apps will be placed under `apptest.out/`.
-
-Following this, by default, the CLI will continue and deploy each test. As usual, it will
-poll CloudFormation for its status and print a pass/fail against each test case.
-When a test completes, it will then destroy the stack, before proceeding to run the next test.
-
-At the end of the run, the CLI will download the detailed test results from AWS Logs to the
-location `apptest.out/results-xxx`.
-
-The major downside to this solution is that it is re-inventing another test execution mechanism.
-
-Users will now need to learn how to organize app-test tests, learn how to execute it and read
-results. We are not leveraging existing "well known" test frameworks.
-
-Although this looks basic today, as the scope of app-test expands and more features are added,
-the app-test test execution mechanism will likely have to re-implement features that are
-already present in most popular testing frameworks today.
-
-The proposal does not produce the test report in any known format, and this is going to lead
-to poor integration with reporting tools and parsers.
-
-### Alternatives
-
-Instead of adding a new CLI subcommand and updated init templates, we could look to reuse
-existing testing frameworks, such as, jest for Node.js, junit for Java, etc.
-This would imply a simpler and a more familiar experience of writing tests. It also integrates
-well with existing tooling such as standard test report generation, test parallelism, etc.
-
-To achieve this, we will need to provide a jsii module that can deploy and destroy AWS CDK
-applications. Currently, this is available only via the AWS CDK CLI.
-
-> TBD: To be explored
-
-## Appendix B - Assertions
-
-All app-test assertions are AWS Lambda functions at their core and uses AWS CloudFormation
+All apptest assertions are AWS Lambda functions at their core and uses AWS CloudFormation
 [custom resources] to execute these during deployment.
 
-app-test ships with a single custom resource provider and every call to an assertion
+apptest ships with a single custom resource provider and every call to an assertion
 provisions a new CloudFormation custom resource using this provider. Every assertion is a
 lambda function.
 
 The provider backing this custom resource simply invokes the lambda function attached to the
-assertion with parameters specific to that instance, collect results and write them into a
-pre-configured log stream in AWS Logs associated with this test run.
+assertion with parameters specific to that instance, collect results and write them to a
+known destination.
 
-### Alternatives
+Every test run has a unique id that identifies that test run. The custom resource provider
+shipped by apptest will write the assertion output to a AWS Logs log stream using that
+identifier, thereby holding the log of all tests and assertions that were executed and their
+results.
+
+A reasonable retention period will be applied to the log stream, by default.
+
+### Alternative - run assertions locally
 
 Alternatively, the test runner executes these assertions locally. Either the developer machine
 or the CI server will interact directly with the deployed CDK app to execute the assertions.
@@ -389,3 +343,62 @@ If this is not accounted for, this alternative will cause the assertion to behav
 [cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
 [AWS Lambda base images]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-images.html
 [Modifying runtime environment]: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-modify.html
+
+## Appendix B - Test Execution
+
+### Design
+
+The AWS CDK CLI (aka toolkit) is responsible for deploying and destroying AWS CDK apps.
+We will extract these two parts from the CLI into a separate jsii module.
+
+The `run()` method on the class `apptest.Test` will depend on this module to deploy and
+destroy stacks as part of test runs.
+
+Once the CDK app and assertions have finished deploying (deploying assertions implies
+execution of the assertions - see Appendix A), the `run()` method will query the status
+of the stack in CloudFormation.
+
+If the stack is not in one of the expected `COMPLETE` states, an error (or `Exception`
+in some languages) will be thrown containing the relevant failure messages.
+The failure messages will be sourced from messages from the AWS CloudFormation stack
+and the log stream produced by the test run.
+
+### Alternative - custom test executor
+
+An alternate approach is to ship our own test framework & execution system
+as part of the AWS CDK CLI.
+
+An example design for such an approach will consist -
+
+A project set up for apptest will have the `apptest` section in its `cdk.json`.
+In the case of a javascript CDK app:
+
+```json
+{
+  "apptest": {
+    "exec": "node {}",
+    "testRegex": "**/*.apptest.js"
+  }
+}
+```
+
+The apptest suite for a project is executed by running `cdk apptest`.
+
+When invoked, it will discover all apptest test cases using the `testRegex` provided.
+For each match, run synthesis using the value provided in the `exec` option, followed
+by deployment and finally destruction of the stack and assertions.
+
+At the end of the run, the CLI will download the detailed test results from AWS Logs to the
+location `apptest.out/results-xxx`.
+
+The major downside to this solution is that it is re-inventing another test execution mechanism.
+
+Users will now need to learn how to organize apptest tests, learn how to execute it and read
+results. We are not leveraging existing "well known" test frameworks.
+
+Although this looks basic today, as the scope of apptest expands and more features are added,
+the apptest test execution mechanism will likely have to re-implement features that are
+already present in most popular testing frameworks today.
+
+The proposal does not produce the test report in any known format, and this is going to lead
+to poor integration with test reporting tools that support well known test reporting formats.
