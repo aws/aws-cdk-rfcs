@@ -194,10 +194,9 @@ test runners.
 
 ## Working Backwards - README.md
 
-### AWS CDK Toolkit
+### `cdk-deploy`
 
 > TBD
-> For now see, [Test Execution](#test-execution--report) above.
 
 ---
 
@@ -217,11 +216,17 @@ We are launch a new AWS CDK module, named `apptest`, that enables customers to w
 tests as part of their CDK app, and execute them on their developer machines or on a CI server
 as part of their continuous deployment.
 
-These integration tests
+These integration tests can be used to verify that their CDK app or construct library deploys
+successfully on AWS CloudFormation. Users can add additional assertions to verify the behaviour
+of their app, such as, invoking an API endpoint or sending a request to a load balancer.
 
 ### Why should I use this feature?
 
-> Describe use cases that are addressed by this feature.
+This feature is beneficial to users who own a CDK app and want to run assertions on the deployed
+app in their pre-production stages as part of a CI/CD pipeline.
+
+It is also beneficial to construct library owners who want to test the consumption of their
+construct library when it is deployed as part of an app.
 
 ### Why are all my apptest snapshots sometimes invalidated when I upgrade to a newer CDK version?
 
@@ -244,7 +249,16 @@ As stated previously, it is still safer to run all tests with invalidated snapsh
 
 ### Why are we doing this?
 
-> What is the motivation for this change?
+Customers have been using the AWS CDK to define and deploy their cloud applications
+on AWS. The industry best practice is to automate the release of cloud software so
+that tests and release happen automatically upon "check in".
+
+The AWS CDK provides a unit testing framework for CDK apps in the form of the
+"assertions" module and has recently released the "pipelines" module to provide CI/CD
+solution to CDK apps.
+
+However, customers are still missing the ability to run integration or application
+tests "in the cloud". This module aims to address this gap.
 
 ### Why should we _not_ do this?
 
@@ -253,12 +267,20 @@ As stated previously, it is still safer to run all tests with invalidated snapsh
 
 ### What is the technical solution (design) of this feature?
 
-> Briefly describe the high-level design approach for implementing this feature.
->
-> As appropriate, you can add an appendix with a more detailed design document.
->
-> This is a good place to reference a prototype or proof of concept, which is
-> highly recommended for most RFCs.
+At a high level, we will be releasing a new construct library - `@aws-cdk/apptest`
+that has the following features -
+
+- methods to bootstrap an app or construct library for app testing.
+- constructs that provide the ability to write assertions. Assertions are run
+  "in the cloud" as part of deployment.
+- provide a set of canned commonly used assertions, with the ability to
+  "bring your own".
+- ability to write the test suite in the same programming language as your app,
+  and use the your favourite "off the shelf" test runner.
+- ability to deploy and destroy AWS CDK stacks programmatically.
+- take and store snapshots of your test to speed up test execution.
+
+See appendices for detailed design.
 
 ### Is this a breaking change?
 
@@ -276,12 +298,8 @@ See [Appendix B](#appendix-b---test-execution) for alternatives on test executio
 
 ### What is the high-level project plan?
 
-> Describe your plan on how to deliver this feature from prototyping to GA.
-> Especially think about how to "bake" it in the open and get constant feedback
-> from users before you stabilize the APIs.
->
-> If you have a project board with your implementation plan, this is a good
-> place to link to it.
+Since this functionality has a fair level of complexity and touches multiple
+modules, the project plan will be tracked separately and outside of this RFC.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -307,6 +325,24 @@ identifier, thereby holding the log of all tests and assertions that were execut
 results.
 
 A reasonable retention period will be applied to the log stream, by default.
+
+There are two major drawbacks to this solution:
+
+Firstly, writing new assertions is non-trivial. Since assertions are lambda functions, there
+is a cost associated to developing them. These include, bringing in the function's
+dependencies, modeling the input and outputs of the function, considering AWS Lambda's limits
+such as timeouts into consideration.
+
+This is not as trivial as writing a new assertion that runs locally in a popular testing
+framework.
+
+Secondly, executing and debugging assertions is non-trivial. Since these assertions are
+executed as part of an AWS CloudFormation stack deployment, they take time to execute.
+It will not be possible to, deploy the app once and run assertions many times against it.
+
+These insufficiencies could lead users to make poor choices on how they model their tests.
+For example, bunch unrelated assertions together in the same test in order to reduce test
+execution time.
 
 ### Alternative - run assertions locally
 
@@ -336,8 +372,6 @@ while Linux ships with GNU sed, which have subtly different behaviours and optio
 In the proposed solution, the assertion will either use the `sed` utility in the Lambda base
 image or bring its own via Lambda Layers.
 If this is not accounted for, this alternative will cause the assertion to behave inconsistently.
-
-> TBD: Document the downsides of the proposed approach
 
 [AWS CloudFormation custom resources]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 [cloud assembly]: https://docs.aws.amazon.com/cdk/api/latest/docs/cloud-assembly-schema-readme.html#cloud-assembly
