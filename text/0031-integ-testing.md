@@ -9,21 +9,21 @@ tests that can be run locally or in their CI/CD pipeline.
 
 ## Working Backwards - README.md
 
-### contest *[name not final]*
+### `@aws-cdk/app-test`
 
-🌩️ contest tests can verify that your CDK app can be deployed successfully on AWS with the desired resources.
+🌩️ app-test can verify that your CDK app can be deployed successfully on AWS with the desired resources.
 
-🤖 contest tests can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
+🤖 app-test can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
-🧑‍💻 Write contest tests in any CDK supported language, and execute them as part of your CI pipeline.
+🧑‍💻 Write tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
 
-🧹 contest will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
+🧹 app-test will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
 
 ### Writing Tests
 
-contest tests can be written in the same programming language as your CDK project.
+Tests that use app-test can be written in the same programming language as your CDK project.
 
 Let's start with the below CDK construct that creates an artifact repository in an S3 bucket,
 and notifies of new artifacts to an SQS queue.
@@ -54,9 +54,9 @@ export class ArtifactRepo extends Construct {
 The following integ test invokes puts an object in the S3 bucket and verifies the message in the SQS queue.
 
 ```ts
-// repo.contest.ts
+// repo.apptest.ts
 import { ArtifactRepo } from './records';
-import { AwsAssertionCall, AwsAssertion, Test } from '@aws-cdk/contest';
+import { AwsAssertionCall, AwsAssertion, Test } from '@aws-cdk/app-test';
 
 const repo = new ArtifactRepo(app, 'RequestRecord');
 
@@ -74,7 +74,7 @@ new AwsAssertion(repoTest, 'MessageReceived', {
 
 ### Assertions
 
-`contest` comes canned with a set of commonly used high level assertions.
+`app-test` comes canned with a set of commonly used high level assertions.
 
 * `AwsAssertion`: execute AWS service APIs and assert the response.
 * `InvokeLambda`: invoke an AWS Lambda Function and assert its response.
@@ -96,7 +96,7 @@ new InvokeLambda(test, 'Invoke', {
 });
 ```
 
-When canned assertions are insufficient, `contest` also provides a mechanism to write custom assertions.
+When canned assertions are insufficient, `app-test` also provides a mechanism to write custom assertions.
 Custom assertions are simply AWS Lambda Functions, and in the CDK, these are any construct that implements `IFunction`.
 
 ```ts
@@ -129,46 +129,46 @@ test.invokeLambda(hdrAssertion);
 
 ### Test Execution & Report
 
-To execute your contest suite, you need to simply run `cdk contest` using the standard AWS CDK CLI.
+To execute your app-test suite, you need to simply run `cdk app-test` using the standard AWS CDK CLI.
 
-For projects that were created prior to the introduction of contest, or were not created using `cdk init`,
-a section for `contest` will need to be added to the `cdk.json` file of your project.
+For projects that were created prior to the introduction of app-test, or were not created using `cdk init`,
+a section for `app-test` will need to be added to the `cdk.json` file of your project.
 The following applies to a CDK project in javascript that uses Node.js -
 
 ```json
 {
-  "contest": {
+  "app-test": {
     "exec": "node {}",
-    "testRegex": "**/*.contest.js"
+    "testRegex": "**/*.apptest.js"
   }
 }
 ```
 
-- The `testRegex` is the glob pattern to find contest test files.
-- The `exec` key specifies the binary that should be invoked to synthesize a contest test.
+- The `testRegex` is the glob pattern to find app-test test files.
+- The `exec` key specifies the binary that should be invoked to synthesize a app-test test.
   The `{}` placeholder is required. This will be replaced by each file resolved by the `testRegex` glob.
 
-`cdk contest` will begin by discovering files and executing them one by one.
+`cdk app-test` will begin by discovering files and executing them one by one.
 As each test is completed, a one line summary of its pass/fail is printed to console.
-Detailed test results are available in a file, usually at `contest.out/results-xxx`.
+Detailed test results are available in a file, usually at `app-test.out/results-xxx`.
 
 ### Test snapshots
 
-On first run of a contest test, a snapshot will be produced that *must be checked into source tree*.
+On first run of a app-test test, a snapshot will be produced that *must be checked into source tree*.
 This is a snapshot of the [cloud assembly] containing both the CDK app (being tested) and the test's
 assertions. The snapshot will be placed at a folder relative to the test file.
 
 ```
 test
-├── repo.contest.ts
-└── repo.contest.snap
+├── repo.apptest.ts
+└── repo.apptest.snap
     ├── manifest.json
     ├── RepoStack.template.json
     ├── ...
     └── ...
 ```
 
-On subsequent runs of this test - via `cdk contest` - if the synthesized cloud assembly matches the
+On subsequent runs of this test - via `cdk app-test` - if the synthesized cloud assembly matches the
 snapshot, then a full deployment and assertions will be skipped and the test will be considered to
 have passed. This behaviour can be overridden with the `--ignore-snapshots` flag.
 
@@ -222,7 +222,7 @@ RFC pull request):
 
 > Describe use cases that are addressed by this feature.
 
-### Why are all my contest snapshots sometimes invalidated when I upgrade to a newer CDK version?
+### Why are all my app-test snapshots sometimes invalidated when I upgrade to a newer CDK version?
 
 This usually happens when your CDK app depends on an asset that is bundled as part of the AWS CDK.
 Learn more about [assets].
@@ -230,7 +230,7 @@ Learn more about [assets].
 Assets bundled as part of the CDK can change when there is a bug fix or a new feature added to the
 asset. When an asset changes, its fingerprint (hash) stored in the CloudFormation template also changes.
 
-With such changes, it is best to re-run all your tests in full (as is the default by `cdk contest`)
+With such changes, it is best to re-run all your tests in full (as is the default by `cdk app-test`)
 to ensure that all of the new changes do not have any unintended impact to your application.
 
 Rarely, the AWS CDK will change the synthesized template in backwards compatible ways, such as,
@@ -284,46 +284,46 @@ See [Appendix B](#appendix-b---assertions) for alternatives on assertions design
 
 ### Are there any open issues that need to be addressed later?
 
-The RFC does not describe the experience of using contest in CDK Pipelines.
+The RFC does not describe the experience of using app-test in CDK Pipelines.
 This needs to be incorporated later.
 
 ## Appendix A - Test Execution
 
 ### Design
 
-A project set up for contest will have the `contest` section in its `cdk.json`.
+A project set up for app-test will have the `app-test` section in its `cdk.json`.
 In the case of a javascript CDK app:
 
 ```json
 {
-  "contest": {
+  "app-test": {
     "exec": "node {}",
-    "testRegex": "**/*.contest.js"
+    "testRegex": "**/*.apptest.js"
   }
 }
 ```
 
-The contest suite for a project is executed by running `cdk contest`.
+The app-test suite for a project is executed by running `cdk app-test`.
 
-When invoked, it will discover all contest test cases using the `testRegex` provided and,
+When invoked, it will discover all app-test test cases using the `testRegex` provided and,
 for each match will run synthesis using the `exec` command.
 
-All synthesized CDK apps will be placed under `contest.out/`.
+All synthesized CDK apps will be placed under `apptest.out/`.
 
 Following this, by default, the CLI will continue and deploy each test. As usual, it will
 poll CloudFormation for its status and print a pass/fail against each test case.
 When a test completes, it will then destroy the stack, before proceeding to run the next test.
 
 At the end of the run, the CLI will download the detailed test results from AWS Logs to the
-location `contest.out/results-xxx`.
+location `apptest.out/results-xxx`.
 
 The major downside to this solution is that it is re-inventing another test execution mechanism.
 
-Users will now need to learn how to organize contest tests, learn how to execute it and read
+Users will now need to learn how to organize app-test tests, learn how to execute it and read
 results. We are not leveraging existing "well known" test frameworks.
 
-Although this looks basic today, as the scope of contest expands and more features are added,
-the contest test execution mechanism will likely have to re-implement features that are
+Although this looks basic today, as the scope of app-test expands and more features are added,
+the app-test test execution mechanism will likely have to re-implement features that are
 already present in most popular testing frameworks today.
 
 The proposal does not produce the test report in any known format, and this is going to lead
@@ -343,10 +343,10 @@ applications. Currently, this is available only via the AWS CDK CLI.
 
 ## Appendix B - Assertions
 
-All contest assertions are AWS Lambda functions at their core and uses AWS CloudFormation
+All app-test assertions are AWS Lambda functions at their core and uses AWS CloudFormation
 [custom resources] to execute these during deployment.
 
-contest ships with a single custom resource provider and every call to an assertion
+app-test ships with a single custom resource provider and every call to an assertion
 provisions a new CloudFormation custom resource using this provider. Every assertion is a
 lambda function.
 
