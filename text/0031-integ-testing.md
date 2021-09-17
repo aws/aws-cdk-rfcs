@@ -196,7 +196,52 @@ test runners.
 
 ### `cdk-deploy`
 
-> TBD
+This jsii module provides the ability to programmatically deploy and destroy AWS CDK apps.
+
+A CDK app can be deployed by calling -
+
+```ts
+import { App } from 'cdk-deploy';
+
+const app = new App('/path/to/cdk/app');
+app.deploy();
+...
+app.destroy();
+```
+
+The path provided here can be a path to a project that contains a `cdk.json` file or a path
+to a CDK app [cloud assembly].
+
+The `deploy()` and `destroy()` APIs will block further program execution until the deployment
+or destruction complete. If the action fails, the API will throw an error.
+Asynchronous support for `deploy()` and `destroy()` are not available yet.
+
+> TBD: configurable options of deploy and destroy
+
+By default, the APIs print their output and progress to stdout. This can be configured
+using options on the APIs.
+
+```ts
+app.deploy({
+  stdout: false,
+  outfile: '/path/to/file' // path to file where the progress should be printed
+});
+```
+
+#### Credentials
+
+This module uses the AWS SDK for Javascript under the hood to communicate with CloudFormation.
+We support most of the common ways in which [this SDK allows setting
+credentials](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html).
+
+Credentials are loaded from the following and in the given order of precedence,
+
+1. [Environment variables](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-environment.html)
+1. [Shared credentials file](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html)
+1. Execution platform credentials provider, such as,
+   [IAM roles for Amazon EC2](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-iam.html),
+   [IAM roles for AWS Lambda](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-lambda.html),
+   or Amazon ECS credentials provider.
 
 ---
 
