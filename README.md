@@ -106,6 +106,7 @@ future state of the libraries and to discover projects for contribution.
 [370](https://github.com/aws/aws-cdk-rfcs/issues/370)|[CLI deploy with change set review confirmation](https://github.com/aws/aws-cdk-rfcs/issues/370)||💡 proposed
 [374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[Modularizing jsii](https://github.com/aws/aws-cdk-rfcs/issues/374)||💡 proposed
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
+[380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
