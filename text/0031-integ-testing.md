@@ -15,11 +15,11 @@ tests that can be run locally or in their CI/CD pipeline.
 
 🤖 apptest can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
+💨 apptest can be used to run smoke test against your production stack, and trigger a rollback when they fail.
+
 🧑‍💻 Write tests in any CDK supported language, and execute them as part of your CI pipeline.
 
 📸 Capture snapshots of your CDK apps to track how they are impacted by changes.
-
-🧹 apptest will clean up any AWS resources that it had to provision, and keep your AWS costs to the minimum.
 
 ### Writing Tests
 
@@ -71,7 +71,10 @@ new AwsAssertion(repoTest, 'MessageReceived', {
   returns: { Messages: [...] }
 });
 
-repoTest.run();
+const testResult = repoTest.run();
+if (testResult.failures > 0) {
+  // test runner should fail the test
+}
 ```
 
 ### Assertions
@@ -172,25 +175,33 @@ This setup will enable defining a separate script that runs the apptest suite - 
 Ant target, Maven phase, etc. - by using `*.apptest.*` as the file filter in your test runner.
 
 The test will be executed when the `run()` method is called on the `apptest.Test` class.
+This method will return a list of assertion failures (if any), that can then be used to notify
+the test runner of a test case failure.
 
 Test reports can be easily generated from the reporting mechanisms already available via these
 test runners.
 
 > RFC Note: See [Appendix B](#appendix-b---test-execution) for details on this design.
 
-### Developing & Debugging Tests
+### Testing AWS CDK Apps and construct libraries
 
-> TBD
+The industry standard practice is that app developers typically run pre-production instances
+of their applications or services as part of their deployment pipeline where integration tests
+are executed. This is no different for AWS CDK applications.
 
-<!--
+In such cases, the apptest suite should define *ONLY* the tests and point them at the existing
+pre-production app instance, such as via a well-known endpoint or CloudFormation stack outputs.
+The apptest suite, in this case, will deploy (and towards the end destroy) a "testing" stack
+where the tests would be executed.
 
-#### TBD
+The usage of `apptest` when testing construct libraries is different from that when it is used
+for apps.
 
-- In the pipeline
-- clean up
-- authoring experience - interplay with 'cdk watch'
-
--->
+The `apptest` suite for construct libraries can be used to verify the functionality of the construct
+library when it is used with various valid configurations.
+Each `apptest` case would define a new AWS CDK `Stack` or `App` that includes the construct
+library, followed by assertions. Upon execution, both the app and the assertions will be deployed
+(and finally destroyed) as part of the test execution.
 
 ## Working Backwards - README.md
 
@@ -216,8 +227,6 @@ The `deploy()` and `destroy()` APIs will block further program execution until t
 or destruction complete. If the action fails, the API will throw an error.
 Asynchronous support for `deploy()` and `destroy()` are not available yet.
 
-> TBD: configurable options of deploy and destroy
-
 By default, the APIs print their output and progress to stdout. This can be configured
 using options on the APIs.
 
@@ -228,7 +237,7 @@ app.deploy({
 });
 ```
 
-#### Credentials
+### Credentials
 
 This module uses the AWS SDK for Javascript under the hood to communicate with CloudFormation.
 We support most of the common ways in which [this SDK allows setting
@@ -348,8 +357,13 @@ modules, the project plan will be tracked separately and outside of this RFC.
 
 ### Are there any open issues that need to be addressed later?
 
-The RFC does not describe the experience of using apptest in CDK Pipelines.
-This needs to be incorporated later.
+The RFC does not describe:
+
+* the experience of using apptest in CDK Pipelines
+* the local development experience when writing tests and new assertions
+* clean up of resources that were deployed as part of the test
+
+These will be incorporated later.
 
 ## Appendix A - Assertions
 
