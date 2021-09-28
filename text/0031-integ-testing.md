@@ -15,7 +15,7 @@ tests that can be run locally or in their CI/CD pipeline.
 
 🤖 apptest can verify that your CDK app functions as expected, such as assertions against a public API endpoint.
 
-💨 apptest can be used to run smoke test against your production stack, and trigger a rollback when they fail.
+💨 run smoke test against your production stack, and trigger a rollback when they fail.
 
 🧑‍💻 Write tests in any CDK supported language, and execute them as part of your CI pipeline.
 
@@ -202,6 +202,31 @@ library when it is used with various valid configurations.
 Each `apptest` case would define a new AWS CDK `Stack` or `App` that includes the construct
 library, followed by assertions. Upon execution, both the app and the assertions will be deployed
 (and finally destroyed) as part of the test execution.
+
+### Smoke tests
+
+Smoke testing is a set of tests that are run after production deployment to reveal failures
+severe enough to rollback the deployment. Besides running tests against pre-production instances,
+apptest can be used to also write smoke test during deployments.
+
+This can be achieved by simply using apptest's assertions as part of the deployment stack.
+
+To invoke an Amazon API Gateway endpoint as part of your smoke test, simply configure -
+
+```ts
+class MyStack extends Stack {
+  constructor(scope: Construct, id: string) {
+    // ...
+    const restApi = new apigateway.RestApi(this, 'MyRestApi');
+    // ...
+    new HttpInvoke(this, 'SmokeTest', {
+      endpoint: `${restApi.url}/ping`,
+    })
+  }
+}
+```
+
+When the smoke test fails, the CloudFormation stack deployment will fail which triggers a rollback.
 
 ## Working Backwards - README.md
 
