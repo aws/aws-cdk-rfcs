@@ -1,6 +1,6 @@
 # Integration testing for CDK apps
 
-* **Original Author(s):**: [@nija-at](https://github.com/nija-at)
+* **Original Author(s)**: [@nija-at](https://github.com/nija-at)
 * **Tracking Issue**: [#31](https://github.com/aws/aws-cdk-rfcs/issues/31)
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
@@ -73,7 +73,7 @@ new AwsAssertion(repoTest, 'MessageReceived', {
 
 const testResult = repoTest.run();
 if (testResult.failures > 0) {
-  // test runner should fail the test
+  // notify the test runner to fail
 }
 ```
 
@@ -98,6 +98,19 @@ new AwsAssertion(test, 'GetObject', {
 new InvokeLambda(test, 'Invoke', {
   lambda: functionArn,
   throws: ...
+});
+```
+
+The `AwsAssertion` also allows multiple calls to be chained. The following calls Amazon S3 `GetObject` API
+based on the value returned from an Amazon DynamoDB `GetItem` call.
+
+```ts
+const response = new AwsAssertion(test, 'GetItem', {
+  request: AwsAssertionCall.DynamoDB.getItem({ ... }),
+});
+
+new AwsAssertion(test, 'GetObject', {
+  request: AwsAssertionCall.S3.getObject({ bucket: ..., key: response.Item.Payload }),
 });
 ```
 
@@ -129,7 +142,10 @@ To invoke this assertion, you can simply use the `invokeLambda()` API -
 
 ```ts
 const hdrAssertion = new StdHeaderAssertion(...);
-test.invokeLambda(hdrAssertion);
+
+new InvokeLambda(test, {
+  lambda: hdrAssertion,
+});
 ```
 
 > RFC Note: See [Appendix A](#appendix-a---assertions) for details on the underlying design.
@@ -301,8 +317,9 @@ of their app, such as, invoking an API endpoint or sending a request to a load b
 
 ### Why should I use this feature?
 
-This feature is beneficial to users who own a CDK app and want to run assertions on the deployed
-app in their pre-production stages as part of a CI/CD pipeline.
+This feature is beneficial to CDK app developers and want to run integration tests on their app
+in their pre-production stages as part of a CI/CD pipeline, as well as, to run smoke tests in
+their production stages.
 
 It is also beneficial to construct library owners who want to test the consumption of their
 construct library when it is deployed as part of an app.
@@ -319,7 +336,7 @@ With such changes, it is best to re-run all your tests in full (as is the defaul
 to ensure that all of the new changes do not have any unintended impact to your application.
 
 Rarely, the AWS CDK will change the synthesized template in backwards compatible ways, such as,
-changing the order of properties, or setting a property to its default. 
+changing the order of properties, or setting a property to its default.
 As stated previously, it is still safer to run all tests with invalidated snapshots.
 
 [assets]: https://docs.aws.amazon.com/cdk/latest/guide/assets.html
@@ -341,8 +358,11 @@ tests "in the cloud". This module aims to address this gap.
 
 ### Why should we _not_ do this?
 
-> Is there a way to address this use case with the current product? What are the
-> downsides of implementing this feature?
+There is no simple solution for users who wish to run integration tests on their CDK app
+or construct library without releasing these features.
+
+Users can roll their own solution here, but the problem and the effort would be significant.
+There is significant benefit in providing a testing system such as this.
 
 ### What is the technical solution (design) of this feature?
 
