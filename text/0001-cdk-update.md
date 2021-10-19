@@ -84,26 +84,13 @@ The "watch" functionality can be customized by setting a few new options in your
     ```
 
     If the `"build"` key is present in the `cdk.json` file,
-    the "watch" process will invoke the specified command before performing synthesis.
-    If your build process is more complex than just a single command,
-    `"build"` also accepts an array of commands:
-
-    ```json
-    {
-      "app": "node bin/app.js",
-      "build": [
-        "yarn --cwd src/lambda-code build",
-        "yarn build"
-      ]
-    }
-    ```
-
-    The commands will be executed one after the other,
-    in the same order as they were declared in the `cdk.json` file.
+    `cdk synth` (which the "watch" process invokes before deployment)
+    will execute the specified command before performing synthesis.
 
 2. The "watch" process needs to know which files and directories to observe for changes,
     and which ones to ignore. You can customize these using the `"include"` and `"exclude"`
-    sub-keys of the new `"watch"` top-level key:
+    sub-keys of the new `"watch"` top-level key.
+    Values are glob patterns that are matched _relative to the location of the `cdk.json`_ directory:
 
     ```json
     {
