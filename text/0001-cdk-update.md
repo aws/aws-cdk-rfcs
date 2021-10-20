@@ -97,8 +97,8 @@ The "watch" functionality can be customized by setting a few new options in your
       "app": "mvn exec:java",
       "build": "mvn package",
       "watch": {
-        "include": ["src", "lambda/code/**/*"],
-        "exclude": ["cdk.out", "target"]
+        "include": ["./**"],
+        "exclude": ["target"]
       }
     }
     ```
@@ -106,6 +106,8 @@ The "watch" functionality can be customized by setting a few new options in your
     The `cdk init` command fills these out for you,
     so if your project has a standard layout,
     you shouldn't need to modify these from the generated defaults.
+    Also note that the output directory (`cdk.out` by default)
+    is always automatically excluded, so doesn't need to be specified in the `cdk.json` file.
 
 In addition to the monitoring mode, it is possible to perform one-shot
 hotswap deployments on some or all of the stacks in the CDK application:
