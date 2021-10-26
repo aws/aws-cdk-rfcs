@@ -67,14 +67,47 @@ Checking stack DataStack for possible hotswap update
 Watching stack inputs for changes:
  * LambdaFunction[Appfunction]: <spinner>
  * LambdaFunction[StreamFunction]: <spinner>
-
 ```
 
-The watcher can only watch for file changes. For Lambda code, that means that
-directories will be watched for changes and zipped if they change. If the file
-asset is a zip file, then the update will fire whenever that changes. The
-existing docker asset builder will be used to watch for changes in local docker
-images.
+The "watch" functionality can be customized by setting a few new options in your `cdk.json` file:
+
+1. If either your CDK code, or your runtime code
+    (like the code of your Lambda functions)
+    needs to go through a build step before invoking `cdk deploy`,
+    you can specify that command in the new `"build"` key. Example:
+
+    ```json
+    {
+      "app": "mvn exec:java",
+      "build": "mvn package"
+    }
+    ```
+
+    If the `"build"` key is present in the `cdk.json` file,
+    `cdk synth` (which the "watch" process invokes before deployment)
+    will execute the specified command before performing synthesis.
+
+2. The "watch" process needs to know which files and directories to observe for changes,
+    and which ones to ignore. You can customize these using the `"include"` and `"exclude"`
+    sub-keys of the new `"watch"` top-level key.
+    Values are glob patterns that are matched _relative to the location of the `cdk.json`_ directory:
+
+    ```json
+    {
+      "app": "mvn exec:java",
+      "build": "mvn package",
+      "watch": {
+        "include": ["./**"],
+        "exclude": ["target"]
+      }
+    }
+    ```
+
+    The `cdk init` command fills these out for you,
+    so if your project has a standard layout,
+    you shouldn't need to modify these from the generated defaults.
+    Also note that the output directory (`cdk.out` by default)
+    is always automatically excluded, so doesn't need to be specified in the `cdk.json` file.
 
 In addition to the monitoring mode, it is possible to perform one-shot
 hotswap deployments on some or all of the stacks in the CDK application:
@@ -123,18 +156,12 @@ Deploying DataStack
 Done!
 ```
 
-In addition to running in a one shot mode, the `cdk deploy --hotswap`
-command also has a `--watch` command line option that enable it to monitor the
-assets on disk and perform an update when they change.
-
 #### Resource Support
 
 - AWS Lambda `Function`
   - file and directory assets
 - StepFunction
-  - Workflow definitions
-- AWS Fargate
-  - image assets
+  - State Machine definitions
 - ECS
   - image assets
 
