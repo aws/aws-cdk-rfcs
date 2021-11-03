@@ -41,7 +41,7 @@ In npm, to ensure that there is a single instance of a module in the graph, the
 dependency".
 
 However, peer dependencies are not automatically installed. They must be
-explicitly installed by the end consumer. In our example, the implicationis that
+explicitly installed by the end consumer. In our example, the implication is that
 if an application takes a dependency on **aws-s3**, it **MUST ALSO** add a
 direct dependency on **aws-kms**. Otherwise, the **aws-s3** module will not be
 able to resolve the **aws-kms** dependency at runtime.
