@@ -9,14 +9,14 @@ resources and modules published to the public CloudFormation Registry.
 
 ## README
 
-The `@cdk-cloudformation-extensions/xxx` scope includes construct libraries with generated strongly-typed "L1" constructs
+The `@cdk-cloudformation-types/xxx` scope includes construct libraries with generated strongly-typed "L1" constructs
 for all the public extensions (resources and modules) in the AWS CloudFormation public registry. This library
 makes it easier to use public CloudFormation extensions in your CDK apps.
 
 For example, let's say I want to define a GitHub repository using the `TF::GitHub::Repository` resource:
 
 ```ts
-import { CfnRepository } from '@cdk-cloudformation-extensions/tf-github-repository';
+import { CfnRepository } from '@cdk-cloudformation-types/tf-github-repository';
 
 new CfnRepository(this, 'MyRepo', {
   name: 'my-repo',
@@ -27,7 +27,7 @@ new CfnRepository(this, 'MyRepo', {
 
 For each type (e.g. `TF::GitHub::Repository` in the above example) in
 the public CloudFormation Registry, a module is available under
-the scope `@cdk-cloudformation-extensions/NAMESPACE-TYPE`. This library
+the scope `@cdk-cloudformation-types/<namespace-type>`. This library
 includes a construct class and all the relevant data types for this
 type.
 
@@ -70,13 +70,13 @@ new CfnResource(this, 'MyEksCluster', {
 });
 ```
 
-With `@cdk-cloudformation-extensions` all public resources and modules will be listed in the **Construct Hub** like any
+With `@cdk-cloudformation-types` all public resources and modules will be listed in the **Construct Hub** like any
 other construct and by importing the relevant `cdk-cloudformation-extensions` module into their projects, they will be able to
 use them via strongly-typed classes. IDEs will show type information and inline help derived from the
 extension schema.
 
 ```ts
-import { CfnCluster } from '@cdk-cloudformation-extensions/awsqs-eks-cluster';
+import { CfnCluster } from '@cdk-cloudformation-types/awsqs-eks-cluster';
 
 new CfnCluster(this, 'MyEksCluster', {
   name: 'my-new-cluster',
@@ -146,19 +146,24 @@ We will use the following naming scheme:
   * .NET Namespace: `Cdklabs.CdkCloudFormationTypes.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormationTypes.MongodbAtlasProject`)
 
 Alternatives:
-* `@cdk-types/mongodb-atlas-project`
-* `@cdk-cfn/mongodb-atlas-project`
-* `@cdkcfn/mongodb-atlas-project`
-* `@awscdk/mongodb-atlas-project`
-* `@cfn/mongodb-atlas-project`
-* `@cfn/cdk-mongodb-atlas-project`
-* `@cloudformation/cdk-mongodb-atlas-project`
-* `@cfntypes/mongodb-atlas-project`
-* `@cloudformation-registry/mongodb-atlas-project`
-* `@cfn-registry/cdk-mongodb-atlas-project`
-* `@cfn-types/cdk-mongodb-atlas-project`
-
-
+1. `@cdk-types/mongodb-atlas-project`
+2. `@cdk-cfn/mongodb-atlas-project`
+3. `@cdkcfn/mongodb-atlas-project`
+4. `@awscdk/mongodb-atlas-project`
+5. `@cfn/mongodb-atlas-project`
+6. `@cfn/cdk-mongodb-atlas-project`
+7. `@cloudformation/cdk-mongodb-atlas-project`
+8. `@cfntypes/mongodb-atlas-project`
+9. `@cloudformation-registry/mongodb-atlas-project`
+10. `@cfn-registry/cdk-mongodb-atlas-project`
+11. `@cfn-types/cdk-mongodb-atlas-project`
+12. `@cfn-registry/cdk-mongodb-atlas-project`
+13. `@cloudformation-registry/cdk-mongodb-atlas-project`
+13. `@cdk-cloudformation-registry/cdk-mongodb-atlas-project`
+13. `@cdk-resources/cdk-mongodb-atlas-project`
+13. `@awscdk-resources/mongodb-atlas-project`
+13. `@cloudformation-resources/mongodb-atlas-project`
+13. `@cloudformation-types/mongodb-atlas-project`
 
 #### Versioning
 
