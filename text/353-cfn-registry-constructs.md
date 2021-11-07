@@ -121,6 +121,45 @@ list to substantially grow. If this dramatically scales (to thousands of
 packages) and we hit any limitations of package managers (e.g. account/scope
 limits), we can shard the solution (multiple accounts, multiple scopes, etc).
 
+#### Naming Scheme
+
+> *This is still not finalized. From a CDK user standpoint, I am not sure if they should really
+> care if these are CloudFormation registry extensions or just normal CDK libraries. Consider a user
+> that goes to Construct Hub and searches for "mongodb". They find this library, import it and use it.
+> As far as they are concerned, they just used a construct library. The fact that this is an L1 type
+> and not some L2/L3 is an implementation details, isn't it. So I am not sure that the semantics which
+> involves "CloudFormation" or "extensions" or "types" is not a leak in the abstraction*.
+
+We will use the following naming scheme:
+
+* **npm**: 
+  * Package name: `@cdk-cloudformation-types/<name-kebab-case>` (e.g. `cdk-cloudformation-types/mongodb-atlas-project`)
+* **Maven Central**:
+  * Group ID: `io.github.cdklabs.cdk_cloudformation_types`
+  * Artifact ID: `<name-kebab-case>` (e.g. `mongodb-atlas-project`)
+  * Java Package: `io.github.cdklabs.cdk_cloudformation_types.<name_snake_case>` (e.g. `io.github.cdklabs.cdk_cloudformation.mongodb_atlas_project`)
+* **PyPI**:
+  * Distribution name: `cdk-cloudformation-types-<name-kebab-case>` (e.g. `cdk-cloudformation-types-mongodb-atlas-project`)
+  * Module: `cdk_cloudformation_types_<name_snake_case>` (e.g. `cdk_cloudformation_types_mongodb_atlas_project`)
+* **NuGet**:
+  * Package ID: `Cdklabs.CdkCloudFormationTypes.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormationTypes.MongodbAtlasProject`)
+  * .NET Namespace: `Cdklabs.CdkCloudFormationTypes.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormationTypes.MongodbAtlasProject`)
+
+Alternatives:
+* `@cdk-types/mongodb-atlas-project`
+* `@cdk-cfn/mongodb-atlas-project`
+* `@cdkcfn/mongodb-atlas-project`
+* `@awscdk/mongodb-atlas-project`
+* `@cfn/mongodb-atlas-project`
+* `@cfn/cdk-mongodb-atlas-project`
+* `@cloudformation/cdk-mongodb-atlas-project`
+* `@cfntypes/mongodb-atlas-project`
+* `@cloudformation-registry/mongodb-atlas-project`
+* `@cfn-registry/cdk-mongodb-atlas-project`
+* `@cfn-types/cdk-mongodb-atlas-project`
+
+
+
 #### Versioning
 
 To allow users to select which extension schema version to use, the version of
@@ -136,7 +175,7 @@ The code generator will be executed daily (e.g. through a GitHub workflow),
 query the CloudFormation Registry, and generate L1s for all the types based
 on their metadata and schema.
 
-The code generator will be implemented as a separate tool called
+The code generator is implemented as a separate tool called
 [`cdk-import`](https://github.com/cdklabs/cdk-import).
 
 We can use the `ListTypes` API to list all the types in the registry (excluding native AWS resources):
@@ -174,6 +213,7 @@ Nope.
 > Describe any problems/risks that can be introduced if we implement this RFC.
 
 ### What alternative solutions did you consider?
+
 
 #### `cdk import` versus library
 
