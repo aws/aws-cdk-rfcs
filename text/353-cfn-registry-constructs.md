@@ -137,8 +137,8 @@ that these modules include L1s which we also refer to as "CFN resources" in the 
   * Distribution name: `cdk-cloudformation-<name-kebab-case>` (e.g. `cdk-cloudformation-mongodb-atlas-project`)
   * Module: `cdk_cloudformation_<name_snake_case>` (e.g. `cdk_cloudformation_mongodb_atlas_project`)
 * **NuGet**:
-  * Package ID: `Cdklabs.CdkCloudFormation.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormation.MongodbAtlasProject`)
-  * .NET Namespace: `Cdklabs.CdkCloudFormation.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormation.MongodbAtlasProject`)
+  * Package ID: `CdkCloudFormation.<NamePascalCase>` (e.g. `CdkCloudFormation.MongodbAtlasProject`)
+  * .NET Namespace: `CdkCloudFormation.<NamePascalCase>` (e.g. `CdkCloudFormation.MongodbAtlasProject`)
 
 Alternatives considered:
 1. `@cdk-cloudformation-types/mongodb-atlas-project`
