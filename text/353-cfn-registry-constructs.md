@@ -127,7 +127,7 @@ We will use the following naming scheme. Names are all derived from the base nam
 that these modules include L1s which we also refer to as "CFN resources" in the CDK. Since these are also modules, we decided against
 `cdk-cloudformation-resources`. We also decided not to use the short name `cfn` in the scope. See below for some alternatives considered.
 
-* **npm**: 
+* **npm**:
   * Package name: `@cdk-cloudformation/<name-kebab-case>` (e.g. `cdk-cloudformation/mongodb-atlas-project`)
 * **Maven Central**:
   * Group ID: `io.github.cdklabs.cdk_cloudformation`
@@ -141,6 +141,7 @@ that these modules include L1s which we also refer to as "CFN resources" in the 
   * .NET Namespace: `CdkCloudFormation.<NamePascalCase>` (e.g. `CdkCloudFormation.MongodbAtlasProject`)
 
 Alternatives considered:
+
 1. `@cdk-cloudformation-types/mongodb-atlas-project`
 1. `@cdk-types/mongodb-atlas-project`
 2. `@cdk-cfn/mongodb-atlas-project`
@@ -215,7 +216,6 @@ Nope.
 
 ### What alternative solutions did you consider?
 
-
 #### `cdk import` versus library
 
 As mentioned above, an alternative approach would be to add support for `import`
@@ -248,6 +248,9 @@ version of the resource they use, we determined that the best approach is to pub
 
 ### Are there any open issues that need to be addressed later?
 
-* ~__Property name conversion__~ (resolved by [cdklabs/json2jsii#480](https://github.com/cdklabs/json2jsii/pull/480)): `json2jsii` converts field names to camelCase to adhere with naming typescript naming conventions.
+* ~__Property name conversion__~ (resolved by [cdklabs/json2jsii#480]): `json2jsii` converts field names to camelCase to adhere with
+naming typescript naming conventions.
   This means that we need to map field names back when we define the `CfnResource`. I think we might want to add a
   feature to `json2jsii` that will generate conversion functions that can be used to convert back data types to the original schema.
+
+[cdklabs/json2jsii#480]: https://github.com/cdklabs/json2jsii/pull/480
