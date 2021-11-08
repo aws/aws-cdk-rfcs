@@ -9,14 +9,14 @@ resources and modules published to the public CloudFormation Registry.
 
 ## README
 
-The `@cdk-cloudformation-types/xxx` scope includes construct libraries with generated strongly-typed "L1" constructs
+The `@cdk-cloudformation/xxx` scope includes construct libraries with generated strongly-typed "L1" constructs
 for all the public extensions (resources and modules) in the AWS CloudFormation public registry. This library
 makes it easier to use public CloudFormation extensions in your CDK apps.
 
 For example, let's say I want to define a GitHub repository using the `TF::GitHub::Repository` resource:
 
 ```ts
-import { CfnRepository } from '@cdk-cloudformation-types/tf-github-repository';
+import { CfnRepository } from '@cdk-cloudformation/tf-github-repository';
 
 new CfnRepository(this, 'MyRepo', {
   name: 'my-repo',
@@ -27,7 +27,7 @@ new CfnRepository(this, 'MyRepo', {
 
 For each type (e.g. `TF::GitHub::Repository` in the above example) in
 the public CloudFormation Registry, a module is available under
-the scope `@cdk-cloudformation-types/<namespace-type>`. This library
+the scope `@cdk-cloudformation/<namespace-type>`. This library
 includes a construct class and all the relevant data types for this
 type.
 
@@ -70,13 +70,13 @@ new CfnResource(this, 'MyEksCluster', {
 });
 ```
 
-With `@cdk-cloudformation-types` all public resources and modules will be listed in the **Construct Hub** like any
+With `@cdk-cloudformation` all public resources and modules will be listed in the **Construct Hub** like any
 other construct and by importing the relevant `cdk-cloudformation-extensions` module into their projects, they will be able to
 use them via strongly-typed classes. IDEs will show type information and inline help derived from the
 extension schema.
 
 ```ts
-import { CfnCluster } from '@cdk-cloudformation-types/awsqs-eks-cluster';
+import { CfnCluster } from '@cdk-cloudformation/awsqs-eks-cluster';
 
 new CfnCluster(this, 'MyEksCluster', {
   name: 'my-new-cluster',
@@ -123,29 +123,25 @@ limits), we can shard the solution (multiple accounts, multiple scopes, etc).
 
 #### Naming Scheme
 
-> *This is still not finalized. From a CDK user standpoint, I am not sure if they should really
-> care if these are CloudFormation registry extensions or just normal CDK libraries. Consider a user
-> that goes to Construct Hub and searches for "mongodb". They find this library, import it and use it.
-> As far as they are concerned, they just used a construct library. The fact that this is an L1 type
-> and not some L2/L3 is an implementation details, isn't it. So I am not sure that the semantics which
-> involves "CloudFormation" or "extensions" or "types" is not a leak in the abstraction*.
-
-We will use the following naming scheme:
+We will use the following naming scheme. Names are all derived from the base name of `cdk-cloudformation` which represents the fact
+that these modules include L1s which we also refer to as "CFN resources" in the CDK. Since these are also modules, we decided against
+`cdk-cloudformation-resources`. We also decided not to use the short name `cfn` in the scope. See below for some alternatives considered.
 
 * **npm**: 
-  * Package name: `@cdk-cloudformation-types/<name-kebab-case>` (e.g. `cdk-cloudformation-types/mongodb-atlas-project`)
+  * Package name: `@cdk-cloudformation/<name-kebab-case>` (e.g. `cdk-cloudformation/mongodb-atlas-project`)
 * **Maven Central**:
-  * Group ID: `io.github.cdklabs.cdk_cloudformation_types`
+  * Group ID: `io.github.cdklabs.cdk_cloudformation`
   * Artifact ID: `<name-kebab-case>` (e.g. `mongodb-atlas-project`)
-  * Java Package: `io.github.cdklabs.cdk_cloudformation_types.<name_snake_case>` (e.g. `io.github.cdklabs.cdk_cloudformation.mongodb_atlas_project`)
+  * Java Package: `io.github.cdklabs.cdk_cloudformation.<name_snake_case>` (e.g. `io.github.cdklabs.cdk_cloudformation.mongodb_atlas_project`)
 * **PyPI**:
-  * Distribution name: `cdk-cloudformation-types-<name-kebab-case>` (e.g. `cdk-cloudformation-types-mongodb-atlas-project`)
-  * Module: `cdk_cloudformation_types_<name_snake_case>` (e.g. `cdk_cloudformation_types_mongodb_atlas_project`)
+  * Distribution name: `cdk-cloudformation-<name-kebab-case>` (e.g. `cdk-cloudformation-mongodb-atlas-project`)
+  * Module: `cdk_cloudformation_<name_snake_case>` (e.g. `cdk_cloudformation_mongodb_atlas_project`)
 * **NuGet**:
-  * Package ID: `Cdklabs.CdkCloudFormationTypes.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormationTypes.MongodbAtlasProject`)
-  * .NET Namespace: `Cdklabs.CdkCloudFormationTypes.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormationTypes.MongodbAtlasProject`)
+  * Package ID: `Cdklabs.CdkCloudFormation.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormation.MongodbAtlasProject`)
+  * .NET Namespace: `Cdklabs.CdkCloudFormation.<NamePascalCase>` (e.g. `Cdklabs.CdkCloudFormation.MongodbAtlasProject`)
 
-Alternatives:
+Alternatives considered:
+1. `@cdk-cloudformation-types/mongodb-atlas-project`
 1. `@cdk-types/mongodb-atlas-project`
 2. `@cdk-cfn/mongodb-atlas-project`
 3. `@cdkcfn/mongodb-atlas-project`
