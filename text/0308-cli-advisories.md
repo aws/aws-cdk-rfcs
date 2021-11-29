@@ -1,4 +1,8 @@
-# CLI advisories RFC (draft)
+# CLI advisories
+
+* **Original Author(s)**: [@otaviomacedo](https://github.com/otaviomacedo)
+* **Tracking Issue**: [#308](https://github.com/aws/aws-cdk-rfcs/issues/308)
+* **API Bar Raiser**: @{BAR_RAISER_USER}
 
 A new CLI feature to notify customers about urgent and important issues that require their attention.
 
@@ -77,6 +81,10 @@ $ cdk advisories
 ```
 
 This command returns zero if there is no advisory and non-zero otherwise. Users can then plug this into a pipeline approval workflow and expect manual review if there are any advisories.
+
+```
+[ ] Signed-off by API Bar Raiser @xxxxx
+```
 
 ## Public FAQ
 
@@ -177,6 +185,6 @@ The CLI will make unauthenticated requests to the GitHub Issues API and query fo
 
 Issues that pass these filters will be displayed on the standard output.
 
-The GitHub API imposes a rate limit of 60 requests per hour for unauthenticated requests. To avoid hitting that limit, the CLI will cache the results for a set period of time (provisionally defined as 1 hour). The filtered advisories and the expiration time will be saved to a file in the `$HOME/.cdk` folder. When the expiration time is reached, the cache is considered invalid and, at the next command execution, the CLI will make a new request to get fresh results.
+The GitHub API imposes a rate limit of 60 requests per hour for unauthenticated requests. To avoid hitting that limit, the CLI will cache the results for a set period of time (provisionally defined as 1 hour). The filtered advisories and the expiration time will be saved to a file in the `$HOME/.cdk/cache` folder. When the expiration time is reached, the cache is considered invalid and, at the next command execution, the CLI will make a new request to get fresh results.
 
 The CLI will also store the IDs of the acknowledged issues in a file in the `$HOME/.cdk` folder.
