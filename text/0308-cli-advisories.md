@@ -9,6 +9,8 @@ require their attention.
 
 ## Working backwards
 
+### README
+
 Starting on version x.y.z of the CDK CLI, customers will be notified, on every
 command, about security vulnerabilities, regressions and usage of unsupported
 versions:
@@ -75,7 +77,7 @@ And you can disable all advisories indefinitely by adding this entry to
 `~/.cdk.json`:
 
 ```
-"supressAllAdvisories": true
+"advisories": false
 ```
 
 Regardless of the state of this flag and the advisories you have acknowledged,
@@ -88,6 +90,72 @@ $ cdk advisories
 This command returns zero if there is no advisory and non-zero otherwise. Users
 can then plug this into a pipeline approval workflow and expect manual review if
 there are any advisories.
+
+> Please note that the acknowledgements are made project by project. If you
+acknowledge an advisory in one CDK project, it will still appear on other 
+projects when you run any CDK commands, unless you have suppressed or disabled 
+advisories.  
+
+### Runbook section (internal to the CDK team)
+
+In case of a high-impact issue, follow these steps:
+1. Create or update an issue for this incident on the aws-cdk GitHub repository.
+2. If there is an error message related to issue, include it in the title so 
+that it appears in web searches.
+3. In the body of the issue, use the following template:
+
+```markdown
+Please add your +1 👍 to let us know you have encountered this
+---
+
+### Status: __<!-- Please add status here 'INVESTIGATING/IN-PROGRESS/RESOLVED' -->__
+
+### Overview
+<!--
+Use this section to outline the problem, focusing on 'root-cause' and 'users affected'
+-->
+#### Complete Error Message
+
+### Workaround
+<!--
+Please provide a detailed workaround outlining all steps required for implementation.
+If none exist yet, leave blank
+-->
+
+### Solution
+<!--
+Once able please describe solution here as well as any steps required for implementation
+If no solution at present, leave blank
+-->
+
+### Related Issues
+<!--
+List all related issues here. If none related, leave blank
+-->
+
+### Affected component
+
+<!-- 
+Either "CLI", "Framework" or both, separated by comma. 
+This is mandatory if you want the issue to be published as a CLI advisory
+-->
+
+### Affected version range
+
+<!--  
+The versions of the CLI or the framework affected by this incident. Use the
+[Semantic Versioning scheme](https://semver.org) to denote the version range.
+This is mandatory if you want the issue to be published as a CLI advisory
+-->
+```
+4. Remove the `needs-triage` label.
+5. Add the labels `p0`, `management/tracking` and all relevant
+   subject/package labels.
+6. Pin the issue.
+7. Add the `advisory` label. If you followed the previous steps correctly, CLI
+   users will start seeing this information as part of the output of every
+   command. If you missed anything, a GitHub action will post a warning on the
+   issue.
 
 ```
 [ ] Signed-off by API Bar Raiser @xxxxx
@@ -216,15 +284,16 @@ valid advisory, the body of a GitHub issue must have the following fields:
 
 | Field                  | Description                                                                                                                                                | Format                                 | Mandatory? |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------- |
-| Summary                | A paragraph with more information                                                                                                                          | Free-form text                         | Yes        |
+| Overview               | A paragraph with more information                                                                                                                          | Free-form text                         | Yes        |
 | Affected component     | The CLI or the construct library (or both)                                                                                                                 | A non-empty subset of {CLI, Framework} | Yes        |
 | Affected version range | Version range using the semver format                                                                                                                      | semver                                 | No         |
-| Suggested fix          | An action the user can take to mitigate the problem. If it requires a longer explanation, this field should be omitted in favor of the resource linked to. | Free-form text                         | No         |
+| Workaround             | Actions the user can take to mitigate the problem. | Free-form text                         | No         |
 
 In order to keep the issue human readable as well as easily parseable, each of
-these fields should be indicated by a Markdown header (`### Summary`, `###
+these fields should be indicated by a Markdown header (`### Overview`, `###
 Affected component` etc). The piece of text following the header will be
-interpreted as the content of the field.
+interpreted as the content of the field. See the template in the **Working
+backwards** section.
 
 #### GitHub workflow
 
@@ -259,5 +328,5 @@ the expiration time will be saved to a file in the `$HOME/.cdk/cache` folder.
 When the expiration time is reached, the cache is considered invalid and, at the
 next command execution, the CLI will make a new request to get fresh results.
 
-The CLI will also store the IDs of the acknowledged issues in a file in the
-`$HOME/.cdk` folder.
+The CLI will store the IDs of the acknowledged issues in the project specific 
+`./cdk.json` file.
