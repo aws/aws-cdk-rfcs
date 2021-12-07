@@ -326,7 +326,10 @@ requests. To avoid hitting that limit, the CLI will cache the results for a set
 period of time (provisionally defined as 1 hour). The filtered advisories and
 the expiration time will be saved to a file in the `$HOME/.cdk/cache` folder.
 When the expiration time is reached, the cache is considered invalid and, at the
-next command execution, the CLI will make a new request to get fresh results.
+next command execution, the CLI will make a new request to get fresh results. 
+
+If an error or timeout occurs when retrieving the issues, the CLI will simply
+skip the display of advisories and try again at the next command execution.
 
 The CLI will store the IDs of the acknowledged issues in the project specific 
 `./cdk.json` file.
