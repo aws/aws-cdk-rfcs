@@ -24,10 +24,10 @@ ADVISORIES
 
 16603   Toggling off auto_delete_objects for Bucket empties the bucket
 
-        Summary: If a stack is deployed with an S3 bucket with
-                 auto_delete_objects=True, and then re-deployed with 
-                 auto_delete_objects=False, all the objects in the bucket 
-                 will be deleted.
+        Overview: If a stack is deployed with an S3 bucket with
+                  auto_delete_objects=True, and then re-deployed with 
+                  auto_delete_objects=False, all the objects in the bucket 
+                  will be deleted.
                  
         Affected versions: <1.126.0.
 
@@ -36,9 +36,9 @@ ADVISORIES
 
 17061   Error when building EKS cluster with monocdk import
 
-        Summary: When using monocdk/aws-eks to build a stack containing
-                 an EKS cluster, error is thrown about missing 
-                 lambda-layer-node-proxy-agent/layer/package.json.
+        Overview: When using monocdk/aws-eks to build a stack containing
+                  an EKS cluster, error is thrown about missing 
+                  lambda-layer-node-proxy-agent/layer/package.json.
          
         Affected versions: >=1.126.0 <=1.130.0.
 
@@ -56,9 +56,9 @@ ADVISORIES
 
 17061   Error when building EKS cluster with monocdk import
 
-        Summary: When using monocdk/aws-eks to build a stack containing
-                 an EKS cluster, error is thrown about missing 
-                 lambda-layer-node-proxy-agent/layer/package.json.
+        Overview: When using monocdk/aws-eks to build a stack containing
+                  an EKS cluster, error is thrown about missing 
+                  lambda-layer-node-proxy-agent/layer/package.json.
          
         Affected versions: >=1.126.0 <=1.130.0.
 
@@ -99,67 +99,29 @@ advisories.
 ### Runbook section (internal to the CDK team)
 
 In case of a high-impact issue, follow these steps:
+
 1. Create or update an issue for this incident on the aws-cdk GitHub repository.
-2. If there is an error message related to issue, include it in the title so 
-that it appears in web searches.
-3. In the body of the issue, use the following template:
-
-```markdown
-Please add your +1 👍 to let us know you have encountered this
----
-
-### Status: __<!-- Please add status here 'INVESTIGATING/IN-PROGRESS/RESOLVED' -->__
-
-### Overview
-<!--
-Use this section to outline the problem, focusing on 'root-cause' and 'users affected'
--->
-#### Complete Error Message
-
-### Workaround
-<!--
-Please provide a detailed workaround outlining all steps required for implementation.
-If none exist yet, leave blank
--->
-
-### Solution
-<!--
-Once able please describe solution here as well as any steps required for implementation
-If no solution at present, leave blank
--->
-
-### Related Issues
-<!--
-List all related issues here. If none related, leave blank
--->
-
-### Affected component
-
-<!-- 
-Either "CLI", "Framework" or both, separated by comma. 
-This is mandatory if you want the issue to be published as a CLI advisory
--->
-
-### Affected version range
-
-<!--  
-The versions of the CLI or the framework affected by this incident. Use the
-[Semantic Versioning scheme](https://semver.org) to denote the version range.
-This is mandatory if you want the issue to be published as a CLI advisory
--->
+2. Update the file `advisories.json` on repository _TBD_, adding an entry for
+   the incident. Example:
+```json
+  {
+    "title":  "Toggling off auto_delete_objects for Bucket empties the bucket",
+    "issueUrl": "https://github.com/aws/aws-cdk/issues/16603",
+    "overview": "If a stack is deployed with an S3 bucket with auto_delete_objects=True, and then re-deployed with auto_delete_objects=False, all the objects in the bucket will be deleted.",
+    "components": ["framework"],
+    "version": "<1.126.0"
+  }
 ```
-4. Remove the `needs-triage` label.
-5. Add the labels `p0`, `management/tracking` and all relevant
-   subject/package labels.
-6. Pin the issue.
-7. Add the `advisory` label. If you followed the previous steps correctly, CLI
-   users will start seeing this information as part of the output of every
-   command. If you missed anything, a GitHub action will post a warning on the
-   issue.
 
-```
+3. Create a PR with this change and wait for an approval. When the PR gets
+   merged, the advisory will be visible to all CLI installations. The GitHub
+   issue will also be automatically updated with the information contained in
+   the file. All the necessary tags will also be added automatically.
+4. You can keep updating the issue normally, as new information comes in, but
+   you're not allowed to touch the sections auto-generated from the advisories
+   file.
+
 [ ] Signed-off by API Bar Raiser @xxxxx
-```
 
 ## Public FAQ
 
@@ -193,21 +155,20 @@ This is a powerful feature to convey urgent and important messages to customers.
 However, to keep its relevance, it should be used sparingly and the messages
 must meet a high bar. Otherwise it will just become a tool for spamming
 customers. We will introduce filters to reduce this risk, by only showing
-content that applies to each particular environment. But ultimately, it hinges
-on responsible use. In particular, this feature should not be used for things
-like marketing campaigns, blog post announcements or upcoming events. If we
-don’t have a good mechanism for defining and enforcing this constraint, we
-should not implement this feature.
+content that applies to each particular environment and also require PR approval 
+for any changes in advisories. But ultimately, it hinges on responsible use. In 
+particular, this feature should not be used for things like marketing campaigns, 
+blog post announcements and things like that. If the mechanisms proposed in this
+RFC are not considered strong enough by the CDK team, we should not implement 
+this feature.
 
 ### What is the technical solution (design) of this feature?
 
-To publish a new advisory, all that the CDK team will have to do is create a
-GitHub issue that fulfils some requirements. The CLI will consume these issues
-using the GitHub API and apply a set of filters to narrow down the list of
-advisories to the context in which it is being run. To improve the publishing
-experience, we will implement a GitHub action that will validate whether the
-issues that are candidates for advisories fulfil the requirements. For a more
-detailed explanation, see the Appendix.
+Advisory information will be available as a static file, served from GitHub. 
+The CLI will consume this file from and apply a set of filters to narrow down 
+the list of advisories to the context in which it is being run. We will also 
+implement some GitHub actions to validate and copy the contents of the file over
+to the issue. For a more detailed explanation, see the Appendix.
 
 ### Is this a breaking change?
 
@@ -215,28 +176,26 @@ No.
 
 ### What alternative solutions did you consider?
 
-All the solutions listed below were considered and discarded for adding
-unnecessary complexity to the overall architecture.
-
 On the publishing side:
 
-* Implementing a new internal REST service to manage the advisories.
-* Storing the advisories as structured data (e.g., JSON files) in some GitHub
-  repository.
+* Implementing a new internal REST service to manage the advisories. Overly
+  complex for this use case.
+* Authoring the content directly on the GitHub issue. There is good way to
+  implement an approval workflow that includes a human verification step.
 
 On the distribution side:
 
-* Assuming the advisories were stored in an S3 file (using one of the publishing
-  solutions considered above), we would use CloudFront to distribute them.
-* Use GitHub pages as our distribution mechanism, directly from the repository
-  were the data were stored.
+* Assuming the advisories were stored in an S3 file (in case of the REST
+  service), we would use CloudFront to distribute them.
+* Using the GitHub API to query for special issues that are considered
+  advisories (in case of using GitHub issues as the source of truth).  
 
 ### What is the high-level project plan?
 
-1. Implement the issue validation logic as an NPM package.
-2. Implement the GitHub action, using the validation package.
-3. Implement the CLI changes.
-4. Add the GitHub action to the aws-cdk repository.
+1. Implement the GitHub actions of validation and issue sync-up and issue
+   protection.
+2. Add the construct library version to the cloud assembly metadata. 
+2. Implement and release the CLI changes.
 
 ### What is the expected lifetime of advisories?
 
@@ -274,62 +233,45 @@ is any advisory.
 
 ### Detailed design
 
-There are three parts to this solution: the data format, the GitHub workflow and
-the CLI logic.
+#### Publishing advisories
 
-#### Data format
+We will create a new repository, dedicated to host the advisories file. As
+usual, any change to this file will have to be published as a PR and approved to
+be merged. The file will contain a list of advisories, each having the following
+fields:
 
-We will use GitHub issues to publish and manage advisories. To be considered a
-valid advisory, the body of a GitHub issue must have the following fields:
+|     Field    |                           Description                          | Format                          | Mandatory? |
+|:------------:|:--------------------------------------------------------------:|---------------------------------|:----------:|
+| `title`      | The title of the incident                                      | Free form text                  | Yes        |
+| `issueUrl`   | A link to the GitHub issue where the incident is being tracked | URL                             | Yes        |
+| `overview`   | A paragraph with more information about the incident           | Free form text                  | Yes        |
+| `components` | The CLI or the Framework                                       | Either `"cli"` or `"framework"` | Yes        |
+| `version`    | Version range using the semver format                          | Semantic Versioning             | No         |
 
-| Field                  | Description                                                                                                                                                | Format                                 | Mandatory? |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------- |
-| Overview               | A paragraph with more information                                                                                                                          | Free-form text                         | Yes        |
-| Affected component     | The CLI or the construct library (or both)                                                                                                                 | A non-empty subset of {CLI, Framework} | Yes        |
-| Affected version range | Version range using the semver format                                                                                                                      | semver                                 | No         |
-| Workaround             | Actions the user can take to mitigate the problem. | Free-form text                         | No         |
 
-In order to keep the issue human readable as well as easily parseable, each of
-these fields should be indicated by a Markdown header (`### Overview`, `###
-Affected component` etc). The piece of text following the header will be
-interpreted as the content of the field. See the template in the **Working
-backwards** section.
+We will also need to implement three GitHub actions on this repository:
 
-#### GitHub workflow
-
-To be considered an advisory, a GitHub issue must be pinned and have the
-following tags: `p0` and a new tag, `advisory`. The `advisory` tag will work as
-an acknowledgement that author of the issue is making a conscious decision to
-publish an advisory that will be seen by potentially hundreds of thousands of
-users. Adding this tag will trigger a new workflow, which will inspect the issue
-and check whether its body contains the right data format (see **Data format**
-section). If the issue doesn’t comply with the specification, the workflow will
-post a message (similar to a CI report, for example).
+1. File validation on PR. It will block merging if the structure of the file is
+   not compliant with the rules.
+2. Issue sync-up. When the PR is merged, this action will copy the content of
+   the file over to the GitHub issue it's linked to.
+3. Issue protection. Every change to issues that are linked to advisories will
+   be checked by this action, to avoid corruption.
 
 #### CLI logic
 
-The CLI will make unauthenticated requests to the GitHub Issues API and query
-for issues that match the tag system described in the **GitHub workflow**
-section. Then it will apply additional filters on the result:
+The CLI will fetch the file from GitHub, parse the content and check whether the
+version range contained in the advisory matches the CLI version or the framework
+version (depending on the affected component, also present in the advisory).
 
-* Format filter: whether the body of the issue complies with the data format
-  specification.
-* Version filter: whether the version range contained in the issue matches the
-  CLI version or the framework version (depending on the affected component,
-  also present in the issue). To check which version of the framework is being
-  used, the CLI will read the cloud assembly (`tree.json` file, specifically).
+Since the CLI knows its own version, checking against the version range of the
+advisory is trivial. The version of the framework, however, is not readily
+available anywhere. To address this, we will start writing the framework version
+to the Cloud Assembly, in a place where the CLI can read it.
 
-Issues that pass these filters will be displayed on the standard output.
-
-The GitHub API imposes a rate limit of 60 requests per hour for unauthenticated
-requests. To avoid hitting that limit, the CLI will cache the results for a set
-period of time (provisionally defined as 1 hour). The filtered advisories and
-the expiration time will be saved to a file in the `$HOME/.cdk/cache` folder.
-When the expiration time is reached, the cache is considered invalid and, at the
-next command execution, the CLI will make a new request to get fresh results. 
-
-If an error or timeout occurs when retrieving the issues, the CLI will simply
-skip the display of advisories and try again at the next command execution.
+Issues that pass this filter will be displayed on the standard output. If an 
+error or timeout occurs when retrieving the issues, the CLI will simply skip 
+the display of advisories and try again at the next command execution.
 
 The CLI will store the IDs of the acknowledged issues in the project specific 
 `./cdk.json` file.
