@@ -101,7 +101,7 @@ advisories.
 In case of a high-impact issue, follow these steps:
 
 1. Create or update an issue for this incident on the aws-cdk GitHub repository.
-2. Update the file `advisories.json` on repository _TBD_, adding an entry for
+2. Update the file `advisories.json` on repository `cdklabs/aws-cdk-advisories`, adding an entry for
    the incident. Example:
 ```json
   {
