@@ -113,11 +113,13 @@ In case of a high-impact issue, follow these steps:
   }
 ```
 
-3. Create a PR with this change and wait for an approval. When the PR gets
-   merged, the advisory will be visible to all CLI installations. The GitHub
-   issue will also be automatically updated with the information contained in
-   the file. All the necessary tags will also be added automatically.
-4. You can keep updating the issue normally, as new information comes in, but
+3. Create a PR with this change and wait for an approval. Only SDMs have
+   permission to approve PRs in this repository.
+4. When the PR gets merged, the advisory will be visible to all CLI
+   installations. The GitHub issue will also be automatically updated with the
+   information contained in the file. All the necessary tags will also be added
+   automatically. 
+5. You can keep updating the issue normally, as new information comes in, but
    you're not allowed to touch the sections auto-generated from the advisories
    file.
 
@@ -235,7 +237,8 @@ is any advisory.
 
 #### Publishing advisories
 
-We will create a new repository, dedicated to host the advisories file. As
+We will create a new repository, dedicated to host the advisories file. Using a
+CODEOWNERS file, we will restrict the permission to approve PRs only to SDMs. As
 usual, any change to this file will have to be published as a PR and approved to
 be merged. The file will contain a list of advisories, each having the following
 fields:
