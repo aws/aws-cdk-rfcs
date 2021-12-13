@@ -108,7 +108,7 @@ In case of a high-impact issue, follow these steps:
     "title":  "Toggling off auto_delete_objects for Bucket empties the bucket",
     "issueUrl": "https://github.com/aws/aws-cdk/issues/16603",
     "overview": "If a stack is deployed with an S3 bucket with auto_delete_objects=True, and then re-deployed with auto_delete_objects=False, all the objects in the bucket will be deleted.",
-    "components": ["framework"],
+    "component": ["framework"],
     "version": "<1.126.0"
   }
 ```
@@ -248,7 +248,7 @@ fields:
 | `title`      | The title of the incident                                      | Free form text                  | Yes        |
 | `issueUrl`   | A link to the GitHub issue where the incident is being tracked | URL                             | Yes        |
 | `overview`   | A paragraph with more information about the incident           | Free form text                  | Yes        |
-| `components` | The CLI or the Framework                                       | Either `"cli"` or `"framework"` | Yes        |
+| `component`  | The CLI or the Framework                                       | Either `"cli"` or `"framework"` | Yes        |
 | `version`    | Version range using the semver format                          | Semantic Versioning             | No         |
 
 
