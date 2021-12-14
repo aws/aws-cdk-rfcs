@@ -182,7 +182,7 @@ On the publishing side:
 
 * Implementing a new internal REST service to manage the advisories. Overly
   complex for this use case.
-* Authoring the content directly on the GitHub issue. There is good way to
+* Authoring the content directly on the GitHub issue. There is no good way to
   implement an approval workflow that includes a human verification step.
 
 On the distribution side:
