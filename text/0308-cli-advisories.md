@@ -237,11 +237,11 @@ is any advisory.
 
 #### Publishing advisories
 
-We will create a new repository, dedicated to host the advisories file. Using a
-CODEOWNERS file, we will restrict the permission to approve PRs only to SDMs. As
-usual, any change to this file will have to be published as a PR and approved to
-be merged. The file will contain a list of advisories, each having the following
-fields:
+We will create a new repository, `cdklabs/aws-cdk-advisories`, dedicated to host
+the advisories file. As usual, in order to be merged, any change to this file
+will have to be published as a PR and approved. Using a CODEOWNERS file, we will
+restrict the permission to approve PRs only to SDMs. The file will contain a
+list of advisories, each having the following fields:
 
 |     Field    |                           Description                          | Format                          | Mandatory? |
 |:------------:|:--------------------------------------------------------------:|---------------------------------|:----------:|
@@ -252,20 +252,20 @@ fields:
 | `version`    | Version range using the semver format                          | Semantic Versioning             | No         |
 
 
-We will also need to implement three GitHub actions on this repository:
+We will also implement three GitHub actions on this repository:
 
 1. File validation on PR. It will block merging if the structure of the file is
-   not compliant with the rules.
+   not compliant with the specification above.
 2. Issue sync-up. When the PR is merged, this action will copy the content of
    the file over to the GitHub issue it's linked to.
-3. Issue protection. Every change to issues that are linked to advisories will
-   be checked by this action, to avoid corruption.
+3. Issue protection. Every change to issues that are linked to some advisory
+   will be checked by this action, to avoid corruption.
 
 #### CLI logic
 
 The CLI will fetch the file from GitHub, parse the content and check whether the
 version range contained in the advisory matches the CLI version or the framework
-version (depending on the affected component, also present in the advisory).
+version (depending on the affected component).
 
 Since the CLI knows its own version, checking against the version range of the
 advisory is trivial. The version of the framework, however, is not readily
