@@ -7,6 +7,9 @@
 > Write one sentence which is a brief description of the feature from a user
 > perspective ("impact on users").
 
+## Customer pains
+Describe in short the customer pains your'e trying to solve.
+
 ## Working Backwards
 
 > This section should contain one or more "artifacts from the future", as if the
