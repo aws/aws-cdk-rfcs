@@ -15,12 +15,9 @@ future state of the libraries and to discover projects for contribution.
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
 ---|-----|-----|------
-[1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||👷 implementing
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||👷 implementing
 [77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/issues/77)||👷 implementing
-[249](https://github.com/aws/aws-cdk-rfcs/issues/249)|[Experimental Code in CDK v2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.expired.md)|[@ericzbeard](https://github.com/ericzbeard)|👷 implementing
-[340](https://github.com/aws/aws-cdk-rfcs/issues/340)|[Kinesis Data Firehose Delivery Stream L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0340-firehose-l2.md)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
-[287](https://github.com/aws/aws-cdk-rfcs/issues/287)|[Deprecated API Warnings](https://github.com/aws/aws-cdk-rfcs/blob/master/text/287-cli-deprecation-warnings.md)||👍 approved
+[340](https://github.com/aws/aws-cdk-rfcs/issues/340)|[Kinesis Data Firehose Delivery Stream L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0340-firehose-l2.md)|[@BenChaimberg](https://github.com/BenChaimberg)|👷 implementing
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
@@ -45,7 +42,7 @@ future state of the libraries and to discover projects for contribution.
 [26](https://github.com/aws/aws-cdk-rfcs/issues/26)|[Monitoring packs](https://github.com/aws/aws-cdk-rfcs/issues/26)||💡 proposed
 [27](https://github.com/aws/aws-cdk-rfcs/issues/27)|[200 resource limit tools & guidance](https://github.com/aws/aws-cdk-rfcs/issues/27)||💡 proposed
 [30](https://github.com/aws/aws-cdk-rfcs/issues/30)|[Improve synthesized template output](https://github.com/aws/aws-cdk-rfcs/issues/30)||💡 proposed
-[31](https://github.com/aws/aws-cdk-rfcs/issues/31)|[Integration tests](https://github.com/aws/aws-cdk-rfcs/issues/31)|[@nija-at](https://github.com/nija-at)|💡 proposed
+[31](https://github.com/aws/aws-cdk-rfcs/issues/31)|[Integration tests](https://github.com/aws/aws-cdk-rfcs/issues/31)||💡 proposed
 [32](https://github.com/aws/aws-cdk-rfcs/issues/32)|[App-centric operational experience](https://github.com/aws/aws-cdk-rfcs/issues/32)||💡 proposed
 [34](https://github.com/aws/aws-cdk-rfcs/issues/34)|[Third-party construct ecosystem](https://github.com/aws/aws-cdk-rfcs/issues/34)||💡 proposed
 [39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/issues/39)||💡 proposed
@@ -102,11 +99,13 @@ future state of the libraries and to discover projects for contribution.
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
 [313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
 [348](https://github.com/aws/aws-cdk-rfcs/issues/348)|[CloudFormationController - refactor CloudFormation stacks](https://github.com/aws/aws-cdk-rfcs/issues/348)||💡 proposed
-[353](https://github.com/aws/aws-cdk-rfcs/issues/353)|[Constructs for all public CloudFormation resources and modules](https://github.com/aws/aws-cdk-rfcs/issues/353)||💡 proposed
+[353](https://github.com/aws/aws-cdk-rfcs/issues/353)|[Constructs for all public CloudFormation resources and modules](https://github.com/aws/aws-cdk-rfcs/blob/master/text/353-cfn-registry-constructs.md)||💡 proposed
 [370](https://github.com/aws/aws-cdk-rfcs/issues/370)|[CLI deploy with change set review confirmation](https://github.com/aws/aws-cdk-rfcs/issues/370)||💡 proposed
 [374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[Modularizing jsii](https://github.com/aws/aws-cdk-rfcs/issues/374)||💡 proposed
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
+[388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||💡 proposed
+[1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
@@ -123,8 +122,10 @@ future state of the libraries and to discover projects for contribution.
 [171](https://github.com/aws/aws-cdk-rfcs/issues/171)|[CloudFront Module Redesign](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0171-cloudfront-redesign.md)||✅ done
 [192](https://github.com/aws/aws-cdk-rfcs/issues/192)|[Removal of the "constructs" compatibility layer (v2.0)](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0192-remove-constructs-compat.md)|[@eladb](https://github.com/eladb)|✅ done
 [204](https://github.com/aws/aws-cdk-rfcs/issues/204)|[JSII Go Support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/204-golang-bindings.md)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
+[249](https://github.com/aws/aws-cdk-rfcs/issues/249)|[Experimental Code in CDK v2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.expired.md)|[@ericzbeard](https://github.com/ericzbeard)|✅ done
 [253](https://github.com/aws/aws-cdk-rfcs/issues/253)|[CDK Metadata v2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0253-cdk-metadata-v2.md)||✅ done
 [282](https://github.com/aws/aws-cdk-rfcs/issues/282)|[CDK Pipelines security posture change approvals](https://github.com/aws/aws-cdk-rfcs/issues/282)||✅ done
+[287](https://github.com/aws/aws-cdk-rfcs/issues/287)|[Deprecated API Warnings](https://github.com/aws/aws-cdk-rfcs/blob/master/text/287-cli-deprecation-warnings.md)||✅ done
 [322](https://github.com/aws/aws-cdk-rfcs/issues/322)|[CDK Pipelines Updated API](https://github.com/aws/aws-cdk-rfcs/issues/322)||✅ done
 [324](https://github.com/aws/aws-cdk-rfcs/issues/324)|[Construct Hub](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0324-cdk-construct-hub.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
 [328](https://github.com/aws/aws-cdk-rfcs/issues/328)|[polyglot assert library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0328-polyglot-assert.md)|[@nija-at](https://github.com/nija-at)|✅ done
