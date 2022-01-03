@@ -44,8 +44,6 @@ an impact on the service.
 
 To import an existing resource into a CDK stack:
 
-- Run a `cdk diff` to ensure there are no pending changes to the CDK stack you
-  want to import resources into - if there are, apply/discard them first.
 - Add corresponding constructs for the resources to be added in your stack - for
   example, for an S3 bucket, add something like
   `new s3.Bucket(this, 'ImportedS3Bucket', {});` - **no other changes must be
@@ -59,6 +57,64 @@ To import an existing resource into a CDK stack:
 - After `cdk import` reports success, the resource is managed by CDK. Any
   subsequent changes to the construct configuration will be reflected on the
   resource.
+
+### How CDK identifies the physical resources to be imported
+
+CDK will first find the resources that are being added to the stack, by
+comparing the template with the currently deployed version. For each resource
+that is being added, CDK will try to identify corresponding existing physical
+resource.
+
+First, CDK always checks if the construct (resource) properties provide
+sufficient information to identify the resource (e.g. if there is an explicit
+`bucketName` set for an s3.Bucket construct). In this case, the resource will
+automatically be identified.
+
+If the resource cannot be identified by construct properties, CDK behaviour
+depends on whether the import operation runs in an _interactive_ or a
+_non-interactive_ mode. Interactive mode is the default if CDK cli is run from
+an interactive terminal, while non-interactive is the default for script
+execution.
+
+In an interactive mode, the user is prompted on command line to provide the
+required identifiers (e.g. S3 bucket name) of each newly added resource that
+couldn't be automatically identified in previous step. User can either fill in
+the prompt or leave it empty to skip the particular resource import.
+
+In a non-interactive mode, user can optionally pass a _resource mapping_
+structure (as a JSON file) on command line using `--resource-mapping` argument.
+It maps the contruct tree path (in forward slash separated format) to the
+required resource identifier, for example:
+
+```json
+{
+  "MyApplicationStack/MyBucket/Resource": {
+    "BucketName": "foo-application-static"
+  },
+  "MyApplicationStack/Vpc": {
+    "VpcId": "vpc-123456"
+  }
+}
+```
+
+The resource mapping file can either be constructed manually or `cdk import`
+can be called with `--create-resource-mapping` to create the file using an
+interactive prompt. This allows two step workflow:
+
+1. User runs CDK CLI in interactive mode to create the mapping file to be
+   modified, peer-reviewed or checked in the version control
+2. CDK is run non-interactively to apply the changes (perform the import),
+   possibly by a CI/CD toolchain
+
+Resources that weren't identified automatically or by provided resource mapping
+will be omitted from import (skipped).
+
+CDK import logic considers a resource _identified_ as long as it has a non-empty
+value for all required identification properties. For CloudFormation import
+operation to succeed, the resource with such properties must both exist and must
+not belong to another CloudFormation stack. CDK will not perform any validation
+of the provided values - it will pass them to CloudFormation and in case of an
+error, propagates it back to the user.
 
 ---
 
@@ -82,6 +138,25 @@ attempts to import corresponding existing resources.
 
 When an already existing AWS resource needs to be brought under CDK management
 the most convenient way of achieving this is using this feature (`cdk import`).
+
+There are serveral use cases for importing resources into CDK stacks:
+
+- **IaC adoption:** Resources were created manually using AWS Console / CLI
+  originally. As the project got more complex, the team opts for
+  infrastructure-as-code approach using CDK. To be able to organize the existing
+  resources in CDK stacks without recreation, the import feature is needed.
+- **CDK migration:** The team uses an infrastructure-as-code tool such as
+  Terraform, Pulumi or plain CloudFormation and chooses to migrate onto CDK. To
+  perform a smooth migration without resources recreation, it is important to:
+  1. make the original IaC orchestrator "abandon" the resource - remove it
+     from its orchestration without physically removing the resource
+  2. "import" the resource in a CDK stack
+- **App refactoring:** The team already uses CDK but a major refactor is needed
+  and the resources need to be reorganized between stacks. Same two steps are
+  required: The resources first need to be abandoned by their original stacks
+  (by removing corresponding constructs from the stack definition with removal
+  policy of "RETAIN"). Then, the resources are imported in their destination
+  stack using `cdk import`.
 
 ## Internal FAQ
 
@@ -162,9 +237,10 @@ Based on command line flags, this phase either reads "resource mapping" from the
 specified file, or it will be passed the resource mapping directly from the
 previous phase.
 
-First, the sanity checks are performed and then the change set is created. By
-default, the change set is also executed (can be changed by passing
-`--no-execute` flag just like with regular deploy).
+First, the sanity checks are performed (check that there are no
+delete/update-type changes in the template, see below) and then the change set
+is created. By default, the change set is also executed (can be changed by
+passing `--no-execute` flag just like with regular deploy).
 
 #### Cannot import and create/change resources in the same changeset
 
@@ -260,6 +336,27 @@ to be merged.
 Not known at the time of writing
 
 ## Appendix
+
+### Possible future expansions
+
+This proposal prioritizes implementation simplicity over user comfort
+(deliberately). For example, if a user needs to import a VPC, they will be
+prompted to type in a VPC ID, a value that is AWS-generated and must be first
+retrieved from Console/CLI. It would be much nicer to retrieve the list of VPCs
+in the target account and display to the user (including the Name tag) to choose
+from.
+
+Moreover, it would be of a great benefit to do pre-import validations in CDK
+(Does the physical resource exist? Does it not belong to another CloudFormation
+stack? Is the resource configuration consistent with the actual state?).
+
+However, such features would be difficult to implement and might require
+resource type-specific logic. Using [Cloud Control API](https://aws.amazon.com/blogs/aws/announcing-aws-cloud-control-api/)
+might avoid using service-specific APIs, but some resource type specific code
+might still be needed.
+
+It might be considered to release such convenience features iteratively
+per resource type, beginning with the most frequently used types.
 
 ### Links
 
