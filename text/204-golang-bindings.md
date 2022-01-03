@@ -1032,11 +1032,11 @@ func (c *cluster) HasEc2Capacity() (result *bool) {
 These should be able to be handled much in the same way as regular classes, by generating an interface and a struct. The struct generation is still
 necessary in this case because method implementations can actually be defined on abstract classes in Typescript.
 
-## Optional Values and Pointer Types
+## Optional Values
 
 Go doesn't have 'nullable' types. This presents an issue when transpiling various typescript types to Go. Particularly, this is an issue for methods with
-optional arguments and interfaces/structs/classes with optional fields. The accepted solution for this in Go, is to use a pointer to the corresponding
-type, as pointers can be `nil`. This is used in the aws and github go sdks.
+optional arguments and interfaces/structs/classes with optional fields. Being able to downgrade a required parameter to optional without breaking existing
+usage is a highly desirable feature.
 
 For example:
 
@@ -1049,7 +1049,7 @@ export interface OptionalPropertyProps {
 // A JSII class with an optional property
 export class MyClass {
   public readonly optionalString?: string;
-  
+
   // constructor function has an optional argument
   public constructor(props: OptionalPropertyProps) {
     this.optionalString = props.optionalString;
@@ -1068,11 +1068,159 @@ This allows construction like so:
 const hasString = new MyClass({ optionalString: "I have a string!" });
 const notSoMuch = new MyClass({});
 
-console.log(hasString); // =>"I have a string"!
-console.log(notSoMuch); // =>undefined
+console.log(hasString.optionalString); // =>"I have a string"!
+console.log(notSoMuch.optionalString); // =>undefined
 console.log(MyClass.SomeStatic("returns a string")); // =>"returns a string"
 console.log(MyClass.SomeStatic()); // =>undefined
 ```
+
+The upcoming go 1.18 release introduces generic types, which can be used to define an `Option[T]` interfae such as:
+
+```go
+package jsii
+
+type Option[T any] interface {
+    // Fromoption__ is a marker method that effectively associates the Option[T]
+    // type with the "required" form T.
+    FromOption__() T
+}
+```
+
+This interface can easily be implemented for any type, although it cannot be added to primitive types (including
+`time.Time`), which must be wrapped in a new type instead:
+
+```go
+package jsii
+
+import (
+    "time"
+)
+
+type String string
+
+func (s String) FromOption__() String {
+	return s
+}
+
+type Time time.Time
+
+func (t Time) FromOption__() Time {
+    return t
+}
+```
+
+Given the TypeScript definitions above, the following Go bindings would be generated:
+
+```go
+package example
+
+import "github.com/aws/jsii-runtime-go"
+
+type OptionalPropertyProps struct {
+    OptionalString  jsii.Option[jsii.String]
+}
+
+// Make OptionalPropertyProps be a valid value for Option[OptionalPropertyProps]
+func (o OptionalPropertyProps)FromOption__() OptionalPropertyProps {
+    return o
+}
+
+type MyClass interface {
+    OptionalString() jsii.Option[jsii.String]
+}
+type myClass struct { /* ... */ }
+
+func NewMyClass(props OptionalPropertyProps) MyClass {
+    return &myClass{ /* ... */ }
+}
+
+func MyClass_SomeStatic(arg jsii.Option[jsii.String]) jsii.Option[jsii.String] {
+    // ...
+}
+
+func (m *myClass)OptionalString() jsii.Option[jsii.String] {
+    // ...
+}
+
+// Make myClass be a valid value for Option[MyClass]
+func (m myClass)FromOption__() MyClass {
+    return &m
+}
+```
+
+On the usage site, this would look like so:
+
+```go
+package usage
+
+import (
+    "fmt"
+
+    "github.com/aws/jsii-runtime-go"
+    "github.com/acme/example"
+)
+
+func main() {
+    has_string := example.NewMyClass(example.OptionalPropertyProps{ OptionalString: jsii.String("I have a string!") });
+    not_so_much := new MyClass(example.OptionalPropertyProps{ /* The 0-value of interface types is `nil` */ });
+
+    fmt.printf("{}", has_string.OptionalString());  // => "I have a string"
+    fmt.printf("{}", not_so_much.OptionalString()); // => nil
+
+    fmt.printf("{}", example.MyClass_._SomeStatic(jsii.String("returns a string"))); // => "returns a string"
+    fmt.printf("{}", example.MyClass_._SomeStatic(nil));                             // => nil
+}
+```
+
+### Side Benefits
+
+As jsii struct fields are explicitly declared to be optional, this approach makes it possible to perform run-time
+validity checks on structs (ensuring all required properties were set) without having to code-generate, and keep track
+of a custom validator for each struct type; instead relying solely on the type information that is available from
+the `reflect` standard library package.
+
+Not using pointers everywhere also enables the runtime library to do away with a lot of pointer indirection work, as
+values may no longer be of pointer types and instead are always either a plain struct (in the case of jsii structs), or
+an interface type. This results in simplifications in some areas of the runtime library.
+
+Non-optional jsii struct parameters are passed as go structs, which provides compile-time gurantee that the value is not
+nil (but does not gurantee all fields have been set to a value other than their zero-value). Thi is more idiomatic go
+than the option of passing pointers to structs.
+
+### Downsides
+
+In go, `nil` is a valid value at any location where an interface is expected. This means it is not possible to achieve
+compile-time safety with this approach in places where classes are passed as arguments, since those are represented as
+interfaces with a non-exported implementing struct. A run-time check can be woven into the generated bindings, to
+provide helpful error messages (this can be done regardless of how optionals are implemented, as the type model has the
+required information).
+
+While turning an required parameter to optional is not a usage-breaking change in this scenario, it is as an
+override-breaking change, as the type signature of the function that must be implemented to satisfy an interface
+changes. This has consequences in case a type extends a go interface from a dependency.
+
+Generics are reified to their "instantiated" types during compilation, and the `reflect` standard library package does
+not expose generic type information directly. This makes it difficult to identify `jsii.Option[T]` types when traversing
+a type's mirror without relying on name-matching (`reflect.Type.Name()` returns a string such as
+`Option[github.com/aws/jsii-runtime-go.String]`) or method-matching (identifying whether the `FromOption__` method is
+present for a type or not). While working, both methods feel brittle.
+
+Wrapping primitive types requires explicit conversions (both from a go primitive to the boxed variant, and back).
+Primitive values are frequently used in the API suerface of the AWS CDK, and this is effectively boilerplate code.
+
+Relying on generics forces us to require go 1.18 or greater (at time of writing, this is due to be released in February
+of 2022). We can leverage generics to improve the expressiveness of some of the go runtime library's internals, however
+this does not deliver a significant improvement over the current situation. For example, the signature of the
+`StaticGet` function can be made generic so that it can declare the result variable internally instead of receiving an
+`interface{}` pointer to send the result to (the same can be applied to all runtime functions that return a value).
+
+```go
+func StaticGet[R any](fqn FQN, property string) R { /* ... */ }
+```
+
+### Explored Alternatives
+
+1. Use pointers everywhere
 
 In order to represent this in Go, we use pointers for all types.
 
@@ -1117,8 +1265,6 @@ type MyJsiiStruct struct {
 }
 ```
 
-### Downsides
-
 This is annoying for users when passing simple values to structs or class methods. This can be mitigated by providing the user with convenience
 functions to allow them to continue to define these values inline.
 
@@ -1158,8 +1304,6 @@ also true, an output value, IE a method's return value, cannot be changed from n
 
 With these downsides, it still seems like this is the most idiomatic route to take. Go users are familiar with using pointer types in this way from other
 popular modules. Additionally, it is the only strategy we can identify that allows us to maintain JSII's versioning compatibility strategy.
-
-### Explored Alternatives
 
 1. Don't use pointers.
 
