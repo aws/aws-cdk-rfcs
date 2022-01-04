@@ -1195,7 +1195,7 @@ interfaces with a non-exported implementing struct. A run-time check can be wove
 provide helpful error messages (this can be done regardless of how optionals are implemented, as the type model has the
 required information).
 
-While turning an required parameter to optional is not a usage-breaking change in this scenario, it is as an
+While turning a required parameter to optional is not a usage-breaking change in this scenario, it is as an
 override-breaking change, as the type signature of the function that must be implemented to satisfy an interface
 changes. This has consequences in case a type extends a go interface from a dependency.
 
