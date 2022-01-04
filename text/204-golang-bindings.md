@@ -1179,6 +1179,29 @@ validity checks on structs (ensuring all required properties were set) without h
 of a custom validator for each struct type; instead relying solely on the type information that is available from
 the `reflect` standard library package.
 
+```go
+// Given this struct
+type WithRequiredProperties struct {
+    Required     InterfaceType
+    Optional     Option[InterfaceType]
+}
+
+// The following are all valid, compiler-wise
+a := WithRequiredProperties{}
+b := WithRequiredProperties{Optional: someValue}
+c := WithRequiredProperties{Required: someValue}
+d := WithRequiredProperties{Required: someValue, optional: someValue}
+
+// When that struct is passed over the wire to node, we can determine that a and b are invalid
+SomeStatic(a) // #=> Panic ("missing value for required property 'Required'")
+SomeStatic(b) // #=> Panic ("missing value for required property 'Required'")
+SomeStatic(c) // #=> OK
+SomeStatic(d) // #=> OK
+
+// Without `Option[T]`, this can only be achieved by generating a validator function, and calling that on EVERY usage
+// site of the struct.
+```
+
 Not using pointers everywhere also enables the runtime library to do away with a lot of pointer indirection work, as
 values may no longer be of pointer types and instead are always either a plain struct (in the case of jsii structs), or
 an interface type. This results in simplifications in some areas of the runtime library.
@@ -1186,6 +1209,43 @@ an interface type. This results in simplifications in some areas of the runtime 
 Non-optional jsii struct parameters are passed as go structs, which provides compile-time gurantee that the value is not
 nil (but does not gurantee all fields have been set to a value other than their zero-value). Thi is more idiomatic go
 than the option of passing pointers to structs.
+
+```go
+type MyStruct struct { /* ... */ }
+
+// Using pointers:
+func WithPointers(ptr *MyStruct) { /* ... */ }
+WithPointers(nil) // Compiles, but is invalid!
+
+// Using bare struct
+func WithStruct(val MyStruct) { /* ... */ }
+withPointers(nil) // Compile error
+```
+
+An "unchecked cast" feature is much nicer to use when using generics than when those are not available:
+
+```go
+// Without generics
+func UncheckedCast(from interface{}, to *interface{}) {
+    // Must use reflection & pointer indirection to determine the target type
+    t := reflect.TypeOf(to).Elem()
+    // ... etc ...
+}
+
+opaqueValue := GetOpaque() // Typed interface{} or a parent type of the dynamic type of the value
+var castValue SpecificType // Must declare separate variable, then "cast into it"
+UncheckedCast(opaqueValue, &castValue)
+
+// With generics
+func UncheckedCast[T any](from interface{}) T {
+    var result T // Cast function can internally create the target value
+    // ...
+    return result
+}
+
+// No need to declare a separate variable up-front here.
+UncheckedCast[SpecificType](opaqueValue)
+```
 
 ### Downsides
 
@@ -1195,9 +1255,24 @@ interfaces with a non-exported implementing struct. A run-time check can be wove
 provide helpful error messages (this can be done regardless of how optionals are implemented, as the type model has the
 required information).
 
-While turning a required parameter to optional is not a usage-breaking change in this scenario, it is as an
+```go
+// SomeType is a go interface type (e.g: jsii class or interface)
+func RequiresInterface(value SomeType) { /* ... */ }
+
+RequiresInterface(nil) // Compiles, but likely crashes at runtime
+```
+
+While turning a required parameter to optional is not a usage-breaking change in this scenario, it is an
 override-breaking change, as the type signature of the function that must be implemented to satisfy an interface
 changes. This has consequences in case a type extends a go interface from a dependency.
+
+```go
+// The version accepting required arguments
+func (o *MyOverridingClass)OverrideMe(required jsii.String) { /* ... */ }
+
+// Is a different method from the one accepting optional arguments
+func (o *MyOverridingClass)OverrideMe(required jsii.Option[jsii.String]) { /* ... */ }
+```
 
 Generics are reified to their "instantiated" types during compilation, and the `reflect` standard library package does
 not expose generic type information directly. This makes it difficult to identify `jsii.Option[T]` types when traversing
@@ -1208,6 +1283,13 @@ present for a type or not). While working, both methods feel brittle.
 Wrapping primitive types requires explicit conversions (both from a go primitive to the boxed variant, and back).
 Primitive values are frequently used in the API suerface of the AWS CDK, and this is effectively boilerplate code.
 
+```go
+func FromString(str jsii.String) { /* ... */ }
+
+FromString("My string literal") // ❌ Compile error (expected jsii.String, received string)
+FromString(jsii.String("My string literal")) // ✅ Compiles, but has boilerplate.
+```
+
 Relying on generics forces us to require go 1.18 or greater (at time of writing, this is due to be released in February
 of 2022). We can leverage generics to improve the expressiveness of some of the go runtime library's internals, however
 this does not deliver a significant improvement over the current situation. For example, the signature of the
@@ -1215,7 +1297,14 @@ this does not deliver a significant improvement over the current situation. For 
 `interface{}` pointer to send the result to (the same can be applied to all runtime functions that return a value).
 
 ```go
+func StaticGet(fqn FQN, property string, res *interface{}) { /* ... */ }
+// Must declare the result type ahead of time
+var result ResultType
+StaticGet(jsii.FQN("type.FQN"), "property", &result)
+
+// Can become:
 func StaticGet[R any](fqn FQN, property string) R { /* ... */ }
+result := StaticGet(jsii.FQN("type.FQN"), "property")
 ```
 
 ### Explored Alternatives
