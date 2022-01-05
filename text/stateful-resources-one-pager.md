@@ -1,13 +1,17 @@
 # 1Pager | Modeling Stateful Resources
 
-This document is a one pager meant to surface the idea of explicitly modeling stateful resources in the core framework. Its goal is to conduct a preliminary discussion and gather feedback before it potentially progresses into a full blown RFC.
+This document is a one pager meant to surface the idea of explicitly modeling
+stateful resources in the core framework. Its goal is to conduct a preliminary
+discussion and gather feedback before it potentially progresses into a full blown RFC.
 
 ## Customer pain
 
 Customers are currently exposed to un intentional data loss when stateful resources are designated for either removal or replacement by CloudFormation.
 
-Data, similarly to security postures, is an area in which even a single rare mistake can cause catastrophic outages. The CDK can and should help reduce the risk of such failures.
-With respect to security, the CDK currently defaults to blocking deployments that contain changes in security postures, requiring a user confirmation:
+Data, similarly to security postures, is an area in which even a single rare
+mistake can cause catastrophic outages. The CDK can and should help reduce the risk
+of such failures. With respect to security, the CDK currently defaults to
+blocking deployments that contain changes in security postures, requiring a user confirmation:
 
 ```console
 This deployment will make potentially sensitive changes according to your current security approval level (--require-approval broadening).
@@ -17,26 +21,35 @@ Please confirm you intend to make the following modifications:
 Do you wish to deploy these changes (y/n)?
 ```
 
-However, no such mechanism exists for changes that might result in data loss, i.e removal or replacement of stateful resources, such as `S3` buckets, `DynamoDB` tables, etc...
+However, no such mechanism exists for changes that might result in data loss,
+i.e removal or replacement of stateful resources, such as `S3` buckets, `DynamoDB` tables, etc...
 
 ## Failure scenarios
 
-To understand how susceptible customers are to this, we outline a few scenarios where such data loss can occur.
+To understand how susceptible customers are to this, we outline a few
+scenarios where such data loss can occur.
 
 ### Stateful resource without `DeletionPolicy/UpdateReplacePolicy`
 
-By default, CloudFormation will **delete** resources that are removed from the stack, or when a property that requires replacement is changed.
+By default, CloudFormation will **delete** resources that are removed from the stack,
+or when a property that requires replacement is changed.
 
 > - [UpdateReplacePolicy](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatereplacepolicy.html)
 > - [DeletionPolicy](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html)
 
-To retain stateful resources, authors must remember to configure those policies with the `Retain` value. Having to remember this makes it also easy to forget. This means that stateful resources might be shipped with the incorrect policy.
+To retain stateful resources, authors must remember to configure those policies
+with the `Retain` value. Having to remember this makes it also easy to forget.
+This means that stateful resources might be shipped with the incorrect policy.
 
 ### Policy Change
 
-CDK applications are often comprised out of many third-party resources. Even if a third-party resource is initially shipped with the correct policy, this may change. Whether or not the policy change was intentional is somewhat irrelevant, it can still be undesired and have dire implications on the consuming application.
+CDK applications are often comprised out of many third-party resources.
+Even if a third-party resource is initially shipped with the correct policy, this may change.
+Whether or not the policy change was intentional is somewhat irrelevant, it can
+still be undesired and have dire implications on the consuming application.
 
-For that matter, even policy changes made by the application author itself can be unexpected or undesired.
+For that matter, even policy changes made by the application author itself
+can be unexpected or undesired.
 
 ## Desired Customer Experience
 
@@ -45,7 +58,9 @@ The experience described here lays under the following assumptions:
 1. The correct policy for stateful resources is always `Retain`.
 2. With data loss, its better to ask for permission than ask for forgiveness.
 
-As mentioned before, we should provide an experience similar to the one we have with respect to security posture changes. When deploying or destroying an application causes the removal of stateful resources, the user will, by default, see:
+As mentioned before, we should provide an experience similar to the one we have
+with respect to security posture changes. When deploying or destroying an
+application causes the removal of stateful resources, the user will, by default, see:
 
 ```console
 The following stateful resources will be removed:
@@ -84,13 +99,17 @@ via CloudFormation will still pose a risk.
 In order to provide any of the features described above, the core framework must be able
 to differentiate between stateful and stateless resources.
 
-> Side note: Explicitly differentiating stateful resources from stateless ones is a common practice in infrastructure modeling. For example, Kubernetes uses the [`StatefulSet`](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) resource for this. And terraform has the [`prevent_destroy`](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy) property to mark stateful resources.
+> **Side note**: Explicitly differentiating stateful resources from stateless ones is a
+> common practice in infrastructure modeling. For example, Kubernetes
+> uses the [`StatefulSet`](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+> resource for this.
+> And terraform has the [`prevent_destroy`](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy) property to mark stateful resources.
 
 ### API
 
-We'd like to extend our API so it enforces every resource marks itself as either stateful or stateless.
-
-To that end, we propose adding the following properties to the `CfnResourceProps` interface:
+We'd like to extend our API so it enforces every resource marks itself as either
+stateful or stateless. To that end, we propose adding the following properties to
+the `CfnResourceProps` interface:
 
 ```ts
 export interface CfnResourceProps {
@@ -109,14 +128,35 @@ export interface CfnResourceProps {
 }
 ```
 
+As well as corresponding getters:
+
+```ts
+/**
+ * Represents a CloudFormation resource.
+ */
+export class CfnResource extends CfnRefElement {
+
+  public get stateful: boolean;
+
+  public get replacedIf?: string[];
+
+  constructor(scope: Construct, id: string, props: CfnResourceProps) {
+    super(scope, id);
+    this.stateful = props.stateful;
+    this.replacedIf = props.replacedIf;
+  }
+}
+```
+
 ### CodeGen
 
-Adding those properties will break the generated L1 resources because the `stateful` property is required.
-This means we need to add some logic into `cfn2ts` so that it generates constructors that pass the appropriate values.
-
-To support this, we manually curate a list of stateful resources and check that into our source code, i.e:
+Adding these properties will break the generated L1 resources. We need to add some
+logic into `cfn2ts` so that it generates constructors that pass the appropriate values.
+For that, we manually curate a list of stateful resources and check that into our source code, i.e:
 
 + stateful-resources.json
+
+> The key is the resource type, and the value is the list of properties that require replacement.
 
 ```json
 {
@@ -124,11 +164,6 @@ To support this, we manually curate a list of stateful resources and check that 
   "AWS::DynamoDB::Table": ["TableName"],
 }
 ```
-
-The key is the resource type, and the value is the list of properties that require replacement.
-
-> We might be able to leverage the work already done by cfn-lint: [StatefulResources.json](https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json)
-> However, we also need the list of properties that require replacement for these resources. We can probably collaborate with cfn-lint on this.
 
 Using this file, we can generate the correct constructor, for example:
 
@@ -142,27 +177,61 @@ export class CfnBucket extends cdk.CfnResource implements cdk.IInspectable {
         type: CfnBucket.CFN_RESOURCE_TYPE_NAME,
         properties: props
       });
-      ...
-      ...
   }
 }
 ```
 
 ### Synthesis
 
+Now that all L1 resources are correctly marked and can be inspected, we add
+logic to the synthesis process to write this metadata to the cloud assembly.
+For example, a stack called `my-stack`, defining an `S3` bucket with
+id `MyBucket`, will contain the following in `manifest.json`:
+
+```json
+{
+  "metadata": {
+    "/my-stack/MyBucket/Resource": [
+      {
+        "stateful": true,
+        "replacedIf": ["BucketName"],
+      }
+    ],
+  }
+}
+```
+
 ### Deployment
 
-
-
-
+During deployment, we inspect the diff and identify which changes are about
+to occur on stateful resources in the stack. This closes the loop and should
+allow for the [customer experience](#desired-customer-experience) we described.
 
 ## Q & A
 
-#### Isn't remembering to extend `StatefulResource` the same as remembering to configure `DeletionPolicy/UpdateReplacePolicy`?
+### Why do we need the API change given we have the curated file?
 
-#### What about CDK Pipelines?
+Its true that the existence of the file allows us to codegen marked L1 resources
+without needing to make changes to the input API. However, this won't
+cover the use-case of **stateful custom resources**. As we know, custom resources may
+also be stateful. This scenario is in fact what sparked this discussion.
 
-#### Would this have prevented https://github.com/aws/aws-cdk/issues/16603?
+> See [s3: toggling off auto_delete_objects for Bucket empties the bucket](https://github.com/aws/aws-cdk/issues/16603)
 
-####
+Since every [`CustomResource`] eventually instantiates a `CfnResource`,
+changing this API will also enforce that every custom resource is marked,
+which is the desired behavior.
 
+In addition, enforcing this on the API level will also be beneficial for third-party
+constructs that might be extending from `CfnResource`.
+
+[CustomResource]: https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/core/lib/custom-resource.ts#L123
+
+### What about CDK Pipelines?
+
+### Would this have prevented [#16603](https://github.com/aws/aws-cdk/issues/16603)?
+
+### Curating a list of stateful resources is a maintenance burden - can we do it differently?
+
+> We might be able to leverage the work already done by cfn-lint: [StatefulResources.json](https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json)
+> However, we also need the list of properties that require replacement for these resources. We can probably collaborate with cfn-lint on this.
