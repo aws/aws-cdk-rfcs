@@ -10,8 +10,10 @@ Data, similarly to security postures, is an area in which even a single rare mis
 With respect to security, the CDK currently defaults to blocking deployments that contain changes in security postures, requiring a user confirmation:
 
 ```console
-(NOTE: There may be security-related changes not in this list. See https://github.com/aws/aws-cdk/issues/1299)
-
+This deployment will make potentially sensitive changes according to your current security approval level (--require-approval broadening).
+Please confirm you intend to make the following modifications:
+...
+...
 Do you wish to deploy these changes (y/n)?
 ```
 
@@ -36,12 +38,101 @@ CDK applications are often comprised out of many third-party resources. Even if 
 
 For that matter, even policy changes made by the application author itself can be unexpected or undesired.
 
-## Proposal
+## Desired Customer Experience
 
-The proposal described here was designed under the following assumptions:
+The experience described here lays under the following assumptions:
 
 1. The correct policy for stateful resources is always `Retain`.
-2. Its better
+2. With data loss, its better to ask for permission than ask for forgiveness.
+
+As mentioned before, we should provide an experience similar to the one we have with respect to security posture changes. When deploying or destroying an application causes the removal of stateful resources, the user will, by default, see:
+
+```console
+The following stateful resources will be removed:
+
+ - MyBucket (Removed from stack)
+ - MyDynamoTable (Changing property `TableName` requires a replacement)
+
+Do you wish to continue (y/n)?
+```
+
+> Note that we want to warn the users about possible replacements as well, not just removals.
+
+If this is desired, the user will confirm. And if this behavior is expected to repeat, the user can run:
+
+`cdk deploy --allow-removal MyBucket --allow-removal MyDynamoTable`
+
+To skip the interactive confirmation.
+
+An additional feature we can provide is to detect when a deployment will change the policy of stateful resources. i.e:
+
+```console
+The removal policy of the following stateful resources will change:
+
+ - MyBucket (RETAIN -> DESTROY)
+ - MyDynamoTable (RETAIN -> DESTROY)
+
+Do you wish to continue (y/n)?
+```
+
+Blocking these types of changes will keep the CloudFormation template in a safe state.
+Otherwise, if such changes are allowed to be deployed, out of band operations
+via CloudFormation will still pose a risk.
+
+## High Level Design
+
+In order to provide any of the features described above, the core framework must be able
+to differentiate between stateful and stateless resources. This means we need to enforce that every
+resource marks itself as such.
+
+We propose to add the following properties to the `CfnResourceProps` interface:
+
+```ts
+export interface CfnResourceProps {
+  /**
+   * Whether or not this resource is stateful.
+   */
+  readonly stateful: boolean;
+
+  /**
+   * Which properties cause replacement of this resource.
+   * Required if the resource is stateful, encouraged otherwise.
+   *
+   * @default undefined
+   */
+  readonly replacedIf?: string[];
+}
+```
+
+In addition, we manually curate a list of stateful resources and check that into our source code, i.e:
+
++ stateful-resources.json
+
+```json
+{
+  "AWS::S3::Bucket": ["BucketName"],
+  "AWS::DynamoDB::Table": ["TableName"],
+}
+```
+
+The key is the resource type, and the value is the list of properties that require replacement.
+This file will be used during execution of `cfn2ts` so that every resource passes the right values for these new properties. For example:
+
+```ts
+export class CfnBucket extends cdk.CfnResource implements cdk.IInspectable {
+
+  constructor(scope: cdk.Construct, id: string, props: CfnBucketProps = {}) {
+      super(scope, id, {
+        stateful: true,
+        replacedIf: ["BucketName"],
+        type: CfnBucket.CFN_RESOURCE_TYPE_NAME,
+        properties: props
+      });
+      ...
+      ...
+  }
+}
+```
 
 ## Q & A
 
@@ -49,7 +140,7 @@ The proposal described here was designed under the following assumptions:
 
 #### What about CDK Pipelines?
 
-#### Would this have prevented https://github.com/aws/aws-cdk/issues/16603 ?
+#### Would this have prevented https://github.com/aws/aws-cdk/issues/16603?
 
-#### 
+####
 
