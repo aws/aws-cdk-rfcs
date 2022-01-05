@@ -6,12 +6,14 @@ discussion and gather feedback before it potentially progresses into a full blow
 
 ## Customer pain
 
-Customers are currently exposed to un intentional data loss when stateful resources are designated for either removal or replacement by CloudFormation.
+Customers are currently exposed to unintentional data loss when stateful resources
+are designated for either removal or replacement by CloudFormation. Data, similarly
+to security postures, is an area in which even a single rare mistake can
+cause catastrophic outages.
 
-Data, similarly to security postures, is an area in which even a single rare
-mistake can cause catastrophic outages. The CDK can and should help reduce the risk
-of such failures. With respect to security, the CDK currently defaults to
-blocking deployments that contain changes in security postures, requiring a user confirmation:
+The CDK can and should help reduce the risk of such failures. With respect to
+security, the CDK currently defaults to blocking deployments that contain
+changes in security postures, requiring a user confirmation:
 
 ```console
 This deployment will make potentially sensitive changes according to your current security approval level (--require-approval broadening).
@@ -59,8 +61,8 @@ The experience described here lays under the following assumptions:
 2. With data loss, its better to ask for permission than ask for forgiveness.
 
 As mentioned before, we should provide an experience similar to the one we have
-with respect to security posture changes. When deploying or destroying an
-application causes the removal of stateful resources, the user will, by default, see:
+with respect to security posture changes. We propose that when deploying or
+destroying a stack, in case it causes the removal of stateful resources, the user will see:
 
 ```console
 The following stateful resources will be removed:
@@ -73,11 +75,10 @@ Do you wish to continue (y/n)?
 
 > Note that we want to warn the users about possible replacements as well, not just removals.
 
-If this is desired, the user will confirm. And if this behavior is expected to repeat, the user can run:
+If this is desired, the user will confirm. And if this behavior is expected to repeat,
+the user can use a new `allow-removal` flag, to skip the interactive confirmation:
 
 `cdk deploy --allow-removal MyBucket --allow-removal MyDynamoTable`
-
-To skip the interactive confirmation.
 
 An additional feature we can provide is to detect when a deployment will change the policy of stateful resources. i.e:
 
@@ -90,7 +91,7 @@ The removal policy of the following stateful resources will change:
 Do you wish to continue (y/n)?
 ```
 
-Blocking these types of changes will keep the CloudFormation template in a safe state.
+Blocking these types of changes will keep CloudFormation templates in a safe state.
 Otherwise, if such changes are allowed to be deployed, out of band operations
 via CloudFormation will still pose a risk.
 
