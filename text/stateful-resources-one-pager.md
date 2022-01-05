@@ -82,10 +82,15 @@ via CloudFormation will still pose a risk.
 ## High Level Design
 
 In order to provide any of the features described above, the core framework must be able
-to differentiate between stateful and stateless resources. This means we need to enforce that every
-resource marks itself as such.
+to differentiate between stateful and stateless resources.
 
-We propose to add the following properties to the `CfnResourceProps` interface:
+> Side note: Explicitly differentiating stateful resources from stateless ones is a common practice in infrastructure modeling. For example, Kubernetes uses the [`StatefulSet`](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) resource for this. And terraform has the [`prevent_destroy`](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy) property to mark stateful resources.
+
+### API
+
+We'd like to extend our API so it enforces every resource marks itself as either stateful or stateless.
+
+To that end, we propose adding the following properties to the `CfnResourceProps` interface:
 
 ```ts
 export interface CfnResourceProps {
@@ -104,7 +109,12 @@ export interface CfnResourceProps {
 }
 ```
 
-In addition, we manually curate a list of stateful resources and check that into our source code, i.e:
+### CodeGen
+
+Adding those properties will break the generated L1 resources because the `stateful` property is required.
+This means we need to add some logic into `cfn2ts` so that it generates constructors that pass the appropriate values.
+
+To support this, we manually curate a list of stateful resources and check that into our source code, i.e:
 
 + stateful-resources.json
 
@@ -116,7 +126,11 @@ In addition, we manually curate a list of stateful resources and check that into
 ```
 
 The key is the resource type, and the value is the list of properties that require replacement.
-This file will be used during execution of `cfn2ts` so that every resource passes the right values for these new properties. For example:
+
+> We might be able to leverage the work already done by cfn-lint: [StatefulResources.json](https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json)
+> However, we also need the list of properties that require replacement for these resources. We can probably collaborate with cfn-lint on this.
+
+Using this file, we can generate the correct constructor, for example:
 
 ```ts
 export class CfnBucket extends cdk.CfnResource implements cdk.IInspectable {
@@ -133,6 +147,14 @@ export class CfnBucket extends cdk.CfnResource implements cdk.IInspectable {
   }
 }
 ```
+
+### Synthesis
+
+### Deployment
+
+
+
+
 
 ## Q & A
 
