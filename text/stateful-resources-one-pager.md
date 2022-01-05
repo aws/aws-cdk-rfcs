@@ -218,9 +218,8 @@ also be stateful. This scenario is in fact what sparked this discussion.
 
 > See [s3: toggling off auto_delete_objects for Bucket empties the bucket](https://github.com/aws/aws-cdk/issues/16603)
 
-Since every [`CustomResource`] eventually instantiates a `CfnResource`,
-changing this API will also enforce that every custom resource is marked,
-which is the desired behavior.
+Since every [CustomResource] eventually instantiates a `CfnResource`,
+changing this API will also make sure custom resources are marked appropriately.
 
 In addition, enforcing this on the API level will also be beneficial for third-party
 constructs that might be extending from `CfnResource`.
@@ -229,9 +228,20 @@ constructs that might be extending from `CfnResource`.
 
 ### What about CDK Pipelines?
 
+This document only refers to a deployment workflow using `cdk deploy`. I have yet
+to research how this would be done in CDK pipelines. My initial thoughts are to somehow incorporate
+`cdk diff` in the pipeline, along with a manual approval stage.
+
 ### Would this have prevented [#16603](https://github.com/aws/aws-cdk/issues/16603)?
+
+Yes. If the API proposed here existed, we would have passed `stateful: true` in the
+implementation of the `autoDeleteObjects` property. Then, when the resource was
+removed due to the toggle, we would identify this as a removal of a stateful resource, and block it.
 
 ### Curating a list of stateful resources is a maintenance burden - can we do it differently?
 
-> We might be able to leverage the work already done by cfn-lint: [StatefulResources.json](https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json)
-> However, we also need the list of properties that require replacement for these resources. We can probably collaborate with cfn-lint on this.
+We might be able to leverage the work already done by cfn-lint, i.e [StatefulResources.json].
+However, we also need the list of properties that require replacement for these resources.
+We can probably collaborate with cfn-lint on this.
+
+[StatefulResources.json]: https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json
