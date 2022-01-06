@@ -246,3 +246,13 @@ However, we also need the list of properties that require replacement for these 
 We can probably collaborate with cfn-lint on this.
 
 [StatefulResources.json]: https://github.com/aws-cloudformation/cfn-lint/blob/main/src/cfnlint/data/AdditionalSpecs/StatefulResources.json
+
+### Isn't this a breaking change? How are we supposed to roll it out?
+
+Yes. Making the `stateful` property required will break some customers.
+There are two options I can think of:
+
+1. Release it as v3. We should in general consider not being so hesitant about releasing new major versions.
+We've seen with v2 that as long as migrations are not too painful, our customers are willing to
+perform such upgrades.
+2. Make the `stateful` property optional and perform runtime validations controlled by a feature flag.
