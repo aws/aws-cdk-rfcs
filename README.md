@@ -105,6 +105,8 @@ future state of the libraries and to discover projects for contribution.
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
 [388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||💡 proposed
+[394](https://github.com/aws/aws-cdk-rfcs/issues/394)|[WAF v2 L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/394)||💡 proposed
+[399](https://github.com/aws/aws-cdk-rfcs/issues/399)|[SSM Document as Objects](https://github.com/aws/aws-cdk-rfcs/issues/399)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
