@@ -2,7 +2,7 @@
 
 * **Original Author(s)**: [@otaviomacedo](https://github.com/otaviomacedo)
 * **Tracking Issue**: [#308](https://github.com/aws/aws-cdk-rfcs/issues/308)
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @eladb
 
 A new CLI feature to notify customers about urgent and important issues that
 require their attention.
@@ -115,11 +115,18 @@ In case of a high-impact issue, follow these steps:
 
 3. Create a PR with this change and wait for an approval. Only SDMs have
    permission to approve PRs in this repository.
-4. When the PR gets merged, the advisory will be visible to all CLI
+4. A PR check will validate the `advisories.json` file and verify that the
+   following conditions hold:
+   * The file is compliant with the schema.
+   * The issue exists.
+   * Title and overview are within the length constraints.
+   * The semantic version is valid.
+   * The component is valid.
+5. When the PR gets merged, the advisory will be visible to all CLI
    installations. The GitHub issue will also be automatically updated with the
    information contained in the file. All the necessary tags will also be added
    automatically. 
-5. You can keep updating the issue normally, as new information comes in, but
+6. You can keep updating the issue normally, as new information comes in, but
    you're not allowed to touch the sections auto-generated from the advisories
    file.
 
@@ -166,11 +173,12 @@ this feature.
 
 ### What is the technical solution (design) of this feature?
 
-Advisory information will be available as a static file, served from GitHub. 
-The CLI will consume this file from and apply a set of filters to narrow down 
-the list of advisories to the context in which it is being run. We will also 
-implement some GitHub actions to validate and copy the contents of the file over
-to the issue. For a more detailed explanation, see the Appendix.
+Advisory information will be available as a static file on a GitHub repository.
+This file will be automatically synced to an S3 bucket and distributed via
+CloudFront. The CLI will consume this file from and apply a set of filters to
+narrow down the list of advisories to the context in which it is being run. We
+will also implement some GitHub actions to validate and copy the contents of the
+file over to the issue. For a more detailed explanation, see the Appendix.
 
 ### Is this a breaking change?
 
@@ -182,18 +190,19 @@ On the publishing side:
 
 * Implementing a new internal REST service to manage the advisories. Overly
   complex for this use case.
-* Authoring the content directly on the GitHub issue. There is no good way to
-  implement an approval workflow that includes a human verification step.
+* Authoring the content directly on the GitHub issue. Hard to enfore
+  constraints on the content. 
 
 On the distribution side:
 
-* Assuming the advisories were stored in an S3 file (in case of the REST
-  service), we would use CloudFront to distribute them.
+* Serving the file directly form GitHub.
 * Using the GitHub API to query for special issues that are considered
   advisories (in case of using GitHub issues as the source of truth).  
 
 ### What is the high-level project plan?
 
+1. Implement and deploy the infastructure necessary for distribution (S3 +
+   CloudFront). 
 1. Implement the GitHub actions of validation and issue sync-up and issue
    protection.
 2. Add the construct library version to the cloud assembly metadata. 
@@ -245,7 +254,7 @@ list of advisories, each having the following fields:
 
 |     Field    |                           Description                          | Format                          | Mandatory? |
 |:------------:|:--------------------------------------------------------------:|---------------------------------|:----------:|
-| `title`      | The title of the incident                                      | Free form text                  | Yes        |
+| `title`      | The title of the incident (max length: 100)                    | Free form text                  | Yes        |
 | `issueUrl`   | A link to the GitHub issue where the incident is being tracked | URL                             | Yes        |
 | `overview`   | A paragraph with more information about the incident           | Free form text                  | Yes        |
 | `component`  | The CLI or the Framework                                       | Either `"cli"` or `"framework"` | Yes        |
@@ -261,11 +270,15 @@ We will also implement three GitHub actions on this repository:
 3. Issue protection. Every change to issues that are linked to some advisory
    will be checked by this action, to avoid corruption.
 
+For the distribution, we will implement a mechanism to sync the contents of the
+GitHub repository with the S3 bucket (e.g., a Event Bridge event). The S3
+content will be served by a CloudFront distribution.
+
 #### CLI logic
 
-The CLI will fetch the file from GitHub, parse the content and check whether the
-version range contained in the advisory matches the CLI version or the framework
-version (depending on the affected component).
+On every command, the CLI will fetch the file from the backend, parse the
+content and check whether the version range contained in the advisory matches
+the CLI version or the framework version (depending on the affected component).
 
 Since the CLI knows its own version, checking against the version range of the
 advisory is trivial. The version of the framework, however, is not readily
@@ -274,7 +287,8 @@ to the Cloud Assembly, in a place where the CLI can read it.
 
 Issues that pass this filter will be displayed on the standard output. If an 
 error or timeout occurs when retrieving the issues, the CLI will simply skip 
-the display of advisories and try again at the next command execution.
+the display of advisories and try again at the next command execution. Results
+will be cached for a period of one hour.
 
 The CLI will store the IDs of the acknowledged issues in the project specific 
 `./cdk.json` file.
