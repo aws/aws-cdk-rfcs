@@ -18,7 +18,7 @@ future state of the libraries and to discover projects for contribution.
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||👷 implementing
 [77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/issues/77)||👷 implementing
 [340](https://github.com/aws/aws-cdk-rfcs/issues/340)|[Kinesis Data Firehose Delivery Stream L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0340-firehose-l2.md)|[@BenChaimberg](https://github.com/BenChaimberg)|👷 implementing
-[308](https://github.com/aws/aws-cdk-rfcs/issues/308)|[CLI notices](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0308-cli-advisories.md)||👍 approved
+[308](https://github.com/aws/aws-cdk-rfcs/issues/308)|[CLI notices](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0308-cli-advisories.md)|[@otaviomacedo](https://github.com/otaviomacedo/)|👷 implementing
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
