@@ -248,18 +248,20 @@ CloudFormation API doesn't allow any non-import changes in the template for
 import operation. This is a challenge for CDK, as:
 
 * `CDKMetadata` resource changes on each synthesis, so the import operation
-  never succeeds with the unmodified template. To resolve this, the proposed
-  solution restores CDKMetadata to the currently deployed version before
-  passing the template to ChangeSet creation step.
+  never succeeds with the unmodified template. To resolve this, this solution
+  doesn't pass the newly synthesized template to the import operation - instead,
+  the currently deployed template is fetched and only the resources to be imported
+  are added to it (copied over from the new template), producing an interim
+  _import template_.
 * High-level constructs produce multiple underlying CloudFormation resources
   and only some of those might need to be imported - the rest might need to
   be created (e.g. `ec2.Vpc()` might require VPC being imported, but subnets
   being created). Furthermore, CDK can't automatically determine what
   resources to import and what to create. For this to behave correctly, the
   solution will prompt user for each resource - whether it should be imported
-  or not. If not, the resource is removed from the template before creating
-  the change set. The remaining (not imported) resources can be created by
-  a subsequent `cdk deploy` command.
+  or not. If not, the resource is omitted (not added to the import template).
+  The remaining (not imported) resources can be created by a subsequent
+  `cdk deploy` command.
 
 #### An explicit DeletionPolicy must be set on imported resources
 
@@ -267,7 +269,8 @@ CloudFormation import API requires all imported resources to have specified
 explicit DeletionPolicy. CDK satisfies this requirement for typical stateful
 resources (e.g. S3 buckets), but not _all_ resources (e.g. VPCs). The solution
 will inject a `DeletionPolicy` with a value of `Delete` (CloudFormation's
-default) in the template for all resources without `DeletionPolicy` set by CDK.
+default) in the import template for all resources without `DeletionPolicy` set
+by CDK.
 
 This manipulation will only happen during the import operation and therefore it
 is not persistent. On the next deploy, the property is dropped. However, as
@@ -324,12 +327,34 @@ feature and so it introduces the import feature's inherent issues in CDK, like:
 
 ### What is the high-level project plan?
 
-A simple [PoC Draft PR](https://github.com/aws/aws-cdk/pull/17666) was created
-in the main `aws-cdk` repository that is being iteratively expanded with the
-proposed features. Once the approach is agreed and the agreed solution is
-implemented, the PR will be moved from "Draft" to "Open" status and CDK team
-member code review will be requested. Once all approved, the PR will be ready
-to be merged.
+The RFC will be implemented in following stages:
+
+#### 1. Interactive import
+
+Basic wrapper around the CloudFormation Import API, `cdk import` CLI command
+with only basic options. Interactive prompts for resource identification. Use
+of the default credentials (same as `cdk deploy`) for all API calls. A simple
+[PoC Draft PR](https://github.com/aws/aws-cdk/pull/17666) was created in the
+main `aws-cdk` repository that implements this stage.
+
+#### 2. Non-interactive import
+
+Extend the CLI interface to allow passing "resource mapping" hints on command
+line, instead of the interactive prompts. Secondly, provide a helper to
+create the "resource mapping" file based on user input (interactive). This
+stage allows splitting the import workflow into prepare and execute phases,
+possibly using CI/CD
+
+#### 3. Using the lookup role
+
+Run read-only operations using the lookup role from CDK Toolkit stack instead
+of the default credentials.
+
+#### 4. Leverage Cloud Control API to improve user experience
+
+By using Cloud Control API, the CLI interface can be relatively easily extended
+to provide much better user experience, see
+[possible future expansions](#possible-future-expansions) section.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -357,6 +382,12 @@ might still be needed.
 
 It might be considered to release such convenience features iteratively
 per resource type, beginning with the most frequently used types.
+
+This proposal also only concerns with a single CDK stack at a time - the PoC
+code fails if multilpe stacks are matched. For the app stacks refactoring
+use case it would be beneficial to support batch operations (same import flow
+on multiple stacks) and a _move operation_ - single command to remove a
+resource from one stack and import it into another).
 
 ### Links
 
