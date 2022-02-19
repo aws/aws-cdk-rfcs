@@ -4,7 +4,10 @@
 * **Tracking Issue**: #400
 * **API Bar Raiser**: @madeline-k
 
-The `aws-rum` construct allows you to create an Amazon CloudWatch RUM AppMonitor with just a few lines of code, enabling you to retrieve code snippets outside of the management console, which was previously impossible. This allows users to retrieve code snippets and fully automate deployments without having to go through the management console.
+The `aws-rum` construct allows you to create an Amazon CloudWatch RUM AppMonitor
+with just a few lines of code, enabling you to retrieve code snippets outside of the management console,
+which was previously impossible. This allows users to retrieve code snippets
+and fully automate deployments without having to go through the management console.
 
 ## Working Backwards
 
@@ -32,7 +35,8 @@ The `aws-rum` construct allows you to create an Amazon CloudWatch RUM AppMonitor
 
 ## Introduction
 
-CloudWatch RUM is monitoring tool that can perform real user monitoring to collect and view client-side data about your web application performance from actual user sessions in near real time.
+CloudWatch RUM is monitoring tool that can perform real user monitoring to collect
+and view client-side data about your web application performance from actual user sessions in near real time.
 
 This module supports the ability for users to create CloudWatch RUM and retrieve code snippets on CloudFormation.
 
@@ -94,7 +98,8 @@ const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
 
 ### Code Snippet
 
-AppMonitor generates a code snippet that looks like to create on the management console. Note, however, that unlike the management console, the code snippets do not have `<script>` tags because the CDK expects them to be automatically embedded in the application.
+AppMonitor generates a code snippet that looks like to create on the management console. Note, however,
+that unlike the management console, the code snippets do not have `<script>` tags because the CDK expects them to be automatically embedded in the application.
 
 ```ts
 import * as rum from '@aws-cdk/aws-rum';
@@ -110,7 +115,8 @@ const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
 
 #### RUM web client configuration
 
-If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md) (e.g cookieAttributes), you can pass options to `generateCodeSnippet` argument.
+If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md)
+ (e.g cookieAttributes), you can pass options to `generateCodeSnippet` argument.
 
 ```ts
 import * as rum from '@aws-cdk/aws-rum';
@@ -208,11 +214,13 @@ We are launching a new module (`@aws-cdk/aws-rum`) that contains next 3 main fea
 In most simple pattern, you need only domain name and app monitor name to start using app monitor.
 **"Importing an existing app monitor"** of 2 is feature that is similar other L2 constructs.
 You can import app monitor from outside of the stack by app monitor name or app monitor ARN.
-At last, **"Generate code snippet"** of 3 is most important feature that allows you to retrieve code snippets without management console. You can fully automate deployment app monitor to your application by this feature.
+At last, **"Generate code snippet"** of 3 is most important feature that allows you to retrieve code snippets without management console.
+You can fully automate deployment app monitor to your application by this feature.
 
 ### Why should I use this feature?
 
-RUM AppMonitor L1 construct doesn't provide code snippet and app monitor id, so to embed client code user must access management console or run AWS CLI for get app monitor id after created app monitor by RUM AppMonitor L1 Construct. This is a bit far from full automation, so you should use this feature.
+RUM AppMonitor L1 construct doesn't provide code snippet and app monitor id, so to embed client code user must access management console or run AWS CLI
+for get app monitor id after created app monitor by RUM AppMonitor L1 Construct. This is a bit far from full automation, so you should use this feature.
 
 ## Internal FAQ
 
@@ -317,7 +325,9 @@ class ThirdPartyAuthorizer implements IAppMonitorAuthorizer {
 ```
 
 ##### `WebClientConfigurationOption` and subtypes
-[RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) modified for jsii. This is used to generate advanced code snippets.
+
+[RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) modified for jsii.
+This is used to generate advanced code snippets.
 
 ```ts
 interface WebClientConfigurationOption {
@@ -427,7 +437,9 @@ classDiagram
 ### Generate code snippet solution
 
 To avoid XSS, I implement the following mechanism using a custom resource that can validate the actual value.
-1. generate advanced code snippet using [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) as argument of generateCodeSnippet
+
+1. generate advanced code snippet using
+ [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) as argument of generateCodeSnippet
 2. unspecified configuration defaults to the configuration that can be obtained with rum:GetAppMonitor
 
 This is image.
@@ -451,7 +463,8 @@ No.
 
 ### What alternative solutions did you consider?
 
-It is `generateCodeSnippet` method change to `CodeSnippet` construct. Currently, `AppMonitor` have  `generateCodeSnippet` method in my design, but code snippet strings are 1:1 to `CustomResource` so this can be expressed as construct. However, I think this is not intuitive so I designed as method.
+It is `generateCodeSnippet` method change to `CodeSnippet` construct. Currently, `AppMonitor` have  `generateCodeSnippet` method in my design,
+but code snippet strings are 1:1 to `CustomResource` so this can be expressed as construct. However, I think this is not intuitive so I designed as method.
 
 ### What are the drawbacks of this solution?
 
