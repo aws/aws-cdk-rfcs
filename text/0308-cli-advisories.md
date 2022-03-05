@@ -25,10 +25,10 @@ NOTICES
 16603   Toggling off auto_delete_objects for Bucket empties the bucket
 
         Overview: If a stack is deployed with an S3 bucket with
-                  auto_delete_objects=True, and then re-deployed with 
-                  auto_delete_objects=False, all the objects in the bucket 
+                  auto_delete_objects=True, and then re-deployed with
+                  auto_delete_objects=False, all the objects in the bucket
                   will be deleted.
-                 
+
         Affected versions: <1.126.0.
 
         More information at: https://github.com/aws/aws-cdk/issues/16603
@@ -37,12 +37,12 @@ NOTICES
 17061   Error when building EKS cluster with monocdk import
 
         Overview: When using monocdk/aws-eks to build a stack containing
-                  an EKS cluster, error is thrown about missing 
+                  an EKS cluster, error is thrown about missing
                   lambda-layer-node-proxy-agent/layer/package.json.
-         
+
         Affected versions: >=1.126.0 <=1.130.0.
 
-        More information at: https://github.com/aws/aws-cdk/issues/17061 
+        More information at: https://github.com/aws/aws-cdk/issues/17061
 
 If you don’t want to see an notice anymore, use "cdk acknowledge ID". For example, "cdk acknowledge 16603".
 ```
@@ -57,12 +57,12 @@ NOTICES
 17061   Error when building EKS cluster with monocdk import
 
         Overview: When using monocdk/aws-eks to build a stack containing
-                  an EKS cluster, error is thrown about missing 
+                  an EKS cluster, error is thrown about missing
                   lambda-layer-node-proxy-agent/layer/package.json.
-         
+
         Affected versions: >=1.126.0 <=1.130.0.
 
-        More information at: https://github.com/aws/aws-cdk/issues/17061 
+        More information at: https://github.com/aws/aws-cdk/issues/17061
 
 If you don’t want to see an notice anymore, use "cdk acknowledge ID". For example, "cdk acknowledge 17061".
 ```
@@ -92,8 +92,8 @@ can then plug this into a pipeline approval workflow and expect manual review if
 there are any notices.
 
 > Please note that the acknowledgements are made project by project. If you
-acknowledge an notice in one CDK project, it will still appear on other 
-projects when you run any CDK commands, unless you have suppressed or disabled 
+acknowledge an notice in one CDK project, it will still appear on other
+projects when you run any CDK commands, unless you have suppressed or disabled
 notices.  
 
 ### Runbook section (internal to the CDK team)
@@ -103,6 +103,7 @@ In case of a high-impact issue, follow these steps:
 1. Create or update an issue for this incident on the aws-cdk GitHub repository.
 2. Update the file `notices.json` on repository `cdklabs/aws-cdk-notices`, adding an entry for
    the incident. Example:
+<!-- markdownlint-disable line-length  -->
 ```json
   {
     "title":  "Toggling off auto_delete_objects for Bucket empties the bucket",
@@ -112,6 +113,7 @@ In case of a high-impact issue, follow these steps:
     "version": "<1.126.0"
   }
 ```
+<!-- markdownlint-enable line-length  -->
 
 3. Create a PR with this change and wait for an approval. Only SDMs have
    permission to approve PRs in this repository.
@@ -125,7 +127,7 @@ In case of a high-impact issue, follow these steps:
 5. When the PR gets merged, the notice will be visible to all CLI
    installations. The GitHub issue will also be automatically updated with the
    information contained in the file. All the necessary tags will also be added
-   automatically. 
+   automatically.
 6. You can keep updating the issue normally, as new information comes in, but
    you're not allowed to touch the sections auto-generated from the notices
    file.
@@ -164,11 +166,11 @@ This is a powerful feature to convey urgent and important messages to customers.
 However, to keep its relevance, it should be used sparingly and the messages
 must meet a high bar. Otherwise it will just become a tool for spamming
 customers. We will introduce filters to reduce this risk, by only showing
-content that applies to each particular environment and also require PR approval 
-for any changes in notices. But ultimately, it hinges on responsible use. In 
-particular, this feature should not be used for things like marketing campaigns, 
+content that applies to each particular environment and also require PR approval
+for any changes in notices. But ultimately, it hinges on responsible use. In
+particular, this feature should not be used for things like marketing campaigns,
 blog post announcements and things like that. If the mechanisms proposed in this
-RFC are not considered strong enough by the CDK team, we should not implement 
+RFC are not considered strong enough by the CDK team, we should not implement
 this feature.
 
 ### What is the technical solution (design) of this feature?
@@ -191,7 +193,7 @@ On the publishing side:
 * Implementing a new internal REST service to manage the notices. Overly
   complex for this use case.
 * Authoring the content directly on the GitHub issue. Hard to enfore
-  constraints on the content. 
+  constraints on the content.
 
 On the distribution side:
 
@@ -202,10 +204,10 @@ On the distribution side:
 ### What is the high-level project plan?
 
 1. Implement and deploy the infastructure necessary for distribution (S3 +
-   CloudFront). 
+   CloudFront).
 1. Implement the GitHub actions of validation and issue sync-up and issue
    protection.
-2. Add the construct library version to the cloud assembly metadata. 
+2. Add the construct library version to the cloud assembly metadata.
 2. Implement and release the CLI changes.
 
 ### What is the expected lifetime of notices?
@@ -260,7 +262,6 @@ list of notices, each having the following fields:
 | `component`  | The CLI or the Framework                                       | Either `"cli"` or `"framework"` | Yes        |
 | `version`    | Version range using the semver format                          | Semantic Versioning             | No         |
 
-
 We will also implement three GitHub actions on this repository:
 
 1. File validation on PR. It will block merging if the structure of the file is
@@ -285,10 +286,10 @@ notice is trivial. The version of the framework, however, is not readily
 available anywhere. To address this, we will start writing the framework version
 to the Cloud Assembly, in a place where the CLI can read it.
 
-Issues that pass this filter will be displayed on the standard output. If an 
-error or timeout occurs when retrieving the issues, the CLI will simply skip 
+Issues that pass this filter will be displayed on the standard output. If an
+error or timeout occurs when retrieving the issues, the CLI will simply skip
 the display of notices and try again at the next command execution. Results
 will be cached for a period of one hour.
 
-The CLI will store the IDs of the acknowledged issues in the project specific 
+The CLI will store the IDs of the acknowledged issues in the project specific
 `./cdk.json` file.
