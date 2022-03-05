@@ -115,8 +115,8 @@ const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
 
 #### RUM web client configuration
 
-If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md)
- (e.g cookieAttributes), you can pass options to `generateCodeSnippet` argument.
+If you want to use [RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments)
+ (e.g applicationVersion, cookieAttributes), you can pass options to `generateCodeSnippet` argument.
 
 ```ts
 import * as rum from '@aws-cdk/aws-rum';
@@ -127,7 +127,10 @@ const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
 });
 
 const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet', {
-  pageIdFormat: rum.PageIdFormat.HASH,
+  applicationVersion: '1.1.0',
+  configuration: {
+    pageIdFormat: rum.PageIdFormat.HASH
+  }
 });
 ```
 
@@ -252,14 +255,14 @@ Downsides of implementing this feature is to need update of RUM web client type 
 interface IAppMonitor extends IResource {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
-  generateCodeSnippet(id: string, option?: WebClientConfigurationOption): string;
+  generateCodeSnippet(id: string, props?: CodeSnippetProps): string;
 }
 
 abstract class AppMonitorBase extends Resource implements IAppMonitor {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
   constructor(scope: Construct, id: string, props: ResourceProps);
-  generateCodeSnippet(id: string, option?: WebClientConfigurationOption): string;
+  generateCodeSnippet(id: string, props?: CodeSnippetProps): string;
 }
 
 enum Telemetry {
@@ -324,13 +327,22 @@ class ThirdPartyAuthorizer implements IAppMonitorAuthorizer {
 }
 ```
 
-##### `WebClientConfigurationOption` and subtypes
+##### `CodeSnippetProps` and subtypes
 
-[RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) modified for jsii.
+[RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments) modified for jsii.
 This is used to generate advanced code snippets.
 
 ```ts
-interface WebClientConfigurationOption {
+interface CodeSnippetProps {
+  readonly namespace?: string
+  readonly applicationVersion?: string
+  readonly webClientVersion?: string
+  readonly configuration?: WebClientConfiguration
+}
+```
+
+```ts
+interface WebClientConfiguration {
   readonly allowCookies?: boolean;
   readonly cookieAttibutes?: CookieAttibute;
   readonly disableAutoPageView?: boolean;
@@ -379,7 +391,8 @@ interface CookieAttibute {
   readonly domain?: string;
   readonly path?: string;
   readonly sameSite?: boolean;
-  readonly secure?: boolean
+  readonly secure?: boolean;
+  readonly unique?: boolean;
 }
 
 enum PageIdFormat {
@@ -439,7 +452,7 @@ classDiagram
 To avoid XSS, I implement the following mechanism using a custom resource that can validate the actual value.
 
 1. generate advanced code snippet using
- [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#configuration) as argument of generateCodeSnippet
+ [RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments) as argument of generateCodeSnippet
 2. unspecified configuration defaults to the configuration that can be obtained with rum:GetAppMonitor
 
 This is image.
