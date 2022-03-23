@@ -11,7 +11,7 @@ with just a few lines of code. You can integrate this AppMonitor into your appli
 
 ### CHANGELOG
 
-`feat(rum): AppMonitor L2; Import, Generate code snippet`
+`feat(rum): AppMonitor L2; Generate code snippet`
 
 ### README
 
