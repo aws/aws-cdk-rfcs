@@ -245,7 +245,7 @@ Downsides of implementing this feature is to need update of RUM web client type 
 
 ### What is the technical solution (design) of this feature?
 
-#### Type Definetions
+#### Type Definitions
 
 ##### `AppMonitor`
 
