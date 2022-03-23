@@ -53,7 +53,7 @@ const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
 
 ### Authorizer
 
-By default, AppMonitor creates a new Amazon Cognito identity pool and uses it to authenticate the put event.
+By default, when you create a new `AppMonitor` construct, CDK creates a new Amazon Cognito identity pool. This identity pool is used by CloudWatch to...
 
 #### Use an existing Amazon Cognito identity pool
 
