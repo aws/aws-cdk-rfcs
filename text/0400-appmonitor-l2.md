@@ -40,7 +40,7 @@ This module supports the ability for users to create CloudWatch RUM and retrieve
 
 ## App Monitor
 
-Define `AppMonitor` to your stack:
+Define an`AppMonitor` in your stack:
 
 ```ts
 import * as rum from '@aws-cdk/aws-rum';
