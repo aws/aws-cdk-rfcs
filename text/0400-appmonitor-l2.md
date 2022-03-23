@@ -134,7 +134,7 @@ const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet', {
 
 #### With s3 deployment
 
-By using S3 Deployment, you can automate embeded to your application.
+By using S3 Deployment, you can automate embedding the CloudWatch RUM code snippet into your application.
 This example is shortest way that deploy site using RUM.
 
 ```ts
