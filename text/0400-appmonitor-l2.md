@@ -4,7 +4,7 @@
 * **Tracking Issue**: #400
 * **API Bar Raiser**: @madeline-k
 
-The `aws-rum` construct allows you to create an Amazon CloudWatch RUM AppMonitor
+The `aws-rum` construct library allows you to create an Amazon CloudWatch RUM AppMonitor
 with just a few lines of code, enabling you to retrieve code snippets outside of the management console,
 which was previously impossible. This allows users to retrieve code snippets
 and fully automate deployments without having to go through the management console.
