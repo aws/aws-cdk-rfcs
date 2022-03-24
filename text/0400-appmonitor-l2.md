@@ -44,8 +44,7 @@ Define an`AppMonitor` in your stack:
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'my-website.com',
-  appMonitorName: 'my-app-monitor'
+  domain: 'my-website.com'
 });
 ```
 
@@ -64,7 +63,6 @@ declare const myRole: iam.IRole;
 
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'my-website.com',
-  appMonitorName: 'my-app-monitor',
   authorizer: new CognitoIdentityPoolAuthorizer({
     identityPoolId: 'my-user-pool-id',
     unauthenticatedRole: myRole,
@@ -83,7 +81,6 @@ declare const myRole: iam.IRole;
 
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'my-website.com',
-  appMonitorName: 'my-app-monitor',
   authorizer: new ThirdPartyAuthorizer({
     role: myRole,
   }),
@@ -97,8 +94,7 @@ that unlike the management console, the code snippets do not have `<script>` tag
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'my-website.com',
-  appMonitorName: 'my-app-monitor'
+  domain: 'my-website.com'
 });
 
 // (function(n,i,v,r,s,c,x,z){...})
@@ -113,7 +109,6 @@ If you want to use [RUM web client arguments](https://github.com/aws-observabili
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'my-website.com',
-  appMonitorName: 'my-app-monitor'
 });
 
 const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet', {
@@ -138,8 +133,7 @@ const webSiteBucket = new s3.Bucket(this, 'WebSiteBucket', {
   websiteIndexDocument: 'index.html'
 });
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: webSiteBucket.bucketWebsiteDomainName,
-  appMonitorName: 'my-app-monitor'
+  domain: webSiteBucket.bucketWebsiteDomainName
 });
 const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
 const rumJs = s3deploy.Source.data('rum.js', codeSnippet);
