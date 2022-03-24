@@ -44,7 +44,7 @@ Define an`AppMonitor` in your stack:
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'amazon.com',
+  domain: 'my-website.com',
   appMonitorName: 'my-app-monitor'
 });
 ```
@@ -63,7 +63,7 @@ import * as iam from '@aws-cdk/aws-iam';
 declare const myRole: iam.IRole;
 
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'amazon.com',
+  domain: 'my-website.com',
   appMonitorName: 'my-app-monitor',
   authorizer: new CognitoIdentityPoolAuthorizer({
     identityPoolId: 'my-user-pool-id',
@@ -82,7 +82,7 @@ import * as iam from '@aws-cdk/aws-iam';
 declare const myRole: iam.IRole;
 
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'amazon.com',
+  domain: 'my-website.com',
   appMonitorName: 'my-app-monitor',
   authorizer: new ThirdPartyAuthorizer({
     role: myRole,
@@ -97,7 +97,7 @@ that unlike the management console, the code snippets do not have `<script>` tag
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'amazon.com',
+  domain: 'my-website.com',
   appMonitorName: 'my-app-monitor'
 });
 
@@ -112,7 +112,7 @@ If you want to use [RUM web client arguments](https://github.com/aws-observabili
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'amazon.com',
+  domain: 'my-website.com',
   appMonitorName: 'my-app-monitor'
 });
 
