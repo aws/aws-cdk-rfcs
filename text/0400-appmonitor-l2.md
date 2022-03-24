@@ -29,7 +29,6 @@ with just a few lines of code. You can integrate this AppMonitor into your appli
   - [Code Snippet](#code-snippet)
     - [RUM web client configuration](#rum-web-client-configuration)
     - [With s3 deployment](#with-s3-deployment)
-  - [Importing App Monigor](#importing-app-monitor)
 
 ## Introduction
 
@@ -151,33 +150,6 @@ new s3deploy.BucketDeployment(this, 'BucketDeployment', {
 });
 ```
 
-### Importing App Monitor
-
-AppMonitor construct can import existing app monitor, just like any other L2 construct.
-
-```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = rum.AppMonitor.fromAppMonitorName(this, 'AppMonitor', 'my-app-monitor');
-```
-
-or
-
-```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = rum.AppMonitor.fromAppMonitorArn(this, 'AppMonitor', 'arn:aws:rum:some-region:1111111:appmonitor/my-app-monitor');
-```
-
-Of course, the imported app monitors can generate code snippets.
-
-```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = rum.AppMonitor.fromAppMonitorName(this, 'AppMonitor', 'my-app-monitor');
-const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
-```
-
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -193,14 +165,11 @@ RFC pull request):
 We are launching a new module (`@aws-cdk/aws-rum`) that contains next 3 main features.
 
 1. Create app monitor easy
-2. Importing an existing app monitor
-3. Generate code snippet
+2. Generate code snippet
 
 **"Create app monitor easy"** of 1 is feature that looks like to create app monitor on the management console.
 In most simple pattern, you need only domain name and app monitor name to start using app monitor.
-**"Importing an existing app monitor"** of 2 is feature that is similar other L2 constructs.
-You can import app monitor from outside of the stack by app monitor name or app monitor ARN.
-At last, **"Generate code snippet"** of 3 is most important feature that allows you to retrieve code snippets without management console.
+And **"Generate code snippet"** of 2 is most important feature that allows you to retrieve code snippets without management console.
 You can fully automate deployment app monitor to your application by this feature.
 
 ### Why should I use this feature?
@@ -391,8 +360,6 @@ enum PageIdFormat {
 classDiagram
   IAppMonitor <|.. AppMonitorBase
   AppMonitorBase <|-- AppMonitor
-  AppMonitorBase <|-- Import
-  AppMonitor -- Import
   IAppMonitorAuthorizer <-- AppMonitor
   IAppMonitorAuthorizer <|.. CognitoIdentityPoolAuthorizer
   IAppMonitorAuthorizer <|.. ThirdPartyAuthorizer
@@ -411,8 +378,6 @@ classDiagram
   class AppMonitor{
     +IAppMonitor fromAppMonitorName()$
     +IAppMonitor fromAppMonitorArn()$
-  }
-  class Import{
   }
   class IAppMonitorAuthorizer{
     <<interface>>
@@ -472,7 +437,7 @@ Follow the other L2 constructs.
 
 ### Are there any open issues that need to be addressed later?
 
-Yes, It is to import app monitor from another region.
+No
 
 ## Appendix
 
