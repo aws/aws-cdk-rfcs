@@ -43,9 +43,7 @@ This module supports the ability for users to create CloudWatch RUM and retrieve
 Define an`AppMonitor` in your stack:
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'amazon.com',
   appMonitorName: 'my-app-monitor'
 });
@@ -60,15 +58,14 @@ By default, when you create a new `AppMonitor` construct, CDK creates a new Amaz
 If you want to use an existing Amazon Cognito identity pool, you need to pass a `CognitoIdentityPoolAuthorizer` instance.
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
 import * as iam from '@aws-cdk/aws-iam';
 
 declare const myRole: iam.IRole;
 
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'amazon.com',
   appMonitorName: 'my-app-monitor',
-  authorizer: new rum.CognitoIdentityPoolAuthorizer({
+  authorizer: new CognitoIdentityPoolAuthorizer({
     identityPoolId: 'my-user-pool-id',
     unauthenticatedRole: myRole,
   }),
@@ -80,15 +77,14 @@ const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
 You can also use a third party authenticator as in `CognitoIdentityPoolAuthorizer`.
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
 import * as iam from '@aws-cdk/aws-iam';
 
 declare const myRole: iam.IRole;
 
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'amazon.com',
   appMonitorName: 'my-app-monitor',
-  authorizer: new rum.ThirdPartyAuthorizer({
+  authorizer: new ThirdPartyAuthorizer({
     role: myRole,
   }),
 });
@@ -100,9 +96,7 @@ AppMonitor generates a code snippet that looks like to create on the management 
 that unlike the management console, the code snippets do not have `<script>` tags because the CDK expects them to be automatically embedded in the application.
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'amazon.com',
   appMonitorName: 'my-app-monitor'
 });
@@ -117,9 +111,7 @@ If you want to use [RUM web client arguments](https://github.com/aws-observabili
  (e.g applicationVersion, cookieAttributes), you can pass options to `generateCodeSnippet` argument.
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
-
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'amazon.com',
   appMonitorName: 'my-app-monitor'
 });
@@ -127,7 +119,7 @@ const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
 const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet', {
   applicationVersion: '1.1.0',
   configuration: {
-    pageIdFormat: rum.PageIdFormat.HASH
+    pageIdFormat: PageIdFormat.HASH
   }
 });
 ```
@@ -138,7 +130,6 @@ By using S3 Deployment, you can automate embedding the CloudWatch RUM code snipp
 This example is shortest way that deploy site using RUM.
 
 ```ts
-import * as rum from '@aws-cdk/aws-rum';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as s3deploy from '@aws-cdk/aws-s3-deployment';
 
@@ -146,7 +137,7 @@ const webSiteBucket = new s3.Bucket(this, 'WebSiteBucket', {
   publicReadAccess: true,
   websiteIndexDocument: 'index.html'
 });
-const appMonitor = new rum.AppMonitor(this, 'AppMonitor', {
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: webSiteBucket.bucketWebsiteDomainName,
   appMonitorName: 'my-app-monitor'
 });
