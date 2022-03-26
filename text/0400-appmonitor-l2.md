@@ -84,7 +84,8 @@ const appMonitor = new AppMonitor(this, 'AppMonitor', {
 
 #### Use an existing Amazon Cognito identity pool
 
-If you want to use an existing Amazon Cognito identity pool, you need to pass the `identityPool` and the IAM role that is attached to the identity pool.
+If you want to use an existing Amazon Cognito identity pool,
+you need to pass the `identityPool` and the `role` that associated with your identity pool.
 
 ```ts
 import * as identitypool from '@aws-cdk/aws-cognito-identitypool';
