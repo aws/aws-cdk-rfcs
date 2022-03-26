@@ -24,22 +24,23 @@ with just a few lines of code. You can integrate this AppMonitor into your appli
 - [Introduction](#introduction)
   - [App Monitor](#appmonitor)
   - [Authorizer](#authorizer)
+    - [Create a New Cognito ID pool](#use-an-existing-amazon-cognito-identity-pool)
     - [Existing Cognito ID pool](#use-an-existing-amazon-cognito-identity-pool)
     - [Third-party provider](#use-third-party-provider)
   - [Code Snippet](#code-snippet)
-    - [RUM web client configuration](#rum-web-client-configuration)
-    - [With s3 deployment](#with-s3-deployment)
 
 ## Introduction
 
-CloudWatch RUM is monitoring tool that can perform real user monitoring to collect
-and view client-side data about your web application performance from actual user sessions in near real time.
+With CloudWatch RUM, you can perform real user monitoring to collect and view client-side data about your web application performance from actual user sessions in near real time. The data that you can visualize and analyze includes page load times, client-side errors, and user behavior. When you view this data, you can see it all aggregated together and also see breakdowns by the browsers and devices that your customers use.
 
-This module supports the ability for users to create CloudWatch RUM and retrieve code snippets on CloudFormation.
+To use RUM, you create an app monitor and provide some information. RUM generates a JavaScript snippet for you to paste into your application. The snippet pulls in the RUM web client code. The RUM web client captures data from a percentage of your application's user sessions, which is displayed in a pre-built dashboard. You can specify what percentage of user sessions to gather data from.  
+For more information, see [Amazon Amazon CloudWatch User Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM.html).
+
+This module supports the ability for users to create CloudWatch RUM and retrieve code snippets.
 
 ## App Monitor
 
-Define an`AppMonitor` in your stack:
+Define an `AppMonitor` in your stack:
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
@@ -49,104 +50,126 @@ const appMonitor = new AppMonitor(this, 'AppMonitor', {
 
 ### Authorizer
 
-By default, when you create a new `AppMonitor` construct, CDK creates a new Amazon Cognito identity pool. This identity pool is used by CloudWatch to...
+To use CloudWatch RUM, your application must have authorization.
 
-#### Use an existing Amazon Cognito identity pool
+You have three options to set up authorization:
 
-If you want to use an existing Amazon Cognito identity pool, you need to pass a `CognitoIdentityPoolAuthorizer` instance.
+- Let CloudWatch RUM create a new Amazon Cognito identity pool for the application. This method requires the least effort to set up. It's the default option.
+The identity pool will contain an unauthenticated identity. This allows the CloudWatch RUM web client to send data to CloudWatch RUM without authenticating the user of the application.
+The Amazon Cognito identity pool has an attached IAM role. The Amazon Cognito unauthenticated identity allows the web client to assume the IAM role that is authorized to send data to CloudWatch RUM.
+- Use an existing Amazon Cognito identity pool. In this case, you must pass the IAM role as well that is attached to the identity pool.
+- Use authentication from an existing identity provider that you have already set up. In this case, you must get credentials from the identity provider and your application must forward these credentials to the RUM web client.
 
-```ts
-import * as iam from '@aws-cdk/aws-iam';
+#### Creates a new Amazon Cognito identity pool
 
-declare const myRole: iam.IRole;
-
-const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'my-website.com',
-  authorizer: new CognitoIdentityPoolAuthorizer({
-    identityPoolId: 'my-user-pool-id',
-    unauthenticatedRole: myRole,
-  }),
-});
-```
-
-#### Use Third-party provider
-
-You can also use a third party authenticator as in `CognitoIdentityPoolAuthorizer`.
-
-```ts
-import * as iam from '@aws-cdk/aws-iam';
-
-declare const myRole: iam.IRole;
-
-const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'my-website.com',
-  authorizer: new ThirdPartyAuthorizer({
-    role: myRole,
-  }),
-});
-```
-
-### Code Snippet
-
-AppMonitor generates a code snippet that looks like to create on the management console. Note, however,
-that unlike the management console, the code snippets do not have `<script>` tags because the CDK expects them to be automatically embedded in the application.
+By default, AppMonitor creates a new Amazon Cognito identity pool.
+This is the simplest option to set up, and if you choose this no further setup steps are required. You must have administrative permissions to use this option. For more information, see [IAM policies to use CloudWatch RUM](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM-permissions.html).
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
   domain: 'my-website.com'
 });
+```
 
-// (function(n,i,v,r,s,c,x,z){...})
-const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
+#### Use an existing Amazon Cognito identity pool
+
+If you want to use an existing Amazon Cognito identity pool, you need to pass the `identityPool` and the IAM role that is attached to the identity pool.
+
+
+```ts
+import * as identitypool from '@aws-cdk/aws-cognito-identitypool';
+import * as iam from '@aws-cdk/aws-iam';
+
+const identityPool = identitypool.IdentityPool.fromIdentityPoolId(this, 'IdentityPool', 'us-east-1:dj2823ryiwuhef937');
+const role = iam.Role.fromRoleName(this, 'Role', 'UnauthenticatedRole');
+
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
+  domain: 'my-website.com',
+  identityPool,
+  role
+});
+```
+
+#### Use Third-party provider
+
+If you want to use third-party authenticator, you can only pass a `role` that associated with your identity pool.
+
+```ts
+import * as iam from '@aws-cdk/aws-iam';
+
+declare const role: iam.IRole;
+
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
+  domain: 'my-website.com',
+  role
+});
+```
+
+Add the following to your application to have it pass the credentials from your provider to CloudWatch RUM. Insert the line so that it runs after a user has signed in to your application and the application has received the credentials to use to access AWS.
+
+```ts
+cwr('setAwsCredentials', {/* Credentials or CredentialProvider */});
+```
+
+For more information, see [Amazon Amazon CloudWatch User Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM-get-started-authorization.html#CloudWatch-RUM-get-started-authorization-thirdparty) for to use Third-party provider.
+
+### Code Snippet
+
+AppMonitor generates code snippet as you would create them on the management console, except that there are no `<script>` tags. The reason there is no `<script>` tag in the code snippet is that it is intended to be loaded as a regular JavaScript file from your HTML document. This allows you to seamlessly embed RUM into your application without having to rewrite your HTML document when deploying.
+
+The code snippet is integrated with [aws-s3-deployment](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-s3-deployment-readme.html), so you can deploy directly to any S3 bucket using BucketDeployment.
+
+An example of deploying a static website and code snippet to S3 is shown below.
+
+```ts
+import * as s3 from '@aws-cdk/aws-s3';
+import * as s3deployment from '@aws-cdk/aws-s3-deployment';
+
+declare const myWebSiteBucket: s3.Bucket;
+const website = s3deployment.Source.asset(path.join(__dirname, 'my-website'));
+
+const appMonitor = new AppMonitor(this, 'AppMonitor', {
+  domain: 'my-website.com'
+});
+
+new s3deployment.BucketDeployment(this, 'BucketDeployment', {
+  sources: [website, appMonitor.codeSnippet],
+  destinationBucket: myWebSiteBucket
+});
+```
+
+Your website must load the code snippet with the object key (default: `rum.js`).
+
+```html
+<html>
+  <head>
+    <!-- add next line -->
+    <script src="/rum.js" async="true"></script>
+  </head>
+  <body>Hello RUM</body>
+</html>
+```
+
+If you want to use another name for will generates code snippet, then you can pass the `objectKey` to `addCodeSnippet` argument.
+
+```ts
+declare const appMonitor: AppMonitor;
+
+const codeSnippet = appMonitor.addCodeSnippet('CodeSnippet', {
+  objectKey: 'my-rum.js'
+});
 ```
 
 #### RUM web client configuration
 
-If you want to use [RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments)
- (e.g applicationVersion, cookieAttributes), you can pass options to `generateCodeSnippet` argument.
+If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md) (e.g pageIdFormat), you can pass options to `addCodeSnippet` argument.
 
 ```ts
-const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: 'my-website.com',
-});
+declare const appMonitor: AppMonitor;
 
-const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet', {
+const codeSnippet = appMonitor.addCodeSnippet('CodeSnippet', {
   applicationVersion: '1.1.0',
-  configuration: {
-    pageIdFormat: PageIdFormat.HASH
-  }
-});
-```
-
-#### With s3 deployment
-
-By using S3 Deployment, you can automate embedding the CloudWatch RUM code snippet into your application.
-This example is shortest way that deploy site using RUM.
-
-```ts
-import * as s3 from '@aws-cdk/aws-s3';
-import * as s3deploy from '@aws-cdk/aws-s3-deployment';
-
-const webSiteBucket = new s3.Bucket(this, 'WebSiteBucket', {
-  publicReadAccess: true,
-  websiteIndexDocument: 'index.html'
-});
-const appMonitor = new AppMonitor(this, 'AppMonitor', {
-  domain: webSiteBucket.bucketWebsiteDomainName
-});
-const codeSnippet = appMonitor.generateCodeSnippet('CodeSnippet');
-const rumJs = s3deploy.Source.data('rum.js', codeSnippet);
-
-const html = s3deploy.Source.data('index.html', `<html>
-  <head>
-    <script src="/rum.js" async="true"></script>
-  </head>
-  <body>Hello RUM</body>
-</html>`);
-
-new s3deploy.BucketDeployment(this, 'BucketDeployment', {
-  sources: [html, rumJs],
-  destinationBucket: webSiteBucket
+  pageIdFormat: PageIdFormat.HASH,
 });
 ```
 
@@ -201,20 +224,26 @@ Downsides of implementing this feature is to need update of RUM web client type 
 
 #### Type Definitions
 
-##### `AppMonitor`
+`AppMonitor`
 
 ```ts
 interface IAppMonitor extends IResource {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
-  generateCodeSnippet(id: string, props?: CodeSnippetProps): string;
+  readonly codeSnippet: CodeSnippet;
+  addCodeSnippet(id: string, props?: CodeSnippetProps): CodeSnippet;
 }
 
 abstract class AppMonitorBase extends Resource implements IAppMonitor {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
+  readonly codeSnippet: CodeSnippet;
   constructor(scope: Construct, id: string, props: ResourceProps);
-  generateCodeSnippet(id: string, props?: CodeSnippetProps): string;
+  addCodeSnippet(id: string, props?: CodeSnippetProps): CodeSnippet;
+}
+
+class AppMonitor extends AppMonitorBase {
+  constructor(scope: Construct, id: string, props: AppMonitorProps);
 }
 
 enum Telemetry {
@@ -223,7 +252,12 @@ enum Telemetry {
   HTTP = 'http',
 }
 
-interface AppMonitorConfiguration {
+interface AppMonitorProps {
+  readonly domain: string;
+  readonly appMonitorName?: string;
+  readonly identityPool?: identitypool.IIdentityPool;
+  readonly role?: iam.IRole;
+  readonly persistence?: boolean;
   readonly allowCookies?: boolean;
   readonly enableXRay?: boolean;
   readonly excludedPages?: string[];
@@ -232,91 +266,53 @@ interface AppMonitorConfiguration {
   readonly sessionSampleRate?: number;
   readonly telemetries?: Telemetry[];
 }
-
-interface AppMonitorProps {
-  readonly domain: string;
-  readonly appMonitorName: string;
-  readonly authorizer?: IAppMonitorAuthorizer;
-  readonly appMonitorConfiguration?: AppMonitorConfiguration;
-  readonly persistence?: boolean;
-}
-
-class AppMonitor extends AppMonitorBase {
-  public static fromAppMonitorName(scope: Construct, id: string, appMonitorName: string): IAppMonitor;
-  public static fromAppMonitorArn(scope: Construct, id: string, appMonitorArn: string): IAppMonitor;
-  constructor(scope: Construct, id: string, props: AppMonitorProps);
-}
 ```
 
-##### `Authorizer`
+`CodeSnippet`
 
 ```ts
-interface IAppMonitorAuthorizer {
-  readonly guestRoleArn?: string;
-  readonly identityPoolId?: string;
-  readonly role: iam.IRole;
+class CodeSnippet implements s3deployment.ISource {
+  readonly value: string;
+  bind(scope: Construct, context?: s3deployment.DeploymentSourceContext): s3deployment.SourceConfig;
 }
 
-interface CognitoIdentityPoolAuthorizerProps {
-  readonly identityPoolId: string;
-  readonly unauthenticatedRole: iam.IRole;
-}
-
-class CognitoIdentityPoolAuthorizer implements IAppMonitorAuthorizer {
-  public readonly identityPoolId: string | undefined;
-  public readonly guestRoleArn: string | undefined;
-  public readonly role: iam.IRole;
-  constructor(props: CognitoIdentityPoolAuthorizerProps);
-}
-
-interface ThirdPartyAuthorizerProps {
-  readonly role: iam.IRole;
-}
-
-class ThirdPartyAuthorizer implements IAppMonitorAuthorizer {
-  public readonly role: iam.IRole;
-  constructor(props: ThirdPartyAuthorizerProps);
-}
-```
-
-##### `CodeSnippetProps` and subtypes
-
-[RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments) modified for jsii.
-This is used to generate advanced code snippets.
-
-```ts
 interface CodeSnippetProps {
+  readonly objectKey?: string;
   readonly namespace?: string
   readonly applicationVersion?: string
   readonly webClientVersion?: string
-  readonly configuration?: WebClientConfiguration
-}
-```
-
-```ts
-interface WebClientConfiguration {
-  readonly allowCookies?: boolean;
-  readonly cookieAttibutes?: CookieAttibute;
+  readonly cookieAttibuteDomain?: string;
+  readonly cookieAttibutePath?: string;
+  readonly cookieAttibuteSameSite?: boolean;
+  readonly cookieAttibuteSecure?: boolean;
+  readonly cookieAttibuteUnique?: boolean;
   readonly disableAutoPageView?: boolean;
   readonly enableRumClient?: boolean;
-  readonly enableXRay?: boolean;
   readonly endpoint?: string;
-  readonly guestRoleArn?: string;
-  readonly identityPoolId?: string;
   readonly pageIdFormat?: PageIdFormat;
   readonly pagesToInclude?: string[];
   readonly pagesToExclude?: string[];
   readonly recordResourceUrl?: boolean;
   readonly sessionEventLimit?: number;
-  readonly sessionSampleRate?: number;
-  readonly telemetries?: Telemetries;
+  readonly telemetries?: ITelemetryConfig[];
 }
 
-interface ErrorsTelemetry {
+interface ITelemetryConfig {
+  config(): any;
+}
+
+class TelemetryConfig {
+  static errors(options?: ErrorsOptions): ITelemetryConfig;
+  static http(options?: HttpOptions): ITelemetryConfig;
+  static performance(options?: PerformanceOptions): ITelemetryConfig;
+  static interaction(options?: InteractionOptions): ITelemetryConfig;
+}
+
+interface ErrorsOptions {
   readonly stackTraceLength?: number;
 }
 
-interface HttpTelemetry {
+interface HttpOptions {
   readonly urlsToInclude?: string[];
   readonly urlsToExclude?: string[];
   readonly stackTraceLength?: number;
@@ -324,27 +320,12 @@ interface HttpTelemetry {
   readonly addXRayTraceIdHeader?: boolean;
 }
 
-interface InteractionTelemetry {
+interface InteractionOptions {
   readonly events?: any[];
 }
 
-interface PerformanceTelemetry {
+interface PerformanceOptions {
   readonly eventLimit?: number;
-}
-
-interface Telemetries {
-  readonly errors?: ErrorsTelemetry;
-  readonly http?: HttpTelemetry;
-  readonly interaction?: InteractionTelemetry;
-  readonly performance?: PerformanceTelemetry;
-}
-
-interface CookieAttibute {
-  readonly domain?: string;
-  readonly path?: string;
-  readonly sameSite?: boolean;
-  readonly secure?: boolean;
-  readonly unique?: boolean;
 }
 
 enum PageIdFormat {
@@ -360,38 +341,19 @@ enum PageIdFormat {
 classDiagram
   IAppMonitor <|.. AppMonitorBase
   AppMonitorBase <|-- AppMonitor
-  IAppMonitorAuthorizer <-- AppMonitor
-  IAppMonitorAuthorizer <|.. CognitoIdentityPoolAuthorizer
-  IAppMonitorAuthorizer <|.. ThirdPartyAuthorizer
   class IAppMonitor{
     <<interface>>
     +string appMonitorId*
     +string appMonitorArn*
-    +generateCodeSnippet()*
+    +addCodeSnippet()*
   }
   class AppMonitorBase{
     <<abstract>>
     +string appMonitorId
     +string appMonitorArn
-    +generateCodeSnippet()
+    +addCodeSnippet()
   }
   class AppMonitor{
-    +IAppMonitor fromAppMonitorName()$
-    +IAppMonitor fromAppMonitorArn()$
-  }
-  class IAppMonitorAuthorizer{
-    <<interface>>
-    +stringOrUndefined guestRoleArn*
-    +stringOrUndefined identityPoolId*
-    +IRole role*
-  }
-  class CognitoIdentityPoolAuthorizer{
-    +stringOrUndefined guestRoleArn
-    +stringOrUndefined identityPoolId
-    +IRole role
-  }
-  class ThirdPartyAuthorizer{
-    +IRole role
   }
 ```
 
@@ -400,7 +362,7 @@ classDiagram
 To avoid XSS, I implement the following mechanism using a custom resource that can validate the actual value.
 
 1. generate advanced code snippet using
- [RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments) as argument of generateCodeSnippet
+ [RUM web client arguments](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md#arguments) as argument of addCodeSnippet
 2. unspecified configuration defaults to the configuration that can be obtained with rum:GetAppMonitor
 
 This is image.
@@ -408,14 +370,14 @@ This is image.
 ```mermaid
 sequenceDiagram
   actor User
-  User->>generateCodeSnippet: call with RUM web client configuration as option
-  generateCodeSnippet->>GenerateCodeSnippetLambda: call with name and option
-  GenerateCodeSnippetLambda->>AWS: rum:GetAppMonitor
-  AWS-->>GenerateCodeSnippetLambda: AppMonitor
-  GenerateCodeSnippetLambda->>GenerateCodeSnippetLambda: merge option and AppMonitor.Configuration
-  GenerateCodeSnippetLambda->>GenerateCodeSnippetLambda: validate and generate code snippet
-  GenerateCodeSnippetLambda-->>generateCodeSnippet: code snippet
-  generateCodeSnippet-->>User: code snippet
+  User->>addCodeSnippet: call with RUM web client configuration as option
+  addCodeSnippet->>addCodeSnippetLambda: call with name and option
+  addCodeSnippetLambda->>AWS: rum:GetAppMonitor
+  AWS-->>addCodeSnippetLambda: AppMonitor
+  addCodeSnippetLambda->>addCodeSnippetLambda: merge option and AppMonitor.Configuration
+  addCodeSnippetLambda->>addCodeSnippetLambda: validate and generate code snippet
+  addCodeSnippetLambda-->>addCodeSnippet: code snippet
+  addCodeSnippet-->>User: code snippet
 ```
 
 ### Is this a breaking change?
@@ -424,7 +386,7 @@ No.
 
 ### What alternative solutions did you consider?
 
-It is `generateCodeSnippet` method change to `CodeSnippet` construct. Currently, `AppMonitor` have  `generateCodeSnippet` method in my design,
+It is `addCodeSnippet` method change to `CodeSnippet` construct. Currently, `AppMonitor` have  `addCodeSnippet` method in my design,
 but code snippet strings are 1:1 to `CustomResource` so this can be expressed as construct. However, I think this is not intuitive so I designed as method.
 
 ### What are the drawbacks of this solution?
