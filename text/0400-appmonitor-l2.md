@@ -5,7 +5,8 @@
 * **API Bar Raiser**: @madeline-k
 
 The `aws-rum` construct library allows you to create an Amazon CloudWatch RUM AppMonitor
-with just a few lines of code. You can integrate this AppMonitor into your application without manually copy-pasting code snippets from the CloudWatch management console into your application code. This allows users to fully automate deployments use CloudWatch RUM AppMonitor.
+with just a few lines of code. You can integrate this AppMonitor into your application without manually copy-pasting code snippets from
+the CloudWatch management console into your application code. This allows users to fully automate deployments use CloudWatch RUM AppMonitor.
 
 ## Working Backwards
 
@@ -31,9 +32,14 @@ with just a few lines of code. You can integrate this AppMonitor into your appli
 
 ## Introduction
 
-With CloudWatch RUM, you can perform real user monitoring to collect and view client-side data about your web application performance from actual user sessions in near real time. The data that you can visualize and analyze includes page load times, client-side errors, and user behavior. When you view this data, you can see it all aggregated together and also see breakdowns by the browsers and devices that your customers use.
+With CloudWatch RUM, you can perform real user monitoring to collect and view client-side data about your web application performance
+from actual user sessions in near real time. The data that you can visualize and analyze includes page load times,
+client-side errors, and user behavior. When you view this data, you can see it all aggregated together and also see breakdowns
+by the browsers and devices that your customers use.
 
-To use RUM, you create an app monitor and provide some information. RUM generates a JavaScript snippet for you to paste into your application. The snippet pulls in the RUM web client code. The RUM web client captures data from a percentage of your application's user sessions, which is displayed in a pre-built dashboard. You can specify what percentage of user sessions to gather data from.  
+To use RUM, you create an app monitor and provide some information. RUM generates a JavaScript snippet for you to paste into your application.
+The snippet pulls in the RUM web client code. The RUM web client captures data from a percentage of your application's user sessions,
+which is displayed in a pre-built dashboard. You can specify what percentage of user sessions to gather data from.  
 For more information, see [Amazon Amazon CloudWatch User Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM.html).
 
 This module supports the ability for users to create CloudWatch RUM and retrieve code snippets.
@@ -55,15 +61,20 @@ To use CloudWatch RUM, your application must have authorization.
 You have three options to set up authorization:
 
 - Let CloudWatch RUM create a new Amazon Cognito identity pool for the application. This method requires the least effort to set up. It's the default option.
-The identity pool will contain an unauthenticated identity. This allows the CloudWatch RUM web client to send data to CloudWatch RUM without authenticating the user of the application.
-The Amazon Cognito identity pool has an attached IAM role. The Amazon Cognito unauthenticated identity allows the web client to assume the IAM role that is authorized to send data to CloudWatch RUM.
+The identity pool will contain an unauthenticated identity.
+This allows the CloudWatch RUM web client to send data to CloudWatch RUM without authenticating the user of the application.
+The Amazon Cognito identity pool has an attached IAM role.
+The Amazon Cognito unauthenticated identity allows the web client to assume the IAM role that is authorized to send data to CloudWatch RUM.
 - Use an existing Amazon Cognito identity pool. In this case, you must pass the IAM role as well that is attached to the identity pool.
-- Use authentication from an existing identity provider that you have already set up. In this case, you must get credentials from the identity provider and your application must forward these credentials to the RUM web client.
+- Use authentication from an existing identity provider that you have already set up.
+In this case, you must get credentials from the identity provider and your application must forward these credentials to the RUM web client.
 
 #### Creates a new Amazon Cognito identity pool
 
 By default, AppMonitor creates a new Amazon Cognito identity pool.
-This is the simplest option to set up, and if you choose this no further setup steps are required. You must have administrative permissions to use this option. For more information, see [IAM policies to use CloudWatch RUM](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM-permissions.html).
+This is the simplest option to set up, and if you choose this no further setup steps are required.
+You must have administrative permissions to use this option. For more information,
+see [IAM policies to use CloudWatch RUM](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM-permissions.html).
 
 ```ts
 const appMonitor = new AppMonitor(this, 'AppMonitor', {
@@ -74,7 +85,6 @@ const appMonitor = new AppMonitor(this, 'AppMonitor', {
 #### Use an existing Amazon Cognito identity pool
 
 If you want to use an existing Amazon Cognito identity pool, you need to pass the `identityPool` and the IAM role that is attached to the identity pool.
-
 
 ```ts
 import * as identitypool from '@aws-cdk/aws-cognito-identitypool';
@@ -105,19 +115,24 @@ const appMonitor = new AppMonitor(this, 'AppMonitor', {
 });
 ```
 
-Add the following to your application to have it pass the credentials from your provider to CloudWatch RUM. Insert the line so that it runs after a user has signed in to your application and the application has received the credentials to use to access AWS.
+Add the following to your application to have it pass the credentials from your provider to CloudWatch RUM.
+Insert the line so that it runs after a user has signed in to your application and the application has received the credentials to use to access AWS.
 
 ```ts
 cwr('setAwsCredentials', {/* Credentials or CredentialProvider */});
 ```
-
+<!-- markdownlint-disable line-length  -->
 For more information, see [Amazon Amazon CloudWatch User Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM-get-started-authorization.html#CloudWatch-RUM-get-started-authorization-thirdparty) for to use Third-party provider.
+<!-- markdownlint-enable line-length  -->
 
 ### Code Snippet
 
-AppMonitor generates code snippet as you would create them on the management console, except that there are no `<script>` tags. The reason there is no `<script>` tag in the code snippet is that it is intended to be loaded as a regular JavaScript file from your HTML document. This allows you to seamlessly embed RUM into your application without having to rewrite your HTML document when deploying.
+AppMonitor generates code snippet as you would create them on the management console, except that there are no `<script>` tags.
+The reason there is no `<script>` tag in the code snippet is that it is intended to be loaded as a regular JavaScript file from your HTML document.
+This allows you to seamlessly embed RUM into your application without having to rewrite your HTML document when deploying.
 
-The code snippet is integrated with [aws-s3-deployment](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-s3-deployment-readme.html), so you can deploy directly to any S3 bucket using BucketDeployment.
+The code snippet is integrated with [aws-s3-deployment](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-s3-deployment-readme.html),
+so you can deploy directly to any S3 bucket using BucketDeployment.
 
 An example of deploying a static website and code snippet to S3 is shown below.
 
@@ -162,7 +177,8 @@ const codeSnippet = appMonitor.addCodeSnippet('CodeSnippet', {
 
 #### RUM web client configuration
 
-If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md) (e.g pageIdFormat), you can pass options to `addCodeSnippet` argument.
+If you want to use [RUM web client configuration](https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_installation.md)
+(e.g pageIdFormat), you can pass options to `addCodeSnippet` argument.
 
 ```ts
 declare const appMonitor: AppMonitor;
