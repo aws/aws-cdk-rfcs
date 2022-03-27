@@ -247,6 +247,7 @@ Downsides of implementing this feature is to need update of RUM web client type 
 interface IAppMonitor extends IResource {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
+  readonly appMonitorName: string;
   readonly codeSnippet: CodeSnippet;
   addCodeSnippet(id: string, props?: CodeSnippetProps): CodeSnippet;
 }
@@ -254,6 +255,7 @@ interface IAppMonitor extends IResource {
 abstract class AppMonitorBase extends Resource implements IAppMonitor {
   readonly appMonitorId: string;
   readonly appMonitorArn: string;
+  readonly appMonitorName: string;
   readonly codeSnippet: CodeSnippet;
   constructor(scope: Construct, id: string, props: ResourceProps);
   addCodeSnippet(id: string, props?: CodeSnippetProps): CodeSnippet;
@@ -295,9 +297,9 @@ class CodeSnippet implements s3deployment.ISource {
 
 interface CodeSnippetProps {
   readonly objectKey?: string;
-  readonly namespace?: string
-  readonly applicationVersion?: string
-  readonly webClientVersion?: string
+  readonly namespace?: string;
+  readonly applicationVersion?: string;
+  readonly webClientVersion?: string;
   readonly cookieAttibuteDomain?: string;
   readonly cookieAttibutePath?: string;
   readonly cookieAttibuteSameSite?: boolean;
@@ -358,19 +360,29 @@ enum PageIdFormat {
 classDiagram
   IAppMonitor <|.. AppMonitorBase
   AppMonitorBase <|-- AppMonitor
+  ISource <|.. CodeSnippet
+  IAppMonitor -- CodeSnippet
   class IAppMonitor{
     <<interface>>
     +string appMonitorId*
     +string appMonitorArn*
-    +addCodeSnippet()*
+    +string appMonitorName*
+    +CodeSnippet codeSnippet*
+    +CodeSnippet addCodeSnippet()*
   }
   class AppMonitorBase{
     <<abstract>>
     +string appMonitorId
     +string appMonitorArn
-    +addCodeSnippet()
+    +string appMonitorName
+    +CodeSnippet codeSnippet
+    +CodeSnippet addCodeSnippet()
   }
   class AppMonitor{
+  }
+  class CodeSnippet{
+    +string value
+    +SourceConfig bind()
   }
 ```
 
