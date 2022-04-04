@@ -136,6 +136,7 @@ future state of the libraries and to discover projects for contribution.
 [359](https://github.com/aws/aws-cdk-rfcs/issues/359)|[Construct Hub Deny List](https://github.com/aws/aws-cdk-rfcs/blob/master/text/359-construct-hub-deny-list.md)||✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
+[414](https://github.com/aws/aws-cdk-rfcs/issues/414)|[Documentation for DEPRECATED environment variable does not match CDK behavior](https://github.com/aws/aws-cdk-rfcs/issues/414)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
