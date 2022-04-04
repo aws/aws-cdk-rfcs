@@ -30,11 +30,11 @@ you will receive a warning when performing any CLI operation that performs synth
   This API will be removed in the next major release
 ```
 
-There is also an environment variable `DEPRECATED` that you can use to change the behavior of this feature:
+There is also an environment variable `JSII_DEPRECATED` that you can use to change the behavior of this feature:
 
 * Setting that environment variable to the value `quiet` will silence these warnings
   (they will no longer be printed to the stderr stream).
-* Setting that environment variable to the value `error` will instead fail with an exception when any deprecated element is used.
+* Setting that environment variable to the value `fail` will instead fail with an exception when any deprecated element is used.
 * Setting that environment variable to the value `warn` is the same as the default behavior
   (the warnings will be printed to the stderr stream,
   but will not cause errors).
@@ -87,7 +87,7 @@ and thus no longer available to be used by your code.
 
 If you want to make sure your code does not use any deprecated APIs,
 and thus is ready for migrating to CDK `V2`,
-you can set the `DEPRECATED` environment variable to the value `error`,
+you can set the `JSII_DEPRECATED` environment variable to the value `fail`,
 which will make any CDK command that invokes synthesis
 (`cdk synth`, `cdk deploy`, `cdk diff`, etc.)
 fail with an exception if any deprecated element is used.
@@ -138,7 +138,7 @@ Once we have modified JSII and released a new version of it,
 we will need to use it in the CDK,
 and start compiling CDK with the new option turned on.
 
-We should also modify our CDK test infrastructure to run with the `DEPRECATED`
+We should also modify our CDK test infrastructure to run with the `JSII_DEPRECATED`
 environment variable set to `error` by default,
 to prevent our own code from using deprecated APIs which would cause warnings to be shown to users.
 We should come up with a nice API that allows individual tests that are explicitly checking deprecated API(s)
@@ -153,7 +153,7 @@ No.
 1. Requires changes to JSII.
 2. Does not allow distinguishing between the customer using deprecated APIs,
   and the library code using deprecated APIs.
-  We can alleviate this problem by making the value of the `DEPRECATED` environment variable `error` by default in our tests,
+  We can alleviate this problem by making the value of the `JSII_DEPRECATED` environment variable `fail` by default in our tests,
   which will be a forcing function for us to stop using deprecated APIs in the Construct Library.
 3. We only report APIs actually hit during a particular execution of the code
   (while missing statically declared but not actually invoked deprecated elements -
@@ -258,7 +258,7 @@ The high-level implementation plan is:
   Effort estimate (development + code review): 2 weeks.
 
 2. Set the new option during building CDK,
-  make sure the tests use the `DEPRECATED` environment variable set to `error`,
+  make sure the tests use the `JSII_DEPRECATED` environment variable set to `fail`,
   and provide an API for tests to opt-out of that on a case-by-case basis.
   Effort estimate (development + code review): 1 week.
 
