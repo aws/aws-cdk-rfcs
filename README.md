@@ -15,6 +15,7 @@ future state of the libraries and to discover projects for contribution.
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
 ---|-----|-----|------
+[52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0052-resource-importing-support.md)||👷 implementing
 [77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/issues/77)||👷 implementing
 [340](https://github.com/aws/aws-cdk-rfcs/issues/340)|[Kinesis Data Firehose Delivery Stream L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0340-firehose-l2.md)|[@BenChaimberg](https://github.com/BenChaimberg)|👷 implementing
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
@@ -47,7 +48,6 @@ future state of the libraries and to discover projects for contribution.
 [40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||💡 proposed
 [48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)||💡 proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
-[52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0052-resource-importing-support.md)||💡 proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||💡 proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizen3031593](https://github.com/kaizen3031593)|💡 proposed
@@ -99,11 +99,11 @@ future state of the libraries and to discover projects for contribution.
 [374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[Modularizing jsii](https://github.com/aws/aws-cdk-rfcs/issues/374)||💡 proposed
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
-[388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||💡 proposed
 [394](https://github.com/aws/aws-cdk-rfcs/issues/394)|[WAF v2 L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/394)||💡 proposed
 [399](https://github.com/aws/aws-cdk-rfcs/issues/399)|[SSM Document as Objects](https://github.com/aws/aws-cdk-rfcs/issues/399)||💡 proposed
 [400](https://github.com/aws/aws-cdk-rfcs/issues/400)|[RUM AppMonitor L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/400)||💡 proposed
 [402](https://github.com/aws/aws-cdk-rfcs/issues/402)|[Glue DataBrew L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/402)||💡 proposed
+[418](https://github.com/aws/aws-cdk-rfcs/issues/418)|[CDK Operator CLI](https://github.com/aws/aws-cdk-rfcs/issues/418)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
@@ -134,6 +134,7 @@ future state of the libraries and to discover projects for contribution.
 [328](https://github.com/aws/aws-cdk-rfcs/issues/328)|[polyglot assert library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0328-polyglot-assert.md)|[@nija-at](https://github.com/nija-at)|✅ done
 [353](https://github.com/aws/aws-cdk-rfcs/issues/353)|[Constructs for all public CloudFormation resources and modules](https://github.com/aws/aws-cdk-rfcs/blob/master/text/353-cfn-registry-constructs.md)||✅ done
 [359](https://github.com/aws/aws-cdk-rfcs/issues/359)|[Construct Hub Deny List](https://github.com/aws/aws-cdk-rfcs/blob/master/text/359-construct-hub-deny-list.md)||✅ done
+[388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 <!--END_TABLE-->
