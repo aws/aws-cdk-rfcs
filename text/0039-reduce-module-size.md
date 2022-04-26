@@ -147,19 +147,18 @@ that each category of files contributes to the size of aws-cdk-lib.
 Note: The percentages do not add up to 100. Some files, e.g. various .json
 files, are excluded and contribute very little to the size. 
 
-| Category                       | Percentage of aws-cdk-lib size |
-| ------------------------------ | ------------------------------ |
-| .jsii files                    | 41.64%                         |
-| Source Maps (.js.map)          | 21.93%                         |
-| Lambda Layer zipfiles          | 15.48%                         |
-| Javascript code (.js)          | 9.17%                          |
-| Type Declaration files (.d.ts) | 9.15%                          |
-| README, etc (.md)              | 0.76%                          |
-| bundled npm dependencies       | 0.69%                          |
-| .ts-fixture                    | 0.37%                          |
-| .jsiirc                        | 0.36%                          |
-
-
+| Category                       | Size (MB)                      | Percentage of aws-cdk-lib size |
+| ------------------------------ | ------------------------------ | ------------------------------ |
+| .jsii files                    | 100.35                         | 41.64%                         |
+| Source Maps (.js.map)          | 52.85                          | 21.93%                         |
+| Lambda Layer zipfiles          | 37.31                          | 15.48%                         |
+| Javascript code (.js)          | 22.10                          | 9.17%                          |
+| Type Declaration files (.d.ts) | 22.05                          | 9.15%                          |
+| README, etc (.md)              | 1.83                           | 0.76%                          |
+| bundled npm dependencies       | 1.66                           | 0.69%                          |
+| .ts-fixture                    | 0.89                           | 0.37%                          |
+| .jsiirc                        | 0.87                           | 0.36%                          |
+| Total                          | 239.91                         | 99.55%                         |
 
 ### Why should we _not_ do this?
 
