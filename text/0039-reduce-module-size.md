@@ -220,11 +220,6 @@ potential size.
 
 #### Lambda Layer Zip Files
 
-For the Lambda Layers, there are two different approaches we will take to remove
-these large assets from `aws-cdk-lib`.
-
-###### Separate npm packages
-
 Use separate npm packages for each `lambda-layer-X` module, which the CDK CLI
 will automatically install if not already present in the `node_modules`
 directory. With this solution, customers will not have to figure out when they
@@ -294,8 +289,8 @@ Practically, this solution breaks down into the following steps.
     4. AWS CDK v2 will automatically pick up new minor versions of the above
        libraries.
 
-_What about customers executing their CDK apps in network-restricted
-environments?_
+##### What about customers executing their CDK apps in network-restricted
+environments?
 
 This question raises an important drawback of this solution. It will result in a
 breaking change for customers who are using these Lambda Layers in
@@ -313,7 +308,7 @@ publish a CLI notice directly to potentially-affected customers of this change
 well in advance of releasing it. And, advertise the change in advance of release
 on the aws-cdk GitHub repository.
 
-_What about customers in ADC regions?_
+##### What about customers in ADC regions?
 
 Today, there is a mechanism for publishing AWS CDK into ADC (Amazon Dedicated
 Cloud) regions. This mechanism includes bundling the direct dependencies of the
