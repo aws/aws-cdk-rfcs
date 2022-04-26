@@ -542,15 +542,15 @@ complex, and the detailed design is out of scope of this document.
 5. The estimate for the 130 MiB increase in size for future Lambda Layer zips
    was calculated from these estimates:
 
-   |                             | Size (KiB) | Source                                        |
-   | --------------------------- | ---------- | --------------------------------------------- |
-   | kubectl                     | 23740      | actual size of zip in released package        |
-   | awscli                      | 13088      | ''                                            |
-   | node-proxy-agent            | 1400       | ''                                            |
-   | 3 minor versions of kubectl | 71220      | = 3 * 23740                                   |
-   | boto3                       | 133        | [pypi](https://pypi.org/project/boto3/#files) |
-   | awscliv2                    | 13088      | estimate same size as awscli                  |
-   | aws-sdk                     | 9876       | estimate same size as awscli                  |
-   | --------------------------- | ---------- | --------------------------------------------- |
-   | Total KiB                   | 132545     |                                               |
-   | Total MiB                   | 129.44     | = 132545 / 1024                               |
+   |                             | Size (KiB) | Source                                           |
+   | --------------------------- | ---------- | ------------------------------------------------ |
+   | kubectl                     | 23740      | actual size of zip in released package           |
+   | awscli                      | 13088      | ''                                               |
+   | node-proxy-agent            | 1400       | ''                                               |
+   | 3 minor versions of kubectl | 71220      | = 3 * 23740                                      |
+   | boto3                       | 133        | [pypi](https://pypi.org/project/boto3/#files)    |
+   | awscliv2                    | 13088      | estimate same size as awscli                     |
+   | aws-sdk                     | 9876       | zipped size of aws-sdk after a fresh npm install |
+   | --------------------------- | ---------- | ---------------------------------------------    |
+   | Total KiB                   | 132545     |                                                  |
+   | Total MiB                   | 129.44     | = 132545 / 1024                                  |
