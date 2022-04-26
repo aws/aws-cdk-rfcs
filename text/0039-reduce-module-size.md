@@ -32,8 +32,8 @@ environment, you might encounter problems upgrading to this version. ‼️
 * aws_eks.FargateProfile
 * aws_eks.Cluster
 
-Please see [#1234](https://github.com/aws/aws-cdk/issues/1234) for more details, and
-comment on the issue if you run into problems.
+Please see [#1234](https://github.com/aws/aws-cdk/issues/1234) for more details,
+and comment on the issue if you run into problems.
 
 * **CLI Notices**:
 
@@ -47,7 +47,8 @@ Body: We’ve identified that you are using at least one of the [List of
 Constructs] Constructs. If you are running your aws-cdk commands in an
 environment that does not have access to npm, then you will need to make a
 change to make version 2.x of [npm packages] available in your environment. See
-[#1234](https://github.com/aws/aws-cdk/issues/1234) for details and instructions.
+[#1234](https://github.com/aws/aws-cdk/issues/1234) for details and
+instructions.
 
 | List of Constructs                                                                        | npm packages                                                                                            |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -140,9 +141,9 @@ before customers start complaining about it.
 
 There are some large assets contributing to the size of aws-cdk-lib, like .jsii
 files, and zip files of dependencies used in custom resources. However, the
-library also contains a huge volume of source code now that `aws-cdk-lib` combines
-231 (and increasing) CDK modules. The table below breaks down the percentage
-that each category of files contributes to the size of aws-cdk-lib.
+library also contains a huge volume of source code now that `aws-cdk-lib`
+combines 231 (and increasing) CDK modules. The table below breaks down the
+percentage that each category of files contributes to the size of aws-cdk-lib.
 
 Note: The percentages do not add up to 100. Some files, e.g. various .json
 files, are excluded and contribute very little to the size.
@@ -243,28 +244,29 @@ original .ts files. We will remove the source maps from the released package.
 
 #### Lambda Layer Zip Files
 
-For the Lambda Layers, there are two different approaches we will take to remove these large assets from `aws-cdk-lib`.
+For the Lambda Layers, there are two different approaches we will take to remove
+these large assets from `aws-cdk-lib`.
 
 ###### Separate npm packages
 
-Use separate npm packages for each `lambda-layer-X` module, which the CDK CLI will
-automatically install if not already present in the `node_modules` directory. With
-this solution, customers will not have to figure out when they do or do not need
-to include these dependencies, and they will not be required to access a public
-endpoint besides npm during runtime of their CDK apps. Practically, this
-solution breaks down into the following steps.
+Use separate npm packages for each `lambda-layer-X` module, which the CDK CLI
+will automatically install if not already present in the `node_modules`
+directory. With this solution, customers will not have to figure out when they
+do or do not need to include these dependencies, and they will not be required
+to access a public endpoint besides npm during runtime of their CDK apps.
+Practically, this solution breaks down into the following steps.
 
 1. Publish v2 compatible versions of `@aws-cdk/lambda-layer-aws-cli`,
    `@aws-cdk/lambda-layer-aws-cli`, `@aws-cdk/lambda-layer-node-proxy-agent` as
    their own npm packages, separate from `aws-cdk-lib`.
-2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to not bundle these large
-   dependencies themselves, but instead reference the appropriate `Layer` class
-   from the packages in step 1. We will need to do something clever here to make
-   sure customers do not have IDE or compilation errors before the CDK CLI has
-   an opportunity to download and install the lambda layer packages.
+2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to not bundle these
+   large dependencies themselves, but instead reference the appropriate `Layer`
+   class from the packages in step 1. We will need to do something clever here
+   to make sure customers do not have IDE or compilation errors before the CDK
+   CLI has an opportunity to download and install the lambda layer packages.
 3. Modify the CDK CLI to verify that the correct packages are available in the
-   `node_modules` directory during synthesis. If they are not available, download
-   them from npm.
+   `node_modules` directory during synthesis. If they are not available,
+   download them from npm.
 4. We need to keep the dependencies up-to-date to get security updates and new
    features. Each Lambda Layer will need to be treated slightly differently.
     1. `@aws-cdk/lambda-layer-kubectl` - This one has two dependencies to keep
@@ -276,16 +278,18 @@ solution breaks down into the following steps.
                need to as well.
             2. The public API for this package will have a `KubectlV1_20Layer`
                class for each currently supported minor version of kubernetes.
-            3. A weekly automated task will check the [Kubernetes API](https://dl.k8s.io/release/stable.txt) for a new patch version of
-               each currently supported minor version, and automatically update
-               the existing `Layer` class to use the new patch version. This
-               update will be performed with an auto-approved PR.
+            3. A weekly automated task will check the [Kubernetes
+               API](https://dl.k8s.io/release/stable.txt) for a new patch
+               version of each currently supported minor version, and
+               automatically update the existing `Layer` class to use the new
+               patch version. This update will be performed with an
+               auto-approved PR.
             4. A weekly automated task will check for new supported minor
                versions of kubectl. If there is one, a PR will be automatically
                created which creates a new `Layer` class in the API for the new
                minor version. A human will need to review this one.
-        2. [helm](https://helm.sh/) is also included in each Lambda Layer in this
-           package
+        2. [helm](https://helm.sh/) is also included in each Lambda Layer in
+           this package
             1. Helm has a somewhat complicated version support policy documented
                [here](https://helm.sh/docs/topics/version_skew/).
             2. For each `KubectlVX_YLayer` class, we will include the latest
@@ -314,7 +318,8 @@ solution breaks down into the following steps.
     4. AWS CDK v2 will automatically pick up new minor versions of the above
        libraries.
 
-_What about customers executing their CDK apps in network-restricted environments?_
+_What about customers executing their CDK apps in network-restricted
+environments?_
 
 This question raises an important drawback of this solution. It will result in a
 breaking change for customers who are using these Lambda Layers in
@@ -427,9 +432,9 @@ Each category of files has different alternative solutions to reduce the size.
    workaround for these customers.
 2. Download the the zip files from a static website in the framework
    implementation of each `Layer` class, instead of in the CLI. We should not do
-   this, because the CLI already has logic for managing credentials and
-   making network calls. This type of work should remain in the CLI, and not
-   overflow into the framework.
+   this, because the CLI already has logic for managing credentials and making
+   network calls. This type of work should remain in the CLI, and not overflow
+   into the framework.
 3. Use regionalized S3 buckets to host the zip files. With this solution, the
    customer does not need to download the zip file and then re-upload it to
    their deployment environment. Instead, the Lambda Layer or Lambda Function
