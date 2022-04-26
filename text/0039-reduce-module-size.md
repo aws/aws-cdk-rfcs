@@ -289,18 +289,17 @@ Practically, this solution breaks down into the following steps.
     4. AWS CDK v2 will automatically pick up new minor versions of the above
        libraries.
 
-##### What about customers executing their CDK apps in network-restricted
-environments?
+##### What about customers executing their CDK apps in network-restricted environments?
 
 This question raises an important drawback of this solution. It will result in a
 breaking change for customers who are using these Lambda Layers in
 network-restricted environments. If customers are able to use the CDK CLI in
 their network-restricted environments, then it is reasonable to assume they were
-able to acquire the aws-cdk package from npm somehow. This implies customers
-will be able to also acquire the lambda layer packages if we publish them
-separately to npm. They can either make sure the necessary packages are already
-installed and available in the `node_modules` directory where their CDK
-applications are executed, or include them in a private npm registry.
+able to acquire the `aws-cdk` package from npm somehow. This implies customers
+will be able to also acquire the lambda layer packages from npm. They can either
+make sure the necessary packages are already installed and available in the
+`node_modules` directory where their CDK applications are executed, or include
+them in a private npm registry.
 
 Unfortunately, there is no way to remove these large files and host them
 somewhere else without causing a breaking change for these customers. We will
@@ -321,9 +320,9 @@ package in ADC regions, the right dependencies will already be present in the
 
 There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
 JSII runtime to work for any non-NodeJS languages. And, to enable code and
-documentation generation from the published npm package. Today, they makeup 42 %
+documentation generation from the published npm package. Today, they makeup 42%
 of the package size. And in the future, after adding more Lambda Layers would
-still compose 30%.
+compose 30%.
 
 We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
 currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
@@ -358,7 +357,7 @@ type-checking in IDEs still has readable type references.
 
 Yes, see CHANGELOG and CLI Notice sections. The solution for the Lambda Layer
 zip files will have a breaking change for customers executing CDK applications
-that use the Lambda Layers in some network-restricted environments. All
+that use the Lambda Layers in some network-restricted environments. Most
 alternative solutions will also have a breaking change for these customers. The
 proposed solution will have the easiest migration path for these customers.
 
@@ -438,7 +437,7 @@ Each category of files has different alternative solutions to reduce the size.
    package, this solution also has another benefit of addressing pain points
    with CDK publishing custom resources into customer accounts. The lambda-layer
    APIs on their own are also valuable to customers. If we are able to remove
-   their dependencies within aws-cdk-lib by removing the custom resources, then
+   their dependencies within `aws-cdk-lib` by removing the custom resources, then
    we could vend these libraries separately for customers who use them
    explicitly. We are not going to pursue this solution right now, since this
    will increase the operational burden on our team by an unknown amount. The
