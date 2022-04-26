@@ -12,13 +12,13 @@ reduces the size of the package to under 100 MB.
 
 ## Working Backwards
 
-
 * **CHANGELOG**:
 
 feat(aws-cdk-lib): Reduce aws-cdk-lib package size.
 
 ‼️ If you use any of the following Constructs in a network-restricted
 environment, you might encounter problems upgrading to this version. ‼️
+
 * lambda_layer_kubectl.KubectlLayer
 * aws_eks.KubectlProvider
 * aws_eks.HelmChart
@@ -159,7 +159,7 @@ files, are excluded and contribute very little to the size.
 | .ts-fixture                    | 0.37%                          |
 | .jsiirc                        | 0.36%                          |
 
- ### Why is the package going to be large in the future?
+### Why is the package going to be large in the future?
 
 The CDK team is currently blocked on adding more Lambda Layer zip files to the
 AWS CDK framework, because adding them would dramatically increase the size of
@@ -250,8 +250,6 @@ There are three zip files included in the `aws-cdk-lib` package. They are listed
 | lambda-layer-kubectl/lib/layer.zip          | [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl), [helm](https://helm.sh/) | [eks.KubectlProvider](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-eks/lib/kubectl-provider.ts#L68)                                                                                                                                                                                                                                                                                                                                                                                                      | 23.18     | 9.61 %                    |
 | lambda-layer-awscli/lib/layer.zip           | [awscli](https://pypi.org/project/awscli/)                                           | [eks.KubectlProvider](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-eks/lib/kubectl-provider.ts#L68), [s3-deployment.BucketDeployment](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-s3-deployment/lib/bucket-deployment.ts#L241), [stepfunctions-tasks.EmrContainersStartJobRun](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-stepfunctions-tasks/lib/emrcontainers/start-job-run.ts#L90) | 12.78     | 5.29                      |
 | lambda-layer-node-proxy-agent/lib/layer.zip | [node-proxy-agent](https://www.npmjs.com/package/proxy-agent)                        | [eks.ClusterResourceProvider](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-eks/lib/cluster-resource-provider.ts#L60)                                                                                                                                                                                                                                                                                                                                                                                     | 1.37      | 0.57                      |
-
-
 
 ##### Solution
 
@@ -530,7 +528,6 @@ resource. This is the best option to start with, because it uses the largest
 Lambda-Layer dependency, kubectl. And, because there is the most customer demand
 for this custom resource to be removed from CDK. This work will be quite
 complex, and the detailed design is out of scope of this document.
-
 
 ## Appendix A - Notes on size calculations
 
