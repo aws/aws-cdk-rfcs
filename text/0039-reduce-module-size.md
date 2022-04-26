@@ -550,9 +550,10 @@ complex, and the detailed design is out of scope of this document.
    | kubectl                     | 23740      | actual size of zip in released package        |
    | awscli                      | 13088      | ''                                            |
    | node-proxy-agent            | 1400       | ''                                            |
-   | 3 minor versions of kubectl |            | = 3 * 23740                                   |
-   | boto3                       | 132.5      | [pypi](https://pypi.org/project/boto3/#files) |
+   | 3 minor versions of kubectl | 71220      | = 3 * 23740                                   |
+   | boto3                       | 133        | [pypi](https://pypi.org/project/boto3/#files) |
    | awscliv2                    | 13088      | estimate same size as awscli                  |
+   | aws-sdk                     | 9876       | estimate same size as awscli                  |
    | --------------------------- | ---------- | --------------------------------------------- |
    | Total KiB                   | 132545     |                                               |
    | Total MiB                   | 129.44     | = 132545 / 1024                               |
