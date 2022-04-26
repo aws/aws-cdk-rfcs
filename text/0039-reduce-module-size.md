@@ -341,14 +341,11 @@ is out of scope for this document, and will probably need its own RFC.
 
 #### .jsii Files
 
-There are two .jsii files bundled in `aws-cdk-lib` for the JSII runtime to work
-for any non-NodeJS languages. And, to enable code and documentation generation
-from the published npm package.
-
-|                 | Size (MB) | Percentage of aws-cdk-lib |
-| --------------- | --------- | ------------------------- |
-| .jsii.tabl.json | 55.1      | 22.84 %                   |
-| .jsii           | 45.35     | 18.8 %                    |
+There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
+JSII runtime to work for any non-NodeJS languages. And, to enable code and
+documentation generation from the published npm package. Today, they makeup 42 %
+of the package size. And in the future, after adding more Lambda Layers would
+still compose 30%.
 
 We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
 currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
@@ -362,7 +359,7 @@ it will also decompress this file as needed.
 These files currently makeup 22% of the total size of `aws-cdk-lib`. Source map
 files map from the transformed source to the original source. In the case of
 `aws-cdk-lib`, these are not actually useful today, since we do not ship the
-original .ts files. We will remove the source maps from the released package.
+original `.ts` files. We will remove the source maps from the released package.
 
 #### Javascript Files (.js)
 
