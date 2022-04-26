@@ -7,8 +7,8 @@
 The AWS CDK v2 framework library, `aws-cdk-lib` contains all packages from AWS
 CDK v1 in one monolithic package. While this is a great value for customers in
 making dependency management much easier, it has also resulted in increasing the
-unpacked npm package size to 238 MB, at the time of writing. This feature
-reduces the size of the package to 100 MB.
+unpacked npm package size to 234 MB, at the time of writing. This feature
+reduces the size of the package to under 100 MB.
 
 ## Working Backwards
 
@@ -74,12 +74,12 @@ RFC pull request):
 Today, we are launching a smaller version of the AWS CDK v2 framework library,
 `aws-cdk-lib`. And, a change in the AWS CDK v2 CLI to support this smaller
 framework library. Before today’s release, the unpacked size of this package was
-238 MB. This large size prevented many customers from being able to use it, and
+234 MB. This large size prevented many customers from being able to use it, and
 caused performance problems for others. It also prevented the CDK team from
-releasing certain new features. Now, the size of the package is 100 MB. This
-smaller version also has a mechanism for adding new lambda-layer dependencies.
-Because of this launch, the AWS CDK framework will be able to add support for
-more versions of kubectl, and awscliv2.
+releasing certain new features. Now, the size of the package is less than 100
+MB. This smaller version also has a mechanism for adding new lambda-layer
+dependencies. Because of this launch, the AWS CDK framework will be able to add
+support for more versions of kubectl, and awscliv2.
 
 ### Why should I use this feature?
 
@@ -106,7 +106,7 @@ to be addressed.
        host NPM packages do. For example, [Azure
        Artifacts](https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/limits?view=azure-devops)
        has a limit of 500 MB.
-    3. PyPi has an unofficially documented limit of 60 MB
+    3. PyPi has an unofficially documented limit of 60 MB.
 2. A large download size might be problematic for customers with weak internet
    connections or limited bandwidth.
 3. Customers who download and install `aws-cdk-lib` on every CI/CD pipeline run
@@ -131,12 +131,12 @@ package manager size limits, we can request
 [increases](https://github.com/pypa/pypi-support/issues/1642), and those have
 historically been approved. However, publishing a large package is a bad
 practice in the open-source software ecosystem. Even if a customer has no
-technical limitations for adding a ~240 MB dependency to their package, it is a
+technical limitations for adding a 234 MB dependency to their package, it is a
 red flag to them when considering using `aws-cdk-lib`. We should be
 customer-obsessed, and solve the problem of aws-cdk-lib being a huge dependency,
 before customers start complaining about it.
 
-### Why is the package so large?
+### Why is the package so large today?
 
 There are some large assets contributing to the size of aws-cdk-lib, like .jsii
 files, and zip files of dependencies used in custom resources. However, the
@@ -147,18 +147,60 @@ that each category of files contributes to the size of aws-cdk-lib.
 Note: The percentages do not add up to 100. Some files, e.g. various .json
 files, are excluded and contribute very little to the size.
 
-| Category                       | Size (MB)                      | Percentage of aws-cdk-lib size |
-| ------------------------------ | ------------------------------ | ------------------------------ |
-| .jsii files                    | 100.35                         | 41.64%                         |
-| Source Maps (.js.map)          | 52.85                          | 21.93%                         |
-| Lambda Layer zipfiles          | 37.31                          | 15.48%                         |
-| Javascript code (.js)          | 22.10                          | 9.17%                          |
-| Type Declaration files (.d.ts) | 22.05                          | 9.15%                          |
-| README, etc (.md)              | 1.83                           | 0.76%                          |
-| bundled npm dependencies       | 1.66                           | 0.69%                          |
-| .ts-fixture                    | 0.89                           | 0.37%                          |
-| .jsiirc                        | 0.87                           | 0.36%                          |
-| Total                          | 239.91                         | 99.55%                         |
+| Category                       | Percentage of aws-cdk-lib size |
+| ------------------------------ | ------------------------------ |
+| .jsii files                    | 41.64%                         |
+| Source Maps (.js.map)          | 21.93%                         |
+| Lambda Layer zip files         | 15.48%                         |
+| Javascript code (.js)          | 9.17%                          |
+| Type Declaration files (.d.ts) | 9.15%                          |
+| README, etc (.md)              | 0.76%                          |
+| bundled npm dependencies       | 0.69%                          |
+| .ts-fixture                    | 0.37%                          |
+| .jsiirc                        | 0.36%                          |
+
+ ### Why is the package going to be large in the future?
+
+The CDK team is currently blocked on adding more Lambda Layer zip files to the
+AWS CDK framework, because adding them would dramatically increase the size of
+the package. Each of these zips are in a module whose only purpose is to bundle
+a dependency (or two) into a Lambda Layer, which is then used in custom
+resources that are part of the AWS CDK framework.
+
+There are more dependencies like these that need to be added to the framework,
+but we are currently blocked on adding them because they would increase the size
+too much. The current known list is:
+
+1. Additional versions of
+   [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl). This is a
+   pressing problem for customers using the EKS module, who are limited to a
+   single version of the kubectl CLI today.
+2. Additional versions of [awscli](https://pypi.org/project/awscli/). See
+   [issue](https://github.com/aws/aws-cdk/issues/13993).
+3. [Boto3](https://pypi.org/project/boto3/), and
+   [aws-sdk](https://www.npmjs.com/package/aws-sdk). All custom resources in the
+   AWS CDK framework currently rely on whatever version of the AWS SDK that is
+   available in the Lambda runtime by default. To make the custom resources more
+   robust, and allow us to choose the exact version of the AWS SDK used by them,
+   we should bundle these dependencies into each custom resource’s Lambda code.
+
+If we add all of these with the current design, that would increase the size of
+`aws-cdk-lib` by approximately 130 MiB*, and make the Lambda Layers the biggest
+contributor of size at 39%.
+
+*See Appendix A to see where this estimate came from.
+
+| Category                       | Percentage of aws-cdk-lib size |
+| ------------------------------ | ------------------------------ |
+| Lambda Layer zip files         | 38.83%                         |
+| .jsii files                    | 30.14%                         |
+| Source Maps (.js.map)          | 15.87%                         |
+| Javascript code (.js)          | 6.63%                          |
+| Type Declaration files (.d.ts) | 6.62%                          |
+| README, etc (.md)              | 0.55%                          |
+| bundled npm dependencies       | 0.50%                          |
+| .ts-fixture                    | 0.27%                          |
+| .jsiirc                        | 0.26%                          |
 
 ### Why should we _not_ do this?
 
@@ -209,33 +251,7 @@ There are three zip files included in the `aws-cdk-lib` package. They are listed
 | lambda-layer-awscli/lib/layer.zip           | [awscli](https://pypi.org/project/awscli/)                                           | [eks.KubectlProvider](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-eks/lib/kubectl-provider.ts#L68), [s3-deployment.BucketDeployment](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-s3-deployment/lib/bucket-deployment.ts#L241), [stepfunctions-tasks.EmrContainersStartJobRun](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-stepfunctions-tasks/lib/emrcontainers/start-job-run.ts#L90) | 12.78     | 5.29                      |
 | lambda-layer-node-proxy-agent/lib/layer.zip | [node-proxy-agent](https://www.npmjs.com/package/proxy-agent)                        | [eks.ClusterResourceProvider](https://github.com/aws/aws-cdk/blob/5a895a308ef2b6e66a330038c7ae35ea95a0fba4/packages/%40aws-cdk/aws-eks/lib/cluster-resource-provider.ts#L60)                                                                                                                                                                                                                                                                                                                                                                                     | 1.37      | 0.57                      |
 
-Each of these zips are in a module whose only purpose is to bundle a dependency
-(or two) into a Lambda Layer, which is then used in custom resources that are
-part of the AWS CDK framework. Together, they contribute ~16% of the size of
-aws-cdk-lib. If these zips are removed, the size of aws-cdk-lib would be ~196
-MB.
 
-There are more dependencies like these that need to be added to the framework,
-but we are currently blocked on adding them because they would increase the size
-too much. The current known list is:
-
-1. Additional versions of
-   [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl). This is a
-   pressing problem for customers using the EKS module, who are limited to a
-   single version of the kubectl CLI today.
-2. Additional versions of [awscli](https://pypi.org/project/awscli/). See
-   [issue](https://github.com/aws/aws-cdk/issues/13993).
-3. [Boto3](https://pypi.org/project/boto3/), and
-   [aws-sdk](https://www.npmjs.com/package/aws-sdk). All custom resources in the
-   AWS CDK framework currently rely on whatever version of the AWS SDK that is
-   available in the Lambda runtime by default. To make the custom resources more
-   robust, and allow us to choose the exact version of the AWS SDK used by them,
-   we should bundle these dependencies into each custom resource’s Lambda code.
-
-If we add all of these with the current design, that would increase the size of `aws-cdk-lib` by ~91 MB*.
-
-*Rough calculation: 91 MB = 9.2 MB (aws-sdk) + <1 MB (boto3) + 3x23.18 MB (three
-more versions of kubectl) + 12.78 MB (one more major version of awscli)
 
 ##### Solution
 
@@ -514,3 +530,29 @@ resource. This is the best option to start with, because it uses the largest
 Lambda-Layer dependency, kubectl. And, because there is the most customer demand
 for this custom resource to be removed from CDK. This work will be quite
 complex, and the detailed design is out of scope of this document.
+
+
+## Appendix A - Notes on size calculations
+
+1. All size calculations in this document were done based on
+   `aws-cdk-lib@2.19.0`.
+2. `du -k` was used to get sizes in Kb (Kebibytes), for calculating the
+   percentages.
+3. The total size of the package according to `du` that was used to calculate
+   percentages is 247008 Kb.
+4. The total size of 234 MB that is referenced in the doc, is the unpacked size
+   of version 2.19.0 according to npm.
+5. The estimate for the 130 MiB increase in size for future Lambda Layer zips
+   was calculated from these estimates:
+
+   |                             | Size (KiB) | Source                                        |
+   | --------------------------- | ---------- | --------------------------------------------- |
+   | kubectl                     | 23740      | actual size of zip in released package        |
+   | awscli                      | 13088      | ''                                            |
+   | node-proxy-agent            | 1400       | ''                                            |
+   | 3 minor versions of kubectl |            | = 3 * 23740                                   |
+   | boto3                       | 132.5      | [pypi](https://pypi.org/project/boto3/#files) |
+   | awscliv2                    | 13088      | estimate same size as awscli                  |
+   | --------------------------- | ---------- | --------------------------------------------- |
+   | Total KiB                   | 132545     |                                               |
+   | Total MiB                   | 129.44     | = 132545 / 1024                               |
