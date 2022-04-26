@@ -482,12 +482,12 @@ this category:
 ### What are the drawbacks of this solution?
 
 1. This solution does not address the fact that the size of aws-cdk-lib
-increases with each weekly release, because we are adding code and new features
-at a rapid pace, and AWS is always adding new services and features. It is
-possible that after all of the proposed solutions are implemented, that the
-package size will still continue to increase past a reasonable size. At that
-point, we might need to invent more creative solutions to reduce the size, or
-implement some of the alternative solutions outlined here.
+   increases with each weekly release, because we are adding code and new
+   features at a rapid pace, and AWS is always adding new services and features.
+   It is possible that after all of the proposed solutions are implemented, that
+   the package size will still continue to increase past a reasonable size. At
+   that point, we might need to invent more creative solutions to reduce the
+   size, or implement some of the alternative solutions outlined here.
 
 2. This solution has a breaking change for some customers. Until we get some
    feedback from the community on this RFC, we don't know for sure if the
