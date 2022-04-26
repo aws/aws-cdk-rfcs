@@ -320,7 +320,7 @@ package in ADC regions, the right dependencies will already be present in the
 
 There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
 JSII runtime to work for any non-NodeJS languages. And, to enable code and
-documentation generation from the published npm package. Today, they makeup 42%
+documentation generation from the published npm package. Today, they make up 42%
 of the package size. And in the future, after adding more Lambda Layers would
 compose 30%.
 
