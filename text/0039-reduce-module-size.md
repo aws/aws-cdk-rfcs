@@ -321,8 +321,8 @@ package in ADC regions, the right dependencies will already be present in the
 There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
 JSII runtime to work for any non-NodeJS languages. And, to enable code and
 documentation generation from the published npm package. Today, they make up 42%
-of the package size. And in the future, after adding more Lambda Layers would
-compose 30%.
+of the package size. And in the future, after adding more Lambda Layers, the .jsii files would
+compose 30% of the package size.
 
 We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
 currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
