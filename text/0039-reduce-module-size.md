@@ -322,23 +322,6 @@ lambda-layer packages to this process, and when customers use the aws-cdk npm
 package in ADC regions, the right dependencies will already be present in the
 `node_modules` directory.
 
-###### Upstream custom resources that consume the lambda layers
-
-The second, and more long-term part of this solution will be to upstream the
-custom resources where the zip files are used. Since all of these zip files are
-used in custom resources, another way to remove them from `aws-cdk-lib` is to
-remove the custom resources themselves. We will create Uluru resources that are
-available in the CloudFormation public registry under the namespace `AWS::CDK`.
-This will increase the operational burden on our team by an unknown amount. We
-should start with a single custom resource, and evaluate the maintenance cost of
-this as it is implemented. In addition to reducing the size of the package, this
-solution also has another benefit of addressing pain points with CDK publishing
-custom resources into customer accounts. The lambda-layer APIs on their own, are
-also valuable to customers. If we are able to remove their dependencies within
-aws-cdk-lib by removing the custom resources, then we could vend these libraries
-separately for customers who use them explicitly. The details of this solution
-is out of scope for this document, and will probably need its own RFC.
-
 #### .jsii Files
 
 There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
@@ -452,6 +435,21 @@ Each category of files has different alternative solutions to reduce the size.
    requires them. This is not a reasonable solution, since it would too
    confusing for customers to know when they need these peer dependencies, and
    when they do not.
+5. Upstream the custom resources where the zip files are used. Since all of
+   these zip files are used in custom resources, another way to remove them from
+   `aws-cdk-lib` is to remove the custom resources themselves. We will create
+   Uluru resources that are available in the CloudFormation public registry
+   under the namespace `AWS::CDK`. In addition to reducing the size of the
+   package, this solution also has another benefit of addressing pain points
+   with CDK publishing custom resources into customer accounts. The lambda-layer
+   APIs on their own are also valuable to customers. If we are able to remove
+   their dependencies within aws-cdk-lib by removing the custom resources, then
+   we could vend these libraries separately for customers who use them
+   explicitly. We are not going to pursue this solution right now, since this
+   will increase the operational burden on our team by an unknown amount. The
+   proposed solution does not prevent us from also pursuing this in the
+   future. This would remove the need for customers in network-restricted to
+   perform a workaround to get these dependencies.
 
 #### Javascript Files (.js)
 
@@ -497,10 +495,6 @@ implement some of the alternative solutions outlined here.
 
 ### What is the high-level project plan?
 
-This project will have two phases:
-
-#### Phase 1 — Remove large files & minify as much as possible
-
 Each category of files can be worked on in parallel and addressed separately.
 The highest priority category to start with will be the Lambda Layer zip files.
 Even though the Lambda Layers are not the biggest contributor to size today,
@@ -515,16 +509,8 @@ The lowest priority category will be removing the Source Map files and minifying
 the Type Declaration files. The final size of the package after this work is
 still to be determined.
 
-Work for phase 1 will be tracked on [this project
+Work will be tracked on [this project
 board](https://github.com/aws/aws-cdk/projects/15).
-
-#### Phase 2 — Upstream custom resources as Uluru resources
-
-For this phase, we will start by upstreaming the `KubectlProvider` custom
-resource. This is the best option to start with, because it uses the largest
-Lambda-Layer dependency, kubectl. And, because there is the most customer demand
-for this custom resource to be removed from CDK. This work will be quite
-complex, and the detailed design is out of scope of this document.
 
 ## Appendix A - Notes on size calculations
 
