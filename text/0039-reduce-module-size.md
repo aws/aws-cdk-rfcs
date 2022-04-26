@@ -160,7 +160,7 @@ files, are excluded and contribute very little to the size.
 | .ts-fixture                    | 0.37%                          |
 | .jsiirc                        | 0.36%                          |
 
-### Why is the package going to be large in the future?
+### Why is the package going to be larger in the future?
 
 The CDK team is currently blocked on adding more Lambda Layer zip files to the
 AWS CDK framework, because adding them would dramatically increase the size of
