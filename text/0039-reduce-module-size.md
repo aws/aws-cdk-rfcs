@@ -98,7 +98,7 @@ improvements in the download times.
 There are many reasons this is an issue for customers. The following items need
 to be addressed.
 
-1. The package managers that aws-cdk-lib is published on have real or
+1. The package managers that `aws-cdk-lib` is published on have real or
    recommended filesize limits. For example:
     1. The v2 release currently gets this warning when publishing for Go. `Go:
        remote: warning: File awscdk/jsii/aws-cdk-lib-2.17.0.tgz is 55.42 MB;
@@ -134,16 +134,16 @@ historically been approved. However, publishing a large package is a bad
 practice in the open-source software ecosystem. Even if a customer has no
 technical limitations for adding a 234 MB dependency to their package, it is a
 red flag to them when considering using `aws-cdk-lib`. We should be
-customer-obsessed, and solve the problem of aws-cdk-lib being a huge dependency,
-before customers start complaining about it.
+customer-obsessed, and solve the problem of `aws-cdk-lib` being a huge
+dependency, before customers start complaining about it.
 
 ### Why is the package so large today?
 
-There are some large assets contributing to the size of aws-cdk-lib, like .jsii
-files, and zip files of dependencies used in custom resources. However, the
-library also contains a huge volume of source code now that `aws-cdk-lib`
-combines 231 (and increasing) CDK modules. The table below breaks down the
-percentage that each category of files contributes to the size of aws-cdk-lib.
+There are some large assets contributing to the size of `aws-cdk-lib`, like
+.jsii files, and zip files of dependencies used in custom resources. The library
+also contains a huge volume of source code now that `aws-cdk-lib` combines 231
+(and increasing) CDK modules. The table below breaks down the percentage that
+each category of files contributes to the size of aws-cdk-lib.
 
 Note: The percentages do not add up to 100. Some files, e.g. various .json
 files, are excluded and contribute very little to the size.
@@ -169,8 +169,8 @@ a dependency (or two) into a Lambda Layer, which is then used in custom
 resources that are part of the AWS CDK framework.
 
 There are more dependencies like these that need to be added to the framework,
-but we are currently blocked on adding them because they would increase the size
-too much. The current known list is:
+but we are currently blocked on adding them with the current design because they
+would increase the size too much. The current known list is:
 
 1. Additional versions of
    [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl). This is a
@@ -215,32 +215,8 @@ positive impact.
 
 There are different categories of files contributing to the size of aws-cdk-lib,
 and each category will have it’s own solution. The following sections cover the
-top five categories in size contribution in order from largest to smallest.
-
-#### .jsii Files
-
-There are two .jsii files bundled in `aws-cdk-lib` for the JSII runtime to work
-for any non-NodeJS languages. And, to enable code and documentation generation
-from the published npm package.
-
-|                 | Size (MB) | Percentage of aws-cdk-lib |
-| --------------- | --------- | ------------------------- |
-| .jsii.tabl.json | 55.1      | 22.84 %                   |
-| .jsii           | 45.35     | 18.8 %                    |
-
-We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
-currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
-the JSII runtime, and Construct Hub. NodeJS JSII runtimes don't need to use
-either file, and non-NodeJS runtimes would decompress the .jsii file when
-needed. Construct Hub generates documentation from the .jsii.tabl.json file, and
-it will also decompress this file as needed.
-
-#### Source Map Files (.js.map)
-
-These files currently makeup 22% of the total size of `aws-cdk-lib`. Source map
-files map from the transformed source to the original source. In the case of
-`aws-cdk-lib`, these are not actually useful today, since we do not ship the
-original .ts files. We will remove the source maps from the released package.
+top five categories in size contribution in order from largest to smallest
+potential size.
 
 #### Lambda Layer Zip Files
 
@@ -363,6 +339,31 @@ aws-cdk-lib by removing the custom resources, then we could vend these libraries
 separately for customers who use them explicitly. The details of this solution
 is out of scope for this document, and will probably need its own RFC.
 
+#### .jsii Files
+
+There are two .jsii files bundled in `aws-cdk-lib` for the JSII runtime to work
+for any non-NodeJS languages. And, to enable code and documentation generation
+from the published npm package.
+
+|                 | Size (MB) | Percentage of aws-cdk-lib |
+| --------------- | --------- | ------------------------- |
+| .jsii.tabl.json | 55.1      | 22.84 %                   |
+| .jsii           | 45.35     | 18.8 %                    |
+
+We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
+currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
+the JSII runtime, and Construct Hub. NodeJS JSII runtimes don't need to use
+either file, and non-NodeJS runtimes would decompress the .jsii file when
+needed. Construct Hub generates documentation from the .jsii.tabl.json file, and
+it will also decompress this file as needed.
+
+#### Source Map Files (.js.map)
+
+These files currently makeup 22% of the total size of `aws-cdk-lib`. Source map
+files map from the transformed source to the original source. In the case of
+`aws-cdk-lib`, these are not actually useful today, since we do not ship the
+original .ts files. We will remove the source maps from the released package.
+
 #### Javascript Files (.js)
 
 The Javascript files make up about 10% of the overall package size. Today, they
@@ -380,7 +381,11 @@ type-checking in IDEs still has readable type references.
 
 ### Is this a breaking change?
 
-Yes, see CHANGELOG and CLI Notice sections.
+Yes, see CHANGELOG and CLI Notice sections. The solution for the Lambda Layer
+zip files will have a breaking change for customers executing CDK applications
+that use the Lambda Layers in some network-restricted environments. All
+alternative solutions will also have a breaking change for these customers. The
+proposed solution will have the easiest migration path for these customers.
 
 ### What alternative solutions did you consider?
 
