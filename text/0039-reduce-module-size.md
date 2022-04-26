@@ -15,7 +15,7 @@ reduces the size of the package to 100 MB.
 
 * **CHANGELOG**:
 
-feat(aws-cdk-lib): Reduce aws-cdk-lib package size. 
+feat(aws-cdk-lib): Reduce aws-cdk-lib package size.
 
 ‼️ If you use any of the following Constructs in a network-restricted
 environment, you might encounter problems upgrading to this version. ‼️
@@ -32,8 +32,8 @@ environment, you might encounter problems upgrading to this version. ‼️
 * aws_eks.FargateProfile
 * aws_eks.Cluster
 
-Please see https://github.com/aws/aws-cdk/issues/1234 for more details, and
-comment on the issue if you run into problems. 
+Please see [#1234](https://github.com/aws/aws-cdk/issues/1234) for more details, and
+comment on the issue if you run into problems.
 
 * **CLI Notices**:
 
@@ -47,7 +47,7 @@ Body: We’ve identified that you are using at least one of the [List of
 Constructs] Constructs. If you are running your aws-cdk commands in an
 environment that does not have access to npm, then you will need to make a
 change to make version 2.x of [npm packages] available in your environment. See
-https://github.com/aws/aws-cdk/issues/1234 for details and instructions.
+[#1234](https://github.com/aws/aws-cdk/issues/1234) for details and instructions.
 
 | List of Constructs                                                                        | npm packages                                                                                            |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -95,7 +95,7 @@ improvements in the download times.
 ### Why is a large package a problem? Why are we doing this?
 
 There are many reasons this is an issue for customers. The following items need
-to be addressed. 
+to be addressed.
 
 1. The package managers that aws-cdk-lib is published on have real or
    recommended filesize limits. For example:
@@ -105,19 +105,19 @@ to be addressed.
     2. NPM itself does not have a package size limit, but other services that
        host NPM packages do. For example, [Azure
        Artifacts](https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/limits?view=azure-devops)
-       has a limit of 500 MB. 
+       has a limit of 500 MB.
     3. PyPi has an unofficially documented limit of 60 MB
 2. A large download size might be problematic for customers with weak internet
-   connections or limited bandwidth. 
+   connections or limited bandwidth.
 3. Customers who download and install `aws-cdk-lib` on every CI/CD pipeline run
    may be frustrated to spend resources frequently downloading a large package.
-4. AWS Lambda limits the size of your function code to 250 MB. 
+4. AWS Lambda limits the size of your function code to 250 MB.
 5. The AWS Lambda limit for all uploaded assets for a Function is 75 GB. If a
    customer is using Lambda Versions, and wants to maintain a Version for every
    version they have published, they might end up hitting this limit because of
    the large size of `aws-cdk-lib`.
 6. The developer experience of using `aws-cdk-lib` in an IDE might be slower in
-   some cases. 
+   some cases.
 7. The CDK project is currently blocked from including more ‘large
    dependencies’, such as multiple version of kubectl, multiple version of the
    AWS CLI, and dedicated versions of the AWS SDK for use in custom resources.
@@ -142,10 +142,10 @@ There are some large assets contributing to the size of aws-cdk-lib, like .jsii
 files, and zip files of dependencies used in custom resources. However, the
 library also contains a huge volume of source code now that `aws-cdk-lib` combines
 231 (and increasing) CDK modules. The table below breaks down the percentage
-that each category of files contributes to the size of aws-cdk-lib. 
+that each category of files contributes to the size of aws-cdk-lib.
 
 Note: The percentages do not add up to 100. Some files, e.g. various .json
-files, are excluded and contribute very little to the size. 
+files, are excluded and contribute very little to the size.
 
 | Category                       | Size (MB)                      | Percentage of aws-cdk-lib size |
 | ------------------------------ | ------------------------------ | ------------------------------ |
@@ -257,10 +257,10 @@ solution breaks down into the following steps.
    dependencies themselves, but instead reference the appropriate `Layer` class
    from the packages in step 1. We will need to do something clever here to make
    sure customers do not have IDE or compilation errors before the CDK CLI has
-   an opportunity to download and install the lambda layer packages. 
+   an opportunity to download and install the lambda layer packages.
 3. Modify the CDK CLI to verify that the correct packages are available in the
    `node_modules` directory during synthesis. If they are not available, download
-   them from npm. 
+   them from npm.
 4. We need to keep the dependencies up-to-date to get security updates and new
    features. Each Lambda Layer will need to be treated slightly differently.
     1. `@aws-cdk/lambda-layer-kubectl` - This one has two dependencies to keep
@@ -275,20 +275,20 @@ solution breaks down into the following steps.
             3. A weekly automated task will check the [Kubernetes API](https://dl.k8s.io/release/stable.txt) for a new patch version of
                each currently supported minor version, and automatically update
                the existing `Layer` class to use the new patch version. This
-               update will be performed with an auto-approved PR. 
+               update will be performed with an auto-approved PR.
             4. A weekly automated task will check for new supported minor
                versions of kubectl. If there is one, a PR will be automatically
                created which creates a new `Layer` class in the API for the new
-               minor version. A human will need to review this one. 
+               minor version. A human will need to review this one.
         2. [helm](https://helm.sh/) is also included in each Lambda Layer in this
            package
             1. Helm has a somewhat complicated version support policy documented
-               [here](https://helm.sh/docs/topics/version_skew/). 
+               [here](https://helm.sh/docs/topics/version_skew/).
             2. For each `KubectlVX_YLayer` class, we will include the latest
                available version of Helm which is compatible with that version
-               of Kubernetes. 
+               of Kubernetes.
             3. A weekly automated task will update the minor and patch versions
-               of helm within the supported ranges. 
+               of helm within the supported ranges.
             4. The automated task that checks for new supported minor versions
                of kubectl, will also attempt to figure out what is the latest
                version of helm compatible with that version of kubectl. This
@@ -299,9 +299,9 @@ solution breaks down into the following steps.
        version.
         1. This package will have two APIs: `AwsCliLayer`, and `AwsCliV2Layer`.
         2. Automatically check for new minor and patch versions from Pypi -
-           awscli (https://pypi.org/project/awscli/), awscliv2
-           (https://pypi.org/project/awscliv2/). Each update will result in a
-           minor version bump of this package. 
+           [awscli](https://pypi.org/project/awscli/),
+           [awscliv2](https://pypi.org/project/awscliv2/). Each update will
+           result in a minor version bump of this package.
     3. `@aws-cdk/lambda-layer-node-proxy-agent` - New minor versions will
        automatically be picked up and available with a minor version bump of the
        library.
@@ -320,7 +320,7 @@ able to acquire the aws-cdk package from npm somehow. This implies customers
 will be able to also acquire the lambda layer packages if we publish them
 separately to npm. They can either make sure the necessary packages are already
 installed and available in the `node_modules` directory where their CDK
-applications are executed, or include them in a private npm registry. 
+applications are executed, or include them in a private npm registry.
 
 Unfortunately, there is no way to remove these large files and host them
 somewhere else without causing a breaking change for these customers. We will
@@ -352,13 +352,13 @@ custom resources into customer accounts. The lambda-layer APIs on their own, are
 also valuable to customers. If we are able to remove their dependencies within
 aws-cdk-lib by removing the custom resources, then we could vend these libraries
 separately for customers who use them explicitly. The details of this solution
-is out of scope for this document, and will probably need its own RFC. 
+is out of scope for this document, and will probably need its own RFC.
 
 #### Javascript Files (.js)
 
 The Javascript files make up about 10% of the overall package size. Today, they
 are already minified in the released package. There is not much else that can be
-done to make them smaller. 
+done to make them smaller.
 
 #### Type Declaration Files (.d.ts)
 
@@ -367,7 +367,7 @@ Minifying is the process of removing new-lines and whitespace characters from
 the files. The 20 MB number was collected by removing all new-line and
 whitespace characters. In reality, we will need to do something slightly more
 sophisticated and keep whitespace in documentation comments, so that
-type-checking in IDEs still has readable type references. 
+type-checking in IDEs still has readable type references.
 
 ### Is this a breaking change?
 
@@ -434,7 +434,7 @@ Each category of files has different alternative solutions to reduce the size.
    maintenance burden of keeping up with deploying these artifacts and keeping
    them up to date in every AWS region is too high. This solution is the same as
    the one described in this
-   [comment](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612). 
+   [comment](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612).
 4. Separate packages that `aws-cdk-lib` peer depends on. With this solution,
    customers do not need to include the large `lambda-layer-X` packages in their
    dependencies unless they are actually using one of the Constructs that
@@ -465,7 +465,7 @@ this category:
    dependency tree for their CDK apps and libraries. We might consider this in
    the future as a logical way of breaking up the library into multiple
    components, if we are not able to keep the size under control with other
-   solutions described in this document. 
+   solutions described in this document.
 2. Invent a new way of generating this code that has a smaller footprint. This
    could be a huge undertaking, and needs a lot more investigation into whether
    there are possible solutions for this.
@@ -484,10 +484,9 @@ implement some of the alternative solutions outlined here.
    feedback from the community on this RFC, we don't know for sure if the
    proposed migration for those customers is reasonable.
 
-
 ### What is the high-level project plan?
 
-This project will have two main phases:
+This project will have two phases:
 
 #### Phase 1 — Remove large files & minify as much as possible
 
@@ -504,9 +503,9 @@ implemented, the the aws-cdk-lib unpacked npm package size will be about 100 MB.
 The lowest priority category will be removing the Source Map files and minifying
 the Type Declaration files. The final size of the package after this work is
 still to be determined.
- 
-Work for phase 1 will be tracked on this project board:
-https://github.com/aws/aws-cdk/projects/15 
+
+Work for phase 1 will be tracked on [this project
+board](https://github.com/aws/aws-cdk/projects/15).
 
 #### Phase 2 — Upstream custom resources as Uluru resources
 
