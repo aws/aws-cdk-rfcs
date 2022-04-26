@@ -43,10 +43,10 @@ using. We will define separate notices for each different scenario.
 Title: (aws-cdk-lib): upcoming change in packaging structure might require
 action to upgrade
 
-Body: We’ve identified that you are using at least one of the <List of
-Constructs> Constructs. If you are running your aws-cdk commands in an
+Body: We’ve identified that you are using at least one of the [List of
+Constructs] Constructs. If you are running your aws-cdk commands in an
 environment that does not have access to npm, then you will need to make a
-change to make version 2.x of <npm packages> available in your environment. See
+change to make version 2.x of [npm packages] available in your environment. See
 https://github.com/aws/aws-cdk/issues/1234 for details and instructions.
 
 | List of Constructs                                                                        | npm packages                                                                                            |
@@ -103,8 +103,8 @@ to be addressed.
        remote: warning: File awscdk/jsii/aws-cdk-lib-2.17.0.tgz is 55.42 MB;
        this is larger than GitHub's recommended maximum file size of 50.00 MB`
     2. NPM itself does not have a package size limit, but other services that
-       host NPM packages do. For example, [Azure Artifacts]
-       (https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/limits?view=azure-devops)
+       host NPM packages do. For example, [Azure
+       Artifacts](https://docs.microsoft.com/en-us/azure/devops/artifacts/reference/limits?view=azure-devops)
        has a limit of 500 MB. 
     3. PyPi has an unofficially documented limit of 60 MB
 2. A large download size might be problematic for customers with weak internet
@@ -127,20 +127,20 @@ to be addressed.
 
 Most of these above issues have workarounds. For running CDK apps in Lambda, you
 can use a Docker image for your Lambda code, and the limit becomes 10GB. For
-package manager size limits, we can request [increases]
-(https://github.com/pypa/pypi-support/issues/1642), and those are typically
-approved. However, publishing a large package is a bad practice in the
-open-source software ecosystem. Even if a customer has no technical limitations
-for adding a ~240 MB dependency to their package, it is a red flag to them when
-considering using `aws-cdk-lib`. We should be customer-obsessed, and solve the
-problem of aws-cdk-lib being a huge dependency, before customers start
-complaining about it.
+package manager size limits, we can request
+[increases](https://github.com/pypa/pypi-support/issues/1642), and those have
+historically been approved. However, publishing a large package is a bad
+practice in the open-source software ecosystem. Even if a customer has no
+technical limitations for adding a ~240 MB dependency to their package, it is a
+red flag to them when considering using `aws-cdk-lib`. We should be
+customer-obsessed, and solve the problem of aws-cdk-lib being a huge dependency,
+before customers start complaining about it.
 
 ### Why is the package so large?
 
 There are some large assets contributing to the size of aws-cdk-lib, like .jsii
 files, and zip files of dependencies used in custom resources. However, the
-library also contains a huge volume of source code now that aws-cdk-lib combines
+library also contains a huge volume of source code now that `aws-cdk-lib` combines
 231 (and increasing) CDK modules. The table below breaks down the percentage
 that each category of files contributes to the size of aws-cdk-lib. 
 
@@ -163,9 +163,11 @@ files, are excluded and contribute very little to the size.
 
 ### Why should we _not_ do this?
 
-The main reason to not do this is that it will inevitably break about the
-monolothic `aws-cdk-lib` package in some manner. But, we can't keep everything in one
-place, and reduce the size enough to have a significant positive impact.
+The main reason to not do this is that it will inevitably break up the
+monolothic `aws-cdk-lib` package in some manner, and we will lose some of the
+wonderful simplicity of releasing and using a single package. But, we can't keep
+everything in one place, and reduce the size enough to have a significant
+positive impact.
 
 ### What is the technical solution (design) of this feature?
 
@@ -200,7 +202,7 @@ original .ts files. We will remove the source maps from the released package.
 
 #### Lambda Layer Zip Files
 
-There are three zip files included in the `aws-cdk-lib package`. They are listed in the table below.
+There are three zip files included in the `aws-cdk-lib` package. They are listed in the table below.
 
 | Filename                                    | Includes                                                                             | Usage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Size (MB) | Percentage of aws-cdk-lib |
 | ------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------- |
@@ -432,8 +434,8 @@ Each category of files has different alternative solutions to reduce the size.
    hosted by us in the same region as their deployment environment. The
    maintenance burden of keeping up with deploying these artifacts and keeping
    them up to date in every AWS region is too high. This solution is the same as
-   the one described in this [comment]
-   (https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612). 
+   the one described in this
+   [comment](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612). 
 4. Separate packages that `aws-cdk-lib` peer depends on. With this solution,
    customers do not need to include the large `lambda-layer-X` packages in their
    dependencies unless they are actually using one of the Constructs that
