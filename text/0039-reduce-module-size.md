@@ -432,7 +432,7 @@ Each category of files has different alternative solutions to reduce the size.
 5. Upstream the custom resources where the zip files are used. Since all of
    these zip files are used in custom resources, another way to remove them from
    `aws-cdk-lib` is to remove the custom resources themselves. We will create
-   Uluru resources that are available in the CloudFormation public registry
+   AWS resources that are available in the CloudFormation public registry
    under the namespace `AWS::CDK`. In addition to reducing the size of the
    package, this solution also has another benefit of addressing pain points
    with CDK publishing custom resources into customer accounts. The lambda-layer
