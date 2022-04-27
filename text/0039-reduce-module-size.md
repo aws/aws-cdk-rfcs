@@ -78,15 +78,15 @@ framework library. Before today’s release, the unpacked size of this package w
 234 MB. This large size prevented many customers from being able to use it, and
 caused performance problems for others. It also prevented the CDK team from
 releasing certain new features. Now, the size of the package is less than 100
-MB. This smaller version also has a mechanism for adding new lambda-layer
+MB. This smaller version also has a mechanism for adding new Lambda Layer
 dependencies. Because of this launch, the AWS CDK framework will be able to add
 support for more versions of kubectl, and awscliv2.
 
 ### Why should I use this feature?
 
 You should upgrade your dependencies on `aws-cdk-lib` to get the benefits of a
-smaller package size. If you use `aws-cdk-lib` in a lambda function, now you can
-include more code and dependencies before hitting the lambda function code size
+smaller package size. If you use `aws-cdk-lib` in a Lambda function, now you can
+include more code and dependencies before hitting the Lambda function code size
 limit of 250 MB. If you use `aws-cdk-lib` in your CI/CD pipelines and are
 frequently downloading it with a fresh npm install, you will see performance
 improvements in the download times.
@@ -234,7 +234,7 @@ Practically, this solution breaks down into the following steps.
    large dependencies themselves, but instead reference the appropriate `Layer`
    class from the packages in step 1. We will need to do something clever here
    to make sure customers do not have IDE or compilation errors before the CDK
-   CLI has an opportunity to download and install the lambda layer packages.
+   CLI has an opportunity to download and install the packages.
 3. Modify the CDK CLI to verify that the correct packages are available in the
    `node_modules` directory during synthesis. If they are not available,
    download them from npm.
@@ -296,7 +296,7 @@ breaking change for customers who are using these Lambda Layers in
 network-restricted environments. If customers are able to use the CDK CLI in
 their network-restricted environments, then it is reasonable to assume they were
 able to acquire the `aws-cdk` package from npm somehow. This implies customers
-will be able to also acquire the lambda layer packages from npm. They can either
+will be able to also acquire the `@aws-cdk/lambda-layer-X` packages from npm. They can either
 make sure the necessary packages are already installed and available in the
 `node_modules` directory where their CDK applications are executed, or include
 them in a private npm registry.
@@ -312,7 +312,7 @@ on the aws-cdk GitHub repository.
 Today, there is a mechanism for publishing AWS CDK into ADC (Amazon Dedicated
 Cloud) regions. This mechanism includes bundling the direct dependencies of the
 CDK and publishing them into the ADC regions, e.g. `constructs`. We will add the
-lambda-layer packages to this process, and when customers use the aws-cdk npm
+`@aws-cdk/lambda-layer-X` packages to this process, and when customers use the aws-cdk npm
 package in ADC regions, the right dependencies will already be present in the
 `node_modules` directory.
 
@@ -435,7 +435,7 @@ Each category of files has different alternative solutions to reduce the size.
    AWS resources that are available in the CloudFormation public registry
    under the namespace `AWS::CDK`. In addition to reducing the size of the
    package, this solution also has another benefit of addressing pain points
-   with CDK publishing custom resources into customer accounts. The lambda-layer
+   with CDK publishing custom resources into customer accounts. The `XXLayer`
    APIs on their own are also valuable to customers. If we are able to remove
    their dependencies within `aws-cdk-lib` by removing the custom resources, then
    we could vend these libraries separately for customers who use them
