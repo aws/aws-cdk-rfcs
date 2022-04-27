@@ -173,8 +173,8 @@ well as from their consumers.
 
 Separating the mono-repository into multiple repositories will help ensure we
 maintain backwards compatibility between individual packages, and reduce the
-risk of creating codependent packages (different repositories need to be
-released independenlty, so dependencies can only flow in an asyclic manner).
+risk of creating co-dependent packages (different repositories need to be
+released independently, so dependencies can only flow in an acyclic manner).
 This will also make it easier for new contributors to approach *jsii*, as they
 will be able to focus strictly on one package, instead of having the entire
 constellation in their working set.
