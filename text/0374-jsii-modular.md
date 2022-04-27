@@ -153,6 +153,14 @@ of the *jsii* constellation of packages. This will allow breaking changes to be
 introduced in parts of the ecosystem without bumping the major version of the
 rest of packages.
 
+In particular, it is currently difficult to introduce breaking changes to the
+compiler (such as: moving to a more recent version of TypeScript, adding new
+compile-time validations that break existing code, removing behaviors such as
+the peer dependencies update which are no longer desirable, dropping support for
+older runtime versions, etc...), as bumping the major version of all packages
+implies fragmenting the entire ecosystem (between what's been upgraded, and what
+has not been upgraded).
+
 This will improve our pace of innovation, as we will hence be able to introduce
 a new major version of any part of the ecosystem wihtout necessarily requiring
 all downstream consumers to migrate all at once.
