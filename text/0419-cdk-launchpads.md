@@ -194,65 +194,88 @@ Those compliance rules are then deployed as
 [CloudFormation Hooks](https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/hooks.html),
 which means it's impossible to deploy a CDK application into a given environment that violates any compliance rule defined for it.
 
+When importing the Launchpad into your CDK app (see below),
+the Compliance rules get imported as well,
+meaning they will be evaluated at `synth` time in addition to at deploy time,
+to provide developers the quickest possible feedback loop on whether their apps are compliant or not.
+
 Compliance rules can be defined in JSON/YAML directly:
 
 ```json
 {
   "launchpad": {
     "compliance": {
-      "cfn-guard": {
-        "common": [
-          "let s3_buckets = Resources.[ Type == /S3::Bucket/ ]"
-        ],
-         "rules": {
-           "s3_bucket_name_encryption_check": {
-             "$when": "%s3_buckets !empty",
-           "%s3_buckets": {
-            "Properties": {
-              "BucketName": "== /^MyCompanyPrefix/",
-                "BucketEncryption.ServerSideEncryptionConfiguration[]": {
-                  "ServerSideEncryptionByDefault.SSEAlgorithm": "IN ['aws:KMS']"
+      "cfn-guard": [
+        {
+          "common": [
+            "let s3_buckets = Resources.[ Type == /S3::Bucket/ ]"
+          ],
+          "rules": {
+            "s3_bucket_name_encryption_check": {
+              "$when": "%s3_buckets !empty",
+              "%s3_buckets": {
+                "Properties": {
+                  "BucketName": "== /^MyCompanyPrefix/",
+                  "BucketEncryption.ServerSideEncryptionConfiguration[]": {
+                    "ServerSideEncryptionByDefault.SSEAlgorithm": "IN ['aws:KMS']"
+                  }
                 }
               }
             }
           }
         }
-      }
+      ]
     }
   }
 }
 ```
 
-Using CDK, you can either write them directly in the construct's body:
+Or you can reference a file on disk that contains the Guard rules:
+
+```json
+{
+  "launchpad": {
+    "compliance": {
+      "cfn-guard": ["file:my-guard-rules.guard"]
+    }
+  }
+}
+```
+
+Using CDK, you can either write them directly in the construct's body,
+or again reference a file on disk:
 
 ```ts
 new lpads.CfnGuardComplianceRules(launchpad, 'Compliance', {
-  rules: lpads.CfnGuardRules.fromString(`
-    let s3_buckets = Resources.[ Type == /S3::Bucket/ ]
+  rules: [
+    lpads.CfnGuardRules.fromString(`
+      let s3_buckets = Resources.[ Type == /S3::Bucket/ ]
 
-    # Skip the checks if there are no S3 buckets present
-    rule s3_bucket_name_encryption_check when %s3_buckets !empty {
-      %s3_buckets {
-        Properties {
-          # common prefix
-          BucketName == /^MyCompanyPrefix/
+      # Skip the checks if there are no S3 buckets present
+      rule s3_bucket_name_encryption_check when %s3_buckets !empty {
+        %s3_buckets {
+          Properties {
+            # common prefix
+            BucketName == /^MyCompanyPrefix/
 
-          # encryption MUST BE on
-          BucketEncryption.ServerSideEncryptionConfiguration[*] {
-            # only KMS
-            ServerSideEncryptionByDefault.SSEAlgorithm IN ["aws:KMS"]
+            # encryption MUST BE on
+            BucketEncryption.ServerSideEncryptionConfiguration[*] {
+              # only KMS
+              ServerSideEncryptionByDefault.SSEAlgorithm IN ["aws:KMS"]
+            }
           }
         }
       }
-    }
-  `),
+    `),
+    lpads.CfnGuardRules.fromFile('my-guard-rules.guard'),
+  ],
 });
 ```
 
 Or use a special dialect of the CDK that allows creating CFN Guard Rules programmatically:
 
 ```ts
-import * as cguard '@aws-cdk/launchpad-cfn-guard';
+import * as cguard from '@aws-cdk/launchpad-cfn-guard';
 
 const s3Buckets = new cguard.Variable(launchpad, 's3_buckets', cguard.Query.resources({
   type: guard.Expr.matches(/S3::Bucket/),
