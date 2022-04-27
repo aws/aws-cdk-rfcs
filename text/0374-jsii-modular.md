@@ -216,6 +216,27 @@ be noted in the release ntoes.
 
 ### What alternative solutions did you consider?
 
+#### Bring-your-own TypeScript version
+
+One of the main rationales for this change is to enable the use of new
+TypeScript releases without forcing the enitre package ecosystem to make the
+change at the same time (due to language-breaking changes).
+
+An option to address this would be to allow customers to "bring their own"
+TypeScript compiler, by making it a `peerDependency`. This however comes with
+two main challenges:
+
+- The TypeScript compiler API is not stable between TypeScript releases, and it
+  is hence not possible to author a `jsii` compiler that can leverage an
+  arbitrary TypeScript version.
+- Declarations files emitted by different TypeScript compiler versions may not
+  be compatible with previous versions of TypeScript. Addressing this particular
+  issue would require all customers use a tool such as `downlevel-dts` to
+  produce declarations files compatible with previous iterations of TypeScript.
+  The `jsii` compiler is a better place to address this.
+
+#### Coordinating major versions with root consumers
+
 An alternative to de-coupled versioning is to time breaking changes in the
 *jsii* constellation with new major releases of the root consumer libraries
 (`constructs`, `aws-cdk-lib`, ...), however this forgets to account for the
@@ -224,6 +245,8 @@ and may hence not have the same drive to release a new major version at that
 time. Additionally, such major releases are expected to be infrequent as they
 represent a major burden on the community, meaning our ability to release
 improvements to *jsii* packages would be severely limited.
+
+#### Unlock versions, but keep mono-repository
 
 It would also be possible to unlock versions in the mono-repository, in order to
 allow each packages to include breaking changes when necessary. However, this
