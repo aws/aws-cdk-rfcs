@@ -534,22 +534,89 @@ separately, as its own project.
 We will be introducing both a lot of complexity to the already complex CDK CLI,
 and also a separate CLI that we will have to maintain.
 
+It might also require the CDK team to own new server-side components,
+like a new AWS Console, and a new service that integrates with AWS Organizations.
+
 ### What is the high-level project plan?
 
+Since this is quite a big and ambiguous project,
+the project plan is a little more detailed than usual.
+
+The plan is divided into the following milestones:
+
+#### 1. Alpha version of automated bootstrapping
+
+In the first version of the Launchpads functionality,
+we want to automate the setup of new accounts in an AWS Organization,
+eliminating the need for running `cdk bootstrap` manually,
+while validating that the approach works before we invest more into it --
+so, we will not have any server-side components the CDK team owns at this stage of the project.
+
+To achieve this goal, we will allow administrators to define a StackSet, using CDK constructs
+(similarly to the [`ProductStack` class](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-servicecatalog.ProductStack.html)
+in the ServiceCatalog Construct Library).
+We will also create construct(s) that represent the CDK bootstrap resources,
+and allow customizing them.
+
+In order to automatically bootstrap new accounts that get added to a given Organization,
+we will use the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html).
+The StackSet will live in a separate Stack, deployed to the master account.
+Any time a new account is added, a CloudWatch Event will trigger the pipeline,
+then a CodeBuild job in the pipeline will use the Organizations API to find out all accounts that belong to it,
+and finally will update the StackSet resource to deploy Stack instances to each account in the organization
+(that update to the StackSet resource will be done by simply deploying the CloudFormation Stack it belongs to,
+with the changed property listing all the organization's accounts).
+
+#### 2. Alpha version of Compliance -- CFN Guard integration
+
+Concurrently with milestone 1 above, we should start working on the compliance piece.
+As the first step, we should integrate CFN Guard 2.0 with CDK more tightly,
+so it's possible to evaluate Guard rules at CDK synthesis time,
+without the explicit need to run the two commands (CDK and Guard) separately.
+
+#### 3. Beta period
+
+After 1. and 2. above are done, we should run a Beta,
+working closely with a group (around 10) of customer,
+making sure the features being developed cover their usecases --
+for example, customers who operate in restricted IAM environments can now use CDK in them.
+
+#### 4. Compliance -- integration with CFN Hooks
+
+After the Beta (or possibly during it), once we have the basic integration between CDK and CFN Guard done,
+we should start working on making sure the Guard rules are also evaluated at deploy time,
+not only at synthesis time.
+
+In this milestone, we should only allow rules to be either verbatim included as a string,
+or referenced from a file, in CDK code --
+the CDK dialect for defining rules will come later.
+
+#### 5. Non-CDK administrators
+
+After the base functionality has been created and validated,
+we should now start catering to customers who don't want to use CDK to define their Launchpads:
+
 1. Create the separate `cdk-lpads` CLI,  and add the necessary commands to it.
-2. Concurrently:
+2. Allow the Launchpad customizing using JSON/YAML files.
+3. Add the capabilities of `cdk-lpads` also to the CDK CLI.
 
-    - work on the integration with AWS Organizations
-    - work on the compliance rules (CFN Guard + CFN Hooks)
-        * first, only in the text format
-        * then, develop the CDK dialect for defining the rules using code
+#### 6. Compliance -- Guard rules CDK dialect
 
-3. Allow the Launchpad customizing using JSON/YAML files.
-4. Launch a Beta, working closely with a group (around 10) of customer, making sure the features being developed cover their usecases --
-  for example, customers who operate in resticted IAM environments can now use CDK in them.
-5. Develop the CDK libraries for customizing the Launchpad in code.
-6. Perform the necessary AWS Console changes.
-7. Add the capabilities of `cdk-lpads` also to the CDK CLI.
+In this milestone, we develop the CDK dialect for defining CFN Guard rules.
+
+#### 7. Server-side AWS Organizations integration
+
+In this milestone, we finally start developing server-side components.
+The first one allows integrating with AWS Organizations,
+so that we don't need a pipeline for the automatic bootstrapping functionality.
+
+#### 8. CDK Console
+
+In the final stage of the project, we develop a separate AWS Console for CDK.
+This allows us to integrate with Organizations with a nice GUI,
+and also opens the door for more visualizations,
+like showing your Launchpads in the Console,
+without having to use a CLI for that purpose.
 
 ### Are there any open issues that need to be addressed later?
 
