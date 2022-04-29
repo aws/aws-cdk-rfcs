@@ -120,7 +120,7 @@ to be addressed.
 6. The developer experience of using `aws-cdk-lib` in an IDE might be slower in
    some cases.
 7. The CDK project is currently blocked from including more ‘large
-   dependencies’, such as multiple version of kubectl, multiple version of the
+   dependencies’, such as multiple versions of kubectl, multiple versions of the
    AWS CLI, and dedicated versions of the AWS SDK for use in custom resources.
    This is a decision we’ve made to avoid increasing the size of the package
    further until a more scalable solution for these kinds of dependencies is
@@ -426,7 +426,7 @@ Each category of files has different alternative solutions to reduce the size.
 4. Separate packages that `aws-cdk-lib` peer depends on. With this solution,
    customers do not need to include the large `lambda-layer-X` packages in their
    dependencies unless they are actually using one of the Constructs that
-   requires them. This is not a reasonable solution, since it would too
+   requires them. This is not a reasonable solution, since it would be too
    confusing for customers to know when they need these peer dependencies, and
    when they do not.
 5. Upstream the custom resources where the zip files are used. Since all of
