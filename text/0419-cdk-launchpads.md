@@ -236,7 +236,10 @@ Or you can reference a file on disk that contains the Guard rules:
 {
   "launchpad": {
     "compliance": {
-      "cfn-guard": ["file:my-guard-rules.guard"]
+      "cfn-guard": [
+        "file:my-guard-rules.guard",
+        "dir:my-other-guard-rules"
+      ]
     }
   }
 }
