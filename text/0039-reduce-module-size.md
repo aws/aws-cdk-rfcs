@@ -1,8 +1,8 @@
 # Reduce aws-cdk-lib package size
 
-* **Original Author(s):**: @{madeline-k}
+* **Original Author(s):**: [@madeline-k](https://github.com/madeline-k)
 * **Tracking Issue**: #39
-* **API Bar Raiser**: @{otaviomacedo}
+* **API Bar Raiser**: [@otaviomacedo](https://github.com/otaviomacedo)
 
 The AWS CDK v2 framework library, `aws-cdk-lib` contains all packages from AWS
 CDK v1 in one monolithic package. While this is a great value for customers in
