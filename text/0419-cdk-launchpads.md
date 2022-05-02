@@ -34,19 +34,19 @@ in fact, it does not require knowing a programming language at all!
 
 The functionality of CDK Launchpads can be accessed in three different ways:
 
-1. Through a dedicated CLI, `cdk-lpads`. This is a self-contained program
+1. Through a dedicated CLI, `cdk-launchpad`. This is a self-contained program
   (does not have any dependencies -- for example, it does not depend on NodeJS)
   that can be installed using the idiomatic package managers for a given platform
-  (`apt-get install cdk-lpads` on Ubuntu Linux, `yum install cdk-lpads` on CentOS Linux,
-  `brew install cdk-lpads` on MacOS, etc.).
-2. Through the existing CDK CLI, using the `cdk lpads` sub-command.
+  (`apt-get install cdk-launchpad` on Ubuntu Linux, `yum install cdk-launchpad` on CentOS Linux,
+  `brew install cdk-launchpad` on MacOS, etc.).
+2. Through the existing CDK CLI, using the `cdk launchpad` sub-command.
 3. Through the AWS Console, which now contains a new section dedicated to CDK,
   which in turn contains options for managing your Launchpads.
 
 ### Basic commands
 
-> **Note**: in this section, I show the commands only for the stand-alone CLI, `cdk-lpads ...`.
-> The same commands would work in the CDK CLI without the dash (`cdk lpads ...`),
+> **Note**: in this section, I show the commands only for the stand-alone CLI, `cdk-launchpad ...`.
+> The same commands would work in the CDK CLI without the dash (`cdk launchpad ...`),
 > but I'm only showing the standalone version for brevity.
 
 #### 1. `init json/yaml/cdk [ts/js/java/python/csharp/go]`
@@ -61,7 +61,7 @@ Creates a new Launchpad in the given account and region.
 By default, the command will include a wizard that will guide the user through the options:
 
 ```shell
-$ cdk-lpads new
+$ cdk-launchpad new
 
 Welcome! This wizard will guide you through creating a new Launchpad in the environment.
 To start, let's make sure we're operating in the correct AWS account and region:
@@ -98,7 +98,7 @@ Shows the current status of any Launchpads defined in the given environment.
 This invocation will use the current AWS credentials in the console:
 
 ```shell
-$ cdk-lpads status
+$ cdk-launchpad status
 
 Environment - account: 123, region: us-east-1
 1 Launchpad found:
@@ -108,12 +108,12 @@ Environment - account: 123, region: us-east-1
 You can also check a specific account and region, using a profile defined in your AWS config files:
 
 ```shell
-$ cdk-lpads status —profile acc-456 aws://456/eu-west-2
+$ cdk-launchpad status —profile acc-456 aws://456/eu-west-2
 
 Environment - account: 456, region: eu-west-2
 1 Launchpad found:
 1 | legacy (V1) CDK bootstrap Stack
-    Run `cdk-lpads update` to upgrade it to the newest version.
+    Run `cdk-launchpad update` to upgrade it to the newest version.
 ```
 
 ### Ways of customizing the Launchpad
@@ -148,7 +148,7 @@ The JSON file has the basic structure (the YAML file is very similar):
 We show examples of different parts of the JSON file in each of the sections below.
 
 You apply the changes using the JSON/YAML file by passing the file as an argument to the Launchpad commands,
-for example `cdk-lpads update my-launchpad.json/my-launchpad.yaml`.
+for example `cdk-launchpad update my-launchpad.json/my-launchpad.yaml`.
 
 Deploying the Launchpads through a pipeline will also be supported with
 [CDK Pipelines](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html).
@@ -157,7 +157,7 @@ Deploying the Launchpads through a pipeline will also be supported with
 
 It's also possible to customize the Launchpad using CDK code.
 In that scenario, the Launchpad is basically a CDK application, and you execute the Launchpads CLI commands,
-like `cdk-lpads update`, inside of it, similarly like you execute CDK CLI commands inside your CDK application.
+like `cdk-launchpad update`, inside of it, similarly like you execute CDK CLI commands inside your CDK application.
 
 A CDK application for a Launchpad has a very similar structure to a "regular" CDK application,
 but the classes used are slightly different (the example is in TypeScript):
@@ -333,7 +333,7 @@ new lpads.StandardCdkBootstrap(launchpad, 'CdkBootstrap', {
 });
 ```
 
-The `cdk-lpads` command contains a validator that makes sure any changes you make to the bootstrap template are correct,
+The `cdk-launchpad` command contains a validator that makes sure any changes you make to the bootstrap template are correct,
 and satisfy the minimal requirements needed by CDK in order to still deploy using those bootstrap resources.
 
 #### Adding new bootstrap resources
@@ -599,9 +599,9 @@ the CDK dialect for defining rules will come later.
 After the base functionality has been created and validated,
 we should now start catering to customers who don't want to use CDK to define their Launchpads:
 
-1. Create the separate `cdk-lpads` CLI,  and add the necessary commands to it.
+1. Create the separate `cdk-launchpad` CLI,  and add the necessary commands to it.
 2. Allow the Launchpad customizing using JSON/YAML files.
-3. Add the capabilities of `cdk-lpads` also to the CDK CLI.
+3. Add the capabilities of `cdk-launchpad` also to the CDK CLI.
 
 #### 6. Compliance -- Guard rules CDK dialect
 
