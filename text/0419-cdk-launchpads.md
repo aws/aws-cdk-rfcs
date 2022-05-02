@@ -438,10 +438,10 @@ Will generate code in your project that you then use in your CDK app definition:
 ```ts
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import Launchpad from '../build';
+import launchpad from '../build';
 
 const app = new cdk.App({
-    launchpad: Launchpad, // adds the appropriate Permission Boundary automatically
+    launchpad: launchpad, // adds the appropriate Permission Boundary automatically
 });
 const stack = new cdk.Stack(app, 'MyStack');
 const fn = new lambda.Function(stack, 'MyLambda', {
@@ -449,7 +449,7 @@ const fn = new lambda.Function(stack, 'MyLambda', {
   handler: 'index.handler',
   runtime: lambda.Runtime.PYTHON_3_9,
   // refer to a resource defined in the Launchpad
-  role: Launchpad.Resources.functionRole,
+  role: launchpad.Resources.functionRole,
 });
 ```
 
