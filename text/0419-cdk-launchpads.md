@@ -278,19 +278,19 @@ new lpads.CfnGuardComplianceRules(launchpad, 'Compliance', {
 Or use a special dialect of the CDK that allows creating CFN Guard Rules programmatically:
 
 ```ts
-import * as cguard from '@aws-cdk/launchpad-cfn-guard';
+import * as cfn_guard from '@aws-cdk/cfn-guard';
 
-const s3Buckets = new cguard.Variable(launchpad, 's3_buckets', cguard.Query.resources({
+const s3Buckets = new cfn_guard.Variable(launchpad, 's3_buckets', cfn_guard.Query.resources({
   type: guard.Expr.matches(/S3::Bucket/),
 }));
 new lpads.CfnGuardComplianceRules(launchpad, 'Compliance', {
   rules: lpads.CfnGuardRules.fromObjects(
-    new guard.Rule(launchpad, 's3_bucket_name_encryption_check', {
-      when: cguard.Expr.not(cguard.Expr.empty(s3Buckets)),
-      expr: guard.Query.properties({
-        'BucketName': cguard.Expr.matches(/^MyCompanyPrefix/),
-        'BucketEncryption.ServerSideEncryptionConfiguration[*]': cguard.Expr.in(
-          'ServerSideEncryptionByDefault.SSEAlgorith', ['aws:KMS']
+    new cfn_guard.Rule(launchpad, 's3_bucket_name_encryption_check', {
+      when: cfn_guard.Expr.not(cfn_guard.Expr.empty(s3Buckets)),
+      expr: cfn_guard.Query.properties({
+        'BucketName': cfn_guard.Expr.matches(/^MyCompanyPrefix/),
+        'BucketEncryption.ServerSideEncryptionConfiguration[*]': cfn_guard.Expr.in(
+          'ServerSideEncryptionByDefault.SSEAlgorith', ['aws:KMS'],
         ),
       }),
     }),
