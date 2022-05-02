@@ -49,30 +49,11 @@ The functionality of CDK Launchpads can be accessed in three different ways:
 > The same commands would work in the CDK CLI without the dash (`cdk lpads ...`),
 > but I'm only showing the standalone version for brevity.
 
-#### 1. `status`
+#### 1. `init json/yaml/cdk [ts/js/java/python/csharp/go]`
 
-Shows the current status of any Launchpads defined in the given environment.
-
-This invocation will use the current AWS credentials in the console:
-
-```shell
-$ cdk-lpads status
-
-Environment - account: 123, region: us-east-1
-1 Launchpad found:
-1 | default CDK bootstrap Stack | version: 10   (UP-TO-DATE)
-```
-
-You can also check a specific account and region, using a profile defined in your AWS config files:
-
-```shell
-$ cdk-lpads status —profile acc-456 aws://456/eu-west-2
-
-Environment - account: 456, region: eu-west-2
-1 Launchpad found:
-1 | legacy (V1) CDK bootstrap Stack
-    Run `cdk-lpads update` to upgrade it to the newest version.
-```
+Similar to the `cdk init` command,
+this command creates a skeleton that allows you get started with customizing your Launchpad.
+It supports both the JSON/YAML and CDK ways of customizing Launchpads (see below).
 
 #### 2. `new`
 
@@ -98,23 +79,42 @@ Do you want to customize the qualifier used? [default: hnb659fds]:
 Alternatively, the `new` command can be customized directly, instead of going through the wizard;
 see "Customizing the Launchpad" below.
 
-#### 3. `update`
+#### 3. `diff`
+
+Allows you to see what differences would be applied if you updated your Launchpad.
+Useful to run before `update` to confirm the changes are what you expect.
+
+#### 4. `update`
 
 This command attempts to update an existing Launchpad.
 In the case it's the default CDK bootstrap Launchpad, it will simply update it to the latest version.
 The `update` command can be customized directly, same as the `new` command;
 see "Customizing the Launchpad" below.
 
-#### 4. `diff`
+#### 5. `status`
 
-Allows you to see what differences would be applied if you updated your Launchpad.
-Useful to run before `update` to confirm the changes are what you expect.
+Shows the current status of any Launchpads defined in the given environment.
 
-#### 5. `init json/yaml/cdk [ts/js/java/python/csharp/go]`
+This invocation will use the current AWS credentials in the console:
 
-Similar to the `cdk init` command,
-this command creates a skeleton that allows you get started with customizing your Launchpad.
-It supports both the JSON/YAML and CDK ways of customizing Launchpads (see below).
+```shell
+$ cdk-lpads status
+
+Environment - account: 123, region: us-east-1
+1 Launchpad found:
+1 | default CDK bootstrap Stack | version: 10   (UP-TO-DATE)
+```
+
+You can also check a specific account and region, using a profile defined in your AWS config files:
+
+```shell
+$ cdk-lpads status —profile acc-456 aws://456/eu-west-2
+
+Environment - account: 456, region: eu-west-2
+1 Launchpad found:
+1 | legacy (V1) CDK bootstrap Stack
+    Run `cdk-lpads update` to upgrade it to the newest version.
+```
 
 ### Ways of customizing the Launchpad
 
