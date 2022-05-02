@@ -392,7 +392,7 @@ const managedPolicy = new iam.ManagedPolicy(launchpad, 'Boundary', {
   ],
 });
 // surface this resource to application developers using this Launchpad
-// (seee below)
+// (see below)
 launchpad.export(managedPolicy);
 ```
 
