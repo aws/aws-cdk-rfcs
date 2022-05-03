@@ -547,7 +547,7 @@ the project plan is a little more detailed than usual.
 
 The plan is divided into the following milestones:
 
-#### 1. Alpha version of automated bootstrapping
+#### Milestone 1: alpha version of automated bootstrapping
 
 In the first version of the Launchpads functionality,
 we want to automate the setup of new accounts in an AWS Organization,
@@ -570,7 +570,7 @@ and finally will update the StackSet resource to deploy Stack instances to each 
 (that update to the StackSet resource will be done by simply deploying the CloudFormation Stack it belongs to,
 with the changed property listing all the organization's accounts).
 
-#### 2. Alpha version of Compliance -- CFN Guard integration
+#### Milestone 2: alpha version of Compliance -- CFN Guard integration
 
 Concurrently with milestone 1 above, we should start working on the compliance piece.
 As the first step, we should integrate CFN Guard 2.0 with CDK more tightly,
@@ -580,11 +580,13 @@ without the explicit need to run the two commands (CDK and Guard) separately.
 #### 3. Beta period
 
 After 1. and 2. above are done, we should run a Beta,
-working closely with a group (around 10) of customer,
-making sure the features being developed cover their usecases --
-for example, customers who operate in restricted IAM environments can now use CDK in them.
+working closely with a group (around 10) of customers,
+making sure the features being developed cover their usecases.
+For customers who operate in restricted IAM environments,
+we want to verify that automated bootstrapping of developer accounts unblocks them from using CDK,
+and if it doesn't -- we need to work with them on additional Launchpad features that will.
 
-#### 4. Compliance -- integration with CFN Hooks
+#### Milestone 4: Compliance -- integration with CFN Hooks
 
 After the Beta (or possibly during it), once we have the basic integration between CDK and CFN Guard done,
 we should start working on making sure the Guard rules are also evaluated at deploy time,
@@ -594,7 +596,12 @@ In this milestone, we should only allow rules to be either verbatim included as 
 or referenced from a file, in CDK code --
 the CDK dialect for defining rules will come later.
 
-#### 5. Non-CDK administrators
+#### Milestone 5: Code generation from the Launchpad
+
+Concurrently with the Compliance work, we should start modifying the `cdk-import`
+tool to allow it to generate CDK code based on the Launchpad definition.
+
+#### Milestone 6: non-CDK customizations
 
 After the base functionality has been created and validated,
 we should now start catering to customers who don't want to use CDK to define their Launchpads:
@@ -603,23 +610,31 @@ we should now start catering to customers who don't want to use CDK to define th
 2. Allow the Launchpad customizing using JSON/YAML files.
 3. Add the capabilities of `cdk-launchpad` also to the CDK CLI.
 
-#### 6. Compliance -- Guard rules CDK dialect
+#### Milestone 7: Compliance -- Guard rules CDK dialect
 
 In this milestone, we develop the CDK dialect for defining CFN Guard rules.
 
-#### 7. Server-side AWS Organizations integration
+#### Milestone 8: server-side AWS Organizations integration
 
 In this milestone, we finally start developing server-side components.
 The first one allows integrating with AWS Organizations,
 so that we don't need a pipeline for the automatic bootstrapping functionality.
 
-#### 8. CDK Console
+#### Milestone 9: CDK Console
 
 In the final stage of the project, we develop a separate AWS Console for CDK.
 This allows us to integrate with Organizations with a nice GUI,
 and also opens the door for more visualizations,
 like showing your Launchpads in the Console,
 without having to use a CLI for that purpose.
+
+#### Milestone 10: CDK service
+
+To take the ideas in this RFC to its logical conclusion,
+we can imagine turning this capability from a client-side tool to a managed AWS service.
+And that point, the `cdk-launchpad` CLI would become redundant,
+replaced with the AWS CLI, or the various AWS SDKs available in the different languages,
+and creating and customizing Launchpads would be completely owned by this service.
 
 ### Are there any open issues that need to be addressed later?
 
