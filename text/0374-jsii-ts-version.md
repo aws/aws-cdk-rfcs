@@ -149,6 +149,23 @@ were superceded by a new *current* line.
 
 ## Internal FAQ
 
+### How will we maintain backwards compatibility?
+
+The change only affects the [TypeScript] compiler version used internally by
+`jsii` and the versioning scheme for the `jsii` package itself.
+
+The compiler will continue to emit `.jsii` assemblies that conform to the schema
+defined in the `@jsii/spec` package, which will hence continue to be compatible
+with all other tools part of the jsii toolchain (including `jsii-pacmak`, ...).
+
+In order to maximize compatibility between [TypeScript] compiler versions, and
+since [TypeScript] occasionally introduces backwards-incompatible syntax changes
+(additions, modifications) to the declarations files (`.d.ts`), the `jsii`
+compiler will proactively produce down-leveled declarations files targeting
+[TypeScript] compiler versions used by previous (not yet *end-of-life*) releases
+of `jsii`. This can be achieved using the [`downlevel-dts`][downlevel-dts]
+utility.
+
 ### Why are we doing this?
 
 Before this change, `jsii` users had been stuck with [TypeScript] `3.9` for a
