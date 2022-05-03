@@ -563,7 +563,7 @@ and allow customizing them.
 
 In order to automatically bootstrap new accounts that get added to a given Organization,
 we will use the [CDK Pipelines library](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html).
-The StackSet will live in a separate Stack, deployed to the master account.
+The StackSet will live in a separate Stack, deployed to the primary account.
 Any time a new account is added, a CloudWatch Event will trigger the pipeline,
 then a CodeBuild job in the pipeline will use the Organizations API to find out all accounts that belong to it,
 and finally will update the StackSet resource to deploy Stack instances to each account in the organization
