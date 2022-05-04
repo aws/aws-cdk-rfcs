@@ -1,6 +1,6 @@
 SageMaker Model Hosting L2 Constructs
 
-* **Original Author(s):**: @pvanlund
+* **Original Author(s):** @pvanlund, @mattmcclean, @l2yao, @jetterdj, @foxpro24, @rangoju
 * **Tracking Issue**: #431
 * **API Bar Raiser**: *TBD*
 
