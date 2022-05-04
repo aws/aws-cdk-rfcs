@@ -527,7 +527,7 @@ board](https://github.com/aws/aws-cdk/projects/15).
 
 1. All size calculations in this document were done based on
    `aws-cdk-lib@2.19.0`.
-2. `du -k` was used to get sizes in Kb (Kebibytes), for calculating the
+2. `du -k` was used to get sizes in Kb (Kibibytes), for calculating the
    percentages.
 3. The total size of the package according to `du` that was used to calculate
    percentages is 247008 Kb.
