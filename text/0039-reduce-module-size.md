@@ -4,11 +4,11 @@
 * **Tracking Issue**: #39
 * **API Bar Raiser**: [@otaviomacedo](https://github.com/otaviomacedo)
 
-The AWS CDK v2 framework library, `aws-cdk-lib` contains all packages from AWS
-CDK v1 in one monolithic package. While this is a great value for customers in
-making dependency management much easier, it has also resulted in increasing the
-unpacked npm package size to 234 MB, at the time of writing. This feature
-reduces the size of the package to under 100 MB.
+The AWS CDK v2 framework library, `aws-cdk-lib` contains all framework packages
+from AWS CDK v1 in one monolithic package. While this is a great value for
+customers in making dependency management much easier, it has also resulted in
+increasing the unpacked npm package size to 234 MB, at the time of writing. The
+goal of this project is to significantly reduce this size.
 
 ## Working Backwards
 
