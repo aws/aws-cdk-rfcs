@@ -217,11 +217,12 @@ potential size.
 #### Lambda Layer Zip Files
 
 Use separate npm packages for each `lambda-layer-X` module, which the CDK CLI
-will automatically install if not already present in the `node_modules`
-directory. With this solution, customers will not have to figure out when they
-do or do not need to include these dependencies, and they will not be required
-to access a public endpoint besides npm during runtime of their CDK apps.
-Practically, this solution breaks down into the following steps.
+will automatically install if not already present in the application's
+`node_modules` directory, or the global `node_modules`. With this solution,
+customers will not have to figure out when they do or do not need to include
+these dependencies, and they will not be required to access a public endpoint
+besides npm during runtime of their CDK apps. Practically, this solution breaks
+down into the following steps.
 
 1. Publish v2 compatible versions of `@aws-cdk/lambda-layer-aws-cli`,
    `@aws-cdk/lambda-layer-aws-cli`, `@aws-cdk/lambda-layer-node-proxy-agent` as
