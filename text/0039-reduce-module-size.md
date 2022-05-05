@@ -32,8 +32,8 @@ environment, you might encounter problems upgrading to this version. ‼️
 * aws_eks.FargateProfile
 * aws_eks.Cluster
 
-Please see [#1234](https://github.com/aws/aws-cdk/issues/1234) for more details,
-and comment on the issue if you run into problems.
+Please see [#1234567](https://github.com/aws/aws-cdk/issues/1234567) for more
+details, and comment on the issue if you run into problems.
 
 * **CLI Notices**:
 
@@ -47,7 +47,7 @@ Body: We’ve identified that you are using at least one of the [List of
 Constructs] Constructs. If you are running your aws-cdk commands in an
 environment that does not have access to npm, then you will need to make a
 change to make version 2.x of [npm packages] available in your environment. See
-[#1234](https://github.com/aws/aws-cdk/issues/1234) for details and
+[#1234567](https://github.com/aws/aws-cdk/issues/1234567) for details and
 instructions.
 
 | List of Constructs                                                                        | npm packages                                                                                            |
