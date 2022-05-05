@@ -115,9 +115,7 @@ to be addressed.
    customer is using Lambda Versions, and wants to maintain a Version for every
    version they have published, they might end up hitting this limit because of
    the large size of `aws-cdk-lib`.
-6. The developer experience of using `aws-cdk-lib` in an IDE might be slower in
-   some cases.
-7. The CDK project is currently blocked from including more ‘large
+6. The CDK project is currently blocked from including more ‘large
    dependencies’, such as multiple versions of kubectl, multiple versions of the
    AWS CLI, and dedicated versions of the AWS SDK for use in custom resources.
    This is a decision we’ve made to avoid increasing the size of the package
