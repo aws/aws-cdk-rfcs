@@ -187,17 +187,17 @@ contributor of size at 39%.
 
 *See Appendix A to see where this estimate came from.
 
-| Category                       | Percentage of aws-cdk-lib size |
-| ------------------------------ | ------------------------------ |
-| Lambda Layer zip files         | 38.83%                         |
-| .jsii files                    | 30.14%                         |
-| Source Maps (.js.map)          | 15.87%                         |
-| Javascript code (.js)          | 6.63%                          |
-| Type Declaration files (.d.ts) | 6.62%                          |
-| README, etc (.md)              | 0.55%                          |
-| bundled npm dependencies       | 0.50%                          |
-| .ts-fixture                    | 0.27%                          |
-| .jsiirc                        | 0.26%                          |
+| Category                       | Estimated future percentage of aws-cdk-lib size |
+| ------------------------------ | ----------------------------------------------- |
+| Lambda Layer zip files         | 38.83%                                          |
+| .jsii files                    | 30.14%                                          |
+| Source Maps (.js.map)          | 15.87%                                          |
+| Javascript code (.js)          | 6.63%                                           |
+| Type Declaration files (.d.ts) | 6.62%                                           |
+| README, etc (.md)              | 0.55%                                           |
+| bundled npm dependencies       | 0.50%                                           |
+| .ts-fixture                    | 0.27%                                           |
+| .jsiirc                        | 0.26%                                           |
 
 ### Why should we _not_ do this?
 
