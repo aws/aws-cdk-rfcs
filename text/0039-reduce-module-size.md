@@ -52,10 +52,10 @@ instructions.
 
 | List of Constructs                                                                                                                     | npm packages                                                                                            |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| lambda-layer-kubectl.KubectlLayer                                                                                                      | @aws-cdk/lambda-layer-kubectl                                                                           |
-| aws-eks.KubectlProvider<br>aws-eks.HelmChart<br>aws-eks.KubernetesManifest<br>aws-eks.KubernetesObjectValue<br>aws-eks.KubernetesPatch | @aws-cdk/lambda-layer-kubectl and @aws-cdk/lambda-layer-awscli                                          |
-| lambda-layer-awscli.AwsCliLayer<br>aws-s3-deployment.BucketDeployment<br>aws-step-functions-tasks.EmrContainersStartJobRun             | @aws-cdk/lambda-layer-awscli                                                                            |
-| lamdba-layer-node-proxy-agent.NodeProxyAgentLayer<br>aws-eks.FargateProfile                                                            | @aws-cdk/lambda-layer-node-proxy-agent                                                                  |
+| lambda_layer_kubectl.KubectlLayer                                                                                                      | @aws-cdk/lambda_layer_kubectl                                                                           |
+| aws_eks.KubectlProvider<br>aws_eks.HelmChart<br>aws_eks.KubernetesManifest<br>aws_eks.KubernetesObjectValue<br>aws_eks.KubernetesPatch | @aws-cdk/lambda-layer-kubectl and @aws-cdk/lambda-layer-awscli                                          |
+| lambda_layer_awscli.AwsCliLayer<br>aws_s3_deployment.BucketDeployment<br>aws_step_functions_tasks.EmrContainersStartJobRun             | @aws-cdk/lambda-layer-awscli                                                                            |
+| lamdba_layer_node_proxy_agent.NodeProxyAgentLayer<br>aws-eks.FargateProfile                                                            | @aws-cdk/lambda-layer-node-proxy-agent                                                                  |
 | aws_eks.Cluster                                                                                                                        | @aws-cdk/lambda-layer-kubectl, @aws-cdk/lambda-layer-awscli, and @aws-cdk/lambda-layer-node-proxy-agent |
 
 ---
