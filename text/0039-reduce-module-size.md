@@ -50,13 +50,13 @@ change to make version 2.x of [npm packages] available in your environment. See
 [#1234567](https://github.com/aws/aws-cdk/issues/1234567) for details and
 instructions.
 
-| List of Constructs                                                                        | npm packages                                                                                            |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| KubectlLayer                                                                              | @aws-cdk/lambda-layer-kubectl                                                                           |
-| KubectlProvider, HelmChart, KubernetesManifest, KubernetesObjectValue, or KubernetesPatch | @aws-cdk/lambda-layer-kubectl and @aws-cdk/lambda-layer-awscli                                          |
-| AwsCliLayer, BucketDeployment, or EmrContainersStartJobRun                                | @aws-cdk/lambda-layer-awscli                                                                            |
-| NodeProxyAgentLayer, or FargateProfile                                                    | @aws-cdk/lambda-layer-node-proxy-agent                                                                  |
-| aws_eks.Cluster                                                                           | @aws-cdk/lambda-layer-kubectl, @aws-cdk/lambda-layer-awscli, and @aws-cdk/lambda-layer-node-proxy-agent |
+| List of Constructs                                                                                                                     | npm packages                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| lambda-layer-kubectl.KubectlLayer                                                                                                      | @aws-cdk/lambda-layer-kubectl                                                                           |
+| aws-eks.KubectlProvider<br>aws-eks.HelmChart<br>aws-eks.KubernetesManifest<br>aws-eks.KubernetesObjectValue<br>aws-eks.KubernetesPatch | @aws-cdk/lambda-layer-kubectl and @aws-cdk/lambda-layer-awscli                                          |
+| lambda-layer-awscli.AwsCliLayer<br>aws-s3-deployment.BucketDeployment<br>aws-step-functions-tasks.EmrContainersStartJobRun             | @aws-cdk/lambda-layer-awscli                                                                            |
+| lamdba-layer-node-proxy-agent.NodeProxyAgentLayer<br>aws-eks.FargateProfile                                                            | @aws-cdk/lambda-layer-node-proxy-agent                                                                  |
+| aws_eks.Cluster                                                                                                                        | @aws-cdk/lambda-layer-kubectl, @aws-cdk/lambda-layer-awscli, and @aws-cdk/lambda-layer-node-proxy-agent |
 
 ---
 
@@ -319,10 +319,13 @@ breaking change for customers who are using these Lambda Layers in
 network-restricted environments. If customers are able to use the CDK CLI in
 their network-restricted environments, then it is reasonable to assume they were
 able to acquire the `aws-cdk` package from npm somehow. This implies customers
-will be able to also acquire the `@aws-cdk/lambda-layer-X` packages from npm. They can either
-make sure the necessary packages are already installed and available in the
-`node_modules` directory where their CDK applications are executed, or include
-them in a private npm registry.
+will be able to acquire the `@aws-cdk/lambda-layer-X` packages from npm. There
+are a few options for these customers:
+1. If using TypeScript or JavaScript, add each necessary package the
+   dependencies of their CDK app.
+2. Make sure the necessary packages are already installed and available in the
+   `node_modules` directory where their CDK CLI is installed.
+3. Include them in a private npm registry. The 
 
 Unfortunately, there is no way to remove these large files and host them
 somewhere else without causing a breaking change for these customers. We will
