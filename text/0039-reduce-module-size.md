@@ -210,7 +210,7 @@ positive impact.
 ### What is the technical solution (design) of this feature?
 
 There are different categories of files contributing to the size of aws-cdk-lib,
-and each category will have it’s own solution. The following sections cover the
+and each category will have its own solution. The following sections cover the
 top five categories in size contribution in order from largest to smallest
 potential size.
 
