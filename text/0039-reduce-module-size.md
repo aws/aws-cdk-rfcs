@@ -347,12 +347,16 @@ documentation generation from the published npm package. Today, they make up 42%
 of the package size. And in the future, after adding more Lambda Layers, the .jsii files would
 compose 30% of the package size.
 
-We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
-currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
-the JSII runtime, and Construct Hub. NodeJS JSII runtimes don't need to use
-either file, and non-NodeJS runtimes would decompress the .jsii file when
-needed. Construct Hub generates documentation from the .jsii.tabl.json file, and
-it will also decompress this file as needed.
+We will take two steps to make them smaller:
+1. The .jsii.tabl.json  and .jsii files are both “pretty-printed.” We can reduce
+   their size to 42 MB (-23%) and 30 MB (-33%) by removing all the whitespace
+   and newlines.
+2. Xompress the .jsii.tabl.json and .jsii files. Compressing with gzip
+   currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
+   the JSII runtime, and Construct Hub. NodeJS JSII runtimes don't need to use
+   either file, and non-NodeJS runtimes would decompress the .jsii file when
+   needed. Construct Hub generates documentation from the .jsii.tabl.json file, and
+   it will also decompress this file as needed.
 
 #### Source Map Files (.js.map)
 
@@ -390,18 +394,13 @@ Each category of files has different alternative solutions to reduce the size.
 
 #### .jsii Files
 
-1. The .jsii.tabl.json  and .jsii files are both “pretty-printed.” We can reduce
-   their size to 42 MB (-23%) and 30 MB (-33%) by removing all the whitespace
-   and newlines. We will not take this solution, because the space savings is
-   not as significant as compression. And, then we can maintain the benefit of
-   using pretty-printed JSON when uncompressed.
-2. Vend the Rosetta tablet file (.jsii.tabl.json) separately. On each release,
-   we would publish this file as a separate artifact on GitHub releases, and
-   reference the URI from the jsii assembly (.jsii). This solution will not be
-   pursued at this time. There are several issues with de-coupling the Rosetta
-   tablet file from the artifacts that customers install, and with requiring the
-   JSII runtime to run in an environment that has access to the public endpoint
-   where it would be hosted.
+Vend the Rosetta tablet file (.jsii.tabl.json) separately. On each release, we
+would publish this file as a separate artifact on GitHub releases, and reference
+the URI from the jsii assembly (.jsii). This solution will not be pursued at
+this time. There are several issues with de-coupling the Rosetta tablet file
+from the artifacts that customers install, and with requiring the JSII runtime
+to run in an environment that has access to the public endpoint where it would
+be hosted.
 
 #### Source Map Files (.js.map)
 
@@ -512,6 +511,7 @@ this category:
 ### What is the high-level project plan?
 
 Each category of files can be worked on in parallel and addressed separately.
+
 The highest priority category to start with will be the Lambda Layer zip files.
 Even though the Lambda Layers are not the biggest contributor to size today,
 they are the biggest potential contributor to size. And, there is customer need
