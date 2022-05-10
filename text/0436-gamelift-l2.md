@@ -20,23 +20,29 @@ The `aws-gamelift` construct library allows you to create Amazon Gamelift Matchm
 
 [Amazon GameLift](https://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-intro.html) is a service used to deploy, operate, and scale dedicated, low-cost servers in the cloud for session-based multiplayer games. Built on AWS global computing infrastructure, GameLift helps deliver high-performance, high-reliability game servers while dynamically scaling your resource usage to meet worldwide player demand.
 
-GameLift is composed of four main components:
+GameLift is composed of three main components:
 
 * GameLift FlexMatch which is a customizable matchmaking service for multiplayer games. With FlexMatch, you can build a custom set of rules that defines what a multiplayer match looks like for your game, and determines how to evaluate and select compatible players for each match. You can also customize key aspects of the matchmaking process to fit your game, including fine-tuning the matching algorithm.
-* GameLift hosting for custom servers which helps you deploy, operate, and scale dedicated game servers. It regulates the resources needed to host games, finds available game servers to host new game sessions, and puts players into games.
-* GameLift hosting for realtime servers which helps you simplify usage of Realtime Servers to stand up games that don't need custom-built game servers. This lightweight server solution provides ready-to-go game servers that you can configure to fit your game. You can deploy game servers with anything from minimal configuration settings to custom logic that is specific to your game and players.
-* GameLift FleetIQ for hosting on Amazon Elastic Compute Cloud (Amazon EC2) which is a system to optimize the use of low-cost Amazon Elastic Compute Cloud (Amazon EC2) Spot Instances for cloud-based game hosting. With GameLift FleetIQ, you can work directly with your hosting resources in Amazon EC2 and Amazon EC2 Auto Scaling while taking advantage of GameLift optimizations to deliver inexpensive, resilient game hosting for your players
+  
+* GameLift hosting for custom or realtime servers which helps you deploy, operate, and scale dedicated game servers. It regulates the resources needed to host games, finds available game servers to host new game sessions, and puts players into games.
+  
+* GameLift FleetIQ to optimize the use of low-cost Amazon Elastic Compute Cloud (Amazon EC2) Spot Instances for cloud-based game hosting. With GameLift FleetIQ, you can work directly with your hosting resources in Amazon EC2 and Amazon EC2 Auto Scaling while taking advantage of GameLift optimizations to deliver inexpensive, resilient game hosting for your players
 
 This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk) project. It allows you to define components for your matchmaking configuration or gmae server fleet management system.
 
-## Defining a Matchmaking configuration
+## GameLift FlexMatch
+
+### Defining a Matchmaking configuration
 
 FlexMatch is available both as a GameLift game hosting solution (including Realtime Servers) and as a standalone matchmaking service.
 
 In order to define a Matchmaking configuration, you must specify a ruleSet.
 
-More pre-built matchmaking ruleSet are covered [below](#ruleSet).
+More details about matchmaking ruleSet are covered [below](#ruleSet).
 
+There is two types of Matchmaking configuration: through a queue system to let FlexMatch forms matches and uses the specified GameLift queue to start a game session for the match, and through a standalone version to let FlexMatch forms matches and returns match information in an event.
+
+Either a Matchmaking configuration using Queue
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
@@ -55,7 +61,7 @@ new QueuedMatchmaking(this, 'Queued Matchmaking', {
 });
 ```
 
-or 
+either a Standalone Matchmaking configuration
 
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -79,11 +85,40 @@ The above example implicitly defines the following resources:
 - A Matchmaking RuleSet
 - A Queue or a Standalone based Matchmaking configuration
 
-##
+#### Queued Matchmaking configuration
 
-### Standalone Matchmaking
+TODO
 
-## Defining a Fleet
+#### Standalone Matchmaking configuration
+
+TODO
+
+### RuleSet
+
+The following pre-built ruleSet are supported. See [kinesisfirehose-destinations](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-kinesisfirehose-destinations-readme.html)
+for the implementations of these destinations.
+
+### Monitoring
+
+## GameLift Fleet
+
+### Defining a GameLift Fleet
+
+#### Realtime server
+
+#### Customer Game server
+
+### Security
+
+### Monitoring
+
+## GameLift FleetIQ
+
+### Defining a Game server group
+
+### Security
+
+### Monitoring
 
 TODO
 
