@@ -31,7 +31,57 @@ This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aw
 
 ## Defining a Matchmaking configuration
 
-TODO
+FlexMatch is available both as a GameLift game hosting solution (including Realtime Servers) and as a standalone matchmaking service.
+
+In order to define a Matchmaking configuration, you must specify a ruleSet.
+
+More pre-built matchmaking ruleSet are covered [below](#ruleSet).
+
+```ts
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const ruleSet = new RuleSet(this, 'Matchmaking RuleSet', {
+    teams: [{
+        name: 'oneteam',
+        minPlayers: 2,
+        maxPlayers: 2
+    }]
+});
+
+
+new QueuedMatchmaking(this, 'Queued Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: matchmakingRuleSet
+});
+```
+
+or 
+
+```ts
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const ruleSet = new RuleSet(this, 'Matchmaking RuleSet', {
+    teams: [{
+        name: 'oneteam',
+        minPlayers: 2,
+        maxPlayers: 2
+    }]
+});
+
+new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: matchmakingRuleSet
+});
+```
+
+The above example implicitly defines the following resources:
+
+- A Matchmaking RuleSet
+- A Queue or a Standalone based Matchmaking configuration
+
+##
+
+### Standalone Matchmaking
 
 ## Defining a Fleet
 
@@ -47,7 +97,7 @@ RFC pull request):
 
 ## Public FAQ
 
-# Internal FAQ
+## Internal FAQ
 
 ## Appendix
 
