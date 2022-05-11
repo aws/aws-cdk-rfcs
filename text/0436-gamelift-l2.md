@@ -34,9 +34,7 @@ This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aw
 
 ### Defining a Matchmaking configuration
 
-FlexMatch is available both as a GameLift game hosting solution (including Realtime Servers) and as a standalone matchmaking service.
-
-In order to define a Matchmaking configuration, you must specify a ruleSet.
+FlexMatch is available both as a GameLift game hosting solution (including Realtime Servers) and as a standalone matchmaking service. To set up a FlexMatch matchmaker to process matchmaking requests, you have to create a matchmaking configuration based on a RuleSet.
 
 More details about matchmaking ruleSet are covered [below](#ruleSet).
 
@@ -82,23 +80,95 @@ new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
 
 The above example implicitly defines the following resources:
 
-- A Matchmaking RuleSet
-- A Queue or a Standalone based Matchmaking configuration
-
-#### Queued Matchmaking configuration
-
-TODO
-
-#### Standalone Matchmaking configuration
-
-TODO
+* A Matchmaking RuleSet
+* A Queue or a Standalone based Matchmaking configuration
 
 ### RuleSet
 
-The following pre-built ruleSet are supported. See [kinesisfirehose-destinations](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-kinesisfirehose-destinations-readme.html)
-for the implementations of these destinations.
+Every FlexMatch matchmaker must have a rule set. The rule set determines the two key elements of a match: your game's team structure and size, and how to group players together for the best possible match.
+
+For example, a rule set might describe a match like this: Create a match with two teams of four to eight players each, one team is the cowboy and the other team the aliens. A team can have novice and experienced players, but the average skill of the two teams must be within 10 points of each other. If no match is made after 30 seconds, gradually relax the skill requirements.
+
+```ts
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const ruleSet = new RuleSet(this, 'Matchmaking RuleSet', {
+    playerAttributes: [ {
+        name: "skill",
+        type: "number",
+        default: 10
+    }],
+    teams: [{
+        name: 'aliens',
+        minPlayers: 4,
+        maxPlayers: 8
+    }, {
+        name: 'cowboys',
+        minPlayers: 4,
+        maxPlayers: 8
+    }],
+    rules: [{
+        name: "FairTeamSkill",
+        description: "The average skill of players in each team is within 10 points from the average skill of all players in the match",
+        type: "distance",
+        // get skill values for players in each team and average separately to produce list of two numbers
+        measurements: [ "avg(teams[*].players.attributes[skill])" ],
+        // get skill values for players in each team, flatten into a single list, and average to produce an overall average
+        referenceValue: "avg(flatten(teams[*].players.attributes[skill]))",
+        maxDistance: 10 // minDistance would achieve the opposite result
+    }, {
+        name: "EqualTeamSizes",
+        description: "Only launch a game when the number of players in each team matches, e.g. 4v4, 5v5, 6v6, 7v7, 8v8",
+        type: "comparison",
+        measurements: [ "count(teams[cowboys].players)" ],
+        referenceValue: "count(teams[aliens].players)",
+        operation: "=" // other operations: !=, <, <=, >, >=
+    }],
+    expansions: [{
+        target: "rules[FairTeamSkill].maxDistance",
+        steps: [{
+            waitTimeSeconds: 30,
+            value: 50
+        }]
+    }]
+});
+```
 
 ### Monitoring
+
+You can monitor GameLift FlexMatch activity for matchmaking configurations and matchmaking rules using Amazon CloudWatch. These statistics are used to provide a historical perspective on how your Gamelift FlexMatch solution is performing.
+
+#### Metrics
+
+GameLift FlexMatch sends metrics to CloudWatch so that you can collect and analyze the activity of your matchmaking solution, including match acceptance workflow, ticket consumtion, and the state of your matchmaking rules evaluation.
+
+You can then use CloudWatch alarms to alert you, for example, when matches has been rejected (potential matches that were rejected by at least one player since the last report) exceed a certain thresold which could means that you may have an issue in your matchmaking rules.
+
+CDK provides methods for accessing GameLift metrics with default configuration,
+such as `metricCurrentTickets`, or `metricMatchAccepted` (see [`IMatchmakingConfiguration`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
+for a full list). CDK also provides a generic `metric` method that can be used to produce
+metric configurations for any metric provided by GameLift FlexMatch; the configurations
+are pre-populated with the correct dimensions for the matchmaking configuration.
+
+```ts fixture=with-matchmaking-configuration
+import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
+// Alarm that triggers when the per-second average of not placed matches exceed 10%
+const matchesPlacedRatio = new cloudwatch.MathExpression({
+  expression: '1 - (matchesPlaced / matchedCreated)',
+  usingMetrics: {
+    matchesPlaced: matchmakingConfiguration.metricMatchesRejected({ statistic: cloudwatch.Statistic.SUM }),
+    matchesCreated: matchmakingConfiguration.metric('MatchesCreated'),
+  },
+});
+new Alarm(this, 'Alarm', {
+  metric: matchesPlacedRatio,
+  threshold: 0.1,
+  evaluationPeriods: 3,
+});
+```
+
+See: [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/gamelift/latest/developerguide/monitoring-cloudwatch.html)
+in the *Amazon GameLift Developer Guide*.
 
 ## GameLift Fleet
 
@@ -108,19 +178,10 @@ for the implementations of these destinations.
 
 #### Customer Game server
 
-### Security
-
-### Monitoring
-
 ## GameLift FleetIQ
 
 ### Defining a Game server group
 
-### Security
-
-### Monitoring
-
-TODO
 
 ---
 
