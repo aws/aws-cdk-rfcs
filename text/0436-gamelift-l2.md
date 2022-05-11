@@ -194,9 +194,7 @@ You can then use CloudWatch alarms to alert you, for example, when matches has b
 
 CDK provides methods for accessing GameLift metrics with default configuration,
 such as `metricCurrentTickets`, or `metricMatchAccepted` (see [`IMatchmakingConfiguration`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
-for a full list). CDK also provides a generic `metric` method that can be used to produce
-metric configurations for any metric provided by GameLift FlexMatch; the configurations
-are pre-populated with the correct dimensions for the matchmaking configuration.
+for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift FlexMatch; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
 
 ```ts fixture=with-matchmaking-configuration
 import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
@@ -236,6 +234,7 @@ When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as usual
 
 ```ts
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
   machineImage: ec2.MachineImage.latestAmazonLinux(),
@@ -244,7 +243,102 @@ const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
   }),
 });
 
+new gamelift.FleetIQ(this, 'Game server group', {
+  instanceDefinition = [{
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
+  }],
+  launchTemplate = template,
+});
+
 ```
+
+### Scaling Policy
+
+The scaling policy uses the metric `PercentUtilizedGameServers` to maintain a buffer of idle game servers that can immediately accommodate new games and players.
+
+```ts fixture=with-launch-template
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
+  machineImage: ec2.MachineImage.latestAmazonLinux(),
+  securityGroup: new ec2.SecurityGroup(this, 'LaunchTemplateSG', {
+    vpc: vpc,
+  }),
+});
+
+new gamelift.FleetIQ(this, 'Game server group', {
+  instanceDefinition = [{
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
+  }],
+  launchTemplate = template,
+  scalingPolicy: {
+    utilizedGameServersPercent: 66
+  }
+});
+
+```
+
+See [Manage game server groups](https://docs.aws.amazon.com/gamelift/latest/fleetiqguide/gsg-integrate-gameservergroup.html)
+in the *Amazon GameLift FleetIQ Developer Guide*.
+
+### Specifying an IAM role
+
+The GameLift FleetIQ class automatically creates an IAM role with all the minimum necessary
+permissions for GameLift to access your Amazon EC2 Auto Scaling groups. If you wish, you may
+specify your own IAM role. It must have the correct permissions, or FleetIQ
+creation or ressource usage may fail.
+
+```ts fixture=with-launch-template
+import * as iam from '@aws-cdk-lib/aws-iam';
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const role = new iam.Role(this, 'Role', {
+  assumedBy: new iam.CompositePrincipale(new iam.ServicePrincipal('gamelift.amazonaws.com'),
+  new iam.ServicePrincipal('autoscaling.amazonaws.com'))
+}
+role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('GameLiftGameServerGroupPolicy'));
+
+new gamelift.FleetIQ(this, 'Game server group', {
+  instanceDefinition = [{
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
+  }],
+  launchTemplate = template,
+  role: role
+});
+```
+
+See [Controlling Access](https://docs.aws.amazon.com/gamelift/latest/fleetiqguide/gsg-iam-permissions-roles.html)
+in the *Amazon GameLift FleetIQ Developer Guide*.
+
+### Specifying VPC Subnets
+
+TODO
+
+### Monitoring
+
+GameLift FleetIQ sends metrics to CloudWatch so that you can collect and analyze the activity of your Game server fleet, including the number of utilized game servers, and the number of game server interruption due to limited Spot availability.
+
+You can then use CloudWatch alarms to alert you, for example, when the portion of game servers that are currently supporting game executions exceed a certain thresold which could means that your autoscaling policy need to be adjust to add more instances to match with player demand.
+
+CDK provides methods for accessing GameLift metrics with default configuration,
+such as `metricGameServerInterruptions`, or `metricAvailableGameServers` (see [`IFleetIQ`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
+for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift FleetIQ; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
+
+```ts fixture=with-matchmaking-configuration
+import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
+// Alarm that triggers when the percent of utilized game servers exceed 90%
+new Alarm(this, 'Alarm', {
+  metric: fleet.metricPercentUtilizedGameServers,
+  threshold: 0.9,
+  evaluationPeriods: 2,
+});
+```
+
+See: [Monitoring with CloudWatch](https://docs.aws.amazon.com/gamelift/latest/fleetiqguide/gsg-metrics.html)
+in the *Amazon GameLift FleetIQ Developer Guide*.
+
 
 ---
 
