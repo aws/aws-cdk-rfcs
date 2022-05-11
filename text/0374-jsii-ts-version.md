@@ -271,8 +271,12 @@ change at the same time (due to language-breaking changes).
 An option to address this would be to allow customers to "bring their own"
 TypeScript compiler, by making it a `peerDependency`. This however comes with
 a significant challenge: the TypeScript compiler API is not stable between
-TypeScript releases, and it is hence not possible to author a `jsii` compiler
-that can leverage an arbitrary TypeScript version.
+TypeScript releases. Addressing this would require maintaining an adapter layer
+for each supported version of the TypeScript compiler, and this would require
+tremendous efforts, in particular as there appears to be no way in TypeScript
+to re-export a `namespace` including all the type declarations it contains, as
+`typeof ts` (assuming `ts` is the TypeScript compiler namespace) only represents
+entities with a run-time value, and none of the interfaces it contains.
 
 #### Only de-couple the `jsii` package version, but stick with [SemVer]
 
