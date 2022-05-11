@@ -134,6 +134,54 @@ const ruleSet = new RuleSet(this, 'Matchmaking RuleSet', {
 });
 ```
 
+another way to implement `RuleSet` can be done through dedicated methods
+
+```ts
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const ruleSet = new RuleSet(this, 'Matchmaking RuleSet');
+ruleSet.addPlayerAttribute({
+    name: "skill",
+    type: "number",
+    default: 10
+});
+ruleSet.addTeam({
+    name: 'aliens',
+    minPlayers: 4,
+    maxPlayers: 8
+});
+ruleSet.addTeam({
+    name: 'cowboys',
+    minPlayers: 4,
+    maxPlayers: 8
+});
+ruleSet.addRule({
+    name: "FairTeamSkill",
+    description: "The average skill of players in each team is within 10 points from the average skill of all players in the match",
+    type: "distance",
+    // get skill values for players in each team and average separately to produce list of two numbers
+    measurements: [ "avg(teams[*].players.attributes[skill])" ],
+    // get skill values for players in each team, flatten into a single list, and average to produce an overall average
+    referenceValue: "avg(flatten(teams[*].players.attributes[skill]))",
+    maxDistance: 10 // minDistance would achieve the opposite result
+});
+ruleSet.addRule({
+    name: "EqualTeamSizes",
+    description: "Only launch a game when the number of players in each team matches, e.g. 4v4, 5v5, 6v6, 7v7, 8v8",
+    type: "comparison",
+    measurements: [ "count(teams[cowboys].players)" ],
+    referenceValue: "count(teams[aliens].players)",
+    operation: "=" // other operations: !=, <, <=, >, >=
+});
+ruleSet.addExpansion({
+    target: "rules[FairTeamSkill].maxDistance",
+    steps: [{
+        waitTimeSeconds: 30,
+        value: 50
+    }]
+});
+```
+
 ### Monitoring
 
 You can monitor GameLift FlexMatch activity for matchmaking configurations and matchmaking rules using Amazon CloudWatch. These statistics are used to provide a historical perspective on how your Gamelift FlexMatch solution is performing.
@@ -180,8 +228,23 @@ in the *Amazon GameLift Developer Guide*.
 
 ## GameLift FleetIQ
 
-### Defining a Game server group
+The GameLift FleetIQ solution is a game hosting layer that supplements the full set of computing resource management tools that you get with Amazon EC2 and Auto Scaling. This solution lets you directly manage your Amazon EC2 and Auto Scaling resources and integrate as needed with other AWS services.
 
+### Defining a Game Server Group
+
+When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as usual: make an Amazon Machine Image (AMI) with your game server software, create an Amazon EC2 launch template, and define configuration settings for an Auto Scaling group. However, instead of creating an Auto Scaling group directly, you create a GameLift FleetIQ game server group with your Amazon EC2 and Auto Scaling resources and configuration.
+
+```ts
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+
+const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
+  machineImage: ec2.MachineImage.latestAmazonLinux(),
+  securityGroup: new ec2.SecurityGroup(this, 'LaunchTemplateSG', {
+    vpc: vpc,
+  }),
+});
+
+```
 
 ---
 
