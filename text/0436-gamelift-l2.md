@@ -314,7 +314,28 @@ in the *Amazon GameLift FleetIQ Developer Guide*.
 
 ### Specifying VPC Subnets
 
-TODO
+GameLift FleetIQ use by default, all supported GameLift FleetIQ Availability Zones in your chosen region. You can override this parameter to specify VPCs subnets that you've set up. 
+
+This property cannot be updated after the game server group is created, and the corresponding Auto Scaling group will always use the property value that is set with this request, even if the Auto Scaling group is updated directly.
+
+```ts fixture=with-rule-set
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const vpc = new ec2.Vpc(this, 'TheVPC', {
+   cidr: "10.0.0.0/16"
+});
+
+new gamelift.FleetIQ(this, 'Game server group', {
+  instanceDefinition = [{
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
+  }],
+  launchTemplate = template,
+  subnets: vpc.selectSubnets({
+    subnetType: ec2.SubnetType.PRIVATE_WITH_NAT
+  })
+});
+```
 
 ### Monitoring
 
