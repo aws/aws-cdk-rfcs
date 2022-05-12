@@ -182,6 +182,42 @@ ruleSet.addExpansion({
 });
 ```
 
+### Integrating a GameLift hosting solution
+
+FlexMatch is available with the managed GameLift hosting for custom game servers and Realtime Servers. To add FlexMatch matchmaking to your game, you have to bind both components through a game session queue.
+
+```ts fix
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+
+new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  queues: [queue]
+});
+```
+
+or
+
+```ts fix
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+
+const config = new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+});
+
+config.addQueue(queue);
+```
+
+See: [FlexMatch integration with GameLift hosting](https://docs.aws.amazon.com/gamelift/latest/flexmatchguide/match-tasks.html)
+in the *Amazon GameLift FlexMatch Developer Guide*.
+
 ### Monitoring
 
 You can monitor GameLift FlexMatch activity for matchmaking configurations and matchmaking rules using Amazon CloudWatch. These statistics are used to provide a historical perspective on how your Gamelift FlexMatch solution is performing.
@@ -216,13 +252,313 @@ new Alarm(this, 'Alarm', {
 See: [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/gamelift/latest/developerguide/monitoring-cloudwatch.html)
 in the *Amazon GameLift Developer Guide*.
 
-## GameLift Fleet
+## GameLift Hosting
 
 ### Defining a GameLift Fleet
 
-#### Realtime server
+GameLift helps you deploy, operate, and scale dedicated game servers for session-based multiplayer games. It helps you regulate the resources needed to host your games, finds available game servers to host new game sessions, and puts players into games.
 
-#### Customer Game server
+#### Creating a realtime game server fleet
+
+This lightweight server solution provides ready-to-go game servers that you can configure to fit your game. To set up and optionnally customize a realtime server fleet, you need to provide a script (in the form of some JavaScript code).
+
+```ts
+import * as s3 from 'aws-cdk-lib/aws-s3-assets';
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const script = new gamelift.RealtimeScript(this, 'Game server build', {
+  location: new s3.Asset(this, "SampleScriptAsset", {
+    path: path.join(__dirname, 'file-asset.txt')
+  })
+});
+
+new gamelift.RealtimeGameServerFleet(this, 'Realtime server fleet', {
+  script: script
+});
+```
+
+#### Creating a custom game server fleet
+
+Your uploaded game servers are hosted on GameLift virtual computing resources, called instances. You set up your hosting resources by creating a fleet of instances and deploying them to run your game servers. You can design a fleet to fit your game's needs.
+
+```ts
+import * as s3 from 'aws-cdk-lib/aws-s3-assets';
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const build = new gamelift.GameServerBuild(this, 'Game server build', {
+  location: new s3.Asset(this, "SampleZippedDirAsset", {
+    path: path.join(__dirname, "sample-asset-directory")
+  })
+});
+
+new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+```
+
+### Integrating a queue system
+
+The game session queue is the primary mechanism for processing new game session requests and locating available game servers to host them. Although it is possible to request a new game session be hosted on specific fleet or location.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+
+new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+```
+
+or
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+
+const alias = fleet.addAlias({
+  name: 'live'
+})
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue');
+queue.addDestination(alias)
+```
+
+See [Setting up GameLift queues for game session placement](https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script-uploading.html)
+in the *Amazon GameLift Developer Guide*.
+
+#### Managing player latency policies
+
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+
+new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+```
+
+#### Setting notifications
+
+If you're using queues to manage game session placement in your game, you need a way to monitor the status of individual placement requests and take action as appropriate. Implementing event notifications is a fast and efficient method for tracking placement activity. If your game is in production, or in pre-production with high-volume placement activity, you should be using event notifications.
+
+There are two options for setting up event notifications. You can set up an SNS topic and have GameLift publish event notifications on placement activity by referencing the topic ID in a game session queue. Alternatively, you can use Amazon CloudWatch Events, which has a suite of tools available for managing events and taking action on them.
+
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+
+const topic = new sns.Topic(this, 'Topic');
+
+new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet],
+  notification: topic
+});
+```
+
+### Managing game servers launch configuration
+
+GameLift uses a fleet's runtime configuration to determine the type and number of processes to run on each instance in the fleet. At a minimum, a runtime configuration contains one server process configuration that represents one game server executable. You can also define additional server process configurations to run other types of processes related to your game. Each server process configuration contains the following information:
+
+* The file name and path of an executable in your game build.
+
+* Optionally Parameters to pass to the process on launch.
+
+* The number of processes to run concurrently.
+
+A GameLift instance is limited to 50 processes running concurrently.
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build,
+  runtimeConfiguration: {
+    gameSessionActivationTimeoutSeconds: 123,
+    maxConcurrentGameSessionActivations: 123,
+    serverProcesses: [{
+      concurrentExecutions: 1
+      launchPath: '/local/game/GameLiftExampleServer.x86_64'
+      parameters: '-logFile /local/game/logs/myserver1935.log -port 1935'
+    }]
+  }
+});
+```
+
+See [Managing how game servers are launched for hosting](https://docs.aws.amazon.com/gamelift/latest/developerguide/fleets-multiprocess.html)
+in the *Amazon GameLift Developer Guide*.
+
+### Defining an instance type
+
+GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called instances, to deploy your game servers and host game sessions for your players. When setting up a new fleet, you decide what type of instances your game needs and how to run game server processes on them (using a runtime configuration). All instances in a fleet use the same type of resources and the same runtime configuration. You can edit a fleet's runtime configuration and other fleet properties, but the type of resources cannot be changed.
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build,
+  instanceType: gamelift.InstanceType.of(gamelift.InstanceClass.C5, gamelift.InstanceSize.LARGE)
+});
+```
+
+### Using Spot instances
+
+When setting up your hosting resources, you have the option of using Spot Instances, On-Demand Instances, or a combination.
+
+By default, this property is set to ON_DEMAND.
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build,
+  fleetType: FleetType.SPOT
+});
+```
+
+### Allowing Ingress traffic
+
+The allowed IP address ranges and port settings that allow inbound traffic to access game sessions on this fleet.
+
+New game sessions are assigned an IP address/port number combination, which must fall into the fleet's allowed ranges. Fleets with custom game builds must have permissions explicitly set. For Realtime Servers fleets, GameLift automatically opens two port ranges, one for TCP messaging and one for UDP.
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build,
+});
+// Allowing all IP Addresses from port 1111 to port 1122 on TCP Protocol
+fleet.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(1111), ec2.Port.tcp(1122));
+
+// Allowing a specific CIDR for port 1111 on UDP Protocol
+fleet.addIngressRule(ec2.Peer.ipv4('1.2.3.4/32'), ec2.Port.udp(1111));
+```
+
+### Managing locations
+
+A single Amazon GameLift fleet has a home Region by default (the Region you deploy it to), but it can deploy resources to any number of GameLift supported Regions. Select Regions based on where your players are located and your latency needs.
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build,
+  locations: [
+    'us-east-1',
+    'eu-west-1'
+  ]
+});
+```
+
+or 
+
+```ts fixture=with-build
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build: build
+});
+fleet.addLocation('eu-west-1');
+```
+
+### Monitoring
+
+GameLift is integrated with CloudWatch, so you can monitor the performance of
+your game servers via logs and metrics.
+
+#### Logs
+
+TODO
+
+#### Metrics
+
+TODO
+
+### Specifying an IAM role
+
+Some GameLift features require you to extend limited access to your AWS resources. This is done by creating an AWS IAM role. The GameLift Fleet class automatically created an IAM role with all the minimum necessary permissions for GameLift to access your ressources. If you wish, you may
+specify your own IAM role.
+
+```ts fixture=with-build
+import * as iam from '@aws-cdk-lib/aws-iam';
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const role = new iam.Role(this, 'Role', {
+  assumedBy: new iam.CompositePrincipale(new iam.ServicePrincipal('gamelift.amazonaws.com'),
+  new iam.ServicePrincipal('ec2.amazonaws.com'), new iam.ServicePrincipal('ec2.amazonaws.com'))
+});
+role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'));
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build = build,
+  instanceRole: role
+});
+
+```
+
+If you need to access resources in your own account and you have a multi-region fleet with locations in one of the opt-in regions, add gamelift.opt-in-region.amazonaws.com to the role trust policy. The following example includes the four supported opt-in regions:
+
+* gamelift.ap-east-1.amazonaws.com
+* gamelift.me-south-1.amazonaws.com
+* gamelift.af-south-1.amazonaws.com
+* gamelift.eu-south-1.amazonaws.com
+
+```ts fixture=with-build
+import * as iam from '@aws-cdk-lib/aws-iam';
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const role = new iam.Role(this, 'Role', {
+  assumedBy: new iam.ServicePrincipal('gamelift.amazonaws.com')
+});
+role.addServicePrincipal('gamelift.ap-east-1.amazonaws.com');
+role.addServicePrincipal('gamelift.me-south-1.amazonaws.com');
+role.addServicePrincipal('gamelift.af-south-1.amazonaws.com');
+role.addServicePrincipal('gamelift.eu-south-1.amazonaws.com');
+
+new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+  build = build,
+  instanceRole: role
+});
+
+```
+
+### Alias
+
+A GameLift alias is used to abstract a fleet designation. Fleet designations tell Amazon GameLift where to search for available resources when creating new game sessions for players. By using aliases instead of specific fleet IDs, you can more easily and seamlessly switch player traffic from one fleet to another by changing the alias's target location.
+
+```ts
+
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+  build: build
+});
+fleet.addAlias({
+  name: 'live'
+});
+```
+
+See [Add an alias to a GameLift fleet](https://docs.aws.amazon.com/gamelift/latest/developerguide/aliases-creating.html)
+in the *Amazon GameLift Developer Guide*.
+
+
 
 ## GameLift FleetIQ
 
@@ -286,8 +622,7 @@ in the *Amazon GameLift FleetIQ Developer Guide*.
 
 The GameLift FleetIQ class automatically creates an IAM role with all the minimum necessary
 permissions for GameLift to access your Amazon EC2 Auto Scaling groups. If you wish, you may
-specify your own IAM role. It must have the correct permissions, or FleetIQ
-creation or ressource usage may fail.
+specify your own IAM role. It must have the correct permissions, or FleetIQ creation or ressource usage may fail.
 
 ```ts fixture=with-launch-template
 import * as iam from '@aws-cdk-lib/aws-iam';
@@ -297,7 +632,7 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 const role = new iam.Role(this, 'Role', {
   assumedBy: new iam.CompositePrincipale(new iam.ServicePrincipal('gamelift.amazonaws.com'),
   new iam.ServicePrincipal('autoscaling.amazonaws.com'))
-}
+});
 role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('GameLiftGameServerGroupPolicy'));
 
 new gamelift.FleetIQ(this, 'Game server group', {
