@@ -616,11 +616,8 @@ construct to help consumers to manager their Fleet or Matchmaking rules. This la
 
 ### Why should I use this feature?
 
-Specify and spin up a delivery stream that streams high amounts of data straight to your
-storage service. Possible use-cases include automated CloudWatch log delivery to S3 for
-analysis in S3; streaming analytic data to Redshift for analysis in Quicksight. Using
-Kinesis Data Firehose with CDK smooths many configuration edges and provides seamless
-integrations with your existing infrastructure as code.
+Specify and spin up a gamer server hosting solution that deploys, operates and scales cloud servers for multiplayer games. Possibles use-cases include defining and deploying a 2vs2 multiplayer solution based on player Skills. Using
+GameLift with CDK smooths many configuration edges and provides seamless integrations with your existing infrastructure as code.
 
 ## Internal FAQ
 
