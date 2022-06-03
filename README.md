@@ -51,7 +51,7 @@ future state of the libraries and to discover projects for contribution.
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/issues/63)||💡 proposed
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizen3031593](https://github.com/kaizen3031593)|💡 proposed
+[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|💡 proposed
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||💡 proposed
 [67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||💡 proposed
@@ -97,7 +97,7 @@ future state of the libraries and to discover projects for contribution.
 [313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
 [348](https://github.com/aws/aws-cdk-rfcs/issues/348)|[CloudFormationController - refactor CloudFormation stacks](https://github.com/aws/aws-cdk-rfcs/issues/348)||💡 proposed
 [370](https://github.com/aws/aws-cdk-rfcs/issues/370)|[CLI deploy with change set review confirmation](https://github.com/aws/aws-cdk-rfcs/issues/370)||💡 proposed
-[374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[Modularizing jsii](https://github.com/aws/aws-cdk-rfcs/issues/374)||💡 proposed
+[374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[The jsii compiler to follow TypeScript versioning](https://github.com/aws/aws-cdk-rfcs/issues/374)||💡 proposed
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
 [394](https://github.com/aws/aws-cdk-rfcs/issues/394)|[WAF v2 L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/394)||💡 proposed
@@ -107,6 +107,11 @@ future state of the libraries and to discover projects for contribution.
 [418](https://github.com/aws/aws-cdk-rfcs/issues/418)|[CDK Operator CLI](https://github.com/aws/aws-cdk-rfcs/issues/418)||💡 proposed
 [423](https://github.com/aws/aws-cdk-rfcs/issues/423)|[IoT Sitewise L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/423)||💡 proposed
 [426](https://github.com/aws/aws-cdk-rfcs/issues/426)|[AppConfig L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/426)||💡 proposed
+[428](https://github.com/aws/aws-cdk-rfcs/issues/428)|[Amazon CloudWatch Evidently L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/428)||💡 proposed
+[431](https://github.com/aws/aws-cdk-rfcs/issues/431)|[SageMaker Model Hosting L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/431)||💡 proposed
+[434](https://github.com/aws/aws-cdk-rfcs/issues/434)|[AWS Ground Station L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/434)||💡 proposed
+[436](https://github.com/aws/aws-cdk-rfcs/issues/436)|[Amazon GameLift L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/436)||💡 proposed
+[437](https://github.com/aws/aws-cdk-rfcs/issues/437)|[CDK post-deployment experience](https://github.com/aws/aws-cdk-rfcs/issues/437)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
