@@ -1,33 +1,48 @@
-# The jsii compiler to follow TypeScript versioning
+# The `jsii` compiler (and `jsii-rosetta`) to follow TypeScript versioning
 
 * **Original Author(s)**: @RomainMuller
 * **Tracking Issue**: #374
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-This RFC proposes to change the versioning scheme of the `jsii` compiler to stop
-conforming to [semantic versioning][semver], and instead use the `major.minor`
-version of the [TypeScript] compiler it is built on.
+This RFC proposes to change the versioning scheme of the `jsii` compiler and
+`jsii-rosetta` to stop conforming to [semantic versioning][semver], and instead
+use the `major.minor` version of the [TypeScript] compiler it is built on.
+
+Other packages (such as `jsii-pacmak`, `@jsii/spec`, ...) are not affected by
+this proposal and will continue to conform to [semantic versioning][semver].
 
 ## Working Backwards
 
 ### Release Notes entry
 
 ```md
-Starting with this release, the `jsii` compiler will no longer conform to
-[semantic versioning][semver]. Instead, its `major.minor` version will match
-that of the [TypeScript] compiler it uses (the [TypeScript] compiler does not
-conform to [semantic versioning][semver]).
+Starting with this release, the `jsii` compiler and `jsii-rosetta` will no
+longer conform to [semantic versioning][semver]. Instead, its `major.minor`
+version will match that of the [TypeScript] compiler it uses (the [TypeScript]
+compiler does not conform to [semantic versioning][semver]). New features will
+only be introduced on the `jsii` release line that targets the latest
+[TypeScript] compiler.
+
+Users may need to modify they code when upgrading from one `major.minor` release
+line to another (addressing [TypeScript] language evolutions and `jsii` feature
+evolutions). While upgrading to the latest release line of `jsii` helps minimize
+the effort required for these updates, the release strategy allows developers to
+do so on their own schedule.
 
 This change is made to allow developers to benefit from the latest and greatest
 features of the [TypeScript] language without requiring the entire ecosystem to
 make the switch at the same time.
 
+Other packages in the jsii toolchain (such as `jsii-pacmak`, `@jsii/spec`, and
+others) are not affected by this change and will continue to follow [semantic
+versioning][semver] as they currently do.
+
 BREAKING CHANGE: In order to allow developers to use the latest & greatest
-features of TypeScript, the `jsii` compiler no longer follows semantic
-versioning. Instead, releases are made in-line with those of the `typescript`
-compiler, which does not follow semantic versioning. We recommend you upgrade
-your `devDependency` on `jsii` to use a tilde range (e.g: `~4.7.0`) to be able
-to control when you migrate to future [TypeScript] language versions.
+features of TypeScript, the `jsii` compiler and `jsii-rosetta` no longer follow
+semantic versioning. Instead, releases are made in-line with those of the
+`typescript` compiler, which does not follow semantic versioning. We recommend
+you upgrade your `devDependency` on `jsii` to use a tilde range (e.g: `~4.7.0`)
+to be able to control when you migrate to future [TypeScript] language versions.
 ```
 
 ### `README.md` for the `jsii` compiler
@@ -66,6 +81,42 @@ When setting up a `jsii` project, we recommend pinning the dependency on the
 ```
 ````
 
+### `README.md` for the `jsii-rosetta` package
+
+````md
+In order to allow developers to access and leverage the latest and greatest of
+*TypeScript* language features, `jsii-rosetta` releases follow the `typescript`
+package releases. For example, `jsii-rosetta` version `4.3.x` is built on top of
+version `4.3.x` of the `typescript` compiler.
+
+> IMPORTANT: As `typescript` package does not follow semantic versioning.
+> Minor releases of the `typescript` compiler almost always include syntax
+> breaking changes together with new language features. Since `jsii-rosetta`
+> releases in line with `typescript` minor lines, `jsii-rosetta` does not adhere
+> to semantic versioning either.
+
+The `jsii-rosetta` release notes for the initial release on each new
+*major.minor* line will include a link to the corresponding TypeScript release
+notes entry, and a description of any `jsii` breaking changes that may have been
+introduced with the release.
+
+When using `jsii-rosetta` in a project, we recommend pinning the dependency on
+`jsii-rosetta` to the desired minor version line (which corresponds to the
+`typescript` release line), using a `~` SemVer range:
+
+```js
+{
+  // ...
+  "devDependencies": {
+    // ...
+    "jsii-rosetta": "~4.7.0",
+    // ...
+  },
+  // ...
+}
+```
+````
+
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -88,9 +139,11 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are announcing a change in versioning strategy for the `jsii` compiler.
-Starting today, new releases of the `jsii` package will use the same
-`major.minor` version as the [TypeScript] compiler it is built on.
+We are announcing a change in versioning strategy for the `jsii` compiler and
+`jsii-rosetta`. Starting today, new releases of the `jsii` and `jsii-rosetta`
+packages will use the same `major.minor` version as the [TypeScript] compiler
+they are built on. Other packages in the jsii toolchain (`jsii-pacmak`,
+`@jsii/spec`, ...) are unaffected by this change.
 
 Since the [TypeScript] compiler does not conform to [SemVer], future releases of
 the `jsii` compiler will not conform to [SemVer] either. In line with the
@@ -114,6 +167,8 @@ Developers are free to decide when it is appropriate for them to upgrade their
 `jsii` dependency to a new `major.minor` version line, bringing in new
 [TypeScript] language features as well as performance improvements and bug
 fixes.
+
+### Do I need to use the same `jsii` version as my dependencies?
 
 The `jsii` compiler makes the due dilligence to ensure the artifacts produced
 (in particular, the `.d.ts` declarations files and the `.jsii` assemblies)
@@ -151,8 +206,8 @@ were superceded by a new *current* line.
 
 ### How will we maintain backwards compatibility?
 
-The change only affects the [TypeScript] compiler version used internally by
-`jsii` and the versioning scheme for the `jsii` package itself.
+The change only affects the [TypeScript] compiler version used internally by the
+`jsii` compiler and the versioning scheme for the `jsii` package itself.
 
 The compiler will continue to emit `.jsii` assemblies that conform to the schema
 defined in the `@jsii/spec` package, which will hence continue to be compatible
@@ -164,7 +219,10 @@ since [TypeScript] occasionally introduces backwards-incompatible syntax changes
 compiler will proactively produce down-leveled declarations files targeting
 [TypeScript] compiler versions used by previous (not yet *end-of-life*) releases
 of `jsii`. This can be achieved using the [`downlevel-dts`][downlevel-dts]
-utility.
+utility. Failure to do so may make it impossible to use a library compiled with
+a given release of `jsii` in a project that is still using an older release,
+which would be akin to forcing dependents to upgrade at the same pace as their
+dependencies (which is undersiable).
 
 ### Why are we doing this?
 
@@ -173,19 +231,23 @@ very long time, due to the introduction of several breaking changes in the
 language specification: upgrading the [TypeScript] compiler that `jsii` builds
 on would cause existing code to break.
 
-This could not be addressed by issuing a new major release of `jsii`, as this
-would cause the ecosystem to be fragmented between packages that have migrated
-to the new major release, and those that haven't. Additionally, a package could
-only migrate if all of their dependencies are already using the new `jsii` major
-release, and they'd likely need to also release a new major version as a
-consequence.
-
 In order to allow each package author to decide for themselves without hinging
-on their dependencie's choices, or influencing their dependents, we are making
+on their dependencies' choices, or influencing their dependents, we are making
 it possible for every developer to decide when they want to migrate to a new
 version of the [TypeScript] language, by following [TypeScript]'s versioning for
 the compiler, and continuing to perform coordinated releases of every other
-package in the toolchain.
+package in the toolchain (those are unaffected by this change).
+
+The `jsii-rosetta` package also internally uses the [TypeScript] compiler that
+needs to be compatible with the [TypeScript] language level used by the project.
+Developers hence need to also be able to control which [TypeScript] version is
+being used by `jsii-rosetta` if they want to use this.
+
+Using the same `major.minor` version as the [TypeScript] compiler makes it easy
+for developers to identify which [TypeScript] language features are available to
+them or not. As the [TypeScript] compiler does not conform to [semantic
+versioning][semver], this implies `jsii` and `jsii-rosetta` also need to stop
+conforming to it.
 
 ### Why should we _not_ do this?
 
@@ -200,8 +262,11 @@ times per year: in February, May, August and November respectively). This is a
 lot more release lines than other AWS products offer, and it would not be
 reasonable to uphold the [AWS SDKs and Tools maintenance policy][aws-policy],
 as it requires offering full support (features and bug fixes) for "Generally
-Available" releases for a minimum of 24 months. Diverging from this
-[policy][aws-policy] is a significant change that customers may not expect.
+Available" releases for a minimum of 24 months (this would require providing
+full support for 8 different releases, and back-porting automation is likely to
+be difficult due to the amount of breaking changes in the [TypeScript] compiler
+API between releases). Diverging from this [policy][aws-policy] is a significant
+change that customers may not expect.
 
 ### What is the technical solution (design) of this feature?
 
@@ -235,7 +300,9 @@ The proposed delivery plan for this feature is as follows:
 
   - See proof-of-concept: [`aws/jsii#3501`][aws/jsii-3501]
 
-* Release the initial `jsii` release on the `4.7` line.
+* Release the initial `jsii` release on the `4.7` line (for practical reasons,
+  we will disregard [TypeScript] releases between `3.9` and the _current_
+  version when this proposal is implemented, which at time of writing is `4.7`).
 
 * Formally announce that the `v1` release line of `jsii` will move into the
   *Maintenance* tier of the [AWS SDKs and Tools maintenance policy][aws-policy]
@@ -276,7 +343,11 @@ for each supported version of the TypeScript compiler, and this would require
 tremendous efforts, in particular as there appears to be no way in TypeScript
 to re-export a `namespace` including all the type declarations it contains, as
 `typeof ts` (assuming `ts` is the TypeScript compiler namespace) only represents
-entities with a run-time value, and none of the interfaces it contains.
+entities with a run-time value, and none of the interfaces it contains. The
+consequence of this is that writing an adapter for a particular [TypeScript]
+version requires wrapping all useful functions of the compiler API and
+re-delcaring the types they use, which represents hundreds if not thousands of
+lines of code for each supported version.
 
 #### Only de-couple the `jsii` package version, but stick with [SemVer]
 
@@ -289,6 +360,25 @@ releases and the [TypeScript] language level they support.
 Using the same version number prefix (`major.minor`) as the [TypeScript]
 compiler makes the relationship clear and removes the need to maintain separate
 documentation for customers to understand what they are upgrading to.
+
+#### Release a different package for each supported [TypeScript] version
+
+The release model used by `cdk8s-plus` involves releasing a different package
+for each version of the underlying resources (e.g: `cdk8s-plus-22` targets
+version 22 of the resources). A similar model could be used for `jsii`, where a
+package named `jsii-4.7` could be released for the compiler that builds on
+[TypeScript] `4.7.x`.
+
+This release pattern however creates an opportunity for supply-chain attacks as
+a malicious party could release `jsii-4.10` ahead of us and possibly exploit
+unsuspecting users.
+
+The attack vector can be mitigated by scoping the packages since npm scopes
+provide ownership guarantees, which would require releasing
+`@jsii/typescript-4.7`. However this approach makes it more difficult for
+customers to know when a new release of the compiler is available, since
+dependency maintenance automation will only look for new versions of the same
+package.
 
 ### What are the drawbacks of this solution?
 
@@ -303,6 +393,21 @@ breaking changes to the `jsii` compiler, as these must be timed together with
 releases a new `major.minor` line 4 times a year, this is not a blocker, but
 will require careful planning.
 
+Breaking changes that could be tempting to introduce in new `major.minor`
+release lines include:
+
+- Upgrading default severity of some diagnostic messages to `ERROR`
+- Adding new compile-time validations
+- Dropping support for a recently end-of-life `node` version (this happens once
+  or twice a year)
+- Dropping support for a particular TypeScript language version (for example,
+  [DefinitelyTyped] packages only support TypeScript compilers that are less
+  than 2 years old)
+- Changing configuration file syntax, format, default values or required entries
+- Addressing a security issue that requires breaking existing code
+
+[DefinitelyTyped]: https://github.com/DefinitelyTyped/DefinitelyTyped#support-window
+
 ### What is the high-level project plan?
 
 Item                                      | Estimation | Notes
@@ -311,8 +416,13 @@ Initial communication                     | 1 day      |
 **Optional:** Break mono-repository out   | 5 days     |
 Have `jsii` down-level `.d.ts`            | 5 days     | [`aws/jsii#3501`][aws/jsii-3501]
 Update release automation                 | 2 days     |
+Update contributor guide                  | 1 day      |
+Update jsii documentation                 | 2 days     |
 Update [TypeScript] dependency            | 5 days     |
 Initial Release                           | 1 day      |
+Update `projen`'s  `JsiiProject` defaults | 1 day      |
+Migrate `aws-cdk` to new `jsii` release   | 10 days    | Via a pre-release
+Validate ConstructHub support             | 3 days     |
 Maintenance Announcement                  | 1 day      |
 Move to Maintenance                       | 1 day      |
 Move to end-of-life                       | 1 day      |
