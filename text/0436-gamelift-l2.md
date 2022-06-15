@@ -38,23 +38,30 @@ More details about matchmaking ruleSet are covered [below](#ruleSet).
 
 There is two types of Matchmaking configuration: through a queue system to let FlexMatch forms matches and uses the specified GameLift queue to start a game session for the match, and through a standalone version to let FlexMatch forms matches and returns match information in an event.
 
-Either a Matchmaking configuration using Queue
+
+Either a Standalone Matchmaking configuration
+
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new QueuedMatchmaking(this, 'Queued Matchmaking', {
+new gamelift.Matchmaking(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
 ```
 
-either a Standalone Matchmaking configuration
-
+Either a Matchmaking configuration using a Queue
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
+const matchmaking = new gamelift.Matchmaking(this, 'Queued Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
+
+const queue = new gamelift.Queue(this, 'GameLift Queue', {
+  placementTimeout: Duration.seconds(10)
+});
+
+matchmaking.withQueue(queue);
 ```
 
 The above example implicitly defines the following resources:
@@ -70,7 +77,7 @@ For example, a rule set might describe a match like this: Create a match with tw
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const ruleSet = new RuleSet(this, 'Matchmaking RuleSet');
+const ruleSet = new gamelift.RuleSet(this, 'Matchmaking RuleSet');
 
 ruleSet.addPlayerAttribute('skill', PlayerAttributeType.STRING,10
 });
@@ -102,7 +109,7 @@ ruleSet.addExpansion({
     }]
 });
 
-new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
+new gamelift.Matchmaking(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: ruleSet
 });
@@ -118,7 +125,8 @@ const matchmaking = new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
 
-matchmaking.with2vs2BasedOnSkillRules('skill', PlayerAttributeType.STRING, 10);
+// Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
+matchmaking.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10);
 ```
 
 ##### Monitoring
@@ -210,13 +218,19 @@ const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', 
   build: build
 });
 
-const matchmaking = new QueueMatchmaking(this, 'Standalone Matchmaking', {
+const queue = new gamelift.Queue(this, 'GameLift Queue', {
+  placementTimeout: Duration.seconds(10)
+});
+
+const matchmaking = new gamelift.Matchmaking(this, 'Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
 
-matchmaking.with2vs2BasedOnSkillRules('skill', PlayerAttributeType.STRING, 10);
+// Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
+matchmaking.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10);
 
-fleet.withMatchmaking(matchmaking);
+matchmaking.withQueue(queue);
+queue.withDestination(fleet);
 ```
 
 See: [FlexMatch integration with GameLift hosting](https://docs.aws.amazon.com/gamelift/latest/flexmatchguide/match-tasks.html)
@@ -246,12 +260,10 @@ const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', 
   build: build
 });
 
-const alias = fleet.addAlias({
-  name: 'live'
-})
+const alias = fleet.addAlias('live')
 
 const queue = new gamelift.GameSessionQueue(this, 'Game session queue');
-queue.addDestination(alias)
+queue.addDestination(alias);
 ```
 
 See [Setting up GameLift queues for game session placement](https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script-uploading.html)
@@ -267,7 +279,7 @@ There are two options for setting up event notifications. You can set up an SNS 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+const fleet = new gamelift.CustomGameServerFleet(this, 'Game server fleet', {
   build: build
 });
 
@@ -481,7 +493,7 @@ const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
   }),
 });
 
-new gamelift.Ec2Fleet(this, 'Game server group', {
+new gamelift.GameServerGroup(this, 'Game server group', {
   instanceDefinition = [{
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
   }],
@@ -505,7 +517,7 @@ const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
   }),
 });
 
-new gamelift.Ec2Fleet(this, 'Game server group', {
+new gamelift.GameServerGroup(this, 'Game server group', {
   instanceDefinition = [{
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
   }],
@@ -537,7 +549,7 @@ const role = new iam.Role(this, 'Role', {
 });
 role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('GameLiftGameServerGroupPolicy'));
 
-new gamelift.Ec2Fleet(this, 'Game server group', {
+new gamelift.GameServerGroup(this, 'Game server group', {
   instanceDefinition = [{
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
   }],
@@ -563,7 +575,7 @@ const vpc = new ec2.Vpc(this, 'TheVPC', {
    cidr: "10.0.0.0/16"
 });
 
-const fleet = new gamelift.Ec2Fleet(this, 'FleetIQ fleet', {
+const fleet = new gamelift.GameServerGroup(this, 'FleetIQ fleet', {
   instanceDefinition = [{
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
   }],
@@ -887,7 +899,7 @@ No.
 
 ### What alternative solutions did you consider?
 
-* Splitting `Ec2Fleet` and `ManagedFleet`  system to 2 differents and independants system to better fit with actual service Api design where we have `FleetIQ` services separated for Gamelift Fleet.
+* Merging `GameServerGroup` and `Fleet` to one single system to simplify design as in a high level point of viesw we are creating a game server Fleet.
 
 * Exporting Matchmaking ruleSet configuration to an external and dedicated package `aws-gamelift-ruleset-patterns` with a higher level approach in order to propose pre-built matchmaking ruleset design.
 
