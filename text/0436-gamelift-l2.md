@@ -670,6 +670,10 @@ robust prototypes already implemented.
 * `FleetBase` -- absdtract base Fleet class with some helper props/methods to help build GameLift Fleet and other common configuration
 
 ```ts
+enum FleetType {
+  ON_DEMAND,
+  SPOT
+}
 enum ProtectionPolicy {
   NO_PROTECTION = 'NoProtection',
   FULL_PROTECTION = 'FullProtection'
@@ -680,14 +684,39 @@ interface FleetProps {
   readonly minSize?: number;
   readonly maxSize?: number;
   readonly protectionPolicy?: ProtectionPolicy;
+  readonly instancetype?: ec2.InstanceType;
+  readonly type?: FleetType;
+  readonly peerVpc?: vpc.IVpc[];
 }
 
 abstract class FleetBase implements IFleet {
   constructor(protected readonly props: FleetProps = {}) {}
+  // Helper methods that subclasses can use to create common config
+  protected createLocation(...): CfnFleet.LocationConfigurationProperty | undefined;
+  protected createRuntimeConfiguration(...): CfnFleet.RuntimeConfigurationProperty | undefined;
+  protected createResourceCreationLimitPolicy(...):
+  CfnFleet.ResourceCreationLimitPolicyProperty | undefined;
+  protected createCertificateConfiguration(...):
+  CfnFleet.CertificateConfigurationProperty | undefined;
+  protected createIpPermission(...):
+  CfnFleet.IpPermissionProperty | undefined;
 }
 ```
+* `IGameServerGroup` -- interface to define and deploy Amazon GameLift FleetIQ solution.
 
-* `Ec2FleetBase` -- abstract base Ec2 Fleet class with some some helper props/methods to help build GameLift Game Server Group and other common configuration
+```ts
+  // cdk.IResource: Since IGameServerGroup will extend Resource
+  // iam.Grantable: To allow service role to access other resources like EC2 or other GameLift endpoint
+  // cdk.Taggable: IGameServerGroup allows tagging
+  interface IGameServerGroup extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+    readonly groupArn: string;
+    readonly groupName: string;
+    grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+    metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  }
+```
+
+* `GameServerGroup` -- abstract base Ec2 Fleet class with some some helper props/methods to help build GameLift Game Server Group and other common configuration
 
 ```ts
 enum BalancingStrategy {
@@ -700,48 +729,19 @@ enum DeleteOption {
   FORCE_DELETE,
   RETAIN
 }
-interface Ec2FleetProps extends FleetProps {
+interface GameServerGroupProps extends FleetProps {
   readonly blancingStrategy?: BalancingStrategy;
   readonly deleteOption?: DeleteOption;
   readonly subnets?: vpc.ISubnet[];
-
 }
 
-abstract class Ec2FleetBase extends FleetBase {
+abstract class GameServerGroup implements IGameServerGroup {
   constructor(protected readonly props: Ec2FleetProps = {}) {}
   // Helper methods that subclasses can use to create common config
   protected createScalingPolicy(...): CfnGameServerGroup.ScalingPolicyProperty | undefined;
   protected createLaunchTemplate(...): CfnGameServerGroup.LaunchTemplateProperty | undefined;
   protected createInstanceDefinition(...):
   CfnGameServerGroup.InstanceDefinitionProperty | undefined;
-}
-```
-
-* `ManagedFleetBase` -- abstract base managed Fleet class with some helpers props/methods to help build a GameLift Fleet and other configuration
-
-```ts
-enum FleetType {
-  ON_DEMAND,
-  SPOT
-}
-interface ManagedFleetProps extends FleetProps {
-  readonly instancetype?: ec2.InstanceType;
-  readonly type?: FleetType;
-  readonly peerVpc?: vpc.IVpc[];
-
-}
-
-abstract class ManagedFleetBase extends FleetBase {
-  constructor(protected readonly props: Ec2FleetProps = {}) {}
-  // Helper methods that subclasses can use to create common config
-  protected createLocation(...): CfnFleet.LocationConfigurationProperty | undefined;
-  protected createRuntimeConfiguration(...): CfnFleet.RuntimeConfigurationProperty | undefined;
-  protected createResourceCreationLimitPolicy(...):
-  CfnFleet.ResourceCreationLimitPolicyProperty | undefined;
-  protected createCertificateConfiguration(...):
-  CfnFleet.CertificateConfigurationProperty | undefined;
-  protected createIpPermission(...):
-  CfnFleet.IpPermissionProperty | undefined;
 }
 ```
 
