@@ -44,7 +44,7 @@ Either a Standalone Matchmaking configuration
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.Matchmaking(this, 'Standalone Matchmaking', {
+new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
 ```
@@ -53,7 +53,7 @@ Either a Matchmaking configuration using a Queue
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const matchmaking = new gamelift.Matchmaking(this, 'Queued Matchmaking', {
+const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Queued Matchmaking', {
   requestTimeouts: Duration.seconds(35)
 });
 
@@ -77,7 +77,7 @@ For example, a rule set might describe a match like this: Create a match with tw
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const ruleSet = new gamelift.RuleSet(this, 'Matchmaking RuleSet');
+const ruleSet = new gamelift.MatchmakingRuleSet(this, 'Matchmaking RuleSet');
 
 ruleSet.addPlayerAttribute('skill', PlayerAttributeType.STRING,10
 });
@@ -109,7 +109,7 @@ ruleSet.addExpansion({
     }]
 });
 
-new gamelift.Matchmaking(this, 'Standalone Matchmaking', {
+new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: ruleSet
 });
@@ -121,12 +121,23 @@ We can also provide high level patterns to simplify rule set definition and bind
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const matchmaking = new StandaloneMatchmaking(this, 'Standalone Matchmaking', {
-  requestTimeouts: Duration.seconds(35)
+const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  // Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
+  ruleSet: MatchmakingRuleSet.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10)
 });
 
-// Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
-matchmaking.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10);
+```
+
+Or either using low level integration methods to inject a JSON file directly
+
+```ts
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
+});
 ```
 
 ##### Monitoring
@@ -149,7 +160,7 @@ import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
 const matchesPlacedRatio = new cloudwatch.MathExpression({
   expression: '1 - (matchesPlaced / matchedCreated)',
   usingMetrics: {
-    matchesPlaced: matchmakingConfiguration.metricMatchesRejected({ statistic: cloudwatch.Statistic.SUM }),
+    matchesPlaced: matchmakingConfiguration.metricMatchesPlaced({ statistic: cloudwatch.Statistic.SUM }),
     matchesCreated: matchmakingConfiguration.metric('MatchesCreated'),
   },
 });
@@ -177,13 +188,13 @@ This lightweight server solution provides ready-to-go game servers that you can 
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const script = new gamelift.RealtimeScript(this, 'Game server build', {
+const script = new gamelift.Script(this, 'Realtime script', {
   location: new s3.Asset(this, "SampleScriptAsset", {
-    path: path.join(__dirname, 'file-asset.txt')
+    path: path.join(__dirname, 'file-asset.js')
   })
 });
 
-new gamelift.RealtimeGameServerFleet(this, 'Realtime server fleet', {
+new gamelift.Fleet(this, 'Realtime server fleet', {
   script: script
 });
 ```
@@ -196,13 +207,13 @@ Your uploaded game servers are hosted on GameLift virtual computing resources, c
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const build = new gamelift.GameServerBuild(this, 'Game server build', {
+const build = new gamelift.Build(this, 'Game server build', {
   location: new s3.Asset(this, "SampleZippedDirAsset", {
     path: path.join(__dirname, "sample-asset-directory")
   })
 });
 
-new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 ```
@@ -214,23 +225,20 @@ FlexMatch is available with the managed GameLift hosting for custom game servers
 ```ts fix
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
 const queue = new gamelift.Queue(this, 'GameLift Queue', {
   placementTimeout: Duration.seconds(10)
 });
-
-const matchmaking = new gamelift.Matchmaking(this, 'Matchmaking', {
-  requestTimeouts: Duration.seconds(35)
-});
-
-// Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
-matchmaking.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10);
-
-matchmaking.withQueue(queue);
 queue.withDestination(fleet);
+
+const matchmaking = new gamelift.MatchmakingConfigiuration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
+});
+matchmaking.withQueue(queue);
 ```
 
 See: [FlexMatch integration with GameLift hosting](https://docs.aws.amazon.com/gamelift/latest/flexmatchguide/match-tasks.html)
@@ -243,7 +251,7 @@ The game session queue is the primary mechanism for processing new game session 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
@@ -256,7 +264,7 @@ or
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
@@ -279,7 +287,7 @@ There are two options for setting up event notifications. You can set up an SNS 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Game server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
@@ -306,7 +314,7 @@ A GameLift instance is limited to 50 processes running concurrently.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
   runtimeConfiguration: {
     gameSessionActivationTimeoutSeconds: 123,
@@ -326,7 +334,7 @@ GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called instan
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
   instanceType: gamelift.InstanceType.of(gamelift.InstanceClass.C5, gamelift.InstanceSize.LARGE)
 });
@@ -341,7 +349,7 @@ By default, this property is set to ON_DEMAND.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
   type: FleetType.SPOT
 });
@@ -357,7 +365,7 @@ New game sessions are assigned an IP address/port number combination, which must
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
 });
 // Allowing all IP Addresses from port 1111 to port 1122 on TCP Protocol
@@ -376,7 +384,7 @@ By default Stack region is used.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 ```
@@ -386,7 +394,7 @@ but we can add new locations using dedicated methods.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 fleet.addLocation('eu-west-1');
@@ -421,7 +429,7 @@ const role = new iam.Role(this, 'Role', {
 });
 role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'));
 
-new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build = build,
   instanceRole: role
 });
@@ -448,7 +456,7 @@ role.addServicePrincipal('gamelift.me-south-1.amazonaws.com');
 role.addServicePrincipal('gamelift.af-south-1.amazonaws.com');
 role.addServicePrincipal('gamelift.eu-south-1.amazonaws.com');
 
-new gamelift.CustomGameServerFleet(this, 'Customer game server fleet', {
+new gamelift.Fleet(this, 'Game server fleet', {
   build = build,
   instanceRole: role
 });
@@ -463,12 +471,10 @@ A GameLift alias is used to abstract a fleet designation. Fleet designations tel
 
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.CustomGameServerFleet(this, 'Realtime server fleet', {
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
-fleet.addAlias({
-  name: 'live'
-});
+fleet.addAlias('live');
 ```
 
 See [Add an alias to a GameLift fleet](https://docs.aws.amazon.com/gamelift/latest/developerguide/aliases-creating.html)
@@ -667,7 +673,7 @@ robust prototypes already implemented.
   }
 ```
 
-* `FleetBase` -- absdtract base Fleet class with some helper props/methods to help build GameLift Fleet and other common configuration
+* `Fleet` -- Fleet class with some helper props/methods to help build GameLift Fleet and other common configuration
 
 ```ts
 enum FleetType {
@@ -689,7 +695,7 @@ interface FleetProps {
   readonly peerVpc?: vpc.IVpc[];
 }
 
-abstract class FleetBase implements IFleet {
+abstract class Fleet implements IFleet {
   constructor(protected readonly props: FleetProps = {}) {}
   // Helper methods that subclasses can use to create common config
   protected createLocation(...): CfnFleet.LocationConfigurationProperty | undefined;
@@ -745,16 +751,16 @@ abstract class GameServerGroup implements IGameServerGroup {
 }
 ```
 
-* `IGameSessionQueue` -- interface to define Game session queues for managing game session request and inject configuration into a matchmaking configuration.
+* `IQueue` -- interface to define Game session queues for managing game session request and inject configuration into a matchmaking configuration.
 
 ```ts
-  // cdk.IResource: Since IGameSessionQueue will extend Resource
+  // cdk.IResource: Since IQueue will extend Resource
   // iam.Grantable: To allow service role to access other resources like Amazon GameLift fleets or other ressources
-  // cdk.Taggable: IGameSessionQueue allows tagging
-  interface IGameSessionQueue extends cdk.IResource, iam.Grantable, cdk.ITaggable {
-    readonly gameSessionQueueArn: string;
-    readonly gameSessionQueueName: string;
-    abstract bind(scope: Construct, options: GameSessionQueueBindOptions): GameSessionQueueConfig;
+  // cdk.Taggable: IQueue allows tagging
+  interface IQueue extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+    readonly queueArn: string;
+    readonly queueName: string;
+    abstract bind(scope: Construct, options: QueueBindOptions): QueueConfig;
     grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
     grantView(grantee: iam.IGrantable): iam.Grant;
     grantWrite(grantee: iam.IGrantable): iam.Grant;
@@ -762,26 +768,17 @@ abstract class GameServerGroup implements IGameServerGroup {
     // Some canned metrics as well like `metricAverageWaitTime`
   }
 
-// Output of IRuleSet bind method
-interface GameSessionQueueConfig {
-  // Schema-less properties that will be injected directly into `CfnMatchmakingConfiguration`.
-  readonly properties: object;
-}
-// Info provided to bind method to help game session queue attach
-interface GameSessionQueueBindOptions {
-  readonly matchmaking: IMatchmaking;
-}
 ```
 
-* `IMatchmaking` -- interface to define and configure matchmaking, their corresponding ruleSet and bind it possibly to an existing Fleet.
+* `IMatchmakingConfiguration` -- interface to define and configure matchmaking, their corresponding ruleSet and bind it possibly to an existing Fleet.
 
 ```ts
   // cdk.IResource: Since IMatchmaking will extend Resource
   // iam.Grantable: To allow service role to access other resources like GameLift Fleet or Game session queue or other ressources
-  // cdk.Taggable: IMatchmaking allows tagging
-  interface IMatchmaking extends cdk.IResource, iam.Grantable, cdk.ITaggable {
-    readonly matchmakingArn: string;
-    readonly matchmakingName: string;
+  // cdk.Taggable: IMatchmakingConfiguration allows tagging
+  interface IMatchmakingConfiguration extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+    readonly matchmakingConfigurationArn: string;
+    readonly matchmakingConfigurationName: string;
     grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
     grantStartMatchmaking(grantee: iam.IGrantable): iam.Grant;
     metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
@@ -789,7 +786,7 @@ interface GameSessionQueueBindOptions {
   }
 ```
 
-* `MatchmakingBase` -- absdtract base matchmaking class with some helper props/methods to help build matchmaking ruleset and other common configuration.
+* `MatchmakingConfiguration` -- matchmaking configuration class with some helper props/methods to help build matchmaking ruleset and other common configuration.
 
 ```ts
 enum MatchmakingMode { STANDALONE, WITH_QUEUE}
@@ -803,8 +800,8 @@ interface MatchmakingProps {
   readonly mode?: MatchmakingMode;
 }
 
-abstract class MatchmakingBase implements IMatchmaking {
-  constructor(protected readonly props: MatchmakingProps = {}) {}
+abstract class MatchmakingConfiguration implements IMatchmaking {
+  constructor(protected readonly props: MatchmakingConfigurationProps = {}) {}
   // Helper methods that subclasses can use to create common config
   protected createGameProperty(...): CfnMatchmakingConfiguration.GamePropertyProperty | undefined;
   protected createRuleSet(...): CfnMatchmakingRuleSet | undefined;
@@ -813,32 +810,23 @@ abstract class MatchmakingBase implements IMatchmaking {
 }
 ```
 
-* `IRuleSet` -- interface to define and configure matchmaking ruleSet and produce configuration that is injected into the
+* `IMatchmakingRuleSet` -- interface to define and configure matchmaking ruleSet and produce configuration that is injected into the
   Matchmaking definition.
 
 ```ts
-// cdk.IResource: Since IMatchmaking will extend Resource
+// cdk.IResource: Since IMatchmakingRuleSet will extend Resource
 // iam.Grantable: To allow service role to access other resources like GameLift Fleet or Game session queue or other ressources
-// cdk.Taggable: IMatchmaking allows tagging
-interface IRuleSet extends cdk.IResource, cdk.ITaggable {
+// cdk.Taggable: IMatchmakingRuleSet allows tagging
+interface IMatchmakingRuleSet extends cdk.IResource, cdk.ITaggable {
   readonly ruleSetgArn: string;
   readonly ruleSetName: string;
   abstract bind(scope: Construct, options: RuleSetBindOptions): RuleSetConfig;
   metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
   // Some canned metrics as well like `metricRuleEvaluationsPassed`
 }
-// Output of IRuleSet bind method
-interface RuleSetConfig {
-  // Schema-less properties that will be injected directly into `CfnMatchmakingConfiguration`.
-  readonly properties: object;
-}
-// Info provided to bind method to help ruleSet attach
-interface RuleSetBindOptions {
-  readonly matchmaking: IMatchmaking;
-}
 ```
 
-* `RuleSetBase` -- absdtract base matchmaking class with some helper props/methods to help build matchmaking ruleset and other common configuration
+* `MatchmakingRuleSet` -- absdtract base matchmaking class with some helper props/methods to help build matchmaking ruleset and other common configuration
 
 ```ts
 enum PlayerAttributeType {
@@ -879,11 +867,11 @@ interface RuleProperty {
   readonly partyAggregation: PartyAggregation;
 }
 
-interface RuleSetProps {
+interface MatchmakingRuleSetProps {
   // Name of the actual ruleSet instance
   readonly name: string
 }
-abstract class RuleSetBase implements IRuleSet {
+abstract class MatchmakingRuleSet implements IRuleSet {
   constructor(protected readonly props: RuleSetProps = {}) {}
   // Helper methods that subclasses can use to create common config
   protected createTeam(...): RuleSetBase.TeamProperty | undefined;
@@ -901,7 +889,7 @@ No.
 
 * Merging `GameServerGroup` and `Fleet` to one single system to simplify design as in a high level point of viesw we are creating a game server Fleet.
 
-* Exporting Matchmaking ruleSet configuration to an external and dedicated package `aws-gamelift-ruleset-patterns` with a higher level approach in order to propose pre-built matchmaking ruleset design.
+* Exporting high level Matchmaking ruleSet constructs like `withTwoTeamBasedOnSkillRules` to an external and dedicated package `aws-gamelift-ruleset-patterns`.
 
 ### What are the drawbacks of this solution?
 
