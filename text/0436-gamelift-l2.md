@@ -146,7 +146,7 @@ You can monitor GameLift FlexMatch activity for matchmaking configurations and m
 
 ###### Metrics
 
-GameLift FlexMatch sends metrics to CloudWatch so that you can collect and analyze the activity of your matchmaking solution, including match acceptance workflow, ticket consumtion, and the state of your matchmaking rules evaluation.
+GameLift FlexMatch sends metrics to CloudWatch so that you can collect and analyze the activity of your matchmaking solution, including match acceptance workflow, ticket consumtion.
 
 You can then use CloudWatch alarms to alert you, for example, when matches has been rejected (potential matches that were rejected by at least one player since the last report) exceed a certain thresold which could means that you may have an issue in your matchmaking rules.
 
@@ -333,10 +333,11 @@ GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called instan
 
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
 new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
-  instanceType: gamelift.InstanceType.of(gamelift.InstanceClass.C5, gamelift.InstanceSize.LARGE)
+  instanceType: gamelift.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE)
 });
 ```
 
@@ -405,13 +406,35 @@ fleet.addLocation('eu-west-1');
 GameLift is integrated with CloudWatch, so you can monitor the performance of
 your game servers via logs and metrics.
 
-###### Logs
-
-TODO
-
 ###### Metrics
 
-TODO
+GameLift Fleet sends metrics to CloudWatch so that you can collect and analyze the activity of your Fleet, including game  and player sessions and server processes.
+
+You can then use CloudWatch alarms to alert you, for example, when matches has been rejected (potential matches that were rejected by at least one player since the last report) exceed a certain thresold which could means that you may have an issue in your matchmaking rules.
+
+CDK provides methods for accessing GameLift Fleet metrics with default configuration,
+such as `metricActiveInstances`, or `metricIdleInstances` (see [`IFleet`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IFleet.html)
+for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift Fleet, Game sessions or server processes; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
+
+```ts fixture=with-matchmaking-configuration
+import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
+// Alarm that triggers when the per-second average of not used instances exceed 10%
+const instancesUsedRatio = new cloudwatch.MathExpression({
+  expression: '1 - (activeInstances / idleInstances)',
+  usingMetrics: {
+    activeInstances: fleet.metricActiveInstances({ statistic: cloudwatch.Statistic.SUM }),
+    idleInstances: fleet.metric('IdleInstances'),
+  },
+});
+new Alarm(this, 'Alarm', {
+  metric: instancesUsedRatio,
+  threshold: 0.1,
+  evaluationPeriods: 3,
+});
+```
+
+See: [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/gamelift/latest/developerguide/monitoring-cloudwatch.html)
+in the *Amazon GameLift Developer Guide*.
 
 ##### Specifying an IAM role
 
@@ -818,7 +841,7 @@ abstract class MatchmakingConfiguration implements IMatchmaking {
 // iam.Grantable: To allow service role to access other resources like GameLift Fleet or Game session queue or other ressources
 // cdk.Taggable: IMatchmakingRuleSet allows tagging
 interface IMatchmakingRuleSet extends cdk.IResource, cdk.ITaggable {
-  readonly ruleSetgArn: string;
+  readonly ruleSetArn: string;
   readonly ruleSetName: string;
   abstract bind(scope: Construct, options: RuleSetBindOptions): RuleSetConfig;
   metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
