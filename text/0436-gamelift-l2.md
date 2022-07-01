@@ -129,7 +129,7 @@ const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking',
 
 ```
 
-Or either using low level integration methods to inject a JSON file directly
+Or either using low level integration methods to inject a JSON file or string directly
 
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -137,6 +137,11 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
+});
+
+const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonContent(MY_JSON_STRING_CONTENT)
 });
 ```
 
