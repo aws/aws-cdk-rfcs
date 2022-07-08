@@ -77,32 +77,75 @@ For example, a rule set might describe a match like this: Create a match with tw
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
+// RuleSet can be definied
+// Using either declarative version in the constructor
+const ruleSet = new gamelift.MatchmakingRuleSet(this, 'Matchmaking RuleSet', {
+  playerAttributes: [{
+    name: 'skill',
+    type: PlayerAttributeType.STRING,
+    default: 10
+  }],
+  teams: [{
+    name: 'aliens',
+    minPlayers: 4,
+    maxPlayers: 8
+  }, {
+    name: 'cowboys',
+    minPlayers: 4,
+    maxPlayers: 8
+  }],
+  rules: [{
+    name: "FairTeamSkill",
+    description: "The average skill of players in each team is within 10 points from the average skill of all players in the match",
+    type: RuleType.DISTANCE,
+    // get skill values for players in each team and average separately to produce list of two numbers
+    measurements: [ Query.avg(Teams.all.players[skill]) ],
+    // get skill values for players in each team, flatten into a single list, and average to produce an overall average
+    referenceValue: Query.avg(Operation.flatten(Teams.all.players[skill])),
+    maxDistance: 10 // minDistance would achieve the opposite result
+  }, {
+    name: "EqualTeamSizes",
+    description: "Only launch a game when the number of players in each team matches, e.g. 4v4, 5v5, 6v6, 7v7, 8v8",
+    type: RuleType.COMPARISON,
+    measurements: [ Query.count(Teams['cowboys'].players) ],
+    referenceValue: Query.count(Teams['aliens'].players),
+    operation: Operator.EQUAL // other operations: !=, <, <=, >, >=
+  }],
+  expansions: [{
+    target: Rules['FairTeamSkill'].maxDistance,
+    steps: [{
+        waitTimeSeconds: 30,
+        value: 50
+    }]
+  }]
+});
+
+// Either using dedicated methods
 const ruleSet = new gamelift.MatchmakingRuleSet(this, 'Matchmaking RuleSet');
 
-ruleSet.addPlayerAttribute('skill', PlayerAttributeType.STRING,10
-});
+ruleSet.addPlayerAttribute('skill', PlayerAttributeType.STRING,10);
 ruleSet.addTeam('aliens',4,8);
 ruleSet.addTeam('cowboys', 4,8);
 ruleSet.addRule({
     name: "FairTeamSkill",
     description: "The average skill of players in each team is within 10 points from the average skill of all players in the match",
-    type: "distance",
+    type: RuleType.DISTANCE,
     // get skill values for players in each team and average separately to produce list of two numbers
-    measurements: [ "avg(teams[*].players.attributes[skill])" ],
+    measurements: [ [Query.avg(Teams.all.players[skill])] ],
     // get skill values for players in each team, flatten into a single list, and average to produce an overall average
-    referenceValue: "avg(flatten(teams[*].players.attributes[skill]))",
+    referenceValue: Query.avg(Operation.flatten(Teams.all.players[skill])),
     maxDistance: 10 // minDistance would achieve the opposite result
 });
 ruleSet.addRule({
     name: "EqualTeamSizes",
     description: "Only launch a game when the number of players in each team matches, e.g. 4v4, 5v5, 6v6, 7v7, 8v8",
-    type: "comparison",
-    measurements: [ "count(teams[cowboys].players)" ],
-    referenceValue: "count(teams[aliens].players)",
-    operation: "=" // other operations: !=, <, <=, >, >=
+    type: RuleType.COMPARISON,
+    measurements: [ Query.count(Teams['cowboys'].players ],
+    referenceValue: Query.count(Teams['aliens'].players,
+    operation: Operator.EQUAL // other operations: !=, <, <=, >, >=
 });
 ruleSet.addExpansion({
-    target: "rules[FairTeamSkill].maxDistance",
+    target: Rules['FairTeamSkill'].maxDistance,
     steps: [{
         waitTimeSeconds: 30,
         value: 50
@@ -112,19 +155,6 @@ ruleSet.addExpansion({
 new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: ruleSet
-});
-
-```
-
-We can also provide high level patterns to simplify rule set definition and binding to a matchmaking configuration
-
-```ts
-import * as gamelift from '@aws-cdk-lib/aws-gamelift';
-
-const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking', {
-  requestTimeouts: Duration.seconds(35),
-  // Build a Team1 vs Team2 with 5 players each based on skill with a minimum of 10 ruleSet
-  ruleSet: MatchmakingRuleSet.withTwoTeamBasedOnSkillRules('team1', 'team2', 5, 'skillAttribute', PlayerAttributeType.STRING, 10)
 });
 
 ```
@@ -193,11 +223,15 @@ This lightweight server solution provides ready-to-go game servers that you can 
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
+// Script can be declared using either declarative version in the constructor
 const script = new gamelift.Script(this, 'Realtime script', {
   location: new s3.Asset(this, "SampleScriptAsset", {
     path: path.join(__dirname, 'file-asset.js')
   })
 });
+
+// Either using dedicated factory static method
+const script = Script.fromAsset(path.join(__dirname, 'file-asset.js');
 
 new gamelift.Fleet(this, 'Realtime server fleet', {
   script: script
@@ -234,7 +268,7 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
-const queue = new gamelift.Queue(this, 'GameLift Queue', {
+const queue = new gamelift.Queue(this, 'Game Session Queue', {
   placementTimeout: Duration.seconds(10)
 });
 queue.withDestination(fleet);
@@ -260,7 +294,7 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
 
-const queue = new gamelift.GameSessionQueue(this, 'Game session queue');
+const queue = new gamelift.Queue(this, 'Game session queue');
 queue.addDestination(fleet);
 ```
 
@@ -275,7 +309,7 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
 
 const alias = fleet.addAlias('live')
 
-const queue = new gamelift.GameSessionQueue(this, 'Game session queue');
+const queue = new gamelift.Queue(this, 'Game session queue');
 queue.addDestination(alias);
 ```
 
@@ -298,8 +332,8 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
 
 const topic = new sns.Topic(this, 'Topic');
 
-const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
-  notification: topic
+const queue = new gamelift.Queue(this, 'Game session queue', {
+  notification: new SnsDestination(topic)
 });
 queue.addDestination(fleet);
 ```
@@ -824,7 +858,7 @@ interface MatchmakingProps {
   // The ruleSet used to definied matchmaking conditions
   readonly ruleSet: IRuleSet;
   readonly backfillMode?: BackfillMode;
-  readonly gameSessionQueues?: IGameSessionQueue[];
+  readonly queues?: IQueue[];
   readonly mode?: MatchmakingMode;
 }
 
@@ -833,7 +867,7 @@ abstract class MatchmakingConfiguration implements IMatchmaking {
   // Helper methods that subclasses can use to create common config
   protected createGameProperty(...): CfnMatchmakingConfiguration.GamePropertyProperty | undefined;
   protected createRuleSet(...): CfnMatchmakingRuleSet | undefined;
-  protected createGameSessionQueue(...):
+  protected createQueue(...):
   CfnGameSessionQueue | undefined;
 }
 ```
