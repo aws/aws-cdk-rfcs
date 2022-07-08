@@ -360,7 +360,11 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
     maxConcurrentGameSessionActivations: 123,
   }
 });
-fleet.runtimeConfiguration.addServerProcess('/local/game/GameLiftExampleServer.x86_64', '-logFile /local/game/logs/myserver1935.log -port 1935');
+fleet.runtimeConfiguration.addServerProcess({
+  launchPath: '/local/game/GameLiftExampleServer.x86_64', 
+  parameters: '-logFile /local/game/logs/myserver1935.log -port 1935',
+  concurrentExecutions: 100,
+});
 ```
 
 See [Managing how game servers are launched for hosting](https://docs.aws.amazon.com/gamelift/latest/developerguide/fleets-multiprocess.html)
@@ -376,7 +380,7 @@ import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
 new gamelift.Fleet(this, 'Game server fleet', {
   build: build,
-  instanceType: gamelift.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE)
+  instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE)
 });
 ```
 
