@@ -326,12 +326,12 @@ be able to acquire the `@aws-cdk/lambda-layer-X` packages from npm. There are a
 few options for these customers:
 1. If using TypeScript or JavaScript, add each necessary package to the
    dependencies of their CDK app.
-2. If using a target JSII language, add each necessary package as a dependency
-   as thye normally would for other construct libraries. Each
-   `@aws-cdk/lambda-layer-X` package will be a JSII construct library, that is
-   also vended to the package managers for each target JSII language. For
-   example, Python users can install aws-cdk.lambda-layer-awscli 2.x from pip.
-3. Include them in a private npm registry.
+2. If using a target jsii language, add each necessary package as a dependency
+   as they normally would for other construct libraries. Each
+   `@aws-cdk/lambda-layer-X` package will be a jsii construct library, that is
+   also vended to the package managers for each target jsii language. For
+   example, Python users can install aws-cdk.lambda-layer-awscli-v2 from pip.
+3. Include them in a private artifact registry.
 
 Unfortunately, there is no way to remove these large files and host them
 somewhere else without causing a breaking change for these customers. We will
@@ -351,14 +351,14 @@ regions, the right dependencies will already be available.
 #### .jsii Files
 
 There are two files, .jsii.tabl.json and .jsii, bundled in `aws-cdk-lib` for the
-JSII runtime to work for any non-NodeJS languages. And, to enable code and
+jsii runtime to work for any non-NodeJS languages. And, to enable code and
 documentation generation from the published npm package. Today, they make up 42%
 of the package size. And in the future, after adding more Lambda Layers, the
 .jsii files would compose 30% of the package size.
 
 We will compress the .jsii.tabl.json and .jsii files. Compressing with gzip
 currently creates a 4 MB and 4.7 MB file, respectively. This change will impact
-the JSII runtime, and Construct Hub. NodeJS JSII runtimes don't need to use
+the jsii runtime, and Construct Hub. NodeJS jsii runtimes don't need to use
 either file, and non-NodeJS runtimes would decompress the .jsii file when
 needed. Construct Hub generates documentation from the .jsii.tabl.json file, and
 it will also decompress this file as needed.
@@ -404,7 +404,7 @@ Each category of files has different alternative solutions to reduce the size.
    reference the URI from the jsii assembly (.jsii). This solution will not be
    pursued at this time. There are several issues with de-coupling the Rosetta
    tablet file from the artifacts that customers install, including adding a
-   requirement that the JSII runtime to run in an environment that has access to
+   requirement that the jsii runtime to run in an environment that has access to
    the public endpoint where it would be hosted.
 2. The .jsii.tabl.json  and .jsii files are both “pretty-printed.” We can reduce
    their size to 42 MB (-23%) and 30 MB (-33%) by removing all the whitespace
