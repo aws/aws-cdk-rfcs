@@ -423,8 +423,10 @@ Each category of files has different alternative solutions to reduce the size.
    the public endpoint where it would be hosted.
 2. The .jsii.tabl.json  and .jsii files are both “pretty-printed.” We can reduce
    their size to 42 MB (-23%) and 30 MB (-33%) by removing all the whitespace
-   and newlines. We will not implement this, since it does not have a
-   significant enough impact on size.
+   and newlines. Since we are going to be compressing these files, removing
+   whitespace doesn't have much benefit. It will not impact either the unpacked
+   npm package size, or the compressed artifact size for all package manager.
+   Since the files will already be compressed in both versions.
 
 #### Source Map Files (.js.map)
 
