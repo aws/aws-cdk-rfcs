@@ -381,9 +381,19 @@ done to make them smaller.
 We can minify these files, which could result in a space saving of up to 20 MB.
 Minifying is the process of removing new-lines and whitespace characters from
 the files. The 20 MB number was collected by removing all new-line and
-whitespace characters. In reality, we will need to do something slightly more
-sophisticated and keep whitespace in documentation comments, so that
-type-checking in IDEs still has readable type references.
+whitespace characters. In reality, we can not actually remove all whitespace. We
+will need to maintain whitespace in documentation comments, so that
+type-checking in IDEs still has readable type references. As well as the minimum
+whitespace necessary for the files to still be readable when navigating to them
+in an IDE from usage of `aws-cdk-lib`.
+
+For the type declaration files, we will also pursue combining them into one file
+per submodule. Currently, there is one `.d.ts` file per `.ts` file in the
+`aws-cdk-lib` source code. This could lead to better compression of the library
+overall. And, would improve performance for `tsc` invocations, since the
+compiler would not need to read as many files. These improvements have not been
+measured yet. They will be measured during the implementation to make sure the
+changes are worth it.
 
 ### Is this a breaking change?
 
