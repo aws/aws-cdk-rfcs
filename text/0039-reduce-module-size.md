@@ -305,6 +305,7 @@ After the above is implemented, this mechanism can be extended to include
 additional Lambda Layers with different dependencies. The solution should be
 implemented in such a way that new dependencies can be added with the below
 steps.
+
 1. Add a new directory in the `aws-cdk` monorepo:
    `@aws-cdk/lambda-layer-MyNewDependency`.
 2. Implement the MyNewDependencyLayer API.
@@ -324,6 +325,7 @@ network-restricted environments, then it is reasonable to assume they were able
 to acquire the `aws-cdk` package from npm somehow. This implies customers will
 be able to acquire the `@aws-cdk/lambda-layer-X` packages from npm. There are a
 few options for these customers:
+
 1. If using TypeScript or JavaScript, add each necessary package to the
    dependencies of their CDK app.
 2. If using a target jsii language, add each necessary package as a dependency
