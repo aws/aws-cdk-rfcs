@@ -162,7 +162,10 @@ The CDK team is currently blocked on adding more Lambda Layer zip files to the
 AWS CDK framework, because adding them would dramatically increase the size of
 the package. Each of these zips are in a module whose only purpose is to bundle
 a dependency (or two) into a Lambda Layer, which is then used in custom
-resources that are part of the AWS CDK framework.
+resources that are part of the AWS CDK framework.  We need a solution that is
+scalable, so that more Lambda Layer dependencies can be added without bundling
+them into `aws-cdk-lib` and significantly impacting its size. See section
+[Lambda Layer Zip Files](#lambda-layer-zip-files) for the proposed solution.
 
 There are more dependencies like these that need to be added to the framework,
 but we are currently blocked on adding them with the current design because they
