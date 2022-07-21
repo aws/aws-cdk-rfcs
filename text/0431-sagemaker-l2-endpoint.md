@@ -281,11 +281,10 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching the first set of L2 constructs for an existing module (`@aws-cdk/aws-sagemaker`),
-introducing the `Endpoint` construct alongside its dependencies `EndpointConfig` and `Model`.
-Together, these constructs enable customers to deploy a machine learning model to an Amazon
-SageMaker-hosted endpoint which can be used for real-time inference via SageMaker's `InvokeEndpoint`
-API.
+We are launching the first set of L2 constructs for the SageMaker module, introducing the `Endpoint`
+construct alongside its dependencies `EndpointConfig` and `Model`. Together, these constructs enable
+customers to deploy a machine learning model to an Amazon SageMaker-hosted endpoint which can be
+used for real-time inference via SageMaker's `InvokeEndpoint` API.
 
 ### Why should I use this feature?
 
