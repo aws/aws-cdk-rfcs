@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @rix0rrr
 * **Tracking Issue**: #309
-* **API Bar Raiser**: @otaviomacedo
+* **API Bar Raiser**: @Naumel
 
 A mechanism to make sure that CDK doesn't prevent resource replacement if there is no impact on downstream stacks.
 
@@ -18,7 +18,7 @@ We introduce a mechanism for turning strong references into weak references, and
 
 ### Cross-stack references
 
-When CDK detects that you are using resources define in one Stack in another Stack, it will automatically add a dependency between the two stacks, and generate the declarations necessary in both stacks to make sure the value gets transported between them (this feature only works for Stacks in the same account and region--if stacks are in either a different account or different region, the reference will lead to a synthesis error).
+When CDK detects that you are using resources defined in one Stack in another Stack, it will automatically add a dependency between the two stacks, and generate the declarations necessary in both stacks to make sure the value gets transported between them (this feature only works for Stacks in the same account and region--if stacks are in either a different account or different region, the reference will lead to a synthesis error).
 
 By default all references are **strong references**, which introduce some limitations on the resources being referenced:
 
@@ -54,7 +54,9 @@ const fn = new lambda.Function(this, 'MyFunction', {
 });
 ```
 
-`Reference.weakStringReference()` only has an effect if the reference is to a construct defined in a different stack: it will use SSM Parameter Store to transport the value between stacks. If the reference is to a construct in the same stack, nothing happens (do be aware that in the example above, if `Bucket` gets renamed, there is a certain time window in which the Lambda Function may continue to be executed with the old bucket name!).
+`Reference.weakStringReference()` only applies if the referenced construct is defined in a different stack: it will use SSM Parameter Store to transport the value between stacks. If the reference is to a construct in the same stack, nothing happens.
+
+> N.B: in the example above, if the reference is weak and `Bucket` gets renamed there is a certain time window in which the Lambda Function may continue to be executed with the old bucket name!
 
 If the value passed to `Reference.weakStringReference()` contains multiple references (either because it's a string with multiple references or it's an array or complex data structure), all of them are made weak.
 
