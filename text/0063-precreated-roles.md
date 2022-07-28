@@ -19,7 +19,7 @@ This RFC proposes a mechanism by which roles creation is replaced with an offlin
 In normal operation, L2 constructs in the AWS Construct Library will automatically create IAM Roles for resources that require them (like Execution Roles for AWS Lambda Functions and Instance Roles for EC2 instances), and assign least-privilege permissions based on the `grant`s and integrations you define.
 
 If you work in an environment that does not allow definition of IAM Roles by application developers, you can disable
-this behavior by calling `iam.Role.preventRoleCreation()` on the scope at which you want to prevent roles from being
+this behavior by calling `iam.Role.customizeRoles()` with `preventSynthesis: true` on the scope at which you want to prevent roles from being
 created, before defining the infrastructure of your application. Example:
 
 ```ts
@@ -29,7 +29,9 @@ import { MyStack } from './my-stack';
 const app = new App();
 
 // Disable synthesis of IAM Roles in the entire app
-iam.Role.preventRoleCreation(app);
+iam.Role.customizeRoles(app, {
+  preventSynthesis: true,
+});
 
 new MyStack(app, 'MyStack', {
   // ...
@@ -43,33 +45,45 @@ For example, `iam-roles.txt` might look like this:
 
 ```text
 <missing role> (/MyStack/MyLambda/Role)
-    {
-        "Effect": "Allow",
-        "Action": ["s3:GetObject"],
-        "Resource": ["arn:PARTITION:s3:REGION:ACCOUNT:${/MyStack/MyBucket}/*",
-    }
+    AssumeRole Policy:
+        {
+            "Effect": "Allow",
+            "Action": ["sts:AssumeRole"],
+            "Principal": { "Service": "lambda.amazonaws.com" }
+        }
+
+    Managed Policies:
+        arn:(PARTITION):iam:::aws/policy/AWSLambdaBasicExecutionRole
+
+    Identity Policy:
+        {
+            "Effect": "Allow",
+            "Action": ["s3:GetObject"],
+            "Resource": ["arn:(PARTITION):s3:(REGION):(ACCOUNT):(/MyStack/MyBucket.Arn)/*",
+        }
 ```
 
-If there are any roles marked as `<missing role>` (which means there is no well-known role name associated with them yet), synthesis will fail.
+If there are any roles marked as `<missing role>` (which means there is no known role name associated with them yet), synthesis will fail.
 
-Give this report to your IT operators, and ask them to create roles with the required permissions (this will
-require specifying wildcards for names of resources that haven't been created yet).
+Give this report to your IT operators, and ask them to create roles with the required permissions. The policies may refer to resources which have yet to be created, and therefore have no resource names to refer to in the policies. Your IT operators will need to use wildcards or set up some form of tag-based access control when they build the permissions for these roles.
 
-When your IT department comes to you, they will have created a role with a well-known name. For example, `LambdaRole`.
-Plug that name into your `preventRoleCreation`:
+> Note: if you don't use this workflow and let CDK generate IAM Roles, it will generate least-privilege permissions Roles that can only access the resources they need to. This avoids the need to use wildcard-based pre-created Role permissions. If you can, let CDK generate Roles and use *Permissions Boundaries* to address concerns of privilege escalation. The feature described in this section is intended only to allow usage of CDK in environments where the IAM Role creation process cannot be changed.
+
+When your IT department comes back to you, they will have created a role with a known name. For example, they might have created a role named `LambdaRole`.
+Plug that name into your `customizeRoles`:
 
 ```ts
-iam.Role.preventRoleCreation(app, {
-  precreatedRoles: {
-    '/MyStack/MyLambda/Role': 'LambdaRole',
+iam.Role.customizeRoles(app, {
+  preventSynthesis: true,
+  usePrecreatedRoles: {
+    'MyStack/MyLambda/Role': 'LambdaRole',
   },
 });
 ```
 
 On the next synthesis, the given existing Role is automatically referenced in places where originally an IAM Role would be created. When all Roles that would be created have a precreated name assigned (and there are no precreated names specified that do not correspond to actual Role constructs), synthesis will succeed.
 
-You do not need to create a separate Role for each construct: it is possible to supply the same role name for multiple
-constructs, as long as that single role has all the required permissions.
+You do not need to create a separate Role for each construct: it is possible to supply the same role name for multiple constructs, as long as that single role has all the required permissions.
 
 ---
 
@@ -133,8 +147,7 @@ MyLambda:
         Value: 'my-bucket'
 ```
 
-We currently render variant `(1)`, because: even though we *know* that `bucketName` has the value `my-bucket`, the `{
-Ref }` has the additional effect of implying a dependency from `MyLambda -> MyBucket`.
+We currently render variant `(1)`, because: even though we *know* that `bucketName` has the value `my-bucket`, the `{ Ref }` has the additional effect of implying a dependency from `MyLambda -> MyBucket`.
 
 If we were to render the value `my-bucket` directly, we would need to recreate that dependency by adding a `DependsOn` field to `MyLambda`. Because of the way the CDK token system works internally, that is currently not available, and not easy to add.
 
@@ -145,13 +158,15 @@ of doing so), we have no way of easily tracking that resource name to the polici
 
 This section is mostly interesting for implementors:
 
-* `preventRoleCreation` will set a **context key** at the given scope. The exact name and value of this context key are an implementation detail and will not be made public.
-* `new Role()` will check for this context key. If found, `new CfnRole()` will *not* be called; instead, if a name is available for the current construct, `iam.Role.fromRoleName()` will be used instead. A validation is added to the Role which will fail if no precreated name is assigned for it.
+* `customizeRoles` will set a **context key** at the given scope. The exact name and value of this context key are an implementation detail and will not be made public.
+* `new Role()` will check for this context key. If found, `new CfnRole()` will *not* be called; instead, if a name is available for the current construct, `iam.Role.fromRoleName()` will be used instead. A validation is added to the Role which will fail if no precreated name is assigned for it (meaning errors are reported as construct tree errors).
 * When operating in "no role creation" mode, roles will synthesize their policy documents to a report file.
 * Some of the logic will have to be reimplemented for the Custom Resource framework in `@aws-cdk/core`, which creates Roles but doesn't use `iam.Role` (but rather `CfnResource`).
-* `preventRoleCreation` takes construct paths *relative* to the scope it's invoked on. This makes it possible to set it on production stacks but not development stacks (for example).
-* `preventRoleCreation` will throw if any of the paths it is invoked on already exist, or if no `iam.Role` creation was prevented. This should help find instances of people calling it *after* application construction, instead of before.
+* `customizeRoles` takes either *absolute* or *relative* construct paths to the scope it's invoked on. This makes it possible to set it on production stacks but not development stacks (for example).
+* `customizeRoles` will throw if any of the paths it is invoked on already exist, or if no `iam.Role` creation was prevented. This should help find instances of people calling it *after* application construction, instead of before.
 * Tokens are not supported.
+* We should be able to detect `new iam.Policy()` as well, as I believe it calls `role.attachPolicy()`. We record the policy and prevent its synthesis of `CfnPolicy`.
+* I'm not sure we will be able to detect `new iam.ManagedPolicy()`.
 
 ### What alternative solutions did you consider?
 
@@ -169,11 +184,12 @@ Potential alternatives might be better, but would require buy-in from the IT org
 MVP
 
 - We should be able to implement the limited version of this feature (without support for tracking resource names) pretty easily. We will let developers use that feature for a while and see how it goes.
-  - `preventRoleCreation` takes an options object on purpose so that if we need to change behavior, we can add more optional fieldds and flags.
+  - `customizeRoles` takes an options object on purpose so that if we need to change behavior, we can add more optional fieldds and flags.
   - Initial version will only support role names but importing by ARN should be trivial enough to add by testing for the presence of a `:` in the given role name.
 
 POTENTIAL EXTENSIONS
 
+- Do the same for Security Groups.
 - We may extend by generating a machine-readable report in addition to a text file so organizations can build their
 own automation around it.
 - We may implement resource name tracking later (although this will be a lot of work) to generate more targeted policies, if enough people ask for it.
