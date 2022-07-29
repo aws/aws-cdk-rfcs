@@ -79,12 +79,14 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 // RuleSet can be definied
 // Using either declarative version in the constructor
+const skill = {
+  name: 'skill',
+  type: PlayerAttributeType.STRING,
+  default: 10
+};
+
 const ruleSet = new gamelift.MatchmakingRuleSet(this, 'Matchmaking RuleSet', {
-  playerAttributes: [{
-    name: 'skill',
-    type: PlayerAttributeType.STRING,
-    default: 10
-  }],
+  playerAttributes: [skill],
   teams: [{
     name: 'aliens',
     minPlayers: 4,
@@ -277,7 +279,7 @@ const queue = new gamelift.Queue(this, 'Game Session Queue', {
 });
 queue.withDestination(fleet);
 
-const matchmaking = new gamelift.MatchmakingConfigiuration(this, 'Standalone Matchmaking', {
+const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
 });
@@ -893,6 +895,7 @@ abstract class MatchmakingConfiguration implements IMatchmaking {
   Matchmaking definition.
 
 ```ts
+
 // cdk.IResource: Since IMatchmakingRuleSet will extend Resource
 // iam.Grantable: To allow service role to access other resources like GameLift Fleet or Game session queue or other ressources
 // cdk.Taggable: IMatchmakingRuleSet allows tagging
@@ -910,7 +913,7 @@ interface IMatchmakingRuleSet extends cdk.IResource, cdk.ITaggable {
 ```ts
 enum PlayerAttributeType {
     STRING = 'string',
-    NUMBER = 'number,
+    NUMBER = 'number',
     STRING_LIST = 'string_list',
     STRING_NUMBER_MAP = 'string_number_map'
 }
