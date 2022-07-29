@@ -246,11 +246,15 @@ Your uploaded game servers are hosted on GameLift virtual computing resources, c
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
+// Build can be declared using either declarative version in the constructor
 const build = new gamelift.Build(this, 'Game server build', {
   location: new s3.Asset(this, "SampleZippedDirAsset", {
     path: path.join(__dirname, "sample-asset-directory")
   })
 });
+
+// Either using dedicated factory static method
+const script = gamelift.Build.fromAsset(path.join(__dirname, 'CustomerGameServer/');
 
 new gamelift.Fleet(this, 'Game server fleet', {
   build: build
@@ -433,11 +437,20 @@ new gamelift.Fleet(this, 'Game server fleet', {
 });
 ```
 
-but we can add new locations using dedicated methods.
+but we can add new locations
 
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
+// Through constructor properties
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+  build: build,
+  locations: [
+    'eu-west-1
+  ]
+});
+
+// Or through dedicated methods
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   build: build
 });
