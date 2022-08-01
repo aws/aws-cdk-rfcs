@@ -931,7 +931,7 @@ interface PlayerAttributeProperty {
 }
 
 interface AlgorithmProperty {
-  readonly strategy: string;
+  readonly strategy: Strategy;
   readonly batchingPreference: BatchingPreference;
   readonly sortByAttributes: string[];
   readonly expansionAgeSelection: ExpansionAgeSelection;
