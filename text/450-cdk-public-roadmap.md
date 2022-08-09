@@ -4,23 +4,23 @@
 * **Tracking Issue**: #450
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-Today, users have a problem when they would like to know the future plans of CDK team. 
+Today, users have a problem when they would like to know the future plans of CDK team.
 Users need a way to get frequent updates and mid/long term visibility into product roadmap.
 
 ## Working Backwards
 
-**CHANGELOG** 
+**CHANGELOG**
 `BREAKING CHANGE` - the proposed will replace the current process for AWS CDK Roadmap updates.
 
 **README**
-This roadmap is meant to making it easier to communicate with the stakeholders and align on the expected outcomes. 
+This roadmap is meant to making it easier to communicate with the stakeholders and align on the expected outcomes.
 Therefore, we prefer to keep it in the same tool and provide an easy and convenient way to get an updates and also update on the progress.
 The suggested approach will be:
 
 - Use Issue as a primary entity for the Product Roadmap
 - Tag the Product Roadmap issues with "Planning" label for easy search/filtering
 - Have two types:
-    - Half-year roadmap: two issues (January - June, July - December) that will outline the 6 months plans for the team
+    - Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team
     - Iteration plan: dedicated Issue for each month (an iteration is considered as a month) that outlines what is the focus in each area for this monnt.
 - Each issue should be created according to the template (half-year or monthly)
 
@@ -42,12 +42,12 @@ A: CDK Product Manager is responsible for hal-year updates, any contributer is r
 Q: how frequent the plans will be updated?
 A: Iteration plans are reviewed and updated monthly (calendar), half year issue is updated in advance
 
-Q: how can I influence the roadmap plans? 
-A: provide your votes and comments in the issue 
+Q: how can I influence the roadmap plans?
+A: provide your votes and comments in the issue
 
 ### What are we launching today?
 
-A new process for creating and maintaining the product roadmap. 
+A new process for creating and maintaining the product roadmap.
 
 ### Why should I use this feature?
 
@@ -88,7 +88,7 @@ We do have current public roadmap, need to invest time and effort to keep it act
 
 - Content: some internal stuff that is not affecting/impacting the community get exposed
 - Discipline: keep process actual
-- Review: will require extra effort to review contributers comments, feedbacs and inputs 
+- Review: will require extra effort to review contributers comments, feedbacs and inputs
 
 ### What is the high-level project plan?
 
