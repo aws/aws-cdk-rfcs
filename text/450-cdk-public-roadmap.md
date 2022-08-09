@@ -4,17 +4,17 @@
 * **Tracking Issue**: #450
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-Today, users have a problem when they would like to know the future plans of CDK team.
+Today, users have a problem when they would like to know the future plans of the CDK team.
 Users need a way to get frequent updates and mid/long term visibility into product roadmap.
 
 ## Working Backwards
 
 **BLOG POST**
-Visibility and collaboration are key success eleements for our project.
+Visibility and collaboration are key success elements for our project.
 This roadmap is meant to provide visibility to the community on the plans and expected outcomes and making it easier to communicate with the stakeholders.
-As a contributer or regular user, you will be able to review and understand what are the team plans for the next iteration (1 month) or half year.
-You will also be able to comment, suggest, vote or complain about the content that is ether planned or currently at work.
-You will be also able to understand the prioritization and selection process for the content that is being implemented.
+As a contributor or regular user, you will be able to review and understand what are the team plans for the next iteration (1 month) or half year.
+You will also be able to comment, suggest, vote or complain about the content that is either planned or currently at work.
+You will also be able to understand the prioritization and selection process for the content that is being implemented.
 We prefer to have it in the same tool to keep it user-centric and focused.
 It should be easy to create, update, understand and respond.
 Therefore, the forward-going approach will be:
@@ -37,16 +37,16 @@ RFC pull request):
 
 ## Public FAQ
 
-Q: who is responsible/in charge of creating and updating the roadmdap?
-A: CDK Product Manager is responsible for hal-year updates, any contributer is reponsible to update the iteration plan.
+Q: Who is responsible/in charge of creating and updating the roadmap?
+A: CDK Product Manager is responsible for half-year updates, any contributor is responsible to update the iteration plan.
 
-Q: how frequent the plans will be updated?
+Q: how frequently will the plans be updated?
 A: Iteration plans are reviewed and updated monthly (calendar), half year issue is updated in advance
 
 Q: how can I influence the roadmap plans?
 A: provide your votes and comments in the issue
 
-Q: I've open a bug, will it be reflected in one of the roadmaps?
+Q: I've opened a bug, will it be reflected in one of the roadmaps?
 A: No, roadmap is reserved for innovation and tech debt increments only.
 
 ### What are we launching today?
@@ -65,18 +65,18 @@ TBD
 ### Why are we doing this?
 
 Current public roadmap is not up to date, which generates uncertainty for the community.
-It is a lot of work to update it, hard to holistically review review it and virtually impossible to respond to it.
+It is a lot of work to update it, hard to holistically review it and virtually impossible to respond to it.
 
 ### Why should we _not_ do this?
 
-We do have current public roadmap, just need to invest in keep it actual and get users feedback.
+We do have a public roadmap, just need to invest in keeping it actual and get users feedback.
 
 ### What is the technical solution (design) of this feature?
 
 - Develop templates for Half-year and iteration roadmap (reflect business goals, domains, challenges, customer feedbacks)
 - Product Manager generate half-year roadmap
 - Product Manager and contributors create iteration plan
-- Contributes and users comment/vote for each
+- Contributors and users comment/vote for each
 
 ### What alternative solutions did you consider?
 
@@ -88,7 +88,7 @@ We do have current public roadmap, just need to invest in keep it actual and get
 
 - Content: some internal stuff that is not affecting/impacting the community may get exposed
 - Discipline: keep process and information actual and up-to-date
-- Review: will require extra effort to review contributers comments, feedbacs and inputs
+- Review: will require extra effort to review contributors comments, feedback and inputs
 
 ### What is the high-level project plan?
 
