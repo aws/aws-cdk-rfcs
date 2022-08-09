@@ -11,18 +11,19 @@ Users need a way to get frequent updates and mid/long term visibility into produ
 
 **BLOG POST**
 Visibility and collaboration are key success eleements for our project.
-This roadmap is meant to provide visibility to the community on the plans and expected outcomes and making it easier to communicate with the internal and external stakeholders.
-As a contributer or regular user, you will be able to review and understand what are the team plans for the next iteration (1 month) or half year. You will also be able to comment, suggest, vote or complain about the content that is ether planned or currently at work.
+This roadmap is meant to provide visibility to the community on the plans and expected outcomes and making it easier to communicate with the stakeholders.
+As a contributer or regular user, you will be able to review and understand what are the team plans for the next iteration (1 month) or half year.
+You will also be able to comment, suggest, vote or complain about the content that is ether planned or currently at work.
 You will be also able to understand the prioritization and selection process for the content that is being implemented.
-We prefer to have it in the same tool to keep it user-centric and focused. 
+We prefer to have it in the same tool to keep it user-centric and focused.
 It should be easy to create, update, understand and respond.
 Therefore, the forward-going approach will be:
 
 - Use Issue as a primary entity for the Product Roadmap.
 - Tag the Product Roadmap issues with "Planning" label for easy search/filtering.
 - Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team.
-- Iteration plan: dedicated Issue for each month (an iteration is considered as a month) that outlines what is the focus in each area for this monnt.
-- The roadmap is focusing on customer value and include innovation and tech debt projects or activities. It is not designed for bug fixes, PR-reviews or any other routine updates. 
+- Iteration plan: dedicated Issue for each and every month (iteration == month) that outlines what is the focus in each area.
+- The roadmap is focusing on customer value and include innovation and tech debt projects or activities. It is not designed for bug fixes, PR-reviews or any other routine updates.
 
 ---
 
