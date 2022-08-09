@@ -20,8 +20,8 @@ The suggested approach will be:
 - Use Issue as a primary entity for the Product Roadmap
 - Tag the Product Roadmap issues with "Planning" label for easy search/filtering
 - Have two types:
-    - Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team
-    - Iteration plan: dedicated Issue for each month (an iteration is considered as a month) that outlines what is the focus in each area for this monnt.
+ - Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team
+ - Iteration plan: dedicated Issue for each month (an iteration is considered as a month) that outlines what is the focus in each area for this monnt.
 - Each issue should be created according to the template (half-year or monthly)
 
 ---
