@@ -103,4 +103,3 @@ TBD
 ## Appendix
 
 Example: <https://github.com/microsoft/TypeScript/labels/Planning>
-
