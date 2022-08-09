@@ -99,4 +99,4 @@ TBD
 
 ## Appendix
 
-Example: https://github.com/microsoft/TypeScript/labels/Planning 
+Example: <https://github.com/microsoft/TypeScript/labels/Planning>
