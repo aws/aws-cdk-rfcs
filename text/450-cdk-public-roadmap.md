@@ -23,7 +23,7 @@ Therefore, the forward-going approach will be:
 - Tag the Product Roadmap issues with "Planning" label for easy search/filtering.
 - Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team.
 - Iteration plan: dedicated Issue for each and every month (iteration == month) that outlines what is the focus in each area.
-- The roadmap is focusing on customer value via innovation and tech debt projects or activities. It is not for bug fixes or PR-reviews updates.
+- The roadmap is focusing on customer value via innovation and tech debt projects or activities.It is not for bug fixes or PR-reviews updates.
 
 ---
 
