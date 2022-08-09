@@ -4,7 +4,8 @@
 * **Tracking Issue**: #450
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-Today, users have a problem when they would like to know the future plans of CDK team. Users need a way to get frequent updates and mid/long term visibility into product roadmap.
+Today, users have a problem when they would like to know the future plans of CDK team. 
+Users need a way to get frequent updates and mid/long term visibility into product roadmap.
 
 ## Working Backwards
 
@@ -12,8 +13,10 @@ Today, users have a problem when they would like to know the future plans of CDK
 `BREAKING CHANGE` - the proposed will replace the current process for AWS CDK Roadmap updates.
 
 **README**
-This roadmap is meant to making it easier to communicate with all stakeholders and align on the expected outcomes. Therefore, we prefer to keep it in the same tool and provide an easy and convenient way to get an updates and also update on the progress.
+This roadmap is meant to making it easier to communicate with the stakeholders and align on the expected outcomes. 
+Therefore, we prefer to keep it in the same tool and provide an easy and convenient way to get an updates and also update on the progress.
 The suggested approach will be:
+
 - Use Issue as a primary entity for the Product Roadmap
 - Tag the Product Roadmap issues with "Planning" label for easy search/filtering
 - Have two types:
@@ -52,6 +55,7 @@ To get visibility and information about what are the mid/short term plans of the
 Provide your inputs, suggestions and comments to the proposed agenda.
 
 ## Internal FAQ
+
 TBD
 
 ### Why are we doing this?
@@ -72,7 +76,7 @@ We do have current public roadmap, need to invest time and effort to keep it act
 
 ### Is this a breaking change?
 
-`BREAKING CHANGE` - the proposed will replace the current  AWS CDK Roadmap - https://github.com/orgs/aws/projects/7
+`BREAKING CHANGE` - the proposed will replace the current  AWS CDK Roadmap - <https://github.com/orgs/aws/projects/7>
 
 ### What alternative solutions did you consider?
 
