@@ -9,19 +9,20 @@ Users need a way to get frequent updates and mid/long term visibility into produ
 
 ## Working Backwards
 
-**CHANGELOG**
-`BREAKING CHANGE` - the proposed will replace the current process for AWS CDK Roadmap updates.
+**BLOG POST**
+Visibility and collaboration are key success eleements for our project.
+This roadmap is meant to provide visibility to the community on the plans and expected outcomes and making it easier to communicate with the internal and external stakeholders.
+As a contributer or regular user, you will be able to review and understand what are the team plans for the next iteration (1 month) or half year. You will also be able to comment, suggest, vote or complain about the content that is ether planned or currently at work.
+You will be also able to understand the prioritization and selection process for the content that is being implemented.
+We prefer to have it in the same tool to keep it user-centric and focused. 
+It should be easy to create, update, understand and respond.
+Therefore, the forward-going approach will be:
 
-**README**
-This roadmap is meant to making it easier to communicate with the stakeholders and align on the expected outcomes.
-Therefore, we prefer to keep it in the same tool and provide an easy and convenient way to get an updates and also update on the progress.
-The suggested approach will be:
-
-- Use Issue as a primary entity for the Product Roadmap
-- Tag the Product Roadmap issues with "Planning" label for easy search/filtering
-- Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team
+- Use Issue as a primary entity for the Product Roadmap.
+- Tag the Product Roadmap issues with "Planning" label for easy search/filtering.
+- Half-year roadmap: 2 issues (January - June, July - December) that will outline the 6 months plans for the team.
 - Iteration plan: dedicated Issue for each month (an iteration is considered as a month) that outlines what is the focus in each area for this monnt.
-- Each issue should be created according to the template (half-year or monthly)
+- The roadmap is focusing on customer value and include innovation and tech debt projects or activities. It is not designed for bug fixes, PR-reviews or any other routine updates. 
 
 ---
 
@@ -44,6 +45,9 @@ A: Iteration plans are reviewed and updated monthly (calendar), half year issue 
 Q: how can I influence the roadmap plans?
 A: provide your votes and comments in the issue
 
+Q: I've open a bug, will it be reflected in one of the roadmaps?
+A: No, roadmap is reserved for innovation and tech debt increments only.
+
 ### What are we launching today?
 
 A new process for creating and maintaining the product roadmap.
@@ -59,12 +63,12 @@ TBD
 
 ### Why are we doing this?
 
-Current public roadmap is not up to date, which provdies ambiguety for the community.
-It is hard to update, hard to review and almost impossible to digest.
+Current public roadmap is not up to date, which generates uncertainty for the community.
+It is a lot of work to update it, hard to holistically review review it and virtually impossible to respond to it.
 
 ### Why should we _not_ do this?
 
-We do have current public roadmap, need to invest time and effort to keep it actual.
+We do have current public roadmap, just need to invest in keep it actual and get users feedback.
 
 ### What is the technical solution (design) of this feature?
 
@@ -73,20 +77,16 @@ We do have current public roadmap, need to invest time and effort to keep it act
 - Product Manager and contributors create iteration plan
 - Contributes and users comment/vote for each
 
-### Is this a breaking change?
-
-`BREAKING CHANGE` - the proposed will replace the current  AWS CDK Roadmap - <https://github.com/orgs/aws/projects/7>
-
 ### What alternative solutions did you consider?
 
-- Keep Product Roadmap in Project View
-- Provide Product Roadmap aside of the tool
-- Not providing Roadmap
+- Keep the Product Roadmap in Project View as of today
+- Provide Product Roadmap outside of the tool
+- Not disclosing the Roadmap
 
 ### What are the drawbacks of this solution?
 
-- Content: some internal stuff that is not affecting/impacting the community get exposed
-- Discipline: keep process actual
+- Content: some internal stuff that is not affecting/impacting the community may get exposed
+- Discipline: keep process and information actual and up-to-date
 - Review: will require extra effort to review contributers comments, feedbacs and inputs
 
 ### What is the high-level project plan?
