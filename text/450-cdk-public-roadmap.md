@@ -47,7 +47,7 @@ Q: how can I influence the roadmap plans?
 A: provide your votes and comments in the issue
 
 Q: I've opened a bug, will it be reflected in one of the roadmaps?
-A: No, roadmap is reserved for innovation and tech debt increments only.
+A: No, Product Roadmap is reserved for innovation and tech debt increments only.
 
 ### What are we launching today?
 
