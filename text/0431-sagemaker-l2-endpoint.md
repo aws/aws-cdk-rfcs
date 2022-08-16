@@ -369,14 +369,14 @@ the proposed interfaces needed for each L2 construct along with any supporting c
     /**
      * The IAM role that the Amazon SageMaker service assumes.
      *
-     * @default a new IAM role will be created.
+     * @default - a new IAM role will be created.
      */
     readonly role?: iam.IRole;
 
     /**
      * Name of the SageMaker Model.
      *
-     * @default AWS CloudFormation generates a unique physical ID and uses that ID for the model's
+     * @default - AWS CloudFormation generates a unique physical ID and uses that ID for the model's
      * name.
      */
     readonly modelName?: string;
@@ -384,14 +384,14 @@ the proposed interfaces needed for each L2 construct along with any supporting c
     /**
      * The VPC to deploy the endpoint to.
      *
-     * @default none
+     * @default - none
      */
     readonly vpc?: ec2.IVpc;
 
     /**
      * The VPC subnets to deploy the endpoints.
      *
-     * @default none
+     * @default - none
      */
     readonly vpcSubnets?: ec2.SubnetSelection;
 
@@ -399,7 +399,7 @@ the proposed interfaces needed for each L2 construct along with any supporting c
      * The security groups to associate to the Model. If no security groups are provided and 'vpc' is
      * configured, one security group will be created automatically.
      *
-     * @default A security group will be automatically created if 'vpc' is supplied
+     * @default - A security group will be automatically created if 'vpc' is supplied
      */
     readonly securityGroups?: ec2.ISecurityGroup[];
 
@@ -413,7 +413,7 @@ the proposed interfaces needed for each L2 construct along with any supporting c
     /**
      * Specifies additional containers for an inference pipeline.
      *
-     * @default none
+     * @default - none
      */
     readonly extraContainers?: ContainerDefinition[];
 
@@ -534,21 +534,21 @@ image is specified as a Docker registry path while the model artifacts must be s
     /**
      * A map of environment variables to pass into the container.
      *
-     * @default none
+     * @default - none
      */
     readonly environment?: {[key: string]: string};
 
     /**
      * Hostname of the container.
      *
-     * @default none
+     * @default - none
      */
     readonly containerHostname?: string;
 
     /**
      * S3 path to the model artifacts.
      *
-     * @default none
+     * @default - none
      */
     readonly modelData?: ModelData;
   }
@@ -679,15 +679,15 @@ artifacts, either in an S3 bucket or a local file asset.
     /**
      * Name of the endpoint configuration.
      *
-     * @default AWS CloudFormation generates a unique physical ID and uses that ID for the endpoint
-     * configuration's name.
+     * @default - AWS CloudFormation generates a unique physical ID and uses that ID for the
+     * endpoint configuration's name.
      */
     readonly endpointConfigName?: string;
 
     /**
      * Optional KMS encryption key associated with this stream.
      *
-     * @default none
+     * @default - none
      */
     readonly encryptionKey?: kms.IKey;
 
@@ -699,7 +699,7 @@ artifacts, either in an S3 bucket or a local file asset.
     /**
      * An optional list of extra ProductionVariantProps objects.
      *
-     * @default none
+     * @default - none
      */
     readonly extraProductionVariants?: ProductionVariantProps[];
   }
@@ -763,7 +763,7 @@ relative to the other configured variants.
      * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
      * provide on-demand GPU computing for inference.
      *
-     * @default none
+     * @default - none
      */
     readonly acceleratorType?: AcceleratorType;
     /**
@@ -783,7 +783,7 @@ relative to the other configured variants.
     /**
      * Instance type of the production variant.
      *
-     * @default ml.t2.medium instance type.
+     * @default - ml.t2.medium instance type.
      */
     readonly instanceType?: ec2.InstanceType;
     /**
@@ -806,7 +806,7 @@ relative to the other configured variants.
      * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
      * provide on-demand GPU computing for inference.
      *
-     * @default none
+     * @default - none
      */
     readonly acceleratorType?: AcceleratorType;
     /**
@@ -890,8 +890,8 @@ relative to the other configured variants.
     /**
      * Name of the endpoint.
      *
-     * @default AWS CloudFormation generates a unique physical ID and uses that ID for the endpoint's
-     * name.
+     * @default - AWS CloudFormation generates a unique physical ID and uses that ID for the
+     * endpoint's name.
      */
     readonly endpointName?: string;
 
@@ -990,67 +990,67 @@ Auto Scaling `BaseScalableAttribute`.
     /**
      * Return the given named metric for Endpoint
      *
-     * @default sum over 5 minutes
+     * @default - sum over 5 minutes
      */
     metric(namespace: string, metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for the number of invocations
      *
-     * @default sum over 5 minutes
+     * @default - sum over 5 minutes
      */
     metricInvocations(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for the number of invocations per instance
      *
-     * @default sum over 5 minutes
+     * @default - sum over 5 minutes
      */
     metricInvocationsPerInstance(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for model latency
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricModelLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for overhead latency
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricOverheadLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for the number of invocations by HTTP response code
      *
-     * @default sum over 5 minutes
+     * @default - sum over 5 minutes
      */
     metricInvocationResponseCode(responseCode: InvocationHttpResponseCode, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for disk utilization
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricDiskUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for CPU utilization
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricCPUUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for memory utilization
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricMemoryUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for GPU utilization
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricGPUUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for GPU memory utilization
      *
-     * @default average over 5 minutes
+     * @default - average over 5 minutes
      */
     metricGPUMemoryUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
