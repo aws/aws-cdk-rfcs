@@ -556,8 +556,8 @@ image is specified as a Docker registry path while the model artifacts must be s
 ###### Container Image
 
 The following interface and abstract class provide mechanisms for configuring a container image.
-These closely mirror [analogous entities from the `@aws-cdk/ecs` module][ecs-image] but, rather than
-`bind`-ing upon an ECS task definition, instead operate upon a SageMaker model.
+These closely mirror [analogous entities from the ECS module][ecs-image] but, rather than `bind`-ing
+upon an ECS task definition, instead operate upon a SageMaker model.
 
 [ecs-image]: https://github.com/aws/aws-cdk/blob/572b52c45a9eb08b62a0f9cc6520c1722089bae6/packages/@aws-cdk/aws-ecs/lib/container-image.ts
 
