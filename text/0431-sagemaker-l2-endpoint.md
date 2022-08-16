@@ -1033,7 +1033,7 @@ Auto Scaling `BaseScalableAttribute`.
      *
      * @default - average over 5 minutes
      */
-    metricCPUUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+    metricCpuUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for memory utilization
      *
@@ -1045,13 +1045,13 @@ Auto Scaling `BaseScalableAttribute`.
      *
      * @default - average over 5 minutes
      */
-    metricGPUUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+    metricGpuUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Metric for GPU memory utilization
      *
      * @default - average over 5 minutes
      */
-    metricGPUMemoryUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+    metricGpuMemoryUtilization(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
     /**
      * Enable autoscaling for SageMaker Endpoint production variant
      *
