@@ -90,10 +90,12 @@ const modelData = sagemaker.ModelData.fromAsset(this, 'ModelData',
   path.join('path', 'to', 'artifact', 'file.tar.gz'));
 
 const model = new sagemaker.Model(this, 'PrimaryContainerModel', {
-  container: {
-    image: image,
-    modelData: modelData,
-  }
+  containers: [
+    {
+      image: image,
+      modelData: modelData,
+    }
+  ]
 });
 ```
 
@@ -104,17 +106,14 @@ five containers that process requests for inferences on data. You use an inferen
 define and deploy any combination of pretrained Amazon SageMaker built-in algorithms and your own
 custom algorithms packaged in Docker containers. You can use an inference pipeline to combine
 preprocessing, predictions, and post-processing data science tasks. Inference pipelines are fully
-managed. To define an inference pipeline, you can provide additional containers for your model via
-the `extraContainers` property:
+managed. To define an inference pipeline, you can provide additional containers for your model:
 
 ```typescript fixture=with-assets
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
 
 const model = new sagemaker.Model(this, 'InferencePipelineModel', {
-  container: {
-    image: image1, modelData: modelData1
-  },
-  extraContainers: [
+  containers: [
+    { image: image1, modelData: modelData1 },
     { image: image2, modelData: modelData2 },
     { image: image3, modelData: modelData3 }
   ],
@@ -202,16 +201,18 @@ traffic to Model A, and one-third to model B:
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
 
 const endpointConfig = new sagemaker.EndpointConfig(this, 'EndpointConfig', {
-  productionVariant: {
-    model: modelA,
-    variantName: 'modelA',
-    initialVariantWeight: 2.0,
-  },
-  extraProductionVariants: [{
-    model: modelB,
-    variantName: 'variantB',
-    initialVariantWeight: 1.0,
-  }]
+  productionVariants: [
+    {
+      model: modelA,
+      variantName: 'modelA',
+      initialVariantWeight: 2.0,
+    },
+    {
+      model: modelB,
+      variantName: 'variantB',
+      initialVariantWeight: 1.0,
+    },
+  ]
 });
 ```
 
@@ -403,18 +404,12 @@ the proposed interfaces needed for each L2 construct along with any supporting c
     readonly securityGroups?: ec2.ISecurityGroup[];
 
     /**
-     * Specifies the primary container or the first container in an inference pipeline. Additional
-     * containers for an inference pipeline can be provided using the "extraContainers" property.
-     *
-     */
-    readonly container: ContainerDefinition;
-
-    /**
-     * Specifies additional containers for an inference pipeline.
+     * Specifies the container definitions for this model, consisting of either a single primary
+     * container or an inference pipeline of multiple containers.
      *
      * @default - none
      */
-    readonly extraContainers?: ContainerDefinition[];
+    readonly containers?: ContainerDefinition[];
 
     /**
      * Whether to allow the SageMaker Model to send all network traffic
@@ -511,7 +506,7 @@ the proposed interfaces needed for each L2 construct along with any supporting c
     public readonly grantPrincipal: iam.IPrincipal;
     private readonly subnets: ec2.SelectedSubnets | undefined;
 
-    constructor(scope: Construct, id: string, props: ModelProps) { ... }
+    constructor(scope: Construct, id: string, props: ModelProps = {}) { ... }
   }
   ```
 
@@ -691,16 +686,12 @@ artifacts, either in an S3 bucket or a local file asset.
     readonly encryptionKey?: kms.IKey;
 
     /**
-     * A ProductionVariantProps object.
-     */
-    readonly productionVariant: ProductionVariantProps;
-
-    /**
-     * An optional list of extra ProductionVariantProps objects.
+     * A list of production variants. You can always add more variants later by calling
+     * {@link EndpointConfig#addProductionVariant}.
      *
      * @default - none
      */
-    readonly extraProductionVariants?: ProductionVariantProps[];
+    readonly productionVariants?: ProductionVariantProps[];
   }
   ```
 
@@ -726,7 +717,7 @@ artifacts, either in an S3 bucket or a local file asset.
      */
     public readonly endpointConfigName: string;
 
-    constructor(scope: Construct, id: string, props: EndpointConfigProps) { ... }
+    constructor(scope: Construct, id: string, props: EndpointConfigProps = {}) { ... }
 
     /**
      * Add production variant to the endpoint configuration.
