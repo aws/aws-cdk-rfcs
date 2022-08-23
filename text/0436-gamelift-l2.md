@@ -233,10 +233,10 @@ const script = new gamelift.Script(this, 'Realtime script', {
 });
 
 // Either using dedicated factory static method
-const script = Script.fromAsset(path.join(__dirname, 'file-asset.js');
+const script = gamelift.fromScriptAsset(path.join(__dirname, 'file-asset.js');
 
 new gamelift.Fleet(this, 'Realtime server fleet', {
-  script: script
+  content: script
 });
 ```
 
@@ -256,10 +256,10 @@ const build = new gamelift.Build(this, 'Game server build', {
 });
 
 // Either using dedicated factory static method
-const script = gamelift.Build.fromAsset(path.join(__dirname, 'CustomerGameServer/');
+const build = gamelift.fromBuildAsset(path.join(__dirname, 'CustomerGameServer/');
 
 new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build
 });
 ```
 
@@ -271,14 +271,29 @@ FlexMatch is available with the managed GameLift hosting for custom game servers
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build
 });
 
+// Bind fllet to a queue either using constructor
 const queue = new gamelift.Queue(this, 'Game Session Queue', {
-  placementTimeout: Duration.seconds(10)
+  placementTimeout: Duration.seconds(10),
+  destination: fleet
+});
+
+// Or through dedicaed methods
+const queue = new gamelift.Queue(this, 'Game Session Queue', {
+  placementTimeout: Duration.seconds(10),
 });
 queue.withDestination(fleet);
 
+// Bind a queue to a matchmaking configuration either using constructor
+const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json')),
+  queue: queue
+});
+
+// Or through dedicated methods
 const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
   requestTimeouts: Duration.seconds(35),
   ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
@@ -297,26 +312,16 @@ The game session queue is the primary mechanism for processing new game session 
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build,
 });
 
+//Bind a queue to a Fleet either directly into constructor
+const queue = new gamelift.Queue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+// Or through dedicated methods
 const queue = new gamelift.Queue(this, 'Game session queue');
 queue.addDestination(fleet);
-```
-
-or
-
-```ts fixture=with-build
-import * as gamelift from 'aws-cdk-lib/aws-gamelift';
-
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
-});
-
-const alias = fleet.addAlias('live')
-
-const queue = new gamelift.Queue(this, 'Game session queue');
-queue.addDestination(alias);
 ```
 
 See [Setting up GameLift queues for game session placement](https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script-uploading.html)
@@ -333,7 +338,7 @@ There are two options for setting up event notifications. You can set up an SNS 
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build
 });
 
 const topic = new sns.Topic(this, 'Topic');
@@ -360,7 +365,7 @@ A GameLift instance is limited to 50 processes running concurrently.
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build,
+  content: build,
   runtimeConfiguration: {
     gameSessionActivationTimeoutSeconds: 123,
     maxConcurrentGameSessionActivations: 123,
@@ -385,7 +390,7 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
 new gamelift.Fleet(this, 'Game server fleet', {
-  build: build,
+  content: build,
   instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE)
 });
 ```
@@ -400,7 +405,7 @@ By default, this property is set to ON_DEMAND.
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 new gamelift.Fleet(this, 'Game server fleet', {
-  build: build,
+  content: build,
   type: FleetType.SPOT
 });
 ```
@@ -416,7 +421,7 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build,
+  content: build,
 });
 // Allowing all IP Addresses from port 1111 to port 1122 on TCP Protocol
 fleet.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(1111), ec2.Port.tcp(1122));
@@ -435,28 +440,37 @@ By default Stack region is used.
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build
 });
 ```
 
-but we can add new locations
+but we can add new locations if needed and define desired capacity
 
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 // Through constructor properties
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build,
-  locations: [
-    'eu-west-1
-  ]
+  content: build,
+  locations: [ {
+    name: 'eu-west-1',
+    desiredCapacity: 5,
+    minCapacity: 2,
+    maxCapacity: 10
+  }, {
+    name: 'us-east-1',
+    desiredCapacity: 5,
+    minCapacity: 2,
+    maxCapacity: 10
+  }
 });
 
 // Or through dedicated methods
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build
 });
-fleet.addLocation('eu-west-1');
+fleet.addLocation('eu-west-1', 5, 2, 10);
+fleet.addLocation('us-east-1', 5, 2, 10);
 ```
 
 ##### Monitoring
@@ -506,7 +520,7 @@ import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 const role = new iam.Role(this, 'Role', {
   assumedBy: new iam.CompositePrincipale(new iam.ServicePrincipal('gamelift.amazonaws.com'),
-  new iam.ServicePrincipal('ec2.amazonaws.com'), new iam.ServicePrincipal('ec2.amazonaws.com'))
+  new iam.ServicePrincipal('ec2.amazonaws.com'))
 });
 role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'));
 
@@ -552,8 +566,15 @@ A GameLift alias is used to abstract a fleet designation. Fleet designations tel
 
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
+// Either using constructor
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  build: build
+  content: build,
+  alias: ['live']
+});
+
+// Or through dedicated methods
+const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+  content: build
 });
 fleet.addAlias('live');
 ```
@@ -567,7 +588,9 @@ The GameLift FleetIQ solution is a game hosting layer that supplements the full 
 
 ##### Defining a Game Server Group
 
-When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as usual: make an Amazon Machine Image (AMI) with your game server software, create an Amazon EC2 launch template, and define configuration settings for an Auto Scaling group. However, instead of creating an Auto Scaling group directly, you create a GameLift FleetIQ game server group with your Amazon EC2 and Auto Scaling resources and configuration.
+When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as usual: make an Amazon Machine Image (AMI) with your game server software, create an Amazon EC2 launch template, and define configuration settings for an Auto Scaling group. However, instead of creating an Auto Scaling group directly, you create a GameLift FleetIQ game server group with your Amazon EC2 and Auto Scaling resources and configuration. All game server groups must have at least two instance types defined for it. 
+
+Once a game server group and Auto Scaling group are up and running with instances deployed, when updating a Game Server Group instance, only certain properties in the Auto Scaling group may be overwrite. For all other Auto Scaling group properties, such as MinSize, MaxSize, and LaunchTemplate, you can modify these directly on the Auto Scaling group using the AWS Console or dedicated Api.
 
 ```ts
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
@@ -583,11 +606,18 @@ const template = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
 new gamelift.GameServerGroup(this, 'Game server group', {
   instanceDefinition = [{
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.SMALL),
+      weightedCapacity: 16
+
+  }, {
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.MEDIUM),
+      weightedCapacity: 24
   }],
   launchTemplate = template,
 });
-
 ```
+
+See [Manage game server groups](https://docs.aws.amazon.com/gamelift/latest/fleetiqguide/gsg-integrate-gameservergroup.html)
+in the *Amazon GameLift FleetIQ Developer Guide*.
 
 ##### Scaling Policy
 
