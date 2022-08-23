@@ -364,14 +364,20 @@ A GameLift instance is limited to 50 processes running concurrently.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
+// Server processes can be delcared in a declarative way through the constructor
 const fleet = new gamelift.Fleet(this, 'Game server fleet', {
   content: build,
-  runtimeConfiguration: {
-    gameSessionActivationTimeoutSeconds: 123,
-    maxConcurrentGameSessionActivations: 123,
-  }
+  gameSessionActivationTimeoutSeconds: 123,
+  maxConcurrentGameSessionActivations: 123,
+  serverProcesses: [{
+    launchPath: '/local/game/GameLiftExampleServer.x86_64', 
+    parameters: '-logFile /local/game/logs/myserver1935.log -port 1935',
+    concurrentExecutions: 100,
+  }]
 });
-fleet.runtimeConfiguration.addServerProcess({
+
+// Or through dedicated runtimeConfiguration methods
+fleet.addServerProcess({
   launchPath: '/local/game/GameLiftExampleServer.x86_64', 
   parameters: '-logFile /local/game/logs/myserver1935.log -port 1935',
   concurrentExecutions: 100,
@@ -526,7 +532,7 @@ role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentSer
 
 new gamelift.Fleet(this, 'Game server fleet', {
   build = build,
-  instanceRole: role
+  role: role
 });
 
 ```
@@ -553,7 +559,7 @@ role.addServicePrincipal('gamelift.eu-south-1.amazonaws.com');
 
 new gamelift.Fleet(this, 'Game server fleet', {
   build = build,
-  instanceRole: role
+  role: role
 });
 
 ```
@@ -797,7 +803,7 @@ enum ProtectionPolicy {
 }
 interface FleetProps {
   readonly name?: stirng;
-  readonly instanceRole?: iam.Role;
+  readonly role?: iam.Role;
   readonly minSize?: number;
   readonly maxSize?: number;
   readonly protectionPolicy?: ProtectionPolicy;
