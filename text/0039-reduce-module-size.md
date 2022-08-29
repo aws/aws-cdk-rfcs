@@ -227,13 +227,12 @@ be required to access a public endpoint besides npm during runtime of their CDK
 apps. Practically, this solution breaks down into the following steps.
 
 1. Publish v2 compatible versions of `@aws-cdk/lambda-layer-aws-cli`,
-   `@aws-cdk/lambda-layer-aws-cli`, `@aws-cdk/lambda-layer-node-proxy-agent` as
+   `@aws-cdk/lambda-layer-kubectl`, `@aws-cdk/lambda-layer-node-proxy-agent` as
    their own npm packages, separate from `aws-cdk-lib`. This publishing process
-   will be an extension of the existing AWS CDK V2 release machinery, which
-   automatically publishes some packages as part of `aws-cdk-lib`, and some
-   packages separately. Any submodules with the prefix `lambda-layer` will be
-   published this way. Even though these packages will be released separately,
-   their source code will remain in the aws-cdk repo.
+   will be done in [cdklabs](https://github.com/cdklabs) repositories. Each
+   package will get its own repository. See [this
+   issue](https://github.com/aws/aws-cdk/issues/21605) for a detailed discussion
+   of the options, and why we have decided to use separate repositories. 
 2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to not bundle these
    large dependencies themselves, and instead dynamically load the appropriate
    `@aws-cdk/lambda-layer-X` package from step 1. Since `aws-cdk-lib`'s source
