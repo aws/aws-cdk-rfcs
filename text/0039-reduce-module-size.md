@@ -471,14 +471,20 @@ Each category of files has different alternative solutions to reduce the size.
    our team double as a hosted artifact repository for artifacts that we don't
    own. This solution is the same as the one described in this
    [comment](https://github.com/aws/aws-cdk-rfcs/issues/39#issuecomment-593092612).
-4. Separate packages that `aws-cdk-lib` peer depends on. With this solution,
+4. Use [public Lambda
+   Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html).
+   This would essentially be the same as alternative #3, because the code for
+   each public Lambda Layer would need to reside in S3. This solution adds
+   additional complexity for the naming and versioning convention of the
+   artifacts, so we would likely choose S3 over this.
+5. Separate packages that `aws-cdk-lib` peer depends on. With this solution,
    customers do not need to include the large `lambda-layer-X` packages in their
    dependencies unless they are actually using one of the Constructs that
    requires them. This would be confusing for customers to know when they need
    these peer dependencies, and when they do not. It would also be difficult for
    customers to manage versions and to know which versions of each package are
    compatible with each other.
-5. Upstream the custom resources where the zip files are used. Since all of
+6. Upstream the custom resources where the zip files are used. Since all of
    these zip files are used in custom resources, another way to remove them from
    `aws-cdk-lib` is to remove the custom resources themselves. We will create
    AWS resources that are available in the CloudFormation public registry under
