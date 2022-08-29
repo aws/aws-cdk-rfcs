@@ -232,7 +232,7 @@ apps. Practically, this solution breaks down into the following steps.
    will be done in [cdklabs](https://github.com/cdklabs) repositories. Each
    package will get its own repository. See [this
    issue](https://github.com/aws/aws-cdk/issues/21605) for a detailed discussion
-   of the options, and why we have decided to use separate repositories. 
+   of the options, and why we have decided to use separate repositories.
 2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to not bundle these
    large dependencies themselves, and instead dynamically load the appropriate
    `@aws-cdk/lambda-layer-X` package from step 1. Since `aws-cdk-lib`'s source
