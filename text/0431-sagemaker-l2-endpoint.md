@@ -195,14 +195,15 @@ HTTPS endpoint where your machine learning model is available to provide inferen
 
 ### Endpoint Configuration
 
-In this configuration, you identify one or more models to deploy and the resources that you want
-Amazon SageMaker to provision. You define one or more production variants, each of which identifies
-a model. Each production variant also describes the resources that you want Amazon SageMaker to
-provision. This includes the number and type of ML compute instances to deploy. If you are hosting
-multiple models, you also assign a variant weight to specify how much traffic you want to allocate
-to each model. For example, suppose that you want to host two models, A and B, and you assign
-traffic weight 2 for model A and 1 for model B. Amazon SageMaker distributes two-thirds of the
-traffic to Model A, and one-third to model B:
+By using the `EndpointConfig` construct, you can define a set of endpoint configuration which can be
+used to provision one or more endpoints. In this configuration, you identify one or more models to
+deploy and the resources that you want Amazon SageMaker to provision. You define one or more
+production variants, each of which identifies a model. Each production variant also describes the
+resources that you want Amazon SageMaker to provision. This includes the number and type of ML
+compute instances to deploy. If you are hosting multiple models, you also assign a variant weight to
+specify how much traffic you want to allocate to each model. For example, suppose that you want to
+host two models, A and B, and you assign traffic weight 2 for model A and 1 for model B. Amazon
+SageMaker distributes two-thirds of the traffic to Model A, and one-third to model B:
 
 ```typescript
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
@@ -228,7 +229,7 @@ const endpointConfig = new sagemaker.EndpointConfig(this, 'EndpointConfig', {
 
 ### Endpoint
 
-If you create an endpoint from an `EndpointConfig`, Amazon SageMaker launches the ML compute
+When you create an endpoint from an `EndpointConfig`, Amazon SageMaker launches the ML compute
 instances and deploys the model or models as specified in the configuration. To get inferences from
 the model, client applications send requests to the Amazon SageMaker Runtime HTTPS endpoint. For
 more information about the API, see the
@@ -1092,7 +1093,17 @@ No.
    author did not create an `EndpointConfig` construct, instead hiding the resource's creation
    behind `Endpoint` (to which production variants could be added). Although a simplifier, this
    prevents customers from reusing configuration across endpoints. For this reason, an explicit
-   L2 construct for endpoint configuration was incorporated into this RFC.
+   L2 construct for endpoint configuration was incorporated into this RFC. This enables use-cases
+   like the following:
+    1. Producer A exposes ten endpoints, each unique to a different consumer (let's label these B
+       thru K).
+    1. Each of these endpoints could use one of, say, three endpoint configs (let's label these 1
+       thru 3) based on the features needed by each consumer.
+    1. Consumer B's endpoint is currently associated with endpoint config 1.
+    1. At some later point, consumer B wants to leverage a new feature, so in collaboration with the
+       consumer, producer A updates B's endpoint to reference endpoint config 3. As a result,
+       without switching endpoints, consumer B was able to begin using the features enabled via the
+       pre-built, shared endpoint config 3.
 
 [earliest-pr]: https://github.com/aws/aws-cdk/pull/2888
 
