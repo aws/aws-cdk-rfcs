@@ -1077,18 +1077,6 @@ No.
 
 ### What alternative solutions did you consider?
 
-1. Theoretically, the `ContainerImage` code (referenced [above](#container-image)) from the
-   `@aws-cdk/ecs` and `@aws-cdk/sagemaker` modules could be unified assuming it would be sufficient
-   for both use-cases to `bind` using an `IGrantable` (adjusting ECS's `TaskDefinition`
-   accordingly). However, it's unclear within which module such a unified API should reside as
-   support for private repositories makes it a bad fit for `@aws-cdk/ecr` and `@aws-cdk/ecr-assets`,
-   and it would be unintuitive for `@aws-cdk/sagemaker` to declare a dependency on `@aws-cdk/ecs`.
-
-   Package concerns aside, historically, there was a period during which SageMaker only supported
-   ECR as an image source while ECS was capable of sourcing images from either ECR or a
-   customer-owned private repository. Given the fact that these two products' supported images
-   sources may yet again diverge in the future, maybe it would be best to keep their
-   `ContainerImage` APIs separate within their respective modules.
 1. In the [earliest PR][earliest-pr] attempting to add SageMaker L2 constructs to the CDK, the
    author did not create an `EndpointConfig` construct, instead hiding the resource's creation
    behind `Endpoint` (to which production variants could be added). Although a simplifier, this
@@ -1164,6 +1152,12 @@ adjustments prior to marking the APIs as stable.
    regardless of whether stack deletion will succeed or fail but may hinder snapshot re-generation
    by subsequent CDK contributors. For this reason, it may be helpful to exclude VPC specification
    from the endpoint integration test at this time.
+1. This RFC proposes a new [`ContainerImage` API](#container-image) for the SageMaker module which
+   closely resembles the same-named API from the ECS module. The primary difference between the two
+   is that the ECS module's API `bind`s on an ECS `TaskDefinition` whereas this new SageMaker
+   module's API `bind`s on a SageMaker `Model`. There may be an opportunity to unify these APIs in
+   the future assuming that `bind`ing to a common type would sufficient for both use-cases (e.g.,
+   `IGrantable`).
 
 [lambda-eni-issue]: https://github.com/aws/aws-cdk/issues/12827
 [eks-eni-issue]: https://github.com/aws/aws-cdk/issues/9970
