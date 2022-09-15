@@ -1194,7 +1194,15 @@ proposed APIs are appropriately extensible in order to support these use-cases.
        been prefixed with the string `[Ii]nstance` to designate that they are only associated with
        instance-based hosting. When later adding serverless support to the SageMaker module,
        `[Ss]erverless`-prefixed analogs can be created with attributes appropriate for the use-case
-       with appropriate plumbing to the L1 constructs.
+       with appropriate plumbing to the L1 constructs. Note, there are a [number of features which
+       do not yet work with serverless variants][serverless-exclusions], so it may be necessary to
+       incorporate a number of new synthesis-time checks or compile-time contracts to guard against
+       mixing incompatible features. For example, as [discussed with the bar
+       raiser][design-conversation], alongside the proposed `EndpointConfigProps` attribute
+       `instanceProductionVariants?: InstanceProductionVariantProps[]`, a new mutually exclusive
+       attribute `serverlessProductionVariant?: ServerlessProductionVariantProps` (as only a single
+       variant is supported with serverless inference) could be added with a synthesis-time check
+       confirming that the customer hasn't configured both instance-based and serverless production variants.
     1. [Asynchronous Inference][async-inference]: By default, a deployed endpoint is synchronous:
        a customer issues an InvokeEndpoint operation to SageMaker with an attached input payload and
        the resulting response contains the output payload from the endpoint. To instead support
@@ -1203,7 +1211,7 @@ proposed APIs are appropriately extensible in order to support these use-cases.
        an InvokeEndpointAsync operation to SageMaker with an attached input location in S3;
        SageMaker asynchronously reads the input from S3, invokes the endpoint, and writes the output
        to an S3 location specified within the `AsyncInferenceClientConfig` attribute. As [discussed
-       with the RFC bar raiser here][async-conversation], there are a few ways to tackle the
+       with the RFC bar raiser here][design-conversation], there are a few ways to tackle the
        addition of this functionlity. One option is to add attribute(s) to the L2 endpoint config
        construct to support asynchronous inference along with synthesis-time error handling to
        catch configuration conflicts (e.g., asynchronous endpoints are only capable of supporting
@@ -1326,7 +1334,8 @@ proposed APIs are appropriately extensible in order to support these use-cases.
 [network-isolation]: https://aws.amazon.com/blogs/security/secure-deployment-of-amazon-sagemaker-resources/
 [marketplace-models]: https://aws.amazon.com/blogs/awsmarketplace/using-amazon-augmented-ai-with-aws-marketplace-machine-learning-models/
 
-[async-conversation]: https://github.com/aws/aws-cdk-rfcs/pull/433#discussion_r952949608
+[serverless-exclusions]: https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints.html#serverless-endpoints-how-it-works-exclusions
+[design-conversation]: https://github.com/aws/aws-cdk-rfcs/pull/433#discussion_r952949608
 [deployment-guardrails-exclusions]: https://docs.aws.amazon.com/sagemaker/latest/dg/deployment-guardrails-exclusions.html
 [container-image-from-registry]: https://github.com/aws/aws-cdk/blob/v1-main/packages/%40aws-cdk/aws-ecs/lib/container-image.ts#L14-L19
 
