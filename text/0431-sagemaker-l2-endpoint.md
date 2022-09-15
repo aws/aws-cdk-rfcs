@@ -1107,39 +1107,15 @@ No.
 
 ### What are the drawbacks of this solution?
 
-This RFC and its [original associated implementation PR][original-pr] were based on a Q3 2019
-feature set of SageMaker real-time inference endpoints. Since that point in time, SageMaker has
-launched the following features which would require further additions to the L2 API contracts:
-
-* [Multi-model endpoints][multi-model]
-* [Model Monitor][model-monitor]
-* [Asynchronous inference][async-inference]
-* [Deployment guardrails][deployment-guardrails]
-* [Serverless inference][serverless-inference]
-
-Although some of these changes would be small and additive (e.g., `DataCaptureConfig` for Model
-Monitor), features like asynchronous and serverless inference represent more significant shifts in
-functionality. For example, SageMaker hosts real-time inference endpoints on EC2 instances, meaning
-that CloudWatch alarms and Application Auto Scaling rules operate on instance-based metrics. In
-contrast, serverless inference does not expose any instance-based metrics nor does it yet support
-auto-scaling. Since both features are specified via the CloudFormation resource
-`AWS::SageMaker::EndpointConfig`, the current recommendation of this RFC would be to support the
-specification of both use-cases through a single L2 `EndointConfig` construct. However, this
-presents a challenge when modeling helper APIs like `metricCPUUtilization` or
-`autoScaleInstanceCount` on a related construct as those methods would not universally apply to
-*all* endpoint types.
-
-Given that (1) RFC reviewers may have idiomatic recommendations to solve such modeling challenges
-and (2) the current proposed constructs are still viable for creating a SageMaker endpoint, the
-first draft of this RFC is being published without further revisions accommodating the above newer
-SageMaker features.
-
-[original-pr]: https://github.com/aws/aws-cdk/pull/6107
-[multi-model]: https://aws.amazon.com/blogs/machine-learning/save-on-inference-costs-by-using-amazon-sagemaker-multi-model-endpoints/
-[model-monitor]: https://aws.amazon.com/about-aws/whats-new/2019/12/introducing-amazon-sagemaker-model-monitor/
-[async-inference]: https://aws.amazon.com/about-aws/whats-new/2021/08/amazon-sagemaker-asynchronous-new-inference-option/
-[deployment-guardrails]: https://aws.amazon.com/about-aws/whats-new/2021/11/new-deployment-guardrails-amazon-sagemaker-inference-endpoints/
-[serverless-inference]: https://aws.amazon.com/about-aws/whats-new/2021/12/amazon-sagemaker-serverless-inference/
+Since production variants are configured via the `EndpointConfig` construct while the monitoring and
+auto-scaling of a deployed production variant is only possible once the `EndpointConfig` has
+been associated to an `Endpoint` (i.e., the dimension for most SageMaker model hosting metrics
+consists of endpoint name and production variant name), this RFC proposes the implementation of the
+function `Endpoint.findProductionVariant(string)`, the [return value for
+which](#endpoint-production-variants) contains `metric*` and `autoScaleInstanceCount` helper methods
+as demonstrated in the [README](#metrics). Although not necessarily a drawback, this separation of
+configuration-time and deploy-time APIs appears to be a novel pattern for the CDK, and thus, has the
+potential to be confusing to customers.
 
 ### What is the high-level project plan?
 
@@ -1151,8 +1127,163 @@ adjustments prior to marking the APIs as stable.
 
 ### Are there any open issues that need to be addressed later?
 
-1. Please see the [drawbacks section above](#what-are-the-drawbacks-of-this-solution) for potential
-   follow-on work (assuming it need not be incorporated into this RFC).
+#### Feature Additions
+
+The following list describes at a high-level future additions that can be made to the L2 constructs
+to enable SageMaker features not yet covered by this RFC but are already supported via
+CloudFormation. For the purposes of this RFC, this list should be reviewed to ensure that the
+proposed APIs are appropriately extensible in order to support these use-cases.
+
+1. `AWS::SageMaker::EndpointConfig` features:
+    1. [Serverless Inference][serverless-inference]: By default, upon endpoint deployment,
+       SageMaker will provision EC2 instances (managed by SageMaker) for hosting purposes. To shield
+       customers from the complexity of forecasting fleet sizes, the `ServerlessConfig` attribute
+       was added to the `ProductionVariant` CloudFormation structure of an endpoint config resource.
+       This configuration removes the need for customers to specify instance-specific settings
+       (e.g., instance count, instance type), abstracting the runtime compute from customers, much
+       in the same way Lambda does for its customers. In preparation for the addition of this
+       feature into the CDK, all concrete production variant related classes and attributes have
+       been prefixed with the string `[Ii]nstance` to designate that they are only associated with
+       instance-based hosting. When later adding serverless support to the SageMaker module,
+       `[Ss]erverless`-prefixed analogs can be created with attributes appropriate for the use-case
+       with appropriate plumbing to the L1 constructs.
+    1. [Asynchronous Inference][async-inference]: By default, a deployed endpoint is synchronous:
+       a customer issues an InvokeEndpoint operation to SageMaker with an attached input payload and
+       the resulting response contains the output payload from the endpoint. To instead support
+       asynchronous invocation, the `AsyncInferenceClientConfig` CloudFormation attribute was added
+       to the endpoint config resource. To interact with an asynchronous endpoint, a customer issues
+       an InvokeEndpointAsync operation to SageMaker with an attached input location in S3;
+       SageMaker asynchronously reads the input from S3, invokes the endpoint, and writes the output
+       to an S3 location specified within the `AsyncInferenceClientConfig` attribute. As [discussed
+       with the RFC bar raiser here][async-conversation], there are a few ways to tackle the
+       addition of this functionlity. One option is to add attribute(s) to the L2 endpoint config
+       construct to support asynchronous inference along with synthesis-time error handling to
+       catch configuration conflicts (e.g., asynchronous endpoints are only capable of supporting
+       a single instance-based production variant today). Alternatively, an `AsyncEndpointConfig`
+       subclass of `EndpointConfig` could be introduced to provide a better compile-time contract
+       to customers (while still implementing the generic functionality within `EndpointConfig`).
+       Either way, the proposed contracts would only undergo backward-compatible changes.
+    1. [Model Monitoring][model-monitor]: For the purposes of monitoring model performance, the
+       `DataCaptureConfig` CloudFormation attribute was added which allows customers to configure a
+       sampling rate of input and/or output endpoint requests that SageMaker should publish to an S3
+       destination. This functionlity is a side-effect of normal endpoint operation and has no
+       bearing on other construct APIs, meaning its addition should be confined to new attribute(s)
+       on the endpoint config construct.
+1. `AWS::SageMaker::Endpoint` features:
+    1. [Retention of Variant Properties][retain-variant-properties]: Once an endpoint has been
+       deployed, the desired instance count and desired weight can be dynamically adjusted _per
+       production variant_ without changing the backing endpoint config resource. These changes can
+       either be made automatically via Application Auto Scaling or manually by the customer via
+       the SageMaker UpdateEndpointWeightsAndCapacities operation. After making such changes, by
+       default, when updating a SageMaker endpoint to use a new endpoint config resource (such as
+       when making a CloudFormation change an endpoint config that results in resource replacement),
+       the desired instance count and desired weight is reset to match the new endpoint config
+       resource. To bypass this resetting of variant properties, the `RetainAllVariantProperties`
+       boolean flag was added to the endpoint resource, which when set to true, will not reset these
+       variant properties. In addition to this field, `ExcludeRetainedVariantProperties` was also
+       added to the endpoint resource to allow for selective retention of variant properties (e.g.,
+       keeping the desired instance count while resetting the desired weight). As the default
+       behavior is already in place (no retention), adding the functionality should consist of
+       incorporating new attribute(s) on the Endpoint L2 construct's props interface and plumbing
+       it through to the underlying L1 resource definition.
+    1. [Deployment Guardrails][deployment-guardrails]: By default, when updating an endpoint,
+       SageMaker uses an all-at-once blue/green deployment strategy: a new fleet is provisioned
+       with the new approrpriate configuration, and upon successful provisioning, the traffic is
+       flipped and the old fleet is terminated. To augment this functionality, the
+       `DeploymentConfig` attribute was added to the Endpoint resource which now allows (1) the
+       specification of a CloudWatch alarm for auto-rollback and (2) additional deployment policies
+       beyond all-at-once, including canary and linear deployment strategies (along with more fine-
+       grained timing settings). Adding this functionlity should consist of incorporating new
+       attribute(s) on the Endpoint L2 construct's props interface and plumbing it through to the
+       underlying L1 resource definition. This work should also include support for the
+       `RetainDeploymentConfig` boolean flag which controls whether to reuse the previous deployment
+       configuration or use the new one. Note, there are a number of [SageMaker features which
+       prevent the use of deployment configuration][deployment-guardrails-exclusions], so defending
+       against combinations of features may improve the customer experience with the Endpoint
+       construct.
+1. `AWS::SageMaker::Model` features:
+    1. [Multi-Model Endpoints][multi-model]: By default (and as [described in the technical solution
+       above](#model-data)), SageMaker expects the model data URL on each container to point to an
+       S3 object containing a gzipped tar file of artifacts, which will be automatically extracted
+       upon instance provisioning. To support colocation of multiple logical models into a single
+       container, the `Mode` attribute was added to the `ContainerDefinition` CloudFormation
+       structure to either explicit configure `SingleModel` mode (the default) or `MultiModel` mode.
+       In multi-model mode, SageMaker now expects the customer configured model data URL to point to
+       an S3 path under which multiple gzipped tar files exist. When invoking a multi-model
+       endpoint, the client invoking the endpoint must specify the target model representing the
+       exact S3 path suffix pointing to a specific gzipped tar file. To accommodate this feature,
+       the proposed `ModelData.fromAsset` API should be adjusted to support zip file assets capable
+       of containing one or more gzipped tar files within them. Even though the code need not be
+       aware of `.tar.gz` files specifically, it might prove a better customer experience to at
+       least put up guard rails to prevent zip file assets from being used in single model mode
+       where as multi-model mode could be more permissive.
+    1. [Direct Invocation of Multi-Container Endpoints][multi-container]: By default (and as
+       [described in the proposed README](#inference-pipeline-model)), when a customer specifies
+       multiple containers for a model, the containers are treated as an inference pipeline (also
+       referred to as a serial pipeline). This means that the containers are treated as an ordered
+       list, wherein the output of one container at runtime is passed as input to the next. Only the
+       output from the last container is surfaced to the client invoking the model. To support a
+       different invocation paradigm, the `InferenceExecutionConfig` structure was added to the
+       model CloudFormation resource which allows customers to either explicitly configure `Serial`
+       invocation mode (the default, as an inference pipeline) or the new `Direct` invocation mode.
+       When using direct mode, a client invoking an endpoint must specify a container to target with
+       their request; SageMaker then invokes only that single container. As SageMaker exposes a new
+       dimension for CloudWatch metrics specific to each directly-invokable container, other than
+       exposing a new inference execution mode attribute on the `Model` construct, this feature
+       would likely also warrant the addition of a `findContainer(containerHostName: string)` method
+       to [`IEndpointProductionVariant`](#endpoint-production-variants) which will return a new
+       interface on which additional `metric*` APIs are present for generating CloudWatch metrics
+       against the dimension consisting of endpoint, variant, and container combined.
+    1. [Private Docker Registries][private-docker]: The `ImageConfig` type was added to the existing
+       `ContainerDefinition` CloudFormation structure in order for customers to specify that a
+       VPC-connected Docker registry will act as the source of the container's image (as opposed to
+       ECR which acts as the default platform repository). This new type also contains an optional
+       `RepositoryAuthConfig` nested structure in order to specify the ARN of a Lambda function
+       capable of serving repository credentials to SageMaker. In order to deliver this
+       functionality in a backward-compatible way, inspiration can be taken from [ECS's
+       `ContainerImage.fromRegistry` API][container-image-from-registry] (note though, ECS sources
+       credentials from Secrets Manager rather than Lambda) in order to make the following
+       additions to the SageMaker module:
+         1. Add attributes to `ContainerImageConfig` to support the specification of a non-platform
+            repository along with an optional Lambda function ARN.
+         1. Implement a new, non-exported `RegistryImage` subclass of `ContainerImage` whose
+            constructor takes an optional Lambda `IFunction` instance for generating a
+            `ContainerImageConfig` instance with the appropriate Lambda function ARN for serving
+            credentials.
+         1. On `ContainerImage`, add a new static `fromRegistry` method which takes a props object
+            consisting of an optional Lambda `IFunction` instance. This method acts as a simple
+            static factory method for the non-exported `RegistryImage` class.
+    1. [Network Isolation][network-isolation]: The `EnableNetworkIsolation` Cloudformation boolean
+       flag (defaults to false) on a model resource prevents inbound and outbound network calls
+       to/from the model container. Incorporating such an attribute into the Model L2 construct
+       should not conflict with any proposed API.
+    1. [AWS Marketplace Models][marketplace-models]: The `ModelPackageName` string attribute was
+       added to the `ContainerDefinition` CloudFormation structure to specify the ARN of a reusable,
+       versioned model which can be listed on the AWS Marketplace. When creating a `Model` resource
+       from a model package, the customer need no longer specify a container image as the model
+       package contains all information about the underlying container(s) required for inference. To
+       incorporate this support into the SageMaker module, it would likely entail creating a new L2
+       construct `ModelPackage` to represent the `AWS::SageMaker::ModelPackage` CloudFormation
+       resource and modifying the proposed `ContainerDefinition` interface to support an optional
+       `IModelPackage` as an attribute (while making `image: ContainerImage` an optional attribute).
+
+[serverless-inference]: https://aws.amazon.com/about-aws/whats-new/2021/12/amazon-sagemaker-serverless-inference/
+[async-inference]: https://aws.amazon.com/about-aws/whats-new/2021/08/amazon-sagemaker-asynchronous-new-inference-option/
+[model-monitor]: https://aws.amazon.com/about-aws/whats-new/2019/12/introducing-amazon-sagemaker-model-monitor/
+[retain-variant-properties]: https://aws.amazon.com/blogs/machine-learning/configuring-autoscaling-inference-endpoints-in-amazon-sagemaker/
+[deployment-guardrails]: https://aws.amazon.com/about-aws/whats-new/2021/11/new-deployment-guardrails-amazon-sagemaker-inference-endpoints/
+[multi-model]: https://aws.amazon.com/blogs/machine-learning/save-on-inference-costs-by-using-amazon-sagemaker-multi-model-endpoints/
+[multi-container]: https://aws.amazon.com/blogs/machine-learning/deploy-multiple-serving-containers-on-a-single-instance-using-amazon-sagemaker-multi-container-endpoints/
+[private-docker]: https://aws.amazon.com/about-aws/whats-new/2021/03/amazon-sagemaker-now-supports-private-docker-registry-authentication/
+[network-isolation]: https://aws.amazon.com/blogs/security/secure-deployment-of-amazon-sagemaker-resources/
+[marketplace-models]: https://aws.amazon.com/blogs/awsmarketplace/using-amazon-augmented-ai-with-aws-marketplace-machine-learning-models/
+
+[async-conversation]: https://github.com/aws/aws-cdk-rfcs/pull/433#discussion_r952949608
+[deployment-guardrails-exclusions]: https://docs.aws.amazon.com/sagemaker/latest/dg/deployment-guardrails-exclusions.html
+[container-image-from-registry]: https://github.com/aws/aws-cdk/blob/v1-main/packages/%40aws-cdk/aws-ecs/lib/container-image.ts#L14-L19
+
+#### Rough Edges
+
 1. As observed with [Lambda][lambda-eni-issue] and [EKS][eks-eni-issue], the Elastic Network
    Interfaces (ENIs) associated with a SageMaker model's VPC are not always cleaned up in a timely
    manner after downstream compute resources are deleted. As a result, attempts to delete a
@@ -1162,15 +1293,18 @@ adjustments prior to marking the APIs as stable.
    regardless of whether stack deletion will succeed or fail but may hinder snapshot re-generation
    by subsequent CDK contributors. For this reason, it may be helpful to exclude VPC specification
    from the endpoint integration test at this time.
+
+[lambda-eni-issue]: https://github.com/aws/aws-cdk/issues/12827
+[eks-eni-issue]: https://github.com/aws/aws-cdk/issues/9970
+
+#### Cross-module API Convergence
+
 1. This RFC proposes a new [`ContainerImage` API](#container-image) for the SageMaker module which
    closely resembles the same-named API from the ECS module. The primary difference between the two
    is that the ECS module's API `bind`s on an ECS `TaskDefinition` whereas this new SageMaker
    module's API `bind`s on a SageMaker `Model`. There may be an opportunity to unify these APIs in
    the future assuming that `bind`ing to a common type would sufficient for both use-cases (e.g.,
    `IGrantable`).
-
-[lambda-eni-issue]: https://github.com/aws/aws-cdk/issues/12827
-[eks-eni-issue]: https://github.com/aws/aws-cdk/issues/9970
 
 ## Appendix
 
