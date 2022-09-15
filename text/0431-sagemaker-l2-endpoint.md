@@ -611,11 +611,9 @@ upon an ECS task definition, instead operate upon a SageMaker model.
     /**
      * Reference an image that's constructed directly from sources on disk
      *
-     * @param scope The scope within which to create the image asset
-     * @param id The id to assign to the image asset
-     * @param props The properties of a Docker image asset
+     * @param asset A Docker image asset
      */
-    public static fromAsset(scope: Construct, id: string, props: assets.DockerImageAssetProps): ContainerImage { ... }
+    public static fromAsset(asset: assets.DockerImageAsset): ContainerImage { ... }
 
     /**
      * Called when the image is used by a Model
@@ -656,11 +654,9 @@ artifacts, either in an S3 bucket or a local file asset.
 
     /**
      * Constructs model data that will be uploaded to S3 as part of the CDK app deployment.
-     * @param scope The scope within which to create a new asset
-     * @param id The id to associate with the new asset
-     * @param path The local path to a model artifact file as a gzipped tar file
+     * @param asset An S3 asset as a gzipped tar file
      */
-    public static fromAsset(scope: Construct, id: string, path: string): ModelData { ... }
+    public static fromAsset(asset: assets.Asset): ModelData { ... }
 
     /**
      * This method is invoked by the SageMaker Model construct when it needs to resolve the model
@@ -713,16 +709,16 @@ artifacts, either in an S3 bucket or a local file asset.
     readonly encryptionKey?: kms.IKey;
 
     /**
-     * A list of production variants. You can always add more variants later by calling
-     * {@link EndpointConfig#addProductionVariant}.
+     * A list of instance production variants. You can always add more variants later by calling
+     * {@link EndpointConfig#addInstanceProductionVariant}.
      *
      * @default - none
      */
-    readonly productionVariants?: ProductionVariantProps[];
+    readonly instanceProductionVariants?: InstanceProductionVariantProps[];
   }
   ```
 
-- `EndpointConfig` -- defines a SageMaker EndpointConfig  (with helper methods for importing an
+- `EndpointConfig` -- defines a SageMaker EndpointConfig (with helper methods for importing an
   endpoint config)
 
   ```ts
@@ -747,22 +743,22 @@ artifacts, either in an S3 bucket or a local file asset.
     constructor(scope: Construct, id: string, props: EndpointConfigProps = {}) { ... }
 
     /**
-     * Add production variant to the endpoint configuration.
+     * Add instance production variant to the endpoint configuration.
      *
      * @param props The properties of a production variant to add.
      */
-    public addProductionVariant(props: ProductionVariantProps): void { ... }
+    public addInstanceProductionVariant(props: InstanceProductionVariantProps): void { ... }
 
     /**
-     * Get production variants associated with endpoint configuration.
+     * Get instance production variants associated with endpoint configuration.
      */
-    public get productionVariants(): ProductionVariant[] { ... }
+    public get instanceProductionVariants(): InstanceProductionVariant[] { ... }
 
     /**
-     * Find production variant based on variant name
+     * Find instance production variant based on variant name
      * @param name Variant name from production variant
      */
-    public findProductionVariant(name: string): ProductionVariant { ... }
+    public findInstanceProductionVariant(name: string): InstanceProductionVariant { ... }
   }
   ```
 
@@ -772,23 +768,11 @@ To accommodate A/B testing of model behaviors, an endpoint config supports the s
 multiple production variants. Each variant's weight determines the traffic distribution to itself
 relative to the other configured variants.
 
-- `ProductionVariantProps` -- construction properties for a production variant
+- `ProductionVariantProps` -- common construction properties for all production variant types (e.g.,
+  instance, serverless) (note, not exported)
 
   ```ts
-  export interface ProductionVariantProps {
-    /**
-     * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
-     * provide on-demand GPU computing for inference.
-     *
-     * @default - none
-     */
-    readonly acceleratorType?: AcceleratorType;
-    /**
-     * Number of instances to launch initially.
-     *
-     * @default 1
-     */
-    readonly initialInstanceCount?: number;
+  interface ProductionVariantProps {
     /**
      * Determines initial traffic distribution among all of the models that you specify in the
      * endpoint configuration. The traffic to a production variant is determined by the ratio of the
@@ -797,12 +781,6 @@ relative to the other configured variants.
      * @default 1.0
      */
     readonly initialVariantWeight?: number;
-    /**
-     * Instance type of the production variant.
-     *
-     * @default - ml.t2.medium instance type.
-     */
-    readonly instanceType?: ec2.InstanceType;
     /**
      * The model to host.
      */
@@ -814,61 +792,123 @@ relative to the other configured variants.
   }
   ```
 
-- `ProductionVariant` -- represents a production variant that has been associated with an
-  `EndpointConfig`
+- `InstanceProductionVariantProps` -- construction properties for an instance production variant
 
   ```ts
-  export interface ProductionVariant {
+  export interface InstanceProductionVariantProps extends ProductionVariantProps {
     /**
-     * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
-     * provide on-demand GPU computing for inference.
-     *
-     * @default - none
-     */
+    * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
+    * provide on-demand GPU computing for inference.
+    *
+    * @default - none
+    */
     readonly acceleratorType?: AcceleratorType;
     /**
-     * Number of instances to launch initially.
-     */
-    readonly initialInstanceCount: number;
+    * Number of instances to launch initially.
+    *
+    * @default 1
+    */
+    readonly initialInstanceCount?: number;
+    /**
+    * Instance type of the production variant.
+    *
+    * @default - ml.t2.medium instance type.
+    */
+    readonly instanceType?: InstanceType;
+  }
+  ```
+
+- `ProductionVariant` -- represents common attributes of all production variant types (e.g.,
+  instance, serverless) once associated to an EndpointConfig (note, not exported)
+
+  ```ts
+  interface ProductionVariant {
     /**
      * Determines initial traffic distribution among all of the models that you specify in the
-     * endpoint configuration. The traffic to a production variant is determined by the ratio of the
-     * variant weight to the sum of all variant weight values across all production variants.
-     */
+    * endpoint configuration. The traffic to a production variant is determined by the ratio of the
+    * variant weight to the sum of all variant weight values across all production variants.
+    */
     readonly initialVariantWeight: number;
     /**
-     * Instance type of the production variant.
-     */
-    readonly instanceType: ec2.InstanceType;
-    /**
      * The name of the model to host.
-     */
+    */
     readonly modelName: string;
     /**
      * The name of the production variant.
-     */
+    */
     readonly variantName: string;
   }
   ```
 
-- `AcceleratorType` -- an enumeration of values representing the size of the Elastic Inference (EI)
-  instance to use for the production variant. EI instances provide on-demand GPU computing for
+- `InstanceProductionVariant` -- represents an instance production variant that has been associated
+  with an `EndpointConfig`
+
+  ```ts
+  export interface InstanceProductionVariant extends ProductionVariant {
+    /**
+    * The size of the Elastic Inference (EI) instance to use for the production variant. EI instances
+    * provide on-demand GPU computing for inference.
+    *
+    * @default - none
+    */
+    readonly acceleratorType?: AcceleratorType;
+    /**
+    * Number of instances to launch initially.
+    */
+    readonly initialInstanceCount: number;
+    /**
+    * Instance type of the production variant.
+    */
+    readonly instanceType: InstanceType;
+  }
+  ```
+
+- `AcceleratorType` -- enum-like class of supported Elastic Inference (EI) instance types for
+  SageMaker instance-based production variants; EI instances provide on-demand GPU computing for
   inference
 
   ```ts
-  export enum AcceleratorType {
+  export class AcceleratorType {
     /**
-     * Medium accelerator type.
+     * ml.eia1.large
      */
-    MEDIUM = 'ml.eia1.medium',
+    public static readonly EIA1_LARGE = AcceleratorType.of('ml.eia1.large');
+
+    /* Additional supported accelerator types */
+
     /**
-     * Large accelerator type.
+     * Builds an AcceleratorType from a given string or token (such as a CfnParameter).
+     * @param acceleratorType An accelerator type as string
+     * @returns A strongly typed AcceleratorType
      */
-    LARGE = 'ml.eia1.large ',
+    public static of(acceleratorType: string): AcceleratorType;
+
     /**
-     * Extra large accelerator type.
+     * Return the accelerator type as a string
+     * @returns The accelerator type as a string
      */
-    XLARGE = 'ml.eia1.xlarge',
+    public toString(): string;
+  }
+  ```
+
+- `InstanceType` -- enum-like class of supported instance types for SageMaker instance-based
+  production variants
+
+  ```ts
+  export class InstanceType {
+    /**
+     * ml.c4.2xlarge
+     */
+    public static readonly C4_2XLARGE = InstanceType.of('ml.c4.2xlarge');
+
+    /* Additional supported instance types */
+
+    /**
+     * Builds an InstanceType from a given string or token (such as a CfnParameter).
+     * @param instanceType An instance type as string
+     * @returns A strongly typed InstanceType
+     */
+    public static of(instanceType: string): InstanceType;
   }
   ```
 
@@ -975,15 +1015,15 @@ relative to the other configured variants.
     constructor(scope: Construct, id: string, props: EndpointProps) { ... }
 
     /**
-     * Get production variants associated with endpoint.
+     * Get instance production variants associated with endpoint.
      */
-    public get productionVariants(): IEndpointProductionVariant[] { ... }
+    public get instanceProductionVariants(): IEndpointInstanceProductionVariant[] { ... }
 
     /**
-     * Find production variant based on variant name
+     * Find instance production variant based on variant name
      * @param name Variant name from production variant
      */
-    public findProductionVariant(name: string): IEndpointProductionVariant { ... }
+    public findInstanceProductionVariant(name: string): IEndpointInstanceProductionVariant { ... }
   }
   ```
 
@@ -991,15 +1031,15 @@ relative to the other configured variants.
 
 When monitoring or auto-scaling real-time inference endpoints, both CloudWatch and Application Auto
 Scaling operate at the level of endpoint name + variant name. For this reason, once a variant has
-been attached to an endpoint, this RFC allows customers to retrieve `IEndpointProductionVariant`
-instances from their endpoint for the purposes of referencing CloudWatch metrics or an Application
-Auto Scaling `BaseScalableAttribute`.
+been attached to an endpoint, this RFC allows customers to retrieve
+`IEndpointInstanceProductionVariant` object instances from their endpoint for the purposes of
+referencing CloudWatch metrics or an Application Auto Scaling `BaseScalableAttribute`.
 
-- `IEndpointProductionVariant` -- represents a production variant that has been associated with an
-  endpoint
+- `IEndpointProductionVariant` -- represents the features common to all production variant types
+  (e.g., instance, serverless) that have been associated with an endpoint (note, not exported)
 
   ```ts
-  export interface IEndpointProductionVariant {
+  interface IEndpointProductionVariant {
     /**
      * The name of the production variant.
      */
@@ -1010,6 +1050,14 @@ Auto Scaling `BaseScalableAttribute`.
      * @default - sum over 5 minutes
      */
     metric(namespace: string, metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  }
+  ```
+
+- `IEndpointInstanceProductionVariant` -- represents an instance production variant that has been
+  associated with an endpoint
+
+  ```ts
+  export interface IEndpointInstanceProductionVariant extends IEndpointProductionVariant {
     /**
      * Metric for the number of invocations
      *
@@ -1078,7 +1126,7 @@ Auto Scaling `BaseScalableAttribute`.
     autoScaleInstanceCount(scalingProps: appscaling.EnableScalingProps): ScalableInstanceCount;
   }
 
-  class EndpointProductionVariant implements IEndpointProductionVariant { ... }
+  class EndpointInstanceProductionVariant implements IEndpointInstanceProductionVariant { ... }
   ```
 
 ### Is this a breaking change?
