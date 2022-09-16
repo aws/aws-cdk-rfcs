@@ -235,7 +235,7 @@ const script = new gamelift.Script(this, 'Realtime script', {
 // Either using dedicated factory static method
 const script = gamelift.fromScriptAsset(path.join(__dirname, 'file-asset.js');
 
-new gamelift.Fleet(this, 'Realtime server fleet', {
+new gamelift.ScriptFleet(this, 'Realtime server fleet', {
   content: script
 });
 ```
@@ -258,7 +258,7 @@ const build = new gamelift.Build(this, 'Game server build', {
 // Either using dedicated factory static method
 const build = gamelift.fromBuildAsset(path.join(__dirname, 'CustomerGameServer/');
 
-new gamelift.Fleet(this, 'Game server fleet', {
+new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
 ```
@@ -270,7 +270,7 @@ FlexMatch is available with the managed GameLift hosting for custom game servers
 ```ts fix
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
 
@@ -311,7 +311,7 @@ The game session queue is the primary mechanism for processing new game session 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
 });
 
@@ -337,7 +337,7 @@ There are two options for setting up event notifications. You can set up an SNS 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
 
@@ -365,7 +365,7 @@ A GameLift instance is limited to 50 processes running concurrently.
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 // Server processes can be delcared in a declarative way through the constructor
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
   gameSessionActivationTimeoutSeconds: 123,
   maxConcurrentGameSessionActivations: 123,
@@ -395,7 +395,7 @@ GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called instan
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
-new gamelift.Fleet(this, 'Game server fleet', {
+new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
   instanceType: ec2.InstanceType.of(ec2.InstanceClass.C5, ec2.InstanceSize.LARGE)
 });
@@ -410,7 +410,7 @@ By default, this property is set to ON_DEMAND.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.Fleet(this, 'Game server fleet', {
+new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
   type: FleetType.SPOT
 });
@@ -426,7 +426,7 @@ New game sessions are assigned an IP address/port number combination, which must
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
 
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
 });
 // Allowing all IP Addresses from port 1111 to port 1122 on TCP Protocol
@@ -445,7 +445,7 @@ By default Stack region is used.
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
-new gamelift.Fleet(this, 'Game server fleet', {
+new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
 ```
@@ -456,7 +456,7 @@ but we can add new locations if needed and define desired capacity
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
 // Through constructor properties
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build,
   locations: [ {
     name: 'eu-west-1',
@@ -472,7 +472,7 @@ const fleet = new gamelift.Fleet(this, 'Game server fleet', {
 });
 
 // Or through dedicated methods
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
 fleet.addLocation('eu-west-1', 5, 2, 10);
@@ -530,7 +530,7 @@ const role = new iam.Role(this, 'Role', {
 });
 role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'));
 
-new gamelift.Fleet(this, 'Game server fleet', {
+new gamelift.BuildFleet(this, 'Game server fleet', {
   build = build,
   role: role
 });
@@ -557,8 +557,8 @@ role.addServicePrincipal('gamelift.me-south-1.amazonaws.com');
 role.addServicePrincipal('gamelift.af-south-1.amazonaws.com');
 role.addServicePrincipal('gamelift.eu-south-1.amazonaws.com');
 
-new gamelift.Fleet(this, 'Game server fleet', {
-  build = build,
+new gamelift.BuildFleet(this, 'Game server fleet', {
+  content = build,
   role: role
 });
 
@@ -572,17 +572,18 @@ A GameLift alias is used to abstract a fleet designation. Fleet designations tel
 
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
 
-// Either using constructor
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
-  content: build,
-  alias: ['live']
+// Either using a dedicated constructor
+const alias = new gamelift.Alias(this, 'Fleet alias', {
+  name: 'live',
+  routingStrategy: RoutingStrategyType.SIMPLE,
+  fleet: fleet
 });
 
-// Or through dedicated methods
-const fleet = new gamelift.Fleet(this, 'Game server fleet', {
+// Or through dedicated fleet methods
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
-fleet.addAlias('live');
+const liveAlias = fleet.addAlias('live');
 ```
 
 See [Add an alias to a GameLift fleet](https://docs.aws.amazon.com/gamelift/latest/developerguide/aliases-creating.html)
@@ -812,7 +813,7 @@ interface FleetProps {
   readonly peerVpc?: vpc.IVpc[];
 }
 
-abstract class Fleet implements IFleet {
+abstract class FleetBase implements IFleet {
   constructor(protected readonly props: FleetProps = {}) {}
   // Helper methods that subclasses can use to create common config
   protected createLocation(...): CfnFleet.LocationConfigurationProperty | undefined;
