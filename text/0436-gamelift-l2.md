@@ -2,9 +2,11 @@
 
 * **Original Author(s):**: @stevehouel
 * **Tracking Issue**: #436
-* **API Bar Raiser**: 
+* **API Bar Raiser**:
 
-The `aws-gamelift` construct library allows you to create Amazon Gamelift Matchmaking configuration and deploy game server Fleets with just a few lines of code. As with most construct libraries, you can also easily define permissions, bind notification resource and add metrics using a simple API.
+The `aws-gamelift` construct library allows you to create Amazon Gamelift Matchmaking configuration and deploy game
+server Fleets with just a few lines of code. As with most construct libraries, you can also easily define
+permissions, bind notification resource and add metrics using a simple API.
 
 ## Working Backwards
 
@@ -16,28 +18,50 @@ The `aws-gamelift` construct library allows you to create Amazon Gamelift Matchm
 
 #### Amazon GameLift Construct Library
 
-[Amazon GameLift](https://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-intro.html) is a service used to deploy, operate, and scale dedicated, low-cost servers in the cloud for session-based multiplayer games. Built on AWS global computing infrastructure, GameLift helps deliver high-performance, high-reliability game servers while dynamically scaling your resource usage to meet worldwide player demand.
+[Amazon GameLift](https://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-intro.html) is a service used
+to deploy, operate, and scale dedicated, low-cost servers in the cloud for session-based multiplayer games. Built
+on AWS global computing infrastructure, GameLift helps deliver high-performance, high-reliability game servers
+while dynamically scaling your resource usage to meet worldwide player demand.
 
 GameLift is composed of three main components:
 
-* GameLift FlexMatch which is a customizable matchmaking service for multiplayer games. With FlexMatch, you can build a custom set of rules that defines what a multiplayer match looks like for your game, and determines how to evaluate and select compatible players for each match. You can also customize key aspects of the matchmaking process to fit your game, including fine-tuning the matching algorithm.
+* GameLift FlexMatch which is a customizable matchmaking service for
+multiplayer games. With FlexMatch, you can
+build a custom set of rules that defines what a multiplayer match looks like
+for your game, and determines how to
+evaluate and select compatible players for each match. You can also customize
+key aspects of the matchmaking
+process to fit your game, including fine-tuning the matching algorithm.
   
-* GameLift hosting for custom or realtime servers which helps you deploy, operate, and scale dedicated game servers. It regulates the resources needed to host games, finds available game servers to host new game sessions, and puts players into games.
+* GameLift hosting for custom or realtime servers which helps you deploy,
+operate, and scale dedicated game servers. It regulates the resources needed to
+host games, finds available game servers to host new game sessions, and puts
+players into games.
   
-* GameLift FleetIQ to optimize the use of low-cost Amazon Elastic Compute Cloud (Amazon EC2) Spot Instances for cloud-based game hosting. With GameLift FleetIQ, you can work directly with your hosting resources in Amazon EC2 and Amazon EC2 Auto Scaling while taking advantage of GameLift optimizations to deliver inexpensive, resilient game hosting for your players
+* GameLift FleetIQ to optimize the use of low-cost Amazon Elastic Compute Cloud
+(Amazon EC2) Spot Instances for cloud-based game hosting. With GameLift
+FleetIQ, you can work directly with your hosting resources in Amazon EC2 and
+Amazon EC2 Auto Scaling while taking advantage of GameLift optimizations to
+deliver inexpensive, resilient game hosting for your players
 
-This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk) project. It allows you to define components for your matchmaking configuration or gmae server fleet management system.
+This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk) project. It allows you to define components for your matchmaking
+configuration or gmae server fleet management system.
 
 #### GameLift FlexMatch
 
 ##### Defining a Matchmaking configuration
 
-FlexMatch is available both as a GameLift game hosting solution (including Realtime Servers) and as a standalone matchmaking service. To set up a FlexMatch matchmaker to process matchmaking requests, you have to create a matchmaking configuration based on a RuleSet.
+FlexMatch is available both as a GameLift game hosting solution (including
+Realtime Servers) and as a standalone matchmaking service. To set up a
+FlexMatch matchmaker to process matchmaking requests, you have to create a
+matchmaking configuration based on a RuleSet.
 
-More details about matchmaking ruleSet are covered [below](#ruleSet).
+More details about matchmaking ruleSet are covered [below](#ruleset).
 
-There is two types of Matchmaking configuration: through a queue system to let FlexMatch forms matches and uses the specified GameLift queue to start a game session for the match, and through a standalone version to let FlexMatch forms matches and returns match information in an event.
-
+There is two types of Matchmaking configuration: through a queue system to let
+FlexMatch forms matches and uses the specified GameLift queue to start a game
+session for the match, and through a standalone version to let FlexMatch forms
+matches and returns match information in an event.
 
 Either a Standalone Matchmaking configuration
 
@@ -50,6 +74,7 @@ new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
 ```
 
 Either a Matchmaking configuration using a Queue
+
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
 
@@ -70,9 +95,15 @@ The above example implicitly defines the following resources:
 
 ##### RuleSet
 
-Every FlexMatch matchmaker must have a rule set. The rule set determines the two key elements of a match: your game's team structure and size, and how to group players together for the best possible match.
+Every FlexMatch matchmaker must have a rule set. The rule set determines the
+two key elements of a match: your game's team structure and size, and how to
+group players together for the best possible match.
 
-For example, a rule set might describe a match like this: Create a match with two teams of four to eight players each, one team is the cowboy and the other team the aliens. A team can have novice and experienced players, but the average skill of the two teams must be within 10 points of each other. If no match is made after 30 seconds, gradually relax the skill requirements.
+For example, a rule set might describe a match like this: Create a match with
+two teams of four to eight players each, one team is the cowboy and the other
+team the aliens. A team can have novice and experienced players, but the
+average skill of the two teams must be within 10 points of each other. If no
+match is made after 30 seconds, gradually relax the skill requirements.
 
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -179,17 +210,28 @@ const matchmaking = new MatchmakingConfiguration(this, 'Standalone Matchmaking',
 
 ##### Monitoring
 
-You can monitor GameLift FlexMatch activity for matchmaking configurations and matchmaking rules using Amazon CloudWatch. These statistics are used to provide a historical perspective on how your Gamelift FlexMatch solution is performing.
+You can monitor GameLift FlexMatch activity for matchmaking configurations and
+matchmaking rules using Amazon CloudWatch. These statistics are used to provide
+a historical perspective on how your Gamelift FlexMatch solution is performing.
 
 ###### Metrics
 
-GameLift FlexMatch sends metrics to CloudWatch so that you can collect and analyze the activity of your matchmaking solution, including match acceptance workflow, ticket consumtion.
+GameLift FlexMatch sends metrics to CloudWatch so that you can collect and
+analyze the activity of your matchmaking solution, including match acceptance
+workflow, ticket consumtion.
 
-You can then use CloudWatch alarms to alert you, for example, when matches has been rejected (potential matches that were rejected by at least one player since the last report) exceed a certain thresold which could means that you may have an issue in your matchmaking rules.
+You can then use CloudWatch alarms to alert you, for example, when matches has
+been rejected (potential matches that were rejected by at least one player
+since the last report) exceed a certain thresold which could means that you may
+have an issue in your matchmaking rules.
 
 CDK provides methods for accessing GameLift metrics with default configuration,
-such as `metricCurrentTickets`, or `metricMatchAccepted` (see [`IMatchmakingConfiguration`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
-for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift FlexMatch; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
+such as `metricCurrentTickets`, or `metricMatchAccepted` (see
+[`IMatchmakingConfiguration`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
+for a full list). CDK also provides a generic `metric` method that can be used
+to produce metric configurations for any metric provided by GameLift FlexMatch;
+the configurations are pre-populated with the correct dimensions for the
+matchmaking configuration.
 
 ```ts fixture=with-matchmaking-configuration
 import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
@@ -215,11 +257,17 @@ in the *Amazon GameLift Developer Guide*.
 
 ##### Defining a GameLift Fleet
 
-GameLift helps you deploy, operate, and scale dedicated game servers for session-based multiplayer games. It helps you regulate the resources needed to host your games, finds available game servers to host new game sessions, and puts players into games.
+GameLift helps you deploy, operate, and scale dedicated game servers for
+session-based multiplayer games. It helps you regulate the resources needed to
+host your games, finds available game servers to host new game sessions, and
+puts players into games.
 
 ###### Creating a realtime game server fleet
 
-This lightweight server solution provides ready-to-go game servers that you can configure to fit your game. To set up and optionnally customize a realtime server fleet, you need to provide a script (in the form of some JavaScript code).
+This lightweight server solution provides ready-to-go game servers that you can
+configure to fit your game. To set up and optionnally customize a realtime
+server fleet, you need to provide a script (in the form of some JavaScript
+code).
 
 ```ts
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
@@ -242,7 +290,10 @@ new gamelift.ScriptFleet(this, 'Realtime server fleet', {
 
 ###### Creating a custom game server fleet
 
-Your uploaded game servers are hosted on GameLift virtual computing resources, called instances. You set up your hosting resources by creating a fleet of instances and deploying them to run your game servers. You can design a fleet to fit your game's needs.
+Your uploaded game servers are hosted on GameLift virtual computing resources,
+called instances. You set up your hosting resources by creating a fleet of
+instances and deploying them to run your game servers. You can design a fleet
+to fit your game's needs.
 
 ```ts
 import * as s3 from 'aws-cdk-lib/aws-s3-assets';
@@ -265,7 +316,9 @@ new gamelift.BuildFleet(this, 'Game server fleet', {
 
 ##### Integrating with a Matchmaking solution
 
-FlexMatch is available with the managed GameLift hosting for custom game servers and Realtime Servers. To add FlexMatch matchmaking to your game, you have to bind both components through a game session queue.
+FlexMatch is available with the managed GameLift hosting for custom game
+servers and Realtime Servers. To add FlexMatch matchmaking to your game, you
+have to bind both components through a game session queue.
 
 ```ts fix
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -306,7 +359,9 @@ in the *Amazon GameLift FlexMatch Developer Guide*.
 
 ##### Integrating a queue system
 
-The game session queue is the primary mechanism for processing new game session requests and locating available game servers to host them. Although it is possible to request a new game session be hosted on specific fleet or location.
+The game session queue is the primary mechanism for processing new game session
+requests and locating available game servers to host them. Although it is
+possible to request a new game session be hosted on specific fleet or location.
 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
@@ -329,10 +384,18 @@ in the *Amazon GameLift Developer Guide*.
 
 ###### Setting notifications
 
-If you're using queues to manage game session placement in your game, you need a way to monitor the status of individual placement requests and take action as appropriate. Implementing event notifications is a fast and efficient method for tracking placement activity. If your game is in production, or in pre-production with high-volume placement activity, you should be using event notifications.
+If you're using queues to manage game session placement in your game, you need
+a way to monitor the status of individual placement requests and take action as
+appropriate. Implementing event notifications is a fast and efficient method
+for tracking placement activity. If your game is in production, or in
+pre-production with high-volume placement activity, you should be using event
+notifications.
 
-There are two options for setting up event notifications. You can set up an SNS topic and have GameLift publish event notifications on placement activity by referencing the topic ID in a game session queue. Alternatively, you can use Amazon CloudWatch Events, which has a suite of tools available for managing events and taking action on them.
-
+There are two options for setting up event notifications. You can set up an SNS
+topic and have GameLift publish event notifications on placement activity by
+referencing the topic ID in a game session queue. Alternatively, you can use
+Amazon CloudWatch Events, which has a suite of tools available for managing
+events and taking action on them.
 
 ```ts fixture=with-build
 import * as gamelift from 'aws-cdk-lib/aws-gamelift';
@@ -351,7 +414,12 @@ queue.addDestination(fleet);
 
 ##### Managing game servers launch configuration
 
-GameLift uses a fleet's runtime configuration to determine the type and number of processes to run on each instance in the fleet. At a minimum, a runtime configuration contains one server process configuration that represents one game server executable. You can also define additional server process configurations to run other types of processes related to your game. Each server process configuration contains the following information:
+GameLift uses a fleet's runtime configuration to determine the type and number
+of processes to run on each instance in the fleet. At a minimum, a runtime
+configuration contains one server process configuration that represents one
+game server executable. You can also define additional server process
+configurations to run other types of processes related to your game. Each
+server process configuration contains the following information:
 
 * The file name and path of an executable in your game build.
 
@@ -370,7 +438,7 @@ const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
   gameSessionActivationTimeoutSeconds: 123,
   maxConcurrentGameSessionActivations: 123,
   serverProcesses: [{
-    launchPath: '/local/game/GameLiftExampleServer.x86_64', 
+    launchPath: '/local/game/GameLiftExampleServer.x86_64',
     parameters: '-logFile /local/game/logs/myserver1935.log -port 1935',
     concurrentExecutions: 100,
   }]
@@ -378,7 +446,7 @@ const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
 
 // Or through dedicated runtimeConfiguration methods
 fleet.addServerProcess({
-  launchPath: '/local/game/GameLiftExampleServer.x86_64', 
+  launchPath: '/local/game/GameLiftExampleServer.x86_64',
   parameters: '-logFile /local/game/logs/myserver1935.log -port 1935',
   concurrentExecutions: 100,
 });
@@ -389,7 +457,12 @@ in the *Amazon GameLift Developer Guide*.
 
 ##### Defining an instance type
 
-GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called instances, to deploy your game servers and host game sessions for your players. When setting up a new fleet, you decide what type of instances your game needs and how to run game server processes on them (using a runtime configuration). All instances in a fleet use the same type of resources and the same runtime configuration. You can edit a fleet's runtime configuration and other fleet properties, but the type of resources cannot be changed.
+GameLift uses Amazon Elastic Compute Cloud (Amazon EC2) resources, called
+instances, to deploy your game servers and host game sessions for your players.
+When setting up a new fleet, you decide what type of instances your game needs
+and how to run game server processes on them (using a runtime configuration). All instances in a fleet use the same type of resources and the same runtime
+configuration. You can edit a fleet's runtime configuration and other fleet
+properties, but the type of resources cannot be changed.
 
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -403,7 +476,8 @@ new gamelift.BuildFleet(this, 'Game server fleet', {
 
 ##### Using Spot instances
 
-When setting up your hosting resources, you have the option of using Spot Instances, On-Demand Instances, or a combination.
+When setting up your hosting resources, you have the option of using Spot
+Instances, On-Demand Instances, or a combination.
 
 By default, this property is set to ON_DEMAND.
 
@@ -418,9 +492,13 @@ new gamelift.BuildFleet(this, 'Game server fleet', {
 
 ##### Allowing Ingress traffic
 
-The allowed IP address ranges and port settings that allow inbound traffic to access game sessions on this fleet.
+The allowed IP address ranges and port settings that allow inbound traffic to
+access game sessions on this fleet.
 
-New game sessions are assigned an IP address/port number combination, which must fall into the fleet's allowed ranges. Fleets with custom game builds must have permissions explicitly set. For Realtime Servers fleets, GameLift automatically opens two port ranges, one for TCP messaging and one for UDP.
+New game sessions are assigned an IP address/port number combination, which
+must fall into the fleet's allowed ranges. Fleets with custom game builds must
+have permissions explicitly set. For Realtime Servers fleets, GameLift
+automatically opens two port ranges, one for TCP messaging and one for UDP.
 
 ```ts fixture=with-build
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -438,7 +516,10 @@ fleet.addIngressRule(ec2.Peer.ipv4('1.2.3.4/32'), ec2.Port.udp(1111));
 
 ##### Managing locations
 
-A single Amazon GameLift fleet has a home Region by default (the Region you deploy it to), but it can deploy resources to any number of GameLift supported Regions. Select Regions based on where your players are located and your latency needs.
+A single Amazon GameLift fleet has a home Region by default (the Region you
+deploy it to), but it can deploy resources to any number of GameLift supported
+Regions. Select Regions based on where your players are located and your
+latency needs.
 
 By default Stack region is used.
 
@@ -486,13 +567,21 @@ your game servers via logs and metrics.
 
 ###### Metrics
 
-GameLift Fleet sends metrics to CloudWatch so that you can collect and analyze the activity of your Fleet, including game  and player sessions and server processes.
+GameLift Fleet sends metrics to CloudWatch so that you can collect and analyze
+the activity of your Fleet, including game  and player sessions and server
+processes.
 
-You can then use CloudWatch alarms to alert you, for example, when matches has been rejected (potential matches that were rejected by at least one player since the last report) exceed a certain thresold which could means that you may have an issue in your matchmaking rules.
+You can then use CloudWatch alarms to alert you, for example, when matches has
+been rejected (potential matches that were rejected by at least one player
+since the last report) exceed a certain thresold which could means that you may
+have an issue in your matchmaking rules.
 
 CDK provides methods for accessing GameLift Fleet metrics with default configuration,
 such as `metricActiveInstances`, or `metricIdleInstances` (see [`IFleet`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IFleet.html)
-for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift Fleet, Game sessions or server processes; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
+for a full list). CDK also provides a generic `metric` method that can be used
+to produce metric configurations for any metric provided by GameLift Fleet,
+Game sessions or server processes; the configurations are pre-populated with
+the correct dimensions for the matchmaking configuration.
 
 ```ts fixture=with-matchmaking-configuration
 import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
@@ -516,7 +605,10 @@ in the *Amazon GameLift Developer Guide*.
 
 ##### Specifying an IAM role
 
-Some GameLift features require you to extend limited access to your AWS resources. This is done by creating an AWS IAM role. The GameLift Fleet class automatically created an IAM role with all the minimum necessary permissions for GameLift to access your ressources. If you wish, you may
+Some GameLift features require you to extend limited access to your AWS
+resources. This is done by creating an AWS IAM role. The GameLift Fleet class
+automatically created an IAM role with all the minimum necessary permissions
+for GameLift to access your ressources. If you wish, you may
 specify your own IAM role.
 
 ```ts fixture=with-build
@@ -537,7 +629,10 @@ new gamelift.BuildFleet(this, 'Game server fleet', {
 
 ```
 
-If you need to access resources in your own account and you have a multi-region fleet with locations in one of the opt-in regions, add gamelift.opt-in-region.amazonaws.com to the role trust policy. The following example includes the four supported opt-in regions:
+If you need to access resources in your own account and you have a multi-region
+fleet with locations in one of the opt-in regions, add gamelift.opt-in-region.amazonaws.com
+to the role trust policy. The following example includes the four
+supported opt-in regions:
 
 * gamelift.ap-east-1.amazonaws.com
 * gamelift.me-south-1.amazonaws.com
@@ -566,7 +661,11 @@ new gamelift.BuildFleet(this, 'Game server fleet', {
 
 ##### Alias
 
-A GameLift alias is used to abstract a fleet designation. Fleet designations tell Amazon GameLift where to search for available resources when creating new game sessions for players. By using aliases instead of specific fleet IDs, you can more easily and seamlessly switch player traffic from one fleet to another by changing the alias's target location.
+A GameLift alias is used to abstract a fleet designation. Fleet designations
+tell Amazon GameLift where to search for available resources when creating new
+game sessions for players. By using aliases instead of specific fleet IDs, you
+can more easily and seamlessly switch player traffic from one fleet to another
+by changing the alias's target location.
 
 ```ts
 
@@ -591,13 +690,27 @@ in the *Amazon GameLift Developer Guide*.
 
 #### GameLift FleetIQ
 
-The GameLift FleetIQ solution is a game hosting layer that supplements the full set of computing resource management tools that you get with Amazon EC2 and Auto Scaling. This solution lets you directly manage your Amazon EC2 and Auto Scaling resources and integrate as needed with other AWS services.
+The GameLift FleetIQ solution is a game hosting layer that supplements the full
+set of computing resource management tools that you get with Amazon EC2 and
+Auto Scaling. This solution lets you directly manage your Amazon EC2 and Auto
+Scaling resources and integrate as needed with other AWS services.
 
 ##### Defining a Game Server Group
 
-When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as usual: make an Amazon Machine Image (AMI) with your game server software, create an Amazon EC2 launch template, and define configuration settings for an Auto Scaling group. However, instead of creating an Auto Scaling group directly, you create a GameLift FleetIQ game server group with your Amazon EC2 and Auto Scaling resources and configuration. All game server groups must have at least two instance types defined for it. 
+When using GameLift FleetIQ, you prepare to launch Amazon EC2 instances as
+usual: make an Amazon Machine Image (AMI) with your game server software,
+create an Amazon EC2 launch template, and define configuration settings for an
+Auto Scaling group. However, instead of creating an Auto Scaling group
+directly, you create a GameLift FleetIQ game server group with your Amazon EC2
+and Auto Scaling resources and configuration. All game server groups must have
+at least two instance types defined for it.
 
-Once a game server group and Auto Scaling group are up and running with instances deployed, when updating a Game Server Group instance, only certain properties in the Auto Scaling group may be overwrite. For all other Auto Scaling group properties, such as MinSize, MaxSize, and LaunchTemplate, you can modify these directly on the Auto Scaling group using the AWS Console or dedicated Api.
+Once a game server group and Auto Scaling group are up and running with
+instances deployed, when updating a Game Server Group instance, only certain
+properties in the Auto Scaling group may be overwrite. For all other Auto
+Scaling group properties, such as MinSize, MaxSize, and LaunchTemplate, you can
+modify these directly on the Auto Scaling group using the AWS Console or
+dedicated Api.
 
 ```ts
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
@@ -628,7 +741,9 @@ in the *Amazon GameLift FleetIQ Developer Guide*.
 
 ##### Scaling Policy
 
-The scaling policy uses the metric `PercentUtilizedGameServers` to maintain a buffer of idle game servers that can immediately accommodate new games and players.
+The scaling policy uses the metric `PercentUtilizedGameServers` to maintain a
+buffer of idle game servers that can immediately accommodate new games and
+players.
 
 ```ts fixture=with-launch-template
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
@@ -687,9 +802,13 @@ in the *Amazon GameLift FleetIQ Developer Guide*.
 
 ##### Specifying VPC Subnets
 
-GameLift FleetIQ use by default, all supported GameLift FleetIQ Availability Zones in your chosen region. You can override this parameter to specify VPCs subnets that you've set up. 
+GameLift FleetIQ use by default, all supported GameLift FleetIQ Availability
+Zones in your chosen region. You can override this parameter to specify VPCs
+subnets that you've set up.
 
-This property cannot be updated after the game server group is created, and the corresponding Auto Scaling group will always use the property value that is set with this request, even if the Auto Scaling group is updated directly.
+This property cannot be updated after the game server group is created, and the
+corresponding Auto Scaling group will always use the property value that is set
+with this request, even if the Auto Scaling group is updated directly.
 
 ```ts fixture=with-rule-set
 import * as ec2 from '@aws-cdk-lib/aws-ec2';
@@ -712,13 +831,23 @@ const fleet = new gamelift.GameServerGroup(this, 'FleetIQ fleet', {
 
 ##### Monitoring
 
-GameLift FleetIQ sends metrics to CloudWatch so that you can collect and analyze the activity of your Game server fleet, including the number of utilized game servers, and the number of game server interruption due to limited Spot availability.
+GameLift FleetIQ sends metrics to CloudWatch so that you can collect and
+analyze the activity of your Game server fleet, including the number of
+utilized game servers, and the number of game server interruption due to
+limited Spot availability.
 
-You can then use CloudWatch alarms to alert you, for example, when the portion of game servers that are currently supporting game executions exceed a certain thresold which could means that your autoscaling policy need to be adjust to add more instances to match with player demand.
+You can then use CloudWatch alarms to alert you, for example, when the portion
+of game servers that are currently supporting game executions exceed a certain
+thresold which could means that your autoscaling policy need to be adjust to
+add more instances to match with player demand.
 
 CDK provides methods for accessing GameLift metrics with default configuration,
-such as `metricGameServerInterruptions`, or `metricAvailableGameServers` (see [`IFleetIQ`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
-for a full list). CDK also provides a generic `metric` method that can be used to produce metric configurations for any metric provided by GameLift FleetIQ; the configurations are pre-populated with the correct dimensions for the matchmaking configuration.
+such as `metricGameServerInterruptions`, or `metricAvailableGameServers` (see
+[`IFleetIQ`](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-gamelift.IMatchmakingConfiguration.html)
+for a full list). CDK also provides a generic `metric` method that can be used
+to produce metric configurations for any metric provided by GameLift FleetIQ;
+the configurations are pre-populated with the correct dimensions for the
+matchmaking configuration.
 
 ```ts fixture=with-matchmaking-configuration
 import * as cloudwatch from '@aws-cdk-lib/aws-cloudwatch';
@@ -747,32 +876,56 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching a new module (`@aws-cdk-lib/aws-gamelift`) that contains multiple L2
-construct to help consumers to manager their Fleet or Matchmaking rules. This launch fully and fluently supports Amazon Gamelift (a fully-managed service for hosting game servers) within the CDK.
+We are launching a new module (`@aws-cdk-lib/aws-gamelift`) that contains
+multiple L2
+construct to help consumers to manager their Fleet or Matchmaking rules. This
+launch fully and fluently supports Amazon Gamelift (a fully-managed service for
+hosting game servers) within the CDK.
 
 ### Why should I use this feature?
 
-Specify and spin up a gamer server hosting solution that deploys, operates and scales cloud servers for multiplayer games. Possibles use-cases include defining and deploying a 2vs2 multiplayer solution based on player Skills. Using
-GameLift with CDK smooths many configuration edges and provides seamless integrations with your existing infrastructure as code.
+Specify and spin up a gamer server hosting solution that deploys, operates and
+scales cloud servers for multiplayer games. Possibles use-cases include
+defining and deploying a 2vs2 multiplayer solution based on player Skills. Using
+GameLift with CDK smooths many configuration edges and provides seamless
+integrations with your existing infrastructure as code.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
-Create, operate, scale and deploy cloud servers for multiplayer games requires a fairly verbose configuration to set up depending on the desired
-matchmaking ruleset and Fleet configuration needed. For example, a fleet system binded to a matchmaking configuration synthesizes to about 400 lines of JSON/YAML from about 15 lines of Typescript code.The Fleet requires only few variables to be configured and a single method call to create and attach a matchmaking configuration. While we retain flexibility, we simplify the understanding of different components binding by replacing this comlplexity by a high level method / pattern approch.
+Create, operate, scale and deploy cloud servers for multiplayer games requires
+a fairly verbose configuration to set up depending on the desired
+matchmaking ruleset and Fleet configuration needed. For example, a fleet system
+binded to a matchmaking configuration synthesizes to about 400 lines
+of JSON/YAML from about 15 lines of Typescript code.The Fleet requires only few
+variables to be configured and a single method call to create and attach a
+matchmaking configuration. While we retain flexibility, we simplify the
+understanding of different components binding by replacing this comlplexity by
+a high level method / pattern approch.
 
-Using Amazon GameLift without the CDK requires network configuration, instance sizing, complex
-permission statements and notification system, and manual intervention. We have added 10+ compile-time validations
-and auto-generated permissions to ensure matchmaking configuraton, queues and Fleet are correctly integrated, avoiding
-days of debugging errors. We have leveraged custom resources in order to perform a one-click deployment that creates an immediately functional application with no manual
+Using Amazon GameLift without the CDK requires network configuration,
+instance sizing, complex
+permission statements and notification system, and manual intervention. We have
+added 10+ compile-time validations
+and auto-generated permissions to ensure matchmaking configuraton, queues and
+Fleet are correctly integrated, avoiding
+days of debugging errors. We have leveraged custom resources in order to
+perform a one-click deployment that creates an immediately functional
+application with no manual
 effort.
 
-### Why should we _not_ do this?
+### Why should we *not* do this?
 
-We are not confident that the service API is fully set in stone and implementing an L2 on top of the current L1 may be setting us up for changes in the future. We are reaching out to the service team to get their input and plans for the service to be sure we already plan new design impoact on our L2 construct design. Second topic will to update all technical contents already released to fit our new L2 implementation design.
+We are not confident that the service API is fully set in stone and
+implementing an L2 on top of the current L1 may be setting us up for changes in
+the future. We are reaching out to the service team to get their input and
+plans for the service to be sure we already plan new design impoact on our L2
+construct design. Second topic will to update all technical contents already
+released to fit our new L2 implementation design.
 
-It’s a large effort to invest in a module when we have other pressing projects. However, the design of the effort has been spent already since we have fairly
+It’s a large effort to invest in a module when we have other pressing projects.
+However, the design of the effort has been spent already since we have fairly
 robust prototypes already implemented.
 
 ### What is the technical solution (design) of this feature?
@@ -791,7 +944,8 @@ robust prototypes already implemented.
   }
 ```
 
-* `Fleet` -- Fleet class with some helper props/methods to help build GameLift Fleet and other common configuration
+* `Fleet` -- Fleet class with some helper props/methods to help build GameLift
+Fleet and other common configuration
 
 ```ts
 enum FleetType {
@@ -826,6 +980,7 @@ abstract class FleetBase implements IFleet {
   CfnFleet.IpPermissionProperty | undefined;
 }
 ```
+
 * `IGameServerGroup` -- interface to define and deploy Amazon GameLift FleetIQ solution.
 
 ```ts
@@ -840,7 +995,9 @@ abstract class FleetBase implements IFleet {
   }
 ```
 
-* `GameServerGroup` -- abstract base Ec2 Fleet class with some some helper props/methods to help build GameLift Game Server Group and other common configuration
+* `GameServerGroup` -- abstract base Ec2 Fleet class with some some helper
+props/methods to help build GameLift Game Server Group and other common
+configuration
 
 ```ts
 enum BalancingStrategy {
@@ -869,7 +1026,8 @@ abstract class GameServerGroup implements IGameServerGroup {
 }
 ```
 
-* `IQueue` -- interface to define Game session queues for managing game session request and inject configuration into a matchmaking configuration.
+* `IQueue` -- interface to define Game session queues for managing game session
+request and inject configuration into a matchmaking configuration.
 
 ```ts
   // cdk.IResource: Since IQueue will extend Resource
@@ -980,7 +1138,7 @@ interface RuleProperty {
   readonly name?: string;
   readonly description?: string;
   readonly measurements?: string;
-  readonly referenceValue: number; 
+  readonly referenceValue: number;
   readonly maxDistance: number;
   readonly minDistance: number;
   readonly partyAggregation: PartyAggregation;
@@ -1006,13 +1164,15 @@ No.
 
 ### What alternative solutions did you consider?
 
-* Merging `GameServerGroup` and `Fleet` to one single system to simplify design as in a high level point of viesw we are creating a game server Fleet.
+* Merging `GameServerGroup` and `Fleet` to one single system to simplify
+design as in a high level point of viesw we are creating a game server Fleet.
 
 * Exporting high level Matchmaking ruleSet constructs like `withTwoTeamBasedOnSkillRules` to an external and dedicated package `aws-gamelift-ruleset-patterns`.
 
 ### What are the drawbacks of this solution?
 
-No problems or risks of implementing this feature as a whole, though the design outlined
+No problems or risks of implementing this feature as a whole, though the
+design outlined
 above may have drawbacks, as detailed below in "alternative solutions".
 
 ### What is the high-level project plan?
