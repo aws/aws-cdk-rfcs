@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @stevehouel
 * **Tracking Issue**: #436
-* **API Bar Raiser**:
+* **API Bar Raiser**: @otaviomacedo
 
 The `aws-gamelift` construct library allows you to create Amazon Gamelift Matchmaking configuration and deploy game
 server Fleets with just a few lines of code. As with most construct libraries, you can also easily define
@@ -957,7 +957,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @otaviomacedo
 ```
 
 ## Public FAQ
