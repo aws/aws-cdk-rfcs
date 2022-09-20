@@ -58,12 +58,11 @@ matchmaking configuration based on a RuleSet.
 
 More details about matchmaking ruleSet are covered [below](#ruleset).
 
-There is two types of Matchmaking configuration: through a queue system to let
-FlexMatch forms matches and uses the specified GameLift queue to start a game
+There is two types of Matchmaking configuration: through a
+game session queue system to let FlexMatch forms matches and
+uses the specified GameLift queue to start a game
 session for the match, and through a standalone version to let FlexMatch forms
 matches and returns match information in an event.
-
-Either a Standalone Matchmaking configuration
 
 ```ts
 import * as gamelift from '@aws-cdk-lib/aws-gamelift';
@@ -73,25 +72,7 @@ new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
 });
 ```
 
-Either a Matchmaking configuration using a Queue
-
-```ts
-import * as gamelift from '@aws-cdk-lib/aws-gamelift';
-
-const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Queued Matchmaking', {
-  requestTimeouts: Duration.seconds(35)
-});
-
-const queue = new gamelift.Queue(this, 'GameLift Queue', {
-  placementTimeout: Duration.seconds(10)
-});
-
-matchmaking.withQueue(queue);
-```
-
-The above example implicitly defines the following resources:
-
-* A Queue or a Standalone based Matchmaking configuration
+More details about Game session queue are covered [below](#game-session-queue).
 
 ##### RuleSet
 
@@ -312,104 +293,6 @@ const build = gamelift.fromBuildAsset(path.join(__dirname, 'CustomerGameServer/'
 new gamelift.BuildFleet(this, 'Game server fleet', {
   content: build
 });
-```
-
-##### Integrating with a Matchmaking solution
-
-FlexMatch is available with the managed GameLift hosting for custom game
-servers and Realtime Servers. To add FlexMatch matchmaking to your game, you
-have to bind both components through a game session queue.
-
-```ts fix
-import * as gamelift from '@aws-cdk-lib/aws-gamelift';
-
-const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
-  content: build
-});
-
-// Bind fllet to a queue either using constructor
-const queue = new gamelift.Queue(this, 'Game Session Queue', {
-  placementTimeout: Duration.seconds(10),
-  destination: fleet
-});
-
-// Or through dedicaed methods
-const queue = new gamelift.Queue(this, 'Game Session Queue', {
-  placementTimeout: Duration.seconds(10),
-});
-queue.withDestination(fleet);
-
-// Bind a queue to a matchmaking configuration either using constructor
-const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
-  requestTimeouts: Duration.seconds(35),
-  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json')),
-  queue: queue
-});
-
-// Or through dedicated methods
-const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
-  requestTimeouts: Duration.seconds(35),
-  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
-});
-matchmaking.withQueue(queue);
-```
-
-See: [FlexMatch integration with GameLift hosting](https://docs.aws.amazon.com/gamelift/latest/flexmatchguide/match-tasks.html)
-in the *Amazon GameLift FlexMatch Developer Guide*.
-
-##### Integrating a queue system
-
-The game session queue is the primary mechanism for processing new game session
-requests and locating available game servers to host them. Although it is
-possible to request a new game session be hosted on specific fleet or location.
-
-```ts fixture=with-build
-import * as gamelift from 'aws-cdk-lib/aws-gamelift';
-
-const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
-  content: build,
-});
-
-//Bind a queue to a Fleet either directly into constructor
-const queue = new gamelift.Queue(this, 'Game session queue', {
-  destinations: [fleet]
-});
-// Or through dedicated methods
-const queue = new gamelift.Queue(this, 'Game session queue');
-queue.addDestination(fleet);
-```
-
-See [Setting up GameLift queues for game session placement](https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script-uploading.html)
-in the *Amazon GameLift Developer Guide*.
-
-###### Setting notifications
-
-If you're using queues to manage game session placement in your game, you need
-a way to monitor the status of individual placement requests and take action as
-appropriate. Implementing event notifications is a fast and efficient method
-for tracking placement activity. If your game is in production, or in
-pre-production with high-volume placement activity, you should be using event
-notifications.
-
-There are two options for setting up event notifications. You can set up an SNS
-topic and have GameLift publish event notifications on placement activity by
-referencing the topic ID in a game session queue. Alternatively, you can use
-Amazon CloudWatch Events, which has a suite of tools available for managing
-events and taking action on them.
-
-```ts fixture=with-build
-import * as gamelift from 'aws-cdk-lib/aws-gamelift';
-
-const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
-  content: build
-});
-
-const topic = new sns.Topic(this, 'Topic');
-
-const queue = new gamelift.Queue(this, 'Game session queue', {
-  notification: new SnsDestination(topic)
-});
-queue.addDestination(fleet);
 ```
 
 ##### Managing game servers launch configuration
@@ -687,6 +570,211 @@ const liveAlias = fleet.addAlias('live');
 
 See [Add an alias to a GameLift fleet](https://docs.aws.amazon.com/gamelift/latest/developerguide/aliases-creating.html)
 in the *Amazon GameLift Developer Guide*.
+
+#### Game session queue
+
+The game session queue is the primary mechanism for processing new game session
+requests and locating available game servers to host them. Although it is
+possible to request a new game session be hosted on specific fleet or location.
+
+The `GameSessionQueue` resource creates a placement queue that processes requests for
+new game sessions. A queue uses FleetIQ algorithms to determine the best placement
+locations and find an available game server, then prompts the game server to start a
+new game session. Queues can have destinations (GameLift fleets or aliases), which
+determine where the queue can place new game sessions. A queue can have destinations
+with varied fleet type (Spot and On-Demand), instance type, and AWS Region.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build,
+});
+
+//Bind a queue to a Fleet either directly into constructor
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  destinations: [fleet]
+});
+
+// Or through dedicated methods
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue');
+queue.addDestination(fleet);
+```
+
+See [Setting up GameLift queues for game session placement](https://docs.aws.amazon.com/gamelift/latest/developerguide/realtime-script-uploading.html)
+in the *Amazon GameLift Developer Guide*.
+
+##### Integrating with a Matchmaking solution
+
+FlexMatch is available with the managed GameLift hosting for custom game
+servers and Realtime Servers. To add FlexMatch matchmaking to your game, you
+have to bind both components through a game session queue.
+
+```ts fix
+import * as gamelift from '@aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build
+});
+
+// Bind fllet to a queue either using constructor
+const queue = new gamelift.GameSessionQueue(this, 'Game Session Queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet]
+});
+
+// Bind a queue to a matchmaking configuration either using constructor
+const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json')),
+  queue: queue
+});
+
+// Or through dedicated methods
+const matchmaking = new gamelift.MatchmakingConfiguration(this, 'Standalone Matchmaking', {
+  requestTimeouts: Duration.seconds(35),
+  ruleSet: MatchmakingRuleSet.fromJsonFile(path.join(__dirname, 'rules.json'))
+});
+matchmaking.withQueue(queue);
+```
+
+See: [FlexMatch integration with GameLift hosting](https://docs.aws.amazon.com/gamelift/latest/flexmatchguide/match-tasks.html)
+in the *Amazon GameLift FlexMatch Developer Guide*.
+
+##### Priority configuration
+
+Custom prioritization settings for use by a game session queue
+when placing new game sessions with available game servers. When
+defined, this configuration replaces the default FleetIQ
+prioritization process, which is as follows:
+
+If player latency data is included in a game session request,
+destinations and locations are prioritized first based on lowest
+average *latency* (1), then on *lowest hosting cost* (2), then on
+*destination list order* (3), and finally on *location
+(alphabetical)* (4). This approach ensures that the queue's top
+priority is to place game sessions where average player latency
+is lowest, and--if latency is the same--where the hosting cost
+is less, etc.
+
+If player latency data is not included, *destinations and locations* are prioritized
+first on destination list order (1), and then on *location (alphabetical)* (2). This
+approach ensures that the queue's top priority is to place game sessions on the first
+destination fleet listed. If that fleet has multiple locations, the game session is
+placed on the first location (when listed alphabetically).
+
+Changing the priority order will affect how game sessions are placed.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build
+});
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet],
+  priorityConfiguration: {
+    locationOrder: ['eu-west-1', 'us-east-1'],
+    priorityOrder: [
+      PriorityOrder.COST,
+      PriorityOrder.LATENCY,
+      PriorityOrder.LOCATION,
+      PriorityOrder.DESTINATION
+    ]
+  }
+});
+```
+
+##### Player latency policy
+
+The queue setting that determines the highest latency allowed
+for individual players when placing a game session. When a
+latency policy is in force, a game session cannot be placed with
+any fleet in a Region where a player reports latency higher than
+the cap. Latency policies are only enforced when the placement
+request contains player latency information.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build
+});
+
+// Using either declarative in constructor
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet],
+  playerLatencyPolicies: [{
+    maximumIndividualPlayerLatency: Duration.milliseconds(1000),
+    policyDuration: Duration.seconds(60)
+  }]
+});
+
+// Or dedicated methods
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet]
+});
+queue.addPlayerLatencyPolicy(Duration.milliseconds(1000), Duration.seconds(60));
+```
+
+##### Filter configuration
+
+A list of fleet locations where a game session queue can place
+new game sessions. You can use a filter to temporarily turn off
+placements for specific locations. For queues that have
+multi-location fleets, you can use a filter configuration allow
+placement with some, but not all of these locations.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build
+});
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet],
+  filterConfiguration: {
+    allowedLocations: ['eu-west-1', 'us-east-1']
+  }
+});
+```
+
+###### Setting notifications
+
+If you're using queues to manage game session placement in your game, you need
+a way to monitor the status of individual placement requests and take action as
+appropriate. Implementing event notifications is a fast and efficient method
+for tracking placement activity. If your game is in production, or in
+pre-production with high-volume placement activity, you should be using event
+notifications.
+
+There are two options for setting up event notifications. You can set up an SNS
+topic and have GameLift publish event notifications on placement activity by
+referencing the topic ID in a game session queue. Alternatively, you can use
+Amazon CloudWatch Events, which has a suite of tools available for managing
+events and taking action on them.
+
+```ts fixture=with-build
+import * as gamelift from 'aws-cdk-lib/aws-gamelift';
+
+const fleet = new gamelift.BuildFleet(this, 'Game server fleet', {
+  content: build
+});
+
+const topic = new sns.Topic(this, 'Topic');
+
+const queue = new gamelift.GameSessionQueue(this, 'Game session queue', {
+  placementTimeout: Duration.seconds(10),
+  destinations: [fleet],
+  notification: new SnsDestination(topic)
+});
+```
 
 #### GameLift FleetIQ
 
