@@ -45,7 +45,7 @@ BREAKING CHANGE: In order to allow developers to use the latest & greatest
 features of TypeScript, the `jsii` compiler and `jsii-rosetta` no longer follow
 semantic versioning. Instead, releases are made in-line with those of the
 `typescript` compiler, which does not follow semantic versioning. We recommend
-you upgrade your `devDependency` on `jsii` to use a tilde range (e.g: `~4.7.0`)
+you upgrade your `devDependency` on `jsii` to use a tilde range (e.g: `~4.9.0`)
 to be able to control when you migrate to future [TypeScript] language versions.
 New `jsii` and `jsii-rosetta` features will only be introduced in the _latest_
 release line, while older release lines only receive bug fixes until they are
@@ -85,7 +85,7 @@ When setting up a `jsii` project, we recommend pinning the dependency on the
   // ...
   "devDependencies": {
     // ...
-    "jsii": "~4.7.0",
+    "jsii": "~4.9.0",
     // ...
   },
   // ...
@@ -126,7 +126,7 @@ When using `jsii-rosetta` in a project, we recommend pinning the dependency on
   // ...
   "devDependencies": {
     // ...
-    "jsii-rosetta": "~4.7.0",
+    "jsii-rosetta": "~4.9.0",
     // ...
   },
   // ...
@@ -198,7 +198,7 @@ bugs and security issues. The `v1` release line will remain in *Maintenace* for
 
 ### What is the support policy for these new releases?
 
-Starting with release `4.7.0`, new features will only be added to the *current*
+Starting with release `4.9.0`, new features will only be added to the *current*
 release line (the *latest* `major.minor` stream), which corresponds to the
 currently active [TypeScript] release line.
 
@@ -341,7 +341,7 @@ change that customers may not expect.
 The proposed delivery plan for this feature is as follows:
 
 * Communicate about the upcoming change in new releases on the `v1` release
-  line, including a planned timeline for the initial release of the `v4.7` line,
+  line, including a planned timeline for the initial release of the `v4.9` line,
   and language about the departure from [SemVer].
 
 * **Optional:** Separate the `jsii` compiler from the rest of packages in the
@@ -368,9 +368,9 @@ The proposed delivery plan for this feature is as follows:
 
   - See proof-of-concept: [`aws/jsii#3501`][aws/jsii-3501]
 
-* Release the initial `jsii` release on the `4.7` line (for practical reasons,
+* Release the initial `jsii` release on the `4.9` line (for practical reasons,
   we will disregard [TypeScript] releases between `3.9` and the _current_
-  version when this proposal is implemented, which at time of writing is `4.7`).
+  version when this proposal is implemented, which at time of writing is `4.8`).
 
 * Formally announce that the `v1` release line of `jsii` will move into the
   *Maintenance* tier of the [AWS SDKs and Tools maintenance policy][aws-policy]
@@ -434,8 +434,8 @@ documentation for customers to understand what they are upgrading to.
 The release model used by `cdk8s-plus` involves releasing a different package
 for each version of the underlying resources (e.g: `cdk8s-plus-22` targets
 version 22 of the resources). A similar model could be used for `jsii`, where a
-package named `jsii-4.7` could be released for the compiler that builds on
-[TypeScript] `4.7.x`.
+package named `jsii-4.9` could be released for the compiler that builds on
+[TypeScript] `4.9.x`.
 
 This release pattern however creates an opportunity for supply-chain attacks as
 a malicious party could release `jsii-4.10` ahead of us and possibly exploit
@@ -443,7 +443,7 @@ unsuspecting users.
 
 The attack vector can be mitigated by scoping the packages since npm scopes
 provide ownership guarantees, which would require releasing
-`@jsii/typescript-4.7`. However this approach makes it more difficult for
+`@jsii/typescript-4.9`. However this approach makes it more difficult for
 customers to know when a new release of the compiler is available, since
 dependency maintenance automation will only look for new versions of the same
 package.
