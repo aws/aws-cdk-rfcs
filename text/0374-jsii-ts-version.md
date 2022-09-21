@@ -52,6 +52,11 @@ In order to allow developers to access and leverage the latest and greatest of
 package releases. For example, `jsii` version `4.3.x` is built on top of version
 `4.3.x` of the `typescript` compiler.
 
+Going forward, new `jsii` compiler features will only be introduced in the
+_latest_ available release line (corresponding to the latest TypeScript
+version), while older release lines will only receive bug fixes until they reach
+end-of-life.
+
 > IMPORTANT: The `typescript` package does not follow semantic versioning.
 > Minor releases of the `typescript` compiler almost always include syntax
 > breaking changes together with new language features. Since `jsii` releases in
@@ -87,6 +92,11 @@ In order to allow developers to access and leverage the latest and greatest of
 *TypeScript* language features, `jsii-rosetta` releases follow the `typescript`
 package releases. For example, `jsii-rosetta` version `4.3.x` is built on top of
 version `4.3.x` of the `typescript` compiler.
+
+Going forward, new `jsii-rosetta` features will only be introduced in the
+_latest_ available release line (corresponding to the latest TypeScript
+version), while older release lines will only receive bug fixes until they reach
+end-of-life.
 
 > IMPORTANT: The `typescript` package does not follow semantic versioning.
 > Minor releases of the `typescript` compiler almost always include syntax
