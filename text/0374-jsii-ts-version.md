@@ -2,7 +2,6 @@
 
 * **Original Author(s)**: @RomainMuller
 * **Tracking Issue**: #374
-* **API Bar Raiser**: @{BAR_RAISER_USER}
 
 This RFC proposes to change the versioning scheme of the `jsii` compiler and
 `jsii-rosetta` to stop conforming to [semantic versioning][semver], and instead
@@ -53,7 +52,7 @@ In order to allow developers to access and leverage the latest and greatest of
 package releases. For example, `jsii` version `4.3.x` is built on top of version
 `4.3.x` of the `typescript` compiler.
 
-> IMPORTANT: As `typescript` package does not follow semantic versioning.
+> IMPORTANT: The `typescript` package does not follow semantic versioning.
 > Minor releases of the `typescript` compiler almost always include syntax
 > breaking changes together with new language features. Since `jsii` releases in
 > line with `typescript` minor lines, `jsii` does not adhere to semantic
@@ -89,7 +88,7 @@ In order to allow developers to access and leverage the latest and greatest of
 package releases. For example, `jsii-rosetta` version `4.3.x` is built on top of
 version `4.3.x` of the `typescript` compiler.
 
-> IMPORTANT: As `typescript` package does not follow semantic versioning.
+> IMPORTANT: The `typescript` package does not follow semantic versioning.
 > Minor releases of the `typescript` compiler almost always include syntax
 > breaking changes together with new language features. Since `jsii-rosetta`
 > releases in line with `typescript` minor lines, `jsii-rosetta` does not adhere
@@ -116,16 +115,6 @@ When using `jsii-rosetta` in a project, we recommend pinning the dependency on
 }
 ```
 ````
-
----
-
-Ticking the box below indicates that the public API of this RFC has been
-signed-off by the API bar raiser (the `api-approved` label was applied to the
-RFC pull request):
-
-```
-[ ] Signed-off by API Bar Raiser @xxxxx
-```
 
 ## Public FAQ
 
@@ -428,8 +417,6 @@ Move to Maintenance                       | 1 day      |
 Move to end-of-life                       | 1 day      |
 
 ### Are there any open issues that need to be addressed later?
-
-
 
 [semver]: https://semver.org/spec/v2.0.0.html
 [TypeScript]: https://www.typescriptlang.org
