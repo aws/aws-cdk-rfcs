@@ -417,7 +417,7 @@ Have `jsii` down-level `.d.ts`            | 5 days     | [`aws/jsii#3501`][aws/j
 Update release automation                 | 2 days     |
 Update contributor guide                  | 1 day      |
 Update jsii documentation                 | 2 days     |
-Update [TypeScript] dependency            | 5 days     |
+Update [TypeScript] dependency            | 15 days    |
 Initial Release                           | 1 day      |
 Update `projen`'s  `JsiiProject` defaults | 1 day      |
 Migrate `aws-cdk` to new `jsii` release   | 10 days    | Via a pre-release
