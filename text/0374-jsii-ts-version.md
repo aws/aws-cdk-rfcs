@@ -17,7 +17,7 @@ libraries, so as to remain completely backwards compatible.
 
 ### Release Notes entry
 
-```md
+```markdown
 Starting with this release, the `jsii` compiler and `jsii-rosetta` will no
 longer conform to [semantic versioning][semver]. Instead, its `major.minor`
 version will match that of the [TypeScript] compiler it uses (the [TypeScript]
