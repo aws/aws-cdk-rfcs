@@ -25,7 +25,7 @@ compiler does not conform to [semantic versioning][semver]). New features will
 only be introduced on the `jsii` release line that targets the latest
 [TypeScript] compiler.
 
-Users may need to modify they code when upgrading from one `major.minor` release
+Users may need to modify their code when upgrading from one `major.minor` release
 line to another (addressing [TypeScript] language evolutions and `jsii` feature
 evolutions). While upgrading to the latest release line of `jsii` helps minimize
 the effort required for these updates, the release strategy allows developers to
