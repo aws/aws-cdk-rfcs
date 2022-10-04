@@ -80,19 +80,11 @@ In the event that a single container is sufficient for your inference use-case, 
 single-container model:
 
 ```typescript
-import * as ecr_assets from '@aws-cdk/aws-ecr-assets';
-import * as s3_assets from '@aws-cdk/aws-s3-assets';
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
 import * as path from 'path';
 
-const imageAsset = new ecr_assets.DockerImageAsset(this, 'Image', {
-  directory: path.join('path', 'to', 'Dockerfile', 'directory')
-});
-const image = sagemaker.ContainerImage.fromAsset(imageAsset);
-const modelDataAsset = new s3_assets.Asset(this, 'ModelData', {
-  path: path.join('path', 'to', 'artifact', 'file.tar.gz')
-});
-const modelData = sagemaker.ModelData.fromAsset(modelDataAsset);
+const image = sagemaker.ContainerImage.fromAsset(path.join('path', 'to', 'Dockerfile', 'directory'));
+const modelData = sagemaker.ModelData.fromAsset(path.join('path', 'to', 'artifact', 'file.tar.gz'));
 
 const model = new sagemaker.Model(this, 'PrimaryContainerModel', {
   containers: [
@@ -143,14 +135,10 @@ abstract base class.
 Reference a local directory containing a Dockerfile:
 
 ```typescript
-import * as ecr_assets from '@aws-cdk/aws-ecr-assets';
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
 import * as path from 'path';
 
-const imageAsset = new ecr_assets.DockerImageAsset(this, 'Image', {
-  directory: path.join('path', 'to', 'Dockerfile', 'directory')
-});
-const image = sagemaker.ContainerImage.fromAsset(imageAsset);
+const image = sagemaker.ContainerImage.fromAsset(path.join('path', 'to', 'Dockerfile', 'directory'));
 ```
 
 #### ECR Image
@@ -176,14 +164,10 @@ base class. The default is to have no model artifacts associated with a model.
 Reference local model data:
 
 ```typescript
-import * as s3_assets from '@aws-cdk/aws-s3-assets';
 import * as sagemaker from '@aws-cdk/aws-sagemaker';
 import * as path from 'path';
 
-const modelDataAsset = new s3_assets.Asset(this, 'ModelData', {
-  path: path.join('path', 'to', 'artifact', 'file.tar.gz')
-});
-const modelData = sagemaker.ModelData.fromAsset(modelDataAsset);
+const modelData = sagemaker.ModelData.fromAsset(path.join('path', 'to', 'artifact', 'file.tar.gz'));
 ```
 
 #### S3 Model Data
@@ -610,10 +594,10 @@ upon an ECS task definition, instead operate upon a SageMaker model.
 
     /**
      * Reference an image that's constructed directly from sources on disk
-     *
-     * @param asset A Docker image asset
+     * @param directory The directory where the Dockerfile is stored
+     * @param options The options to further configure the selected image
      */
-    public static fromAsset(asset: assets.DockerImageAsset): ContainerImage { ... }
+    public static fromAsset(directory: string, options: assets.DockerImageAssetOptions = {}): ContainerImage { ... }
 
     /**
      * Called when the image is used by a Model
@@ -654,9 +638,10 @@ artifacts, either in an S3 bucket or a local file asset.
 
     /**
      * Constructs model data that will be uploaded to S3 as part of the CDK app deployment.
-     * @param asset An S3 asset as a gzipped tar file
+     * @param path The local path to a model artifact file as a gzipped tar file
+     * @param options The options to further configure the selected asset
      */
-    public static fromAsset(asset: assets.Asset): ModelData { ... }
+    public static fromAsset(path: string, options: assets.AssetOptions = {}): ModelData { ... }
 
     /**
      * This method is invoked by the SageMaker Model construct when it needs to resolve the model
