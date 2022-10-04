@@ -1324,14 +1324,15 @@ proposed APIs are appropriately extensible in order to support these use-cases.
    Interfaces (ENIs) associated with a SageMaker model's VPC are not always cleaned up in a timely
    manner after downstream compute resources are deleted. As a result, attempts to delete a
    SageMaker endpoint along with its networking resources (e.g., subnets, security groups) from a
-   CloudFormation stack may cause the stack operation to fail as the ENIs are still in use. From a
-   CDK integration test perspective, specifying `--no-clean` will allow the generation of a snapshot
-   regardless of whether stack deletion will succeed or fail but may hinder snapshot re-generation
-   by subsequent CDK contributors. For this reason, it may be helpful to exclude VPC specification
-   from the endpoint integration test at this time.
+   CloudFormation stack [may cause the stack operation to fail as the ENIs are still in
+   use][sagemaker-eni-issue]. From a CDK integration test perspective, specifying `--no-clean` will
+   allow the generation of a snapshot regardless of whether stack deletion will succeed or fail but
+   may hinder snapshot re-generation by subsequent CDK contributors. For this reason, it may be
+   helpful to exclude VPC specification from the endpoint integration test at this time.
 
 [lambda-eni-issue]: https://github.com/aws/aws-cdk/issues/12827
 [eks-eni-issue]: https://github.com/aws/aws-cdk/issues/9970
+[sagemaker-eni-issue]: https://github.com/aws-cloudformation/cloudformation-coverage-roadmap/issues/1327
 
 #### Cross-module API Convergence
 
