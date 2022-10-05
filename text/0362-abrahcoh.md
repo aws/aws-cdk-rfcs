@@ -15,58 +15,79 @@ By creating a construct library for Contributor Insights Rules, users will be ab
 The rule will specify the rule name, the rule body, and its state.
 
 Using the CDK, a new rule can be created as part of the stack using the construct’s constructor.
-You may specify the ruleState if one desires to disable the rule or explicitly enable it.
+You may specify the rule state if one desires to disable the rule or explicitly enable it.
 Otherwise, it will be enabled by default.
 
 ```typescript
-const rule = new InsightsRule(this, 'insight-fulName', {
-    ruleName: 'insight-fulName',
-    ruleBody: //..
-    ruleState: InsightRuleStates.ENABLED,
-    };
+const rule = new InsightRule(this, 'insight-fulName', {
+    insightRuleName: 'insight-fulName',
+    insightRuleBody: //..
+    insightRuleState: InsightRuleStates.ENABLED,
+};
 ```
 
 # Rule Body
 
 Rule bodies define what data the rule will analyze and how it will analyze it. Further information on fields can be found in the
-[Contributor Insights Rule Syntax documentation](https://docs.amazonaws.cn/en_us/AmazonCloudWatch/latest/monitoring/ContributorInsights-RuleSyntax.html).
+[Contributor Insights Rule Syntax documentation](https://docs.amazonaws.cn/en_us/AmazonCloudWatch/latest/monitoring/ContributorInsights-RuleSyntax.html)
+.
 There are multiple ways to either import or create a Contributor Insights rule body.
 
 ## Rule Bodies for CloudWatch Logs
 
 For CloudWatch Logs, the user can configure their rule body via these fields:
 
-1. `logGroupNames`: These are the log fields that the user’s rule will analyze.
+1. `LogGroupNames`: These are the log fields that the user’s rule will analyze.
 2. `LogFormat`: This is the format of the log fields specifies in logGroupNames. Can either be CLF or JSON
 3. `Contribution`: Specifies the contributor within the log groups the rule will analyze.
 4. `AggregateOn`: Specifies whether to aggregate the report based on count of occurrences of the field
-    specified in `ValueOf` (specified in the Contribution) or to aggregate the report based on the sum of
-    the values of the field specified in `ValueOf`.
+   specified in `ValueOf` (specified in the Contribution) or to aggregate the report based on the sum of
+   the values of the field specified in `ValueOf`.
 
 Users can develop rule bodies for version 1 CloudWatch Logs using the `fromRuleBody` method as seen below:
+For example, to create the Rule Body below:
+
+```json
+{
+   "Schema": {
+      "Name": "CloudWatchLogRule",
+      "Version": 1
+   },
+   "LogFormat": "JSON",
+   "LogGroupNames": [
+      "my-cool-logs"
+   ],
+   "Contribution": {
+      "Keys": [
+         "$.error"
+      ]
+   },
+   "AggregateOn": "Average"
+}
+```
+
+One can do the following:
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: //some log groups,
-    LogFormat: CloudWatchLogFormats.JSON, //optional, default is CLF if 'Fields' field is defined. Otherwise is JSON
-    Contribution: //some contribution,
-    AggregateOn: Aggregates.SUM //optional, default is SUM if 'ValueOf' field is defined in the Contribution.
-                                //Otherwise is COUNT
- });
+    logGroupNames: ["my-cool-logs"],
+    contributionKeys: ["$.error"]
+});
 ```
 
-## Adding Log Groups Insight Rule Bodies
+## Adding Log Groups to Insight Rule Bodies
 
-One can add log groups to an Insight Rule Body either by entering the log group names in a string array.
+One can add log groups to an Insight Rule Body either by entering the log group names or ARNs in a string array.
 Wild card expressions are supported as well.
 
 Adding log groups by name is shown below.
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-    LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
+    logGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"], // Reference log groups by name
+    logGroupArns: ["some-arn-1", "some-arn-2"] // or reference log groups by ARN. But never both in same rule body!
     //...
- });
+});
 ```
 
 ## Additional Fields for CLF Logs
@@ -78,7 +99,7 @@ with an index starting from 1. For example, one can specify the first field as �
 For convenience and better readability, the user can configure an optional `Fields` field to provide
 an alias for CLF field locations.
 
-Furthemore, if the `Fields` is defined, the log format will be inferred to be CLF.
+Furthermore, if the `Fields` is defined, the log format will be inferred to be CLF.
 
 In the below example, the user can create an alias 'IpAddress' for the data in at index 1 of the log group.
 
@@ -89,7 +110,7 @@ const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
         1: "IpAddress"
     },
     //...
- });
+});
 ```
 
 ## Contribution
@@ -98,20 +119,18 @@ Users can specify their contribution via these fields:
 
 1. `Keys`: An array of up to 4 log fields
 2. `ValueOf`: (Optional) Specifies a log field with numerical values.
-    Only required when specifying SUM as the value for AggregateOn.
+   Only required when specifying SUM as the value for AggregateOn.
 4. `Filters`: (Optional) Narrows the log events that are included in the report to those that satisfy the filter(s).
-    If multiple are given, they will be evaluated with a logical AND operator. Can have a max of 4.
+   If multiple are given, they will be evaluated with a logical AND operator. Can have a max of 4.
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
     //...
-    Contribution: {
-        Keys: [ "$.ip"],
-        ValueOf: "$.requestBytes",
-        Filters: //some filters,
-        },
+    contributionKeys: ["$.error"],
+    contributionValueOf: "$.byteCode",
+    contributionFilters: // some filters
     //...
- })
+})
 ```
 
 # Filters
@@ -136,142 +155,60 @@ These are all followed by the values these operators will compare against.
 
 The operator and operator input field are referred to in this library as a `condition`.
 
-To add a filter to a CloudWatch logs contribution, the user will use the `CloudWatchLogsV1Filter.fromFilter()` method,
-which will take in a `CloudWatchLogV1RuleBodyFilterProps`. Users will enter in the `Match` value and the corresponding
-`condition`.
-
 Users can use the `CloudWatchLogsV1FilterCondition` class to leverage autocompletion and
 typechecking when creating the `condition` field as shown below:
 
 ```typescript
 const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-        //...
-        Contribution: {
-            Keys: //...
-            ValueOf: //...
-            Filters: [
-                CloudWatchLogsV1Filter.fromFilter({
-                    match: '$.httpMethod',
-                    condition: CloudWatchLogsV1FilterCondition.startsWith('PUT', 'POST'),
-                })
-            ],
-        //...
-    })
+   //...
+   contributionFilters: [
+       CloudWatchLogsV1Filter.fromFilter({
+           match: '$.httpMethod',
+           condition: CloudWatchLogsV1FilterCondition.startsWith('PUT', 'POST'),
+       })
+    ],
+    //...
+})
 ```
 
-Furthermore, to add multiple filters, the user can use the `CloudWatchLogsV1Filter.allOf()` method as
-shown below:
-
-> Note: using 'allOf' was chosen to be similar to how multiple alarm rules are made. As every filter
-> is combined via a logical AND operator, it was chosen to use a similar syntax for filters.
-> Doing a logical OR operation is not available yet; however, when/if it does, one would follow
-> a similar pattern as the alarm rules and use a function like 'anyOf'
-
-```typescript
-const ruleBody = CloudWatchLogV1RuleBody.fromRuleBody({
-        //...
-        Contribution: {
-            Keys: //...
-            ValueOf: //...
-            Filters: CloudWatchLogsV1Filter.allOf(
-              {
-                match: '$.httpMethod',
-                condition: CloudWatchLogsV1FilterCondition.in('PUT'),
-              },
-              {
-                match: '$.BytesRecieved',
-                condition: CloudWatchLogsV1FilterCondition.greaterThan(0),
-              },
-        ),
-        //...
-    })
-```
-
-## Sample Initialization for a Rule with a CloudWatchLog Rule Body
-
-Below is an example initialization of a CloudWatch log rule.
-
-```typescript
-import * as cdk from '@aws-cdk/core';
-import { CloudWatchLogsV1Filter,
-    InsightRule,
-    CloudWatchLogsV1RuleBody,
-    CloudWatchLogsV1FilterCondition
-    } from '../lib';
-
-new InsightRule(stack, 'myRadRule', {
-  insightRuleName: 'veryCoolRule',
-  insightRuleBody: CloudWatchLogsV1RuleBody.fromRuleBody({
-    logGroupNames: ['/aws/lambda/*'],
-    contribution: {
-      keys: ['$.requestId'],
-      valueof: '$.BytesRecieved',
-      filters: [
-        CloudWatchLogsV1Filter.fromFilter({
-          match: '$.httpMethod',
-          condition: CloudWatchLogsV1FilterCondition.startsWith('PUT'),
-        }),
-      ],
-    },
-  }),
-});
-```
-
-## Importing CloudWatchLog Rules from Files
-
-One can also load a CloudWatch log rule from a file using `CloudWatchLogV1RuleBody.fromFile()` method, which
-takes in the filepath as the input. This will also verify that the rule body in the file is valid.
-
-```typescript
-import * as cdk from '@aws-cdk/core';
-import { InsightRule } from '../lib';
-
-const rule = new InsightRule(this, "Insight-fulRule", {
-    RuleName: "Insight-fulName",
-    RuleBody: CloudWatchLogV1RuleBody.fromFile('rule.json'),
-    RuleState: RuleStates.ENABLED
- };
-```
+Furthermore, to add multiple filters in a single call, the user can use the `CloudWatchLogsV1Filter.fromFilters()` method.
 
 # Custom Rule Bodies
 
 One can also manually input a custom the rule body using `CustomRuleBody.fromRuleBody()`.
-Rule bodies inputted this way will not provided any defaults or be validated by the CDK.
+Rule bodies inputted this way will not provide any defaults or be validated by the CDK.
 
 An example of using `CustomRuleBody.fromRuleBody()` is shown below:
 
 ```typescript
-import * as cdk from '@aws-cdk/core';
-import { InsightRule } from '../lib';
-
 const rule = new InsightsRule(this, "rule", {
-    RuleName: "Insight-fulRule",
-    RuleBody: CustomRuleBody.fromRuleBody({
-            Schema: {
-                Name: "CloudWatchLogRule",
-                Version: 1
-            },
-            LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
-            LogFormat: CloudWatchLogFormats.JSON,
-            Contribution: {
-                Keys: ["$.ip"],
-                ValueOf: "$.requestBytes",
-                Filters: [
-                        {
-                            Match: "$.httpMethod",
-                            In: [
-                                "Put",
-                            ]
-                        },
-                        {
-                            Match: "$.BytesRecieved",
-                            GreaterThan: 1000
-                        }
+    insightRuleName: "Insight-fulRule",
+    insightRuleBody: CustomRuleBody.fromString(JSON.stringify({
+        Schema: {
+            Name: "CloudWatchLogRule",
+            Version: 1
+        },
+        LogGroupNames: ["Interesting-Group-1", "Very-Interesting-Group-2"],
+        LogFormat: CloudWatchLogFormats.JSON,
+        Contribution: {
+            Keys: ["$.ip"],
+            ValueOf: "$.requestBytes",
+            Filters: [
+                {
+                    Match: "$.httpMethod",
+                    In: [
+                        "Put",
                     ]
-            },
-            AggregateOn: "SUM"
-        }),
-    RuleState: InsightsRuleStates.ENABLED
+                },
+                {
+                    Match: "$.BytesRecieved",
+                    GreaterThan: 1000
+                }
+            ]
+        },
+        AggregateOn: "SUM"
+    })),
+    insightRuleState: InsightsRuleStates.ENABLED
 );
 ```
 
@@ -279,13 +216,11 @@ Furthermore, one can also get a string rule body from a file using `CustomRuleBo
 
 ```typescript
 const rule = new InsightRule(this, "Insight-fulRule", {
-    RuleName: "Insight-fulName",
-    RuleBody: CustomRuleBody.fromFile('rule.txt'),
-    RuleState: RuleStates.ENABLED
- };
+    insightRuleName: "Insight-fulName",
+    insightRuleBody: CustomRuleBody.fromFile('rule.txt'),
+    insightRuleState: InsightRuleStates.ENABLED
+};
 ```
-
-Differing from the file method in CloudWatchLogs, this rule will not be validated.
 
 # Using Insight Rule Metric Math Functions
 
@@ -294,14 +229,15 @@ specific metrics from their insight rule. The metric names and there correspondi
 
 1. `UniqueContributors` — the number of unique contributors for each data point.
 2. `MaxContributorValue` — the value of the top contributor for each data point.
-    The identity of the contributor might change for each data point in the graph.
+   The identity of the contributor might change for each data point in the graph.
 3. `SampleCount` — the number of data points matched by the rule.
 4. `Sum` — the sum of the values from all contributors during the time period represented by that data point.
 5. `Minimum` — the minimum value from a single observation during the time period represented by that data point.
 6. `Maximum` — the maximum value from a single observation during the time period represented by that data point.
 7. `Average` — the average value from all contributors during the time period represented by that data point.
 
-These are described in further detail in the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-GraphReportData.html)
+These are described in further detail in
+the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-GraphReportData.html)
 
 Users can use the metric math function through methods provided in the `InsightRule` class. These methods
 will return `MathExpression` objects one can use in graph widgets.
@@ -313,25 +249,23 @@ these functions are used to create a graph that shows all of these metrics and a
 > For some functions, like sum(), it may be better to be more descriptive, like contributorValueSum()
 
 ```typescript
-import * as cloudwatch from '../lib';
+const rule = new InsightRule(...);
 
-const rule = new cloudwatch.InsightRule(...);
-
-const graph = new cloudwatch.GraphWidget({
-  left: [
-    rule.sum(),
-    rule.maximum(),
-    rule.uniqueContributors(),
-    rule.sampleCount(),
-    rule.minimum(),
-    rule.average(),
-    rule.maxContributorValue(),
-  ],
-  title: 'cool-graph',
+const graph = new GraphWidget({
+    left: [
+        rule.sum(),
+        rule.maximum(),
+        rule.uniqueContributors(),
+        rule.sampleCount(),
+        rule.minimum(),
+        rule.average(),
+        rule.maxContributorValue(),
+    ],
+    title: 'cool-graph',
 });
 
-const dash = new cloudwatch.Dashboard(stack, 'cool-dash', {
-  dashboardName: 'my-cool-dashboard',
+const dash = new Dashboard(stack, 'cool-dash', {
+    dashboardName: 'my-cool-dashboard',
 });
 
 dash.addWidgets(graph);
@@ -341,16 +275,11 @@ In addition, these capabilities are compatible with alarms. In the below example
 when the number of unique contributors for this rule goes beyond 5:
 
 ```typescript
-import * as cloudwatch from '../lib';
-
-const app = ...
-const stack = ...
-
-const rule = new cloudwatch.InsightRule(...);
-const alarm = new cloudwatch.Alarm(stack, 'asd', {
-  metric: rule.uniqueContributors(),
-  threshold: 5,
-  evaluationPeriods: //...
+const rule = new InsightRule(...);
+const alarm = new Alarm(stack, 'asd', {
+    metric: rule.uniqueContributors(),
+    threshold: 5,
+    evaluationPeriods: //...
 });
 ```
 
@@ -371,13 +300,8 @@ These can be configured with the following properties:
 An example of using the widget with a dashboard is shown below:
 
 ```typescript
-import * as cloudwatch from '../lib';
-
-const app = ...
-const stack = ...
-
-const rule = new cloudwatch.InsightRule(...);
-const ruleWidget = new cloudwatch.InsightRuleWidget({
+const rule = new InsightRule(...);
+const ruleWidget = new InsightRuleWidget({
     rule: rule,
 )};
 
@@ -389,7 +313,8 @@ dash.addWidgets(ruleWidget);
 
 Any rule that has been created outside of a stack can be imported into the CDK app. Importing a rule allows for it
 to be used in other parts of the CDK app that reference an `IInsightRule`. However, imported rules have limited configuration.
-As a rule of thumb, none of the properties that are a part of the `AWS::CloudWatch::InsightRule` CloudFormation resource can be configured.
+As a rule of thumb, none of the properties that are a part of the `AWS::CloudWatch::InsightRule` CloudFormation resource can be
+configured.
 
 Rules can be imported either by providing the Insight Rule name, via the `InsightRule.fromInsightRuleName()` API or
 by providing the Insight Rule ARN, via `InsightRule.fromInsightRuleArn()` API.
@@ -400,14 +325,14 @@ const stack = new Stack(app, 'my-stack');
 const insightfulRule = InsightsRule.fromInsightRuleName(
     stack,
     'amazing-rule',
-    'us-east-1:lots_of_numbers'
- );
+    'my-rad-rule'
+);
 
 const veryInsightfulRule = InsightsRule.fromInsightRuleArn(
     stack,
     'most-amazing-rule',
     'arn:aws:insight-rule:us-east-1:lots_of_numbers'
- );
+);
 ```
 
 ---
