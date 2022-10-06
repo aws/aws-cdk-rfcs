@@ -2,7 +2,7 @@ SageMaker Model Hosting L2 Constructs
 
 * **Original Author(s):** @petermeansrock, @mattmcclean, @l2yao, @jetterdj, @foxpro24, @rangoju
 * **Tracking Issue**: #431
-* **API Bar Raiser**: @conroyka
+* **API Bar Raiser**: @kaizencc
 
 This feature supports the creation of Amazon SageMaker real-time inference hosted endpoints using a
 new set of L2 constructs for the `Endpoint`, `EndpointConfig`, and `Model` CloudFormation resources.
@@ -279,7 +279,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[x] Signed-off by API Bar Raiser @conroyka
+[x] Signed-off by API Bar Raiser @kaizencc
 ```
 
 ## Public FAQ
