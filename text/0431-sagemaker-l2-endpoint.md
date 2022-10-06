@@ -933,10 +933,8 @@ relative to the other configured variants.
 
     /**
      * The endpoint configuration to use for this endpoint.
-     *
-     * [disable-awslint:ref-via-interface]
      */
-    readonly endpointConfig: EndpointConfig;
+    readonly endpointConfig: IEndpointConfig;
   }
   ```
 
