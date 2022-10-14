@@ -12,51 +12,63 @@ goal of this project is to significantly reduce this size.
 
 ## Working Backwards
 
-* **CHANGELOG**:
+Aside from the change in package size, the only customer-facing changes
+resulting from this RFC will be the changes made to dynamically load dependencies
+for the `lambda-layer` submodules. Since these changes may cause a breaking
+change for customers depending on their environment, we will release in two
+steps. blurg
 
-feat(aws-cdk-lib): Reduce aws-cdk-lib package size.
+### CHANGELOG
 
-‼️ If you use any of the following Constructs in a network-restricted
-environment, you might encounter problems upgrading to this version. ‼️
+#### v2.Y.0
 
-* lambda_layer_kubectl.KubectlLayer
-* aws_eks.KubectlProvider
-* aws_eks.HelmChart
-* aws_eks.KubernetesManifest
-* aws_eks.KubernetesObjectValue
-* aws_eks.KubernetesPatch
-* lambda_layer_awscli.AwsCliLayer
-* aws_s3_deployment.BucketDeploymentß
-* aws_stepfunctions_tasks.EmrContainersStartJobRun
-* lambda_layer_node_proxy_agent.NodeProxyAgentLayer
-* aws_eks.FargateProfile
-* aws_eks.Cluster
+##### ⚠ BREAKING CHANGES TO EXPERIMENTAL FEATURES
+- **lambda-layer-awscli, lambda-layer-kubectl, lambda-layer-node-proxy-agent:**
+  synthesis might fail in certain environments, see
+  [#22470](https://github.com/aws/aws-cdk/issues/22470) for more information
 
-Please see [#1234567](https://github.com/aws/aws-cdk/issues/1234567) for more
-details, and comment on the issue if you run into problems.
+##### Features
 
-* **CLI Notices**:
+- feat(lambda-layer-awscli, lambda-layer-kubectl,
+  lambda-layer-node-proxy-agent): reduce aws-cdk-lib package size, by removing
+  layer.zip files
 
-We can deliver a notice to customers based on what specific constructs they are
-using. We will define separate notices for each different scenario.
+#### v2.X.0 (3 months earlier)
 
-Title: (aws-cdk-lib): upcoming change in packaging structure might require
-action to upgrade
+##### Features
+- feat(lambda-layer-awscli): Dynamically load asset for AwsCliLayer, with
+  bundled fallback
+- feat(lambda-layer-kubectl): Dynamically load asset for KubectLayer, with
+  bundled fallback
+- feat(lambda-layer-node-proxy-agent): Dynamically load asset for AwsCliLayer,
+  with bundled fallback
 
-Body: We’ve identified that you are using at least one of the [List of
-Constructs] Constructs. If you are running your aws-cdk commands in an
-environment that does not have access to npm, then you will need to make a
-change to make version 2.x of [npm packages] available in your environment. See
-[#1234567](https://github.com/aws/aws-cdk/issues/1234567) for details and
-instructions.
+### CLI Notices
 
-| List of Constructs                                                                                                                     | npm packages                                                                                            |
-| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| lambda_layer_kubectl.KubectlLayer                                                                                                      | @aws-cdk/lambda_layer_kubectl                                                                           |
-| aws_eks.KubectlProvider<br>aws_eks.HelmChart<br>aws_eks.KubernetesManifest<br>aws_eks.KubernetesObjectValue<br>aws_eks.KubernetesPatch | @aws-cdk/lambda-layer-kubectl and @aws-cdk/lambda-layer-awscli                                          |
-| lambda_layer_awscli.AwsCliLayer<br>aws_s3_deployment.BucketDeployment<br>aws_step_functions_tasks.EmrContainersStartJobRun             | @aws-cdk/lambda-layer-awscli                                                                            |
-| lamdba_layer_node_proxy_agent.NodeProxyAgentLayer<br>aws-eks.FargateProfile                                                            | @aws-cdk/lambda-layer-node-proxy-agent                                                                  |
-| aws_eks.Cluster                                                                                                                        | @aws-cdk/lambda-layer-kubectl, @aws-cdk/lambda-layer-awscli, and @aws-cdk/lambda-layer-node-proxy-agent |
+Starting with 2.X.0, we will deliver a notice to customers based on if their
+application is using the layer.zip that was bundled into `aws-cdk-lib` as a
+fallback. This will happen if their application is using `KubectlLayer`,
+`AwsCliLayer`, or `NodeProxyAgentLayer` and their environment is not able to
+download packages from npm. This could happen if the environment is network
+restricted, does not have npm installed, or has npm configured to use a private
+registry that does not include `@aws-cdk/asset-` packages. Customers in this
+situation will see:
+
+```
+NOTICES
+
+22470    (lambda-layer-awscli): [ACTION REQUIRED] Your CDK application is using AwsCliLayer
+
+         Overview: Your app is using the AwsCliLayer construct in an environment
+                   where npm is inaccessible. Add a dependency on @aws-cdk/asset-awscli-v1,
+                   or the equivalent in your language, to remove this notice.
+
+         Affected versions: aws-cdk-lib.lambda_layer_awscli.Notice: ^2.X.0
+
+         More information at: https://github.com/aws/aws-cdk/issues/22470
+```
+
+Repeat the same for `lambda-layer-kubectl`, and `lambda-layer-node-proxy-agent`.
 
 ---
 
@@ -226,32 +238,29 @@ out when they do or do not need to include these dependencies, and they will not
 be required to access a public endpoint besides npm during runtime of their CDK
 apps. Practically, this solution breaks down into the following steps.
 
-1. Publish v2 compatible versions of `@aws-cdk/lambda-layer-aws-cli`,
-   `@aws-cdk/lambda-layer-kubectl`, `@aws-cdk/lambda-layer-node-proxy-agent` as
-   their own npm packages, separate from `aws-cdk-lib`. This publishing process
-   will be done in [cdklabs](https://github.com/cdklabs) repositories. Each
-   package will get its own repository. See [this
-   issue](https://github.com/aws/aws-cdk/issues/21605) for a detailed discussion
-   of the options, and why we have decided to use separate repositories.
-2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to not bundle these
-   large dependencies themselves, and instead dynamically load the appropriate
-   `@aws-cdk/lambda-layer-X` package from step 1. Since `aws-cdk-lib`'s source
-   code is auto-generated from the v1 submodules, this logic should be
-   implemented once, and then autogenerated or reused in each
-   `aws-cdk-lib/lambda-layer-X` submodule wrapper. The first two steps should
-   not impact the current developer workflow of working with these `Layer`
-   constructs. Developers will work with each `@aws-cdk` module in its
-   corresponding source directory. The publishing pipeline will publish the
-   `@aws-cdk/lambda-layer-X` packages, and the `aws-cdk-lib` code generation
-   process will create the wrappers that reference them.
+1. Publish `@aws-cdk/asset-aws-cli-v1`, `@aws-cdk/asset-kubectl-v20`,
+   `@aws-cdk/lambda-layer-node-proxy-agent` as separate v2-compatible Construct
+   libraries. Each package will expose a Construct such as `AwsCliAsset` which
+   is an `s3_assets.Asset` and bundles the relevant dependency as an Asset
+   construct. This publishing process will be done in
+   [cdklabs](https://github.com/cdklabs) repositories. Each package will get its
+   own repository. See [this issue](https://github.com/aws/aws-cdk/issues/21605)
+   for a detailed discussion of the options, and why we have decided to use
+   separate repositories.
+2. Modify the `lambda-layer-X` submodules in `aws-cdk-lib` to dynamically load
+   the appropriate `@aws-cdk/asset-X` package from step 1. This implementation
+   should use `npm` commands to download and cache the package's archive in the
+   CDK home directory, and then install the package into the current process's
+   `node_modules`. This logic should be implemented once, and then reused in
+   each `lambda-layer-X` submodule.
     1. I have implemented a POC that shows the proposed dynamic loading
        mechanism will work with node languages and jsii target languages. See
        [this
        repo](https://github.com/madeline-k/dynamically-load-npm-dependencies)
        for more details.
 3. We need to keep the dependencies up-to-date to get security updates and new
-   features. Each Lambda Layer will need to be treated slightly differently.
-    1. `@aws-cdk/lambda-layer-kubectl` - This one has two dependencies to keep
+   features. Each asset package will need to be treated slightly differently.
+    1. Kubectl - This one has two dependencies to keep
        updated. All updates described below will result in a minor version bump
        to this package.
         1. [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
@@ -260,7 +269,8 @@ apps. Practically, this solution breaks down into the following steps.
                need to as well.
             2. We will release multiple packages, one for each currently
                supported minor version of kubernetes, e.g.
-               `@aws-cdk/lambda-layer-kubectl-120`.
+               `@aws-cdk/lambda-layer-kubectl-v20`. Each one will expose a
+               Construct called `KubectlLayer`.
             3. A weekly automated task will check the [Kubernetes
                API](https://dl.k8s.io/release/stable.txt) for a new patch
                version of each currently supported minor version, and
@@ -272,7 +282,7 @@ apps. Practically, this solution breaks down into the following steps.
                `@aws-cdk/lambda-layer-kubectl-XYZ` package for the new minor
                version. A human, the on-call engineer, will need to review this
                one.
-        2. [helm](https://helm.sh/) is also included in each Lambda Layer in
+        2. [helm](https://helm.sh/) is also included in each asset in
            these packages
             1. Helm has a somewhat complicated version support policy documented
                [here](https://helm.sh/docs/topics/version_skew/).
@@ -286,32 +296,35 @@ apps. Practically, this solution breaks down into the following steps.
                version of helm compatible with that version of kubectl. This
                will be verified by a human in PR review to make sure it is
                correct.
-    2. `@aws-cdk/lambda-layer-aws-cli` - We will release two separate packages
-       to make major versions 1 and 2 both available, and automatically update
-       to the latest minor or patch version.
+    2. AWS CLI - We will release two separate packages to make major versions 1
+       and 2 both available, and automatically update to the latest minor or
+       patch version.
         1. Two packages: `@aws-cdk/lambda-layer-aws-cli-v1`, and
            `@aws-cdk/lambda-layer-aws-cli-v2`.
         2. Automatically check for new minor and patch versions from PyPi -
            [awscli](https://pypi.org/project/awscli/),
            [awscliv2](https://pypi.org/project/awscliv2/). Each update will
            result in a minor version bump of the corresponding package.
-    3. `@aws-cdk/lambda-layer-node-proxy-agent` - New minor versions will
+    3. Node proxy-agent - New minor versions will
        automatically be picked up and available with a minor version bump of the
        library.
         1. This can be implemented with `npm-check-updates`, since
-           `node-proxy-agent` is an npm package.
-    4. AWS CDK v2 will automatically pick up new minor versions of the above
-       libraries.
+           `proxy-agent` is an npm package.
+    4. AWS CDK v2 will automatically pick up new minor versions of the
+       `@aws-cdk/asset-XYZ` packages with our current dependency upgrade
+       automation.
 
 After the above is implemented, this mechanism can be extended to include
 additional Lambda Layers with different dependencies. The solution should be
 implemented in such a way that new dependencies can be added with the below
 steps.
 
-1. Add a new directory in the `aws-cdk` monorepo:
+1. Create a cdklabs repo and publish a Construct library called
+   `@aws-cdk/asset-MyNewDependency`.
+2. Add a new directory in the `aws-cdk` monorepo:
    `@aws-cdk/lambda-layer-MyNewDependency`.
-2. Implement the MyNewDependencyLayer API.
-3. If the dependency is from npm, then updates will happen automatically. If it
+3. Implement the MyNewDependencyLayer API.
+4. If the dependency is from npm, then updates will happen automatically. If it
    is from some other source, then extend the automation from the above steps to
    also update the new dependency.
 
@@ -325,21 +338,21 @@ breaking change for customers who are using these Lambda Layers in
 network-restricted environments. If customers are able to use the CDK in their
 network-restricted environments, then it is reasonable to assume they were able
 to acquire the `aws-cdk` package from npm somehow. This implies customers will
-be able to acquire the `@aws-cdk/lambda-layer-X` packages from npm. There are a
+be able to acquire the `@aws-cdk/asset-X` packages from npm. There are a
 few options for these customers:
 
 1. If using TypeScript or JavaScript, add each necessary package to the
    dependencies of their CDK app.
 2. If using a target jsii language, add each necessary package as a dependency
    as they normally would for other construct libraries. Each
-   `@aws-cdk/lambda-layer-X` package will be a jsii construct library, that is
+   `@aws-cdk/asset-X` package will be a jsii construct library, that is
    also vended to the package managers for each target jsii language. For
-   example, Python users can install aws-cdk.lambda-layer-awscli-v2 from pip.
+   example, Python users can install aws-cdk.asset-awscli-v2 from pip.
 3. Include them in a private artifact registry.
 
 Unfortunately, there is no way to remove these large files and host them
 somewhere else without causing a breaking change for these customers. We will
-publish a CLI notice directly to potentially-affected customers of this change
+publish a CLI notice directly to affected customers of this change
 well in advance of releasing it. And, advertise the change in advance of release
 on the aws-cdk GitHub repository.
 
@@ -348,7 +361,7 @@ on the aws-cdk GitHub repository.
 Today, there is a mechanism for publishing AWS CDK into ADC (Amazon Dedicated
 Cloud) regions. This mechanism includes bundling the direct dependencies of the
 CDK and publishing them into the ADC regions, e.g. `constructs`. We will add the
-`@aws-cdk/lambda-layer-X` npm packages, and their corresponding non-Node
+`@aws-cdk/asset-X` npm packages, and their corresponding non-Node
 language versions to this process. When customers use the lambda-layers in ADC
 regions, the right dependencies will already be available.
 
