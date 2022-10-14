@@ -16,7 +16,7 @@ Aside from the change in package size, the only customer-facing changes
 resulting from this RFC will be the changes made to dynamically load dependencies
 for the `lambda-layer` submodules. Since these changes may cause a breaking
 change for customers depending on their environment, we will release in two
-steps. blurg
+steps.
 
 ### CHANGELOG
 
