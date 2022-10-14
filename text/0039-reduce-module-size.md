@@ -23,6 +23,7 @@ steps.
 #### v2.Y.0
 
 ##### ⚠ BREAKING CHANGES TO EXPERIMENTAL FEATURES
+
 - **lambda-layer-awscli, lambda-layer-kubectl, lambda-layer-node-proxy-agent:**
   synthesis might fail in certain environments, see
   [#22470](https://github.com/aws/aws-cdk/issues/22470) for more information
@@ -36,6 +37,7 @@ steps.
 #### v2.X.0 (3 months earlier)
 
 ##### Features
+
 - feat(lambda-layer-awscli): Dynamically load asset for AwsCliLayer, with
   bundled fallback
 - feat(lambda-layer-kubectl): Dynamically load asset for KubectLayer, with
@@ -301,14 +303,10 @@ apps. Practically, this solution breaks down into the following steps.
        patch version.
         1. Two packages: `@aws-cdk/lambda-layer-aws-cli-v1`, and
            `@aws-cdk/lambda-layer-aws-cli-v2`.
-        2. AWS CLI v1: automatically check for new minor and patch versions from PyPi -
-           [awscli](https://pypi.org/project/awscli/). Each update will
+        2. Automatically check for new minor and patch versions from PyPi -
+           [awscli](https://pypi.org/project/awscli/),
+           [awscliv2](https://pypi.org/project/awscliv2/). Each update will
            result in a minor version bump of the corresponding package.
-        3. AWS CLI v2: automatically check for new minor and patch versions from offical
-           awscliv2 [Dockerfile](https://hub.docker.com/r/amazon/aws-cli). AWS CLI v2 does
-           not expose an official PyPi package, but Dependabot can automatically check new
-           Dockerfile versions. Each update will result in a minor version bump of the
-           corresponding package.
     3. Node proxy-agent - New minor versions will
        automatically be picked up and available with a minor version bump of the
        library.
