@@ -23,6 +23,7 @@ steps.
 #### v2.Y.0
 
 ##### ⚠ BREAKING CHANGES TO EXPERIMENTAL FEATURES
+
 - **lambda-layer-awscli, lambda-layer-kubectl, lambda-layer-node-proxy-agent:**
   synthesis might fail in certain environments, see
   [#22470](https://github.com/aws/aws-cdk/issues/22470) for more information
@@ -36,6 +37,7 @@ steps.
 #### v2.X.0 (3 months earlier)
 
 ##### Features
+
 - feat(lambda-layer-awscli): Dynamically load asset for AwsCliLayer, with
   bundled fallback
 - feat(lambda-layer-kubectl): Dynamically load asset for KubectLayer, with
