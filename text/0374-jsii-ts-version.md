@@ -476,6 +476,18 @@ be difficult due to the amount of breaking changes in the [TypeScript] compiler
 API between releases). Diverging from this [policy][aws-policy] is a significant
 change that customers may not expect.
 
+Additionally, since we cannot afford to back-port new features (especially if
+significant) on older releases, this means users may need to update their code
+in order to gain access to new features introduced in the compiler. While this
+may be a desirable forcing function on developers to upgrade to the latest
+release line, it may impose challenges when such features cannot be implemented
+in a way that is compatible with previous versions of the compiler (e.g: it may
+be difficult or impossible to implement [RFC 193][RFC193] in a backwards
+compatible manner, as it likely requires the introduction of a new type kind,
+which previous release lines would not recognize).
+
+[RFC193]: https://github.com/aws/aws-cdk-rfcs/pull/194
+
 ### What is the technical solution (design) of this feature?
 
 The proposed delivery plan for this feature is as follows:
