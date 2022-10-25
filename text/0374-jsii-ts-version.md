@@ -400,7 +400,7 @@ are caught by surprise, or have broken expectations.
 #### Bring-your-own TypeScript version
 
 One of the main rationales for this change is to enable the use of new
-TypeScript releases without forcing the enitre package ecosystem to make the
+TypeScript releases without forcing the entire package ecosystem to make the
 change at the same time (due to language-breaking changes).
 
 An option to address this would be to allow customers to "bring their own"
