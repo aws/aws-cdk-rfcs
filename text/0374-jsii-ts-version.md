@@ -215,14 +215,14 @@ were perfectly synchronized with TypeScript releases:
 
 ```mermaid
 gantt
-  title Support Policy Example
+  title Support Policy Example (assuming 1 year maintenance)
   axisFormat %Y-%m
   todayMarker off
 
   section 1.x
   Current                 :crit, 2020-01-01,2020-08-20
   Active (6 months)       :2020-08-20,2021-02-20
-  Maintenance (1 year)    :2021-02-20,2023-02-20
+  Maintenance (1 year)    :2021-02-20,2022-02-20
   End-of-Life             :milestone, 0d
 
   section 4.0.x
@@ -269,6 +269,138 @@ gantt
   Current                 :crit, 2022-08-25, 12w
   %% 4.8 is the current TypeScript release at time of writing...
 ```
+
+<details>
+<summary>Alternate Scenario (6 months maintenance)</summary>
+
+Shortening the maintenance window to 6 months instead of 12 allows reducing the
+amount of previous lines that are maintained at any given time to 2 to 3, at the
+expense of increased pressure on customers to migrate to newer versions.
+
+```mermaid
+gantt
+  title Support Policy Example (assuming 6 months maintenance)
+  axisFormat %Y-%m
+  todayMarker off
+
+  section 1.x
+  Current                 :crit, 2020-01-01,2020-08-20
+  Active (6 months)       :2020-08-20,2021-02-20
+  Maintenance (6 months)  :2021-02-20,2021-08-20
+  End-of-Life             :milestone, 0d
+
+  section 4.0.x
+  Current                 :crit, 2020-08-20, 2020-11-19
+  Maintenance (6 months)  :2021-05-19
+  End-of-Life             :milestone, 0d
+
+  section 4.1.x
+  Current                 :crit, 2020-11-19, 2021-02-23
+  Maintenance (6 months)  :2021-08-23
+  End-of-Life             :milestone, 0d
+
+  section 4.2.x
+  Current                 :crit, 2021-02-23, 2021-05-26
+  Maintenance (6 months)  :2021-11-26
+  End-of-Life             :milestone, 0d
+
+  section 4.3.x
+  Current                 :crit, 2021-05-26, 2021-08-26
+  Maintenance (6 months)  :2022-02-26
+  End-of-Life             :milestone, 0d
+
+  section 4.4.x
+  Current                 :crit, 2021-08-26, 2021-11-17
+  Maintenance (6 months)  :2022-05-17
+  End-of-Life             :milestone, 0d
+
+  section 4.5.x
+  Current                 :crit, 2021-11-17, 2022-02-28
+  Maintenance (6 months)  :2022-08-28
+  End-of-Life             :milestone, 0d
+
+  section 4.6.x
+  Current                 :crit, 2022-02-28, 2022-05-24
+  Maintenance (6 months)  :2022-11-24
+  End-of-Life             :milestone, 0d
+
+  section 4.7.x
+  Current                 :crit, 2022-05-24, 2022-08-25
+  Maintenance (6 months)  :2023-02-25
+  End-of-Life             :milestone, 0d
+
+  section 4.8.x
+  Current                 :crit, 2022-08-25, 12w
+  %% 4.8 is the current TypeScript release at time of writing...
+```
+</details>
+
+<details>
+<summary>Alternate Scenario (current + previous)</summary>
+
+Adopting a maintenace policy similar to that of the Go compiler toolchain
+guarantees only one previous release line needs maintenance at any given time,
+as this is the gist of the maintenance policy:
+
+> We support the past two *TypeScript* releases. For example, 4.7 a,d 4.8 when
+> 4.8 is the latest active release.
+
+```mermaid
+gantt
+  title Support Policy Example (current + previous)
+  axisFormat %Y-%m
+  todayMarker off
+
+  section 1.x
+  Current                 :crit, 2020-01-01,2020-08-20
+  Active (6 months)       :2020-08-20,2021-02-20
+  Maintenance (1 year)    :2021-02-20,2022-02-20
+  End-of-Life             :milestone, 0d
+
+  section 4.0.x
+  Current                 :crit, 2020-08-20, 2020-11-19
+  Maintenance             :2021-02-23
+  End-of-Life             :milestone, 0d
+
+  section 4.1.x
+  Current                 :crit, 2020-11-19, 2021-02-23
+  Maintenance             :2021-05-26
+  End-of-Life             :milestone, 0d
+
+  section 4.2.x
+  Current                 :crit, 2021-02-23, 2021-05-26
+  Maintenance             :2021-08-26
+  End-of-Life             :milestone, 0d
+
+  section 4.3.x
+  Current                 :crit, 2021-05-26, 2021-08-26
+  Maintenance             :2021-11-17
+  End-of-Life             :milestone, 0d
+
+  section 4.4.x
+  Current                 :crit, 2021-08-26, 2021-11-17
+  Maintenance             :2022-02-28
+  End-of-Life             :milestone, 0d
+
+  section 4.5.x
+  Current                 :crit, 2021-11-17, 2022-02-28
+  Maintenance             :2022-05-24
+  End-of-Life             :milestone, 0d
+
+  section 4.6.x
+  Current                 :crit, 2022-02-28, 2022-05-24
+  Maintenance             :2022-08-25
+  End-of-Life             :milestone, 0d
+
+  section 4.7.x
+  Current                 :crit, 2022-05-24, 2022-08-25
+  Maintenance             :2022-08-25, 12w
+
+  section 4.8.x
+  Current                 :crit, 2022-08-25, 12w
+  %% 4.8 is the current TypeScript release at time of writing...
+```
+</details>
 
 ## Internal FAQ
 
