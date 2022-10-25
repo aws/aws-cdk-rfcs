@@ -290,7 +290,7 @@ of `jsii`. This can be achieved using the [`downlevel-dts`][downlevel-dts]
 utility. Failure to do so may make it impossible to use a library compiled with
 a given release of `jsii` in a project that is still using an older release,
 which would be akin to forcing dependents to upgrade at the same pace as their
-dependencies (which is undersiable).
+dependencies (which is undesirable).
 
 ### Why are we doing this?
 
