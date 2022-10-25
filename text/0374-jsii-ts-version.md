@@ -414,7 +414,7 @@ to re-export a `namespace` including all the type declarations it contains, as
 entities with a run-time value, and none of the interfaces it contains. The
 consequence of this is that writing an adapter for a particular [TypeScript]
 version requires wrapping all useful functions of the compiler API and
-re-delcaring the types they use, which represents hundreds if not thousands of
+re-declaring the types they use, which represents hundreds if not thousands of
 lines of code for each supported version.
 
 #### Only de-couple the `jsii` package version, but stick with [SemVer]
