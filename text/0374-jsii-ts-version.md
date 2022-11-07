@@ -56,7 +56,7 @@ versioning, we strongly recommend you upgrade your `devDependency` on `jsii` and
 `jsii-rosetta` to use a tilde range (e.g: `~4.9.0`) to be able to control when
 you migrate to future [TypeScript] language versions. New `jsii` and
 `jsii-rosetta` features will only be introduced in the _latest_ release line,
-while older release lines only receive bug fixes until they are delcared
+while older release lines only receive bug fixes until they are declared
 end-of-life.
 ```
 
