@@ -65,12 +65,13 @@ A `RedisClusterReplicationGroup` is similar to a `RedisReplicationGroup`, but
 with multiple shards. The documentation calls them "Redis (cluster mode enabled)".
 The main difference is that a `RedisClusterReplicationGroup` requires a
 `numNodeGroups` to be set to a value of 2 or higher. Only `RedisClusterReplicationGroup`s
-can have `automaticFailoverEnabled` and exposes a `configurationEndpoint`,
+must have `automaticFailoverEnabled` enabled and exposes a `configurationEndpoint`,
 but cannot have a `snapshottingClusterId` set.
 
 ### Other constructs
 
-The following resources are used but will not be exposed:
+The following resources are used as L1 constructs in the L2 constructs proposed here,
+but will not be exposed themselves:
 
 - SubnetGroup: Created based on the given vpcs subnets
 - ParameterGroup: Created based on the engineVersion and whether cluster-mode is enabled
@@ -154,15 +155,30 @@ You can use a Secret to set an AuthToken and share it with other services:
 
 ```ts
 import * as secretsmanager from '@aws-cdk/aws-secretsmanager';
+import * as ecs from '@aws-cdk/aws-ecs';
 import * as elasticache from '@aws-cdk/aws-elasticache';
 
 declare const vpc: ec2.Vpc;
 
-const authToken = new Secret(this, 'Secret');
+const authToken = new secretsmanager.Secret(this, 'Secret');
 const replicationGroup = new elasticache.RedisReplicationGroup(this, "RedisReplicationGroup", {
   engineVersion: elasticache.RedisEngineVersion.VER_6_2,
   authToken: authToken.secretValue,
   vpc,
+});
+
+const cluster = new ecs.Cluster(this, "MyCluster", {
+  vpc: vpc
+});
+
+new ecs_patterns.ApplicationLoadBalancedFargateService(this, "MyFargateService", {
+  cluster: cluster, // Required
+  taskImageOptions: {
+    image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+    secrets: {
+      REDIS_AUTH_TOKEN: ecs.Secret.fromSecretsManager(authToken),
+    }
+  },
 });
 ```
 
