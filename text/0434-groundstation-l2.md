@@ -2,7 +2,7 @@
 
 - **Original Author(s):**: @kochie
 - **Tracking Issue**: #434
-- **API Bar Raiser**: @
+- **API Bar Raiser**: @TheRealAmazonKendra
 
 The `aws-groundstation` construct library allows user to seamlessly create
 mission profiles and configurations to connect with satellites in orbit. As with
