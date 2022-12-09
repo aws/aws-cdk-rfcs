@@ -4,7 +4,7 @@
 * **Tracking Issue**: #456
 * **API Bar Raiser**: @corymhall
 
-The `aws-elasticache` construct library allows you to create Amazon ElastiCache 
+The `aws-elasticache` construct library allows you to create Amazon ElastiCache
 data stores with just a few lines of code. As with most construct libraries,
 you can also easily define permissions and metrics using a simple API.
 
@@ -56,7 +56,7 @@ The above example implicitly defines the following resources:
 - A `VPC` with private subnets.
 - A `SubnetGroup` for all private subnets of the Vpc.
 - A `SecurityGroup` in the Vpc.
-- A `ReplicationGroup` with the security group attached, one shard with a Redis 
+- A `ReplicationGroup` with the security group attached, one shard with a Redis
   engine version 6.2 of size `cache.t2.micro`.
 
 ### Defining a RedisClusterReplicationGroup
