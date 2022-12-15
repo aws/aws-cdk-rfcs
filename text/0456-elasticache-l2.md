@@ -53,7 +53,6 @@ new elasticache.RedisReplicationGroup(this, "RedisReplicationGroup", {
 
 The above example implicitly defines the following resources:
 
-- A `VPC` with private subnets.
 - A `SubnetGroup` for all private subnets of the Vpc.
 - A `SecurityGroup` in the Vpc.
 - A `ReplicationGroup` with the security group attached, one shard with a Redis
