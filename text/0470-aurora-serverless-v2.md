@@ -37,13 +37,21 @@ Read [Using Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/A
 
 ### Using Aurora Serverless v2 for existing provisioned workloads
 
-Aurora Serverless v2 allows you to add one or more Aurora Serverless v2 DB instances to the existing cluster as reader DB instances.
+Aurora Serverless v2 allows you to add one or more Aurora Serverless v2 DB instances to the existing cluster as reader DB instances. Make sure the cluster engine is compatible with Aurora Serverless v2 and add the `serverlessV2Scaling` before adding serverless instances into the cluster. Please note some AWS Regions may not support this feature. Check out the supported engines and Region availability in this [document](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.ServerlessV2.html).
 
 ```ts
-declare const vpc: ec2.Vpc;
 const cluster = new rds.DatabaseCluster(this, 'Database', {
   ...
+  instances: 2,
+  // make sure the engine is compatible with serverless v2.
+  engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_02_1 }),
+  // required before you are allowed to add serverless instances
+  serverlessV2Scaling: {
+    maxCapacity: 4,
+    minCapacity: 0.5,
+  },
 });
+// add a serverless reader
 cluster.addServerlessInstance('InstanceId', {...})
 ```
 
@@ -52,11 +60,12 @@ cluster.addServerlessInstance('InstanceId', {...})
 To create a provisioned cluster with serverless instances only, specify `instances` to 0.
 
 ```ts
-declare const vpc: ec2.Vpc;
 const cluster = new rds.DatabaseCluster(this, 'Database', {
   ...
   // do not create any provisioned instances with this cluster
   instances: 0,
+  engine,
+  serverlessV2Scaling,
 });
 cluster.addServerlessInstance('InstanceA', {...});
 cluster.addServerlessInstance('InstanceB', {...});
@@ -65,11 +74,12 @@ cluster.addServerlessInstance('InstanceB', {...});
 To create a provisioned cluster with a serverless writer and a provisioned reader:
 
 ```ts
-declare const vpc: ec2.Vpc;
 const cluster = new rds.DatabaseCluster(this, 'Database', {
   ...
   // do not create any provisioned instances with this cluster
   instances: 0,
+  engine,
+  serverlessV2Scaling,
 });
 const writer = cluster.addServerlessInstance('Writer', {...});
 const reader = cluster.addProvisionedInstance('Reader', {...});
@@ -80,11 +90,12 @@ reader.node.addDependency(writer);
 To create a provisioned cluster with a provisioned writer and a serverless reader:
 
 ```ts
-declare const vpc: ec2.Vpc;
 const cluster = new rds.DatabaseCluster(this, 'Database', {
   ...
   // do not create any provisioned instances with this cluster
   instances: 0,
+  engine,
+  serverlessV2Scaling,
 });
 const writer = cluster.addProvisionedInstance('Writer', {...});
 const reader = cluster.addServerlessInstance('Reader', {...});
