@@ -52,7 +52,7 @@ const cluster = new rds.DatabaseCluster(this, 'Database', {
   },
 });
 // add a serverless reader
-cluster.addServerlessInstance('InstanceId', {...})
+cluster.addServerlessInstance('InstanceId')
 ```
 
 ### Using Aurora Serverless v2 for new provisioned workloads
@@ -67,8 +67,8 @@ const cluster = new rds.DatabaseCluster(this, 'Database', {
   engine,
   serverlessV2Scaling,
 });
-cluster.addServerlessInstance('InstanceA', {...});
-cluster.addServerlessInstance('InstanceB', {...});
+cluster.addServerlessInstance('InstanceA');
+cluster.addServerlessInstance('InstanceB');
 ```
 
 To create a provisioned cluster with a serverless writer and a provisioned reader:
@@ -81,8 +81,8 @@ const cluster = new rds.DatabaseCluster(this, 'Database', {
   engine,
   serverlessV2Scaling,
 });
-const writer = cluster.addServerlessInstance('Writer', {...});
-const reader = cluster.addProvisionedInstance('Reader', {...});
+const writer = cluster.addServerlessInstance('Writer');
+const reader = cluster.addProvisionedInstance('Reader');
 // ensure the reader is created after the writer
 reader.node.addDependency(writer);
 ```
@@ -97,8 +97,8 @@ const cluster = new rds.DatabaseCluster(this, 'Database', {
   engine,
   serverlessV2Scaling,
 });
-const writer = cluster.addProvisionedInstance('Writer', {...});
-const reader = cluster.addServerlessInstance('Reader', {...});
+const writer = cluster.addProvisionedInstance('Writer');
+const reader = cluster.addServerlessInstance('Reader');
 // ensure the reader is created after the writer
 reader.node.addDependency(writer);
 ```
