@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @pahud
 * **Tracking Issue**: #470
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @vinayak-kukreja
 
 Allow users to create Amazon Aurora Serverless v2 instances with the `aws-rds` module.
 
@@ -35,89 +35,30 @@ feat(rds): Aurora Serverless v2 support
 Aurora Serverless v2 is an on-demand, autoscaling configuration for Amazon Aurora.
 Aurora Serverless v2 helps to automate the processes of monitoring the workload and
 adjusting the capacity for your databases. Capacity is adjusted automatically based on
-application demand. Read[Using Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html) for more details.
-
-### Using Aurora Serverless v2 for existing provisioned workloads
-
-Aurora Serverless v2 allows you to add one or more Aurora Serverless v2 DB instances to
-the existing cluster as reader DB instances. Make sure the cluster engine is compatible with
-Aurora Serverless v2 and add the `serverlessV2Scaling` before adding serverless instances into
-the cluster. Please note some AWS Regions may not support this feature. Check out the
-supportedengines and Region availability in this [document](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.ServerlessV2.html).
-
-```ts
-const cluster = new rds.DatabaseCluster(this, 'Database', {
-  ...
-  instances: 2,
-  // make sure the engine is compatible with serverless v2.
-  engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_02_1 }),
-  // required before you are allowed to add serverless instances
-  serverlessV2Scaling: {
-    maxCapacity: 4,
-    minCapacity: 0.5,
-  },
-});
-// add a serverless reader
-cluster.addServerlessInstance('InstanceId')
-```
-
-### Using Aurora Serverless v2 for new provisioned workloads
-
-To create a provisioned cluster with serverless instances only, specify `instances` to 0.
-
-```ts
-const cluster = new rds.DatabaseCluster(this, 'Database', {
-  ...
-  // do not create any provisioned instances with this cluster
-  instances: 0,
-  engine,
-  serverlessV2Scaling,
-});
-cluster.addServerlessInstance('InstanceA');
-cluster.addServerlessInstance('InstanceB');
-```
-
-To create a provisioned cluster with a serverless writer and a provisioned reader:
-
-```ts
-const cluster = new rds.DatabaseCluster(this, 'Database', {
-  ...
-  // do not create any provisioned instances with this cluster
-  instances: 0,
-  engine,
-  serverlessV2Scaling,
-});
-const writer = cluster.addServerlessInstance('Writer');
-const reader = cluster.addProvisionedInstance('Reader');
-// ensure the reader is created after the writer
-reader.node.addDependency(writer);
-```
-
-To create a provisioned cluster with a provisioned writer and a serverless reader:
-
-```ts
-const cluster = new rds.DatabaseCluster(this, 'Database', {
-  ...
-  // do not create any provisioned instances with this cluster
-  instances: 0,
-  engine,
-  serverlessV2Scaling,
-});
-const writer = cluster.addProvisionedInstance('Writer');
-const reader = cluster.addServerlessInstance('Reader');
-// ensure the reader is created after the writer
-reader.node.addDependency(writer);
-```
-
-### Converting from provisioned DB cluster
-
-If you have an existing DB cluster previously provisioned with `DatabaseCluster` construct
-with provisioned instances only. To covert your provisioned writer to a serverless writer,
-you need add one or more Aurora Serverless v2 reader DB instances to an existing provisioned
-cluster and perform a failover to one of the Aurora Serverless v2 DB instances. For the entire
-cluster to use Aurora Serverless v2 DB instances, remove any provisioned writer DB instances
-after promoting the Aurora Serverless v2 DB instance to the writer. Read the [doc](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.upgrade.html#aurora-serverless.comparison-requirements)
+application demand. Read
+[Using Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html)
 for more details.
+
+### Create a new cluster
+
+Use `DatabaseClusterV2` to create a new cluster with Aurora Serverless V2 support.
+You may specify the `writer` and `readers` instances with the cluster. The instances
+could be either serverless or privisioned.
+
+```ts
+new rds.DatabaseClusterV2(stack, 'cluster', {
+  engine,
+  vpc,
+  // writer(serverless)
+  writer: { serverless: true },
+  readers: [
+    // reader 1(provisioned)
+    { instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.LARGE) },
+    // reader 2(serverless)
+    { serverless: true },
+  ],
+});
+```
 
 > * **PRESS RELEASE**: If this is a major feature (~6 months of work), write the
 >   press release which announces this feature. The press release is a single
@@ -148,14 +89,13 @@ RFC pull request):
 ### What are we launching today?
 
 We are launching the Aurora Serverless v2 support for `aws-rds` that allows users to
-add serverless instances to existing provisioned clusters or create a new provisioned
-cluster with serverless instances(writer and readers) only.
+create a new cluster with Serverless v2 support and define serverless or provisioned
+`writer` and `readers` in the new `DatabaseClusterV2` construct.
 
 ### Why should I use this feature?
 
-1. I have a provisoned RDS cluster with a privionsed writer instance only and I'd like to add a serverless instance as the reader in this cluster.
-2. I have a provisoned RDS cluster with provisioned write and reader and I'd like to add a second reader instance as serverless.
-3. I'd like to create a new provisioned RDS cluster with serverless writer and reader(s) only.
+1. I need to create a cluster with Aurora serverless v2 support.
+2. I need to create the writer as well as the readers with this cluster.
 
 ## Internal FAQ
 
@@ -177,68 +117,20 @@ The existing `aws-rds` module is missing the Aurora Serverless v2 support and we
 
 ### What is the technical solution (design) of this feature?
 
-According to the [document](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.requirements.html#aurora-serverless-v2.requirements.capacity-range)
-an Aurora cluster must have a [ServerlessV2ScalingConfiguration](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html#cfn-rds-dbcluster-serverlessv2scalingconfiguration)
-attribute before you can add any DB instances that use the `db.serverless` DB instance class.
-For CDK users adding serverless instances into the existing cluster previously created in CDK,
-we will add a default `ServerlessV2ScalingConfiguration` with minimal required values to satisfy
-this requirement if they do not specify this in the construct props.
+We are creating a new `DatabaseClusterV2` L2 construct by extending the `DatabaseClusterBase` class.
+Users that opt-in serverless v2 enabled clusters should use this class to create a new cluster
+as well as writer and reader instances, which could be serverless, porivioned or mixed.
 
-We will create the `addServerlessInstance()` and `addProvisionedInstance()` construct method
-for the `DatabaseCluster` that allows customers to add serverless or provisioned instances.
-
-```ts
-/**
- * Options to create a serverless v2 instance for Aurora Serverless v2.
- *
- */
-export interface ServerlessInstanceOptions {
-  /**
-   * The instance engine of the instance.
-   */
-  readonly engine: IInstanceEngine;
-}
-
-/**
- * Options to create a provisioned instance for Aurora Serverless v2.
- */
-export interface ProvisionedInstanceOptions {
-  /**
-   * The instance engine of the instance.
-   */
-  readonly engine: IInstanceEngine;
-  /**
-   * The instance type of the instance.
-   */
-  readonly instanceType: ec2.InstanceType;
-}
-
-/**
- * Add a serverless instance into the cluster.
- */
-public addServerlessInstance(id: string, options: ServerlessInstanceOptions): IDatabaseInstance {
-  return new DatabaseInstance(this, id, {
-    vpc: this.props.instanceProps.vpc,
-    serverlessV2InstanceType: ServerlessV2InstanceType.SERVERLESS,
-    clusterIdentifier: this.clusterIdentifier,
-    engine: options.engine,
-  });
-}
-/**
- * Add a provisioned instance into the cluster.
- */
-public addProvisionedInstance(id: string, options: ProvisionedInstanceOptions): IDatabaseInstance {
-  return new DatabaseInstance(this, id, {
-    vpc: this.props.instanceProps.vpc,
-    serverlessV2InstanceType: ServerlessV2InstanceType.PROVISIONED,
-    instanceType: options.instanceType,
-    clusterIdentifier: this.clusterIdentifier,
-    engine: options.engine,
-  });
-}
-```
+While this new construct addresses the requirement for new clusters with serverless v2 support,
+existing clusters previously created with `DatabaseCluster` construct will not be able to enable the
+serverless v2 support or add any serverless instances into the existing cluster with the new construct.
+To address this concern, we should update the existing `DatabaseCluster` by adding help methods such as
+`addServerlessInstance()` and `addProvisionInstance()`. The existing clusters should be updated by manually
+adding the `serverlessV2Config` property which is mandatory for the serverless v2 cluster.
 
 ### Is this a breaking change?
+
+No. As `DatabaseClusterV2` is a new construct, there's no breaking change for that.
 
 > If the answer is no. Otherwise:
 >
@@ -249,46 +141,23 @@ public addProvisionedInstance(id: string, options: ProvisionedInstanceOptions): 
 
 ### What alternative solutions did you consider?
 
-Another alternative is to create a new L2 construct rather than using the existing
-`DatabaseCluster`. Having a new L2 is great when customers are creating a new cluster with
-one or multiple serverless instances, however, this does not help exising clusters created
-by `DatabaseCluster` construct to add serverless instances.
+This RFC addresses two primary senarios for CDK users either creating a new cluster with serverless v2 support or
+modifying the existing one to enable the serverless v2 support. We will split this into multiple small pull requests
+to address those two cases.
+
+Another alternative to consider is to create a new construct to sastify both cases and eventually deprecate
+the original `DatabaseCluster`.
 
 ### What are the drawbacks of this solution?
 
-If customers are creating a provisioned cluster with serverless writer/reader only, they need
-to create this cluster with `instances: 0` before they can `addServerlessInstance()` from
-this cluster. This seems a little bit strange but the benefit is that we can use the existing
-`DatabaseCluster` L2 construct rather than creating a new one.
-
-If customers has already created a cluster with provisoned instances(e.g. `instances: 2`) and
-planning to convert any of them from provisioned to serverless, it would be difficult to do that
-in CDK as the `DatabaseCluster` costruct does not allow you to do that. Customers would have to
-covert them from CLI/SDK/console instead.
-
-For cluster that requires a serverless writer and one or multiple provisoned readers, customers will have to ensure the dependency as below:
-
-```ts
-declare const vpc: ec2.Vpc;
-const cluster = new rds.DatabaseCluster(this, 'Database', {
-  ...
-  // do not create any provisioned instances with this cluster
-  instances: 0,
-});
-const writer = cluster.addServerlessInstance('WriterInstance', {...})
-const reader = cluster.addProvisionedInstance('ReaderInstance', {...})
-// ensure the reader will be created after the writer
-reader.node.addDependency(writer)
-```
+No major drawbacks of this solution as this is a new construct with no breaking changes and targeting
+serverless v2 clusters only.
 
 ### What is the high-level project plan?
 
-> Describe your plan on how to deliver this feature from prototyping to GA.
-> Especially think about how to "bake" it in the open and get constant feedback
-> from users before you stabilize the APIs.
->
-> If you have a project board with your implementation plan, this is a good
-> place to link to it.
+1. We will first create a PR for this new construct.
+2. Depends on users feedback, optionally create another PR to modify the existing `DatabaseCluster`
+construct to allow existing clusters enable the serverless v2 support.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -298,7 +167,7 @@ reader.node.addDependency(writer)
 
 ## Appendix
 
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
+1. [Using Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html) from Aurora User Guide.
+2. [AWS::RDS::DBCluster](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html) from cloudformation.
+3. [feat(aws-rds): support Aurora Serverless v2 cluster and instances #22446](https://github.com/aws/aws-cdk/pull/22446)
+previous closed PR with discussion.
