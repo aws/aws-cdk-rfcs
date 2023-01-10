@@ -1,0 +1,122 @@
+# Programmatic CLI
+
+* **Original Author(s):**: @mrgrain
+* **Tracking Issue**: #300
+* **API Bar Raiser**: @rix0rrr
+
+The `AwsCdkCli` construct allows customers to use all features of the AWS CDK CLI
+via a programmatic interface, replacing the current work-around of shelling out
+to spawn cli commands directly.
+
+It will improve the performance and simplify use cases like running the AWS CDK
+inside an AWS Lambda Function. As a jsii package, the construct will be
+available to all jsii target languages.
+
+## Working Backwards
+
+> This section should contain one or more "artifacts from the future", as if the
+> feature was already released and we are publishing its CHANGELOG, README,
+> CONTRIBUTING.md and optionally a PRESS RELEASE. This is the most important
+> section of your RFC. It's a powerful thought exercise which will challenge you
+> to truly think about this feature from a user's point of view.
+>
+> Choose *one or more* of the options below:
+>
+> * **CHANGELOG**: Write the changelog entry for this feature in conventional
+>   form (e.g. `feat(eks): cluster tags`). If this change includes a breaking
+>   change, include a `BREAKING CHANGE` clause with information on how to
+>   migrate. If migration is complicated, refer to a fictional GitHub issue and
+>   add its contents here.
+>
+> * **README**: If this is a new feature, write the README section which
+>   describes this new feature. It should describe the feature and walk users
+>   through usage examples and description of the various options and behavior.
+>
+> * **PRESS RELEASE**: If this is a major feature (~6 months of work), write the
+>   press release which announces this feature. The press release is a single
+>   page that includes 7 paragraphs: (1) summary, (2) problem, (3) solution, (4)
+>   leader quote, (5) user experience, (6) customer testimonial and (7) one
+>   sentence call to action.
+
+---
+
+Ticking the box below indicates that the public API of this RFC has been
+signed-off by the API bar raiser (the `api-approved` label was applied to the
+RFC pull request):
+
+```md
+[ ] Signed-off by API Bar Raiser @xxxxx
+```
+
+## Public FAQ
+
+### What are we launching today?
+
+> What exactly are we launching? Is this a new feature in an existing module? A
+> new module? A whole framework? A change in the CLI?
+
+### Why should I use this feature?
+
+> Describe use cases that are addressed by this feature.
+
+## Internal FAQ
+
+> The goal of this section is to help decide if this RFC should be implemented.
+> It should include answers to questions that the team is likely ask. Contrary
+> to the rest of the RFC, answers should be written "from the present" and
+> likely discuss design approach, implementation plans, alternative considered
+> and other considerations that will help decide if this RFC should be
+> implemented.
+
+### Why are we doing this?
+
+> What is the motivation for this change?
+
+### Why should we *not* do this?
+
+> Is there a way to address this use case with the current product? What are the
+> downsides of implementing this feature?
+
+### What is the technical solution (design) of this feature?
+
+> Briefly describe the high-level design approach for implementing this feature.
+>
+> As appropriate, you can add an appendix with a more detailed design document.
+>
+> This is a good place to reference a prototype or proof of concept, which is
+> highly recommended for most RFCs.
+
+### What alternative solutions did you consider?
+
+> Briefly describe alternative approaches that you considered. If there are
+> hairy details, include them in an appendix.
+
+### What are the drawbacks of this solution?
+
+> Describe any problems/risks that can be introduced if we implement this RFC.
+
+### What is the high-level project plan?
+
+> Describe your plan on how to deliver this feature from prototyping to GA.
+> Especially think about how to "bake" it in the open and get constant feedback
+> from users before you stabilize the APIs.
+>
+> If you have a project board with your implementation plan, this is a good
+> place to link to it.
+
+### Are there any open issues that need to be addressed later?
+
+> Describe any major open issues that this RFC did not take into account. Once
+> the RFC is approved, create GitHub issues for these issues and update this RFC
+> of the project board with these issue IDs.
+
+## Appendix
+
+### A. GitHub issues
+
+* [(aws-cloudformation) Deploy a CDK stack in a Lambda · Issue #15447 · aws/aws-cdk · GitHub](https://github.com/aws/aws-cdk/issues/15447)
+* [How to deploy CDK app via Lambda · Issue #2637 · aws/aws-cdk · GitHub](https://github.com/aws/aws-cdk/issues/2637)
+* [Programmatically expose the output of CDK list · Issue #8436 · aws/aws-cdk · GitHub](https://github.com/aws/aws-cdk/issues/8436)
+* [Can we run synth programmatically? · Issue #1467 · aws/aws-cdk · GitHub](https://github.com/aws/aws-cdk/issues/1467)
+* [CLI: Using the CDK programmatically](https://github.com/aws/aws-cdk/issues/15851)
+* [SST usage of AWS CDK CLI code](https://github.com/aws/aws-cdk/issues/23182#issuecomment-1375923880)
