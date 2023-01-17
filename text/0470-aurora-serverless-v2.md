@@ -146,7 +146,8 @@ as well as writer and reader instances, which could be serverless, porivioned or
 
 The only required props of `DatabaseClusterV2` are `engine: rds.IClusterEngine` and `vpc: ec2.IVpc`.
 We evaluate the `engine` and check if it's compatible with the serverless v2 and throw if necessary.
-The `vpc` prop is required in the `InstanceProps` for the old `DatabaseCluster` but we don't need the whole `InstanceProps`. We just need the `vpc: ec2.IVpc`.
+The `vpc` prop is required in the `InstanceProps` for the old `DatabaseCluster` but we don't need the
+whole `InstanceProps`. We just need the `vpc: ec2.IVpc`.
 
 We need an interface for `writer` and `readers` and they can be either provisioned or serverless and the
 default is provisioned.
