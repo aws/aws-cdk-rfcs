@@ -144,6 +144,15 @@ We are creating a new `DatabaseClusterV2` L2 construct by extending the `Databas
 Users that opt-in serverless v2 enabled clusters should use this class to create a new cluster
 as well as writer and reader instances, which could be serverless, porivioned or mixed.
 
+The only required props of `DatabaseClusterV2` are `engine: rds.IClusterEngine` and `vpc: ec2.IVpc`.
+We evaluate the `engine` and check if it's compatible with the serverless v2 and throw if necessary.
+The `vpc` prop is required in the `InstanceProps` for the old `DatabaseCluster` but we don't need the whole `InstanceProps`. We just need the `vpc: ec2.IVpc`.
+
+We need an interface for `writer` and `readers` and they can be either provisioned or serverless and the
+default is provisioned.
+
+For a `serverless` instance, the minimal required property would be `serverless: true` since the default is provisioned while for a provisioned instanced the default could be just `{}` but you can optionally specify custom `instanceType` which is not required in `serverless`.
+
 While this new construct addresses the requirement for new clusters with serverless v2 support,
 existing clusters previously created with `DatabaseCluster` construct will not be able to enable the
 serverless v2 support or add any serverless instances into the existing cluster with the new construct.
