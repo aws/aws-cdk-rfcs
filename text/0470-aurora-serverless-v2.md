@@ -24,6 +24,31 @@ Allow users to create Amazon Aurora Serverless v2 instances with the `aws-rds` m
 
 feat(rds): Aurora Serverless v2 support
 
+## Use Cases
+
+1. To create a new Aurora Serverless v2 cluster with one writer only. This writer could
+be either serverless or provisioned instance:
+  - serverless writer
+  - provisioned writer
+
+2. To create a new Aurora Serverless v2 cluster with one
+writer and one reader as serverless or provisoined. This could
+be:
+  - serverless writer + serverless reader
+  - serverless writer + provisioned reader
+  - provisioned writer + serverless reader
+  - provisioned writer + provisioned reader
+
+3. To create a new Aurora Serverless v2 cluster with one writer
+and multiple readers. This could be:
+  - serverless writer + all serverless readders
+  - serverless writer + all provisioned readers
+  - serverless writer + mixed readers
+  - provisioned writer + all serverless readers
+  - provisioned writer + all provisioned readers
+  - provisioned writer + mixed readers
+
+
 >
 > * **README**: If this is a new feature, write the README section which
 >   describes this new feature. It should describe the feature and walk users
