@@ -151,7 +151,9 @@ The `vpc` prop is required in the `InstanceProps` for the old `DatabaseCluster` 
 We need an interface for `writer` and `readers` and they can be either provisioned or serverless and the
 default is provisioned.
 
-For a `serverless` instance, the minimal required property would be `serverless: true` since the default is provisioned while for a provisioned instanced the default could be just `{}` but you can optionally specify custom `instanceType` which is not required in `serverless`.
+For a `serverless` instance, the minimal required property would be `serverless: true` since the default
+is provisioned while for a provisioned instanced the default could be just `{}` but you can optionally
+specify custom `instanceType` which is not required in `serverless`.
 
 While this new construct addresses the requirement for new clusters with serverless v2 support,
 existing clusters previously created with `DatabaseCluster` construct will not be able to enable the
