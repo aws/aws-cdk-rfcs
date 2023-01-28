@@ -274,9 +274,9 @@ information loss between now and then.
   props/methods
 
   ```ts
-  enum CacheNodeType {
-    M6G_LARGE = 'cache.m6g.large',
-    // ...
+  class CacheNodeType {
+    // Cache Node types are derived from InstanceTypes by prepending `cache.`
+    static fromInstanceType(instanceType: ec2.InstanceType): CacheNodeType {}
   }
   
   enum RedisEngineVersion {
