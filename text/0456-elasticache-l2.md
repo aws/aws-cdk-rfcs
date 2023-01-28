@@ -70,7 +70,7 @@ but cannot have a `snapshottingClusterId` set.
 ### Other constructs
 
 The following resources are used as L1 constructs in the L2 constructs proposed here,
-but will not be exposed themselves:
+but will not be exposed as L2 constructs themselves:
 
 - SubnetGroup: Created based on the given vpcs subnets
 - ParameterGroup: Created based on the engineVersion and whether cluster-mode is enabled
