@@ -286,7 +286,8 @@ No.
 
 ### Appendix A - High level design
 
-[Image: validation.png]
+![Class diagram for policy validation](https://github.com/aws/aws-cdk-rfcs/blob/otaviom/rfc-0477/images/policy-validation/validation.png?raw=true)
+
 The main abstraction of the model is that of a validation plugin. A plugin encapsulates a piece of logic that includes one or more of these activities: 
 
 * Loading policy files from a central location.
