@@ -207,12 +207,8 @@ The CFN Guard plugin would then generate that metadata in the template
         },
         "cdk_validations": {
           "rules_to_suppress": [
-            "rule"
-            :
-            "S3BucketEncryption",
-            "reason"
-            :
-            "This bucket does not require encryption because xyz"
+            "rule": "S3BucketEncryption",
+            "reason": "This bucket does not require encryption because xyz"
           ]
         }
       }
