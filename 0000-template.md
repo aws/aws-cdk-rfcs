@@ -4,8 +4,9 @@
 * **Tracking Issue**: #{TRACKING_ISSUE}
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-> Write one sentence which is a brief description of the feature from a user
-> perspective ("impact on users").
+> Write one sentence which is a brief description of the feature. It should describe:
+> * What is the user pain we are solving?
+> * How does it impact users?
 
 ## Working Backwards
 
