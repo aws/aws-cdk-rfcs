@@ -55,7 +55,6 @@ future state of the libraries and to discover projects for contribution.
 [48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)||💡 proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
-[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||💡 proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|💡 proposed
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||💡 proposed
@@ -128,6 +127,7 @@ future state of the libraries and to discover projects for contribution.
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||💡 proposed
 [473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[Eventbridge Pipe L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)||💡 proposed
 [474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/474)||💡 proposed
+[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||✅ done
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
