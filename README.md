@@ -27,6 +27,7 @@ future state of the libraries and to discover projects for contribution.
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)||✍️ review
 [419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)||✍️ review
+[477](https://github.com/aws/aws-cdk-rfcs/issues/477)|[Add policy validation to CDK](https://github.com/aws/aws-cdk-rfcs/issues/477)||✍️ review
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Support for CloudFormation Resource Imports](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|💡 proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||💡 proposed
@@ -94,7 +95,7 @@ future state of the libraries and to discover projects for contribution.
 [275](https://github.com/aws/aws-cdk-rfcs/issues/275)|[route53-patterns for cross account DNS delegation](https://github.com/aws/aws-cdk-rfcs/issues/275)||💡 proposed
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||💡 proposed
 [294](https://github.com/aws/aws-cdk-rfcs/issues/294)|[Policy Definition and Enforcement](https://github.com/aws/aws-cdk-rfcs/issues/294)||💡 proposed
-[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic Access of CDK CLI Capabilities](https://github.com/aws/aws-cdk-rfcs/issues/300)||💡 proposed
+[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)||💡 proposed
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||💡 proposed
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
 [313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
@@ -119,8 +120,13 @@ future state of the libraries and to discover projects for contribution.
 [456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/issues/456)||💡 proposed
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||💡 proposed
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||💡 proposed
-[465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||💡 proposed
+[465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)|[@Naumel](https://github.com/Naumel)|💡 proposed
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amaxon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)||💡 proposed
+[469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
+[470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||💡 proposed
+[471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||💡 proposed
+[473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[Eventbridge Pipe L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)||💡 proposed
+[474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/474)||💡 proposed
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||✅ done
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
