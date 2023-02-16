@@ -15,21 +15,9 @@ It is possible to use policy as code tools such
 as [CloudFormation Guard](https://docs.aws.amazon.com/cfn-guard/latest/ug/what-is-guard.html)
 or [OPA](https://www.openpolicyagent.org/) to evaluate the compliance of CDK applications.
 
-CDK Policy Validation should never be used as a deployment gate or as the enforcement layer. It should instead be
-thought of as developer enablement. This is not a tool that organizations should use to ensure developers actually
-configure the validations. What prevents them from simply omitting it, or making a mistake? Well, nothing really, when
-developers are writing applications, there's always going to be some setup they need to do. The goal of CDK Policy
-Validation is to minimize it, and make it as easy as possible. For example, a typical workflow could be:
-
-* Developer writes a CDK application without the correct validations config.
-* Developer deploys non-compliant stacks.
-* Deployment guardrails catch these violations, and instruct the developer to add a validations property to their
-  application.
-* Developer adds the validations property, and avoids these violations going forward.
-
 Policy as code tools are integrated with CDK through a plugin mechanism so in order to add policy enforcement for a
-specific tool you need to first specify the plugin to use. This can be done by importing the plugin and applying it to a
-scope.
+specific tool you need to first specify the plugin to use. You can do this by importing the plugin and applying it to a
+stage. For example, to add a hypothetical CloudFormation Guard validation to a stage you would do the following:
 
 ```ts
 // globally for the entire app (an app is a stage)
@@ -39,13 +27,20 @@ const app = new App({
   validationPlugins: [
     new CfnGuardValidator({
       rules: [
+        // rules can be specified inline
         Rules.fromAsset('../my-local-rules'),
-        Rules.fromDownload('https://somelocation.com', {
+        
+        // or from a remote location
+        Rules.fromDownload('https://somelocation.com/company-rules', {
           auth: {},
         }),
+        
+        // or from an S3 location
         Rules.fromS3(s3Location),
-        Rules.fromRequest('https://someendpoint.com'),
-        ],
+        
+        // or by calling an external endpoint
+        Rules.fromRequest('POST', 'https://someendpoint.com/validate'),
+      ],
       options: {
         someOption: "value",
       },
@@ -58,6 +53,22 @@ const prodStage = new Stage(app, 'ProdStage', {
   validationPlugins: [...],
 });
 ```
+
+The details of how to configure the plugin will be specific to each plugin. For example, the `CfnGuardValidator` shown
+above has a `rules` property which is an array of `Rules` objects. The `Rules` class is a helper class that can be used
+to specify where the rules are located.
+
+CDK Policy Validation should never be used as a deployment gate or as the enforcement layer. It should instead be
+thought of as developer enablement. Ultimately, the development environment is under the control of individual 
+developers and development teams. It's up to them to opt in to this feature, and to ensure that the policy 
+validation is applied. The goal of CDK Policy Validation is to minimize the amount of set up needed, and make it as easy
+as possible. For example, a typical workflow could be:
+
+* Developer writes a CDK application without the correct validations config.
+* Developer deploys non-compliant stacks.
+* Deployment guardrails catch these violations, and instruct the developer to add a validations property to their
+  application.
+* Developer adds the validations property, and avoids these violations going forward.
 
 #### Alternative
 
@@ -80,11 +91,6 @@ Validation Report (CfnGuardValidator)
 ║ Status    │ failure                ║
 ╟───────────┼────────────────────────╢
 ║ Plugin    │ CfnGuardValidator      ║
-╟───────────┼────────────────────────╢
-║ Version   │ 1.3.4                  ║
-╟───────────┼────────────────────────╢
-║ Customize │ (policy location.      ║
-║ policy    │                        ║
 ╚═══════════╧════════════════════════╝
 
 (Violations)
@@ -177,46 +183,6 @@ new App({
 });
 ```
 
-**Example of how CFN Guard rules handle suppression:**
-<https://github.com/aws-cloudformation/aws-guard-rules-registry/blob/main/rules/aws/amazon_s3/s3_bucket_server_side_encryption_enabled.guard>
-
-Rule snippet:
-
-```text
-let s3_buckets_server_side_encryption = Resources.*[ Type == 'AWS::S3::Bucket'
-  Metadata.guard.SuppressedRules not exists or
-  Metadata.guard.SuppressedRules.* != "S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED"
-]
-```
-
-The CFN Guard plugin would then generate that metadata in the template
-
-```json
-{
-  "Resources": {
-    "MyBucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        ...
-      },
-      "Metadata": {
-        "guard": {
-          "SuppressedRules": [
-            "S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED"
-          ]
-        },
-        "cdk_validations": {
-          "rules_to_suppress": [
-            "rule": "S3BucketEncryption",
-            "reason": "This bucket does not require encryption because xyz"
-          ]
-        }
-      }
-    }
-  }
-}
-```
-
 ### Creating a plugin
 
 A plugin can be created in any language supported by CDK. If you are creating a plugin that might be consumed by
@@ -240,25 +206,26 @@ These policies are constraints on the properties and shape of the resources that
 instance, a policy may specify that all S3 buckets should be encrypted using a customer managed KMS key, and that the
 KMS key, in turn, must have certain policies attached to it.
 
-There are many tools in the market that allow customers to define these policies. Taking a set of CloudFormation templates and a set of
-policies, these tools check whether any template violates any policy and report the violations to the user accordingly.
-This launch allows users to integrate one or more of these tools in the CDK synthesis flow, so that, if their
-application produces a non-compliant CloudFormation template, they get the feedback immediately.
+There are many tools in the market that allow customers to define these policies. Taking a set of CloudFormation 
+templates and a set of policies, these tools check whether any template violates any policy and report the 
+violations to the user accordingly. This launch allows users to integrate one or more of these tools in the CDK 
+synthesis flow, so that, if their application produces a non-compliant CloudFormation template, they get the 
+feedback immediately.
 
 ### Why should I use this feature?
 
-By validating the generated CloudFormation template at synthesis time, the CLI increases your productivity as an
-application developer. Instead of waiting hours for your changes to go through a pipeline and then be blocked because
-some template is non-compliant, you can get this feedback immediately, every time you synthesize the cloud assembly. If
-your application is not compliant, the CLI will report error messages, how to fix the issues (depending on the
-integrated tool) and the offending construct.
+Your productivity as a CDK application developer will increase by getting quicker feedback on whether your 
+application complies with the policies defined for your whole organization. Instead of waiting for your deployment 
+pipeline to detect that some template is non-compliant, you can get this feedback immediately, every time you 
+synthesize the CDK application. If your application is not compliant, the CLI will report error messages, how to fix 
+the issues (depending on the integrated tool) and the offending construct.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
 One of the recurring complaints about the CDK from large enterprise customers is that it generates many resources
-automatically. While this is the original intent of the CDK, it also creates a challenge from a security and compliance
+implicitly. While this is the original intent of the CDK, it also creates a challenge from a security and compliance
 standpoint; the generated resource definitions might not satisfy the rules defined by the central operations teams,
 which, at best, creates delays — as a result of development rework if the issues are caught before deployment — and, at
 worst, may expose the customer to attacks or lawsuits.
@@ -297,18 +264,37 @@ them to get a validation report.
 We eventually discarded this option for the following reasons:
 
 * All plugins would have to be written in TypeScript/JavaScript for them to be consumable by the CLI.
-* The CLI lacks contextual information that would be useful for tracing the problem back to where it was defined.
+* The framework has access to the construct tree in memory, with all the contextual information that is needed to
+  provide a better error message, such as stack traces. This is useful to point out, for example, in which line 
+  an offending construct was defined. The CLI, on the other hand, only has access to the synthesized template.
 * If an application is synthesized without using the CDK CLI, it’s not subject to policy validation.
 
 #### CloudFormation hooks integration
 
 Instead of integrating with each policy tool individually, we have considered the option of developing a single
-mechanism, that would integrate with CloudFormation hooks. The idea was to invoke the Lambda function underlying a
-CloudFormation hook and interpret its results in a similar way CloudFormation, that is, by failing synthesis if the
-function reported a validation failure.
+mechanism, that would integrate with CloudFormation hooks.
+
+As mentioned before, one of the aspects that are out of scope for this RFC is the enforcement of the policies at 
+deployment time. Having said that, most CloudFormation customers use CloudFormation hooks for this. A 
+CloudFormation hook works by invoking a Lambda function before or after a resource is created, updated or deleted. 
+The function handler implements a contract that allows the function to report back to CloudFormation whether the 
+operation should proceed, for each resource.
+
+The idea was to implement, in the CDK, a similar mechanism. It would invoke a Lambda function that satisfies the 
+hook contract and, based on the outcome, decide whether to proceed with the synthesis. In particular, if the 
+function responded by reporting a validation failure, the synthesis would fail. For the CDK to know which functions 
+should be invoked would be a matter of configuration.
+
+The main benefit of this solution is that, from the CDK standpoint, the implementation of these Lambda functions 
+don't matter. For example, customers could use any tool they want to implement the validation logic; they could 
+use a single Lambda function or multiple functions; they could deploy different rules for different sets of accounts 
+etc. All these decisions have to be made and implemented by the central teams anyway. And whatever changes are made 
+later regarding policy validation (other than changing the target functions themselves) would not require any 
+changes on the CDK application side.
 
 However, the Lambda functions invoked by CloudFormation hooks are not deployed to the customer’s account, but to an
-account owned by AWS. This makes this solution not feasible.
+account owned by AWS. As a result, those functions can only be invoked by the CloudFormation hook itself, which 
+makes this solution infeasible.
 
 ### What are the drawbacks of this solution?
 
@@ -318,6 +304,12 @@ necessary for this feature to be extensible — but it places an extra burden on
 application that uses a given plugin may not have the necessary tools installed beforehand, when they synthesize the app
 for the first time. Plugin authors must then make sure that developers can install these tools with as little friction
 as possible to deliver a good user experience.
+
+Another drawback relates to programming languages. If an organization wants validations to apply to all languages in 
+the company, they have to set up a jsii publishing pipeline (assuming the plugin they want to use is not yet 
+available in multiple languages, from their respective package managers). The alternative solution to implement this 
+feature in the CLI would not require this additional setup, as the plugin would only need to be vended and consumed 
+as a node package.
 
 ### What is the high-level project plan?
 
