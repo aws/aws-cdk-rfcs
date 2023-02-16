@@ -240,8 +240,7 @@ These policies are constraints on the properties and shape of the resources that
 instance, a policy may specify that all S3 buckets should be encrypted using a customer managed KMS key, and that the
 KMS key, in turn, must have certain policies attached to it.
 
-There are many tools in the market that allow customers to define these policies using a domain specific language (DSL)
-or a library written in a general purpose programming language. Taking a set of CloudFormation templates and a set of
+There are many tools in the market that allow customers to define these policies. Taking a set of CloudFormation templates and a set of
 policies, these tools check whether any template violates any policy and report the violations to the user accordingly.
 This launch allows users to integrate one or more of these tools in the CDK synthesis flow, so that, if their
 application produces a non-compliant CloudFormation template, they get the feedback immediately.
