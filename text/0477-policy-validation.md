@@ -29,15 +29,15 @@ const app = new App({
       rules: [
         // rules can be specified inline
         Rules.fromAsset('../my-local-rules'),
-        
+
         // or from a remote location
         Rules.fromDownload('https://somelocation.com/company-rules', {
           auth: {},
         }),
-        
+
         // or from an S3 location
         Rules.fromS3(s3Location),
-        
+
         // or by calling an external endpoint
         Rules.fromRequest('POST', 'https://someendpoint.com/validate'),
       ],
@@ -74,7 +74,7 @@ as possible. For example, a typical workflow could be:
 
 ```ts
 const app = new App();
-Validations.of(app).add(new CfnGuardValidator());
+Policy.of(app).add(new CfnGuardValidator());
 ```
 
 When you synthesize the CDK app the validator plugins will be called and the results will be printed.
@@ -124,16 +124,18 @@ Validation failed. See above reports for details
 > Prior art: [cdk-nag](https://github.com/cdklabs/cdk-nag).
 
 There may be cases where you would like to suppress a certain rule. To do so you must specify the rule to suppress and
-the reason for the suppression.
+the reason for the suppression. Each plugin is responsible for handling it's own
+suppressions and exposes a standard API.
 
 A suppression can be added for all resources under a construct scope. For
 example to add suppressions for an entire stack.
 
 ```ts
-import { Stack, Validations } from 'aws-cdk-lib';
+import { Stack } from 'aws-cdk-lib';
+import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
 const stack = new Stack(app, 'DevStack');
-Validations.of(stack).addSuppression({
+CfnGuardValidator.addSuppression(stack, {
   rule: 'S3BucketEncryption'
   reason: 'Dev environment buckets do not have to be encrypted'
 });
@@ -142,10 +144,12 @@ Validations.of(stack).addSuppression({
 They can also be added for specific resources.
 
 ```ts
+import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
+
 class MyStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     const bucket = new Bucket(this, 'MyBucket');
-    Validations.of(bucket).addSuppression({
+    CfnGuardValidator.addSuppression(bucket, {
       rule: 'S3BucketEncryption',
       reason: 'This bucket does not require encryption because xyz',
     });
@@ -153,8 +157,16 @@ class MyStack extends Stack {
 }
 ```
 
-Each plugin will determine how the suppressions are handled for the specific tool used, but the CDK will also synthesize
-the suppressions into the template metadata.
+Each plugin will determine how the suppressions are handled for the specific tool used, for example a plugin might
+add to the resource metadata.
+
+```ts
+class CfnGuardValidator implements IValidatorPlugin {
+  public static addSuppression(scope: Construct, props: SuppressionProps) {
+    // logic to add metadata, tags, etc
+  }
+}
+```
 
 ```json
 {
@@ -173,14 +185,6 @@ the suppressions into the template metadata.
     }
   }
 }
-```
-
-This behavior can be disabled by providing the `validationMetadata: false` property.
-
-```ts
-new App({
-  validationMetadata: false,
-});
 ```
 
 ### Creating a plugin
