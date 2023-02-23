@@ -20,9 +20,9 @@ specific tool you need to first specify the plugin to use. You can do this by im
 stage. For example, to add a CloudFormation Guard validation to a stage you would do the following:
 
 ```ts
-// globally for the entire app (an app is a stage)
 import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
+// globally for the entire app (an app is a stage)
 const app = new App({
   validationPlugins: [
     new CfnGuardValidator({
@@ -58,11 +58,18 @@ The details of how to configure the plugin will be specific to each plugin. For 
 above has a `rules` property which is an array of `Rules` objects. The `Rules` class is a helper class that can be used
 to specify where the rules are located.
 
-CDK Policy Validation should never be used as a deployment gate or as the enforcement layer. It should instead be
+CDK Policy Validation should never be used as a deployment gate or as an enforcement layer. It should instead be
 thought of as developer enablement. Ultimately, the development environment is under the control of individual 
 developers and development teams. It's up to them to opt in to this feature, and to ensure that the policy 
 validation is applied. The goal of CDK Policy Validation is to minimize the amount of set up needed during development, and make it as easy
 as possible. For example, a typical workflow could be:
+
+> A note on the term "deployment gate" above. It is perfectly acceptable to have
+> policy at synth run as part of you CI or CD pipeline and prevent deployments.
+> What we want to ensure is that users do not think of that "deployment gate" as
+> a way to _ensure_ that their infrastructure deployment is compliant. It should
+> instead be thought of as a way to "fail fast" and report issues before
+> deployment.
 
 * Developer writes a CDK application without the correct validations config.
 * Developer deploys non-compliant stacks.
