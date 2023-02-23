@@ -15,9 +15,9 @@ It is possible to use policy as code tools such
 as [CloudFormation Guard](https://docs.aws.amazon.com/cfn-guard/latest/ug/what-is-guard.html)
 or [OPA](https://www.openpolicyagent.org/) to evaluate the compliance of CDK applications.
 
-Policy as code tools are integrated with CDK through a plugin mechanism so in order to add policy enforcement for a
+Policy as code tools are integrated with CDK through a plugin mechanism. In order to add policy enforcement for a
 specific tool you need to first specify the plugin to use. You can do this by importing the plugin and applying it to a
-stage. For example, to add a hypothetical CloudFormation Guard validation to a stage you would do the following:
+stage. For example, to add a CloudFormation Guard validation to a stage you would do the following:
 
 ```ts
 // globally for the entire app (an app is a stage)
@@ -61,7 +61,7 @@ to specify where the rules are located.
 CDK Policy Validation should never be used as a deployment gate or as the enforcement layer. It should instead be
 thought of as developer enablement. Ultimately, the development environment is under the control of individual 
 developers and development teams. It's up to them to opt in to this feature, and to ensure that the policy 
-validation is applied. The goal of CDK Policy Validation is to minimize the amount of set up needed, and make it as easy
+validation is applied. The goal of CDK Policy Validation is to minimize the amount of set up needed during development, and make it as easy
 as possible. For example, a typical workflow could be:
 
 * Developer writes a CDK application without the correct validations config.
