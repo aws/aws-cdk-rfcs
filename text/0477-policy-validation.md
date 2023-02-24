@@ -106,12 +106,21 @@ Ensure S3 Buckets are encrypted with a KMS CMK (2 occurrences)
 
   Occurrences:
   
-    - Construct Path: cdk-app/MyStack/Bucket/Resource
+    - Construct Path: MyStack/MyCustomL3Construct/Bucket
     - Stack Template Path: ./cdk.out/MyStack.template.json
-    - Creation Stack: [
-        'new Bucket (/home/hallcor/tmp/cdk-tmp-app/node_modules/aws-cdk-lib/aws-s3/lib/bucket.js:1:12889)',
-        'new MyStack (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:9:20)',
-      ]
+    - Creation Stack:
+        └──  Bucket (MyStack/MyCustomL3Construct/Bucket)
+             │ Library: aws-cdk-lib/aws-s3.Bucket
+             │ Library Version: 2.50.0
+             │ Location: new Bucket (/home/hallcor/tmp/cdk-tmp-app/node_modules/aws-cdk-lib/aws-s3/lib/bucket.js:1:12889)
+             └──  MyCustomL3Construct (MyStack/MyCustomL3Construct)
+                  │ Library: N/A - (Local Construct)
+                  │ Library Version: N/A
+                  │ Location: new MyCustomL3Construct (/home/hallcor/tmp/cdk-tmp-app/src/custom-construct.ts:9:20)
+                  └──  MyStack (MyStack)
+                       │ Library: aws-cdk-lib.Stack
+                       │ Library Version: 2.50.0
+                       │ Location: new MyStack (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:9:20)
     - Resource Name: my-bucket
     - Locations:
       > BucketEncryption/ServerSideEncryptionConfiguration/0/ServerSideEncryptionByDefault/SSEAlgorithm
@@ -350,7 +359,7 @@ All plugins should implement the same interface, defined in the `core` library (
 here). This interface defines a common set of inputs and outputs that each plugin should conform to.
 
 Zero or more plugins may be added to the CDK application's `App` instance. At some point during synthesis (
-see [Appendix B - Implementation details](https://quip-amazon.com/lDPqAisXjVP6#temp:C:CaF0a4aad817a2a4fa9ab60206e2) for
+see [Appendix B - Implementation details](#appendix-b-implementation-details) for
 some possibilities) the framework will pass the generated CloudFormation template to all the plugins, collect the output
 and print the results. If there is any blocking violation an exception will be thrown, causing the synthesis to fail.
 
