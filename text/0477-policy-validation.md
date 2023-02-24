@@ -264,9 +264,6 @@ them to get a validation report.
 We eventually discarded this option for the following reasons:
 
 * All plugins would have to be written in TypeScript/JavaScript for them to be consumable by the CLI.
-* The framework has access to the construct tree in memory, with all the contextual information that is needed to
-  provide a better error message, such as stack traces. This is useful to point out, for example, in which line 
-  an offending construct was defined. The CLI, on the other hand, only has access to the synthesized template.
 * If an application is synthesized without using the CDK CLI, it’s not subject to policy validation.
 
 #### CloudFormation hooks integration
