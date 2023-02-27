@@ -58,24 +58,22 @@ The details of how to configure the plugin will be specific to each plugin. For 
 above has a `rules` property which is an array of `Rules` objects. The `Rules` class is a helper class that can be used
 to specify where the rules are located.
 
-CDK Policy Validation should never be used as a deployment gate or as an enforcement layer. It should instead be
-thought of as developer enablement. Ultimately, the development environment is under the control of individual 
-developers and development teams. It's up to them to opt in to this feature, and to ensure that the policy 
-validation is applied. The goal of CDK Policy Validation is to minimize the amount of set up needed during development, and make it as easy
-as possible. For example, a typical workflow could be:
+The validation performed by the CDK at synth time can be bypassed by
+developers, and can therefore not be relied on as the sole mechanism
+of validation in large organizations. Some other mechanism to validate
+the same rule set more authoritatively should be set up independently,
+like CloudFormation Hooks or AWS Config. Nevertheless, CDK's ability
+to evaluate the rule set during development is still useful as it will
+improve detection speed and developer productivity.
 
-> A note on the term "deployment gate" above. It is perfectly acceptable to have
-> policy at synth run as part of you CI or CD pipeline and prevent deployments.
-> What we want to ensure is that users do not think of that "deployment gate" as
-> a way to _ensure_ that their infrastructure deployment is compliant. It should
-> instead be thought of as a way to "fail fast" and report issues before
-> deployment.
+The goal of CDK Policy Validation is to minimize the amount of set up needed
+during development, and make it as easy as possible. For example, a typical
+workflow could be:
 
 * Developer writes a CDK application without the correct validations config.
 * Developer deploys non-compliant stacks.
 * Deployment guardrails catch these violations, and instruct the developer to add a validations property to their
   application.
-* Developer adds the validations property, and avoids these violations going forward.
 
 #### Alternative
 
@@ -140,7 +138,7 @@ Validation failed. See above reports for details
 > Prior art: [cdk-nag](https://github.com/cdklabs/cdk-nag).
 
 There may be cases where you would like to suppress a certain rule. To do so you must specify the rule to suppress and
-the reason for the suppression. Each plugin is responsible for handling it's own
+the reason for the suppression. Each plugin is responsible for handling its own
 suppressions and exposes a standard API.
 
 A suppression can be added for all resources under a construct scope. For
@@ -151,7 +149,7 @@ import { Stack } from 'aws-cdk-lib';
 import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
 const stack = new Stack(app, 'DevStack');
-CfnGuardValidator.addSuppression(stack, {
+CfnGuardValidator.suppress(stack, {
   rule: 'S3BucketEncryption'
   reason: 'Dev environment buckets do not have to be encrypted'
 });
@@ -165,7 +163,7 @@ import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 class MyStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     const bucket = new Bucket(this, 'MyBucket');
-    CfnGuardValidator.addSuppression(bucket, {
+    CfnGuardValidator.suppress(bucket, {
       rule: 'S3BucketEncryption',
       reason: 'This bucket does not require encryption because xyz',
     });
@@ -178,7 +176,7 @@ add to the resource metadata.
 
 ```ts
 class CfnGuardValidator implements IValidatorPlugin {
-  public static addSuppression(scope: Construct, props: SuppressionProps) {
+  public static suppress(scope: Construct, props: SuppressionProps) {
     // logic to add metadata, tags, etc
   }
 }
