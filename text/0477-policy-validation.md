@@ -82,6 +82,8 @@ const app = new App();
 Policy.of(app).add(new CfnGuardValidator());
 ```
 
+### Validation Report
+
 When you synthesize the CDK app the validator plugins will be called and the results will be printed.
 
 ```text
@@ -107,18 +109,18 @@ Ensure S3 Buckets are encrypted with a KMS CMK (2 occurrences)
     - Construct Path: MyStack/MyCustomL3Construct/Bucket
     - Stack Template Path: ./cdk.out/MyStack.template.json
     - Creation Stack:
-        └──  Bucket (MyStack/MyCustomL3Construct/Bucket)
-             │ Library: aws-cdk-lib/aws-s3.Bucket
+        └──  MyStack (MyStack)
+             │ Library: aws-cdk-lib.Stack
              │ Library Version: 2.50.0
-             │ Location: new Bucket (/home/hallcor/tmp/cdk-tmp-app/node_modules/aws-cdk-lib/aws-s3/lib/bucket.js:1:12889)
+             │ Location: Object.<anonymous> (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:25:20)
              └──  MyCustomL3Construct (MyStack/MyCustomL3Construct)
                   │ Library: N/A - (Local Construct)
                   │ Library Version: N/A
-                  │ Location: new MyCustomL3Construct (/home/hallcor/tmp/cdk-tmp-app/src/custom-construct.ts:9:20)
-                  └──  MyStack (MyStack)
-                       │ Library: aws-cdk-lib.Stack
+                  │ Location: new MyStack (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:15:20)
+                  └──  Bucket (MyStack/MyCustomL3Construct/Bucket)
+                       │ Library: aws-cdk-lib/aws-s3.Bucket
                        │ Library Version: 2.50.0
-                       │ Location: new MyStack (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:9:20)
+                       │ Location: new MyCustomL3Construct (/home/hallcor/tmp/cdk-tmp-app/src/main.ts:9:20)
     - Resource Name: my-bucket
     - Locations:
       > BucketEncryption/ServerSideEncryptionConfiguration/0/ServerSideEncryptionByDefault/SSEAlgorithm
@@ -137,19 +139,44 @@ Validation failed. See above reports for details
 
 > Prior art: [cdk-nag](https://github.com/cdklabs/cdk-nag).
 
-There may be cases where you would like to suppress a certain rule. To do so you must specify the rule to suppress and
-the reason for the suppression. Each plugin is responsible for handling its own
-suppressions and exposes a standard API.
+For the purposes of this RFC we will defined exemptions and suppressions
+separately.
+
+- `suppressions`: Suppress a rule locally during synth. This will not propagate
+  to any downstream systems.
+- `exemption`: Add an exemption to a rule that will be applied both locally
+  during synth _and_ in any downstream systems (i.e. CFN Hooks, Config, etc.).
+
+#### Suppressions
+
+There may be certain scenarios where a user might need to "suppress" a certain
+rule locally. For example, maybe there is a bug in the rule set that is used
+locally that is causing a false positive.
+
+The suppression will be handled by each individual plugin. Each plugin can
+expose a standard API that will allow the user to specify the rule to suppress and
+the reason for the suppression. 
 
 A suppression can be added for all resources under a construct scope. For
 example to add suppressions for an entire stack.
+
+These suppressions are only meant to work locally. Any suppressions that are
+added using this method can not be expected to propagate to downstream systems
+(CFN Hooks, AWS Config, etc).
+
+The exact implementation could vary per plugin, but an example implementation
+is shown below.
 
 ```ts
 import { Stack } from 'aws-cdk-lib';
 import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
+const cfnGuard = new CfnGuardValidator();
+const app = new App({
+  validationPlugins: [cfnGuard],
+});
 const stack = new Stack(app, 'DevStack');
-CfnGuardValidator.suppress(stack, {
+cfnGuard.suppress(stack, {
   rule: 'S3BucketEncryption'
   reason: 'Dev environment buckets do not have to be encrypted'
 });
@@ -160,27 +187,55 @@ They can also be added for specific resources.
 ```ts
 import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
-class MyStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
-    const bucket = new Bucket(this, 'MyBucket');
-    CfnGuardValidator.suppress(bucket, {
-      rule: 'S3BucketEncryption',
-      reason: 'This bucket does not require encryption because xyz',
-    });
-  }
-}
+const cfnGuard = new CfnGuardValidator();
+const app = new App({
+  validationPlugins: [cfnGuard],
+});
+const stack = new Stack(app, 'DevStack');
+const bucket = new Bucket(stack, 'MyBucket');
+cfnGuard.suppress(bucket, {
+  rule: 'S3BucketEncryption',
+  reason: 'This bucket does not require encryption because xyz',
+});
 ```
 
-Each plugin will determine how the suppressions are handled for the specific tool used, for example a plugin might
-add to the resource metadata.
+Example plugin suppression implementation, for example
+storing the information on which rules/resources are suppressed
+which can then be referenced later during validation.
 
 ```ts
 class CfnGuardValidator implements IValidatorPlugin {
-  public static suppress(scope: Construct, props: SuppressionProps) {
-    // logic to add metadata, tags, etc
+  private suppressions: { [ruleName: string]: string[] } = {};
+
+  public suppress(scope: Construct, props: SuppressionProps) {
+    this.suppressions[props.ruleName] = scope.node.findAll()
+      .filter(node => {
+        return CfnResource.isCfnResource(node);
+      })
+      .map(node => node.logicalId);
   }
 }
 ```
+
+#### Exemptions
+
+An exemption is a more official version of suppressions. Each organization will
+most likely have their own system for handling exemptions so our system needs to
+be extensible. An example scenario to illustrate and exemption:
+
+* An organization has a rule that public S3 Buckets are not allowed, _except_
+  for under certain scenarios.
+* A developer is creating an S3 Bucket that falls under one of those scenarios
+  and requests and exemption (create a ticket for example).
+* Security tooling knows how to read from the internal system that registers
+  exemptions
+
+In this scenario the developer would request an exception in the internal system
+and then will need some way of "registering" that exception in a way that policy
+as code tools will be able to know about.
+
+An example implementation might be adding metadata to the template. That
+includes information that can be verified.
 
 ```json
 {
@@ -190,16 +245,22 @@ class CfnGuardValidator implements IValidatorPlugin {
       "Properties": {...},
       "Metadata": {
         "cdk_validations": {
-          "rules_to_suppress": [
+          "rules_to_suppress": [{
             "rule": "S3BucketEncryption",
-            "reason": 'This bucket does not require encryption because xyz'
-          ]
+            "reason": "This bucket does not require encryption because xyz",
+            "ticket": "internal-ticket-1234"
+          }]
         }
       }
     }
   }
 }
 ```
+
+Since we don't currently have a good idea how most customers are handling
+exceptions, we won't include this in the initial release. At launch each plugin
+could implement it's own exemption process and we could wait to see what
+patterns emerge.
 
 ### Creating a plugin
 
