@@ -697,7 +697,8 @@ Our existing alpha module has customers today. This new API will be substantiall
 different, which will require them to understand the new API to migrate.
 
 ### What is the technical solution (design) of this feature?
-* `IComputeEnvironment` -- interface to define and deploy Batch Compute Environments
+#### Compute Environment
+* `IComputeEnvironment` and `ComputeEnvironmentBase` -- abstract base class and interface
 
 ```ts
 interface IComputeEnvironment extends cdk.IResource, iam.Grantable, cdk.ITaggable {
@@ -711,11 +712,43 @@ interface IComputeEnvironment extends cdk.IResource, iam.Grantable, cdk.ITaggabl
 
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
 }
+
+interface ComputeEnvironmentProps {
+  readonly name?: string;
+  readonly serviceRole?: iam.IRole;
+  readonly replaceComputeEnvironment?: boolean;
+  readonly enabled?: boolean;
+  readonly updateTimeout?: Duration;
+  readonly terimnateOnUpdate?: boolean;
+  readonly maxvCpus?: number; //note: becomes unmanageVCPUs on unmanaged, maxvCPUs on managed
+}
+
+abstract class ComputeEnvironmentBase implements IComputeEnvironment {
+  constructor(readonly props: ComputeEnvironmentProps = {}) {}
+}
 ```
+
+* `IUnmanagedComputeEnvironment` and `UnmanagedComputeEnvironmentBase` -- interface to define and deploy Batch Unmanaged Compute Environments
+
+```ts
+interface IUnmanagedComputeEnvironment extends IComputeEnvironment {}
+
+interface UnmanagedComputeEnvironmentProps extends ComputeEnvironmentProps {}
+
+abstract class UnmanagedComputeEnvironmentBase extends ComputeEnvironmentBase implements IUnmanagedComputeEnvironment {
+  constructor(readonly props: UnmanagedComputeEnvironmentProps = {}) {}
+}
+```
+
 * `IUnmanagedEc2ComputeEnvironment` -- interface to define and deploy Batch Unmanaged Compute Environments (can only use ec2)
 
 ```ts
-interface IUnmanagedEc2ComputeEnvironment extends IComputeEnvironment {
+interface IUnmanagedEc2ComputeEnvironment extends IUnmanagedComputeEnvironment {}
+
+interface UnmanagedEc2ComputeEnvironmentProps extends UnmanagedComputeEnvironmentProps {}
+
+abstract class UnmanagedEc2ComputeEnvironmentBase extends UnmanagedComputeEnvironmentBase implements IUnmanagedEc2ComputeEnvironment {
+  constructor(readonly props: UnmanagedEc2ComputeEnvironmentProps = {}) {}
 }
 ```
 
@@ -727,6 +760,17 @@ interface IManagedComputeEnvironment extends IComputeEnvironment {
   readonly securityGroups?: ec2.ISecurityGroup[];
   readonly subnets?: ec2.ISubnet[];
   readonly updateToLatestImageVersion?: boolean; 
+}
+
+interface ManagedComputeEnvironmentProps extends ComputeEnvironmentProps {
+  readonly maxvCpus?: number;
+  readonly securityGroups?: ec2.ISecurityGroup[];
+  readonly subnets?: ec2.ISubnet[];
+  readonly updateToLatestImageVersion?: boolean; 
+}
+
+abstract class ManagedComputeEnvironmentBase extends ComputeEnvironmentBase implements IManagedComputeEnvironment {
+  constructor(readonly props: ManagedComputeEnvironmentProps = {}) {}
 }
 ```
 
@@ -745,12 +789,35 @@ interface IManagedEc2ComputeEnvironment extends IManagedComputeEnvironment {
   readonly minvCpus?: number;
   readonly placementGroup?: ec2.IPlacementGroup;
 }
+
+interface ManagedEc2ComputeEnvironmentProps extends ComputeEnvironmentProps {
+  readonly images?: IBatchMachineImage[];
+  readonly allocationStrategy?: AllocationStrategy;
+  readonly spotBidPercentage?: number;
+  readonly spot?: boolean;
+  readonly desiredvCpus?: number;
+  readonly instanceTypes?: ec2.InstanceType[];
+  readonly instanceRole?: iam.IRole;
+  readonly launchTemplate?: ec2.ILaunchTemplate;
+  readonly minvCpus?: number;
+  readonly placementGroup?: ec2.IPlacementGroup;
+}
+
+class ManagedEc2ComputeEnvironment extends ManagedComputeEnvironmentBase implements IManagedEc2ComputeEnvironment {
+  constructor(readonly props: ManagedEc2ComputeEnvironmentProps = {}) {}
+  public addInstanceType() {} 
+}
 ```
 
 * `IFargateComputeEnvironment` -- interface to define and deploy Batch Managed Fargate Compute Environments
 
 ```ts
-interface IFargateComputeEnvironment extends IManagedComputeEnvironment {
+interface IFargateComputeEnvironment extends IManagedComputeEnvironment {}
+
+interface FargateComputeEnvironmentProps extends ComputeEnvironmentProps {}
+
+class FargateComputeEnvironment extends ManagedComputeEnvironmentBase implements IFargateComputeEnvironment {
+  constructor(readonly props: FargateComputeEnvironmentProps = {}) {}
 }
 ```
 
@@ -761,7 +828,15 @@ interface IEksComputeEnvironment extends IManagedEc2ComputeEnvironment {
   readonly eksCluster: eks.ICluster,
   readonly kubernetesNamespace: string,
 }
+
+interface EksComputeEnvironmentProps extends ManagedEc2ComputeEnvironmentProps {}
+
+class EksComputeEnvironment extends ManagedEc2ComputeEnvironment implements IEksComputeEnvironment {
+  constructor(readonly props: EksComputeEnvironmentProps = {}) {}
+}
 ```
+
+* `FargateComputeEnvironment` -- interface to define and deploy Batch Managed Fargate Compute Environments
 
 
 
