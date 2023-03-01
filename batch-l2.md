@@ -783,11 +783,34 @@ interface IManagedEc2ComputeEnvironment extends IManagedComputeEnvironment {
   readonly spotBidPercentage?: number;
   readonly spot?: boolean;
   readonly desiredvCpus?: number;
-  readonly instanceTypes?: ec2.InstanceType[];
+  readonly instanceTypes?: InstanceType[];
   readonly instanceRole?: iam.IRole;
   readonly launchTemplate?: ec2.ILaunchTemplate;
   readonly minvCpus?: number;
   readonly placementGroup?: ec2.IPlacementGroup;
+}
+
+interface IBatchMachineImage {
+  image: ec2.IMachineImage;
+  imageType: BatchMachineImageType;
+  imageKubernetesVersion?: string;
+}
+
+enum BatchMachineImageType {
+  ECS_AL2 = 'ECS_AL2',
+  ECS_AL2_NVIDIA = 'ECS_AL2_NVIDIA',
+  EKS_AL2 = 'EKS_AL2',
+  EKS_AL2_NVIDIA = 'EKS_AL2_NVIDIA',
+}
+
+enum InstanceType extends ec2.InstanceType {
+  OPTIMAL = 'optimal',
+}
+
+enum AllocationStrategy {
+  BEST_FIT = 'BEST_FIT',
+  BEST_FIT_PROGRESSIVE = 'BEST_FIT_PROGRESSIVE',
+  SPOT_CAPACITY_OPTIMIZED = 'SPOT_CAPACITY_OPTIMIZED',
 }
 
 interface ManagedEc2ComputeEnvironmentProps extends ComputeEnvironmentProps {
@@ -796,7 +819,8 @@ interface ManagedEc2ComputeEnvironmentProps extends ComputeEnvironmentProps {
   readonly spotBidPercentage?: number;
   readonly spot?: boolean;
   readonly desiredvCpus?: number;
-  readonly instanceTypes?: ec2.InstanceType[];
+  readonly instanceTypes?: InstanceType[];
+  readonly instanceClasses?: ec2.InstanceClass[];
   readonly instanceRole?: iam.IRole;
   readonly launchTemplate?: ec2.ILaunchTemplate;
   readonly minvCpus?: number;
@@ -806,18 +830,7 @@ interface ManagedEc2ComputeEnvironmentProps extends ComputeEnvironmentProps {
 class ManagedEc2ComputeEnvironment extends ManagedComputeEnvironmentBase implements IManagedEc2ComputeEnvironment {
   constructor(readonly props: ManagedEc2ComputeEnvironmentProps = {}) {}
   public addInstanceType() {} 
-}
-```
-
-* `IFargateComputeEnvironment` -- interface to define and deploy Batch Managed Fargate Compute Environments
-
-```ts
-interface IFargateComputeEnvironment extends IManagedComputeEnvironment {}
-
-interface FargateComputeEnvironmentProps extends ComputeEnvironmentProps {}
-
-class FargateComputeEnvironment extends ManagedComputeEnvironmentBase implements IFargateComputeEnvironment {
-  constructor(readonly props: FargateComputeEnvironmentProps = {}) {}
+  public addInstanceClass() {} 
 }
 ```
 
@@ -836,9 +849,323 @@ class EksComputeEnvironment extends ManagedEc2ComputeEnvironment implements IEks
 }
 ```
 
-* `FargateComputeEnvironment` -- interface to define and deploy Batch Managed Fargate Compute Environments
+* `IFargateComputeEnvironment` -- interface to define and deploy Batch Managed Fargate Compute Environments
+
+```ts
+interface IFargateComputeEnvironment extends IManagedComputeEnvironment {}
+
+interface FargateComputeEnvironmentProps extends ComputeEnvironmentProps {}
+
+class FargateComputeEnvironment extends ManagedComputeEnvironmentBase implements IFargateComputeEnvironment {
+  constructor(readonly props: FargateComputeEnvironmentProps = {}) {}
+}
+```
+
+#### JobDefinition
+
+* `IJobDefinition`
+
+```ts
+interface IJobDefinition extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+  name?: string;
+  parameters?: { [key:string]: any };
+  propogateTags?: boolean;
+  retryAttempts?: number;
+  retryStrategies?: RetryStrategy[];
+  schedulingPriority?: number;
+  timeout?: Duration;
+
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+}
+
+interface JobDefinitionProps {
+  name?: string;
+  parameters?: { [key:string]: any };
+  propogateTags?: boolean;
+  retryAttempts?: number;
+  retryStrategies?: RetryStrategy[];
+  schedulingPriority?: number;
+  timeout?: Duration;
+}
+
+class RetryStrategy {
+  public readonly action: Action;
+  public readonly onExitCode: string;
+  public readonly onStatusReason: string;
+  public readonly onReason: string;
+
+  constructor(action: Action, onExitCode: string, onStatusReason: string, onReason: string) {}
+  addRetryStrategy() {}
+}
+
+enum Action {
+  EXIT = 'EXIT';
+  RETRY = 'RETRY';
+}
+
+abstract class JobDefinitionBase implements IJobDefinition {
+  constructor(readonly props: JobDefinitionProps = {}) {}
+}
+```
+
+* `IEcsJobDefinition`
 
 
+```ts
+interface IEcsJobDefinition extends IJobDefinition {
+  containerDefinition: EcsContainerDefinition
+  fargatePlatformVersion?: FargatePlatformVersion
+  compatibility?: Compatibility
+}
+
+class EcsContainerDefinition() {
+  command?: string
+  environments?: Array<{ [key:string]: string }>
+  executionRoleArn?: iam.IRole
+  fargateVersion?: FargateVersion
+  image: ContainerImage
+  jobRoleArn?: iam.IRole
+  linuxParameters?: LinuxParameters
+  logDriver?: LogDriver
+  // Memory is deprecated in favor of ResourceRequirements
+  // mountpoints added via addMountPoint() or addMountVolume()
+  disableNetworking?: boolean
+  priveleged?: boolean
+  readonlyRootFileSystem?: boolean
+  // image covers ContainerProperties.ResourceRequirements.MEMORY
+  cpu: number
+  gpuCount?: number
+  secrets?: { [key: string]: Secret }
+  // Ulimits are added via addUlimit()
+  user?: string
+  // Vcpus is deprecated in favor of ResourceRequirements
+  // Volumes are added via addVolume() or addMountedVolume()
+
+  addUlimit(...Ulimit[])
+  addVolume(...EcsVolume[])
+  addMountedVolume(..MountedEcsVolume[])
+}
+
+enum FargateVersion {
+// TODO
+
+}
+
+interface Ulimit {
+  hardLimit: number;
+  name: UlimitName;
+  softLimit: number;
+}
+
+interface UlimitName {
+  //TODO
+}
+
+interface MountedEcsVolume {
+  name: string;
+  efsVolumeConfiguration?: EfsVolumeConfiguration;
+  host?: string;
+  containerPath: string;
+  readOnly: boolean;
+}
+
+interface EfsVolumeConfiguration {
+  fileSystemId: string;
+  rootDirectory?: string;
+  transitEncryption?: string;
+  transitEncryptionPort?: number;
+  authorizationConfig?: AuthorizationConfig;
+}
+
+interface AuthorizationConfig {
+  accessPointId?: string;
+  iam?: string;
+}
+
+interface EcsJobDefinitionProps {
+  containerDefinition: EcsContainerDefinition
+  fargatePlatformVersion?: FargatePlatformVersion
+  compatibility?: Compatibility
+}
+
+class EcsJobDefinition implements IEcsJobDefinition {
+  constructor(readonly props: EcsJobDefinitionProps = {}) {}
+}
+```
+
+* `IEksJobDefinition`
+
+```ts
+interface IEksJobDefinition extends IJobDefinition {
+  pod: batch.IEksPod;
+  platform?: Platform;
+}
+
+enum Platform {
+  // TODO
+}
+
+class EksPod {
+  containers: batch.EksContainerDefinition[]
+  dnsPolicy?: DnsPolicy
+  useHostNetwork?: boolean
+  serviceAccount?: string
+
+  addContainer(batch.EksContainerDefinition)
+}
+
+class EksContainerDefinition {
+  image: string
+  args?: string[]
+  command?: string[]
+  env?: { [key:string]: string }
+  imagePullPolicy?: ImagePullPolicy
+  name?: string
+  resources?: EksContainerResources
+  priveleged?: boolean
+  readonlyFileSystem?: boolean
+  runAsGroup?: number
+  runAsRoot?: boolean
+  runAsUser?: number
+  volumes?: EksVolume[]
+
+  addVolume(...EksVolume[])
+}
+
+// TODO: need props for all of these smaller classes
+// TODO: EksContainerResources has no definition
+abstract class EksVolume {
+  name: string;
+  mountPath?: string;
+  readonly?: boolean;
+}
+
+class EmptyDirVolume extends EksVolume {
+  medium?: MediumType;
+  sizeLimit?: number;
+}
+
+class HostPathVolume extends EksVolume {
+  path: string;
+}
+
+class SecretPathVolume extends EksVolume {
+  secret: ssm.Secret;
+}
+
+interface EksJobDefinitionProps {
+  pod: batch.IEksPod;
+  platform?: Platform;
+}
+
+class EksJobDefinition implements IEksJobDefinition {
+  constructor(readonly props: EksJobDefinitionProps = {}) {}
+}
+```
+
+* `IMultiNodeJobDefinition`
+
+```ts
+interface IMultiNodeJobDefinition extends IJobDefinition {
+  containers: MultiNodeContainer[];
+  mainNode: number;
+  instanceType: InstanceType;
+}
+
+interface MultiNodeContainer {
+  startNode: number;
+  endNode: number;
+  container: ContainerDefinition;
+}
+
+interface MultiNodeJobDefinitionProps {
+  containers: MultiNodeContainer[];
+  mainNode: number;
+  instanceType: InstanceType;
+}
+
+class MultiNodeJobDefinition implements IMultiNodeJobDefinition {
+  constructor(readonly props: MultiNodeJobDefinitionProps = {}) {}
+
+  public addContainer(...containers: MultiNodeContainer[]) {}
+}
+```
+
+#### JobQueue
+
+* `IJobQueue`
+
+```ts
+interface IJobQueue extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+  priority: number
+  name?: string
+  enabled?: boolean
+  schedulingPolicy?: SchedulingPolicy
+  computeEnvironments: OrderedComputeEnvironment[]
+}
+
+interface JobQueueProps {
+  priority: number
+  name?: string
+  enabled?: boolean
+  schedulingPolicy?: ISchedulingPolicy
+  computeEnvironments: OrderedComputeEnvironment[]
+}
+
+interface OrderedComputeEnvironment {
+  computeEnvironment: IComputeEnvironment;
+  order: number;
+}
+
+class JobQueue implements IJobQueue {
+  constructor(readonly props: JobQueueProps = {}) {}
+
+  addComputeEnvironment(computeEnvironment: ComputeEnvironment, order: number)
+}
+```
+
+#### SchedulingPolicy
+
+* `ISchedulingPolicy`
+
+```ts
+interface ISchedulingPolicy extends cdk.IResource, iam.Grantable, cdk.ITaggable {
+}
+
+interface SchedulingPolicyProps {
+}
+
+class SchedulingPolicyBase implements ISchedulingPolicy {
+  constructor(readonly props: SchedulingPolicyProps = {}) {}
+}
+```
+
+* `IFairshareSchedulingPolicy`
+
+```ts
+interface IFairshareSchedulingPolicy extends ISchedulingPolicy {
+  readonly computeReservation?: number;
+  readonly shareDecay?: Duration;
+  readonly shareDistribution?: ShareDistribution[];
+}
+
+interface FairshareSchedulingPolicyProps {
+  readonly computeReservation?: number;
+  readonly shareDecay?: Duration;
+  readonly shares?: Share[];
+}
+
+interface Share {
+  id: string;
+  weight: number;
+}
+
+class FairshareSchedulingPolicy implements IFairshareSchedulingPolicy {
+  constructor(readonly props: FairshareSchedulingPolicyProps = {}) {}
+
+  addShare(id: string, weight: number) {}
+}
+```
 
 ### Is this a breaking change?
 No, because we will continue to make the old API available. Their existing
