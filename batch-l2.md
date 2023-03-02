@@ -181,18 +181,21 @@ FIFO queuing can cause short-running jobs to be starved while long-running jobs 
 To solve this, Jobs can be associated with a share.
 Shares consist of a `shareIdentifier` and a `weightFactor`, which is inversely correlated with the vCPU allocated to that share identifier.
 For example, if there are two shares defined as follows:
+| Share Identifier | Weight Factor |
+| ---------------- | ------------- |
+| A                | 0.5           |
+| B                | 1             |
 
-`shareIdentifier`: `'A'`, `'B'`
-`weightFactor    :  0.5, 1
 
 This means that all the `'B'` jobs will have half of the total vCPU allocated to 'A' jobs.
 If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
 every one `'B'` job scheduled, two `'A'` jobs will be scheduled.
 
 If the `weightFactor`s were reversed instead:
-
-`shareIdentifier`: `'A'`, `'B'`
-`weightFactor    :  1, 0.5
+| Share Identifier | Weight Factor |
+| ---------------- | ------------- |
+| A                | 1             |
+| B                | 0.5           |
 
 and we had the same vCPU requirements as above, then for every one `'B'` job scheduled,
 there would be four `'A'` jobs scheduled.
