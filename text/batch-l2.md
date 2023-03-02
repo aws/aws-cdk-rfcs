@@ -179,7 +179,9 @@ highPriorityQueue.addComputeEnvironment(sharedComputeEnv, 1);
 Batch `JobQueue`s execute Jobs submitted to them in FIFO order unless you specify a `SchedulingPolicy`.
 FIFO queuing can cause short-running jobs to be starved while long-running jobs fill the compute environment.
 To solve this, Jobs can be associated with a share.
+
 Shares consist of a `shareIdentifier` and a `weightFactor`, which is inversely correlated with the vCPU allocated to that share identifier.
+When submitting a Job, you can specify it's `shareIdentifier` to associate that particular job with that share.
 For example, if there are two shares defined as follows:
 | Share Identifier | Weight Factor |
 | ---------------- | ------------- |
@@ -199,8 +201,6 @@ If the `weightFactor`s were reversed instead:
 
 and we had the same vCPU requirements as above, then for every one `'B'` job scheduled,
 there would be four `'A'` jobs scheduled.
-
-A job is associated with a Share by setting its shareIdentifier when the jobs is submitted to the queue.
 
 The second example would be configured like this:
 
