@@ -179,21 +179,38 @@ highPriorityQueue.addComputeEnvironment(sharedComputeEnv, 1);
 Batch `JobQueue`s execute Jobs submitted to them in FIFO order unless you specify a `SchedulingPolicy`.
 FIFO queuing can cause short-running jobs to be starved while long-running jobs fill the compute environment.
 To solve this, Jobs can be associated with a share.
-Shares consist of a `shareIdentifier` and a `weightFactor`, which is inversely correlated with the resources allocated to that Job.
-This means that a `weightFactor` of 0.5 will have twice the vCPU and memory of a job with weight factor of 1.
+Shares consist of a `shareIdentifier` and a `weightFactor`, which is inversely correlated with the vCPU allocated to that share identifier.
+For example, if there are two shares defined as follows:
+
+`shareIdentifier`: `'A'`, `'B'`
+`weightFactor    :  0.5, 1
+
+This means that all the `'B'` jobs will have half of the total vCPU allocated to 'A' jobs.
+If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
+every one `'B'` job scheduled, two `'A'` jobs will be scheduled.
+
+If the `weightFactor`s were reversed instead:
+
+`shareIdentifier`: `'A'`, `'B'`
+`weightFactor    :  1, 0.5
+
+and we had the same vCPU requirements as above, then for every one `'B'` job scheduled,
+there would be four `'A'` jobs scheduled.
+
 A job is associated with a Share by setting its shareIdentifier when the jobs is submitted to the queue.
-<This doesn’t make sense yet, need to ask the service team how this interacts with the resource requirements defined in a JobDefinition>. 
+
+The second example would be configured like this:
 
 ```ts
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy');
 
 fairsharePolicy.addShare({
-   shareIdentifier: 'JobTypeA',
+  shareIdentifier: 'A',
   weightFactor: 1,
 });
 
 fairsharePolicy.addShare({
-  shareIdentifier: 'JobTypeB',
+  shareIdentifier: 'B',
   weightFactor: 0.5,
 });
 
@@ -203,38 +220,72 @@ new batch.JobQueue(this, 'JobQueue', {
 });
 ```
 
-All Jobs with `shareIdentifier` `'JobTypeA'`  submitted to this `JobQueue` will be allocated half as many resources allocated to `'JobTypeB'` Jobs.
+Note: The scheduler will only consider the current usage of the compute environment unless you specify `shareDecay`. 
+For example, a `shareDecay` of 600 in the above example means that at any given point in time, twice as many `'A'` jobs
+will be scheduled for each `'B'` job, but only for the past 5 minutes. If `'B'` jobs run longer than 5 minutes, then
+the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the weight of those long-running
+`'B'` jobs will no longer be considered after 5 minutes.
 
-`FairsharePolicy`s allow Job `weightFactors` to decay over time, giving preference to newer Jobs.
-The following code specifies that the weight factors will no longer be considered after one hour:
+The following code specifies that the weight factors will no longer be considered after 5 minutes:
 
 ```ts
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
-   shareDecay: Duration.seconds(3600),
+   shareDecay: Duration.seconds(600),
 });
 ```
 
-`FairshareSchedulingPolicy`s can specify a `computeReservation` that specifies the percentage of the capacity that should be reserved for the `shareIdentifiers` specified in the `shareDistribution`. Leaving `computeReservation` unspecified is equivalent to setting it to 99, the maximum allowed. The reserved capacity is split according to the `weightFactor` between the `shareIdentifier`s that are specified. For example, the following code specifies that 25% of the compute resources should be reserved for Jobs with type `'JobTypeA'`, 25% should be reserved for `'JobTypeB'`, and the remaining 50% is available to a Job of any type (including `'JobTypeA'` or `'JobTypeB'`):
+If you have high priority jobs that should always be executed as soon as they arrive,
+you can define a `computeReservation` to specify what percentage of the
+maximum vCPU capacity should be reserved for those jobs. For example, if you specify a `computeReservation` of 75, then
+75% of the maxvCPUs of the Compute Environment are reserved for all the share identifiers in this scheduling policy.
+The following example specifies that 75% of the compute capacity should be reserved for `'A'`, `'B'`, or `'C'` jobs:
 
 ```ts
-const fairsharePolicy = new FairsharePolicy(this, 'myFairsharePolicy', {
-  computeReservation: 50,
+const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
+  computeReservation: 75,
+  shares: [{
+    shareIdentifier: 'A',
+  }],
 });
 
 fairsharePolicy.addShare({
-  shareIdentifier: 'JobTypeA',
-  weightFactor: 1,
+  shareIdentifier: 'B',
 });
 
 fairsharePolicy.addShare({
-  shareIdentifier: 'JobTypeB',
-  weightFactor: 1,
-});
-
-const schedulingPolicy = new SchedulingPolicy(this, 'mySchedulingPolicy', {
-  fairsharePolicy,
+  shareIdentifier: 'C',
 });
 ```
+
+The `computeReservation` is **not** split between shares.
+That is, it guarantees that 75% of the maximum vCPUs are reserved for jobs with share identifier `'A'` or `'B'` `'C'`;
+it does **not** guarantee that 25% is allocated to `'A'` and 25% is allocated to `'B'` and 25% is allocated to `'C'`.
+Instead, it is possible for `'A'` jobs to fill the entire queue and starve the `'B'` and `'C'` jobs. To avoid this,
+define multiple `FairshareSchedulingPolicy`s:
+
+```ts
+new FairshareSchedulingPolicy(this, 'AFairsharePolicy', {
+  computeReservation: 25,
+  shares: [{
+    shareIdentifier: 'A',
+  }],
+});
+new FairshareSchedulingPolicy(this, 'BFairsharePolicy', {
+  computeReservation: 25,
+  shares: [{
+    shareIdentifier: 'B',
+  }],
+});
+new FairshareSchedulingPolicy(this, 'CFairsharePolicy', {
+  computeReservation: 25,
+  shares: [{
+    shareIdentifier: 'C',
+  }],
+});
+```
+
+The above example ensures that each share can take no more than 50% of the total capacity
+(25% reserved + 25% unreserved).
 
 ### Configuring Job Retry Policies
 
@@ -704,10 +755,7 @@ different, which will require them to understand the new API to migrate.
 interface IComputeEnvironment extends cdk.IResource, iam.Grantable, cdk.ITaggable {
   readonly name?: string;
   readonly serviceRole?: iam.IRole;
-  readonly replaceComputeEnvironment?: boolean;
   readonly enabled?: boolean;
-  readonly updateTimeout?: Duration;
-  readonly terimnateOnUpdate?: boolean;
   readonly maxvCpus?: number; //note: becomes unmanageVCPUs on unmanaged, maxvCPUs on managed
 
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
@@ -716,11 +764,8 @@ interface IComputeEnvironment extends cdk.IResource, iam.Grantable, cdk.ITaggabl
 interface ComputeEnvironmentProps {
   readonly name?: string;
   readonly serviceRole?: iam.IRole;
-  readonly replaceComputeEnvironment?: boolean;
   readonly enabled?: boolean;
-  readonly updateTimeout?: Duration;
-  readonly terimnateOnUpdate?: boolean;
-  readonly maxvCpus?: number; //note: becomes unmanageVCPUs on unmanaged, maxvCPUs on managed
+  readonly maxvCpus?: number; //note: becomes unmanagedvCPUs on unmanaged, maxvCPUs on managed
 }
 
 abstract class ComputeEnvironmentBase implements IComputeEnvironment {
@@ -756,14 +801,18 @@ abstract class UnmanagedEc2ComputeEnvironmentBase extends UnmanagedComputeEnviro
 
 ```ts
 interface IManagedComputeEnvironment extends IComputeEnvironment {
-  readonly maxvCpus?: number;
+  readonly replaceComputeEnvironment?: boolean;
+  readonly updateTimeout?: Duration;
+  readonly terimnateOnUpdate?: boolean;
   readonly securityGroups?: ec2.ISecurityGroup[];
   readonly subnets?: ec2.ISubnet[];
   readonly updateToLatestImageVersion?: boolean; 
 }
 
 interface ManagedComputeEnvironmentProps extends ComputeEnvironmentProps {
-  readonly maxvCpus?: number;
+  readonly replaceComputeEnvironment?: boolean;
+  readonly updateTimeout?: Duration;
+  readonly terimnateOnUpdate?: boolean;
   readonly securityGroups?: ec2.ISecurityGroup[];
   readonly subnets?: ec2.ISubnet[];
   readonly updateToLatestImageVersion?: boolean; 
@@ -918,7 +967,7 @@ interface IEcsJobDefinition extends IJobDefinition {
   compatibility?: Compatibility
 }
 
-class EcsContainerDefinition() {
+class EcsContainerDefinition {
   command?: string
   environments?: Array<{ [key:string]: string }>
   executionRoleArn?: iam.IRole
@@ -927,19 +976,13 @@ class EcsContainerDefinition() {
   jobRoleArn?: iam.IRole
   linuxParameters?: LinuxParameters
   logDriver?: LogDriver
-  // Memory is deprecated in favor of ResourceRequirements
-  // mountpoints added via addMountPoint() or addMountVolume()
   disableNetworking?: boolean
   priveleged?: boolean
   readonlyRootFileSystem?: boolean
-  // image covers ContainerProperties.ResourceRequirements.MEMORY
   cpu: number
   gpuCount?: number
   secrets?: { [key: string]: Secret }
-  // Ulimits are added via addUlimit()
   user?: string
-  // Vcpus is deprecated in favor of ResourceRequirements
-  // Volumes are added via addVolume() or addMountedVolume()
 
   addUlimit(...Ulimit[])
   addVolume(...EcsVolume[])
