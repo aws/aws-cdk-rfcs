@@ -4,42 +4,45 @@
 * **Tracking Issue**: #
 * **API Bar Raiser**: @
 
-This proposes a new set of L2 constructs for the aws-batch module. 
+This proposes a new set of L2 constructs for the aws-batch module.
 
-Existing (experimental) L2 API docs: https://docs.aws.amazon.com/cdk/api/v1/docs/aws-batch-readme.html
-CloudFormation resource reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Batch.html
+[Existing (experimental) L2 API docs](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-batch-readme.html)
+[CloudFormation resource reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Batch.html)
 
 ## Batch Overview
 
 Batch has four resources:
 
 * `ComputeEnvironment`
-    * Can be `managed` or `unmanaged`
-        * `managed` can use EC2 or Fargate resources
-        * `unmanaged` can only use EC2 resources.
-    * Can use EC2 or Fargate
-        * Each of these can be regular or SPOT type.
-        * EC2 can then specify EKS or ECS.
-    * ImageId has been deprecated! 
-        *  Likely in favor of EC2Configuration
-        * see: https://docs.aws.amazon.com/batch/latest/APIReference/API_ComputeResource.html
-    * Subnets work with any managed ComputeEnvironment, but you cannot use Local Zones with Fargate
+  * Can be `managed` or `unmanaged`
+    * `managed` can use EC2 or Fargate resources
+    * `unmanaged` can only use EC2 resources.
+  * Can use EC2 or Fargate
+    * Each of these can be regular or SPOT type.
+    * EC2 can then specify EKS or ECS.
+  * ImageId has been deprecated! 
+    *  Likely in favor of EC2Configuration
+    * see: https://docs.aws.amazon.com/batch/latest/APIReference/API_ComputeResource.html
+  * Subnets work with any managed ComputeEnvironment, but you cannot use Local Zones with Fargate
 * `JobDefinition`
-    * Can be `multinode` or `container`
-        * `container`s can be ECS or EKS
-    * Can run on EC2 or Fargate resources
-        * `multinode` only runs on EC2
-            * does not work on spot instances!
-        * `container` can use EC2 or Fargate
+  * Can be `multinode` or `container`
+    * `container`s can be ECS or EKS
+  * Can run on EC2 or Fargate resources
+    * `multinode` only runs on EC2
+      * does not work on spot instances!
+    * `container` can use EC2 or Fargate
 * `JobQueue`
-    * This just uses a `ComputeEnvironment` with an order
-        * Why not add the order to the `ComputeEnvironment`? `ComputeEnvironment`s can be reused across different `JobQueue`s.
+  * This just uses a `ComputeEnvironment` with an order
+    * Why not add the order to the `ComputeEnvironment`? `ComputeEnvironment`s can be reused across different `JobQueue`s.
 * `SchedulingPolicy`
-    * The only type of `SchedulingPolicy` is a `FairsharePolicy`
-    * These let you define Job shares, which associate a Job with a `weightFactor`. The `weightFactor` is inversely correlated with the compute resources that are assigned to a particular Job
+  * The only type of `SchedulingPolicy` is a `FairsharePolicy`
+  * These let you define Job shares, which associate a Job with a `weightFactor`.
+    The `weightFactor` is inversely correlated with the compute resources that are assigned to a particular Job
 
-`ComputeEnvironment`s are used by `JobQueue`s to run incoming Jobs. When a user submits a job to a `JobQueue`, the `JobQueue` chooses one of its available `ComputeEnvironment`s to run the job.
-Jobs are defined by `JobDefinition`s, which are of type either `multinode` or `container`. `multinode` jobs are only compatible with `ComputeEnvironment`s that use `managed` ec2 instances,
+`ComputeEnvironment`s are used by `JobQueue`s to run incoming Jobs.
+When a user submits a job to a `JobQueue`, the `JobQueue` chooses one of its available `ComputeEnvironment`s to run the job.
+Jobs are defined by `JobDefinition`s, which are of type either `multinode` or `container`.
+`multinode` jobs are only compatible with `ComputeEnvironment`s that use `managed` ec2 instances,
 whereas `container` jobs are compatible with any type of `ComputeEnvironment`. 
 
 `SchedulingPolicy`s are used by `JobQueues` to decide which resources to allocate to which Jobs.
@@ -232,7 +235,6 @@ For example, if there are two shares defined as follows:
 | A                | 0.5           |
 | B                | 1             |
 
-
 This means that all the `'B'` jobs will have half of the total vCPU allocated to 'A' jobs.
 If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
 every one `'B'` job scheduled, two `'A'` jobs will be scheduled.
@@ -267,7 +269,7 @@ new batch.JobQueue(this, 'JobQueue', {
 });
 ```
 
-Note: The scheduler will only consider the current usage of the compute environment unless you specify `shareDecay`. 
+Note: The scheduler will only consider the current usage of the compute environment unless you specify `shareDecay`.
 For example, a `shareDecay` of 600 in the above example means that at any given point in time, twice as many `'A'` jobs
 will be scheduled for each `'B'` job, but only for the past 5 minutes. If `'B'` jobs run longer than 5 minutes, then
 the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the weight of those long-running
@@ -301,11 +303,12 @@ and no other shares exist.
 There are no active fair shares, since the queue is empty.
 Thus (75/100)^0 = 1 = 100% of the maximum vCpus are reserved for all shares.
 
-A job with identifier `A` enters the queue. 
+A job with identifier `A` enters the queue.
 
 The number of active fair shares is now 1, hence
 (75/100)^1 = .75 = 75% of the maximum vCpus are reserved for all shares that do not have the identifier `A`;
-for this example, this is `B` and `C`, (but if jobs are submitted with a share identifier not covered by this fairshare policy, those would be considered just as `B` and `C` are).
+for this example, this is `B` and `C`,
+(but if jobs are submitted with a share identifier not covered by this fairshare policy, those would be considered just as `B` and `C` are).
 
 Now a `B` job enters the queue. The number of active fair shares is now 2,
 so (75/100)^2 = .5625 = 56.25% of the maximum vCpus are reserved for all shares that do not have the identifier `A` or `B`.
@@ -329,9 +332,9 @@ This example specifies a `computeReservation` of 75% that will behave as explain
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
   computeReservation: 75,
   shares: [
-    { id: 'A },
-    { id: 'B },
-    { id: 'C },
+    { id: 'A' },
+    { id: 'B' },
+    { id: 'C' },
   ],
 });
 ```
@@ -348,7 +351,7 @@ There are three different ways information about the way a Job exited can be con
 
 * `exitCode`: the exit code returned from the process executed by the container. Will only match non-zero exit codes.
 * `reason`: any middleware errors, like your Docker registry being down.
-* `statusReason`: infrastructure errors, most commonly your spot instance being reclaimed. 
+* `statusReason`: infrastructure errors, most commonly your spot instance being reclaimed.
 
 For most use cases, only one of these will be associated with a particular action at a time.
 To specify common `exitCode`s, `reason`s, or `statusReason`s, use the corresponding value from
@@ -424,7 +427,7 @@ jobDefn.addVolume({
 });
 ```
 
-### Running Kubernetes Workflows:
+### Running Kubernetes Workflows
 
 Batch also supports running workflows on EKS. The following example creates a `JobDefinition` that runs on EKS:
 
@@ -461,11 +464,11 @@ jobDefn.addEmptyDirVolume({
 });
 jobDefn.addHostPathVolume({
   name: 'hostPath',
-  hostPath: '/sys', 
+  hostPath: '/sys',
   mountPath: '/Volumes/hostPath',
 });
 jobDefn.addSecretVolume({
-  name: 'secret', 
+  name: 'secret',
   optional: true,
   mountPath: '/Volumes/secret',
 });
@@ -481,7 +484,8 @@ You must configure your containers to use MPI properly,
 but Batch allows different nodes running different containers to communicate easily with one another.
 You must configure your containers to use certain environment variables that Batch will provide them,
 which lets them know which one is the main node, among other information.
-For an in-depth example on using MPI to perform numerical computations on Batch, see https://aws.amazon.com/blogs/compute/building-a-tightly-coupled-molecular-dynamics-workflow-with-multi-node-parallel-jobs-in-aws-batch/
+For an in-depth example on using MPI to perform numerical computations on Batch,
+see this [blog post](https://aws.amazon.com/blogs/compute/building-a-tightly-coupled-molecular-dynamics-workflow-with-multi-node-parallel-jobs-in-aws-batch/)
 In particular, the environment variable that tells the containers which one is the main node can be configured on your `MultiNodeJobDefinition` as follows:
 
 ```ts
@@ -512,6 +516,7 @@ If you need to set the control node to an index other than 0, specify it in dire
 const multiNodeJob = new batch.MultiNodeJobDefinition(this, 'JobDefinition', {
   mainNode: 5,
 });
+```
 
 ### Pass Parameters to a Job
 
@@ -566,7 +571,7 @@ new ManagedEc2ComputeEnvironment(this, 'myEc2Env', {
   securityGroups: [mySecurityGroup1, mySecurityGroup2], // optional, defaults to newly created
   vpcSubnets: myEc2SubnetSelection, // optional: defaults to newly created
   updateToLatestImageVersion: true // optional, defaults to true
-  eksClusterNamespace: batch.clusterNamespace.from(cluster, 'namespace'); 
+  eksClusterNamespace: batch.clusterNamespace.from(cluster, 'namespace');
 });
 
 new UnmanagedEc2ComputeEnvironment(this, 'myEc2Env', {
@@ -578,7 +583,7 @@ new UnmanagedEc2ComputeEnvironment(this, 'myEc2Env', {
   serviceRole: myServiceRole, // optional, creates it if not supplied (batch recommended default)
   updateToLatestImageVersion: true // optional, defaults to true
   unmanagedvCpus: undefined // TODO: asked service team why ComputeResources can be specified on UNMANAGED env
-  eksClusterNamespace: batch.clusterNamespace.from(cluster, 'namespace'); 
+  eksClusterNamespace: batch.clusterNamespace.from(cluster, 'namespace');
 });
 
 new FargateComputeEnvironment(this, 'myFargateEnv', {
@@ -645,7 +650,7 @@ new MultiNodeJobDefinition(this, 'myMultiNodeJob', {
     new MultiNodeContainer(
       startNode: 0,
       endNode: 5,
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.A1, ec2.InstanceSize.LARGE), // required, 
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.A1, ec2.InstanceSize.LARGE), // required,
       TaskDefinition: new ecs.TaskDefinition(this, 'ECSTask', {
         compatibility: ecs.Compatibility.EC2,
       }).addContainer('myContainer', {
@@ -654,7 +659,7 @@ new MultiNodeJobDefinition(this, 'myMultiNodeJob', {
       }),
     ),
   ],
-  instanceType: ec2.InstanceType.of(ec2.InstanceClass.A1, ec2.InstanceSize.LARGE), // required, 
+  instanceType: ec2.InstanceType.of(ec2.InstanceClass.A1, ec2.InstanceSize.LARGE), // required,
   name: 'myJob', // optional, defaults to CFN generated name
   parameters: { foo: 'bar' }, // optional, defaults to none
   propogateTags: true, // optional, defaults to false (CFN default)
@@ -736,7 +741,7 @@ interface RetryStrategy {
 
 enum ImagePullPolicy {
   ALWAYS = 'Always';
-  IF_NOT_PRESENT = 'IfNotPresent'; 
+  IF_NOT_PRESENT = 'IfNotPresent';
   NEVER = 'Never';
 }
 
@@ -755,7 +760,8 @@ enum FargateComputeEnvironmentType {
 ### Migration Plan
 
 Removing all of the existing L2 constructs and forcing people to migrate to the new construct is not a great customer experience.
-We should deprecate the existing construct, move it to a different repository but still publish it under the same name, and leave it there until the new API is stable.
+We should deprecate the existing construct,
+move it to a different repository but still publish it under the same name, and leave it there until the new API is stable.
 I propose we leave the new API as experimental until Q3 and graduate it then.
 
 ### Differences Between the Existing API and this Proposal
@@ -763,22 +769,26 @@ I propose we leave the new API as experimental until Q3 and graduate it then.
 Existing API consists of:
 
 * `JobDefinition`
-    * It only supports the ECS variant, as the only required property it has it mapped directly to `ContainerProperties`. Specifying `ContainerProperties` prevents you from specifying `EksProperties` or `NodeRangeProperties`, meaning the existing construct does not support either of these (even with escape hatches).
+  * It only supports the ECS variant, as the only required property it has it mapped directly to `ContainerProperties`.
+    Specifying `ContainerProperties` prevents you from specifying `EksProperties` or `NodeRangeProperties`,
+    meaning the existing construct does not support either of these (even with escape hatches).
 * `ComputeEnvironment`
-    * No distinction in type between EC2 and Fargate. The result is this massive amount of runtime error checking for Fargate: https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-batch/lib/compute-environment.ts#L487-538
-    * All of that runtime error checking could be removed with an EC2 type and a Fargate type. 
+  * No distinction in type between EC2 and Fargate. The result is this massive amount of [runtime error checking](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-batch/lib/compute-environment.ts#L487-538) for Fargate
+  * All of that runtime error checking could be removed with an EC2 type and a Fargate type.
 * `JobQueue`
-    * No support for `FairshareSchedulingPolicy`, so they can’t be added to a `JobQueue` easily. 
+  * No support for `FairshareSchedulingPolicy`, so they can’t be added to a `JobQueue` easily.
 
-Existing API does not have `FairsharechedulingPolicys`. 
+Existing API does not have `FairsharechedulingPolicys`.
 
 ## Public FAQ
 
 ### What are we launching today?
+
 We are launching a new set of L2 constructs for Batch (`aws-cdk-lib/aws-batch`).
 These new constructs will fully support Batch within the CDK.
 
 ### Why should I use this feature?
+
 Efficiently run your batch computing jobs without managing servers.
 Use cases include machine learning and high-performance computing.
 CDK provides seamless integrations with your existing infrastructure
@@ -787,17 +797,21 @@ and simplifies configuration of your resources.
 ## Internal FAQ
 
 ### Why are we doing this?
+
 We are graduating alpha modules to build trust with our customers.
 Batch is a highly-requested module for stabilization, but the existing experimental
 constructs do not cover many of the use cases that batch supports and extending them
 will result in a subpar customer experience.
 
 ### Why should we *not* do this?
+
 Our existing alpha module has customers today. This new API will be substantially
 different, which will require them to understand the new API to migrate.
 
 ### What is the technical solution (design) of this feature?
+
 #### Compute Environment
+
 * `IComputeEnvironment` and `ComputeEnvironmentBase` -- abstract base class and interface
 
 ```ts
@@ -855,7 +869,7 @@ interface IManagedComputeEnvironment extends IComputeEnvironment {
   readonly terimnateOnUpdate?: boolean;
   readonly securityGroups?: ec2.ISecurityGroup[];
   readonly subnets?: ec2.ISubnet[];
-  readonly updateToLatestImageVersion?: boolean; 
+  readonly updateToLatestImageVersion?: boolean;
 }
 
 interface ManagedComputeEnvironmentProps extends ComputeEnvironmentProps {
@@ -864,7 +878,7 @@ interface ManagedComputeEnvironmentProps extends ComputeEnvironmentProps {
   readonly terimnateOnUpdate?: boolean;
   readonly securityGroups?: ec2.ISecurityGroup[];
   readonly subnets?: ec2.ISubnet[];
-  readonly updateToLatestImageVersion?: boolean; 
+  readonly updateToLatestImageVersion?: boolean;
 }
 
 abstract class ManagedComputeEnvironmentBase extends ComputeEnvironmentBase implements IManagedComputeEnvironment {
@@ -927,8 +941,8 @@ interface ManagedEc2ComputeEnvironmentProps extends ComputeEnvironmentProps {
 
 class ManagedEc2ComputeEnvironment extends ManagedComputeEnvironmentBase implements IManagedEc2ComputeEnvironment {
   constructor(readonly props: ManagedEc2ComputeEnvironmentProps = {}) {}
-  public addInstanceType() {} 
-  public addInstanceClass() {} 
+  public addInstanceType() {}
+  public addInstanceClass() {}
 }
 ```
 
@@ -1260,10 +1274,12 @@ class FairshareSchedulingPolicy implements IFairshareSchedulingPolicy {
 ```
 
 ### Is this a breaking change?
+
 No, because we will continue to make the old API available. Their existing
 code will not be compatible with the new API.
 
 ### What alternative solutions did you consider?
+
 We could expand the coverage of the existing design to cover all the missing use cases.
 Supporting these additional use cases without redesigning the API requires
 us to provide a subpar customer experience because the existing API suffers from the same
@@ -1272,12 +1288,15 @@ lumped into a single type. Many properties are always silently ignored or reject
 depending on which other properties are specified (12 on a single resource, among many others).
 
 ### What are the drawbacks of this solution?
+
 The new API is substantially different from the old one, which means migration will not be free.
 
 ### What is the high-level project plan?
+
 Once this RFC is approved, implementation will begin and will be completed by Q1.
 
 ### Are there any open issues that need to be addressed later?
+
 No.
 
 ## Appendix
@@ -1448,7 +1467,7 @@ readOnly: boolean
 
 ```
 pod: batch.IEksPod -> EksProperties
-platform?: Platform -> PlatformCapabilities 
+platform?: Platform -> PlatformCapabilities
 ```
 
 ### EksPod
@@ -1530,8 +1549,8 @@ container: ecs.ContainerDefinition -> NodeProperties.NodeRangeProperties.Contain
 #### JobQueue
 
 ```
-//ComputeEnvironmentOrder // can't mix fargate and ec2, added via addComputeEnvironment() 
- priority: number -> Priority 
+//ComputeEnvironmentOrder // can't mix fargate and ec2, added via addComputeEnvironment()
+ priority: number -> Priority
 name?: string -> JobQueueName
 enabled?: boolean ->  State
 schedulingPolicy?: SchedulingPolicy -> SchedulingPolicyArn
@@ -1577,7 +1596,7 @@ ContainerProperties: {
   Secrets: ContainerDefinition.Secrets,
   Ulimits: ContainerDefinition.Ulimits,
   User: ContainerDefinition.User,
-  Vcpu: deprecated, use ResourceRequirements instead.
+  Vcpu: deprecated, use ResourceRequirements instead
   Volumes: Volumes,
 }
 
