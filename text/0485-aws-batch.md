@@ -20,9 +20,9 @@ Batch has four resources:
   * Can use EC2 or Fargate
     * Each of these can be regular or SPOT type.
     * EC2 can then specify EKS or ECS.
-  * ImageId has been deprecated! 
-    *  Likely in favor of EC2Configuration
-    * see: https://docs.aws.amazon.com/batch/latest/APIReference/API_ComputeResource.html
+  * ImageId has been deprecated!
+    * Likely in favor of EC2Configuration
+    * see [API Ref](https://docs.aws.amazon.com/batch/latest/APIReference/API_ComputeResource.html)
   * Subnets work with any managed ComputeEnvironment, but you cannot use Local Zones with Fargate
 * `JobDefinition`
   * Can be `multinode` or `container`
@@ -43,7 +43,7 @@ Batch has four resources:
 When a user submits a job to a `JobQueue`, the `JobQueue` chooses one of its available `ComputeEnvironment`s to run the job.
 Jobs are defined by `JobDefinition`s, which are of type either `multinode` or `container`.
 `multinode` jobs are only compatible with `ComputeEnvironment`s that use `managed` ec2 instances,
-whereas `container` jobs are compatible with any type of `ComputeEnvironment`. 
+whereas `container` jobs are compatible with any type of `ComputeEnvironment`.
 
 `SchedulingPolicy`s are used by `JobQueues` to decide which resources to allocate to which Jobs.
 
@@ -82,7 +82,7 @@ new batch.MangedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
 });
 ```
 
-For stateful or otherwise non-interruption-tolerant workflows, omit `spot` or set it to `false` to only provision on-demand instances. 
+For stateful or otherwise non-interruption-tolerant workflows, omit `spot` or set it to `false` to only provision on-demand instances.
 
 #### Choosing Your Instance Types
 
@@ -135,12 +135,12 @@ computeEnv.addInstanceClass(ec2.InstanceClass.R4);
 | BEST_FIT_PROGRESSIVE    | Throughput         | May increase cost             |
 | SPOT_CAPACITY_OPTIMIZED | Least interruption | Only useful on Spot instances |
 
-Batch provides different Allocation Strategies to help it choose which instances to provision. 
+Batch provides different Allocation Strategies to help it choose which instances to provision.
 If your workflow tolerates interruptions, you should enable `spot` on your `ComputeEnvironment`
 and use `SPOT_CAPACITY_OPTIMIZED` (this is the default is `spot` is enabled).
-This will tell Batch to choose the instance types from the ones you’ve specified that have 
-the most spot capacity available to minimize the chance of interruption. 
-This means that to get the most benefit from your spot instances, 
+This will tell Batch to choose the instance types from the ones you’ve specified that have
+the most spot capacity available to minimize the chance of interruption.
+This means that to get the most benefit from your spot instances,
 you should allow Batch to choose from as many different instance types as possible. 
 
 If your workflow does not tolerate interruptions and you want to minimize your costs,
@@ -149,7 +149,7 @@ This will choose the lowest-cost instance type that fits all the jobs in the que
 If instances of that type are not available,
 the queue will not choose a new type; instead, it will wait for the instance to become available.
 This can stall your `Queue`, with your compute environment only using part of its max capacity
-(or none at all) until the `BEST_FIT` instance becomes available. 
+(or none at all) until the `BEST_FIT` instance becomes available.
 
 If you are running a workflow that does not tolerate interruptions and you want to maximize throughput,
 you can use `AllocationStrategy.BEST_FIT_PROGRESSIVE`.
@@ -540,8 +540,8 @@ new batch.EcsJobDefinition(this, 'JobDefn', {
 ## API
 
 * `ManagedEc2ComputeEnvironment`
-    * Requires an L2 for `CfnPlacementGroup` in aws-ec2
-        * Or, we could use a `placementGroupArn` instead, but that’s sub-par
+  * Requires an L2 for `CfnPlacementGroup` in aws-ec2
+  * Or, we could use a `placementGroupArn` instead, but that’s sub-par
 * `UnmanagedEc2ComputeEnvironment`
 * `FargateComputeEnvironment`
 * `MultinodeJobDefinition`
@@ -598,7 +598,7 @@ new FargateComputeEnvironment(this, 'myFargateEnv', {
   securityGroups: [mySecurityGroup1, mySecurityGroup2], // optional, defaults to newly created
   vpcSubnets: myEc2SubnetSelection, // optional: defaults to newly created
   updateToLatestImageVersion: false, // optional, defaults to false (CFN default)
-  eksClusterNamespce: batch.clusterNamespace.from(cluster, 'namespace'); 
+  eksClusterNamespce: batch.clusterNamespace.from(cluster, 'namespace');
 });
 
 new EcsJobDefinition(this, 'myContainerJob', {
@@ -773,7 +773,8 @@ Existing API consists of:
     Specifying `ContainerProperties` prevents you from specifying `EksProperties` or `NodeRangeProperties`,
     meaning the existing construct does not support either of these (even with escape hatches).
 * `ComputeEnvironment`
-  * No distinction in type between EC2 and Fargate. The result is this massive amount of [runtime error checking](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-batch/lib/compute-environment.ts#L487-538) for Fargate
+  * No distinction in type between EC2 and Fargate. The result is this massive amount of
+    [runtime error checking](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-batch/lib/compute-environment.ts#L487-538) for Fargate
   * All of that runtime error checking could be removed with an EC2 type and a Fargate type.
 * `JobQueue`
   * No support for `FairshareSchedulingPolicy`, so they can’t be added to a `JobQueue` easily.
@@ -1602,4 +1603,3 @@ ContainerProperties: {
 
 Platform: RequiresCompatibilities
 ```
-
