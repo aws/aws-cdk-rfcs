@@ -23,7 +23,7 @@ Batch has four resources:
     * ImageId has been deprecated! 
         *  Likely in favor of EC2Configuration
         * see: https://docs.aws.amazon.com/batch/latest/APIReference/API_ComputeResource.html
-    * Subnets work with Fargate, but you cannot use Local Zones
+    * Subnets work with any managed ComputeEnvironment, but you cannot use Local Zones with Fargate
 * `JobDefinition`
     * Can be `multinode` or `container`
         * `container`s can be ECS or EKS
@@ -50,42 +50,45 @@ whereas `container` jobs are compatible with any type of `ComputeEnvironment`.
 
 #### Spot Instances
 
-Spot instances are significantly discounted EC2 instances that can be reclaimed at any time by AWS. Workloads that are fault-tolerant or stateless can take advantage of spot pricing. Batch allows you to specify the percentage of the on-demand instance that the current spot price must be to provision the instance using the `spotBidPercentage`. The following code configures a Compute Environment to only use spot instances that are at most 20% the price of the on-demand instance price:
+Spot instances are significantly discounted EC2 instances that can be reclaimed at any time by AWS.
+Workloads that are fault-tolerant or stateless can take advantage of spot pricing.
+To use spot spot instances, set `spot` to `true` on a managed Ec2 or Fargate Compute Environment:
+
+```ts
+import * as batch from 'aws-cdk-lib/aws-batch';
+
+new batch.FargateComputeEnvironment(this, 'myFargateComputeEnv', {
+  spot: true,
+});
+```
+
+Batch allows you to specify the percentage of the on-demand instance that the current spot price
+must be to provision the instance using the `spotBidPercentage`.
+This defaults to 100%, which is the recommended value.
+This value cannot be specified for `FargateComputeEnvironment`s
+and only applies to `ManagedEc2ComputeEnvironment`s.
+The following code configures a Compute Environment to only use spot instances that
+are at most 20% the price of the on-demand instance price:
 
 ```ts
 import * as batch from 'aws-cdk-lib/aws-batch';
 
 new batch.MangedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
    spot: true,
-  spotBidPercentage: 20,
-});
-```
-
-You can also use Fargate spot instances, but you can’t specify `spotBidPercentage`:
-
-```ts
-new batch.FargateComputeEnvironment(this, 'myFargateComputeEnv', {
-   spot: true,
+   spotBidPercentage: 20,
 });
 ```
 
 For stateful or otherwise non-interruption-tolerant workflows, omit `spot` or set it to `false` to only provision on-demand instances. 
 
-#### Allocation Strategies
+#### Choosing Your Instance Types
 
-Batch provides different Allocation Strategies to help it choose which instances to provision. 
-If you are using spot instances, you can choose `AllocationStrategy.SPOT_CAPACITY_OPTIMIZED`; 
-this will tell Batch to choose the instance types from the ones you’ve specified that have 
-the most spot capacity available to minimize the chance of interruption. 
-This means that to get the most benefit from your spot instances, 
-you should allow Batch to choose from as many different instance types as possible. 
-If you enable `spot` on your `ComputeEnvironment`, the allocation strategy will default to `SPOT_CAPACITY_OPTIMIZED`.
-This example configures your `ComputeEnvironment` to use several different types of instances:
+Batch allows you to choose the instance types or classes that will run your workload.
+This example configures your `ComputeEnvironment` to use only the `M5AD.large` instance:
 
 ```ts
-const computeEnv = new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
-  spot: true,
-  instanceTypes: [batch.InstanceType.of(ec2.InstanceClass.M5AD, ec2.InstanceSize.LARGE)],
+new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
+  instanceTypes: [ec2.InstanceType.of(ec2.InstanceClass.M5AD, ec2.InstanceSize.LARGE)],
 });
 ```
 
@@ -95,43 +98,84 @@ Batch allows you to specify only the instance class and to let it choose the siz
 computeEnv.addInstanceClass(ec2.InstanceClass.M5AD);
 
 // Or, specify it on the constructor:
-const computeEnv = new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
-  spot: true,
+new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
   instanceClasses: [ec2.InstanceClass.A1],
 });
 ```
 
-If you specify no instance types, then it will default to `InstanceType.OPTIMAL`, which tells Batch to pick an instance from the C4, M4, and R4 instance families.
+If you specify no instance types or classes then it will default to `InstanceType.OPTIMAL`,
+which tells Batch to pick an instance from the C4, M4, and R4 instance families.
+*Note*: Batch does not allow specifying instance types or classes with different architectures.
+For example, `InstanceClass.A1` cannot be specified alongside `InstanceClass.OPTIMAL`,
+because `A1` uses ARM and `OPTIMAL` uses x86_64.
 You can specify both `InstanceType.OPTIMAL` alongside several different instance types in the same compute environment:
 
 ```ts
+const computeEnv = new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
+  instanceTypes: [batch.InstanceType.of(ec2.InstanceClass.M5AD, ec2.InstanceSize.LARGE)],
+});
+
 computeEnv.addInstanceType(batch.InstanceType.OPTIMAL);
 
-Note: this is equivalent to specifying
+// Note: this is equivalent to specifying
 
 computeEnv.addInstanceClass(ec2.InstanceClass.C4);
 computeEnv.addInstanceClass(ec2.InstanceClass.M4);
 computeEnv.addInstanceClass(ec2.InstanceClass.R4);
 ```
 
-If your workflow does not tolerate interruptions and you want to minimize your costs, use `AllocationStrategy.BEST_FIT`.
-This will choose the lowest-cost instance type that fits all the jobs in the queue. If instances of that type are not available,
-the queue will not choose a new type; instead, it will wait for the instance to become available.
-This can stall your `Queue`, with your compute environment only using part of its max capacity (or none at all) until the `BEST_FIT` instance becomes available. 
+#### Allocation Strategies
 
-If you are running a workflow that does not tolerate interruptions and you want to maximize throughput, you can use `AllocationStrategy.BEST_FIT_PROGRESSIVE`.
-This strategy will examine the Jobs in the queue and choose whichever instance type meets the requirements of the jobs in the queue and with the lowest cost per vCPU, just as `BEST_FIT`.
-However, if not all of the capacity can be filled with this instance type, it will choose a new next-best instance type to run any jobs that couldn’t fit into the `BEST_FIT` capacity.
-To make the most use of this allocation strategy, it is recommended to use as many instance classes as is feasible for your workload.
-This example shows a `ComputeEnvironment` that uses `BEST_FIT_PROGRESSIVE` with `InstanceType.OPTIMAL` and `InstanceClass.A1` instance types:
+| Allocation Strategy     | Optimized for      | Downsides                     |
+| ----------------------- | -------------      | ----------------------------- |
+| BEST_FIT                | Cost               | May limit throughput          |
+| BEST_FIT_PROGRESSIVE    | Throughput         | May increase cost             |
+| SPOT_CAPACITY_OPTIMIZED | Least interruption | Only useful on Spot instances |
+
+Batch provides different Allocation Strategies to help it choose which instances to provision. 
+If your workflow tolerates interruptions, you should enable `spot` on your `ComputeEnvironment`
+and use `SPOT_CAPACITY_OPTIMIZED` (this is the default is `spot` is enabled).
+This will tell Batch to choose the instance types from the ones you’ve specified that have 
+the most spot capacity available to minimize the chance of interruption. 
+This means that to get the most benefit from your spot instances, 
+you should allow Batch to choose from as many different instance types as possible. 
+
+If your workflow does not tolerate interruptions and you want to minimize your costs,
+use `AllocationStrategy.BEST_FIT`.
+This will choose the lowest-cost instance type that fits all the jobs in the queue.
+If instances of that type are not available,
+the queue will not choose a new type; instead, it will wait for the instance to become available.
+This can stall your `Queue`, with your compute environment only using part of its max capacity
+(or none at all) until the `BEST_FIT` instance becomes available. 
+
+If you are running a workflow that does not tolerate interruptions and you want to maximize throughput,
+you can use `AllocationStrategy.BEST_FIT_PROGRESSIVE`.
+This is the default Allocation Strategy if `spot` is `false` or unspecified.
+This strategy will examine the Jobs in the queue and choose whichever instance type meets the requirements
+of the jobs in the queue and with the lowest cost per vCPU, just as `BEST_FIT`.
+However, if not all of the capacity can be filled with this instance type,
+it will choose a new next-best instance type to run any jobs that couldn’t fit into the `BEST_FIT` capacity.
+To make the most use of this allocation strategy,
+it is recommended to use as many instance classes as is feasible for your workload.
+This example shows a `ComputeEnvironment` that uses `BEST_FIT_PROGRESSIVE`
+with `InstanceType.OPTIMAL` and `InstanceClass.M5` instance types:
 
 ```ts
 const computeEnv = new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
-   allocationStrategy: AllocationStrategy.BEST_FIT_PROGRESSIVE,
   instanceTypes: [batch.InstanceType.OPTIMAL],
-  instanceClasses: [ec2.InstanceClass.A1],
+  instanceClasses: [ec2.InstanceClass.M5],
 });
 ```
+
+This example shows a `ComputeEnvironment` that uses `BEST_FIT` with `InstanceType.OPTIMAL` instances:
+
+```ts
+const computeEnv = new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
+  allocationStrategy: AllocationStrategy.BEST_FIT,
+});
+```
+
+*Note*: `allocationStrategy` cannot be specified on Fargate Compute Environments.
 
 ### Controlling vCPU allocation
 
@@ -142,7 +186,7 @@ that is, Batch will not scale them up and down as needed. This example shows how
 ```ts
 new batch.ManagedEC2ComputeEnvironment(this, 'myEc2ComputeEnv', {
   instanceClasses: [ec2.InstanceClass.A1],
-  minvCPUs: 10,
+  minvCpus: 10,
   maxvCpus: 100,
 });
 ```
@@ -238,57 +282,63 @@ const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy',
 ```
 
 If you have high priority jobs that should always be executed as soon as they arrive,
-you can define a `computeReservation` to specify what percentage of the
-maximum vCPU capacity should be reserved for those jobs. For example, if you specify a `computeReservation` of 75, then
-75% of the maxvCPUs of the Compute Environment are reserved for all the share identifiers in this scheduling policy.
-The following example specifies that 75% of the compute capacity should be reserved for `'A'`, `'B'`, or `'C'` jobs:
+you can define a `computeReservation` to specify the percentage of the
+maximum vCPU capacity that should be reserved for shares that are *not in the queue*.
+The actual reserved percentage is defined by Batch as:
+
+```
+ (computeReservation/100)^ActiveFairShares
+```
+
+where `ActiveFairShares` is the number of shares for which there exists
+at least one job in the queue with a unique share identifier.
+
+This is best illustrated with an example.
+Suppose there three shares with share identifiers `A`, `B` and `C` respectively
+and we specify the `computeReservation` to be 75%. The queue is currently empty,
+and no other shares exist.
+
+There are no active fair shares, since the queue is empty.
+Thus (75/100)^0 = 1 = 100% of the maximum vCpus are reserved for all shares.
+
+A job with identifier `A` enters the queue. 
+
+The number of active fair shares is now 1, hence
+(75/100)^1 = .75 = 75% of the maximum vCpus are reserved for all shares that do not have the identifier `A`;
+for this example, this is `B` and `C`, (but if jobs are submitted with a share identifier not covered by this fairshare policy, those would be considered just as `B` and `C` are).
+
+Now a `B` job enters the queue. The number of active fair shares is now 2,
+so (75/100)^2 = .5625 = 56.25% of the maximum vCpus are reserved for all shares that do not have the identifier `A` or `B`.
+
+Now a second `A` job enters the queue. The number of active fair shares is still 2,
+so the percentage reserved is still 56.25%
+
+Now a `C` job enters the queue. The number of active fair shares is now 3,
+so (75/100)^3 = .421875 = 42.1875% of the maximum vCpus are reserved for all shares that do not have the identifier `A`, `B`, or `C`.
+
+If these are no other shares that your jobs can specify, this means that 42.1875% of your capacity will never be used!
+
+Now, `A`, `B`, and `C` can only consume 100% - 42.1875% = 57.8125% of the maximum vCpus.
+Note that the this percentage is **not** split between `A`, `B`, and `C`.
+Instead, the scheduler will use their `weightFactor`s to decide which jobs to schedule;
+the only difference is that instead of competing for 100% of the max capacity, jobs compete for 57.8125% of the max capacity.
+
+This example specifies a `computeReservation` of 75% that will behave as explained in the example above:
 
 ```ts
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
   computeReservation: 75,
-  shares: [{
-    shareIdentifier: 'A',
-  }],
-});
-
-fairsharePolicy.addShare({
-  shareIdentifier: 'B',
-});
-
-fairsharePolicy.addShare({
-  shareIdentifier: 'C',
+  shares: [
+    { id: 'A },
+    { id: 'B },
+    { id: 'C },
+  ],
 });
 ```
 
-The `computeReservation` is **not** split between shares.
-That is, it guarantees that 75% of the maximum vCPUs are reserved for jobs with share identifier `'A'` or `'B'` `'C'`;
-it does **not** guarantee that 25% is allocated to `'A'` and 25% is allocated to `'B'` and 25% is allocated to `'C'`.
-Instead, it is possible for `'A'` jobs to fill the entire queue and starve the `'B'` and `'C'` jobs. To avoid this,
-define multiple `FairshareSchedulingPolicy`s:
+You can specify a `priority` on your `JobDefinition`s to tell the scheduler to prioritize certain jobs that share the same share identifier.
 
-```ts
-new FairshareSchedulingPolicy(this, 'AFairsharePolicy', {
-  computeReservation: 25,
-  shares: [{
-    shareIdentifier: 'A',
-  }],
-});
-new FairshareSchedulingPolicy(this, 'BFairsharePolicy', {
-  computeReservation: 25,
-  shares: [{
-    shareIdentifier: 'B',
-  }],
-});
-new FairshareSchedulingPolicy(this, 'CFairsharePolicy', {
-  computeReservation: 25,
-  shares: [{
-    shareIdentifier: 'C',
-  }],
-});
-```
-
-The above example ensures that each share can take no more than 50% of the total capacity
-(25% reserved + 25% unreserved).
+### Configuring a service-linked role
 
 ### Configuring Job Retry Policies
 
@@ -341,7 +391,8 @@ jobDefn.addRetryStrategy({
 
 ### Running single-container ECS workflows
 
-Batch supports ECS workflows natively. This examples creates a `JobDefinition` that runs a single container with ECS:
+Batch can jobs on ECS or EKS. ECS jobs can defined as single container or multinode.
+This examples creates a `JobDefinition` that runs a single container with ECS:
 
 ```ts
 const jobDefn = new batch.EcsJobDefinition(this, 'JobDefn', {
@@ -408,43 +459,26 @@ jobDefn.addHostPathVolume({
 });
 jobDefn.addSecretVolume({
   name: 'secret', 
-  secret: new Secret(this, 'mySecret'),
+  optional: true,
   mountPath: '/Volumes/secret',
 });
-```
-
-Alternatively, if you prefer to add Volumes to the container without mounting them: //do we need this section? I've only implemented this to keep API-parity with our existing ECS construct>
-
-```ts
-// Creates the volumes on the Pod
-jobDefn.addEmptyDirVolume('emptyDir');
-jobDefn.addHostPathVolume('hostPath', '/sys');
-jobDefn.addSecretVolume('secret', new Secret(this, 'mySecret'));
-```
-
-You can mount these later:
-
-```ts
-// Mounts them so they are accessible to the containers
-jobDefn.addVolumeMount('emptyDir', '/Volumes/emptyDir');
-jobDefn.addVolumeMount('hostPath', '/Volumes/hostPath');
-jobDefn.addVolumeMount('secret', '/Volumes/secret');
 ```
 
 ### Running Distributed Workflows
 
 Some workflows benefit from parallellization and are most powerful when run in a distributed environment,
-such as certain numerical calculations or simulations. Batch offers `MultiNodeJobDefinition`s for this purpose.
+such as certain numerical calculations or simulations. Batch offers `MultiNodeJobDefinition`s,
+which allow a single job to run on multiple instances in parallel, for this purpose.
 Message Passing Interface (MPI) is often used with these workflows.
 You must configure your containers to use MPI properly,
 but Batch allows different nodes running different containers to communicate easily with one another.
 You must configure your containers to use certain environment variables that Batch will provide them,
 which lets them know which one is the main node, among other information.
+For an in-depth example on using MPI to perform numerical computations on Batch, see https://aws.amazon.com/blogs/compute/building-a-tightly-coupled-molecular-dynamics-workflow-with-multi-node-parallel-jobs-in-aws-batch/
 In particular, the environment variable that tells the containers which one is the main node can be configured on your `MultiNodeJobDefinition` as follows:
 
 ```ts
 const multiNodeJob = new batch.MultiNodeJobDefinition(this, 'JobDefinition', {
-  mainNode: 0,
   instanceType: ec2.InstanceType.of(ec2.InstanceClass.A1, ec2.InstanceSize.LARGE),
   containers: [
     new MultiNodeContainer(this, 'mainMPIContainer', {
@@ -465,7 +499,12 @@ multiNodeJob.addContainer(this, 'secondContanerType', {
 });
 ```
 
-For an in-depth example on using MPI to perform numerical computations on Batch, see https://aws.amazon.com/blogs/compute/building-a-tightly-coupled-molecular-dynamics-workflow-with-multi-node-parallel-jobs-in-aws-batch/
+If you need to set the control node to an index other than 0, specify it in directly:
+
+```ts
+const multiNodeJob = new batch.MultiNodeJobDefinition(this, 'JobDefinition', {
+  mainNode: 5,
+});
 
 ### Pass Parameters to a Job
 
@@ -512,7 +551,7 @@ new ManagedEc2ComputeEnvironment(this, 'myEc2Env', {
   desiredvCpus: 3, // optional: default???
   instanceTypes: [ec2.InstanceType.of(ec2.InstanceClass.M5AD, ec2.InstanceSize.LARGE)], // optional, defaults to ['Instance.OPTIMAL']
   instanceRole: myRole, // optional, creates it if not supplied
-  serviceRole: myServiceRole, // optional, creates it if not supplied
+  serviceRole: myServiceRole, // optional, defaults to undefined (batch recommended default)
   launchTemplate: myLaunchTemplate // optional, defaults to undefined
   maxvCpus: 5, // optional, defaults to 256
   minvCpus: 1, // optional, defaults to 0 (required on ec2 envs, even though the docs say it's optional)
@@ -529,7 +568,7 @@ new UnmanagedEc2ComputeEnvironment(this, 'myEc2Env', {
   enabled: true, // optional, defaults to true
   updateTimeout: cdk.Duration.minutes(30), // optional, defaults to 30 (CFN default)
   terimnateOnUpdate: false, // optional, defaults to false (CFN default)
-  serviceRole: myServiceRole, // optional, creates it if not supplied
+  serviceRole: myServiceRole, // optional, creates it if not supplied (batch recommended default)
   updateToLatestImageVersion: true // optional, defaults to true
   unmanagedvCpus: undefined // TODO: asked service team why ComputeResources can be specified on UNMANAGED env
   eksClusterNamespace: batch.clusterNamespace.from(cluster, 'namespace'); 
@@ -542,7 +581,7 @@ new FargateComputeEnvironment(this, 'myFargateEnv', {
   spot: true, // optional, defaults to false
   updateTimeout: cdk.Duration.minutes(30), // optional, defaults to 30 (CFN default)
   terimnateOnUpdate: false, // optional, defaults to false (CFN default)
-  serviceRole: myServiceRole, // optional, creates it if not supplied
+  serviceRole: myServiceRole, // optional, defaults to undefined (batch recommended default)
   maxvCpus: 10, // optional, defaults to 256
   securityGroups: [mySecurityGroup1, mySecurityGroup2], // optional, defaults to newly created
   vpcSubnets: myEc2SubnetSelection, // optional: defaults to newly created
@@ -634,7 +673,7 @@ new JobQueue(this, 'myJobQueue', {
 new FairshareSchedulingPolicy(this, 'mySchedulingPolicy', {
   computeReservation: 20, // optional, defaults to none
   shareDecaySeconds: 20, // optional, defaults to none
-  shareDistribution: [{ // optional, defaults to none
+  shares: [{ // optional, defaults to none
     shareIdentifier: 'foo', // optional, defaults to none
     weightFactor: 5, // optional, defaults to none
   }],
@@ -962,7 +1001,6 @@ abstract class JobDefinitionBase implements IJobDefinition {
 
 * `IEcsJobDefinition`
 
-
 ```ts
 interface IEcsJobDefinition extends IJobDefinition {
   containerDefinition: EcsContainerDefinition
@@ -1003,7 +1041,7 @@ interface Ulimit {
   softLimit: number;
 }
 
-interface UlimitName {
+enum UlimitName {
   //TODO
 }
 
@@ -1096,7 +1134,8 @@ class HostPathVolume extends EksVolume {
 }
 
 class SecretPathVolume extends EksVolume {
-  secret: ssm.Secret;
+  secret: string;
+  optional?: boolean;
 }
 
 interface EksJobDefinitionProps {
@@ -1192,7 +1231,7 @@ class SchedulingPolicyBase implements ISchedulingPolicy {
 interface IFairshareSchedulingPolicy extends ISchedulingPolicy {
   readonly computeReservation?: number;
   readonly shareDecay?: Duration;
-  readonly shareDistribution?: ShareDistribution[];
+  readonly shares?: Share[];
 }
 
 interface FairshareSchedulingPolicyProps {
@@ -1460,7 +1499,8 @@ path: string -> Path
 #### SecretVolume extends EksVolume
 
 ```
-secret: ssm.Secret -> Secret
+secretName: string,
+optional?: boolean,
 ```
 
 #### MultiNodeJobDefinition extends JobDefinition
@@ -1498,10 +1538,10 @@ addComputeEnvironment(computeEnvironment: ComputeEnvironment, order: number) -> 
 ```
 computeReservation?: number -> FairsharePolicy.ComputeReservation
 shareDecay?: Duration -> FairsharePolicy.ShareDecaySeconds
-shareDistribution?: ShareDistribution[] -> FairsharePolicy.ShareDistribution
+shares?: Share[] -> FairsharePolicy.ShareDistribution
 ```
 
-#### ShareDistribution
+#### Share
 
 ```
 id: string -> ShareIdentifier
@@ -1536,5 +1576,4 @@ ContainerProperties: {
 
 Platform: RequiresCompatibilities
 ```
-
 
