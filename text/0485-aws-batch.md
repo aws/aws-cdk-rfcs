@@ -237,7 +237,7 @@ For example, if there are two shares defined as follows:
 
 This means that all the `'B'` jobs will have half of the total vCPU allocated to 'A' jobs.
 If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
-every one `'B'` job scheduled, two `'A'` jobs will be scheduled.
+every one `'B'` job scheduled, two `'A'` jobs will be scheduled
 
 If the `weightFactor`s were reversed instead:
 | Share Identifier | Weight Factor |
@@ -246,7 +246,7 @@ If the `weightFactor`s were reversed instead:
 | B                | 0.5           |
 
 and we had the same vCPU requirements as above, then for every one `'B'` job scheduled,
-there would be four `'A'` jobs scheduled.
+there would be one `'A'` job scheduled.
 
 The second example would be configured like this:
 
