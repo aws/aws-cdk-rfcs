@@ -350,14 +350,9 @@ There are three different ways information about the way a Job exited can be con
 * `reason`: any middleware errors, like your Docker registry being down.
 * `statusReason`: infrastructure errors, most commonly your spot instance being reclaimed. 
 
-You can specify a glob string to match each of these and react to different failures accordingly.
-Up to five different retry strategies can be configured for each Job,
-and each strategy can match against some or all of `exitCode`, `reason`, and `statusReason`.
-You can optionally configure the number of times a job will be retried,
-but you cannot configure different retry counts for different strategies; they all share the same count.
-If multiple conditions are specified in a given retry strategy,
-they must all match for the action to be taken; the conditions are ANDed together, not ORed.
-This example configures four retry strategies:
+For most use cases, only one of these will be associated with a particular action at a time.
+To specify common `exitCode`s, `reason`s, or `statusReason`s, use the corresponding value from
+the `Reason` class. This example shows some common failure reasons:
 
 ```ts
 const jobDefn = new batch.EcsJobDefinition(this, 'JobDefn', {
@@ -369,25 +364,37 @@ const jobDefn = new batch.EcsJobDefinition(this, 'JobDefn', {
   attempts: 5,
   retryStrategies: [{
     action: Action.EXIT,
-    onExitCode: '40*', // matches 40, 400, 404, 40230498, etc
+    reason: Reason.NON_ZERO_EXIT_CODE,
   }],
 });
 
 jobDefn.addRetryStrategy({
   action: Action.RETRY,
-  onStatusReason: StatusReason.SPOT_INSTANCE_RECLAIMED,
+  reason: Reason.SPOT_INSTANCE_RECLAIMED,
 });
 
 jobDefn.addRetryStrategy({
    action: Action.EXIT,
-   onReason: Reason.CANNOT_PULL_CONTAINER,
+   reason: Reason.CANNOT_PULL_CONTAINER,
 });
 
 jobDefn.addRetryStrategy({
   action: Action.RETRY,
-  onStatusReason: StatusReason.custom('Some other reason*'),
+  reason: Reason.custom({
+    onExitCode: '40*',
+    onReason: 'some reason',
+  }),
 });
 ```
+
+When specifying a custom reason,
+you can specify a glob string to match each of these and react to different failures accordingly.
+Up to five different retry strategies can be configured for each Job,
+and each strategy can match against some or all of `exitCode`, `reason`, and `statusReason`.
+You can optionally configure the number of times a job will be retried,
+but you cannot configure different retry counts for different strategies; they all share the same count.
+If multiple conditions are specified in a given retry strategy,
+they must all match for the action to be taken; the conditions are ANDed together, not ORed.
 
 ### Running single-container ECS workflows
 
