@@ -356,7 +356,7 @@ will be scheduled for each `'B'` job, but only for the past 5 minutes. If `'B'` 
 the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the usage of those long-running
 `'B'` jobs will no longer be considered after 5 minutes.
 
-The following code specifies that the weight factors will no longer be considered after 5 minutes:
+The following code specifies a `shareDecay` of 5 minutes:
 
 ```ts
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
