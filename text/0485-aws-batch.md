@@ -303,9 +303,6 @@ numAJobs = 4 * numBJobs
 
 This means that for each `'B'` job, the scheduler will schedule four (4) `'A'` jobs.
 
-If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
-every one `'B'` job scheduled, two `'A'` jobs will be scheduled
-
 If the `weightFactor`s were reversed instead:
 
 | Share Identifier | Weight Factor |
@@ -354,16 +351,16 @@ new batch.JobQueue(this, 'JobQueue', {
 ```
 
 Note: The scheduler will only consider the current usage of the compute environment unless you specify `shareDecay`.
-For example, a `shareDecay` of 600 in the above example means that at any given point in time, twice as many `'A'` jobs
+For example, a `shareDecay` of 5 minutes in the above example means that at any given point in time, twice as many `'A'` jobs
 will be scheduled for each `'B'` job, but only for the past 5 minutes. If `'B'` jobs run longer than 5 minutes, then
-the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the weight of those long-running
+the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the usage of those long-running
 `'B'` jobs will no longer be considered after 5 minutes.
 
 The following code specifies that the weight factors will no longer be considered after 5 minutes:
 
 ```ts
 const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy', {
-   shareDecay: Duration.seconds(600),
+   shareDecay: Duration.minutes(5),
 });
 ```
 
