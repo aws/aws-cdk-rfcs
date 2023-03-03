@@ -354,7 +354,10 @@ Note: The scheduler will only consider the current usage of the compute environm
 For example, a `shareDecay` of 5 minutes in the above example means that at any given point in time, twice as many `'A'` jobs
 will be scheduled for each `'B'` job, but only for the past 5 minutes. If `'B'` jobs run longer than 5 minutes, then
 the scheduler is allowed to put more than two `'A'` jobs for each `'B'` job, because the usage of those long-running
-`'B'` jobs will no longer be considered after 5 minutes.
+`'B'` jobs will no longer be considered after 5 minutes. `shareDecay` linearly decreases the usage of
+long running jobs for calculation purposes. eg if share decay is 60 seconds,
+then jobs that run for 30 seconds have their usage considered to be only 50% of what it actually is,
+but after a whole minute the scheduler pretends they don't exist for fairness calculations.
 
 The following code specifies a `shareDecay` of 5 minutes:
 
