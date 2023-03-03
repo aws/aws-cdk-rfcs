@@ -229,13 +229,82 @@ To solve this, Jobs can be associated with a share.
 
 Shares consist of a `shareIdentifier` and a `weightFactor`, which is inversely correlated with the vCPU allocated to that share identifier.
 When submitting a Job, you can specify it's `shareIdentifier` to associate that particular job with that share.
+Let's see how the scheduler uses this information to schedule jobs.
+
 For example, if there are two shares defined as follows:
+
+| Share Identifier | Weight Factor |
+| ---------------- | ------------- |
+| A                | 1             |
+| B                | 1             |
+
+Since they both have weight factor of 1, the amount of vCPU allocated to `'A'` jobs and `'B'` jobs should be the same.
+This is equivalent to the ratio of vCPUs allocated to each being equal to 1, that is:
+
+```
+BvCpus / AvCpus = 1
+```
+
+where `BvCpus` is the number of vCPUs allocated to jobs with share identifier `'B'`.
+We need to find `B_vCpus` and `A_vCpus`. We can multiply both sides of the above equation by `A_vCpus` to get:
+
+```
+BvCpus = AvCpus
+```
+
+We don't know what `BvCpus` is, but we know that each `'B'` job needs 64 vCpus. We also know that each `'A'` job needs 32 vCpus.
+So let's define a new value, `AJobRequirement` and `BJobRequirement` set to 32 and 64, respectively. Now we have:
+
+```
+BvCpus = BJobRequirement * numBJobs
+AvCpus = AJobRequirement * numAJobs
+```
+
+where `numBJobs` is the number of jobs with share identifier `'B'` that will be scheduled and
+`numAJobs` is the number of jobs with share identifier `'A'` that will be scheduled.
+
+With these new definitions we can write our equality as:
+
+```
+BvCpus = AvCpus =>
+BJobRequirement * numBJobs = AJobRequirement * numAJobs
+64 * numBJobs = 32 * numAJobs =>
+2 * numBJobs = numAJobs =>
+numAJobs = 2 * numBJobs
+```
+
+This means that the scheduler will schedule two `'A'` jobs for each `'B'` job.
+
+
+You can control the weight factors to change these ratios.
+Weight factors are inversely correlated with the vCpus allocated to the corresponding share.
+Take this example:
+
 | Share Identifier | Weight Factor |
 | ---------------- | ------------- |
 | A                | 0.5           |
 | B                | 1             |
 
-This means that all the `'B'` jobs will have half of the total vCPU allocated to 'A' jobs.
+The weight factors share the following relationship:
+
+```
+BvCpus / 1 = AvCpus / 0.5 =>
+2 * BvCpus = AvCpus =>
+```
+
+Following similar algebra as above:
+
+```
+2 * BvCpus = AvCpus =>
+2 * BJobRequirement * numBJobs = AJobRequirement * numAJobs =>
+2 * 64 * numBJobs = 32 * numAJobs =>
+128 * numBJobs = 32 * numAJobs =>
+4 * numBJobs = numAJobs =>
+numAJobs = 4 * numBJobs
+```
+
+This means that for each `'B'` job, the scheduler will schedule four (4) `'A'` jobs.
+
 If all the `'A'` Jobs require 32 vCPUs, and all of the `'B'` jobs require 64 vCPUs, then for
 every one `'B'` job scheduled, two `'A'` jobs will be scheduled
 
@@ -245,8 +314,24 @@ If the `weightFactor`s were reversed instead:
 | A                | 1             |
 | B                | 0.5           |
 
-and we had the same vCPU requirements as above, then for every one `'B'` job scheduled,
-there would be one `'A'` job scheduled.
+
+The weight factors share the following relationship:
+
+```
+BvCpus / 0.5 = AvCpus / 1 =>
+BvCpus = 2 * AvCpus =>
+```
+
+Following similar algebra as above:
+
+```
+BvCpus = 2 * AvCpus =>
+BJobRequirement * numBJobs = 2 * AJobRequirement * numAJobs =>
+64 * numBJobs = 2 * 32 * numAJobs =>
+64 * numBJobs = 64 * numAJobs =>
+numBJobs = numAJobs
+```
+This means that for each `'B'` job, the scheduler will schedule one (1) `'A'` job.
 
 The second example would be configured like this:
 
