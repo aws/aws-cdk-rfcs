@@ -141,7 +141,7 @@ and use `SPOT_CAPACITY_OPTIMIZED` (this is the default is `spot` is enabled).
 This will tell Batch to choose the instance types from the ones you’ve specified that have
 the most spot capacity available to minimize the chance of interruption.
 This means that to get the most benefit from your spot instances,
-you should allow Batch to choose from as many different instance types as possible. 
+you should allow Batch to choose from as many different instance types as possible.
 
 If your workflow does not tolerate interruptions and you want to minimize your costs,
 use `AllocationStrategy.BEST_FIT`.
@@ -340,8 +340,6 @@ const fairsharePolicy = new FairshareSchedulingPolicy(this, 'myFairsharePolicy',
 ```
 
 You can specify a `priority` on your `JobDefinition`s to tell the scheduler to prioritize certain jobs that share the same share identifier.
-
-### Configuring a service-linked role
 
 ### Configuring Job Retry Policies
 
