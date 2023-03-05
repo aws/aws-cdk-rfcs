@@ -47,19 +47,7 @@ Library `aws-events-scheduler` contains L2 CDK constructs for creating, run, and
 
  # Amazon EventBridge Scheduler Contruct Library
 
-[Amazon Kinesis Data Firehose](https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html)
-is a service for fully-managed delivery of real-time streaming data to storage services
-such as Amazon S3, Amazon Redshift, Amazon Elasticsearch, Splunk, or any custom HTTP
-endpoint or third-party services such as Datadog, Dynatrace, LogicMonitor, MongoDB, New
-Relic, and Sumo Logic.
-
-Kinesis Data Firehose delivery streams are distinguished from Kinesis data streams in
-their models of consumtpion. Whereas consumers read from a data stream by actively pulling
-data from the stream, a delivery stream pushes data to its destination on a regular
-cadence. This means that data streams are intended to have consumers that do on-demand
-processing, like AWS Lambda or Amazon EC2. On the other hand, delivery streams are
-intended to have destinations that are sources for offline processing and analytics, such
-as Amazon S3 and Amazon Redshift.
+ [Amazon EventBridge Scheduler](https://aws.amazon.com/blogs/compute/introducing-amazon-eventbridge-scheduler/) is a new capability from Amazon EventBridge that allows you to create, run, and manage scheduled tasks at scale. With EventBridge Scheduler, you can schedule one-time or recurrently tens of millions of tasks across many AWS services without provisioning or managing underlying infrastructure.
 
 This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
 project. It allows you to define Kinesis Data Firehose delivery streams.
@@ -210,6 +198,8 @@ robust prototypes already implemented.
 
 Prototype at https://github.com/filletofish/cdk-eb-scheduler/
 
+TODO: Add more details
+
 ### Is this a breaking change?
 
 No.
@@ -219,9 +209,13 @@ No.
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
+TBD
+
 ### What are the drawbacks of this solution?
 
 > Describe any problems/risks that can be introduced if we implement this RFC.
+
+TBD
 
 ### What is the high-level project plan?
 
@@ -232,15 +226,16 @@ No.
 > If you have a project board with your implementation plan, this is a good
 > place to link to it.
 
+TBD
+
 ### Are there any open issues that need to be addressed later?
 
 > Describe any major open issues that this RFC did not take into account. Once
 > the RFC is approved, create GitHub issues for these issues and update this RFC
 > of the project board with these issue IDs.
 
+TBD
+
 ## Appendix
 
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
+N/A
