@@ -1,8 +1,8 @@
 # Batch Graduation
 
 * **Original Author(s):**: @comcalvi
-* **Tracking Issue**: #
-* **API Bar Raiser**: @
+* **Tracking Issue**: #485
+* **API Bar Raiser**: @rix0rrr
 
 This proposes a new set of L2 constructs for the aws-batch module.
 
