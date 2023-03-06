@@ -25,26 +25,7 @@ import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 // globally for the entire app (an app is a stage)
 const app = new App({
   validationPlugins: [
-    new CfnGuardValidator({
-      rules: [
-        // rules can be specified inline
-        Rules.fromAsset('../my-local-rules'),
-
-        // or from a remote location
-        Rules.fromDownload('https://somelocation.com/company-rules', {
-          auth: {},
-        }),
-
-        // or from an S3 location
-        Rules.fromS3(s3Location),
-
-        // or by calling an external endpoint
-        Rules.fromRequest('POST', 'https://someendpoint.com/validate'),
-      ],
-      options: {
-        someOption: "value",
-      },
-    }),
+    new CfnGuardValidator(),
   ],
 });
 
@@ -54,9 +35,9 @@ const prodStage = new Stage(app, 'ProdStage', {
 });
 ```
 
-The details of how to configure the plugin will be specific to each plugin. For example, the `CfnGuardValidator` shown
-above has a `rules` property which is an array of `Rules` objects. The `Rules` class is a helper class that can be used
-to specify where the rules are located.
+The details of how to configure the plugin will be specific to each
+plugin. For example, a plugin could have a `rules` property which
+allows the user to specify where the validation rules are located.
 
 The validation performed by the CDK at synth time can be bypassed by
 developers, and can therefore not be relied on as the sole mechanism
@@ -102,7 +83,7 @@ Validation Report (CfnGuardValidator)
 
 (Violations)
 
-Ensure S3 Buckets are encrypted with a KMS CMK (2 occurrences)
+Ensure S3 Buckets are encrypted with a KMS CMK (1 occurrences)
 
   Occurrences:
   
@@ -135,93 +116,107 @@ Ensure S3 Buckets are encrypted with a KMS CMK (2 occurrences)
 Validation failed. See above reports for details
 ```
 
-### Adding Exemptions/Suppressions
+### Plugins
 
-> Prior art: [cdk-nag](https://github.com/cdklabs/cdk-nag).
+The CDK core framework is responsible for registering and invoking plugins and
+then displaying the formatted validation report. The responsibility of the
+plugin is to act as the translation layer between the CDK framework and the
+policy validation tool. Responsibilities of the plugin may include things like:
 
-For the purposes of this RFC we will defined exemptions and suppressions
-separately.
+- Bundling or installing the policy tool (cfn-guard, opa, etc)
+- Invoking the policy tool, parsing the output, and returning a
+  `ValidationReport` to the framework
+- Handling exemptions
+- Providing contextual information to the policy tool
 
-- `suppressions`: Suppress a rule locally during synth. This will not propagate
-  to any downstream systems.
-- `exemption`: Add an exemption to a rule that will be applied both locally
-  during synth _and_ in any downstream systems (i.e. CFN Hooks, Config, etc.).
+A plugin can be created in any language supported by CDK. If you are creating a
+plugin that might be consumed by multiple languages then it is recommended
+that you create the plugin in `TypeScript` so that you can use JSII to publish
+the plugin in each CDK language.
 
-#### Suppressions
+#### Developing Plugins
 
-There may be certain scenarios where a user might need to "suppress" a certain
-rule locally. For example, maybe there is a bug in the rule set that is used
-locally that is causing a false positive.
-
-The suppression will be handled by each individual plugin. Each plugin can
-expose a standard API that will allow the user to specify the rule to suppress and
-the reason for the suppression. 
-
-A suppression can be added for all resources under a construct scope. For
-example to add suppressions for an entire stack.
-
-These suppressions are only meant to work locally. Any suppressions that are
-added using this method can not be expected to propagate to downstream systems
-(CFN Hooks, AWS Config, etc).
-
-The exact implementation could vary per plugin, but an example implementation
-is shown below.
+If you need to develop your own policy validation plugin, either because one
+does not exist for your policy tool or because and existing plugin does not meet
+your use case, you start by creating a class that implements the
+`IValidationPlugin` interface from `aws-cdk-lib`.
 
 ```ts
-import { Stack } from 'aws-cdk-lib';
-import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
+export interface IValidationPlugin {
+/**
+   * The name of the plugin that will be displayed in the validation
+   * report
+   */
+  readonly name: string;
 
-const cfnGuard = new CfnGuardValidator();
-const app = new App({
-  validationPlugins: [cfnGuard],
-});
-const stack = new Stack(app, 'DevStack');
-cfnGuard.suppress(stack, {
-  rule: 'S3BucketEncryption'
-  reason: 'Dev environment buckets do not have to be encrypted'
-});
+  /**
+   * The method that will be called by the CDK framework to perform
+   * validations. This is where the plugin will evaluate the CloudFormation
+   * templates for compliance and report and violations
+   */
+  validate(context: ValidationContext): ValidationReport;
+
+  /**
+   * This method returns whether or not the plugin is ready to execute
+   */
+  isReady(): boolean;
+}
 ```
 
-They can also be added for specific resources.
+Using `cfn-guard` as an example policy tool, you could create a cfn-guard plugin.
 
 ```ts
-import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
+export class CfnGuardValidator implements IValidationPlugin {
+  public readonly name = 'cfn-guard-validator';
+  constructor() {}
 
-const cfnGuard = new CfnGuardValidator();
-const app = new App({
-  validationPlugins: [cfnGuard],
-});
-const stack = new Stack(app, 'DevStack');
-const bucket = new Bucket(stack, 'MyBucket');
-cfnGuard.suppress(bucket, {
-  rule: 'S3BucketEncryption',
-  reason: 'This bucket does not require encryption because xyz',
-});
-```
+  /**
+   * Check if cfn-guard is installed and can be executed
+   */
+  public isReady(): boolean {
+    const { status } = spawnSync('cfn-guard', ['--version'], {
+      encoding: 'utf-8',
+      stdio: 'pipe',
+      env: { ...process.env },
+    });
+    return status === 0;
+  }
 
-Example plugin suppression implementation, for example
-storing the information on which rules/resources are suppressed
-which can then be referenced later during validation.
+  public validate(context: ValidationContext): ValidationReport {
+    // execute the cfn-guard cli and get the JSON response from the tool
+    const cliResultJson = executeCfnGuardCli();
 
-```ts
-class CfnGuardValidator implements IValidatorPlugin {
-  private suppressions: { [ruleName: string]: string[] } = {};
+    // parse the results and return the violations format
+    // that the framework expects
+    const violations = parseGuardResults(cliResultJson);
 
-  public suppress(scope: Construct, props: SuppressionProps) {
-    this.suppressions[props.ruleName] = scope.node.findAll()
-      .filter(node => {
-        return CfnResource.isCfnResource(node);
-      })
-      .map(node => node.logicalId);
+    // construct the report and return it to the framework
+    // this is a vastly over simplified example that is only
+    // meant to show the structure of the report that is returned
+    return {
+      pluginName: this.name,
+      success: false,
+      violations: [{
+        ruleName: violations.ruleName,
+        recommendation: violations.recommendation,
+        fix: violations.fix,
+        violatingResources: [{
+          resourceName: violations.resourceName,
+          locations: violations.locations,
+          templatePath: violations.templatePath,
+        }],
+      }],
+    };
   }
 }
 ```
 
-#### Exemptions
+#### Handling Exemptions
 
-An exemption is a more official version of suppressions. Each organization will
-most likely have their own system for handling exemptions so our system needs to
-be extensible. An example scenario to illustrate and exemption:
+If your organization has a mechanism for handling exemptions, it can be
+implemented as part of the validator plugin.
+
+An example scenario to illustrate a possible exemption mechanism:
 
 * An organization has a rule that public S3 Buckets are not allowed, _except_
   for under certain scenarios.
@@ -231,42 +226,48 @@ be extensible. An example scenario to illustrate and exemption:
   exemptions
 
 In this scenario the developer would request an exception in the internal system
-and then will need some way of "registering" that exception in a way that policy
-as code tools will be able to know about.
+and then will need some way of "registering" that exception. Adding on to the
+guard plugin example, you could create a plugin that handles exemptions by
+filtering out the violations that have a matching exemption in an internal
+ticketing system.
 
-An example implementation might be adding metadata to the template. That
-includes information that can be verified.
+```ts
+export class CfnGuardValidator implements IValidationPlugin {
+  public readonly name = 'cfn-guard-validator';
+  constructor() {}
 
-```json
-{
-  "Resources": {
-    "MyBucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {...},
-      "Metadata": {
-        "cdk_validations": {
-          "rules_to_suppress": [{
-            "rule": "S3BucketEncryption",
-            "reason": "This bucket does not require encryption because xyz",
-            "ticket": "internal-ticket-1234"
-          }]
-        }
-      }
-    }
+  /**
+   * Check if cfn-guard is installed and can be executed
+   */
+  public isReady(): boolean {...}
+
+  public validate(context: ValidationContext): ValidationReport {
+    // execute the cfn-guard cli and get the JSON response from the tool
+    const cliResultJson = executeCfnGuardCli();
+
+    // parse the results and return the violations format
+    // that the framework expects
+    const violations: ValidationReport = parseGuardResults(cliResultJson);
+
+    // filter the list of violations by filtering out
+    // the violations that have exemptions
+    return this.filterExemptions(violations);
+  }
+
+  private filterExemptions(violations: ValidationReport): ValidationReport {
+    const filteredViolations = violations.violations.filter(violation => {
+      if (violationIsExemptInTicketingSystem) return false
+      return true;
+    });
+
+    return {
+      ...violations,
+      violations: filteredViolations,
+    };
   }
 }
 ```
 
-Since we don't currently have a good idea how most customers are handling
-exceptions, we won't include this in the initial release. At launch each plugin
-could implement it's own exemption process and we could wait to see what
-patterns emerge.
-
-### Creating a plugin
-
-A plugin can be created in any language supported by CDK. If you are creating a plugin that might be consumed by
-multiple languages then it is recommended that you create the plugin in `TypeScript` so that you can use JSII to publish
-the plugin in each CDK language.
 
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `api-approved` label was applied to the
@@ -314,7 +315,7 @@ CDK at a larger scale.
 
 ### What is the technical solution (design) of this feature?
 
-See [Appendix A - High level design](https://quip-amazon.com/lDPqAisXjVP6#temp:C:CaFafef0ee17e804c3bb00434ff5).
+See [Appendix A - High level design](#appendix-a-high-level-design).
 
 ### Is this a breaking change?
 
@@ -414,7 +415,7 @@ one or more of these activities:
 * Interpreting the output of the policy-as-code tool and converting it to a common format that the framework can work
   with.
 
-All plugins should implement the same interface, defined in the `core` library (provisionally called `ValidationPlugin`
+All plugins should implement the same interface, defined in the `core` library (provisionally called `IValidationPlugin`
 here). This interface defines a common set of inputs and outputs that each plugin should conform to.
 
 Zero or more plugins may be added to the CDK application's `App` instance. At some point during synthesis (
@@ -426,7 +427,7 @@ and print the results. If there is any blocking violation an exception will be t
 
 There are at least two different places where we can hook the validation logic in the synthesis flow.
 
-#### **Option 1: part of stack synthesizer**
+#### **Option 1: part of stack synthesizer** (Not selected)
 
 When you add a plugin to an app it gets added in a way that it can be accessed by the synthesizer.
 Currently the call to `synthesizeTemplate` will call the stack method `_synthesizeTemplate` which actually writes the
@@ -445,7 +446,7 @@ export class DefaultStackSynthesizer {
 }
 ```
 
-#### **Option 2: Separate phase after synthesis**
+#### **Option 2: Separate phase after synthesis** (Selected)
 
 ```ts
 export function synthesize(root: IConstruct, options: SynthesisOptions = {}): cxapi.CloudAssembly {
