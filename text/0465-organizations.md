@@ -4,8 +4,13 @@
 * **Tracking Issue**: #{TRACKING_ISSUE}
 * **API Bar Raiser**: @Naumel
 
-> Write one sentence which is a brief description of the feature from a user
-> perspective ("impact on users").
+The `aws-organizations` L2 construct library allows you to define your hierarchy
+of organizational units and accounts. You can easily attach typed policies to your
+organization resources. Additionally shared interfaces like `IAccount` helps
+with the interop between different libraries, i.e. IAM alias or principal.
+
+Managing these organization resources should have then the same developer
+experience like any other resources in the AWS CDK.
 
 ## Working Backwards
 
@@ -32,6 +37,68 @@
 >   page that includes 7 paragraphs: (1) summary, (2) problem, (3) solution, (4)
 >   leader quote, (5) user experience, (6) customer testimonial and (7) one
 >   sentence call to action.
+
+### Changelog
+
+```
+feat(organizations): Organizations L2
+```
+
+### README
+
+___
+
+# AWS Organizations Constructs Library
+
+[AWS Organizations](https://aws.amazon.com/organizations/) provides you with the capability to centrally manage and govern
+your cloud environment. You can manage and organize your accounts under a single bill, 
+set central policies and configuration requirements for your entire organization, 
+create custom permissions or capabilities within the organization, and delegate 
+responsibilities to other accounts so they can manage on behalf of the organization.
+
+This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
+project. It allows you to manage your organization resources.
+
+# Constructs
+
+### Defining an organizational unit OU
+
+In order to define your `OrganizationalUnit`, you must specify the name and the parent `OrganizationalUnit`.
+
+```typescript
+import * as organizations from '@aws-cdk/aws-organizations';
+
+const root = organizations.OrganizationalUnit.fromAttributes({ organizationalUnitId: "r-examplerootid111" });
+new organizations.OrganizationalUnit(this, "OrganizationalUnit", {
+  organizationalUnitName: "MyFirstOrganizationalUnit",
+  parent: root,
+});
+```
+
+### Defining an account
+
+```typescript
+import * as organizations from '@aws-cdk/aws-organizations';
+
+const ou = organizations.OrganizationalUnit.fromAttributes({
+  organizationalUnitId: "ou-examplerootid111-exampleouid111"
+});
+new organizations.Account(this, "Account", {
+  accountName: "MyFirstAccount",
+  accountEmail: "any«example.com",
+  parent: ou,
+  roleName: "OrganizationAccountAccessRole", // The default if don't specified
+});
+```
+
+#### Using an account in other CDK modules
+
+```typescript
+interface IAccount {
+  readonly accountId: number;
+  readonly accountName: string;
+}
+```
 
 ---
 
