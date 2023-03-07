@@ -116,6 +116,15 @@ Ensure S3 Buckets are encrypted with a KMS CMK (1 occurrences)
 Validation failed. See above reports for details
 ```
 
+By default, the report will be printed in a human-readable format. If you want a
+report in JSON format, use the `synth()` method:
+
+```ts
+app.synth({
+  validationReportFormat: ValidationFormat.JSON
+});
+```
+
 ### Plugins
 
 The CDK core framework is responsible for registering and invoking plugins and
