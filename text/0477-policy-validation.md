@@ -124,6 +124,7 @@ plugin is to act as the translation layer between the CDK framework and the
 policy validation tool. Responsibilities of the plugin may include things like:
 
 - Bundling or installing the policy tool (cfn-guard, opa, etc)
+- Bundling or fetching the rules to evaluate. 
 - Invoking the policy tool, parsing the output, and returning a
   `ValidationReport` to the framework
 - Handling exemptions
