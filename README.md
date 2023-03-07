@@ -162,6 +162,7 @@ future state of the libraries and to discover projects for contribution.
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [436](https://github.com/aws/aws-cdk-rfcs/issues/436)|[Amazon GameLift L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0436-gamelift-l2.md)||❓unknown
+[465](https://github.com/aws/aws-cdk-rfcs/issues/465)| [Organizations L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0465-organizations.md)||💡 proposed
 <!--END_TABLE-->
 
 ## What is an RFC?
