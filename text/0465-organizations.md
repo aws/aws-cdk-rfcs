@@ -77,6 +77,9 @@ new organizations.OrganizationalUnit(this, "OrganizationalUnit", {
 
 ### Defining an account
 
+In order to define your `Account`, you must specify the name and a unique account email. Optionally, you
+may specify the parent organizational unit and the organizations role name.
+
 ```typescript
 import * as organizations from '@aws-cdk/aws-organizations';
 
@@ -86,7 +89,7 @@ const ou = organizations.OrganizationalUnit.fromAttributes({
 new organizations.Account(this, "Account", {
   accountName: "MyFirstAccount",
   accountEmail: "any«example.com",
-  parent: ou,
+  parent: ou, // Defaults to the organiaztion root
   roleName: "OrganizationAccountAccessRole", // The default if don't specified
 });
 ```
@@ -99,6 +102,16 @@ interface IAccount {
   readonly accountName: string;
 }
 ```
+
+### Defining policies
+
+#### Defining a service control policy
+
+#### Defining a backup policy
+
+#### Defining a tag policy
+
+#### Defining an AI opt-out policy
 
 ---
 
