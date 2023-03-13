@@ -116,12 +116,13 @@ Ensure S3 Buckets are encrypted with a KMS CMK (1 occurrences)
 Validation failed. See above reports for details
 ```
 
-By default, the report will be printed in a human-readable format. If you want a
-report in JSON format, use the `synth()` method:
+By default, the report will be printed in a human readable format. If you want a
+report in JSON format, enable it using the `@aws-cdk/core:validationReportJson`
+via the CLI or passing it directly to the application:
 
 ```ts
-app.synth({
-  validationReportFormat: ValidationFormat.JSON
+const app = new App({ 
+  context: { '@aws-cdk/core:validationReportJson': true }, 
 });
 ```
 
