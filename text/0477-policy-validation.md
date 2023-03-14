@@ -154,7 +154,7 @@ your use case, you start by creating a class that implements the
 
 ```ts
 export interface IValidationPlugin {
-/**
+  /**
    * The name of the plugin that will be displayed in the validation
    * report
    */
@@ -165,12 +165,7 @@ export interface IValidationPlugin {
    * validations. This is where the plugin will evaluate the CloudFormation
    * templates for compliance and report and violations
    */
-  validate(context: ValidationContext): ValidationReport;
-
-  /**
-   * This method returns whether or not the plugin is ready to execute
-   */
-  isReady(): boolean;
+  validate(context: IValidationContext): ValidationPluginReport;
 }
 ```
 
@@ -181,19 +176,7 @@ export class CfnGuardValidator implements IValidationPlugin {
   public readonly name = 'cfn-guard-validator';
   constructor() {}
 
-  /**
-   * Check if cfn-guard is installed and can be executed
-   */
-  public isReady(): boolean {
-    const { status } = spawnSync('cfn-guard', ['--version'], {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-      env: { ...process.env },
-    });
-    return status === 0;
-  }
-
-  public validate(context: ValidationContext): ValidationReport {
+  validate(context: IValidationContext): ValidationPluginReport {
     // execute the cfn-guard cli and get the JSON response from the tool
     const cliResultJson = executeCfnGuardCli();
 
@@ -205,7 +188,6 @@ export class CfnGuardValidator implements IValidationPlugin {
     // this is a vastly over simplified example that is only
     // meant to show the structure of the report that is returned
     return {
-      pluginName: this.name,
       success: false,
       violations: [{
         ruleName: violations.ruleName,
@@ -247,12 +229,7 @@ export class CfnGuardValidator implements IValidationPlugin {
   public readonly name = 'cfn-guard-validator';
   constructor() {}
 
-  /**
-   * Check if cfn-guard is installed and can be executed
-   */
-  public isReady(): boolean {...}
-
-  public validate(context: ValidationContext): ValidationReport {
+  validate(context: IValidationContext): ValidationPluginReport {
     // execute the cfn-guard cli and get the JSON response from the tool
     const cliResultJson = executeCfnGuardCli();
 
