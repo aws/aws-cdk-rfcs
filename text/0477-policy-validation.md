@@ -153,6 +153,11 @@ your use case, you start by creating a class that implements the
 `IValidationPlugin` interface from `aws-cdk-lib`.
 
 ```ts
+import { ValidationPluginReport } from './report';
+
+/**
+ * Represents a validation plugin that will be executed during synthesis
+ */
 export interface IValidationPlugin {
   /**
    * The name of the plugin that will be displayed in the validation
@@ -166,6 +171,133 @@ export interface IValidationPlugin {
    * templates for compliance and report and violations
    */
   validate(context: IValidationContext): ValidationPluginReport;
+}
+
+/**
+ * Context available to the validation plugin
+ */
+export interface IValidationContext {
+  /**
+   * The absolute path of all templates to be processed
+   */
+  readonly templatePaths: string[];
+}
+
+```
+
+The `validate` method returns an instance of `ValidationPluginReport`, which
+tells the CDK whether the template is compliant, which violations were found
+(if any), and any metadata about the report. These are the report related 
+interfaces:
+
+```ts
+/**
+ * The report emitted by the plugin after evaluation.
+ */
+export interface ValidationPluginReport {
+  /**
+   * List of violations in the report.
+   */
+  readonly violations: ValidationViolationResourceAware[];
+
+  /**
+   * Whether or not the report was successful.
+   */
+  readonly success: boolean;
+
+  /**
+   * Arbitrary information about the report.
+   *
+   * @default - no metadata
+   */
+  readonly metadata?: { readonly [key: string]: string }
+}
+
+/**
+ * Violation produced by the validation plugin.
+ */
+export interface ValidationViolation {
+  /**
+   * The name of the rule.
+   */
+  readonly ruleName: string;
+
+  /**
+   * The description of the violation.
+   */
+  readonly description: string;
+
+  /**
+   * How to fix the violation.
+   *
+   * @default - no fix is provided
+   */
+  readonly fix?: string;
+
+  /**
+   * The severity of the violation, only used for reporting purposes.
+   * This is useful for helping the user discriminate between warnings,
+   * errors, information, etc.
+   *
+   * @default - no severity
+   */
+  readonly severity?: string;
+}
+
+/**
+ * Resource violating a specific rule.
+ */
+export interface ValidationViolatingResource {
+  /**
+   * The logical ID of the resource in the CloudFormation template.
+   */
+  readonly resourceLogicalId: string;
+
+  /**
+   * The locations in the CloudFormation template that pose the violations.
+   */
+  readonly locations: string[];
+
+  /**
+   * The path to the CloudFormation template that contains this resource
+   */
+  readonly templatePath: string;
+}
+
+/**
+ * Validation produced by the validation plugin, in CFN resource terms
+ */
+export interface ValidationViolationResourceAware extends ValidationViolation {
+  /**
+   * The resources violating this rule.
+   */
+  readonly violatingResources: ValidationViolatingResource[];
+}
+
+
+/**
+ * The final status of the validation report
+ */
+export enum ValidationReportStatus {
+  /**
+   * No violations were found
+   */
+  SUCCESS = 'success',
+
+  /**
+   * At least one violation was found
+   */
+  FAILURE = 'failure',
+}
+
+/**
+ * The report containing the name of the plugin that created it.
+ */
+export interface NamedValidationPluginReport extends ValidationPluginReport {
+  /**
+   * The name of the plugin that created the report
+   */
+  readonly pluginName: string;
 }
 ```
 
