@@ -186,7 +186,7 @@ export interface IValidationContext {
 ```
 
 The `validate` method returns an instance of `ValidationPluginReport`, which
-tells the CDK whether the template is compliant, which violations were found
+tells the CDK whether the templates are compliant, which violations were found
 (if any), and any metadata about the report. These are the report related 
 interfaces:
 
