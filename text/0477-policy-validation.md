@@ -24,14 +24,14 @@ import { CfnGuardValidator } from '@aws-cdk/cfn-guard-validator';
 
 // globally for the entire app (an app is a stage)
 const app = new App({
-  validationPlugins: [
+  policyValidation: [
     new CfnGuardValidator(),
   ],
 });
 
 // only apply to a particular stage
 const prodStage = new Stage(app, 'ProdStage', {
-  validationPlugins: [...],
+  policyValidation: [...],
 });
 ```
 
@@ -60,7 +60,7 @@ workflow could be:
 
 ```ts
 const app = new App();
-Policy.of(app).add(new CfnGuardValidator());
+PolicyValidation.of(app).add(new CfnGuardValidator());
 ```
 
 ### Validation Report
@@ -84,6 +84,7 @@ Validation Report (CfnGuardValidator)
 (Violations)
 
 Ensure S3 Buckets are encrypted with a KMS CMK (1 occurrences)
+Severity: medium
 
   Occurrences:
   
@@ -136,7 +137,7 @@ policy validation tool. Responsibilities of the plugin may include things like:
 - Bundling or installing the policy tool (cfn-guard, opa, etc)
 - Bundling or fetching the rules to evaluate. 
 - Invoking the policy tool, parsing the output, and returning a
-  `ValidationReport` to the framework
+  `PolicyValidationReport` to the framework
 - Handling exemptions
 - Providing contextual information to the policy tool
 
@@ -150,15 +151,15 @@ the plugin in each CDK language.
 If you need to develop your own policy validation plugin, either because one
 does not exist for your policy tool or because and existing plugin does not meet
 your use case, you start by creating a class that implements the
-`IValidationPlugin` interface from `aws-cdk-lib`.
+`IPolicyValidationPlugin` interface from `aws-cdk-lib`.
 
 ```ts
-import { ValidationPluginReport } from './report';
+import { PolicyValidationPluginReport } from './report';
 
 /**
  * Represents a validation plugin that will be executed during synthesis
  */
-export interface IValidationPlugin {
+export interface IPolicyValidationPlugin {
   /**
    * The name of the plugin that will be displayed in the validation
    * report
@@ -170,13 +171,13 @@ export interface IValidationPlugin {
    * validations. This is where the plugin will evaluate the CloudFormation
    * templates for compliance and report and violations
    */
-  validate(context: IValidationContext): ValidationPluginReport;
+  validate(context: IPolicyValidationContext): PolicyValidationPluginReport;
 }
 
 /**
  * Context available to the validation plugin
  */
-export interface IValidationContext {
+export interface IPolicyValidationContext {
   /**
    * The absolute path of all templates to be processed
    */
@@ -185,7 +186,7 @@ export interface IValidationContext {
 
 ```
 
-The `validate` method returns an instance of `ValidationPluginReport`, which
+The `validate` method returns an instance of `PolicyValidationPluginReport`, which
 tells the CDK whether the templates are compliant, which violations were found
 (if any), and any metadata about the report. These are the report related 
 interfaces:
@@ -194,11 +195,11 @@ interfaces:
 /**
  * The report emitted by the plugin after evaluation.
  */
-export interface ValidationPluginReport {
+export interface PolicyValidationPluginReport {
   /**
    * List of violations in the report.
    */
-  readonly violations: ValidationViolationResourceAware[];
+  readonly violations: PolicyViolationResourceAware[];
 
   /**
    * Whether or not the report was successful.
@@ -216,7 +217,7 @@ export interface ValidationPluginReport {
 /**
  * Violation produced by the validation plugin.
  */
-export interface ValidationViolation {
+export interface PolicyViolation {
   /**
    * The name of the rule.
    */
@@ -242,12 +243,21 @@ export interface ValidationViolation {
    * @default - no severity
    */
   readonly severity?: string;
+
+  /**
+   * Additional metadata to include with the rule results.
+   * This can be used to provide additional information that is
+   * plugin specific. The data provided here will be rendered as is.
+   *
+   * @default - no rule metadata
+   */
+  readonly ruleMetadata?: { readonly [key: string]: string }
 }
 
 /**
  * Resource violating a specific rule.
  */
-export interface ValidationViolatingResource {
+export interface PolicyViolatingResource {
   /**
    * The logical ID of the resource in the CloudFormation template.
    */
@@ -267,18 +277,18 @@ export interface ValidationViolatingResource {
 /**
  * Validation produced by the validation plugin, in CFN resource terms
  */
-export interface ValidationViolationResourceAware extends ValidationViolation {
+export interface PolicyViolationResourceAware extends PolicyViolation {
   /**
    * The resources violating this rule.
    */
-  readonly violatingResources: ValidationViolatingResource[];
+  readonly violatingResources: PolicyViolatingResource[];
 }
 
 
 /**
  * The final status of the validation report
  */
-export enum ValidationReportStatus {
+export enum PolicyValidationReportStatus {
   /**
    * No violations were found
    */
@@ -293,7 +303,7 @@ export enum ValidationReportStatus {
 /**
  * The report containing the name of the plugin that created it.
  */
-export interface NamedValidationPluginReport extends ValidationPluginReport {
+export interface NamedPolicyValidationPluginReport extends PolicyValidationPluginReport {
   /**
    * The name of the plugin that created the report
    */
@@ -304,11 +314,11 @@ export interface NamedValidationPluginReport extends ValidationPluginReport {
 Using `cfn-guard` as an example policy tool, you could create a cfn-guard plugin.
 
 ```ts
-export class CfnGuardValidator implements IValidationPlugin {
+export class CfnGuardValidator implements IPolicyValidationPlugin {
   public readonly name = 'cfn-guard-validator';
   constructor() {}
 
-  validate(context: IValidationContext): ValidationPluginReport {
+  validate(context: IPolicyValidationContext): PolicyValidationPluginReport {
     // execute the cfn-guard cli and get the JSON response from the tool
     const cliResultJson = executeCfnGuardCli();
 
@@ -357,24 +367,24 @@ filtering out the violations that have a matching exemption in an internal
 ticketing system.
 
 ```ts
-export class CfnGuardValidator implements IValidationPlugin {
+export class CfnGuardValidator implements IPolicyValidationPlugin {
   public readonly name = 'cfn-guard-validator';
   constructor() {}
 
-  validate(context: IValidationContext): ValidationPluginReport {
+  validate(context: IPolicyValidationContext): PolicyValidationPluginReport {
     // execute the cfn-guard cli and get the JSON response from the tool
     const cliResultJson = executeCfnGuardCli();
 
     // parse the results and return the violations format
     // that the framework expects
-    const violations: ValidationReport = parseGuardResults(cliResultJson);
+    const violations: PolicyValidationPluginReport = parseGuardResults(cliResultJson);
 
     // filter the list of violations by filtering out
     // the violations that have exemptions
     return this.filterExemptions(violations);
   }
 
-  private filterExemptions(violations: ValidationReport): ValidationReport {
+  private filterExemptions(violations: PolicyValidationPluginReport): PolicyValidationPluginReport {
     const filteredViolations = violations.violations.filter(violation => {
       if (violationIsExemptInTicketingSystem) return false
       return true;
@@ -533,7 +543,7 @@ one or more of these activities:
 * Interpreting the output of the policy-as-code tool and converting it to a common format that the framework can work
   with.
 
-All plugins should implement the same interface, defined in the `core` library (provisionally called `IValidationPlugin`
+All plugins should implement the same interface, defined in the `core` library (provisionally called `IPolicyValidationPlugin`
 here). This interface defines a common set of inputs and outputs that each plugin should conform to.
 
 Zero or more plugins may be added to the CDK application's `App` instance. At some point during synthesis (
@@ -595,7 +605,7 @@ export function synthesize(root: IConstruct, options: SynthesisOptions = {}): cx
   // stacks to add themselves to the synthesized cloud assembly.
   synthesizeTree(root, builder, options.validateOnSynthesis);
 
-  invokeValidationPlugins(); // do validations after synthesis has completed.
+  invokePolicyValidationPlugins(); // do validations after synthesis has completed.
 
   return builder.buildAssembly();
 }
