@@ -404,7 +404,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```text
-[ ] Signed-off by API Bar Raiser @xxxxx
+[x] Signed-off by API Bar Raiser @iliapolo
 ```
 
 ## Public FAQ
