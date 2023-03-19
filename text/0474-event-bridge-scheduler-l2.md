@@ -62,7 +62,7 @@ This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aw
 
 const target = new targets.LambdaInvoke(props.func, {
     input: ScheduleTargetInput.fromObject({
-    "payload": "useful"
+        "payload": "useful"
     })
 });
     
@@ -87,7 +87,7 @@ const rateBasedSchedule = new Schedule(this, 'Schedule', {
 const cronBasedSchedule = new Schedule(this, 'Schedule', {
     schedule: ScheduleExpression.cron({ day: '20', month: '11' }),
     target,
-    scheduleTimeZone: 'America/New_York'
+    scheduleTimeZone: TimeZone.AMERICA_NEW_YORK,
     description: 'This is a test cron-based schedule in New York timezone',
 });
 ```
@@ -98,7 +98,7 @@ A one-time schedule is a schedule that invokes a target only once. You configure
 const oneTimeSchedule = new Schedule(this, 'Schedule', {
     schedule: ScheduleExpression.at(new Date(2022, 10, 20, 19, 20, 23)),
     target,
-    scheduleTimeZone: 'America/New_York'
+    scheduleTimeZone: TimeZone.AMERICA_NEW_YORK,
     description: 'This is a one-time schedule in New York timezone',
 });
 ```
@@ -114,15 +114,21 @@ const group = new Group(this, "Group", {
 
 const target = new targets.LambdaInvoke(props.func, {
     input: ScheduleTargetInput.fromObject({
-    "payload": "useful"
+        "payload": "useful"
     })
 });
     
-const schedule = new Schedule(this, 'Schedule', {
+const schedule1 = new Schedule(this, 'Schedule1', {
     schedule: ScheduleExpression.rate(Duration.minutes(10)),
-    target,
-    group: group,
+    target
 });
+
+const schedule2 = new Schedule(this, 'Schedule2', {
+    schedule: ScheduleExpression.rate(Duration.minutes(5)),
+    target
+});
+
+group.addSchedules(schedule1, schedule2);
 ```
 
 If group is not provided schedule will be created in default group, which you can access in CDK with: 
@@ -339,16 +345,7 @@ new Alarm(this, 'MyGroupErrorAlarm', {
 
 See full list of metrics and their description at [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/scheduler/latest/UserGuide/monitoring-cloudwatch.html) in the *AWS Event Bridge Scheduler User Guide*.
 
-## Managing Access
 
-Should we add this section?
-
-### Managing Access for Groups
-
-TODO
-
-### Managing Access for Schedules
-TODO
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -376,22 +373,23 @@ RFC pull request):
 
 
 We are launching a new module (`@aws-cdk/aws-eventbridge-scheduler`) that contains L2
-construcs for managing Amazon EventBridge Scheduler schedules and targets.
+constructs for managing Amazon EventBridge Scheduler schedules and targets.
 
-This launch fully and fluently supports schedule expressions for ... 
+With EventBridge Scheduler L2 CDK constructs, you can schedule in code one-time or recurrently tens of millions 
+of tasks across many AWS services without provisioning or managing underlying infrastructure. 
 
-Out of the box, we are launching with X Scheduler Targets for AWS service
-destinations (InvokeLambda, ..., ... ), as well as a Universal Scheduler Target so
-that customers can connect to other AWS services. These targets are located in a secondary module
-(`@aws-cdk/aws-eventbridge-scheduler-targets`).
+Out of the box, we are launching with 12 Scheduler Targets for AWS service
+destinations (LambdaInvoke, SqsSendMessage, StepFunctionsStartExecution), as well as a Universal Scheduler Target so
+that customers can connect to other AWS services. These targets are located in a secondary module (`@aws-cdk/aws-eventbridge-scheduler-targets`).
 
 
 ### Why should I use this feature?
 
 > Describe use cases that are addressed by this feature.
 
-EventBridge Scheduler is a tool that can be used to automate the creation of schedules for various tasks, such as sending reminders for tasks, starting and stopping Amazon EC2 instances, and managing subscription-based services. It can be useful for companies of different sizes and types, such as a task management system, a large organization with multiple AWS accounts, and SaaS providers. EventBridge Scheduler can help reduce costs, respect time zones, and manage scheduled tasks more efficiently. Using EventBridge Scheduler with CDK Constructs smooths many configuration edges and provides seamless
-integrations with your existing infrastructure as code.
+EventBridge Scheduler is a tool that can be used to automate the creation of schedules for various tasks, such as sending reminders for tasks, starting and stopping Amazon EC2 instances, and managing subscription-based services. 
+It can be useful for companies of different sizes and types, such as a task management system, a large organization with multiple AWS accounts, and SaaS providers. 
+EventBridge Scheduler can help reduce costs, respect time zones, and manage scheduled tasks more efficiently. Using EventBridge Scheduler with CDK Constructs smooths many configuration edges and provides seamless integrations with your existing infrastructure as code.
 
 
 ## Internal FAQ
@@ -410,12 +408,12 @@ integrations with your existing infrastructure as code.
 The [tracking Github issue for the module](https://github.com/aws/aws-cdk/issues/23394) has
 the 19 +1s indicating that customers want L2 CDK Construct support for this service.
 
-Describe better what CDK construct simplifies: 
+Here is how L2 CDK constructs for Event Scheduler can improve your AWS CDK development experience:
 
-1. Setting up permissions for invoking targets
-2. Encrypting data 
-3. Metrics / Permissions to Schedules
-4. Simpler target declaration 
+1. CDK L2 Constructs can simplify the process of setting up permissions for invoking targets, such as AWS Lambda functions, by automatically configuring required permissions for the targets.
+2. Encrypt data by providing pre-configured encryption settings that you can use as part of your AWS infrastructure as code. This can make it easier to ensure that your data is encrypted at rest and in transit, and can help you meet compliance requirements.
+3. Add metrics and permissions to your AWS EventBridge schedules. You can use constructs to define CloudWatch alarms that monitor schedule activity, and IAM permissions that control access to schedules. This can make it easier to manage and monitor your schedules, as well as provide more granular control over who can modify them.
+4. Constructs provide pre-configured targets for common AWS services, such as Lambda functions and SQS queues, as well as a universal target that can be used to connect to other AWS services. 
 
 ### Why should we _not_ do this?
 
@@ -434,11 +432,65 @@ robust prototypes already implemented.
 ### What is the technical solution (design) of this feature?
 
 
+```mermaid
+classDiagram
+    Expression <|-- Schedule : scheduleExpression
+    Key <|-- Schedule : key
+    ScheduleTargetBase <|-- Schedule : target
+    Group <|-- Schedule : group
+    Input <|-- ScheduleTargetBase : input
+    Targets <.. ScheduleTargetBase : implements
+
+    class Schedule {
+        + String name
+        + Duration flexibleTimeWindow 
+        + Date startDate
+        + Date endDate
+        + String scheduleTimeZone 
+        + Boolean disabled 
+
+        + <> targetOverrideProps
+
+        +grant(..)
+        +grantRead(..)
+        +grantWrite(..)
+        +Metric metric..() 
+    }
+    class Expression {
+        + Expression at(date: Date)
+        + Expression rate(duration: Duration) 
+        + Expression cron(..)
+        + Expression expression(..)
+    }
+
+    class Group {
+        + String name
+        + addSchedules(..Schedule)
+
+        + Metric metric..()
+        +grant(..)
+        +grantRead(..)
+        +grantWrite(..)
+    }
+
+    class ScheduleTargetBase {
+        + sqs.IQueue deadLetterQueue
+        + Duration maximumEventAge
+        + Number maximumRetryAttempts
+    }
+
+    class Input {
+        + Input fromText(..)
+        + Input fromMultilineText(..)
+        + Input fromObject(..)
+        + Input fromInput(..)
+    }
+```
+
 ![L2 Constructs Class Diagram](../images/EventBridge-Scheduler-2023-03-05-1723.excalidraw.png)
 
 Prototype at https://github.com/filletofish/cdk-eb-scheduler/
 
-TODO: Add more details
 
 ### Is this a breaking change?
 
@@ -449,7 +501,7 @@ No.
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-TBD
+1. We have discussed an opportunity of reusing existing `events.targets` module: https://docs.aws.amazon.com/cdk/api/v1/docs/aws-events-targets-readme.html. See RFC comments
 
 ### What are the drawbacks of this solution?
 
@@ -466,7 +518,19 @@ TBD
 > If you have a project board with your implementation plan, this is a good
 > place to link to it.
 
-TBD
+Most part of the L2 constructs is already implemented. We have a set of relatively (1-2 day of work) todos that can be implemented in parallel: 
+
+1. Decide what removal policy for Group should be 
+2. Support and Test Encrypted Schedules
+3. Decide or clean up how IAM Roles are used in Schedules and Targets
+4. Check why name generation fails if env is not passed to the Stack
+5. Unit tests for class schedule
+6. Unit tests for class targets 
+7. Unit tests for classes: groups, schedule expressions, input 
+8. Integration tests #15
+9. Methods for Granting Schedule Group Management IAM permissions #5
+10. Validate that target is not cross-account
+11. Use Timezone Class
 
 ### Are there any open issues that need to be addressed later?
 
