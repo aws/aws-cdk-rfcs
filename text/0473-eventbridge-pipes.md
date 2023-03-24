@@ -370,9 +370,24 @@ export interface IPipeSource {
   grantRead(grantee: IRole): void;
 }
 ```
-and the Source constructor properties interface:
+and all Source constructor share the interface
 ```ts
-export interface IPipeSourceProps {
+export interface IPipeSourceBaseProps {
+    /**
+    * The maximum number of records to include in each batch.
+    */
+    batchSize?: number;
+    
+    /**
+     * The maximum length of a time to wait for events.
+     */ 
+    maximumBatchingWindowInSeconds?: number;
+}
+```
+one specific source interface is e.g.:
+
+```ts
+export interface IPipeSourceProps extends IPipeSourceBaseProps{
   /**
    * The ARN of the source
    */
