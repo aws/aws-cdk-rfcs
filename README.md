@@ -21,13 +21,11 @@ future state of the libraries and to discover projects for contribution.
 [431](https://github.com/aws/aws-cdk-rfcs/issues/431)|[SageMaker Model Hosting L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0431-sagemaker-l2-endpoint.md)||👷 implementing
 [460](https://github.com/aws/aws-cdk-rfcs/issues/460)|[Reduce aws-cdk-lib package size](https://github.com/aws/aws-cdk-rfcs/issues/460)||👷 implementing
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)||📆 planning
-[374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[The jsii compiler to follow TypeScript versioning](https://github.com/aws/aws-cdk-rfcs/issues/374)||⏰ final comments
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)||✍️ review
 [419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)||✍️ review
-[477](https://github.com/aws/aws-cdk-rfcs/issues/477)|[Add policy validation to CDK](https://github.com/aws/aws-cdk-rfcs/issues/477)||✍️ review
 [2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Support for CloudFormation Resource Imports](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|💡 proposed
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||💡 proposed
@@ -55,6 +53,7 @@ future state of the libraries and to discover projects for contribution.
 [48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)||💡 proposed
 [51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
+[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||💡 proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|💡 proposed
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||💡 proposed
@@ -117,7 +116,7 @@ future state of the libraries and to discover projects for contribution.
 [446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||💡 proposed
 [448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||💡 proposed
 [450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||💡 proposed
-[456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/issues/456)||💡 proposed
+[456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0456-elasticache-l2.md)||💡 proposed
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||💡 proposed
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||💡 proposed
 [465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)|[@Naumel](https://github.com/Naumel)|💡 proposed
@@ -125,9 +124,12 @@ future state of the libraries and to discover projects for contribution.
 [469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||💡 proposed
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||💡 proposed
-[473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[Eventbridge Pipe L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)||💡 proposed
+[473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[EventBridge Pipes L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)|[@mrgrain](https://github.com/mrgrain)|💡 proposed
 [474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/474)||💡 proposed
-[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||✅ done
+[481](https://github.com/aws/aws-cdk-rfcs/issues/481)|[Add L2 constructs for Amazon Redshift Serverless](https://github.com/aws/aws-cdk-rfcs/issues/481)||💡 proposed
+[483](https://github.com/aws/aws-cdk-rfcs/issues/483)|[AppFlow L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/483)|[@iliapolo](https://github.com/iliapolo)|💡 proposed
+[487](https://github.com/aws/aws-cdk-rfcs/issues/487)|[New L2 Construct for Step Functions Map State in Distributed Mode](https://github.com/aws/aws-cdk-rfcs/issues/487)||💡 proposed
+[489](https://github.com/aws/aws-cdk-rfcs/issues/489)|[Add API to register and execute code before or after CDK App lifecycle events](https://github.com/aws/aws-cdk-rfcs/issues/489)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
@@ -158,10 +160,13 @@ future state of the libraries and to discover projects for contribution.
 [328](https://github.com/aws/aws-cdk-rfcs/issues/328)|[polyglot assert library](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0328-polyglot-assert.md)|[@nija-at](https://github.com/nija-at)|✅ done
 [353](https://github.com/aws/aws-cdk-rfcs/issues/353)|[Constructs for all public CloudFormation resources and modules](https://github.com/aws/aws-cdk-rfcs/blob/master/text/353-cfn-registry-constructs.md)||✅ done
 [359](https://github.com/aws/aws-cdk-rfcs/issues/359)|[Construct Hub Deny List](https://github.com/aws/aws-cdk-rfcs/blob/master/text/359-construct-hub-deny-list.md)||✅ done
+[374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[The jsii compiler to follow TypeScript versioning](https://github.com/aws/aws-cdk-rfcs/issues/374)||✅ done
 [388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||✅ done
+[477](https://github.com/aws/aws-cdk-rfcs/issues/477)|[Add policy validation to CDK](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0477-policy-validation.md)|[@otaviomacedo](https://github.com/otaviomacedo)|✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [436](https://github.com/aws/aws-cdk-rfcs/issues/436)|[Amazon GameLift L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0436-gamelift-l2.md)||❓unknown
+[485](https://github.com/aws/aws-cdk-rfcs/issues/485)|[AWS Batch L2](https://github.com/aws/aws-cdk-rfcs/issues/485)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
