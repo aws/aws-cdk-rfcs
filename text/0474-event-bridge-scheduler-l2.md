@@ -105,7 +105,13 @@ const oneTimeSchedule = new Schedule(this, 'Schedule', {
 
 ### Grouping Schedules
 
-When creating a new schedule, you can add it to a scheduling group:
+Your AWS account comes with a default scheduler group. If group is not provided a schedule will be created in default group, which you can access in CDK with: 
+
+```ts
+const defaultGroup = Group.fromDefaultGroup(this, "DefaultGroup");
+```
+
+When creating a new schedule, you can also add the schedule to a custom scheduling group managed by you:
 
 ```ts
 const group = new Group(this, "Group", {
@@ -131,10 +137,7 @@ const schedule2 = new Schedule(this, 'Schedule2', {
 group.addSchedules(schedule1, schedule2);
 ```
 
-If group is not provided schedule will be created in default group, which you can access in CDK with: 
-```ts
-const defaultGroup = Group.fromDefaultGroup(this, "DefaultGroup");
-```
+Groups can be used to organize the schedules logically, access the schedule metrics and manage permissions at group granularity (see below).
 
 ## Scheduler Targets
 
@@ -185,7 +188,7 @@ const input = ScheduleTargetInput.fromObject({
 });
 ```
 
-You can include context attributes in your target payload. EventBridge Scheduler will replace each keyword with its respective value and deliver it to the target. Supported context attributes: 
+You can include context attributes in your target payload. EventBridge Scheduler will replace each keyword with its respective value and deliver it to the target. See [full list of supported context attributes](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html): 
 
 1. `ContextAttribute.scheduleArn()` – The ARN of the schedule.
 2. `ContextAttribute.scheduledTime()` – The time you specified for the schedule to invoke its target, for example, 2022-03-22T18:59:43Z.
@@ -210,6 +213,8 @@ execution IAM role permission to `lambda:InvokeFunction`.
 ```ts
 import * as iam from '@aws-cdk/aws-iam';
 
+declare const fn: lambda.Function;
+
 const role = new iam.Role(this, 'Role', {
   assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
 });
@@ -219,7 +224,7 @@ const target = new targets.LambdaInvoke({
         "payload": "useful"
     }),
     role: role
-}, props.func);
+}, fn);
 ```
 
 For universal targets you must grant the required IAM permissions yourself.
