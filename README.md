@@ -9,7 +9,7 @@ future state of the libraries and to discover projects for contribution.
 
 **Jump to**: [What is an RFC?](#what-is-an-rfc) |
 [RFC Process](#rfc-process) |
-[RFC Life Cycle](#the-rfc-life-cycle)
+[RFC State Diagram](#state-diagram)
 
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
