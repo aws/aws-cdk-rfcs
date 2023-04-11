@@ -2,14 +2,13 @@
 
 * **Original Author(s):**: @filletofish, @Jacco
 * **Tracking Issue**: #https://github.com/aws/aws-cdk-rfcs/issues/473
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @kaizencc
 
 > Write one sentence which is a brief description of the feature. It should describe:
 > * What is the user pain we are solving?
 > * How does it impact users?
 
 Library `aws-events-scheduler` contains L2 CDK constructs for creating, run, and manage scheduled tasks at scale with Amazon Event Bridge Scheduler. 
-
 
 ## Working Backwards
 
@@ -59,7 +58,6 @@ This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aw
 ## Defining a schedule 
 
 ```ts
-
 const target = new targets.LambdaInvoke(props.func, {
     input: ScheduleTargetInput.fromObject({
         "payload": "useful"
@@ -245,7 +243,6 @@ permissions policy
 ```ts
 import * as kms from '@aws-cdk/aws-kms';
 
-
 const key = new kms.Key(this, 'Key');
 
 const schedule = new Schedule(this, 'Schedule', {
@@ -347,7 +344,6 @@ new Alarm(this, 'MyGroupErrorAlarm', {
 });
 ```
 
-
 See full list of metrics and their description at [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/scheduler/latest/UserGuide/monitoring-cloudwatch.html) in the *AWS Event Bridge Scheduler User Guide*.
 
 
@@ -358,7 +354,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[x] Signed-off by API Bar Raiser @kaizencc
 ```
 
 ## Public FAQ
