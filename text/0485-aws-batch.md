@@ -599,7 +599,10 @@ new batch.EcsJobDefinition(this, 'JobDefn', {
 
 ### Understanding Progressive Allocation Strategies
 
-AWS Batch uses an [allocation strategy](https://docs.aws.amazon.com/batch/latest/userguide/allocation-strategies.html) to determine what compute resource will efficiently handle incoming job requests. By default, **BEST_FIT** will pick an available compute instance based on vCPU requirements. If none exist, the job will wait until resources become available. However, with this strategy, you may have jobs waiting in the queue unnecessarily despite having more powerful instances available. Below is an example of how that situation might look like:
+AWS Batch uses an [allocation strategy](https://docs.aws.amazon.com/batch/latest/userguide/allocation-strategies.html) to determine what compute resource will efficiently handle incoming job requests.
+By default, **BEST_FIT** will pick an available compute instance based on vCPU requirements.
+If none exist, the job will wait until resources become available.
+However, with this strategy, you may have jobs waiting in the queue unnecessarily despite having more powerful instances available. Below is an example of how that situation might look like:
 
 ```plaintext
 Compute Environment:
@@ -619,10 +622,11 @@ A => 4 vCPU - ALLOCATED TO m5.xlarge
 B => 2 vCPU - WAITING
 ```
 
-In this situation, Batch will allocate **Job A** to compute resource #1 because it is the most cost efficient resource that matches the vCPU requirement. However, with this `BEST_FIT` strategy, **Job B** will not be allocated to our other available compute resource even though it is strong enough to handle it. Instead, it will wait until the first job is finished processing or wait a similar `m5.xlarge` resource to be provisioned.
+In this situation, Batch will allocate **Job A** to compute resource #1 because it is the most cost efficient resource that matches the vCPU requirement.
+However, with this `BEST_FIT` strategy, **Job B** will not be allocated to our other available compute resource even though it is strong enough to handle it.
+Instead, it will wait until the first job is finished processing or wait a similar `m5.xlarge` resource to be provisioned.
 
 The alternative would be to use the `BEST_FIT_PROGRESSIVE` strategy in order for the remaining job to be handled in larger containers regardless of vCPU requirement and costs.
-
 
 ## API
 
