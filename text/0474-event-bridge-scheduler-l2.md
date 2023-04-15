@@ -199,7 +199,7 @@ const input = scheduler.ScheduleTargetInput.fromInput(text);
 ```
 
 
-### Specifying IAM role 
+### Specifying Execution Role 
 
 An execution role is an IAM role that EventBridge Scheduler assumes in order to interact with other AWS services on your behalf.
 
