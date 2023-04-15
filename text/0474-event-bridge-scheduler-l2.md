@@ -257,7 +257,7 @@ the *Amazon EventBridge Scheduler User Guide*.
 
 ## Error-handling 
 
-You configure how your schedule handles failures, when EventBridge Scheduler is unable to deliver an event
+You can configure how your schedule handles failures, when EventBridge Scheduler is unable to deliver an event
 successfully to a target, by using two primary mechanisms: a retry policy, and a dead-letter queue (DLQ). 
 
 A retry policy determines the number of times EventBridge Scheduler must retry a failed event, and how long 
