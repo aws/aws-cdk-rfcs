@@ -205,7 +205,7 @@ An execution role is an IAM role that EventBridge Scheduler assumes in order to 
 
 The classes for templated schedule targets automatically create an IAM role with all the minimum necessary
 permissions to interact with the templated target. If you wish you may specify your own IAM role, then the templated targets 
-will grant minimal required permission. For example: for invoking Lambda function target `LambdaInvoke` will grant
+will grant minimal required permissions. For example: for invoking Lambda function target `LambdaInvoke` will grant
 execution IAM role permission to `lambda:InvokeFunction`.
 
 ```ts
