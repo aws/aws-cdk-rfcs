@@ -221,7 +221,7 @@ const target = new targets.LambdaInvoke({
     input: ScheduleTargetInput.fromObject({ 
         "payload": "useful"
     }),
-    role: role
+    role,
 }, fn);
 ```
 
