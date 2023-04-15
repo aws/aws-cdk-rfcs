@@ -229,7 +229,7 @@ For universal targets you must grant the required IAM permissions yourself.
 
 ### Cross-account and cross-region targets
 
-Executing cross-account and cross-region targets will not be supported from day 1.
+Executing cross-account and cross-region targets are not supported yet.
 
 ### Specifying Encryption key
 
