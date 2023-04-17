@@ -472,15 +472,15 @@ classDiagram
         + Duration flexibleTimeWindow 
         + Date startDate
         + Date endDate
-        + String scheduleTimeZone 
+        + Timezone scheduleTimeZone 
         + Boolean disabled 
 
         + <> targetOverrideProps
 
-        +grant(..)
-        +grantRead(..)
-        +grantWrite(..)
-        +Metric metric..() 
+        + grant(..)
+        + grantRead(..)
+        + grantWrite(..)
+        + Metric metric..() 
     }
     class Expression {
         + Expression at(date: Date)
@@ -494,15 +494,16 @@ classDiagram
         + addSchedules(..Schedule)
 
         + Metric metric..()
-        +grant(..)
-        +grantRead(..)
-        +grantWrite(..)
+        + grant(..)
+        + grantRead(..)
+        + grantWrite(..)
     }
 
     class ScheduleTargetBase {
         + sqs.IQueue deadLetterQueue
         + Duration maximumEventAge
         + Number maximumRetryAttempts
+        + Role role
     }
 
     class Input {
