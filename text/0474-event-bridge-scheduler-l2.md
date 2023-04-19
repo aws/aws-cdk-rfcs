@@ -65,7 +65,7 @@ const target = new targets.LambdaInvoke(props.func, {
 });
     
 const schedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.rate(Duration.minutes(10)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target,
     description: 'This is a test schedule that invokes lambda function every 10 minutes.',
 });
@@ -75,30 +75,34 @@ const schedule = new Schedule(this, 'Schedule', {
 
 You can choose from three schedule types when configuring your schedule: rate-based, cron-based, and one-time schedules. 
 
-Both rate-based and cron-based schedules are recurring schedules. You configure each recurring schedule type using a schedule expression for the type of schedule you want to configure, and specifying a time zone in which EventBridge Scheduler evaluates the expression with `scheduleTimeZone` parameter.
+Both rate-based and cron-based schedules are recurring schedules. You can configure each recurring schedule type using a schedule expression. For cron-based schedule you can specify a time zone in which EventBridge Scheduler evaluates the expression. 
 
 ```ts
 const rateBasedSchedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.rate(Duration.minutes(10)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target,
     description: 'This is a test rate-based schedule',
 });
 
 const cronBasedSchedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.cron({ minute: '0', hour: '23', day: '20', month: '11' }),
+    scheduleExpression: ScheduleExpression.cron(
+        { minute: '0', hour: '23', day: '20', month: '11' },
+        TimeZone.AMERICA_NEW_YORK
+    ),
     target,
-    scheduleTimeZone: TimeZone.AMERICA_NEW_YORK,
     description: 'This is a test cron-based schedule that will run at 11:00 PM, on day 20 of the month, only in November in New York timezone',
 });
 ```
 
-A one-time schedule is a schedule that invokes a target only once. You configure a one-time schedule when by specifying the time, date, and time zone in which EventBridge Scheduler evaluates the schedule.
+A one-time schedule is a schedule that invokes a target only once. You configure a one-time schedule when by specifying the time of the day, date, and time zone in which EventBridge Scheduler evaluates the schedule.
 
 ```ts
 const oneTimeSchedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.at(new Date(2022, 10, 20, 19, 20, 23)),
+    scheduleExpression: ScheduleExpression.at(
+        new Date(2022, 10, 20, 19, 20, 23)
+        TimeZone.AMERICA_NEW_YORK
+    )
     target,
-    scheduleTimeZone: TimeZone.AMERICA_NEW_YORK,
     description: 'This is a one-time schedule in New York timezone',
 });
 ```
@@ -125,12 +129,12 @@ const target = new targets.LambdaInvoke(props.func, {
 });
     
 const schedule1 = new Schedule(this, 'Schedule1', {
-    schedule: ScheduleExpression.rate(Duration.minutes(10)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target
 });
 
 const schedule2 = new Schedule(this, 'Schedule2', {
-    schedule: ScheduleExpression.rate(Duration.minutes(5)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(5)),
     target
 });
 
@@ -138,7 +142,7 @@ group.addSchedules(schedule1, schedule2);
 
 // You can also assign groups in a schedule constructor: 
 const schedule3 = new Schedule(this, 'Schedule2', {
-    schedule: ScheduleExpression.rate(Duration.minutes(5)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(5)),
     group,
     target
 });
@@ -177,7 +181,7 @@ const input = ScheduleTargetInput.fromObject({
 });
 
 const schedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.rate(Duration.hours(1)),
+    scheduleExpression: ScheduleExpression.rate(Duration.hours(1)),
     target: new targets.Universal('sqs', 'CreateQueue', { input: input })
 });
 ```
@@ -247,7 +251,7 @@ target.role.addToPolicy(new iam.PolicyStatement({
 }));
 
 const schedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.rate(Duration.hours(1)),
+    scheduleExpression: ScheduleExpression.rate(Duration.hours(1)),
     target
 });
 ```
@@ -271,7 +275,7 @@ import * as kms from '@aws-cdk/aws-kms';
 const key = new kms.Key(this, 'Key');
 
 const schedule = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.rate(Duration.minutes(10)),
+    scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target,
     key: key,
 });
@@ -318,12 +322,12 @@ const target = new targets.LambdaInvoke(props.func, {
 });
     
 const schedule1 = new Schedule(this, 'Schedule', {
-    schedule: ScheduleExpression.cron({ day: '20' }),
+    scheduleExpression: ScheduleExpression.cron({ day: '20' }),
     target,
 });
 
 const schedule2 = new Schedule(this, 'Schedule2', {
-    schedule: ScheduleExpression.cron({ day: '5' }),
+    scheduleExpression: ScheduleExpression.cron({ day: '5' })
     target,
     targetOverrides: {
         input: ScheduleTargetInput.fromText("Overriding Target Input") 
@@ -460,7 +464,7 @@ robust prototypes already implemented.
 
 ```mermaid
 classDiagram
-    Expression <|-- Schedule : scheduleExpression
+    ScheduleExpression <|-- Schedule : scheduleExpression
     Key <|-- Schedule : key
     ScheduleTargetBase <|-- Schedule : target
     Group <|-- Schedule : group
@@ -472,7 +476,6 @@ classDiagram
         + Duration flexibleTimeWindow 
         + Date startDate
         + Date endDate
-        + Timezone scheduleTimeZone 
         + Boolean disabled 
 
         + <> targetOverrideProps
@@ -482,11 +485,11 @@ classDiagram
         + grantWrite(..)
         + Metric metric..() 
     }
-    class Expression {
-        + Expression at(date: Date)
-        + Expression rate(duration: Duration) 
-        + Expression cron(..)
-        + Expression expression(..)
+    class ScheduleExpression {
+        + ScheduleExpression at(date: Date, timezone? Timezone)
+        + ScheduleExpression rate(duration: Duration) 
+        + ScheduleExpression cron(options: CronOptions, timezone?: Timezone)
+        + ScheduleExpression expression(..)
     }
 
     class Group {
