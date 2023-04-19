@@ -1,63 +1,59 @@
 # RFC - Glue CDK L2 Construct
 
-https://github.com/aws/aws-cdk-rfcs/issues/497
-
 ## L2 Construct for AWS Glue Connections, Jobs, and Workflows
 
 * **Original Author(s):** @natalie-white-aws, @mjanardhan @parag-shah-aws
-* **Tracking Issue:** 
+* **Tracking Issue:**
 * **API Bar Raiser:** @TheRealAmazonKendra
+[Link to RFC Issue](https://github.com/aws/aws-cdk-rfcs/issues/497)
 
 ## Working Backwards - README
 
-[AWS Glue](https://aws.amazon.com/glue/) is a serverless data integration 
-service that makes it easier to discover, prepare, move, and integrate data 
-from multiple sources for analytics, machine learning (ML), and application 
-development. Glue was released on 2017/08.  
+[AWS Glue](https://aws.amazon.com/glue/) is a serverless data integration
+service that makes it easier to discover, prepare, move, and integrate data
+from multiple sources for analytics, machine learning (ML), and application
+development. Glue was released on 2017/08.
 [Launch](https://aws.amazon.com/blogs/aws/launch-aws-glue-now-generally-available/)
 
-Today, customers define Glue data sources, connections, jobs, and workflows 
-to define their data and ETL solutions via the AWS console, the AWS CLI, and 
-Infrastructure as Code tools like CloudFormation and the CDK. However, they 
-have challenges defining the required and optional parameters depending on 
-job type, networking constraints for data source connections, secrets for 
-JDBC connections, and least-privilege IAM Roles and Policies. We will build 
-convenience methods working backwards from common use cases and default to 
+Today, customers define Glue data sources, connections, jobs, and workflows
+to define their data and ETL solutions via the AWS console, the AWS CLI, and
+Infrastructure as Code tools like CloudFormation and the CDK. However, they
+have challenges defining the required and optional parameters depending on
+job type, networking constraints for data source connections, secrets for
+JDBC connections, and least-privilege IAM Roles and Policies. We will build
+convenience methods working backwards from common use cases and default to
 recommended best practices.
 
-This RFC proposes updates to the L2 construct for Glue which will provide 
-convenience features and abstractions for the existing 
-[L1 (CloudFormation) Constructs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Glue.html) building on the 
-functionality already supported in the [@aws-cdk/aws-glue-alpha module](https://github.com/aws/aws-cdk/blob/v2.51.1/packages/%40aws-cdk/aws-glue/README.md). 
-
+This RFC proposes updates to the L2 construct for Glue which will provide
+convenience features and abstractions for the existing
+[L1 (CloudFormation) Constructs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Glue.html) building on the
+functionality already supported in the [@aws-cdk/aws-glue-alpha module](https://github.com/aws/aws-cdk/blob/v2.51.1/packages/%40aws-cdk/aws-glue/README.md).
 
 ## Create a Glue Job
 
 The glue-alpha-module already supports three of the four common types of Glue
-Jobs: Spark (ETL and Streaming), Python Shell, Ray. This RFC will add the 
-more recent Flex Job. The construct also implements AWS practice 
-recommendations when creating a Glue Job such use of Secrets Management for 
-Connection JDBC strings, Glue Job Autoscaling, least privileges in terms of 
+Jobs: Spark (ETL and Streaming), Python Shell, Ray. This RFC will add the
+more recent Flex Job. The construct also implements AWS practice
+recommendations when creating a Glue Job such use of Secrets Management for
+Connection JDBC strings, Glue Job Autoscaling, least privileges in terms of
 IAM permissions and also sane defaults for Glue job specification (more details
 are mentioned in the below table).
 
-This RFC will introduce breaking changes to the existing glue-alpha-module to 
-streamline the developer experience and introduce new constants and validations. 
-The L2 construct will determine the job type by the job type and language 
+This RFC will introduce breaking changes to the existing glue-alpha-module to
+streamline the developer experience and introduce new constants and validations.
+The L2 construct will determine the job type by the job type and language
 provided by the developer, rather than having separate methods in every
-permutation that Glue jobs allow. 
-
+permutation that Glue jobs allow.
 
 ### Spark Jobs
 
-1. **ETL Jobs
-    **
+1. **ETL Jobs**
 
 ETL jobs supports python and Scala language. ETL job type supports G1, G2, G4
 and G8 worker type default as G2 which customer can override. Also preferred
 version for ETL is 4.0 but customer can override the version to 3.0. We by
 default enable several features for ETL jobs these are
-` —enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log.` We
+`—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log.` We
 recommend to use these feature for ETL jobs. You can find more details about
 version, worker type and other feature on public documentation.
 
@@ -221,7 +217,6 @@ MaxDPU will be set `0.0625`. Also `PythonVersion.3_9` supports preloaded
 analytics libraries using flag `library-set=analytics` , this feature will
 be enable by default.
 
-
 ```
 new glue.Job(this, 'PythonShellJob', {
     jobType: glue.JobType.PYTHON_SHELL,
@@ -244,13 +239,10 @@ new glue.Job(this, 'PythonShellJob', {
 });
 ```
 
-
-
 ### Ray Jobs
 
 Glue ray only supports Z.2X worker type and 4.0 Glue version. Runtime
 will default to `Ray2.3` and min workers will default to 3.
-
 
 ```
 declare const bucket: s3.Bucket;
@@ -262,7 +254,6 @@ new glue.Job(this, 'GlueRayJob', {
 ```
 
 Optionally customer can override min workers and other Glue job fields
-
 
 ```
 declare const bucket: s3.Bucket;
@@ -282,13 +273,12 @@ We will add convenience functions for adding triggers to jobs. Standalone
 triggers are an anti-pattern, so we will only create triggers from within a
 workflow.
 
-
 1. **On Demand Triggers**
 
 On demand triggers can start glue jobs or crawlers. We’ll add convenience
 functions to create on-demand crawler or job triggers. The trigger method
 will take an optional description but abstract the requirement of an actions
-list using the job or crawler name. 
+list using the job or crawler name.
 
 ```
 myGlueJob.createOnDemandTrigger(this, 'MyJobTrigger', {
@@ -300,15 +290,13 @@ myGlueJob.createOnDemandTrigger(this, 'MyJobTrigger', {
 myGlueCrawler.createOnDemandTrigger(this, 'MyCrawlerTrigger');
 ```
 
-
-
 1. **Scheduled Triggers**
 
 Schedule triggers are a way for customers to create jobs using cron
 expressions. We’ll provide daily, weekly and hourly options which customer
 can override using custom cron expression. The trigger method will take an
 optional description but abstract the requirement of an actions list using
-the job or crawler name. 
+the job or crawler name. \
 
 ```
 myGlueJob.createDailyTrigger(this, 'MyDailyTrigger');
@@ -322,8 +310,6 @@ myGlueJob.createScheduledTrigger(this, 'MyScheduledTrigger', {
   schedule: '`cron(15 12 * * ? *)'`` //``every day at 12:15 UTC`
 });
 ```
-
-
 
 #### **3. Notify  Event Trigger**
 
@@ -380,7 +366,7 @@ certain types of data stores.
     **User needs to specify JDBC connection credentials in Secrets Manager and
     provide the Secrets Manager Key name as a property to the Job connection
     property.
-    
+
 * **Networking - CDK determines the best fit subnet for Glue Connection
 configuration
     **The current glue-alpha-module requires the developer to specify the
