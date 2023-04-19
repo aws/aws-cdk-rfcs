@@ -5,6 +5,7 @@
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
 > Write one sentence which is a brief description of the feature. It should describe:
+>
 > * What is the user pain we are solving?
 > * How does it impact users?
 
