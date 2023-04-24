@@ -235,7 +235,7 @@ const target = new targets.LambdaInvoke({
 }, fn);
 ```
 
-Class for universal target also automatically creates an IAM role if you do no specify your own IAM role. However, in comparison with templated targets, for universal targets you must grant the required IAM permissions yourself.
+Universal target automatically create an IAM role if you do not specify your own IAM role. However, in comparison with templated targets, for universal targets you must grant the required IAM permissions yourself.
 
 ```ts
 const input = ScheduleTargetInput.fromObject({
