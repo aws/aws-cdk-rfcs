@@ -85,10 +85,13 @@ const rateBasedSchedule = new Schedule(this, 'Schedule', {
 });
 
 const cronBasedSchedule = new Schedule(this, 'Schedule', {
-    scheduleExpression: ScheduleExpression.cron(
-        { minute: '0', hour: '23', day: '20', month: '11' },
-        TimeZone.AMERICA_NEW_YORK
-    ),
+    scheduleExpression: ScheduleExpression.cron({ 
+        minute: '0',
+        hour: '23',
+        day: '20',
+        month: '11',
+        timeZone: TimeZone.AMERICA_NEW_YORK 
+    }),
     target,
     description: 'This is a test cron-based schedule that will run at 11:00 PM, on day 20 of the month, only in November in New York timezone',
 });
@@ -488,7 +491,7 @@ classDiagram
     class ScheduleExpression {
         + ScheduleExpression at(date: Date, timezone? Timezone)
         + ScheduleExpression rate(duration: Duration) 
-        + ScheduleExpression cron(options: CronOptions, timezone?: Timezone)
+        + ScheduleExpression cron(options: CronOptionsWithTimezone)
         + ScheduleExpression expression(..)
     }
 
