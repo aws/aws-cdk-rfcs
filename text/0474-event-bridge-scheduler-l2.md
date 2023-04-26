@@ -223,7 +223,7 @@ const input = ScheduleTargetInput.fromObject({
 
 You can include context attributes in your target payload. EventBridge Scheduler will replace each keyword with
 its respective value and deliver it to the target. See
-[full list of supported context attributes](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html): 
+[full list of supported context attributes](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html):
 
 1. `ContextAttribute.scheduleArn()` – The ARN of the schedule.
 2. `ContextAttribute.scheduledTime()` – The time you specified for the schedule to invoke its target, for example, 2022-03-22T18:59:43Z.
@@ -523,7 +523,7 @@ classDiagram
     }
     class ScheduleExpression {
         + ScheduleExpression at(date: Date, timezone? Timezone)
-        + ScheduleExpression rate(duration: Duration) 
+        + ScheduleExpression rate(duration: Duration)
         + ScheduleExpression cron(options: CronOptionsWithTimezone)
         + ScheduleExpression expression(..)
     }
@@ -555,7 +555,7 @@ classDiagram
 
 ![L2 Constructs Class Diagram](../images/EventBridge-Scheduler-2023-03-05-1723.excalidraw.png)
 
-Prototype at (github.com/filletofish/cdk-eb-scheduler)[https://github.com/filletofish/cdk-eb-scheduler].
+Prototype at [github.com/filletofish/cdk-eb-scheduler](https://github.com/filletofish/cdk-eb-scheduler).
 
 ### Is this a breaking change?
 
@@ -566,8 +566,8 @@ No.
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-1. We have discussed an opportunity of reusing existing `events.targets` module:
-https://docs.aws.amazon.com/cdk/api/v1/docs/aws-events-targets-readme.html. See RFC comments.
+1. We have discussed an opportunity of reusing existing `events.targets`
+[module](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-events-targets-readme.html). See RFC comments.
 
 ### What are the drawbacks of this solution?
 
