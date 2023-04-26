@@ -51,23 +51,26 @@ See below
 allows you to create, run, and manage scheduled tasks at scale. With EventBridge Scheduler, you can schedule one-time or recurrently tens of millions of
 tasks across many AWS services without provisioning or managing underlying infrastructure.
 
-1. **Schedule**: A schedule is the main resource you create, configure, and manage using Amazon EventBridge Scheduler. Every schedule has a schedule 
-expression that determines when, and with what frequency, the schedule runs. EventBridge Scheduler supports three types of schedules: rate, cron, and one-
-time schedules. When you create a schedule, you configure a target for the schedule to invoke. 
-2. **Targets**: A target is an API operation that EventBridge Scheduler calls on your behalf every time your schedule runs. EventBridge Scheduler supports 
-two types of targets: templated targets and universal targets. Templated targets invoke common API operations across a core groups of services. For 
-example, EventBridge Scheduler supports templated targets for invoking AWS Lambda Function or starting execution of Step Function state machine. For API 
-operations that are not supported by templated targets you can use customizeable universal targets. Universal targets support calling more than 6,000 API 
+1. **Schedule**: A schedule is the main resource you create, configure, and manage using Amazon EventBridge Scheduler.
+Every schedule has a schedule expression that determines when, and with what frequency, the schedule runs. EventBridge
+Scheduler supports three types of schedules: rate, cron, and one-time schedules. When you create a schedule, you
+configure a target for the schedule to invoke.
+2. **Targets**: A target is an API operation that EventBridge Scheduler calls on your behalf every time your schedule runs.
+EventBridge Scheduler supports two types of targets: templated targets and universal targets. Templated targets invoke common
+API operations across a core groups of services. For example, EventBridge Scheduler supports templated targets for invoking
+AWS Lambda Function or starting execution of Step Function state machine. For API operations that are not supported by
+templated targets you can use customizeable universal targets. Universal targets support calling more than 6,000 API
 operations across over 270 AWS services.
-3. **Schedule Group**: A schedule group is an Amazon EventBridge Scheduler resource that you use to organize your schedules. Your AWS account comes with a 
-default scheduler group. A new schedule will always be added to a scheduling group. If you do not provide a scheduling group to add to, it will be added to 
-the default scheduling group. You can create up to 500 schedule groups in your AWS account. Groups can be used to organize the schedules logically, access 
-the schedule metrics and manage permissions at group granularity (see details below). Scheduling groups support tagging: with EventBridge Scheduler, you 
+3. **Schedule Group**: A schedule group is an Amazon EventBridge Scheduler resource that you use to organize your schedules.
+Your AWS account comes with a default scheduler group. A new schedule will always be added to a scheduling group. If you do
+not provide a scheduling group to add to, it will be added to the default scheduling group. You can create up to 500 schedule
+groups in your AWS account. Groups can be used to organize the schedules logically, access the schedule metrics and manage
+permissions at group granularity (see details below). Scheduling groups support tagging: with EventBridge Scheduler, you
 apply tags to schedule groups, not to individual schedules to organize your resources.
 
 This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk) project. It allows you to define Event Bridge Schedules.
 
-## Defining a schedule 
+## Defining a schedule
 
 ```ts
 const target = new targets.LambdaInvoke(props.func, {
@@ -75,7 +78,7 @@ const target = new targets.LambdaInvoke(props.func, {
         "payload": "useful",
     }),
 });
-    
+
 const schedule = new Schedule(this, 'Schedule', {
     scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target,
@@ -85,10 +88,10 @@ const schedule = new Schedule(this, 'Schedule', {
 
 ### Schedule Expressions
 
-You can choose from three schedule types when configuring your schedule: rate-based, cron-based, and one-time schedules. 
+You can choose from three schedule types when configuring your schedule: rate-based, cron-based, and one-time schedules.
 
 Both rate-based and cron-based schedules are recurring schedules. You can configure each recurring schedule type using a schedule expression. For cron-
-based schedule you can specify a time zone in which EventBridge Scheduler evaluates the expression. 
+based schedule you can specify a time zone in which EventBridge Scheduler evaluates the expression.
 
 ```ts
 const rateBasedSchedule = new Schedule(this, 'Schedule', {
@@ -110,8 +113,8 @@ const cronBasedSchedule = new Schedule(this, 'Schedule', {
 });
 ```
 
-A one-time schedule is a schedule that invokes a target only once. You configure a one-time schedule when by specifying the time of the day, date, and time 
-zone in which EventBridge Scheduler evaluates the schedule.
+A one-time schedule is a schedule that invokes a target only once. You configure a one-time schedule when by specifying
+the time of the day, date, and time zone in which EventBridge Scheduler evaluates the schedule.
 
 ```ts
 const oneTimeSchedule = new Schedule(this, 'Schedule', {
@@ -126,7 +129,7 @@ const oneTimeSchedule = new Schedule(this, 'Schedule', {
 
 ### Grouping Schedules
 
-Your AWS account comes with a default scheduler group, which you can access in CDK with: 
+Your AWS account comes with a default scheduler group, which you can access in CDK with:
 
 ```ts
 const defaultGroup = Group.fromDefaultGroup(this, "DefaultGroup");
@@ -144,7 +147,7 @@ const target = new targets.LambdaInvoke(props.func, {
         "payload": "useful",
     }),
 });
-    
+
 const schedule1 = new Schedule(this, 'Schedule1', {
     scheduleExpression: ScheduleExpression.rate(Duration.minutes(10)),
     target,
@@ -157,7 +160,7 @@ const schedule2 = new Schedule(this, 'Schedule2', {
 
 group.addSchedules(schedule1, schedule2);
 
-// You can also assign groups in a schedule constructor: 
+// You can also assign groups in a schedule constructor:
 const schedule3 = new Schedule(this, 'Schedule2', {
     scheduleExpression: ScheduleExpression.rate(Duration.minutes(5)),
     group,
@@ -167,32 +170,33 @@ const schedule3 = new Schedule(this, 'Schedule2', {
 
 ## Scheduler Targets
 
-The `@aws-cdk/aws-schedule-targets` module includes classes that implement the `IScheduleTarget` interface for various AWS services. EventBridge Scheduler 
-supports two types of targets: templated targets invoke common API operations across a core groups of services, and customizeable universal targets that 
-you can use to call more than 6,000 operations across over 270 services.
+The `@aws-cdk/aws-schedule-targets` module includes classes that implement the `IScheduleTarget` interface for
+various AWS services. EventBridge Scheduler supports two types of targets: templated targets invoke common API
+operations across a core groups of services, and customizeable universal targets that you can use to call more
+than 6,000 operations across over 270 services.
 
-Templated targets are a set of common API operations across a group of core AWS services such as Amazon SQS, Lambda, and Step Functions. The module 
-contains CDK constructs for templated targets. For example, you can use construct `targets.LambdaInvoke` to target Lambda's Invoke API operation by 
-providing a `lambda.IFunction`, or use `targets.SqsSendMessage` with a `sqs.IQueue` to send a message to SQS queue. 
-
+Templated targets are a set of common API operations across a group of core AWS services such as Amazon SQS, Lambda, and Step Functions. The module
+contains CDK constructs for templated targets. For example, you can use construct `targets.LambdaInvoke` to target Lambda's Invoke API operation by
+providing a `lambda.IFunction`, or use `targets.SqsSendMessage` with a `sqs.IQueue` to send a message to SQS queue.
 
 The following templated targets are supported:
 
 1. `targets.CodeBuildStartBuild`: Start an AWS CodeBuild build
-1. `targets.CodePipelineStartPipelineExecution`: Start an AWS CodePipeline pipeline execution
-1. `targets.StepFunctionsStartExecution`: Trigger an AWS Step Functions state machine
-1. `targets.KinesisDataFirehosePutRecord`: Put a record to a Kinesis Firehose
-1. `targets.KinesisStreamPutRecord`: Put a record to a Kinesis Stream
-1. `targets.InspectorStartAssessmentRun`: Start an AWS Inspector assessment run
-1. `targets.EventBridgePutEvents`: Put an event to an AWS Event Bridge Event Bus
-1. `targets.EcsTask`: Start a task on an Amazon ECS cluster
-1. `targets.SageMakerStartPipelineExecution`: Start Amazon SageMaker pipeline
-1. `targets.LambdaInvoke`: Invoke an AWS Lambda function
-1. `targets.SqsSendMessage`: Send a message to an Amazon SQS Queue
-1. `targets.SnsPublish`: Publish a message into an SNS topic
+2. `targets.CodePipelineStartPipelineExecution`: Start an AWS CodePipeline pipeline execution
+3. `targets.StepFunctionsStartExecution`: Trigger an AWS Step Functions state machine
+4. `targets.KinesisDataFirehosePutRecord`: Put a record to a Kinesis Firehose
+5. `targets.KinesisStreamPutRecord`: Put a record to a Kinesis Stream
+6. `targets.InspectorStartAssessmentRun`: Start an AWS Inspector assessment run
+7. `targets.EventBridgePutEvents`: Put an event to an AWS Event Bridge Event Bus
+8. `targets.EcsTask`: Start a task on an Amazon ECS cluster
+9. `targets.SageMakerStartPipelineExecution`: Start Amazon SageMaker pipeline
+10. `targets.LambdaInvoke`: Invoke an AWS Lambda function
+11. `targets.SqsSendMessage`: Send a message to an Amazon SQS Queue
+12. `targets.SnsPublish`: Publish a message into an SNS topic
 
-
-A universal target is a customizable set of parameters that allow you to invoke a wider set of API operation for many AWS services. To create a universal target you need to specify `input`, service name and service action. See [full list of support universal targets](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-universal.html#supported-universal-targets).
+A universal target is a customizable set of parameters that allow you to invoke a wider set of API operation for
+many AWS services. To create a universal target you need to specify `input`, service name and service action. See
+[full list of support universal targets](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-universal.html#supported-universal-targets).
 
 For example, to create a schedule that will create a SQS queue every hour:
 
@@ -207,7 +211,7 @@ const schedule = new Schedule(this, 'Schedule', {
 });
 ```
 
-### Input 
+### Input
 
 Target can be invoked with a custom input. Class `ScheduleTargetInput` supports free form text input and JSON-formatted object input:
 
@@ -217,7 +221,9 @@ const input = ScheduleTargetInput.fromObject({
 });
 ```
 
-You can include context attributes in your target payload. EventBridge Scheduler will replace each keyword with its respective value and deliver it to the target. See [full list of supported context attributes](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html): 
+You can include context attributes in your target payload. EventBridge Scheduler will replace each keyword with
+its respective value and deliver it to the target. See
+[full list of supported context attributes](https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html): 
 
 1. `ContextAttribute.scheduleArn()` – The ARN of the schedule.
 2. `ContextAttribute.scheduledTime()` – The time you specified for the schedule to invoke its target, for example, 2022-03-22T18:59:43Z.
@@ -229,13 +235,12 @@ const text = `Attempt number: ${ContextAttribute.attemptNumber}`;
 const input = scheduler.ScheduleTargetInput.fromInput(text);
 ```
 
-
-### Specifying Execution Role 
+### Specifying Execution Role
 
 An execution role is an IAM role that EventBridge Scheduler assumes in order to interact with other AWS services on your behalf.
 
 The classes for templated schedule targets automatically create an IAM role with all the minimum necessary
-permissions to interact with the templated target. If you wish you may specify your own IAM role, then the templated targets 
+permissions to interact with the templated target. If you wish you may specify your own IAM role, then the templated targets
 will grant minimal required permissions. For example: for invoking Lambda function target `LambdaInvoke` will grant
 execution IAM role permission to `lambda:InvokeFunction`.
 
@@ -249,14 +254,16 @@ const role = new iam.Role(this, 'Role', {
 });
 
 const target = new targets.LambdaInvoke({
-    input: ScheduleTargetInput.fromObject({ 
+    input: ScheduleTargetInput.fromObject({
         "payload": "useful"
     }),
     role,
 }, fn);
 ```
 
-Universal target automatically create an IAM role if you do not specify your own IAM role. However, in comparison with templated targets, for universal targets you must grant the required IAM permissions yourself.
+Universal target automatically create an IAM role if you do not specify your own IAM role.
+However, in comparison with templated targets, for universal targets you must grant the required
+IAM permissions yourself.
 
 ```ts
 const input = ScheduleTargetInput.fromObject({
@@ -283,10 +290,11 @@ Executing cross-account and cross-region targets are not supported yet.
 
 ### Specifying Encryption key
 
-EventBridge Scheduler integrates with AWS Key Management Service (AWS KMS) to encrypt and decrypt your data using an AWS KMS key. EventBridge Scheduler supports two types of KMS keys: AWS owned keys, and customer managed keys. 
+EventBridge Scheduler integrates with AWS Key Management Service (AWS KMS) to encrypt and decrypt your data using
+an AWS KMS key. EventBridge Scheduler supports two types of KMS keys: AWS owned keys, and customer managed keys.
 
-By default, all events in Scheduler are encrypted with a key that AWS owns and manages. 
-If you wish you can also provide a customer managed key to encrypt and decrypt the payload that your schedule delivers 
+By default, all events in Scheduler are encrypted with a key that AWS owns and manages.
+If you wish you can also provide a customer managed key to encrypt and decrypt the payload that your schedule delivers
 to its target. Target classes will automatically add AWS KMS Decrypt permission to your schedule's execution role
 permissions policy
 
@@ -305,16 +313,16 @@ const schedule = new Schedule(this, 'Schedule', {
 See: [Data Protection](https://docs.aws.amazon.com/scheduler/latest/UserGuide/data-protection.html) in
 the *Amazon EventBridge Scheduler User Guide*.
 
-## Error-handling 
+## Error-handling
 
 You can configure how your schedule handles failures, when EventBridge Scheduler is unable to deliver an event
-successfully to a target, by using two primary mechanisms: a retry policy, and a dead-letter queue (DLQ). 
+successfully to a target, by using two primary mechanisms: a retry policy, and a dead-letter queue (DLQ).
 
-A retry policy determines the number of times EventBridge Scheduler must retry a failed event, and how long 
-to keep an unprocessed event. 
+A retry policy determines the number of times EventBridge Scheduler must retry a failed event, and how long
+to keep an unprocessed event.
 
-A DLQ is a standard Amazon SQS queue EventBridge Scheduler uses to deliver failed events to, after the retry 
-policy has been exhausted. You can use a DLQ to troubleshoot issues with your schedule or its downstream target. 
+A DLQ is a standard Amazon SQS queue EventBridge Scheduler uses to deliver failed events to, after the retry
+policy has been exhausted. You can use a DLQ to troubleshoot issues with your schedule or its downstream target.
 If you've configured a retry policy for your schedule, EventBridge Scheduler delivers the dead-letter event after
 exhausting the maximum number of retries you set in the retry policy.
 
@@ -330,9 +338,9 @@ const target = new targets.LambdaInvoke(props.func, {
 });
 ```
 
-## Overriding Target Properties 
+## Overriding Target Properties
 
-If you wish to reuse the same target in multiple schedules, you can override target properties 
+If you wish to reuse the same target in multiple schedules, you can override target properties
 like `input`, `maximumRetryAttempts` and `maximumEventAge` when creating a Schedule:
 
 ```ts
@@ -341,7 +349,7 @@ const target = new targets.LambdaInvoke(props.func, {
         "payload": "useful"
     }),
 });
-    
+
 const schedule1 = new Schedule(this, 'Schedule', {
     scheduleExpression: ScheduleExpression.cron({ day: '20' }),
     target,
@@ -351,25 +359,25 @@ const schedule2 = new Schedule(this, 'Schedule2', {
     scheduleExpression: ScheduleExpression.cron({ day: '5' })
     target,
     targetOverrides: {
-        input: ScheduleTargetInput.fromText("Overriding Target Input") 
+        input: ScheduleTargetInput.fromText("Overriding Target Input")
     }
 });
 ```
 
 ## Monitoring
 
-You can monitor Amazon EventBridge Scheduler using CloudWatch, which collects raw data 
-and processes it into readable, near real-time metrics. EventBridge Scheduler emits 
+You can monitor Amazon EventBridge Scheduler using CloudWatch, which collects raw data
+and processes it into readable, near real-time metrics. EventBridge Scheduler emits
 a set of metrics for all schedules, and an additional set of metrics for schedules that
-have an associated dead-letter queue (DLQ). If you configure a DLQ for your schedule, 
+have an associated dead-letter queue (DLQ). If you configure a DLQ for your schedule,
 EventBridge Scheduler publishes additional metrics when your schedule exhausts its retry policy.
 
 ### Metrics for all schedules
 
-Class `Schedule` provides static methods for accessing all schedules metrics with default configuration, 
-such as `metricAllErrors` for viewing errors when executing targets. 
+Class `Schedule` provides static methods for accessing all schedules metrics with default configuration,
+such as `metricAllErrors` for viewing errors when executing targets.
 
-```ts 
+```ts
 
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 
@@ -394,8 +402,9 @@ new Alarm(this, 'MyGroupErrorAlarm', {
 });
 ```
 
-See full list of metrics and their description at [Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/scheduler/latest/UserGuide/monitoring-cloudwatch.html) in the *AWS Event Bridge Scheduler User Guide*.
-
+See full list of metrics and their description at
+[Monitoring Using CloudWatch Metrics](https://docs.aws.amazon.com/scheduler/latest/UserGuide/monitoring-cloudwatch.html)
+in the *AWS Event Bridge Scheduler User Guide*.
 
 ---
 
@@ -422,26 +431,28 @@ RFC pull request):
 > What exactly are we launching? Is this a new feature in an existing module? A
 > new module? A whole framework? A change in the CLI?
 
-
 We are launching a new module (`@aws-cdk/aws-eventbridge-scheduler`) that contains L2
 constructs for managing Amazon EventBridge Scheduler schedules and targets.
 
-With EventBridge Scheduler L2 CDK constructs, you can schedule in code one-time or recurrently tens of millions 
-of tasks across many AWS services without provisioning or managing underlying infrastructure. 
+With EventBridge Scheduler L2 CDK constructs, you can schedule in code one-time or recurrently tens of millions
+of tasks across many AWS services without provisioning or managing underlying infrastructure.
 
 Out of the box, we are launching with 12 Scheduler Targets for AWS service
 destinations (LambdaInvoke, SqsSendMessage, StepFunctionsStartExecution), as well as a Universal Scheduler Target so
 that customers can connect to other AWS services. These targets are located in a secondary module (`@aws-cdk/aws-eventbridge-scheduler-targets`).
 
-
 ### Why should I use this feature?
 
 > Describe use cases that are addressed by this feature.
 
-EventBridge Scheduler is a tool that can be used to automate the creation of schedules for various tasks, such as sending reminders for tasks, starting and stopping Amazon EC2 instances, and managing subscription-based services. 
-It can be useful for companies of different sizes and types, such as a task management system, a large organization with multiple AWS accounts, and SaaS providers. 
-EventBridge Scheduler can help reduce costs, respect time zones, and manage scheduled tasks more efficiently. Using EventBridge Scheduler with CDK Constructs smooths many configuration edges and provides seamless integrations with your existing infrastructure as code.
-
+EventBridge Scheduler is a tool that can be used to automate the creation of schedules for various tasks,
+such as sending reminders for tasks, starting and stopping Amazon EC2 instances, and managing
+subscription-based services.
+It can be useful for companies of different sizes and types, such as a task management system,
+a large organization with multiple AWS accounts, and SaaS providers.
+EventBridge Scheduler can help reduce costs, respect time zones, and manage scheduled tasks more efficiently.
+Using EventBridge Scheduler with CDK Constructs smooths many configuration edges and provides seamless
+integrations with your existing infrastructure as code.
 
 ## Internal FAQ
 
@@ -461,25 +472,25 @@ the 19 +1s indicating that customers want L2 CDK Construct support for this serv
 
 Here is how L2 CDK constructs for Event Scheduler can improve your AWS CDK development experience:
 
-1. CDK L2 Constructs can simplify the process of setting up permissions for invoking targets, such as AWS Lambda functions, by automatically configuring 
-required permissions for the targets.
-2. Encrypt data by providing pre-configured encryption settings that you can use as part of your AWS infrastructure as code. This can make it easier to e
-nsure that your data is encrypted at rest and in transit, and can help you meet compliance requirements.
-3. Add metrics and permissions to your AWS EventBridge schedules. You can use constructs to define CloudWatch alarms that monitor schedule activity, and 
-IAM permissions that control access to schedules. This can make it easier to manage and monitor your schedules, as well as provide more granular control 
-over who can modify them.
-4. Constructs provide pre-configured targets for common AWS services, such as Lambda functions and SQS queues, as well as a universal target that can be 
-used to connect to other AWS services. 
+1. CDK L2 Constructs can simplify the process of setting up permissions for invoking targets, such as AWS Lambda
+functions, by automatically configuring required permissions for the targets.
+2. Encrypt data by providing pre-configured encryption settings that you can use as part of your AWS infrastructure
+as code. This can make it easier to ensure that your data is encrypted at rest and in transit, and can
+help you meet compliance requirements.
+3. Add metrics and permissions to your AWS EventBridge schedules. You can use constructs to define CloudWatch
+alarms that monitor schedule activity, and IAM permissions that control access to schedules. This can make it
+easier to manage and monitor your schedules, as well as provide more granular control over who can modify them.
+4. Constructs provide pre-configured targets for common AWS services, such as Lambda functions and SQS queues, as well as a universal target that
+can be used to connect to other AWS services.
 
 ### Why should we _not_ do this?
 
 > Is there a way to address this use case with the current product? What are the
 > downsides of implementing this feature?
 
-
 We are not confident that the service API is fully set in stone and implementing an L2 on
 top of the current L1 may be setting us up for changes in the future. We are reaching out
-to the service team to get their input and plans for the service. 
+to the service team to get their input and plans for the service.
 
 It’s a large effort (X devs * 1 week) to invest in a module when we have other pressing
 projects. However, the bulk of the effort has been spent already since we have fairly
@@ -498,17 +509,17 @@ classDiagram
 
     class Schedule {
         + String name
-        + Duration flexibleTimeWindow 
+        + Duration flexibleTimeWindow
         + Date startDate
         + Date endDate
-        + Boolean disabled 
+        + Boolean disabled
 
         + <> targetOverrideProps
 
         + grant(..)
         + grantRead(..)
         + grantWrite(..)
-        + Metric metric..() 
+        + Metric metric..()
     }
     class ScheduleExpression {
         + ScheduleExpression at(date: Date, timezone? Timezone)
@@ -544,8 +555,7 @@ classDiagram
 
 ![L2 Constructs Class Diagram](../images/EventBridge-Scheduler-2023-03-05-1723.excalidraw.png)
 
-Prototype at https://github.com/filletofish/cdk-eb-scheduler/
-
+Prototype at (github.com/filletofish/cdk-eb-scheduler)[https://github.com/filletofish/cdk-eb-scheduler].
 
 ### Is this a breaking change?
 
@@ -556,8 +566,8 @@ No.
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-1. We have discussed an opportunity of reusing existing `events.targets` module: https://docs.aws.amazon.com/cdk/api/v1/docs/aws-events-targets-r
-eadme.html. See RFC comments.
+1. We have discussed an opportunity of reusing existing `events.targets` module:
+https://docs.aws.amazon.com/cdk/api/v1/docs/aws-events-targets-readme.html. See RFC comments.
 
 ### What are the drawbacks of this solution?
 
@@ -574,17 +584,17 @@ N/A
 > If you have a project board with your implementation plan, this is a good
 > place to link to it.
 
-Most part of the L2 constructs is already implemented. We have a set of relatively (1-2 day of work) todos that can be implemented in parallel: 
+Most part of the L2 constructs is already implemented. We have a set of relatively (1-2 day of work) todos that can be implemented in parallel:
 
-1. Decide what removal policy for Group should be 
+1. Decide what removal policy for Group should be
 2. Support and Test Encrypted Schedules
 3. Decide or clean up how IAM Roles are used in Schedules and Targets
 4. Check why name generation fails if env is not passed to the Stack
 5. Unit tests for class schedule
-6. Unit tests for class targets 
-7. Unit tests for classes: groups, schedule expressions, input 
+6. Unit tests for class targets
+7. Unit tests for classes: groups, schedule expressions, input
 8. Methods for Granting Schedule Group Management IAM permissions
-9. Integration tests 
+9. Integration tests
 
 ### Are there any open issues that need to be addressed later?
 
