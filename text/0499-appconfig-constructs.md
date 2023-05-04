@@ -51,6 +51,8 @@ const env = new Environment(stack, 'MyEnvironment', {
 });
 ```
 
+We can also add an extension association to this resource by calling `on(ActionPoint, EventDestination)` or through convenience methods such as `onDeploymentComplete(EventDestination)`.
+
 # Deployment strategy
 
 An AWS AppConfig deployment strategy defines the following important aspects of a configuration deployment.
@@ -145,16 +147,13 @@ For more information about extensions, see [About AWS AppConfig extensions](http
 const extension = new Extension(this, 'MyExtension', {
   actions: [
     new Action(this, 'MyAction', {
-      actionPointEvent: <IFunction|IQueue|IBus|ITopic>,  // ex. ActionPointEvent.fromFunction(<IFunction>)
+      eventDestination: <IEventDestination>,
       actionPoint: ActionPoint.ON_DEPLOYMENT_COMPLETE,
     }),
   ],
 
   // optional
   name: 'ExtensionName',
-  resources: [
-    <IApplciation|IConfigurationProfile|IEnvironment>,
-  ],   // ex. ExtensionResource.fromApplication(<IApplication>)
 });
 ```
 
@@ -211,6 +210,8 @@ const sourcedConfig = new SourcedConfiguration(this, 'MySourcedConfig', {
 
 We will also be able to add these configurations to an application by calling `addConfiguration`.
 
+We can also add an extension association to this resource by calling `on(ActionPoint, EventDestination)` or through convenience methods such as `onDeploymentComplete(EventDestination)`.
+
 # AppConfig
 
 An AppConfig construct will be the simplest way to create and deploy configuration. This construct will handle deployments for you and start deploying configuration on creation. There will be a 1:1 mapping between `AppConfig` and an application resource.
@@ -232,10 +233,12 @@ const appconfig = new AppConfig(this, 'MyAppConfig',{
 
 appconfig.addEnvironment();
 appconfig.addConfiguration();
-appconfig.onDeploymentComplete(<ActionPointEvent>);
-appconfig.onBakeComplete(<ActionPointEvent>);
-appconfig.onDeploymentRollback(<ActionPointEvent>);
+appconfig.onDeploymentComplete(<EventDestination>);
+appconfig.onBakeComplete(<EventDestination>);
+appconfig.onDeploymentRollback(<EventDestination>);
 ```
+
+We can also add an extension association to an application by calling `on(ActionPoint, EventDestination)` or through convenience methods such as `onDeploymentComplete(EventDestination)`.
 
 ---
 
