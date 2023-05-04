@@ -32,18 +32,11 @@ const app = new Application(stack, 'MyApplication', {
   // optional
   name: 'MyApp',
   description: 'This is my description',
-  tags: [
-    {
-      key: 'key',
-      value: 'value',
-    },
-  ],
 });
 
 app.addEnvironment('MyEnvironment');
 app.addConfigurationProfile('MyConfigProfile');
-app.addExtensionAssociation('MyExtensionAssociation');
-app.addHostedConfiguration('MyHostedConfig');
+app.addConfiguration();
 ```
 
 # Environment
@@ -74,15 +67,7 @@ const env = new Environment(stack, 'MyEnvironment', {
     },
   ],
   description: 'This is my description',
-  tags: [
-    {
-      key: 'key',
-      value: 'value',
-    },
-  ],
 });
-
-env.addExtensionAssociation('MyExtensionAssociation');
 ```
 
 # Configuration profile
@@ -110,24 +95,16 @@ const configProfile = new ConfigurationProfile(stack, 'MyConfigurationProfile', 
   location: <IBucket|IParameter|IDocument|ISecret|IPipeline>, // default is hosted, ex. Location.fromBucket(<IBucket>)
   retrievalRole: <IRole>,
   validators: [
-    {
-      content: '...',
-      type: ValidatorType.JSON_SCHEMA,
-    },
+    JsonSchemaValidator.fromAsset('path/to/the/schema'), // or .fromBucket(), .fromInline() etc.
+    LambdaValidator.fromFunction(myFunction),
   ],
   type: ConfigurationType.FREEFORM,
   description: 'This is my description',
-  tags: [
-    {
-      key: 'key',
-      value: 'value',
-    },
-  ],
 });
 
 // throws exception if the config profile is not hosted
 configProfile.addHostedConfigurationVersion('MyHostedConfig', {
-  content: 'This is my configuration content',
+  content: ConfigurationSource.fromInline('This is my configuration content'),
 
   // optional
   versionLabel: 'version-label',
@@ -135,7 +112,6 @@ configProfile.addHostedConfigurationVersion('MyHostedConfig', {
   description: 'This is my description',
   contentType: 'application/json', // this is the default value
 });
-configProfile.addExtensionAssociation('MyExtensionAssociation');
 configProfile.addToRolePolicy(<PolicyStatement>);
 ```
 
@@ -148,7 +124,7 @@ For configuration in the AWS AppConfig hosted configuration store, you can creat
 new HostedConfigurationVersion(stack, 'HostedConfigurationVersion', {
   application: <IApplication>,
   configurationProfile: <IConfigurationProfile>,
-  content: 'This is my content',
+  content: ConfigurationSource.fromInline('This is my configuration content'),
 
   // optional
   versionLabel: 'version-label',
@@ -206,28 +182,25 @@ You can create a maximum of 20 deployment strategies. When you deploy a configur
 ### Example
 ```ts
 new DeploymentStrategy(this, 'MyDeploymentStrategy', {
-  growthFactor: 15,
-  deploymentDurationInMinutes: 60,
+  rolloutStrategy: RolloutStrategy.linear({
+    growthFactor: 15,
+    deploymentDuration: Duration.minutes(60),
+  }),
   
   // optional
   name: 'MyDeploymentStrategy',
   finalBakeTimeInMinutes: 30,
-  growthType: GrowthType.LINEAR,
   replicateTo: 'NONE',  // this is the default value
   description: 'This is my description',
-  tags: [
-    {
-      key: 'key',
-      value: 'value',
-    },
-  ],
 });
 ```
 
 To import and use a predefined deployment strategy, we can do so as follows.
 
 ```ts
-DeploymentStrategy.fromDeploymentStrategyId(this, 'MyPredefinedStrategy', PredefinedDeploymentStrategyId.ALL_AT_ONCE);
+new DeploymentStrategy(this, 'MyDeploymentStrategy', {
+  rolloutStrategy: RolloutStrategy.ALL_AT_ONCE,
+});
 ```
 
 # Extension
@@ -262,12 +235,9 @@ const extension = new Extension(this, 'MyExtension', {
 
   // optional
   name: 'ExtensionName',
-  resource: <IApplciation|IConfigurationProfile|IEnvironment>,   // ex. ExtensionResource.fromApplication(<IApplication>)
-});
-
-// can also add more extension associations
-extension.addExtensionAssociation({
-  resource: <IApplciation|IConfigurationProfile|IEnvironment>,
+  resources: [
+    <IApplciation|IConfigurationProfile|IEnvironment>,
+  ],   // ex. ExtensionResource.fromApplication(<IApplication>)
 });
 ```
 
@@ -294,7 +264,7 @@ A configuration is a higher level construct that can either be a HostedConfigura
 ### Example
 ```ts
 const hostedConfig = new HostedConfiguration(this, 'MyHostedConfig', {
-  content: 'This is the configuration content.',
+  content: ConfigurationSource.fromInline('This is my configuration content'),
   application: <IApplication>,      // only required if creating new configuration profile
 
   // optional, taken directly from ConfigurationProfile props
@@ -341,7 +311,7 @@ const sourcedConfig = new SourcedConfiguration(this, 'MySourcedConfig', {
 });
 ```
 
-We will also be able to add these configurations to an application by calling `addHostedConfiguration` or `addSourcedConfiguration`.
+We will also be able to add these configurations to an application by calling `addConfiguration`.
 
 # AppConfig
 
@@ -360,7 +330,12 @@ const appconfig = new AppConfig(this, 'MyAppConfig',{
   kmsKey: <IKey>,
   description: '...',
   tags: '...',
+  extension: <IExtension>,
 });
+
+appconfig.onDeploymentComplete(<ActionPointEvent>);
+appconfig.onBakeComplete(<ActionPointEvent>);
+appconfig.onDeploymentRollback(<ActionPointEvent>);
 ```
 
 ---
