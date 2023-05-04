@@ -20,25 +20,6 @@ This RFC proposes new AppConfig L2 constructs which will provide convenient feat
 
 This section details how we will implement our constructs that are based off resources.
 
-# Application
-
-In AWS AppConfig, an application is simply an organizational construct like a folder. This organizational construct has a relationship with some unit of executable code. For example, you could create an application called MyMobileApp to organize and manage configuration data for a mobile application installed by your users.
-
-Because an application is our primary resource, we will have methods on an application that allow associating secondary resources; these include environment, configuration profile, and extension association.
-
-### Example
-```ts
-const app = new Application(stack, 'MyApplication', {
-  // optional
-  name: 'MyApp',
-  description: 'This is my description',
-});
-
-app.addEnvironment('MyEnvironment');
-app.addConfigurationProfile('MyConfigProfile');
-app.addConfiguration();
-```
-
 # Environment
 
 For each AWS AppConfig application, you define one or more environments. An environment is a logical deployment group of AppConfig targets, such as applications in a Beta or Production environment. You can also define environments for application subcomponents such as the Web, Mobile, and Back-end components for your application. You can configure Amazon CloudWatch alarms for each environment. The system monitors alarms during a configuration deployment. If an alarm is triggered, the system rolls back the configuration.
@@ -67,70 +48,6 @@ const env = new Environment(stack, 'MyEnvironment', {
     },
   ],
   description: 'This is my description',
-});
-```
-
-# Configuration profile
-
-A configuration is a collection of settings that influence the behavior of your application. A configuration profile enables AWS AppConfig to access your configuration. Configuration profiles include the following information.
-  * The URI location where the configuration is stored.
-  * The AWS Identity and Access Management (IAM) role that provides access to the configuration.
-  * A validator for the configuration data. You can use either a JSON Schema or an AWS Lambda function to validate your configuration profile. A configuration profile can have a maximum of two validators.
-
-AWS AppConfig supports the following types of configuration profiles.
-  * Feature flag: Use a feature flag configuration to turn on new features that require a timely deployment, such as a product launch or announcement.
-  * Freeform: Use a freeform configuration to carefully introduce changes to your application.
-
-Hosted configuration store is used when customers want to store their configuration data through AppConfig. By default, a configuration profile will be hosted. Other configuration store options are S3, Secrets Manager, SSM Paramter, SSM Document, and Code Pipeline. If you choose to store configuration in a different storage, we will auto-create the IAM role required to access the configuration (or you can define this yourself).
-
-We can create this secondary resource by calling `addConfigurationProfile` to an application or we can construct this as follows. Secondary resources to a configuration profile are extension association and hosted configuration version (if stored in hosted config store) so we will also have methods to add this.
-
-### Example
-```ts
-const configProfile = new ConfigurationProfile(stack, 'MyConfigurationProfile', {
-  application: <IApplication>,
-
-  // optional
-  name: 'MyConfigProfile',
-  location: <IBucket|IParameter|IDocument|ISecret|IPipeline>, // default is hosted, ex. Location.fromBucket(<IBucket>)
-  retrievalRole: <IRole>,
-  validators: [
-    JsonSchemaValidator.fromAsset('path/to/the/schema'), // or .fromBucket(), .fromInline() etc.
-    LambdaValidator.fromFunction(myFunction),
-  ],
-  type: ConfigurationType.FREEFORM,
-  description: 'This is my description',
-});
-
-// throws exception if the config profile is not hosted
-configProfile.addHostedConfigurationVersion('MyHostedConfig', {
-  content: ConfigurationSource.fromInline('This is my configuration content'),
-
-  // optional
-  versionLabel: 'version-label',
-  latestVersionNumber: 1,
-  description: 'This is my description',
-  contentType: 'application/json', // this is the default value
-});
-configProfile.addToRolePolicy(<PolicyStatement>);
-```
-
-# Hosted configuration version
-
-For configuration in the AWS AppConfig hosted configuration store, you can create new versions of the configuration, called a hosted configuration version. This secondary resource can be added to a hosted configuration profile or created directly.
-
-### Example
-```ts
-new HostedConfigurationVersion(stack, 'HostedConfigurationVersion', {
-  application: <IApplication>,
-  configurationProfile: <IConfigurationProfile>,
-  content: ConfigurationSource.fromInline('This is my configuration content'),
-
-  // optional
-  versionLabel: 'version-label',
-  latestVersionNumber: 1,
-  description: 'This is my description',
-  contentType: 'application/json', // this is the default value
 });
 ```
 
@@ -241,18 +158,6 @@ const extension = new Extension(this, 'MyExtension', {
 });
 ```
 
-To customize existing AWS AppConfig authored extensions, we can do the following as an example.
-
-```ts
-const extension = Extension.customAppConfigDeploymentEventsToAmazonSQS({
-  actionPoints: [
-    ActionPoint.ON_DEPLOYMENT_START,
-    ActionPoint.ON_DEPLOYMENT_BAKING,
-    ActionPoint.ON_DEPLOYMENT_COMPLETE,
-  ],
-});
-```
-
 ## Higher level resources
 
 This section details how we will implement our constructs that combine multiple different resources into one.
@@ -265,47 +170,40 @@ A configuration is a higher level construct that can either be a HostedConfigura
 ```ts
 const hostedConfig = new HostedConfiguration(this, 'MyHostedConfig', {
   content: ConfigurationSource.fromInline('This is my configuration content'),
-  application: <IApplication>,      // only required if creating new configuration profile
+  application: <IApplication>,
 
-  // optional, taken directly from ConfigurationProfile props
+  // optional ConfigurationProfile props
   name: '...',
   tags: '...',
   validators: '...',
   configurationType: '...',
-  configurationProfile: <IConfigurationProfile>,    // if specified, we will use this config profile instead of creating one
 
-  // optional, taken directly from HostedConfigurationVersion props
+  // optional HostedConfigurationVersion props
   versionLabel: '...',
   latestVersionNumber: 1,
   contentType: '...',
 
   // optional
-  description: '...',   // description for both resources
-  deployTo: [           // will deploy to all environments by default
-    Environment.create('beta'),
-    Environment.create('prod'),
+  description: '...',
+  deployTo: [
     <IEnvironment>,
   ],
 });
 
 const sourcedConfig = new SourcedConfiguration(this, 'MySourcedConfig', {
   location: <IBucket|IParameter|IDocument|ISecret|IPipeline>,   // ex. Location.fromBucket(<IBucket>), only required if creating new configuration profile
-  application: <IApplication>,                                  // only required if creating new configuration profile
+  application: <IApplication>,
   versionNumber: '...',
 
-  // optional, taken directly from ConfigurationProfile props
+  // optional ConfigurationProfile props
   name: '...',
   retrievalRole: '...',
   validators: '...',
   configurationType: '...',
   description: '...',
-  tags: '...',
-  configurationProfile: <IConfigurationProfile>,    // if specified, we will use this config profile instead of creating one
 
   // optional
-  deployTo: [    // will deploy to all environments by default
-    Environment.create('beta'),
-    Environment.create('prod'),
+  deployTo: [
     <IEnvironment>,
   ],
 });
@@ -315,7 +213,7 @@ We will also be able to add these configurations to an application by calling `a
 
 # AppConfig
 
-An AppConfig construct will be the simplest way to create and deploy configuration. This construct will handle deployments for you and start deploying configuration on creation.
+An AppConfig construct will be the simplest way to create and deploy configuration. This construct will handle deployments for you and start deploying configuration on creation. There will be a 1:1 mapping between `AppConfig` and an application resource.
 
 ### Example
 ```ts
@@ -327,12 +225,13 @@ const appconfig = new AppConfig(this, 'MyAppConfig',{
   ]
 
   // optional
+  name: 'MyApp',
   kmsKey: <IKey>,
   description: '...',
-  tags: '...',
-  extension: <IExtension>,
 });
 
+appconfig.addEnvironment();
+appconfig.addConfiguration();
 appconfig.onDeploymentComplete(<ActionPointEvent>);
 appconfig.onBakeComplete(<ActionPointEvent>);
 appconfig.onDeploymentRollback(<ActionPointEvent>);
