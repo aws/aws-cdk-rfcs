@@ -189,8 +189,8 @@ new DeploymentStrategy(this, 'MyDeploymentStrategy', {
   
   // optional
   name: 'MyDeploymentStrategy',
-  finalBakeTimeInMinutes: 30,
-  replicateTo: 'NONE',  // this is the default value
+  finalBakeTime: Duration.minutes(30),
+  replicateTo: ReplicateTo.NONE,  // this is the default value
   description: 'This is my description',
 });
 ```
@@ -284,7 +284,7 @@ const hostedConfig = new HostedConfiguration(this, 'MyHostedConfig', {
   deployTo: [           // will deploy to all environments by default
     Environment.create('beta'),
     Environment.create('prod'),
-    Environment.from(<IEnvironment>),
+    <IEnvironment>,
   ],
 });
 
@@ -306,7 +306,7 @@ const sourcedConfig = new SourcedConfiguration(this, 'MySourcedConfig', {
   deployTo: [    // will deploy to all environments by default
     Environment.create('beta'),
     Environment.create('prod'),
-    Environment.from(<IEnvironment>),
+    <IEnvironment>,
   ],
 });
 ```
