@@ -81,20 +81,20 @@ Becomes:
 import * as cdkp from '@aws-cdk/pipelines';
 
 const pipeline = new cdkp.Pipeline(this, 'Pipeline', {
-  build: new cdkp.CdkBuild({
+  build: new cdkp.Build({
     input: cdkp.CodePipelineSource.gitHub('OWNER/REPO'),
     commands: ['npm ci', 'npm run build'],
     additionalOutputs: {
       tests: cdkp.AdditionalOutput.fromDirectory('test'),
     }
   }),
-  backend: new cdkp.AwsCodePipelineBackend(),
+  backend: new cdkp.CodePipelineBackend(),
 });
 
 const stage = new MyStage(this, 'PreProd', {
   env: { account: '12345', region: 'us-east-1' },
 });
-pipeline.addCdkStage(stage, {
+pipeline.addStage(stage, {
   after: [
     new cdkp.ShellScriptAction({
       input: pipeline.build.additionalOutput('tests'),
@@ -269,7 +269,7 @@ const cdkStage = new MyAppStage(...);
 wave.addCdkStage(cdkStage, {
   after: [
     new cdkp.ShellScriptAction('Validate', {
-      environmentVariablesFromStackOutputs: {
+      env: {
         ENDPOINT_URL: cdkp.StackOutput.fromCfnOutput(cdkStage.endpointUrl),
       },
       commands: [
@@ -309,15 +309,15 @@ new cdkp.CodePipeline(this, 'Pipeline', {
     image: codebuild.CodeBuildImage.AWS_STANDARD_6,
     privilegedMode: true,
   },
-  assetBuildEnvironment: {
-    environmentVariables: {
+  publishEnvironment: {
+    env: {
       SECRET: { type: codebuild.EnvironmentVariableType.SECRETS_MANAGER, value: 'arn:aws:...:my-secret' },
     },
     additionalDockerBuildArgs: ['SECRET'],
   },
   buildCaching: true,
   cdkCliVersion: '1.2.3',
-  selfMutating: false,
+  selfMutation: false,
   pipelineUsesDockerAssets: true,
   dockerAssetBuildPrefetch: true,
   dockerCredentials: {
@@ -451,5 +451,4 @@ enough that it becomes feasible to port the concepts.
 ### What is the high level implementation plan?
 
 ### Are there any open issues that need to be addressed later?
-
 
