@@ -26,7 +26,7 @@ The resources, that are required by lattice broadly fall into two catagories
 * those are a associated with the creation of a Lattice Service network, its access and logging
 * those that are associated with the the **services** that the applicaton network will deliver. 
 
-## Quick Overview / Example.
+## Example Implementation
 
 #### Create a Service Network, and allow access from a VPC
 
