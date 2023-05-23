@@ -1,52 +1,59 @@
----
-rfc pr: [#xxx](https://github.com/aws/aws-cdk-rfcs/pull/xxx) <-- fill this after you've already created the PR
-tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
----
+# {RFC_TITLE}
 
-# [TITLE]
+* **Original Author(s):**: @{AUTHOR}
+* **Tracking Issue**: #{TRACKING_ISSUE}
+* **API Bar Raiser**: @{BAR_RAISER_USER}
 
-> One sentence: brief description of the feature from a user perspective.
+> Write one sentence which is a brief description of the feature. It should describe:
+>
+> * What is the user pain we are solving?
+> * How does it impact users?
 
 ## Working Backwards
 
 > This section should contain one or more "artifacts from the future", as if the
-> feature was already released and we are publishing its CHANGELOG, README
-> and optionally a PRESS RELEASE.
+> feature was already released and we are publishing its CHANGELOG, README,
+> CONTRIBUTING.md and optionally a PRESS RELEASE. This is the most important
+> section of your RFC. It's a powerful thought exercise which will challenge you
+> to truly think about this feature from a user's point of view.
 >
-> This is the most important section of your RFC. It's a powerful thought
-> exercise which will challenge you to truly think about this feature from a
-> user's point of view.
-
-### CHANGELOG
-
-> Write the changelog entry for this feature in conventional form (e.g.
-> `feat(eks): cluster tags`).
+> Choose *one or more* of the options below:
 >
-> If this change includes a breaking change, include a `BREAKING CHANGE` clause
-> with information on how to migrate. If migration is complicated, refer to a
-> fictional GitHub issue and add its contents here.
-
-### README
-
-> If this is a new feature, write the README section which describes this new
-> feature. It should describe the feature and walk users through usage examples
-> and description of the various options and behavior.
-
-### PRESS RELEASE
-
-> If this is a major feature (~6 months of work), write the PRESS RELEASE which
-> announces this feature. The press release is a single page that includes 7
-> paragraphs: (1) summary, (2) problem, (3) solution, (4) leader quote, (5) user
-> experience, (6) customer testimonial and (7) one sentence call to action.
-
-## FAQ
-
-> This section should contain answers to questions customers will likely ask about
-> this release. Similar to the working backwards section, this section should be
-> written "from the future" in a language as if the feature is now released.
+> * **CHANGELOG**: Write the changelog entry for this feature in conventional
+>   form (e.g. `feat(eks): cluster tags`). If this change includes a breaking
+>   change, include a `BREAKING CHANGE` clause with information on how to
+>   migrate. If migration is complicated, refer to a fictional GitHub issue and
+>   add its contents here.
 >
-> The template includes a bunch of common questions, and you should add
-> questions that might be relevant to this feature.
+> * **README**: If this is a new feature, write the README section which
+>   describes this new feature. It should describe the feature and walk users
+>   through usage examples and description of the various options and behavior.
+>
+> * **PRESS RELEASE**: If this is a major feature (~6 months of work), write the
+>   press release which announces this feature. The press release is a single
+>   page that includes 7 paragraphs: (1) summary, (2) problem, (3) solution, (4)
+>   leader quote, (5) user experience, (6) customer testimonial and (7) one
+>   sentence call to action.
+
+---
+
+Ticking the box below indicates that the public API of this RFC has been
+signed-off by the API bar raiser (the `api-approved` label was applied to the
+RFC pull request):
+
+```
+[ ] Signed-off by API Bar Raiser @xxxxx
+```
+
+## Public FAQ
+
+> This section should include answers to questions readers will likely ask about
+> this release. Similar to the "working backwards", this section should be
+> written in a language as if the feature is now released.
+>
+> The template includes a some common questions, feel free to add any questions
+> that might be relevant to this feature or omit questions that you feel are not
+> applicable.
 
 ### What are we launching today?
 
@@ -75,7 +82,7 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 > Is there a way to address this use case with the current product? What are the
 > downsides of implementing this feature?
 
-### What changes are required to enable this change?
+### What is the technical solution (design) of this feature?
 
 > Briefly describe the high-level design approach for implementing this feature.
 >
@@ -93,16 +100,16 @@ tracking issue: https://github.com/aws/aws-cdk-rfcs/issues/yyy
 > Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
 > changes and the migration path.
 
-### What are the drawbacks of this solution?
-
-> Describe any problems/risks that can be introduced if we implement this RFC.
-
 ### What alternative solutions did you consider?
 
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-### What is the high level implementation plan?
+### What are the drawbacks of this solution?
+
+> Describe any problems/risks that can be introduced if we implement this RFC.
+
+### What is the high-level project plan?
 
 > Describe your plan on how to deliver this feature from prototyping to GA.
 > Especially think about how to "bake" it in the open and get constant feedback
