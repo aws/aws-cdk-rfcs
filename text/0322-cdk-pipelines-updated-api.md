@@ -22,7 +22,6 @@ The final API for CDK Pipelines is finally here. Compared to the previous API:
 - For simple use cases, you no longer need to manage CodePipeline Artifacts: artifact management is implicit
   as objects that produce artifacts can be used to reference them.
 
-
 ### Examples
 
 The following:
@@ -444,11 +443,8 @@ enough that it becomes feasible to port the concepts.
 
 ### What are the drawbacks of this solution?
 
-
 ### What alternative solutions did you consider?
-
 
 ### What is the high level implementation plan?
 
 ### Are there any open issues that need to be addressed later?
-
