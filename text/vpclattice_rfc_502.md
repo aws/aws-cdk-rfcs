@@ -28,7 +28,8 @@ The resources, that are required by lattice broadly fall into two catagories
 
 ## Quick Overview / Example.
 
-All vpcLattice applications networks require a service network. 
+#### Create a Service Network, and allow access from a VPC
+
 
 ```typescript
 import { ServiceNetwork } from '@aws-cdk/aws-vpclattice-alpha';
@@ -85,7 +86,7 @@ cosnt serviceNetwork = ServiceNetwork.importFromName('mylatticenetwork')
 myServiceNetwork.associateVPC(vpc, [securityGroups])
 ```
 
-## 2. Create a service
+#### Create a service from a Lambda and associate it with the Service
 
 A lattice service is the 'front' for various applicaitons that might be 'served' by AWS resources such
 as ec2 Instances, Applicaiton Load Balancers, Lambdas.   Listeners are attached to the service, which have rules and targets. 
@@ -147,6 +148,10 @@ The following API design is proposed
 
 #### Listener
 ```typescript
+/**
+ * Create a vpcLattice Listener.
+ * Implemented by `Listener`.
+ */
 export interface IListener extends core.IResource {
   /**
   * The Amazon Resource Name (ARN) of the service.
@@ -158,7 +163,7 @@ export interface IListener extends core.IResource {
   readonly listenerId: string;
 
   /**
-   * Add A Listener Rule to the Listener
+   * Add A Rule to the Listener
    */
   addListenerRule(props: AddRuleProps): void;
 }
@@ -166,6 +171,10 @@ export interface IListener extends core.IResource {
 
 #### Service
 ```typescript
+/**
+ * Create a vpcLattice service.
+ * Implemented by `Service`.
+ */
 export interface IService extends core.IResource {
   /**
   * The Amazon Resource Name (ARN) of the service.
@@ -215,9 +224,10 @@ export interface IService extends core.IResource {
    */
   addName(name: string): void;
   /**
-   * add Tags to the service
+   *grant a Principal access to a Services Path
    * @deafult
    */
+   grantAccess(props: grantAccessProps): void; 
 
 }
 ```
@@ -225,7 +235,7 @@ export interface IService extends core.IResource {
 ```typescript
 /**
  * Create a vpc lattice service network.
- * Implemented by `ServiceNetwork`.
+ * Implemented by `ServiceNetwork`
  */
 export interface IServiceNetwork extends core.IResource {
 
@@ -266,6 +276,12 @@ export interface IServiceNetwork extends core.IResource {
    * Share the ServiceNetwork
    */
   share(props: ShareServiceNetworkProps): void;
+  /**
+  * Create a service network from Attributes.  
+  * This function only needs to be used when it is not possible to pass
+  * a ServiceNetwork between cdk apps or stacks.
+  */ 
+  fromServiceNetworkAttributes(attrs: ServiceNetworkAttributes): void;
 
 }
 ```
