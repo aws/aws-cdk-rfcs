@@ -43,19 +43,19 @@ This RFC will introduce breaking changes to the existing glue-alpha-module to
 streamline the developer experience and introduce new constants and validations.
 The L2 construct will determine the job type by the job type and language
 provided by the developer, rather than having separate methods in every
-permutation that Glue jobs allow. As an opinionated construct, it will enforce 
-best practices and not allow developers to create resources that use deprecated 
-libraries and tool sets (e.g. deprecated versions of Python). 
+permutation that Glue jobs allow. As an opinionated construct, it will enforce
+best practices and not allow developers to create resources that use deprecated
+libraries and tool sets (e.g. deprecated versions of Python).
 
 ### Spark Jobs
 
 1. **ETL Jobs**
 
 ETL jobs supports python and Scala language. ETL job type supports G1, G2, G4
-and G8 worker type default as G2, which customer can override. It wil default to 
-the best practice version of ETL 4.0, but allow developers to override to 3.0. 
+and G8 worker type default as G2, which customer can override. It wil default to
+the best practice version of ETL 4.0, but allow developers to override to 3.0.
 We will also default to best practice enablement the following ETL features:
-`—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log.` 
+`—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log.`
 You can find more details about version, worker type and other features in Glue's
 public documentation.
 
@@ -190,9 +190,9 @@ A Python shell job runs Python scripts as a shell and supports a Python
 version that depends on the AWS Glue version you are using. This can be used
 to schedule and run tasks that don't require an Apache Spark environment.
 
-We’ll default to `PythonVersion.3_9`. Python shell jobs don't support different 
-worker typesbut do have they have a MaxDPU feature. Developers can choose 
-MaxDPU = `0.0625` or MaxDPU = `1`. By default, axDPU will be set `0.0625`. 
+We’ll default to `PythonVersion.3_9`. Python shell jobs don't support different
+worker typesbut do have they have a MaxDPU feature. Developers can choose
+MaxDPU = `0.0625` or MaxDPU = `1`. By default, axDPU will be set `0.0625`.
 Python 3.9 supports preloaded analytics libraries using the `library-set=analytics`
 flag, and this feature will be enabled by default.
 
@@ -240,8 +240,8 @@ new glue.GlueRayJob(this, 'GlueRayJob', {
 
 Similar to other L2 constructs, the Glue L2 will automate uploading / updating
 scripts to S3 via an optional fromAsset parameter pointing to a script
-in the local file structure. Developers will provide an existing S3 bucket and 
-the path to which they'd like the script to be uploaded. 
+in the local file structure. Developers will provide an existing S3 bucket and
+the path to which they'd like the script to be uploaded.
 
 ```
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
@@ -252,16 +252,16 @@ glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
 
 ### Workflow Triggers
 
-In AWS Glue, developers can use workflows to create and visualize complex 
-extract, transform, and load (ETL) activities involving multiple crawlers, 
-jobs, and triggers. Standalone triggers are an anti-pattern, so we will 
+In AWS Glue, developers can use workflows to create and visualize complex
+extract, transform, and load (ETL) activities involving multiple crawlers,
+jobs, and triggers. Standalone triggers are an anti-pattern, so we will
 only create triggers from within a workflow.
 
-Within the workflow object, there will be functions to create different 
+Within the workflow object, there will be functions to create different
 types of triggers with actions and predicates. Those triggers can then be
 added to jobs.
 
-For all trigger types, the StartOnCreation property will be set to true by 
+For all trigger types, the StartOnCreation property will be set to true by
 default, but developers will have the option to override it.
 
 1. **On Demand Triggers**
@@ -282,19 +282,17 @@ myWorkflow.createOnDemandTrigger(this, 'TriggerJobOnDemand', {
     description: 'On demand run for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
 });
-    
 ```
 
 1. **Scheduled Triggers**
 
-Schedule triggers are a way for developers to create jobs using cron 
+Schedule triggers are a way for developers to create jobs using cron
 expressions. We’ll provide daily, weekly, and monthly convenience functions,
-as well as a custom function that will allow developers to create their own 
-custom timing using the [existing event Schedule object]
-(https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events.Schedule.html) 
-without having to build their own cron expressions. (The L2 will extract 
-the expression that Glue requires from the Schedule object). The trigger method will 
-take an optional description and list of Actions which can refer to Jobs or 
+as well as a custom function that will allow developers to create their own
+custom timing using the [existing event Schedule object](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events.Schedule.html)
+without having to build their own cron expressions. (The L2 will extract
+the expression that Glue requires from the Schedule object). The trigger method will
+take an optional description and list of Actions which can refer to Jobs or
 crawlers via conditional types.
 
 ```
@@ -339,7 +337,7 @@ myWorkflow.createNotifyEventTrigger(this, 'MyNotifyTriggerNonBatching', {
 
 #### **4. Conditional Triggers**
 
-Conditional triggers have a predicate and actions associated with them. 
+Conditional triggers have a predicate and actions associated with them.
 When the predicateCondition is true, the trigger actions will be executed.
 
 ```
@@ -348,7 +346,7 @@ myWorkflow.createConditionalTrigger(this, 'conditionalTrigger', {
     description: 'Conditional trigger for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
     predicateCondition: glue.TriggerPredicateCondition.AND,
-    jobPredicates: [{'job': glueJobPred, 'state': glue.JobRunState.FAILED}, 
+    jobPredicates: [{'job': glueJobPred, 'state': glue.JobRunState.FAILED},
                     {'job': glueJobPred1, 'state' : glue.JobRunState.SUCCEEDED}]
 });
 ```
@@ -358,7 +356,7 @@ myWorkflow.createConditionalTrigger(this, 'conditionalTrigger', {
 A `Connection` allows Glue jobs, crawlers and development endpoints to access
 certain types of data stores.
 
-* **Secrets Management
+***Secrets Management
     **User needs to specify JDBC connection credentials in Secrets Manager and
     provide the Secrets Manager Key name as a property to the Job connection
     property.
