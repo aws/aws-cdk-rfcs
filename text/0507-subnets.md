@@ -93,10 +93,12 @@ const subnet = vpc.addSubnet({
 });
 ```
 
-
 ### Routing
 
-To create a public subnet:
+By default, `addSubnet()` creates isolated subnets, that only route traffic 
+to other hosts inside the VPC. To define different routing policies for a 
+subnet, provide a route table when creating it. For example, to create a 
+public subnet:
 
 ```ts
 const publicRouteTable = vpc.addRouteTable('routeTable', {
