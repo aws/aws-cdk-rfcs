@@ -23,11 +23,6 @@ const vpc = new Vpc(this, 'vpc', {
 
 // The secondary address block must be in the same RFC 1918 range
 vpc.addSecondaryAddressBlock(IpAddresses.ipv4('10.2.0.0/16'));
-
-const subnet = vpc.addSubnet({
-  cidrBlock: '10.2.0.0/20',
-  availabilityZone: 'us-west-2a'
-});
 ```
 
 Or by providing an [IPAM] pool with a netmask length:
@@ -44,12 +39,6 @@ vpc.addSecondaryAddressBlock(IpAddresses.ipv4Ipam({
   netmaskLength: 20
 }));
 ```
-
-If you add more than one subnet to the VPC, the framework validates that there
-is no intersection between their address blocks. In addition, if all VPC IP
-address blocks (both primary and secondary) are provided as CIDR strings, the
-framework validates that each address block of all subnets is within one of the
-address blocks of the VPC.
 
 You can also add secondary IPv6 address ranges, in three different ways:
 
@@ -74,6 +63,26 @@ vpc.addSecondaryAddressBlock(IpAddresses.ipv6Ipam({
 vpc.addSecondaryAddressBlock(IpAddresses.amazonProvidedIpv6());
 ```
 
+### Defining your own subnets
+
+By default, `Vpc` will create subnets for you (by default, a public and a
+private subnet per availability zone). If you want to define your own
+subnets, use the `addSubnet()` method, which will turn off this default
+behavior:
+
+```ts
+const subnet = vpc.addSubnet({
+  cidrBlock: '10.2.0.0/20',
+  availabilityZone: 'us-west-2a'
+});
+```
+
+If you add more than one subnet to the VPC, the framework validates that there
+is no intersection between their address blocks. In addition, if all VPC IP
+address blocks (both primary and secondary) are provided as CIDR strings, the
+framework validates that each address block of all subnets is within one of the
+address blocks of the VPC.
+
 If you have added a secondary IPv6 block to your VPC, you can then add
 subnets with IPv6 ranges as well:
 
@@ -83,6 +92,7 @@ const subnet = vpc.addSubnet({
   availabilityZone: 'us-west-2a'
 });
 ```
+
 
 ### Routing
 
