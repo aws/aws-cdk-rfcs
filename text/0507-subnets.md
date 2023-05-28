@@ -328,21 +328,21 @@ track this theme, which has received 116 reactions so far. "CDK should
 follow the cloud-formation interface! Do not tie our hands, let
 us build. If you want to add a 'convenience' wrapper, do so, but do not
 force this on us. CDK is a tool not a prescription for how to build",
-complained one user. "I have been given a design brief that details out 
-exact subnets, IP address ranges, NACL, Routing etc. CDK does not allow the 
+complained one user. "I have been given a design brief that details out
+exact subnets, IP address ranges, NACL, Routing etc. CDK does not allow the
 user to follow such a brief", explained another.
 
 ### Why should we _not_ do this?
 
-This API is for advanced users, who need to override the default 
-configuration provided by the framework, and understand the consequences of 
+This API is for advanced users, who need to override the default
+configuration provided by the framework, and understand the consequences of
 doing so.
 
-An argument against adding this API to the framework is that it would give 
-users a tool that allows them to implement bad patterns, from a security, 
-availability and cost standpoints. For example, users might accidentally add 
-an internet route to an otherwise private subnet, exposing sensitive 
-resources, such as databases, to the outside world.
+An argument against implementing this API is that it would give users a tool
+that allows them to implement bad patterns, from a security, availability 
+and cost standpoints. For example, users might accidentally add an internet 
+route to an otherwise private subnet, exposing sensitive resources, such as 
+databases, to the outside world.
 
 ### What is the technical solution (design) of this feature?
 
@@ -359,12 +359,18 @@ No.
 
 ### What alternative solutions did you consider?
 
-> Briefly describe alternative approaches that you considered. If there are
-> hairy details, include them in an appendix.
+- **VPC patterns**: a new module, similar in spirit to `aws-ecs-patterns`,
+  which would provide users with a set of common architectural patterns.
+- **VPC builder**: a new interface that would allow users to build a VPC from
+  scratch, by adding subnets, route tables, etc. Different implementations
+  of this interface would have follow different strategies, such as
+  different ways to partition the address space, or different ways to assign
+  route tables to subnets. Users would be able to choose from a set of
+  existing implementations or create their own.
 
-### What are the drawbacks of this solution?
-
-> Describe any problems/risks that can be introduced if we implement this RFC.
+These solutions would be more flexible than what is currently offered by the
+`aws-ec2` module, but would still fall short of what advanced users need.
+There is simply too much variation in the way users want to design their VPCs.
 
 ### What is the high-level project plan?
 
