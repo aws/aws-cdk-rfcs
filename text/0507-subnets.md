@@ -12,8 +12,8 @@ ways that are not currently possible with the `Vpc` construct.
 
 ### IP addressing
 
-When you create a VPC, you can provide one or more secondary IP ranges, by
-providing them in the CIDR format:
+When you create a VPC, in addition to the primary IP block, you can provide
+one or more secondary IP blocks, by providing them in the CIDR format:
 
 ```ts
 const vpc = new Vpc(this, 'vpc', {
@@ -40,12 +40,12 @@ vpc.addSecondaryAddressBlock(IpAddresses.ipv4Ipam({
 }));
 ```
 
-You can also add secondary IPv6 address ranges, in three different ways:
+You can also add secondary IPv6 address blocks, in three different ways:
 
 ```ts
 // 1. Providing an Ipv6 address block. Because IPv6 addresses are all publicly 
-// addressable, they must come from an address pool that you brought to AWS 
-// (BYOIP). So you must also provide the pool ID:
+// addressable, they must come from an address pool that you own and brought to 
+// AWS (BYOIP). So you must also provide the pool ID:
 vpc.addSecondaryAddressBlock(IpAddresses.ipv6({
   cidr: '2001:db8:1234:1a00::/56',
 
@@ -71,7 +71,7 @@ subnets, use the `addSubnet()` method, which will turn off this default
 behavior:
 
 ```ts
-const subnet = vpc.addSubnet({
+const subnet = vpc.addSubnet('subnet', {
   cidrBlock: '10.2.0.0/20',
   availabilityZone: 'us-west-2a'
 });
@@ -87,7 +87,7 @@ If you have added a secondary IPv6 block to your VPC, you can then add
 subnets with IPv6 ranges as well:
 
 ```ts
-const subnet = vpc.addSubnet({
+const subnet = vpc.addSubnet('subnet', {
   cidrBlock: '2001:db8:1234:1a00::/60',
   availabilityZone: 'us-west-2a'
 });
@@ -95,9 +95,9 @@ const subnet = vpc.addSubnet({
 
 ### Routing
 
-By default, `addSubnet()` creates isolated subnets, that only route traffic 
-to other hosts inside the VPC. To define different routing policies for a 
-subnet, provide a route table when creating it. For example, to create a 
+By default, `addSubnet()` creates isolated subnets, that only route traffic
+to other hosts inside the VPC. To define different routing policies for a
+subnet, provide a route table when creating it. For example, to create a
 public subnet:
 
 ```ts
@@ -114,7 +114,7 @@ const publicRouteTable = vpc.addRouteTable('routeTable', {
   ],
 });
 
-const subnet = vpc.addSubnet({
+const subnet = vpc.addSubnet('publicSubnet', {
   cidrBlock: '10.2.0.0/20',
   availabilityZone: 'us-west-2a',
   routeTable: publicRouteTable,
@@ -128,7 +128,7 @@ vpc.publicSubnets.includes(subnet);
 vpc.selectSubnets({subnetType: ec2.SubnetType.PUBLIC}).includes(subnet);
 ```
 
-To create a route table that routes DynamoDB and S3 traffic through VPC
+To create a route table that sends DynamoDB and S3 traffic through VPC
 endpoints:
 
 ```ts
@@ -148,11 +148,11 @@ establishing connections to the instances:
 const elasticIp = new ElasticIp({
   domain: Domain.VPC
 
-  // Other properties, such as networkBorderGroup and publicIpv4Pool 
+  // Other properties, such as networkBorderGroup and publicIpv4Pool, 
   // are also available. Omitted here for brevity.
 });
 
-const natGateway = publicSubnet.addNatGateway({elasticIp});
+const natGateway = publicSubnet.addNatGateway('natgw', {elasticIp});
 
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
@@ -165,7 +165,7 @@ const routeTable = vpc.addRouteTable('routeTable', {
   ],
 });
 
-const privateSubnet = vpc.addSubnet({
+const privateSubnet = vpc.addSubnet('privateSubnet', {
   cidrBlock: '10.2.0.0/20',
   availabilityZone: 'us-west-2a',
   routeTable,
@@ -176,7 +176,7 @@ You can also create the same kind of routing pattern, but with a NAT instance
 instead:
 
 ```ts
-const natInstance = publicSubnet.addNatInstance({
+const natInstance = publicSubnet.addNatInstance('natinst', {
   instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO),
   machineImage: ec2.MachineImage.latestAmazonLinux({
     generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
@@ -196,7 +196,7 @@ const routeTable = vpc.addRouteTable('routeTable', {
   ],
 });
 
-const privateSubnet = vpc.addSubnet({
+const privateSubnet = vpc.addSubnet('privateSubnet', {
   cidrBlock: '10.2.0.0/20',
   availabilityZone: 'us-west-2a',
   routeTable,
@@ -290,10 +290,10 @@ concepts, such as routes and route tables.
 
 ### Why should I use this feature?
 
-With these constructs, you'll be able to:
+With this new API, you'll be able to:
 
 - Define your own route tables if the "each subnet has its own table"
-  approach doesn't fit your use case.
+  strategy doesn't fit your use case.
 - Add secondary address ranges to the VPC.
 - Define an address block per subnet. As a consequence, you will also be
   able to create asymmetric VPCs, in which different subnets of the same
@@ -328,12 +328,21 @@ track this theme, which has received 116 reactions so far. "CDK should
 follow the cloud-formation interface! Do not tie our hands, let
 us build. If you want to add a 'convenience' wrapper, do so, but do not
 force this on us. CDK is a tool not a prescription for how to build",
-complained one user.
+complained one user. "I have been given a design brief that details out 
+exact subnets, IP address ranges, NACL, Routing etc. CDK does not allow the 
+user to follow such a brief", explained another.
 
 ### Why should we _not_ do this?
 
-> Is there a way to address this use case with the current product? What are the
-> downsides of implementing this feature?
+This API is for advanced users, who need to override the default 
+configuration provided by the framework, and understand the consequences of 
+doing so.
+
+An argument against adding this API to the framework is that it would give 
+users a tool that allows them to implement bad patterns, from a security, 
+availability and cost standpoints. For example, users might accidentally add 
+an internet route to an otherwise private subnet, exposing sensitive 
+resources, such as databases, to the outside world.
 
 ### What is the technical solution (design) of this feature?
 
