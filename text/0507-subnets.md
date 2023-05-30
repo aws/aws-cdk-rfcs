@@ -18,11 +18,16 @@ one or more secondary IP blocks, by providing them in the CIDR format:
 ```ts
 const vpc = new Vpc(this, 'vpc', {
   // Primary address block
-  ipAddresses: IpAddresses.ipv4('10.1.0.0/16'),
+  ipAddresses: IpAddresses.ipv4('10.0.0.0/16'),
+
+  secondaryAddressBlocks: [
+    // The secondary address blocks must be in the same RFC 1918 range
+    IpAddresses.ipv4('10.1.0.0/16'),
+    IpAddresses.ipv4('10.2.0.0/16')
+  ]
 });
 
-// The secondary address block must be in the same RFC 1918 range
-vpc.addSecondaryAddressBlock(IpAddresses.ipv4('10.2.0.0/16'));
+vpc.addSecondaryAddressBlock(IpAddresses.ipv4('10.3.0.0/16'));
 ```
 
 Or by providing an [IPAM] pool with a netmask length:
@@ -31,7 +36,7 @@ Or by providing an [IPAM] pool with a netmask length:
 const ipam = new Ipam(stack, 'ipam');
 const pool = ipam.publicScope.addPool({
   addressFamily: AddressFamily.IP_V4,
-  provisionedCidrs: [IpAddresses.ipv4('10.2.0.0/16')],
+  provisionedCidrs: ['10.2.0.0/16'],
 });
 
 vpc.addSecondaryAddressBlock(IpAddresses.ipv4Ipam({
@@ -55,7 +60,7 @@ vpc.addSecondaryAddressBlock(IpAddresses.ipv6({
 
 // 2. Using an IPAM pool:
 vpc.addSecondaryAddressBlock(IpAddresses.ipv6Ipam({
-  ipamPoolId: pool,
+  ipamPool: pool,
   netmaskLength: 64
 }));
 
@@ -128,14 +133,43 @@ vpc.publicSubnets.includes(subnet);
 vpc.selectSubnets({subnetType: ec2.SubnetType.PUBLIC}).includes(subnet);
 ```
 
-To create a route table that sends DynamoDB and S3 traffic through VPC
-endpoints:
+If you don't provide a route table when adding a subnet, a new route table 
+will be automatically created and assigned to it. To add routes to a route 
+table after it has been created, use the `addRoute()` method:
 
 ```ts
-const routeTable = new RouteTable(this, 'routeTable', {
+subnet.routeTable.addRoute(
+  Route.to({
+    destination: '0.0.0.0/0',
+    target: Routers.INTERNET_GATEWAY,
+  }),
+);
+```
+
+To create a route table that sends traffic through interface VPC endpoints:
+
+```ts
+const dockerEndpoint  = vpc.addInterfaceEndpoint('EcrDockerEndpoint', {
+  service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER, 
+});
+
+vpc.addRouteTable('routeTable', {
   routes: [
-    Route.DYNAMODB_ENDPOINT,
-    Route.S3_ENDPOINT
+    Route.interfaceEndpoint(dockerEndpoint),
+  ],
+});
+```
+
+Similarly, to route traffic through gateway VPC endpoints:
+
+```ts
+const dynamoDbEndpoint = vpc.addGatewayEndpoint('DynamoDbEndpoint', {
+  service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+});
+
+vpc.addRouteTable('routeTable', {
+  routes: [
+    Route.gatewayEndpoint(dynamoDbEndpoint),
   ],
 });
 ```
@@ -177,9 +211,9 @@ instead:
 
 ```ts
 const natInstance = publicSubnet.addNatInstance('natinst', {
-  instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO),
-  machineImage: ec2.MachineImage.latestAmazonLinux({
-    generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+  instanceType: new ec2.InstanceType('t3.micro'),
+  machineImage: new ec2.GenericLinuxImage({
+    'us-east-2': 'ami-0f9c61b5a562a16af'
   }),
 
   // Other properties ommitted
@@ -218,7 +252,7 @@ const routeTable = vpc.addRouteTable('routeTable', {
 });
 ```
 
-To route traffic to a VPN Gateway, you can either explicitly add a route to the
+To route traffic to a VPN Gateway, you can explicitly add a route to the 
 route table or you can enable route propagation:
 
 ```ts
@@ -257,9 +291,7 @@ The API to create routes to them follows the same pattern as above.
 
 When you create a component that needs to be placed in a subnet, you can
 provide a subnet selection, which informs the `Vpc` construct which
-actual subnet to pick. On the other hand, if you already have an `ISubnet`
-instance where you want to place a component, you can provide it directly.
-For example, to create an `ApplicationLoadBalancer`:
+actual subnet to pick. For example, to create an `ApplicationLoadBalancer`:
 
 ```ts
 const subnet1 = vpc.addSubnet(/*...*/);
@@ -267,7 +299,9 @@ const subnet2 = vpc.addSubnet(/*...*/);
 
 const lb = new elbv2.ApplicationLoadBalancer(this, 'LB', {
   vpc,
-  subnets: [subnet1, subnet2],
+  vpcSubnets: {
+    subnets: [subnet1, subnet2],
+  },
 });
 ```
 
