@@ -336,8 +336,6 @@ With this new API, you'll be able to:
   public IPv4 address. In subnets created automatically by the `Vpc`
   construct, they always do.
 - Control in which availability zones specifically your subnets will be placed.
-- Control in which subnet specifically other resources, such as load
-  balancers and EC2 instances, will be placed.
 
 ## Internal FAQ
 
