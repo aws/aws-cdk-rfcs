@@ -380,12 +380,7 @@ databases, to the outside world.
 
 ### What is the technical solution (design) of this feature?
 
-> Briefly describe the high-level design approach for implementing this feature.
->
-> As appropriate, you can add an appendix with a more detailed design document.
->
-> This is a good place to reference a prototype or proof of concept, which is
-> highly recommended for most RFCs.
+See the [proof-of-concept].
 
 ### Is this a breaking change?
 
@@ -434,3 +429,5 @@ algorithm and reference it from the FAQ.
 
 
 [IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/what-it-is-ipam.html
+
+[proof-of-concept]: https://github.com/aws/aws-cdk/blob/otaviom/subnets/packages/aws-cdk-lib/aws-ec2/test/vpc.test.ts#L2357
