@@ -21,7 +21,8 @@ const vpc = new Vpc(this, 'vpc', {
   ipAddresses: IpAddresses.ipv4('10.0.0.0/16'),
 
   secondaryAddressBlocks: [
-    // The secondary address blocks must be in the same RFC 1918 range
+    // The secondary address blocks must be in the same RFC 1918 range as 
+    // the primary address block
     IpAddresses.ipv4('10.1.0.0/16'),
     IpAddresses.ipv4('10.2.0.0/16')
   ]
@@ -133,8 +134,8 @@ vpc.publicSubnets.includes(subnet);
 vpc.selectSubnets({subnetType: ec2.SubnetType.PUBLIC}).includes(subnet);
 ```
 
-If you don't provide a route table when adding a subnet, a new route table 
-will be automatically created and assigned to it. To add routes to a route 
+If you don't provide a route table when adding a subnet, a new route table
+will be automatically created and assigned to it. To add routes to a route
 table after it has been created, use the `addRoute()` method:
 
 ```ts
@@ -149,8 +150,8 @@ subnet.routeTable.addRoute(
 To create a route table that sends traffic through interface VPC endpoints:
 
 ```ts
-const dockerEndpoint  = vpc.addInterfaceEndpoint('EcrDockerEndpoint', {
-  service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER, 
+const dockerEndpoint = vpc.addInterfaceEndpoint('EcrDockerEndpoint', {
+  service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
 });
 
 vpc.addRouteTable('routeTable', {
@@ -252,8 +253,8 @@ const routeTable = vpc.addRouteTable('routeTable', {
 });
 ```
 
-To route traffic to a VPN Gateway, you can explicitly add a route to the 
-route table or you can enable route propagation:
+To route traffic to a VPN Gateway, you can explicitly add a route to the
+route table or you can enable route propagation (or both):
 
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
@@ -355,14 +356,15 @@ be customized: number of availability zones, types of subnet groups and
 subnet size within a group are some of the things users can control.
 
 While this is ideal for beginners, more advanced users need a level of
-control that the construct doesn't afford. We have an open GitHub issue to
-track this theme, which has received 116 reactions so far. "CDK should
-follow the cloud-formation interface! Do not tie our hands, let
-us build. If you want to add a 'convenience' wrapper, do so, but do not
-force this on us. CDK is a tool not a prescription for how to build",
-complained one user. "I have been given a design brief that details out
-exact subnets, IP address ranges, NACL, Routing etc. CDK does not allow the
-user to follow such a brief", explained another.
+control that the construct doesn't afford. We have an open
+[GitHub issue](https://github.com/aws/aws-cdk/issues/5927) to track this theme,
+which has received 116 reactions so far. In the top-rated comment in that issue,
+one user complains: "CDK should follow the cloud-formation interface! Do not 
+tie our hands, let us build. If you want to add a 'convenience' wrapper, do 
+so, but do not force this on us. CDK is a tool not a prescription for how to 
+build", a point that was further elaborated by another user: "I have been 
+given a design brief that details out exact subnets, IP address ranges, NACL,
+Routing etc. CDK does not allow the user to follow such a brief".
 
 ### Why should we _not_ do this?
 
@@ -371,9 +373,9 @@ configuration provided by the framework, and understand the consequences of
 doing so.
 
 An argument against implementing this API is that it would give users a tool
-that allows them to implement bad patterns, from a security, availability 
-and cost standpoints. For example, users might accidentally add an internet 
-route to an otherwise private subnet, exposing sensitive resources, such as 
+that allows them to implement bad patterns, from a security, availability
+and cost standpoints. For example, users might accidentally add an internet
+route to an otherwise private subnet, exposing sensitive resources, such as
 databases, to the outside world.
 
 ### What is the technical solution (design) of this feature?
