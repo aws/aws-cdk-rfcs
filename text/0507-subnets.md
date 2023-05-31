@@ -109,9 +109,6 @@ public subnet:
 ```ts
 const publicRouteTable = vpc.addRouteTable('routeTable', {
   routes: [
-    // With no parameters, the destination is the entire VPC CIDR
-    Route.local(),
-
     // By adding this route, all subnets that use this table become public
     Route.to({
       destination: '0.0.0.0/0',
@@ -244,9 +241,6 @@ gateway:
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
-    Route.local('10.0.0.0/16'),
-    Route.local('2001:db8:1234:1a00:/64'),
-
     // The CIDR provided here must be for IPv6
     Route.toEgressOnlyInternetGateway('::/0'),
   ],
@@ -259,8 +253,6 @@ route table or you can enable route propagation (or both):
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
-    Route.local('10.0.0.0/16'),
-
     // Static route to a VPN Gateway. Takes priority over propagated ones
     // Causes VPN gateway to be enabled in the VPC
     Route.toVpnGateway('172.31.0.0/24'),
@@ -276,7 +268,6 @@ If you have another VPC that you want to use in a peering connection:
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
-    Route.local(),
     Route.toPeerVpc({
       vpc: anotherVpc, // or Vpc.fromLookup(...)
       destination: '192.168.0.0/24', // The peer VPC CIDR
