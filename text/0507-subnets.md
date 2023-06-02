@@ -193,7 +193,6 @@ const natGateway = new NatGateway(vpc, 'NatGateway', {
   eip: elasticIp,
 });
 
-
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
     Route.to({
@@ -216,7 +215,9 @@ You can also create the same kind of routing pattern, but with a NAT instance
 instead:
 
 ```ts
-const natInstance = publicSubnet.addNatInstance('natinst', {
+// Same thing with a NAT instance: we have to create it outside of the subnet.
+// NatInstance extends Instance, which implements IRouter.
+const natInstance = new NatInstance(vpc, 'natinst', {
   instanceType: new ec2.InstanceType('t3.micro'),
   machineImage: new ec2.GenericLinuxImage({
     'us-east-2': 'ami-0f9c61b5a562a16af'
@@ -229,8 +230,6 @@ const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
     Route.to({
       destination: '0.0.0.0/0',
-
-      // Instance also implements IRouter
       target: natInstance,
     }),
   ],
