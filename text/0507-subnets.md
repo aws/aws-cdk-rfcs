@@ -184,7 +184,15 @@ const elasticIp = new ElasticIp({
   // are also available. Omitted here for brevity.
 });
 
-const natGateway = publicSubnet.addNatGateway('natgw', {elasticIp});
+// Ideally, we would have an addNatGateway() to ISubnet or just on Subnet,
+// that would return IRouter, but this method already exists, with a
+// different signature, and only in PublicSubnet. So we have to export
+// NatGateway and create it outside.
+const natGateway = new NatGateway(vpc, 'NatGateway', {
+  subnet: subnet,
+  eip: elasticIp,
+});
+
 
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
