@@ -143,31 +143,31 @@ subnet.routeTable.addRoute(
   }),
 );
 ```
-
-To create a route table that sends traffic through interface VPC endpoints:
+To route traffic through gateway VPC endpoints, use the `Route.
+toGatewayEndpoint()` method:
 
 ```ts
-const dockerEndpoint = vpc.addInterfaceEndpoint('EcrDockerEndpoint', {
-  service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
-});
-
 vpc.addRouteTable('routeTable', {
   routes: [
-    Route.interfaceEndpoint(dockerEndpoint),
+    // The endpoint will be created if it doesn't exist
+    Route.toGatewayEndpoint(GatewayVpcEndpointAwsService.DYNAMODB),
   ],
 });
 ```
 
-Similarly, to route traffic through gateway VPC endpoints:
+To create a route table that sends traffic through interface VPC endpoints:
 
 ```ts
-const dynamoDbEndpoint = vpc.addGatewayEndpoint('DynamoDbEndpoint', {
-  service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
-});
+const subnet1 = vpc.addSubnet(/*...*/);
+const subnet2 = vpc.addSubnet(/*...*/);
 
 vpc.addRouteTable('routeTable', {
   routes: [
-    Route.gatewayEndpoint(dynamoDbEndpoint),
+    Route.toInterfaceEndpoint(InterfaceVpcEndpointAwsService.ECR_DOCKER, {
+      // The endpoint will be created if it doesn't exist,
+      // in each of these subnets
+      subnets: [subnet1, subnet2],
+    }),
   ],
 });
 ```
