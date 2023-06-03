@@ -10,25 +10,30 @@ ways that are not currently possible with the `Vpc` construct.
 
 ## Working Backwards
 
+The `VpcV2` is a new construct, that creates an AWS VPC. Compared to `Vpc`,
+it makes fewer assumptions and allows for more control over how you
+structure your VPC, subnets and related resources, such as NAT Gateways and
+VPC Endpoints.
+
+> **Note**
+> In all the code snippets in this document, unless otherwise specified, the
+> variable `vpc` always refers to an instance of `VpcV2`.
+
 ### IP addressing
 
-When you create a VPC, in addition to the primary IP block, you can provide
-one or more secondary IP blocks, by providing them in the CIDR format:
+With `VpcV2`, in addition to the mandatory primary IP block, you can have one or
+more secondary IP blocks, by providing them in the CIDR format:
 
 ```ts
-const vpc = new Vpc(this, 'vpc', {
-  // Primary address block
-  ipAddresses: IpAddresses.ipv4('10.0.0.0/16'),
-
+const vpc = new VpcV2(this, 'vpc', {
+  primaryAddressBlock: IpAddresses.ipv4('10.0.0.0/16'),
   secondaryAddressBlocks: [
     // The secondary address blocks must be in the same RFC 1918 range as 
     // the primary address block
     IpAddresses.ipv4('10.1.0.0/16'),
-    IpAddresses.ipv4('10.2.0.0/16')
-  ]
+    IpAddresses.ipv4('10.2.0.0/16'),
+  ],
 });
-
-vpc.addSecondaryAddressBlock(IpAddresses.ipv4('10.3.0.0/16'));
 ```
 
 Or by providing an [IPAM] pool with a netmask length:
@@ -40,41 +45,43 @@ const pool = ipam.publicScope.addPool({
   provisionedCidrs: ['10.2.0.0/16'],
 });
 
-vpc.addSecondaryAddressBlock(IpAddresses.ipv4Ipam({
-  ipamPool: pool,
-  netmaskLength: 20
-}));
+const vpc = new VpcV2(this, 'vpc', {
+  primaryAddressBlock: IpAddresses.ipv4('10.0.0.0/16'),
+  secondaryAddressBlocks: [
+    IpAddresses.ipv4Ipam({
+      ipamPool: pool,
+      netmaskLength: 20,
+    }),
+  ],
+});
 ```
 
 You can also add secondary IPv6 address blocks, in three different ways:
 
 ```ts
-// 1. Providing an Ipv6 address block. Because IPv6 addresses are all publicly 
+// 1. Using an Ipv6 address block. Because IPv6 addresses are all publicly 
 // addressable, they must come from an address pool that you own and brought to 
 // AWS (BYOIP). So you must also provide the pool ID:
-vpc.addSecondaryAddressBlock(IpAddresses.ipv6({
+IpAddresses.ipv6({
   cidr: '2001:db8:1234:1a00::/56',
 
   // The pool of IPs you own. Not to be confused with an IPAM pool ID
   poolId: 'my-ipv6-pool-id',
-}));
+});
 
 // 2. Using an IPAM pool:
-vpc.addSecondaryAddressBlock(IpAddresses.ipv6Ipam({
+IpAddresses.ipv6Ipam({
   ipamPool: pool,
   netmaskLength: 64
-}));
+});
 
 // 3. Using an Amazon-provided IPv6 CIDR block:
-vpc.addSecondaryAddressBlock(IpAddresses.amazonProvidedIpv6());
+IpAddresses.amazonProvidedIpv6();
 ```
 
 ### Defining your own subnets
 
-By default, `Vpc` will create subnets for you (by default, a public and a
-private subnet per availability zone). If you want to define your own
-subnets, use the `addSubnet()` method, which will turn off this default
-behavior:
+`VpcV2` also allows you to define your own subnets:
 
 ```ts
 const subnet = vpc.addSubnet('subnet', {
@@ -139,10 +146,11 @@ table after it has been created, use the `addRoute()` method:
 subnet.routeTable.addRoute(
   Route.to({
     destination: '0.0.0.0/0',
-    target: Routers.INTERNET_GATEWAY,
+    target: Router.INTERNET_GATEWAY,
   }),
 );
 ```
+
 To route traffic through gateway VPC endpoints, use the `Route.
 toGatewayEndpoint()` method:
 
@@ -211,12 +219,11 @@ const privateSubnet = vpc.addSubnet('privateSubnet', {
 });
 ```
 
-You can also create the same kind of routing pattern, but with a NAT instance
-instead:
+You can also produce the same kind of routing pattern with a NAT instance:
 
 ```ts
 // Same thing with a NAT instance: we have to create it outside of the subnet.
-// NatInstance extends Instance, which implements IRouter.
+// NatInstance extends Instance and implements IRouter.
 const natInstance = new NatInstance(vpc, 'natinst', {
   instanceType: new ec2.InstanceType('t3.micro'),
   machineImage: new ec2.GenericLinuxImage({
@@ -242,8 +249,8 @@ const privateSubnet = vpc.addSubnet('privateSubnet', {
 });
 ```
 
-For IPv6 traffic, you create this pattern by using an egress-only internet
-gateway:
+For IPv6 traffic, to produce this pattern, you have to use an egress-only
+internet gateway:
 
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
@@ -255,7 +262,7 @@ const routeTable = vpc.addRouteTable('routeTable', {
 ```
 
 To route traffic to a VPN Gateway, you can explicitly add a route to the
-route table or you can enable route propagation (or both):
+route table, or you can enable route propagation (or both):
 
 ```ts
 const routeTable = vpc.addRouteTable('routeTable', {
@@ -276,7 +283,7 @@ If you have another VPC that you want to use in a peering connection:
 const routeTable = vpc.addRouteTable('routeTable', {
   routes: [
     Route.toPeerVpc({
-      vpc: anotherVpc, // or Vpc.fromLookup(...)
+      vpc: anotherVpc,
       destination: '192.168.0.0/24', // The peer VPC CIDR
     }),
   ],
@@ -357,10 +364,10 @@ While this is ideal for beginners, more advanced users need a level of
 control that the construct doesn't afford. We have an open
 [GitHub issue](https://github.com/aws/aws-cdk/issues/5927) to track this theme,
 which has received 116 reactions so far. In the top-rated comment in that issue,
-one user complains: "CDK should follow the cloud-formation interface! Do not 
-tie our hands, let us build. If you want to add a 'convenience' wrapper, do 
-so, but do not force this on us. CDK is a tool not a prescription for how to 
-build", a point that was further elaborated by another user: "I have been 
+one user complains: "CDK should follow the cloud-formation interface! Do not
+tie our hands, let us build. If you want to add a 'convenience' wrapper, do
+so, but do not force this on us. CDK is a tool not a prescription for how to
+build", a point that was further elaborated by another user: "I have been
 given a design brief that details out exact subnets, IP address ranges, NACL,
 Routing etc. CDK does not allow the user to follow such a brief".
 
@@ -401,30 +408,35 @@ There is simply too much variation in the way users want to design their VPCs.
 
 ### What is the high-level project plan?
 
-> Describe your plan on how to deliver this feature from prototyping to GA.
-> Especially think about how to "bake" it in the open and get constant feedback
-> from users before you stabilize the APIs.
->
-> If you have a project board with your implementation plan, this is a good
-> place to link to it.
+1. Implement the whole API described in this document.
+2. Launch it in a separate construct library, in Developer Preview mode.
+3. When it meets the exit criteria (3 months bake time, at least 2000
+   stacks and no P0 bugs), move all the new API over to the `aws-ec2` module.
 
 ### Are there any open issues that need to be addressed later?
 
 No.
 
+### Why is a new temporary module being introduced?
+
+For large experimental APIs like this, it's a good idea to clearly mark them 
+as such. Although we have other mechanisms for this, like adding `BetaN` 
+prefixes, this intention is better by a separate module marked as 
+Experimental or Developer Preview. 
+
+### Why create a new `VpcV2` construct instead of adding to `Vpc`?
+
+They will serve two separate sets of customers, with different use cases.
+For example, `Vpc` creates all the subnets on behalf of the user, while
+`VpcV2` will not create any subnet other than the ones requested by the user.
+
 ### Why all the `.addXxx()` methods?
 
 To keep the current way of organizing constructs in the tree, in which
 everything that is logically part of the VPC is a direct or indirect
-descendant of the `Vpc` construct.
-
-## Appendix
-
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
-
+descendant of the `Vpc` construct. The exceptions to this rule are 
+`NatGateway` and `NatInstance`, due to limitations with the `ISubnet` 
+interface, as explained in the main section.
 
 [IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/what-it-is-ipam.html
 
