@@ -117,10 +117,7 @@ public subnet:
 const publicRouteTable = vpc.addRouteTable('routeTable', {
   routes: [
     // By adding this route, all subnets that use this table become public
-    Route.to({
-      destination: '0.0.0.0/0',
-      target: Routers.INTERNET_GATEWAY,
-    }),
+    Route.toInternetGateway('0.0.0.0/0'),
   ],
 });
 
@@ -144,10 +141,7 @@ table after it has been created, use the `addRoute()` method:
 
 ```ts
 subnet.routeTable.addRoute(
-  Route.to({
-    destination: '0.0.0.0/0',
-    target: Router.INTERNET_GATEWAY,
-  }),
+  Route.toInternetGateway('0.0.0.0/0'),
 );
 ```
 
