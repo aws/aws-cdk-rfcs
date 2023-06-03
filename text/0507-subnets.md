@@ -28,7 +28,7 @@ more secondary IP blocks, by providing them in the CIDR format:
 const vpc = new VpcV2(this, 'vpc', {
   primaryAddressBlock: IpAddresses.ipv4('10.0.0.0/16'),
   secondaryAddressBlocks: [
-    // The secondary address blocks must be in the same RFC 1918 range as 
+    // The secondary address blocks must be in the same RFC 1918 range as
     // the primary address block
     IpAddresses.ipv4('10.1.0.0/16'),
     IpAddresses.ipv4('10.2.0.0/16'),
@@ -59,8 +59,8 @@ const vpc = new VpcV2(this, 'vpc', {
 You can also add secondary IPv6 address blocks, in three different ways:
 
 ```ts
-// 1. Using an Ipv6 address block. Because IPv6 addresses are all publicly 
-// addressable, they must come from an address pool that you own and brought to 
+// 1. Using an Ipv6 address block. Because IPv6 addresses are all publicly
+// addressable, they must come from an address pool that you own and brought to
 // AWS (BYOIP). So you must also provide the pool ID:
 IpAddresses.ipv6({
   cidr: '2001:db8:1234:1a00::/56',
@@ -188,7 +188,7 @@ establishing connections to the instances:
 const elasticIp = new ElasticIp({
   domain: Domain.VPC
 
-  // Other properties, such as networkBorderGroup and publicIpv4Pool, 
+  // Other properties, such as networkBorderGroup and publicIpv4Pool,
   // are also available. Omitted here for brevity.
 });
 
@@ -419,10 +419,10 @@ No.
 
 ### Why is a new temporary module being introduced?
 
-For large experimental APIs like this, it's a good idea to clearly mark them 
-as such. Although we have other mechanisms for this, like adding `BetaN` 
-prefixes, this intention is better by a separate module marked as 
-Experimental or Developer Preview. 
+For large experimental APIs like this, it's a good idea to clearly mark them
+as such. Although we have other mechanisms for this, like adding `BetaN`
+prefixes, this intention is better by a separate module marked as
+Experimental or Developer Preview.
 
 ### Why create a new `VpcV2` construct instead of adding to `Vpc`?
 
@@ -434,8 +434,8 @@ For example, `Vpc` creates all the subnets on behalf of the user, while
 
 To keep the current way of organizing constructs in the tree, in which
 everything that is logically part of the VPC is a direct or indirect
-descendant of the `Vpc` construct. The exceptions to this rule are 
-`NatGateway` and `NatInstance`, due to limitations with the `ISubnet` 
+descendant of the `Vpc` construct. The exceptions to this rule are
+`NatGateway` and `NatInstance`, due to limitations with the `ISubnet`
 interface, as explained in the main section.
 
 [IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/what-it-is-ipam.html
