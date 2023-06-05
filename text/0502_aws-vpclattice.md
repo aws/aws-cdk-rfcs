@@ -51,7 +51,7 @@ const lambda2: lambda.Function;
 // this will default to using IAM Authentication
 const myLatticeService = new vpclattice.Service(this, 'myLatticeService', {
   certificate: serviceCert,
-  customDomain: 'exampleorg.cloud'
+  customDomain: 'exampleorg.cloud',
   dnsEntry: 'latticerfc'
 });
 
