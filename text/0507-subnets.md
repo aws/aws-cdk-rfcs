@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @otaviomacedo
 * **Tracking Issue**: #507
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @rix0rrr
 
 New L2 constructs to allow for greater control over VPC design. Among other
 things, these constructs allow users to create and configure subnets in
@@ -312,7 +312,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @rix0rrr
 ```
 
 ## Public FAQ
