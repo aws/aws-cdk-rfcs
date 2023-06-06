@@ -125,7 +125,7 @@ description:
 ```
 new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
-   pythonVersion: glue.PythonVersion.3_6,
+   pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
@@ -134,7 +134,7 @@ new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
 
 new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
-   pythonVersion: glue.PythonVersion.3_6,
+   pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
    className: 'com.example.HelloWorld',
    description: 'an example Python Streaming job',
@@ -177,7 +177,7 @@ glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
 
 new glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
-   pythonVersion: glue.PythonVersion.3_6,
+   pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Flex job',
    numberOfWorkers: 20,
@@ -207,7 +207,7 @@ Optional overrides:
 ```
 new glue.PythonShellJob(this, 'PythonShellJob', {
     glueVersion: glue.GlueVersion.V1_0,
-    pythonVersion: glue.PythonVersion.3_6,
+    pythonVersion: glue.PythonVersion.3_9,
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
     description: 'an example Python Shell job',
     numberOfWorkers: 20,
