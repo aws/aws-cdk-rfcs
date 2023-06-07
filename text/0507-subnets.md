@@ -395,6 +395,7 @@ No.
   different ways to partition the address space, or different ways to assign
   route tables to subnets. Users would be able to choose from a set of
   existing implementations or create their own.
+- **Pure L2s**: see the [auxiliary doc](./0507-subnets-alternative.md).
 
 These solutions would be more flexible than what is currently offered by the
 `aws-ec2` module, but would still fall short of what advanced users need.
