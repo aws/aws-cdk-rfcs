@@ -15,10 +15,6 @@ it makes fewer assumptions and allows for more control over how you
 structure your VPC, subnets and related resources, such as NAT Gateways and
 VPC Endpoints.
 
-> **Note**
-> In all the code snippets in this document, unless otherwise specified, the
-> variable `vpc` always refers to an instance of `VpcV2`.
-
 ### IP addressing
 
 With `VpcV2`, in addition to the mandatory primary IP block, you can have one or
@@ -81,12 +77,13 @@ IpAddresses.amazonProvidedIpv6();
 
 ### Defining your own subnets
 
-`VpcV2` also allows you to define your own subnets:
+You can define your subnets with `SubnetV2`:
 
 ```ts
-const subnet = vpc.addSubnet('subnet', {
-  cidrBlock: '10.2.0.0/20',
-  availabilityZone: 'us-west-2a'
+const subnet = new SubnetV2(this, 'subnet', {
+  vpc,
+  cidrBlock: new Ipv4Cidr('10.0.0.0/24'),
+  availabilityZone: Fn.select(0, fn.getAzs()), // or directly, 'us-west-2a'
 });
 ```
 
@@ -100,60 +97,101 @@ If you have added a secondary IPv6 block to your VPC, you can then add
 subnets with IPv6 ranges as well:
 
 ```ts
-const subnet = vpc.addSubnet('subnet', {
-  cidrBlock: '2001:db8:1234:1a00::/60',
-  availabilityZone: 'us-west-2a'
+const subnet = new SubnetV2(this, 'subnet', {
+  vpc,
+  cidrBlock: new Ipv6Cidr('2001:db8:1234:1a00::/60'),
+  availabilityZone: Fn.select(0, fn.getAzs()), // or directly, 'us-west-2a'
 });
 ```
 
 ### Routing
 
-By default, `addSubnet()` creates isolated subnets, that only route traffic
-to other hosts inside the VPC. To define different routing policies for a
-subnet, provide a route table when creating it. For example, to create a
-public subnet:
+To define a public subnet, create a route table with a route to an Internet
+gateway:
 
 ```ts
-const publicRouteTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    // By adding this route, all subnets that use this table become public
-    Route.toInternetGateway('0.0.0.0/0'),
-  ],
+const internetGateway = new InternetGateway(this, 'igw');
+
+const publicDefaultRoute = new Route(this, 'publicDefaultRoute', {
+  destination: new Ipv4Cidr('0.0.0.0/0'),
+
+  // targets implement IRouter
+  target: internetGateway,
 });
 
-const subnet = vpc.addSubnet('publicSubnet', {
-  cidrBlock: '10.2.0.0/20',
-  availabilityZone: 'us-west-2a',
+const publicRouteTable = new RouteTable(this, 'publicRouteTable', {
+  routes: [publicDefaultRoute],
+});
+
+const publicSubnet = new Subnet(this, 'publicSubnet', {
+  vpc,
   routeTable: publicRouteTable,
-  mapPublicIpOnLaunch: false, // default: true for public subnets
+  cidrBlock: new Ipv4Cidr('10.0.0.0/24'),
+  availabilityZone: Fn.select(0, fn.getAzs()), // or directly, 'us-west-2a'
+});
+```
+
+You can place a NAT Gateway in this subnet:
+
+```ts
+const elasticIp = new ElasticIp(this, 'eip', {
+  domain: Domain.VPC,
 });
 
-// The following is true
-vpc.publicSubnets.includes(subnet);
-
-// As is
-vpc.selectSubnets({subnetType: ec2.SubnetType.PUBLIC}).includes(subnet);
+const natGateway = new NatGateway(this, 'NatGateway', {
+  subnet: publicSubnet,
+  eip: elasticIp,
+});
 ```
 
-If you don't provide a route table when adding a subnet, a new route table
-will be automatically created and assigned to it. To add routes to a route
-table after it has been created, use the `addRoute()` method:
+To define a private subnet with egress-only access to the Internet, you need
+a route to the NAT Gateway that was placed in the public subnet:
 
 ```ts
-subnet.routeTable.addRoute(
-  Route.toInternetGateway('0.0.0.0/0'),
-);
+const privateDefaultRoute = new Route(this, 'privateDefaultRoute', {
+  destination: new Ipv4Cidr('0.0.0.0/0'),
+  target: natGateway,
+});
+
+const privateRouteTable = new RouteTable(this, 'privateRouteTable', {
+  routes: [privateDefaultRoute],
+});
+
+const privateSubnet = new Subnet(this, 'privateSubnet', {
+  vpc,
+  routeTable: privateRouteTable,
+  cidrBlock: new Ipv4Cidr('10.0.1.0/24'),
+  availabilityZone: Fn.select(0, fn.getAzs()), // or directly, 'us-west-2a'
+});
 ```
 
-To route traffic through gateway VPC endpoints, use the `Route.
-toGatewayEndpoint()` method:
+For IPv6 traffic, to produce this pattern, you have to use an egress-only
+internet gateway:
 
 ```ts
-vpc.addRouteTable('routeTable', {
-  routes: [
-    // The endpoint will be created if it doesn't exist
-    Route.toGatewayEndpoint(GatewayVpcEndpointAwsService.DYNAMODB),
-  ],
+const egressOnlyInternetGateway = new EgressOnlyInternetGateway(this, 'gw');
+
+const privateDefaultRoute = new Route(this, 'privateDefaultRoute', {
+  destination: new Ipv4Cidr('::/0'),
+  target: egressOnlyInternetGateway,
+});
+```
+
+To route traffic through gateway VPC endpoints:
+
+```ts
+const dynamoDbEndpoint = new GatewayVpcEndpoint(this, 'endpoint', {
+  vpc,
+  service: GatewayVpcEndpointAwsService.DYNAMODB,
+});
+
+const route = new Route(this, 'route', {
+  destination: GatewayVpcEndpointAwsService.DYNAMODB.name,
+  target: dynamoDbEndpoint,
+});
+
+const routeTable = new RouteTable(this, 'routeTable', {
+  routes: [route],
 });
 ```
 
@@ -163,95 +201,17 @@ To create a route table that sends traffic through interface VPC endpoints:
 const subnet1 = vpc.addSubnet(/*...*/);
 const subnet2 = vpc.addSubnet(/*...*/);
 
-vpc.addRouteTable('routeTable', {
-  routes: [
-    Route.toInterfaceEndpoint(InterfaceVpcEndpointAwsService.ECR_DOCKER, {
-      // The endpoint will be created if it doesn't exist,
-      // in each of these subnets
-      subnets: [subnet1, subnet2],
-    }),
-  ],
-});
-```
-
-You can use a public NAT gateway to enable instances in a private subnet to
-send outbound traffic to the internet, while preventing the internet from
-establishing connections to the instances:
-
-```ts
-const elasticIp = new ElasticIp({
-  domain: Domain.VPC
-
-  // Other properties, such as networkBorderGroup and publicIpv4Pool,
-  // are also available. Omitted here for brevity.
+const dockerEndpoint = new InterfaceVpcEndpoint(this, 'EcrDockerEndpoint', {
+  vpc,
+  service: InterfaceVpcEndpointAwsService.ECR_DOCKER,
+  subnets: {
+    subnets: [subnet1, subnet2],
+  },
 });
 
-// Ideally, we would have an addNatGateway() to ISubnet or just on Subnet,
-// that would return IRouter, but this method already exists, with a
-// different signature, and only in PublicSubnet. So we have to export
-// NatGateway and create it outside.
-const natGateway = new NatGateway(vpc, 'NatGateway', {
-  subnet: subnet,
-  eip: elasticIp,
-});
-
-const routeTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    Route.to({
-      destination: '0.0.0.0/0',
-
-      // targets must implement the IRouter interface
-      target: natGateway,
-    }),
-  ],
-});
-
-const privateSubnet = vpc.addSubnet('privateSubnet', {
-  cidrBlock: '10.2.0.0/20',
-  availabilityZone: 'us-west-2a',
-  routeTable,
-});
-```
-
-You can also produce the same kind of routing pattern with a NAT instance:
-
-```ts
-// Same thing with a NAT instance: we have to create it outside of the subnet.
-// NatInstance extends Instance and implements IRouter.
-const natInstance = new NatInstance(vpc, 'natinst', {
-  instanceType: new ec2.InstanceType('t3.micro'),
-  machineImage: new ec2.GenericLinuxImage({
-    'us-east-2': 'ami-0f9c61b5a562a16af'
-  }),
-
-  // Other properties ommitted
-});
-
-const routeTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    Route.to({
-      destination: '0.0.0.0/0',
-      target: natInstance,
-    }),
-  ],
-});
-
-const privateSubnet = vpc.addSubnet('privateSubnet', {
-  cidrBlock: '10.2.0.0/20',
-  availabilityZone: 'us-west-2a',
-  routeTable,
-});
-```
-
-For IPv6 traffic, to produce this pattern, you have to use an egress-only
-internet gateway:
-
-```ts
-const routeTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    // The CIDR provided here must be for IPv6
-    Route.toEgressOnlyInternetGateway('::/0'),
-  ],
+const route = new Route(this, 'route', {
+  destination: InterfaceVpcEndpointAwsService.ECR_DOCKER.name,
+  target: dockerEndpoint,
 });
 ```
 
@@ -259,33 +219,68 @@ To route traffic to a VPN Gateway, you can explicitly add a route to the
 route table, or you can enable route propagation (or both):
 
 ```ts
-const routeTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    // Static route to a VPN Gateway. Takes priority over propagated ones
-    // Causes VPN gateway to be enabled in the VPC
-    Route.toVpnGateway('172.31.0.0/24'),
-  ],
+// Because VpnGateway doesn't do much
+const vpnGateway = new VpnGatewayV2(this, 'VpnGateway', {
+  vpc,
+});
 
-  // To make VPN Gateway routes propagate to this route table
-  enableVpnGatewayRoutePropagation: true, // default: false
+const route = new Route(this, 'route', {
+  destination: new Ipv4Cidr('172.31.0.0/24'),
+  target: vpnGateway,
 });
 ```
 
 If you have another VPC that you want to use in a peering connection:
 
 ```ts
-const routeTable = vpc.addRouteTable('routeTable', {
-  routes: [
-    Route.toPeerVpc({
-      vpc: anotherVpc,
-      destination: '192.168.0.0/24', // The peer VPC CIDR
-    }),
-  ],
+const route = new Route(this, 'route', {
+  destination: new Ipv4Cidr('192.168.0.0/24'), // The peer VPC CIDR
+  target: anotherVpc,
 });
 ```
 
 Other targets include carrier gateways, transit gateways and network interfaces.
 The API to create routes to them follows the same pattern as above.
+
+### Creating higher-level abstractions
+
+From these building blocks, you can assemble any VPC pattern you want and
+encapsulate them in custom higher-level constructs (L3s). For example,
+suppose you create a new construct called `MySubnetGroup` with the public
+and private subnets above (and their ancillary constructs such as route
+tables etc.) You can then replicate this group across all availability
+zones:
+
+```ts
+// This filter does a lookup and produces a list of availability zones 
+// according to your deny-list
+const azs = AzFilter.excludeIds(['use1-az1']);
+
+const ipProvider = IpAddresses.ipv4('10.0.0.0/20');
+azs.forEach((az, i) => {
+  new MySubnetGroup(this, `group${i}`, {
+    // This value is passed to the availabilityZone property of Subnet
+    az,
+
+    // You can call ipAddresses.allocateSubnetsCidr() to get chunks of this 
+    // space allocated to each subnet
+    ipAddresses: ipProvider,
+  });
+})
+```
+
+Consider the `publicSubnet` object created above. Then the following two
+statements are true:
+
+```ts
+vpc.publicSubnets.includes(subnet);
+vpc.selectSubnets({subnetType: ec2.SubnetType.PUBLIC}).includes(subnet);
+```
+
+Note that, once you access `.publicSubnets` or `selectSubnets()`, you are no
+longer allowed to create a subnet in this VPC. Otherwise, the same query
+would return different results in different parts of the application, a
+surprising behavior, that can cause confusion.
 
 ### Using subnets with other components
 
@@ -377,29 +372,16 @@ and cost standpoints. For example, users might accidentally add an internet
 route to an otherwise private subnet, exposing sensitive resources, such as
 databases, to the outside world.
 
-### What is the technical solution (design) of this feature?
-
-See the [proof-of-concept].
-
 ### Is this a breaking change?
 
 No.
 
 ### What alternative solutions did you consider?
 
-- **VPC patterns**: a new module, similar in spirit to `aws-ecs-patterns`,
-  which would provide users with a set of common architectural patterns.
-- **VPC builder**: a new interface that would allow users to build a VPC from
-  scratch, by adding subnets, route tables, etc. Different implementations
-  of this interface would have follow different strategies, such as
-  different ways to partition the address space, or different ways to assign
-  route tables to subnets. Users would be able to choose from a set of
-  existing implementations or create their own.
-- **Pure L2s**: see the [auxiliary doc](./0507-subnets-alternative.md).
-
-These solutions would be more flexible than what is currently offered by the
-`aws-ec2` module, but would still fall short of what advanced users need.
-There is simply too much variation in the way users want to design their VPCs.
+We have considered an
+[alternative API](./0507-subnets/alternative-working-backwards.md), in which
+most of the constructs are created by calling `VpcV2` methods (e.g.,
+`addSubnet()`).
 
 ### What is the high-level project plan?
 
@@ -419,20 +401,11 @@ as such. Although we have other mechanisms for this, like adding `BetaN`
 prefixes, this intention is better by a separate module marked as
 Experimental or Developer Preview.
 
-### Why create a new `VpcV2` construct instead of adding to `Vpc`?
+### Why create new `V2` constructs?
 
-They will serve two separate sets of customers, with different use cases.
-For example, `Vpc` creates all the subnets on behalf of the user, while
-`VpcV2` will not create any subnet other than the ones requested by the user.
-
-### Why all the `.addXxx()` methods?
-
-To keep the current way of organizing constructs in the tree, in which
-everything that is logically part of the VPC is a direct or indirect
-descendant of the `Vpc` construct. The exceptions to this rule are
-`NatGateway` and `NatInstance`, due to limitations with the `ISubnet`
-interface, as explained in the main section.
+The current constructs are very opinionated, with a lot of behavior  
+defined in the constructor (which makes it impossible to turn those 
+behaviors off), and with an API that is hard to add to without making 
+breaking changes (e.g., `Subnet`).
 
 [IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/what-it-is-ipam.html
-
-[proof-of-concept]: https://github.com/aws/aws-cdk/blob/otaviom/subnets/packages/aws-cdk-lib/aws-ec2/test/vpc.test.ts#L2357
