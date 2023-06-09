@@ -239,8 +239,10 @@ Each of these parameters are documented in [Glue's public documentation](https:/
 this table lists the parameters that will or will not be required, optional,
 and/or overridable for the Glue L2 construct.
 
+/md
 |Parameter|Required|Default Value|Overridable|
-|Command ScriptLocation|Yes: S3 location|CommandName|yes S3 location|
+|---|---|---|---|
+|ScriptLocation|Yes: S3 location|CommandName|yes S3 location|
 |NumberOfWorkers|No|10|Yes for ETL, STREAMING, RAY jobs|
 |Name|Yes|Default: Auto Generated name|Yes|
 |Role|Yes|None|Yes|
@@ -250,8 +252,7 @@ and/or overridable for the Glue L2 construct.
 |Connections|No|None|Yes|
 |MaxRetries|No|0|Yes|
 |Timeout|No|2 Days for non-streaming jobs|Yes|
-|SecurityConfiguration|No|None|Yes|
-|Tags|No|None|Yes|
+|SecurityConfiguration|No|None|Yes| |Tags|No|None|Yes|
 |GlueVersion|No|Default: 3.0 for ETL, RAY: 4.0|Yes|
 |Command name|No|ETL, PythonShell, Streaming and GlueRay|No|
 |Command Runtime|No|GlueRay: Ray2.4|No|
