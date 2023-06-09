@@ -41,9 +41,7 @@ are mentioned in the below table).
 
 This RFC will introduce breaking changes to the existing glue-alpha-module to
 streamline the developer experience and introduce new constants and validations.
-The L2 construct will determine the job type by the job type and language
-provided by the developer, rather than having separate methods in every
-permutation that Glue jobs allow. As an opinionated construct, it will enforce
+As an opinionated construct, the Glue L2 construct will enforce
 best practices and not allow developers to create resources that use deprecated
 libraries and tool sets (e.g. deprecated versions of Python).
 
@@ -56,8 +54,8 @@ and G8 worker type default as G2, which customer can override. It wil default to
 the best practice version of ETL 4.0, but allow developers to override to 3.0.
 We will also default to best practice enablement the following ETL features:
 `—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log.`
-You can find more details about version, worker type and other features in Glue's
-public documentation.
+You can find more details about version, worker type and other features in
+[Glue's public documentation](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-jobs-job.html).
 
 ```
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
@@ -190,11 +188,11 @@ A Python shell job runs Python scripts as a shell and supports a Python
 version that depends on the AWS Glue version you are using. This can be used
 to schedule and run tasks that don't require an Apache Spark environment.
 
-We’ll default to `PythonVersion.3_9`. Python shell jobs don't support different
-worker typesbut do have they have a MaxDPU feature. Developers can choose
-MaxDPU = `0.0625` or MaxDPU = `1`. By default, axDPU will be set `0.0625`.
-Python 3.9 supports preloaded analytics libraries using the `library-set=analytics`
-flag, and this feature will be enabled by default.
+We’ll default to `PythonVersion.3_9`. Python shell jobs have a MaxCapacity feature.
+Developers can choose MaxCapacity = `0.0625` or MaxCapacity = `1`. By default,
+MaxCapacity will be set `0.0625`. Python 3.9 supports preloaded analytics
+libraries using the `library-set=analytics` flag, and this feature will
+be enabled by default.
 
 ```
 new glue.PythonShellJob(this, 'PythonShellJob', {
@@ -231,10 +229,37 @@ Developers can override min workers and other Glue job fields
 new glue.GlueRayJob(this, 'GlueRayJob', {
   runtime: glue.Runtime.RAY_2_2,
   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
-  minWorkers: 20,
   numberOfWorkers: 50
 });
 ```
+
+### Required, Optional, and Overridable Parameters
+
+Each of these parameters are documented in [Glue's public documentation](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api.html);
+this table lists the parameters that will or will not be required, optional,
+and/or overridable for the Glue L2 construct.
+
+|Parameter|Required|Default Value|Overridable|
+|Command ScriptLocation|Yes: S3 location|CommandName|yes S3 location|
+|NumberOfWorkers|No|10|Yes for ETL, STREAMING, RAY jobs|
+|Name|Yes|Default: Auto Generated name|Yes|
+|Role|Yes|None|Yes|
+|Description|No|None|Yes|
+|MaxConcurrentRuns|No|1|Yes|
+|DefaultArguments|No|None|Yes|
+|Connections|No|None|Yes|
+|MaxRetries|No|0|Yes|
+|Timeout|No|2 Days for non-streaming jobs|Yes|
+|SecurityConfiguration|No|None|Yes|
+|Tags|No|None|Yes|
+|GlueVersion|No|Default: 3.0 for ETL, RAY: 4.0|Yes|
+|Command name|No|ETL, PythonShell, Streaming and GlueRay|No|
+|Command Runtime|No|GlueRay: Ray2.4|No|
+|NonOverridableArguments|No|None|No|
+|ExecutionClass|No|STANDARD / FLEX|No|
+|Command PythonVersion|No|3 for ETL/Streaming, 3.9 for PythonShell|
+|LogUri|No|None|This option is not widely used|
+|MaxCapacity (Python Shell Jobs only)|No|0.0625|Yes|
 
 ### Uploading scripts from the same repo to S3
 
@@ -309,7 +334,7 @@ myWorkflow.createWeeklyScheduleTrigger(this, 'TriggerJobOnWeeklySchedule', {
 });
 
 // Create Custom schedule, e.g. Monthly on the 7th day at 15:30 UTC
-myWorkflow.createCustomScheduleJobTrigger((this, 'TriggerCrawlerOnCustomSchedule', {
+myWorkflow.createCustomScheduleJobTrigger(this, 'TriggerCrawlerOnCustomSchedule', {
     description: 'Scheduled run for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
     schedule: events.Schedule.cron(day: '7', hour: '15', minute: '30')
@@ -325,7 +350,7 @@ to 1. For both triggers, `BatchWindow` will be default to 900 seconds.
 
 ```
 myWorkflow.createNotifyEventTrigger(this, 'MyNotifyTriggerBatching', {
-    batchSize: batchSize,
+    batchSize: int,
     jobActions: [glueJob1, glueJob2, glueJob3],
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
 });
@@ -364,12 +389,11 @@ certain types of data stores.
 * **Networking - CDK determines the best fit subnet for Glue Connection
 configuration
     **The current glue-alpha-module requires the developer to specify the
-    subnet of the Connection when it’s defined. This L2 RFC will make the
-    best choice selection for subnet by default by using the data source
-    provided during Job provisioning, traverse the source’s existing networking
-    configuration, and determine the best subnet to provide to the Glue Job
-    parameters to allow the Job to access the data source. The developer can
-    override this subnet parameter, but no longer has to provide it directly.
+    subnet of the Connection when it’s defined. The developer can still specify the
+    specific subnet they want to use, but no longer have to. This Glue L2 RFC will
+    allow developers to provide only a VPC and either a public or private subnet
+    selection. The L2 will then leverage the existing [EC2 Subnet Selection](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_ec2/SubnetSelection.html)
+    library to make the best choice selection for the subnet.
 
 ## Public FAQ
 
