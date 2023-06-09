@@ -239,9 +239,8 @@ Each of these parameters are documented in [Glue's public documentation](https:/
 this table lists the parameters that will or will not be required, optional,
 and/or overridable for the Glue L2 construct.
 
-/md
 |Parameter|Required|Default Value|Overridable|
-|---|---|---|---|
+|:---|:---|:---|:---|
 |ScriptLocation|Yes: S3 location|CommandName|yes S3 location|
 |NumberOfWorkers|No|10|Yes for ETL, STREAMING, RAY jobs|
 |Name|Yes|Default: Auto Generated name|Yes|
