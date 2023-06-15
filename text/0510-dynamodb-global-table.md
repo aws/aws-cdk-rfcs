@@ -12,7 +12,7 @@ custom resources from provisioning global tables.
 
 The following is ReadMe for DynamoDB Global Table:
 
-### DynamoDB Global Table
+### DynamoDB Global TableKMS
 
 [DynamoDB Global Table](https://aws.amazon.com/dynamodb/global-tables/) lets you provision a table that could be
  replicated across different regions. It could also be deployed to just one region and would cost the same as a
@@ -57,18 +57,20 @@ would be the same for each replica.
 #### Billing Mode
 
 There are two billing modes that global tables could have,
-  1. Pay Per Request: In this mode you would not need to specify write or read capacity. You would only be
-  paying for the capacity utilized by the requests coming in.
-  2. Provisioned: In this mode you would have write with auto scaling and read capacity with either auto
-  scaling or with exact read capacity units. You would be paying for the provisioned capacity even if it is
-  not utilized.
+
+1. Pay Per Request: In this mode you would not need to specify write or read capacity. You would only be
+paying for the capacity utilized by the requests coming in.
+2. Provisioned: In this mode you would have write with auto scaling and read capacity with either auto
+scaling or with exact read capacity units. You would be paying for the provisioned capacity even if it is
+not utilized.
 
 The default mode is pay per request mode. If you choose provisioned mode, then you would need to specify read
  and write capacity for the table and replicas. You can do this in three ways,
-  1. Mention capacity on table level and these get copied over to all replicas.
-  2. Mention capacity for each replica separately.
-  3. Mention capacity on table level and for replica where you want to have a different capacity. Wherever you
-  would not mention capacity, the table level values would be used.
+
+1. Mention capacity on table level and these get copied over to all replicas.
+2. Mention capacity for each replica separately.
+3. Mention capacity on table level and for replica where you want to have a different capacity. Wherever you
+would not mention capacity, the table level values would be used.
 
 The billing mode will remain the same across all replicas.
 
@@ -112,11 +114,12 @@ The billing mode will remain the same across all replicas.
 ```
 
 __NOTE:__
-  * Provisioned mode for write capacity could only be used with autoscaling. There is no way to provision
-  an exact write capacity unit in global tables.
-  * Write capacity could not be configured on a per replica basis. You can only modify read capacity per
-  replica.
-  * You can either define `readCapacity` or `readWithAutoScaling` but not both at the same time.
+
+* Provisioned mode for write capacity could only be used with autoscaling. There is no way to provision
+an exact write capacity unit in global tables.
+* Write capacity could not be configured on a per replica basis. You can only modify read capacity per
+replica.
+* You can either define `readCapacity` or `readWithAutoScaling` but not both at the same time.
 
 #### Global Secondary Indexes
 
@@ -146,8 +149,9 @@ You can add global secondary index with `addGlobalSecondaryIndex` method.
 ```
 
 __NOTE:__
-  * You can create up to 20 global secondary indexes.
-  * You can only create or delete one global secondary index in a single stack operation.
+
+* You can create up to 20 global secondary indexes.
+* You can only create or delete one global secondary index in a single stack operation.
 
 #### Local Secondary Indexes
 
@@ -177,16 +181,18 @@ You can add local secondary index with `addLocalSecondaryIndex` method.
 ```
 
 __NOTE:__
-  * You need a sort key to define a local secondary index.
-  * You can create up to five local secondary indexes.
+
+* You need a sort key to define a local secondary index.
+* You can create up to five local secondary indexes.
 
 #### Encryption
 
 There are three types of encryptions that are available for global tables.
-  1. `AWS_OWNED`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default
-  for global tables.
-  2. `AWS_MANAGED`: A KMS key is created in your account and is managed by AWS.
-  3. `CUSTOMER_MANAGED`: You can specify a KMS key that is managed by you for encrytion.
+
+1. `AWS_OWNED`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default
+for global tables.
+2. `AWS_MANAGED`: A KMS key is created in your account and is managed by AWS.
+3. `CUSTOMER_MANAGED`: You can specify a KMS key that is managed by you for encrytion.
 
 This would be the same for each replica.
 
@@ -198,15 +204,17 @@ This would be the same for each replica.
 ```
 
 __NOTE__:
-  * If the encryption mode is CUSTOMER_MANAGED, then you would need to specify a KMS key for each replica.
+
+* If the encryption mode is CUSTOMER_MANAGED, then you would need to specify a KMS key for each replica.
 
 #### Streams
 
 You can enable DynamoDB streams for your global tables. There are four possible values for it,
-  1. `NEW_IMAGE`: The entire item, as it appears after it was modified, is written to the stream.
-  2. `OLD_IMAGE`: The entire item, as it appeared before it was modified, is written to the stream.
-  3. `NEW_AND_OLD_IMAGES`: Both the new and the old item images of the item are written to the stream.
-  4. `KEYS_ONLY`: Only the key attributes of the modified item are written to the stream.
+
+1. `NEW_IMAGE`: The entire item, as it appears after it was modified, is written to the stream.
+2. `OLD_IMAGE`: The entire item, as it appeared before it was modified, is written to the stream.
+3. `NEW_AND_OLD_IMAGES`: Both the new and the old item images of the item are written to the stream.
+4. `KEYS_ONLY`: Only the key attributes of the modified item are written to the stream.
 
 This would be the same for each replica. By default, streams are not enabled for global table. But, if
 you have a replica present which is not of the same region as where the stack is deployed to, then the
@@ -256,19 +264,20 @@ But, if the replica has any configuration that is defined and the tabel level pr
 then the replica property value takes precedence and would be assigned.
 
 Options:
-  * `region` --> Needs to be specified
-  * `contributorInsightsEnabled` --> Gets copied over from table level props if defined.
-  * `deletionProtection` --> Gets copied over from table level props if defined.
-  * `pointInTimeRecovery` --> Gets copied over from table level props if defined.
-  * `tableClass` --> Gets copied over from table level props if defined.
-  * `tags` --> Gets copied over from table level props if defined.
-  * `readWithAutoScaling` --> Gets copied over from table level props if defined.
-  * `readCapactity` --> Gets copied over from table level props if defined.
-  * `encryptionKey` --> This needs to be defined per replica
-  * `kinesisStream` --> This needs to be defined per replica
-  * `gsiProps`
-      * `indexName` --> Needs to be specified
-      * `contributorInsightsEnabled` --> Gets copied over from table level props or replica level props if defined.
+
+* `region` --> Needs to be specified
+* `contributorInsightsEnabled` --> Gets copied over from table level props if defined.
+* `deletionProtection` --> Gets copied over from table level props if defined.
+* `pointInTimeRecovery` --> Gets copied over from table level props if defined.
+* `tableClass` --> Gets copied over from table level props if defined.
+* `tags` --> Gets copied over from table level props if defined.
+* `readWithAutoScaling` --> Gets copied over from table level props if defined.
+* `readCapactity` --> Gets copied over from table level props if defined.
+* `encryptionKey` --> This needs to be defined per replica
+* `kinesisStream` --> This needs to be defined per replica
+* `gsiProps`
+  * `indexName` --> Needs to be specified
+  * `contributorInsightsEnabled` --> Gets copied over from table level props or replica level props if defined.
 
 You can also add a replica using `addReplica` method.
 
@@ -279,8 +288,9 @@ You can also add a replica using `addReplica` method.
 ```
 
 __NOTE:__
-  * A replica needs to be deployed to the region where stack is deployed to. We do this automatically if
-  user has not defined the region in replica.
+
+* A replica needs to be deployed to the region where stack is deployed to. We do this automatically if
+user has not defined the region in replica.
 
 #### Grants
 
@@ -332,10 +342,11 @@ GlobalTable.fromTableName(stack, 'FooTableId', 'FooTable');
 ```
 
 ### NOTE
-  * Be careful while naming your global table. If there is a name conflict in a region with a DynamoDB table,
-  that could lead to removal of that table with the global table replica.
-  * We only support version [2019.11.21](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/globaltables.V2.html)
-  of the global table since CloudFormation just has support for the same.
+
+* Be careful while naming your global table. If there is a name conflict in a region with a DynamoDB table,
+that could lead to removal of that table with the global table replica.
+* We only support version [2019.11.21](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/globaltables.V2.html)
+of the global table since CloudFormation just has support for the same.
 
 ---
 
@@ -370,13 +381,11 @@ within our [Table construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk
 to add support for this feature.
 
 The current implementation has some limitations,
-  * Some properties are not propagated across replicas.
-    * Open Issues:
-      * https://github.com/aws/aws-cdk/issues/25740
-      * https://github.com/aws/aws-cdk/issues/25443
-      * https://github.com/aws/aws-cdk/issues/18582
-  * Customer managed key is not supported with replicationRegions in current solution.
-  (Issues: https://github.com/aws/aws-cdk/issues/15957)
+
+* Some properties are not propagated across replicas.
+  * Open Issues: #25740, #25443, #18582
+* Customer managed key is not supported with replicationRegions in current solution.
+(Issues: #15957)
 
 The current solution also would add maintenance load and cost for custom resource in user stack.
 And also blocks users who do not want to use a custom resource solution for provisioning their global tables.
@@ -389,8 +398,8 @@ we can now add L2 support for this feature.
 
 We currently offer two solution to provision a global table,
 
-  1. Custom CloudFormation Resource within Table construct
-  2. L1 for global table resource
+1. Custom CloudFormation Resource within Table construct
+2. L1 for global table resource
 
 This means the customer is not blocked to use global tables. Adding L2 support would take up developer
 time and effort and, would also add to maintenance load for the CDK team.
@@ -1150,7 +1159,6 @@ This would be a file hosting the `GlobalTable` L2 construct.
   }
   ```
 
-
 * `GlobalTableProps` Interface
 
   ```typescript
@@ -1571,19 +1579,21 @@ This would be a file hosting the `GlobalTable` L2 construct.
 
 __Callout__:
 
-  * The grant stream functions would not be able to grant stream access to replicas other than the one
-  deployed in the stack region. This is due to the format of the stream arn which has format:
-  _arn:aws:dynamodb:region:account-id:table/table-name/stream/timestamp_.
+* The grant stream functions would not be able to grant stream access to replicas other than the one
+deployed in the stack region. This is due to the format of the stream arn which has format:
+_arn:aws:dynamodb:region:account-id:table/table-name/stream/timestamp_.
 
-  For [example](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#aws-resource-dynamodb-globaltable-return-values),
+For [example](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#aws-resource-dynamodb-globaltable-return-values),
 
-  ```
-  arn:aws:dynamodb:us-east-1:123456789012:table/testddbstack-myDynamoDBTable-012A1SL7SMP5Q/stream/2015-11-30T20:10:00.000
-  ```
+```
+arn:aws:dynamodb:us-east-1:123456789012:table/testddbstack-myDynamoDBTable-012A1SL7SMP5Q/stream/2015-11-30T20:10:00.000
+```
 
-  Due to this, there is no way to reconstruct it for another region since we would not be aware of the
-  timestamp value. If we want to support this, we can add a lookup function to determine the stream arn
-  or create a CloudFormation custom resource.
+Due to this, there is no way to reconstruct it for another region since we
+would not be aware of the
+timestamp value. If we want to support this, we can add a lookup function
+to determine the stream arn
+or create a CloudFormation custom resource.
 
 ### Is this a breaking change?
 
@@ -1593,21 +1603,28 @@ This is not a breaking change. This is adding functionality to CDK library.
 
 #### Defaults for read and write capacity
 
-In the proposed solution, if a user selects billing mode as provisioned, then they would need to specify
-values for read and write capacities. There are no defaults assigned in this solution.
+In the proposed solution, if a user selects billing mode as provisioned,
+then they would need to specify
+values for read and write capacities. There are no defaults assigned in
+this solution.
 
-In my opinion, if a user is using the provisioned mode, then they must make conscious decisions about what
+In my opinion, if a user is using the provisioned mode, then they must
+make conscious decisions about what
 the capacity should look like for the table and its replicas.
 
 #### Kms key not created for customer managed keys
 
-In the proposed solution, if a user specifies customer managed key as their choice on encryption, then they
+In the proposed solution, if a user specifies customer managed key as
+their choice on encryption, then they
 would need to specify a key for each replica.
 
-Unlike the Table construct, I am not creating the KMS keys for the customers. I believe customer is making a
-conscious decision of using such encryption and should add relevant keys.
+Unlike the Table construct, I am not creating the KMS keys for the customers.
+I believe customer is making a conscious decision of using such encryption
+and should add relevant keys.
 
-To mitigate customer pain in this scenario, we can use a [multi region kms key](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html) and provision that if none is present.
+To mitigate customer pain in this scenario, we can use a
+[multi region kms key](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html)
+ and provision that if none is present.
 
 ### What are the drawbacks of this solution?
 
