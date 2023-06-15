@@ -1,10 +1,10 @@
 # AWS DynamoDB Global Table L2 Construct
 
 * **Original Author(s):**: @vinayak-kukreja
-* **Tracking Issue**: #https://github.com/aws/aws-cdk-rfcs/issues/510
+* **Tracking Issue**: #510
 * **API Bar Raiser**: @rix0rrr
 
-Users will now be able to replicate their DynamoDB table to multiple regions using the Global Table L2 construct. This feature would be using the CloudFormation resource for global table and users would no longer need to rely custom resources from provisioning their global tables.
+Users will now be able to replicate their DynamoDB table to multiple regions using the Global Table L2 construct. This feature would be using the CloudFormation resource for global table and users would no longer need to rely custom resources from provisioning global tables.
 
 ## Working Backwards
 
@@ -12,7 +12,7 @@ The following is ReadMe for DynamoDB Global Table:
 
 ### DynamoDB Global Table
 
-[DynamoDB Global Table](https://aws.amazon.com/dynamodb/global-tables/) lets you provision a table that could be replicated across different regions. 
+[DynamoDB Global Table](https://aws.amazon.com/dynamodb/global-tables/) lets you provision a table that could be replicated across different regions. It could also be deployed to just one region and would cost the same as a single DynamoDB table.
 
 #### Partition Key
 
@@ -24,7 +24,7 @@ Our GlobalTable L2 construct could be used to provision a global table. You can 
   });
 ```
 
-This would provision a global table only in the region the stack is being deployed to with provisioning mode as pay-per-request. It would also add a partition key which would be the same for all replicas of the table.
+This would provision a global table only in the region where the stack is being deployed to. The provisioning mode would be on-demand. And, it would also add a partition key which would be the same for all replicas of the table.
 
 #### Sort Key
 
@@ -51,8 +51,8 @@ You can mention a name for your global table. If not specified, this is auto gen
 #### Billing Mode
 
 There are two billing modes that global tables could have,
-  1. Pay Per Request: In this mode you would not need to specify write or read capacity.
-  2. Provisioned: In this mode you would have write with auto scaling and read capacity with either auto scaling or with exact read capacity units. 
+  1. Pay Per Request: In this mode you would not need to specify write or read capacity. You would only be paying for the capacity utilized by the requests coming in.
+  2. Provisioned: In this mode you would have write with auto scaling and read capacity with either auto scaling or with exact read capacity units. You would be paying for the provisioned capacity even if it is not utilized.
 
 The default mode is pay per request mode. If you choose provisioned mode, then you would need to specify read and write capacity for the table and replicas. You can do this in three ways, 
   1. Mention capacity on table level and these get copied over to all replicas.
@@ -60,11 +60,6 @@ The default mode is pay per request mode. If you choose provisioned mode, then y
   3. Mention capacity on table level and for replica where you want to have a different capacity. Wherever you would not mention capacity, the table level values would be used.
 
 The billing mode will remain the same across all replicas.
-
-__NOTE:__
-  * Provisioned mode for write capacity could only be used with autoscaling. There is no way to provision an exact write capacity unit in global tables.
-  * Write capacity could not be configured on a per replica basis. You can only modify read capacity per replica. 
-  * You can either define `readCapacity` or `readWithAutoScaling` but not both at the same time.
 
 ##### Pay Per Request Mode
 
@@ -104,6 +99,11 @@ __NOTE:__
     readCapactity: 50,
   });
 ```
+
+__NOTE:__
+  * Provisioned mode for write capacity could only be used with autoscaling. There is no way to provision an exact write capacity unit in global tables.
+  * Write capacity could not be configured on a per replica basis. You can only modify read capacity per replica. 
+  * You can either define `readCapacity` or `readWithAutoScaling` but not both at the same time.
 
 #### Global Secondary Indexes
 
@@ -169,8 +169,8 @@ __NOTE:__
 
 There are three types of encryptions that are available for global tables.
   1. `AWS_OWNED`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default for global tables.
-  2. `AWS_MANAGED`: A kms key is created in your account and is managed by AWS.
-  3. `CUSTOMER_MANAGED`: You can specify a key that is managed by you for encrytion.
+  2. `AWS_MANAGED`: A KMS key is created in your account and is managed by AWS.
+  3. `CUSTOMER_MANAGED`: You can specify a KMS key that is managed by you for encrytion.
 
 This would be the same for each replica.
 
@@ -335,7 +335,7 @@ You should use this feature if you would like to provision a DynamoDB table that
 
 ### Why are we doing this?
 
-DynamoDB Global table L2 support has been requested by our users for a long time. When CDK initally added support for this feature, CloudFormation support for global tables did not exist. So we had to use [custom aws resources](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources-readme.html) within our [Table construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html#amazon-dynamodb-global-tables) to add support for this feature. 
+DynamoDB Global table L2 support has been requested by our users for a long time. When CDK initally added support for this feature, CloudFormation support for global tables did not exist. So we had to use [custom CloudFormation resources](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources-readme.html) within our [Table construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html#amazon-dynamodb-global-tables) to add support for this feature. 
 
 The current implementation has some limitations,
   * Some properties are not propagated across replicas.
@@ -432,13 +432,6 @@ The L1 for global table is quite similar to the L1 for table. This also reflects
 
     /**
      * Server-side KMS encryption with a customer master key managed by customer.
-     * If `encryptionKey` is specified, this key will be used, otherwise, one will be defined.
-     *
-     * > **NOTE**: if `encryptionKey` is not specified and the `Table` construct creates
-     * > a KMS key for you, the key will be created with default permissions. If you are using
-     * > CDKv2, these permissions will be sufficient to enable the key for use with DynamoDB tables.
-     * > If you are using CDKv1, make sure the feature flag `@aws-cdk/aws-kms:defaultKeyPolicies`
-     * > is set to `true` in your `cdk.json`.
      */
     CUSTOMER_MANAGED = 'CUSTOMER_MANAGED',
 
@@ -494,7 +487,6 @@ The L1 for global table is quite similar to the L1 for table. This also reflects
    * Supported DynamoDB table operations.
    */
   export enum Operation {
-
     /** GetItem */
     GET_ITEM = 'GetItem',
 
@@ -536,7 +528,6 @@ The L1 for global table is quite similar to the L1 for table. This also reflects
 
     /** ExecuteStatement */
     EXECUTE_STATEMENT = 'ExecuteStatement',
-
   }
   ```
 
@@ -633,10 +624,7 @@ The L1 for global table is quite similar to the L1 for table. This also reflects
      *
      * This property can only be set if `encryption` is set to `TableEncryption.CUSTOMER_MANAGED`.
      *
-     * @default - If `encryption` is set to `TableEncryption.CUSTOMER_MANAGED` and this
-     * property is undefined, a new KMS key will be created and associated with this table.
-     * If `encryption` and this property are both undefined, then the table is encrypted with
-     * an encryption key managed by DynamoDB, and you are not charged any fee for using it.
+     * @default - no KMS key is defined
      */
     readonly encryptionKey?: kms.IKey;
 
@@ -889,9 +877,6 @@ The L1 for global table is quite similar to the L1 for table. This also reflects
      * @attribute
      */
     public abstract readonly tableStreamArn?: string;
-
-    protected readonly regionalArns = new Array<string>();
-    protected abstract get hasIndex(): boolean;
 
     /**
      * Return the given named metric for this Table
@@ -1369,8 +1354,6 @@ This would be a file hosting the `GlobalTable` L2 construct.
      * @attribute
      */
     public abstract readonly tableStreamArn?: string;
-
-    public abstract readonly replicas?: ReplicaTableOptions[];
 
     /**
      * Adds an IAM policy statement associated with this table to an IAM
