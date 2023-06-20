@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @otaviomacedo
 * **Tracking Issue**: #507
-* **API Bar Raiser**: @rix0rrr
+* **API Bar Raiser**: @corymhall
 
 New L2 constructs to allow for greater control over VPC design. Among other
 things, these constructs allow users to create and configure subnets in
@@ -13,7 +13,9 @@ ways that are not currently possible with the `Vpc` construct.
 The `VpcV2` is a new construct, that creates an AWS VPC. Compared to `Vpc`,
 it makes fewer assumptions and allows for more control over how you
 structure your VPC, subnets and related resources, such as NAT Gateways and
-VPC Endpoints.
+VPC Endpoints. `VpcV2` also implements `IVpc`, which allows you to switch 
+from one implementation to the other without affecting other resources that 
+reference an `IVpc`.
 
 ### IP addressing
 
@@ -77,7 +79,7 @@ IpAddresses.amazonProvidedIpv6();
 
 ### Defining your own subnets
 
-You can define your subnets with `SubnetV2`:
+You can define your subnets with `SubnetV2`, which implements `ISubnet`:
 
 ```ts
 const subnet = new SubnetV2(this, 'subnet', {
@@ -85,6 +87,23 @@ const subnet = new SubnetV2(this, 'subnet', {
   cidrBlock: new Ipv4Cidr('10.0.0.0/24'),
   availabilityZone: Fn.select(0, fn.getAzs()), // or directly, 'us-west-2a'
 });
+
+// When you create a subnet, it attaches itself to the VPC, so you q
+// By default, subnets are isolated, until you add a custom route table to it
+vpc.isolatedSubnets.includes(subnet); // true
+```
+
+When you create a subnet, it attaches itself to the VPC, so you query the 
+`IVpc` object for the subnets it contains. Subnets are isolated by default, 
+until you add a custom route table to it (see more details below). For example:
+
+```ts
+const subnet = new SubnetV2(this, 'subnet', {
+  vpc,
+  ...,
+});
+
+vpc.isolatedSubnets.includes(subnet); // true
 ```
 
 If you add more than one subnet to the VPC, the framework validates that there
@@ -307,7 +326,7 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @rix0rrr
+[ ] Signed-off by API Bar Raiser @corymhall
 ```
 
 ## Public FAQ
