@@ -23,13 +23,15 @@
 
 
 **Prototype Code**
-- https://github.com/raindancers/latticeplay
 - https://github.com/raindancers/aws-cdk/tree/mrpackethead/aws-vpclattice-alpha/packages/%40aws-cdk/aws-vpclattice-alpha
+- hhttps://github.com/raindancers/vpclattice-prealpha-demo
 
 
 **VpcLattice**
 
 Amazon VPC Lattice is an application networking service that consistently connects, monitors, and secures communications between your services, helping to improve productivity so that your developers can focus on building features that matter to your business. You can define policies for network traffic management, access, and monitoring to connect compute services in a simplified and consistent way across instances, containers, and serverless applications.
+
+The L2 Construct seeks to assist the consumer to create a lattice service easily by abstracting some of the detail.  The major part of this is in creating the underlying auth policy and listener rules together, as their is significant intersection in the properties require for both. 
  
 ---
 
@@ -72,41 +74,63 @@ export class LatticeTestStack extends core.Stack {
 
     // Create a Lattice Service
     // this will default to using IAM Authentication
-    const myLatticeService = new Service(this, 'myLatticeService', {
-      shares: [{
-        name: 'LatticeShare',
-        allowExternalPrincipals: false,
-        principals: [
-          '123456654321',
-        ],
-      }],
-    });
+    const myLatticeService = new Service(this, 'myLatticeService', {});
     // add a listener to the service, using the defaults
     // - HTTPS
     // - Port 443
     // - default action of providing 404 NOT Found,
     // - cloudformation name
-    const myListener = myLatticeService.addListener({});
+    const myListener = new vpclattice.Listener(this, 'Listener', {
+      service: myLatticeService,
+    })
 
-    myListener.addListenerRule({
-      name: 'thing',
-      priority: 100,
+  
+    // add a listenerRule that will use the helloworld lambda as a Target
+    mylistener.addListenerRule({
+      name: 'helloworld',
+      priority: 10,
       action: [
         {
-          targetGroup: new TargetGroup(this, 'lambdatargets', {
-            name: 'lambda1',
-            target: Target.lambda([
-              support.checkHelloWorld,
+          targetGroup: new vpclattice.TargetGroup(this, 'hellolambdatargets', {
+            name: 'hellowworld',
+            target: vpclattice.Target.lambda([
+              support.helloWorld,
             ]),
           }),
         },
       ],
-      pathMatch: {
-        path: '/helloWorld',
+
+      httpMatch: {
+        pathMatches: { path: '/hello' },
       },
-      allowedPrincipals: [support.checkHelloWorld.role as iam.Role],
+      // we will only allow access to this service from the ec2 instance
+      accessMode: vpclattice.RuleAccessMode.UNAUTHENTICATED
     });
 
+    //add a listenerRule that will use the goodbyeworld lambda as a Target
+    mylistener.addListenerRule({
+      name: 'goodbyeworld',
+      priority: 20,
+      action: [
+        {
+          targetGroup: new vpclattice.TargetGroup(this, 'goodbyelambdatargets', {
+            name: 'goodbyeworld',
+            target: vpclattice.Target.lambda([
+              support.goodbyeWorld,
+            ]),
+          }),
+        },
+      ],
+      
+      httpMatch: {
+        pathMatches: { path: '/goodbye' },
+      },
+      // we will only allow access to this service from the ec2 instance
+      allowedPrincipals: [support.ec2instance.role],
+      accessMode: vpclattice.RuleAccessMode.AUTHENTICATED_ONLY,
+    });
+
+    
     myLatticeService.applyAuthPolicy();
 
     /**
@@ -120,7 +144,6 @@ export class LatticeTestStack extends core.Stack {
       services: [myLatticeService],
       vpcs: [
         support.vpc1,
-        support.vpc2,
       ],
     });
 
@@ -141,7 +164,6 @@ export class LatticeTestStack extends core.Stack {
 
 
 
-
 ### ServiceNetwork
 A service network is a logical boundary for a collection of services. Services associated with the network can be authorized for discovery, connectivity, accessibility, and observability. To make requests to services in the network, your service or client must be in a VPC that is associated with the service network.
 
@@ -150,9 +172,7 @@ A service network is a logical boundary for a collection of services. Services a
 
 The construct `ServiceNetwork` provides for this. 
 
-
 The construct will implement `IServiceNetwork`.  
-
 
 ```typescript
 /**
@@ -171,9 +191,9 @@ export interface IServiceNetwork extends core.IResource {
    */
   readonly serviceNetworkId: string;
   /**
-   * Add Lattice Service Policy
+   * Add Lattice Service
    */
-  addService(service: IService): void;
+  addService(props: AddServiceProps): void;
   /**
    * Associate a VPC with the Service Network
    */
@@ -181,7 +201,7 @@ export interface IServiceNetwork extends core.IResource {
   /**
    * Add a logging Destination.
    */
-  addloggingDestination(destination: LoggingDestination): void;
+  addloggingDestination(props: AddloggingDestinationProps): void;
   /**
    * Share the ServiceNetwork, Consider if it is more appropriate to do this at the service.
    */
@@ -198,13 +218,15 @@ export interface IServiceNetwork extends core.IResource {
   */
   applyAuthPolicyToServiceNetwork(): void;
 }
-``` 
+```
+
+The Construct will consume ServiceNetworkProps.
 
 
-`ServiceNetwork` will take `ServiceNetworkProps` as props
 ```typescript
 /**
- * The properties for the ServiceNetwork.
+ * Create a vpc lattice service network.
+ * Implemented by `ServiceNetwork`.
  */
 export interface ServiceNetworkProps {
 
@@ -241,15 +263,8 @@ export interface ServiceNetworkProps {
    * Allow external principals
    * @default false
    */
-  readonly allowExternalPrincipals?: boolean | undefined;
-
-  /**
-   * Allow unauthenticated access
-   * @default false
-   */
-  readonly allowUnauthenticatedAccess?: boolean | undefined;
+  readonly accessmode?: ServiceNetworkAccessMode | undefined;
 }
-
 ```
 
 ### Service
@@ -261,10 +276,6 @@ A service within VPC Lattice is an independently deployable unit of software tha
 
 
 ```typescript
-**
- * Create a vpcLattice service network.
- * Implemented by `Service`.
- */
 /**
  * Create a vpcLattice service network.
  * Implemented by `Service`.
@@ -278,17 +289,20 @@ export interface IService extends core.IResource {
   * The Id of the Service Network
   */
   readonly serviceId: string;
+  /**
+   * Allow an Odd
+   */
+  readonly orgId: string | undefined;
+  /**
+   * the policy document for the service;
+   */
+  authPolicy: iam.PolicyDocument;
 
   /**
    * Add A vpc listener to the Service.
    * @param props
    */
-  addListener(props: AddListenerProps): Listener;
-  /**
-   * Share the service to other accounts via RAM
-   * @param props
-   */
-  share(props: ShareServiceProps): void;
+  shareToAccounts(props: ShareServiceProps): void;
 
   /**
    * Grant Access to other principals
@@ -304,6 +318,45 @@ export interface IService extends core.IResource {
    */
   addPolicyStatement(statement: iam.PolicyStatement): void;
 }
+export interface IService extends core.IResource {
+  /**
+  * The Amazon Resource Name (ARN) of the service.
+  */
+  readonly serviceArn: string;
+  /**
+  * The Id of the Service Network
+  */
+  readonly serviceId: string;
+  /**
+   * Allow an Odd
+   */
+  readonly orgId: string | undefined;
+  /**
+   * the policy document for the service;
+   */
+  authPolicy: iam.PolicyDocument;
+
+  /**
+   * Add A vpc listener to the Service.
+   * @param props
+   */
+  shareToAccounts(props: ShareServiceProps): void;
+
+  /**
+   * Grant Access to other principals
+   */
+  grantAccess(principals: iam.IPrincipal[]): void;
+
+  /**
+   * Apply the authAuthPolicy to the Service
+   */
+  applyAuthPolicy(): iam.PolicyDocument;
+  /**
+   * Add A policyStatement to the Auth Policy
+   */
+  addPolicyStatement(statement: iam.PolicyStatement): void;
+}
+
 ```
 
 `Service` will take `ServiceProps` as props
@@ -352,19 +405,8 @@ export interface LatticeServiceProps {
    *@default no sharing of the service
    */
   readonly shares?: ShareServiceProps[] | undefined;
-
-  /**
-  * Allow external principals
-   * @default false
-   */
-  readonly allowExternalPrincipals?: boolean | undefined;
-
-  /**
-    * Allow unauthenticated access
-    * @default false
-    */
-  readonly allowUnauthenticatedAccess?: boolean | undefined;
 }
+
 ```
 
 ### Listener
@@ -402,6 +444,9 @@ export interface IListener extends core.IResource {
 /**
  * Propertys to Create a Lattice Listener
  */
+/**
+ * Propertys to Create a Lattice Listener
+ */
 export interface ListenerProps {
   /**
    *  * A default action that will be taken if no rules match.
@@ -410,8 +455,9 @@ export interface ListenerProps {
   readonly defaultAction?: aws_vpclattice.CfnListener.DefaultActionProperty | undefined;
   /**
   * protocol that the listener will listen on
+  * @default HTTPS
   */
-  readonly protocol: Protocol
+  readonly protocol?: Protocol | undefined;
   /**
   * Optional port number for the listener. If not supplied, will default to 80 or 443, depending on the Protocol
   * @default 80 or 443 depending on the Protocol
@@ -426,12 +472,7 @@ export interface ListenerProps {
   /**
    * The Id of the service that this listener is associated with.
    */
-  readonly serviceId: string;
-  /**
-   * the authpolicy for the service this listener is associated with
-   * @default none.
-   */
-  readonly serviceAuthPolicy?: iam.PolicyDocument | undefined
+  readonly service: IService;
 }
 ```
 
@@ -440,7 +481,8 @@ export interface ListenerProps {
 A VPC Lattice target group is a collection of targets, or compute resources, that run your application or service. Targets can be EC2 instances, IP addresses, Lambda functions, Application Load Balancers
 
 ```typescript
- * Create a vpc lattice TargetGroup.
+
+ /** Create a vpc lattice TargetGroup.
  * Implemented by `TargetGroup`.
  */
 export interface ITargetGroup extends core.IResource {
@@ -454,6 +496,7 @@ export interface ITargetGroup extends core.IResource {
   readonly targetGroupArn: string;
 }
 ```
+
 `TargetGroup` will take `TargetGroupProps`
 
 ```typescript
