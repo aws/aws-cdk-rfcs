@@ -7,7 +7,7 @@
 * **API Bar Raiser:** @TheRealAmazonKendra
 [Link to RFC Issue](https://github.com/aws/aws-cdk-rfcs/issues/497)
 
-## Working Backwards - README
+## Overview
 
 [AWS Glue](https://aws.amazon.com/glue/) is a serverless data integration
 service that makes it easier to discover, prepare, move, and integrate data
@@ -33,11 +33,12 @@ functionality already supported in the [@aws-cdk/aws-glue-alpha module](https://
 
 The glue-alpha-module already supports three of the four common types of Glue
 Jobs: Spark (ETL and Streaming), Python Shell, Ray. This RFC will add the
-more recent Flex Job. The construct also implements AWS practice
-recommendations when creating a Glue Job such use of Secrets Management for
-Connection JDBC strings, Glue Job Autoscaling, least privileges in terms of
-IAM permissions and also sane defaults for Glue job specification (more details
-are mentioned in the below table).
+more recent Flex Job. The construct also implements AWS best practice
+recommendations, such as:
+
+* use of Secrets Management for Connection JDBC strings
+* Glue Job Autoscaling
+* defaults for Glue job specification
 
 This RFC will introduce breaking changes to the existing glue-alpha-module to
 streamline the developer experience and introduce new constants and validations.
@@ -57,28 +58,31 @@ We will also default to best practice enablement the following ETL features:
 You can find more details about version, worker type and other features in
 [Glue's public documentation](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-jobs-job.html).
 
-```
+```ts
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
     className: 'com.example.HelloWorld',
+    role: iam.IRole,
 });
 
 glue.pySparkEtlJob(this, 'pySparkEtlJob', {
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
+    role: iam.IRole,
 });
 ```
 
 Optionally, developers can override the glueVersion and add extra jars and a
 description:
 
-```
+```ts
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
    className: 'com.example.HelloWorld',
    extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar'),],
    description: 'an example Scala Spark ETL job',
-   numberOfWorkers: 20
+   numberOfWorkers: 20,
+   role: iam.IRole,
 });
 
 glue.pySparkEtlJob(this, 'pySparkEtlJob', {
@@ -88,7 +92,8 @@ glue.pySparkEtlJob(this, 'pySparkEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar')],
    description: 'an example pySpark ETL job',
-   numberOfWorkers: 20
+   numberOfWorkers: 20,
+   role: iam.IRole,
 });
 ```
 
@@ -104,15 +109,17 @@ it supports G1 and G2 worker type and 2.0, 3.0 and 4.0 version. We’ll default
 to G2 worker and 4.0 version for streaming jobs which developers can override.
 We will enable `—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log`.
 
-```
+```ts
 new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
+   role: iam.IRole,
 });
 
 
 new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
    className: 'com.example.HelloWorld',
+   role: iam.IRole,
 });
 
 ```
@@ -120,13 +127,14 @@ new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
 Optionally, developers can override the glueVersion and add extraJars and a
 description:
 
-```
+```ts
 new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
    pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
+   role: iam.IRole,
 });
 
 
@@ -137,6 +145,7 @@ new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    className: 'com.example.HelloWorld',
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
+   role: iam.IRole,
 });
 ```
 
@@ -149,21 +158,23 @@ are supported for jobs using AWS Glue version 3.0 or later and `G.1X` or
 (currently Glue 3.0.) Similar to ETL, we’ll enable these features:
 `—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log`
 
-```
+```ts
 glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
    className: 'com.example.HelloWorld',
+   role: iam.IRole,
 });
 
 glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
+   role: iam.IRole,
 });
 ```
 
 Optionally, developers can override the glue version, python version,
 provide extra jars, and a description
 
-```
+```ts
 glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
@@ -171,6 +182,7 @@ glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
    extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-python-scripts')],
    description: 'an example pySpark ETL job',
    numberOfWorkers: 20,
+   role: iam.IRole,
 });
 
 new glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
@@ -179,6 +191,7 @@ new glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Flex job',
    numberOfWorkers: 20,
+   role: iam.IRole,
 });
 ```
 
@@ -194,21 +207,23 @@ MaxCapacity will be set `0.0625`. Python 3.9 supports preloaded analytics
 libraries using the `library-set=analytics` flag, and this feature will
 be enabled by default.
 
-```
+```ts
 new glue.PythonShellJob(this, 'PythonShellJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
+   role: iam.IRole,
 });
 ```
 
 Optional overrides:
 
-```
+```ts
 new glue.PythonShellJob(this, 'PythonShellJob', {
     glueVersion: glue.GlueVersion.V1_0,
     pythonVersion: glue.PythonVersion.3_9,
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
     description: 'an example Python Shell job',
     numberOfWorkers: 20,
+    role: iam.IRole,
 });
 ```
 
@@ -217,19 +232,21 @@ new glue.PythonShellJob(this, 'PythonShellJob', {
 Glue ray only supports worker type Z.2X and Glue version 4.0. Runtime
 will default to `Ray2.3` and min workers will default to 3.
 
-```
+```ts
 new glue.GlueRayJob(this, 'GlueRayJob', {
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
+    role: iam.IRole,
 });
 ```
 
 Developers can override min workers and other Glue job fields
 
-```
+```ts
 new glue.GlueRayJob(this, 'GlueRayJob', {
   runtime: glue.Runtime.RAY_2_2,
   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
-  numberOfWorkers: 50
+  numberOfWorkers: 50,
+  role: iam.IRole,
 });
 ```
 
@@ -268,7 +285,7 @@ scripts to S3 via an optional fromAsset parameter pointing to a script
 in the local file structure. Developers will provide an existing S3 bucket and
 the path to which they'd like the script to be uploaded.
 
-```
+```ts
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
     script: glue.Code.fromAsset('bucket-name', 'local/path/to/scala-jar'),
     className: 'com.example.HelloWorld',
@@ -296,14 +313,14 @@ functions to create on-demand crawler or job triggers. The trigger method
 will take an optional description but abstract the requirement of an actions
 list using the job or crawler objects using conditional types.
 
-```
+```ts
 myWorkflow = new glue.Workflow(this, "GlueWorkflow", {
     name: "MyWorkflow";
     description: "New Workflow";
     properties: {'key', 'value'};
 });
 
-myWorkflow.createOnDemandTrigger(this, 'TriggerJobOnDemand', {
+myWorkflow.onDemandTrigger(this, 'TriggerJobOnDemand', {
     description: 'On demand run for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
 });
@@ -320,21 +337,21 @@ the expression that Glue requires from the Schedule object). The trigger method 
 take an optional description and list of Actions which can refer to Jobs or
 crawlers via conditional types.
 
-```
+```ts
 // Create Daily Schedule at 00 UTC
-myWorkflow.createDailyScheduleTrigger(this, 'TriggerCrawlerOnDailySchedule', {
+myWorkflow.dailyScheduleTrigger(this, 'TriggerCrawlerOnDailySchedule', {
     description: 'Scheduled run for ' + myGlueJob.name,
     actions: [ myGlueCrawler]
 });
 
 // Create Weekly schedule at 00 UTC on Sunday
-myWorkflow.createWeeklyScheduleTrigger(this, 'TriggerJobOnWeeklySchedule', {
+myWorkflow.weeklyScheduleTrigger(this, 'TriggerJobOnWeeklySchedule', {
     description: 'Scheduled run for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
 });
 
 // Create Custom schedule, e.g. Monthly on the 7th day at 15:30 UTC
-myWorkflow.createCustomScheduleJobTrigger(this, 'TriggerCrawlerOnCustomSchedule', {
+myWorkflow.customScheduleJobTrigger(this, 'TriggerCrawlerOnCustomSchedule', {
     description: 'Scheduled run for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
     schedule: events.Schedule.cron(day: '7', hour: '15', minute: '30')
@@ -348,14 +365,14 @@ of notify event triggers, batching and non-batching trigger. For batching trigge
 developers must specify `BatchSize` but for non-batching `BatchSize` will be set
 to 1. For both triggers, `BatchWindow` will be default to 900 seconds.
 
-```
-myWorkflow.createNotifyEventTrigger(this, 'MyNotifyTriggerBatching', {
+```ts
+myWorkflow.notifyEventTrigger(this, 'MyNotifyTriggerBatching', {
     batchSize: int,
     jobActions: [glueJob1, glueJob2, glueJob3],
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
 });
 
-myWorkflow.createNotifyEventTrigger(this, 'MyNotifyTriggerNonBatching', {
+myWorkflow.notifyEventTrigger(this, 'MyNotifyTriggerNonBatching', {
     actions: [glueJob1, glueJob2, glueJob3]
 });
 ```
@@ -365,9 +382,9 @@ myWorkflow.createNotifyEventTrigger(this, 'MyNotifyTriggerNonBatching', {
 Conditional triggers have a predicate and actions associated with them.
 When the predicateCondition is true, the trigger actions will be executed.
 
-```
+```ts
 // Triggers on Job and Crawler status
-myWorkflow.createConditionalTrigger(this, 'conditionalTrigger', {
+myWorkflow.conditionalTrigger(this, 'conditionalTrigger', {
     description: 'Conditional trigger for ' + myGlueJob.name,
     actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
     predicateCondition: glue.TriggerPredicateCondition.AND,
