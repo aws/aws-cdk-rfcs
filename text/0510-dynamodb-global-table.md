@@ -6,20 +6,24 @@
 
 Users will now be able to replicate their DynamoDB table to multiple regions using the Global Table L2 construct.
 This feature will be using the CloudFormation resource for global table and users will no longer need to rely
-custom resources from provisioning global tables.
+custom resources for provisioning global tables.
 
 ## Working Backwards
 
 The following is ReadMe for DynamoDB Global Table.
 
-__NOTE:__ This just includes properties that are different from the Table resource. For an in detailed comparision
- between properties, take a look at the [appendix](#difference-between-tableprops-and-globaltableprops).
+__NOTE:__ This just includes properties that are different from the Table construct. For an in detailed comparision
+between properties, take a look at the [appendix](#difference-between-tableprops-and-globaltableprops).
 
 ### DynamoDB Global Table
 
 [DynamoDB Global Table](https://aws.amazon.com/dynamodb/global-tables/) lets you provision a table that can be
- replicated across different regions. It can also be deployed to just one region and will cost the same as a
- single DynamoDB table.
+replicated across different regions. It can also be deployed to just one region and will cost the same as a
+single DynamoDB table.
+
+It is also multi-active database, that means there is no primary table and all the tables created as called
+as replicas and all replicas support reads and writes. Writes to a replica are eventually propagated to other
+replicas where conflicts are resolved by 'last writer wins'.
 
 #### Read and Write Capacity
 
@@ -50,19 +54,28 @@ new GlobalTable(tableStack, 'GlobalTable', {
 
 __NOTE:__
 
-* Provisioned mode for write capacity can only be used with autoscaling. There is no way to provision
-an exact write capacity unit in global tables.
-* Write capacity cannot be configured on a per replica basis. You can only modify read capacity per
-replica.
+* Provisioned mode for write capacity can only be used with autoscaling configuration. There is no way to
+provision fixed write capacity units in global tables.
+* Write capacity for tables(all replicas) or GSIs cannot be configured on a per replica basis. You can only
+modify read capacity per replica.
 
 #### Replicas
 
-You can define replicas for your global table. By default, single table is deployed to the stack region with defaults.
+You can define replicas for your global table. By default, a single table is deployed in the stack's region.
 
 You only need to define replicas for other regions or if you will like to configure the default replica i.e. the replica
 in the stack region.
 
+For instance, the following would create a replica in `us-west-2`(stack's region), `us-east-1` and `us-east-2`.
+
 ```typescript
+const app = new App();
+const tableStack = new Stack(app, 'GlobalTableStack', {
+  env: {
+    region: 'us-west-2',
+  },
+});
+
 new GlobalTable(tableStack, 'GlobalTable', {
   tableName: 'FooTable',
   partitionKey: {
@@ -98,20 +111,20 @@ There are per replica properties that are available.
 * `pointInTimeRecovery` --> Gets copied over from global table level props if defined.
 * `tableClass` --> Gets copied over from global table level props if defined.
 * `tags` --> Gets copied over from global table level props if defined.
-* `readWithAutoScaling` --> Gets copied over from global table level props if defined.
-* `readCapactity` --> Gets copied over from global table level props if defined.
+* `read` --> Gets copied over from global table level props if defined.
 * `encryptionKey` --> This needs to be defined per replica
 * `kinesisStream` --> This needs to be defined per replica
 * `globalSecondaryIndexOptions`
   * `indexName` --> Needs to be specified
   * `contributorInsightsEnabled` --> Gets copied over from global table level props or replica level props if defined.
-  * `read` --> Gets copied over from either table level GSI props, replica level props or global table level props.
+  * `read` --> Gets copied over from either table level GSI props or replica level props or global table level props.
 
 ##### Capacities
 
-Write capacity cannot be configured for replicas. Read capacity can be specified for replicas. You only need to
-specify read capacity if you want it to be different from the global table level value. If its undefined, it uses the table
-level value.
+Write capacity cannot be configured for replicas but read capacity can be specified for replicas.
+
+You only need to specify read capacity if you want it to be different from the global table level
+value. If its undefined, it uses the table global table level value.
 
 ```typescript
 new GlobalTable(tableStack, 'GlobalTable', {
@@ -179,7 +192,7 @@ globalTable.addGlobalSecondaryIndex({
 });
 ```
 
-You can also allocate capacities for your GSIs.
+You can also allocate capacities for your GSIs:
 
 * You only need to provide write and read capacity for GSIs where you want it to be different than capacity specified
 for the global table. If not specified, it uses the same value as that of the global table.
@@ -288,24 +301,24 @@ __NOTE:__
 #### Encryption
 
 Encryption mode is similar to Table construct and will be the same for each replica. There are now four types
- of encryptions that are available for global tables.
+of encryptions that are available for global tables.
 
 1. `AWS_OWNED`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default
 for global tables.
 2. `AWS_MANAGED`: A KMS key is created in your account and is managed by AWS.
-3. `KEY_ARNS`: You will provide KMS key arns for each replica. You will need to specify arns for each
+3. `KEY_ARNS`: [NEW] You will provide KMS key arns for each replica. You will need to specify arns for each
 replica region. The key also needs to be in the same region as the replica.
-4. `MULTI_REGION_KEY`: A multi region KMS key and its supporting stacks in replica regions will be
+4. `MULTI_REGION_KEY`: [NEW] A multi region KMS key and its supporting stacks in replica regions will be
 provisioned automatically.
 
 __NOTE__:
 
-* Encryption mode CUSTOMER_MANAGED is now deprecated. You can switch to either `KEY_ARNS` or `MULTI_REGION_KEY` mode.
+* Encryption mode `CUSTOMER_MANAGED` is now deprecated. You can switch to either `KEY_ARNS` or `MULTI_REGION_KEY` mode.
 
 #### Grants
 
 Global table's `replica(region)` method would return an `ITable` reference for the replica in the region. Grant methods
-could be used to provide replica specific permissions.
+can be used to provide replica specific permissions.
 
 ```typescript
 class FooStack extends Stack {
@@ -407,7 +420,7 @@ dashboard.addWidgets(
 #### Importing
 
 You can import an existing global table in your stack by using `from` functions. You will need to specify
- either table name, table arn or table attributes to import it.
+either table name, table arn or table attributes to import it.
 
 ```typescript
 GlobalTable.fromTableName(stack, 'FooTableId', 'FooTable');
@@ -449,7 +462,7 @@ decrease maintenance load.
 
 ### Why are we doing this?
 
-DynamoDB Global table L2 support has been requested by our users for a long time. When CDK initally added
+DynamoDB Global Table L2 support has been requested by our users for a long time. When CDK initally added
 support for this feature, CloudFormation support for global tables did not exist. So we had to use
 [custom CloudFormation resources](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources-readme.html)
 within our [Table construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb-readme.html#amazon-dynamodb-global-tables)
@@ -483,13 +496,14 @@ time and effort and, will also add to maintenance load for the CDK team.
 
 #### Replicas
 
-The user will be able to specify list of replicas using `replicas` properties or the `addReplica` method.
+The user will be able to specify list of replicas using `replicas` properties. User would also be add a
+single replica using the `addReplica` method.
 
 * If a user just wants to deploy to the region where the stack is being deployed, then they will not need
 to specify the replica until they want to configure certain aspects of the replica.
 * Properties that are mentioned at the global table level configuration gets copied over to all replicas
-if user has not mentioned them. If a certain property is mentioned on a replica level, then that takes
-precedence over the global table level value. For instance,
+if user has left them undefined. If a certain property is defined on a replica level, then that takes
+precedence over the global table level value(if present). For instance,
 
   ```typescript
   new GlobalTable(tableStack, 'GlobalTable', {
@@ -536,7 +550,7 @@ precedence over the global table level value. For instance,
 The capacity will only be needed to be specified if the provisioning mode is not on-demand. By defaut,
 the mode will be on-demand.
 
-The write capacity for table, replicas or gsis can only be specified with an autoscaling configuration.
+The write capacity for table, replicas or GSIs can only be specified with an autoscaling configuration.
 Whereas, the read capacity can either be with a fixed capacity unit or with an autoscaling cofiguration.
 
 So, having an enum like class for these two modes, users will have,
@@ -550,8 +564,10 @@ The following explains how this works for each,
 
 * __Table__
   User can assign read and write capacity at global table level props and these will be used for each replica
-  and gsis. So the user does not need to add any other value. And, if the user wants, they can change certain
-  value for replica or gsi and that will take precedence over global table level values. For instance,
+  and GSIs. So the user does not need to define any other value.
+
+  And, if the user wants, they can change certain value for replica or GSI and that will take precedence over
+  global table level values. For instance,
 
   ```typescript
   new GlobalTable(tableStack, 'GlobalTable', {
@@ -589,8 +605,8 @@ The following explains how this works for each,
   table level props. These values will be used for each replica and each global secondary index.
 
 * __Replicas__
-  User can choose to assign capacity values for each replica. They will still need to specify global table
-  level "write" capacity, since this value is not configurable per replica. But, they will be able to choose
+  User can choose to assign capacity values for each replica. They will still need to specify "write" capacity
+  at the global table level , since this value is not configurable per replica. But, they will be able to choose
   "read" capacity per replica.
 
   ```typescript
@@ -622,13 +638,12 @@ The following explains how this works for each,
   the global table level capacity, i.e., `Capacity.autoscaled({ max: 50 })`.
 
 * __Global Secondary Indexes__
-  There are multiple ways to define gsi capacity values.
+  There are multiple ways to define GSI capacity values.
 
   For reads and writes,
 
-  * A user can specify value at global table level props. This is similar to what is mentioned under
-  Table above.
-  * A user can specify value at global table level global secondary index props.
+  * A user can specify value at global table level props. This is mentioned in the prior section for tables.
+  * A user can specify value in global secondary index props at global table level.
 
     ```typescript
     new GlobalTable(tableStack, 'GlobalTable', {
@@ -663,12 +678,13 @@ The following explains how this works for each,
     ```
 
     Here, the `write and read` capacity specified on table will be used by the replicas. And, the values
-    specified for GSI, will be used by all GSIs.
+    specified for GSI, i.e. `write: Capacity.autoscaled({ max: 90 }) and read: Capacity.fixed(16)` will
+    be used by all GSIs.
 
     If both are specified, the precedence will be
 
     ```
-    Global table level gsi capacity <---- Global table level capacity
+    GSI capacity at global table level  <---- Capacity at global table level
     ```
 
   For only reads,
@@ -711,10 +727,10 @@ The following explains how this works for each,
 
     Here, `read: Capacity.fixed(10)` is defined for `us-east-1` replica. This value for read capacity will
     be used for each GSI in the region. And for write capacity, global table level
-    `write: Capacity.autoscaled({ max: 70 })` will be used. The benefit here will be that the user will not
-    need to define read capacity for each GSI and this still gives the flexibility of configuring for just
-    the replica and not affecting other replicas.
-  * A user can specify value at replica level gsi props.
+    `write: Capacity.autoscaled({ max: 70 })` will be used for the replica and GSIs in the replica region.
+    The benefit here will be that the user will not need to define read capacity for each GSI and this still
+    gives the flexibility of configuring for just the replica and not affecting other replicas.
+  * A user can specify value at replica level GSI props.
 
     ```typescript
     new GlobalTable(tableStack, 'GlobalTable', {
@@ -752,23 +768,24 @@ The following explains how this works for each,
     ```
 
     Here, `read: Capacity.fixed(10)` is defined for a particular GSI and all other GSIs defined will
-    use global table level defined capacity, i.e. `read: Capacity.autoscaled({ max: 50 }).`. The benefit
+    use capacity defined at global table level, i.e. `read: Capacity.autoscaled({ max: 50 }).`. The benefit
     for this is allowing users with an option to define a per GSI(within replica) read capacity configuration.
 
   If values are specified for each of the above, then the precedence will be
 
   ```
-  Replica level gsi capacity <---- Global table level gsi capacity <---- Replica level capacity <---- Global table level capacity
+  GSI capacity defined at replica level <---- GSI capacity defined at global table level
+  <---- Capacity defined at replica level <---- Capacity defined at global table level
   ```
 
 #### Per-replica KMS keys
 
-Global table offers users to specify user owned kms keys for replica. The user will need to define
+Global table offers users to specify user owned KMS keys for replica. The user will need to define
 these keys for each replica.
 
 Global table requires keys to be present in-region of the replica. To support this,
 
-* A new option is added: `KEY_ARNS`, where the user can mention the kms key arns in their replica
+* A new option is added: `KEY_ARNS`, where the user can mention the KMS key arns in their replica
 configuration and we will import these to the user stack.
 
   ```typescript
@@ -793,7 +810,7 @@ configuration and we will import these to the user stack.
   ```
 
   Here, `encryptionKey` i.e. KMS key arn will need to be defined for each replica.
-* Another new option will be: `MULTI_REGION_KEY`. This will be a multi region kms key that we provision
+* Another new option will be: `MULTI_REGION_KEY`. This will be a multi region KMS key that we provision
 for the customer and also provision the supporting stacks in regions where a table replica is present.
 This feature probably requires an RFC of its own and can be added at a later point after release.
 * The `CUSTOMER_MANAGED` encryption option, will be deprecated and users can then switch to `KEY_ARNS`
@@ -870,9 +887,9 @@ specific region.
 
   __Callouts__:
 
-* For references, `tableName` property can be mandated for contructing arns for replicas. If not mandated,
-we can create a predictable way of constructing the name instead of relying on the CloudFormation created
-name.
+* For table references, `tableName` property can be mandated for contructing arns for replicas. If not mandated to
+keep the API similar, then we can create a predictable way of constructing the tableName instead of relying on the
+CloudFormation auto-created name.
 * The grant stream functions will not be able to grant stream access to replicas other than the one
 deployed in the stack region. This is due to the format of the stream arn which has format:
 _arn:aws:dynamodb:region:account-id:table/table-name/stream/timestamp_.
@@ -884,27 +901,24 @@ _arn:aws:dynamodb:region:account-id:table/table-name/stream/timestamp_.
   ```
 
   Due to this, there is no way to reconstruct it for another region since we
-  will not be aware of the
-  timestamp value. We can support this by adding a lookup function
-  to determine the stream arn
-  or create a CloudFormation custom resource.
+  will not be aware of the timestamp value. We can support this by adding a
+  lookup function to determine the stream arn or create a CloudFormation custom resource.
 
 * Similar to stream arn, there is an extra attribute associated with global
-tables, i.e.
-[TableId](https://tinyurl.com/tableid-readme). This is also unique for each replica and if we
-just refer the attribute, that will return the ID for the replica that is
-in the same region as the stack. So, to have operations on these, we will
-need to add a lookup function as well.
+tables, i.e.[TableId](https://tinyurl.com/tableid-readme). This is also unique
+for each replica and if we just refer the attribute, that will return the ID for
+the replica that is in the same region as the stack. So, to have operations on these,
+we will need to add a lookup function as well.
 
 #### Migration Blog Post
 
-The following is just a draft of what migration could look like from Table to GlobalTable construct.
+The following is just a short draft of what migration can look like from Table to GlobalTable construct.
 
 __Assumptions:__
 
 * DynamoDB Table resource exists in a CloudFormation stack and is deployed to a region.
 * Running `cdk diff` shows no differences between cdk code and the deployed stack.
-* Any table references in another resource are removed. This is required since we would
+* Any table references in another resource are removed. This is required since we will
 be deleting the table cdk code for migration.
 
 __Steps:__
@@ -923,7 +937,7 @@ __Steps:__
   ```
 
 2. After the prior deployment is successful, you can now remove the table from your CDK code and
-deploy again. Since the retention policy is set to `RETAIN`, this would just disassociate the
+deploy again. Since the retention policy is set to `RETAIN`, this will just disassociate the
 resource from your CloudFormation stack.
 3. Once prior deployment is successful, you can now import the existing table as a GlobalTable in
 your CDK code. You can do this by using `from` methods like, `fromTableArn`, `fromTableName` or
@@ -958,12 +972,13 @@ will need to specify a key for each replica.
 
 Unlike the Table construct, I am not creating the KMS keys for the customers.
 I believe customer is making a conscious decision of using such encryption
-and should add relevant keys. Customers will also not be surprised with the added cost of KMS infrastructure.
+and should add relevant keys. Customers will also not be surprised with the added cost
+of KMS infrastructure.
 
 To mitigate customer pain in this scenario, we can use a
-[multi region kms key](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html)
- and provision that if none is present. This will mean provisioning separate stacks in replica regions
- to host the replicated KMS keys.
+[multi region KMS key](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html)
+and provision that if none is present. This will mean provisioning separate stacks in replica regions
+to host the replicated KMS keys.
 
 ### What are the drawbacks of this solution?
 
@@ -977,7 +992,7 @@ of the construct, it can lead to customer pain.
 
 ### What is the high-level project plan?
 
-After this RFC is approved, I will start with implemetation and adding necessary tests.
+After this RFC is approved, construct squad members can pickup the implementation for it.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -990,8 +1005,16 @@ custom resource solution. This should be deprecated and users must be informed o
 
 Since Global Tables cost the same as a single table in a region, and will also cause code redundancy
 between the two constructs, it will make sense to deprecate the construct and recommend users to use the
-Global Table construct instead. To do this, we will first need a defined migration path from Table to GlobalTable
-construct. This will be done by a blog post.
+Global Table construct instead.
+
+#### MULTI_REGION_KEY support
+
+After deprecating `CUSTOMER_MANAGED` encryption mode, one of the new alternative will be `KEY_ARNS` mode. In this
+mode, the users are responsibile for creating the KMS keys, maintaining them and also adding ARNs to the global table
+construct. This will add churn for the users.
+An RFC can be done for finalizing user experience around provisioning multi region KMS keys. What this probably would
+involve is creating a multi region KMS key for the user and also creating stacks with replicated KMS key in requested
+regions.
 
 ## Appendix
 
@@ -1018,8 +1041,7 @@ Props that are different:
 * `serverSideEncryption?: boolean;`
   * This property was already deprecated.
 * `replicationRegions?: string[];`, `replicationTimeout?: Duration;`, and `waitForReplicationToFinish?: boolean;`
-  * These are no longer needed since replication is managed
-  by GlobalTable resource itself.
+  * These are no longer needed since replication is managed by GlobalTable resource itself.
 * `encryption?: TableEncryption;`
   * There are more encryption options for GlobalTable.
 * `encryptionKey?: kms.IKey;`
@@ -1030,16 +1052,15 @@ Props that are different:
   * This is no longer just a number in Global Table. This is now an autoscaling
   configuration.
 * `readCapacity?: number;`
-  * This can be either be fixed capacity or an autoscaling configuration and
-  is not just a number anymore.
+  * This can be either be fixed capacity or an autoscaling configuration.
 
 * __GlobalTable Props__
 
 Props that are different:
 
 * `write?: Capacity;` and `read?: Capacity;`
-  * Write capacity if mentioned, needs to be Capacity.autoscaled. And read capacity
-  can be Capacity.fixed or Capacity.autoscaled.
+  * Write capacity if mentioned, needs to be `Capacity.autoscaled`. And read capacity
+  can be `Capacity.fixed` or `Capacity.autoscaled`.
 * `globalSecondaryIndex?: GlobalSecondaryIndexOptions[];` and `localSecondaryIndex?: LocalSecondaryIndexProps[];`
   * These are now available to be passed in via constructor too and not just by `add` methods.
 * `replicas?: ReplicaTableOptions[];`
@@ -1062,7 +1083,7 @@ Props that are different:
       * `kinesisStream?: kinesis.IStream;`
       * `tags?: CfnTag[];`
 * `encryption?: GlobalTableEncryption;`
-  * `CUSTOMER_MANAGED` will remain the same but will be deprecated.
+  * `CUSTOMER_MANAGED` will be deprecated.
   * [NEW] `KEY_ARNS` option will now need users to pass in KMS key arns to the replicas and it will
   be their responsibility to manage these. These arns will be imported as KMS keys.
   * [NEW] `MULTI_REGION_KEY` option will provision a new multi region KMS key for the user and provision
