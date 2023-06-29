@@ -570,34 +570,105 @@ precedence over the global table level value(if present). For instance,
   * `tableClass?: TableClass`
   * `tags?: CfnTag[]`
 
-#### Capacity specifications
+#### BillingMode and Capacity
 
-The capacity will only be needed to be specified if the provisioning mode is not on-demand. By defaut,
+The capacity will only be needed to be specified if the billing mode is not on-demand. By default,
 the mode will be on-demand.
 
 The write capacity for table, replicas or GSIs can only be specified with an autoscaling configuration.
-Whereas, the read capacity can either be with a fixed capacity unit or with an autoscaling cofiguration.
+Whereas, the read capacity can either be with a fixed capacity unit or with an autoscaling configuration.
 
 So, having an enum like class for these two modes, users will have,
 
 * `Capacity.fixed(number)`
 * `Capacity.autoscaled({ configuration })`
 
+```typescript
+readCapacity: Capacity.fixed(20)
+```
+
 Now, if the billing mode is provisioned, then each capacity needs to be specified since we are not choosing
-defaults for the users. But, to ease the user experience, this API will copy over values where undefined.
+defaults for the users.
+
+Another enum like class would be for BillingMode,
+
+* `BillingMode.provisioned(({ configuration }))`
+* `BillingMode.ondemand()`
+
+```typescript
+billingMode: BillingMode.provisioned({
+  writeCapacity: Capacity.autoscaled({ max: 70 }),
+  readCapacity: Capacity.fixed(20),
+}),
+```
+
+Another way of defining the capacity can be,
+
+```typescript
+new GlobalTable(tableStack, 'GlobalTable', {
+  tableName: 'FooTable',
+  partitionKey: {
+    name: 'FooHashKey',
+    type: AttributeType.STRING,
+  },
+  billingMode: BillingMode.PROVISIONED,
+  writeCapacity: Capacity.autoscaled({ max: 70 }),
+  readCapacity: Capacity.fixed(20),
+  replicas: [
+    {
+      region: 'us-west-1',
+    },
+    {
+      region: 'us-east-2',
+    },
+  ],
+});
+```
+
+Here, the `billingMode`, `writeCapacity` and `readCapacity` are different props. The reasoning of using enum like
+classes are,
+
+* It conveys better intent to the users. For instance, it only makes sense to add capacity value if the billing mode is
+provisioned. If not using the enum like classes, then we can have something like this,
+
+  ```typescript
+  {
+    ...
+    billingMode: BillingMode.ON_DEMAND,
+    writeCapacity: Capacity.autoscaled({ max: 70 }),
+    readCapacity: Capacity.fixed(20),
+    ...
+  }
+  ```
+
+  This does not make sense as we are adding capacity even when the billing mode is on-demand. We can add validation
+  around this, but, it is much cleaner to do this with the enum like class.
+* It reduces the number of validation we will have to add for the three properties. For instance, another scenario
+could be if a user sets the `billingMode: BillingMode.PROVISIONED` but does not set any capacity values. We would need
+to add validations around this case but, with an enum like class here, we would not need such validation since user
+would need to pass in configuration if mode is provisioned, i.e. `BillingMode.provisioned(({ configuration }))`.
+
+To ease the user experience, this API will copy over values where undefined.
 The following explains how this works for each,
 
 * __Table__
-  User can assign read and write capacity at global table level props and these will be used for each replica
-  and GSIs. So the user does not need to define any other value.
+  User can assign read and write capacity at global table level props and these will be used for each replica.
+  And, if the user wants, they can change certain value for replica and that will take precedence over
+  global table level values.
 
-  And, if the user wants, they can change certain value for replica or GSI and that will take precedence over
-  global table level values. For instance,
+  Unlike replicas, for the GSIs only write capacity of the global table will be copied. The user would need
+  to specify read capacity for a GSI. If they also mention the read capacity for a GSI in a replica, then that
+  value would take precedence.
+
+  For instance,
 
   ```typescript
   new GlobalTable(tableStack, 'GlobalTable', {
     tableName: 'FooTable',
-    billingMode: BillingMode.PROVISIONED,
+    billingMode: BillingMode.provisioned({
+      writeCapacity: Capacity.autoscaled({ max: 70 }),
+      readCapacity: Capacity.fixed(20),
+    }),
     partitionKey: {
       name: 'FooHashKey',
       type: AttributeType.STRING,
@@ -606,14 +677,13 @@ The following explains how this works for each,
       name: 'FooRangeKey',
       type: AttributeType.STRING,
     },
-    write: Capacity.autoscaled({ max: 70 }),
-    read: Capacity.fixed(20),
     globalSecondaryIndex: [{
       indexName: 'UniqueGsiName',
       partitionKey: {
         name: 'FooRangeKey',
         type: AttributeType.STRING,
       },
+      readCapacity: Capacity.fixed(10),
     }],
     replicas: [
       {
@@ -627,7 +697,8 @@ The following explains how this works for each,
   ```
 
   Here, `write: Capacity.autoscaled({ max: 70 })` and the `read: Capacity.fixed(20)` is defined at global
-  table level props. These values will be used for each replica and each global secondary index.
+  table level props. And `readCapacity: Capacity.fixed(10),` is specified for a GSI and write capacity would be
+  the same as the table since not defined in the GSI.
 
 * __Replicas__
   User can choose to assign capacity values for each replica. They will still need to specify "write" capacity
@@ -637,24 +708,23 @@ The following explains how this works for each,
   ```typescript
   new GlobalTable(tableStack, 'GlobalTable', {
     tableName: 'FooTable',
-    billingMode: BillingMode.PROVISIONED,
+    billingMode: BillingMode.provisioned({
+      writeCapacity: Capacity.autoscaled({ max: 70 }),
+      readCapacity: Capacity.autoscaled({ max: 50 }),
+    }),
     partitionKey: {
       name: 'FooHashKey',
       type: AttributeType.STRING,
     },
-    sortKey: {
-      name: 'FooRangeKey',
-      type: AttributeType.STRING,
-    },
-    write: Capacity.autoscaled({ max: 70 }),
-    read: Capacity.autoscaled({ max: 50 }),
-    replicas: [{
-      region: 'us-west-2',
-      read: Capacity.fixed(15),
-    },
-    {
-      region: 'us-east-1',
-    }],
+    replicas: [
+      {
+        region: 'us-west-2',
+        readCapacity: Capacity.fixed(15),
+      },
+      {
+        region: 'us-east-1',
+      },
+    ],
   });
   ```
 
@@ -665,15 +735,21 @@ The following explains how this works for each,
 * __Global Secondary Indexes__
   There are multiple ways to define GSI capacity values.
 
-  For reads and writes,
+  For only writes,
 
   * A user can specify value at global table level props. This is mentioned in the prior section for tables.
+
+  For reads and writes,
+
   * A user can specify value in global secondary index props at global table level.
 
     ```typescript
     new GlobalTable(tableStack, 'GlobalTable', {
       tableName: 'FooTable',
-      billingMode: BillingMode.PROVISIONED,
+      billingMode: BillingMode.provisioned({
+        writeCapacity: Capacity.autoscaled({ max: 70 }),
+        readCapacity: Capacity.autoscaled({ max: 50 }),
+      }),
       partitionKey: {
         name: 'FooHashKey',
         type: AttributeType.STRING,
@@ -682,16 +758,14 @@ The following explains how this works for each,
         name: 'FooRangeKey',
         type: AttributeType.STRING,
       },
-      write: Capacity.autoscaled({ max: 70 }),
-      read: Capacity.autoscaled({ max: 50 }),
       globalSecondaryIndex: [{
         indexName: 'UniqueGsiName',
         partitionKey: {
           name: 'FooRangeKey',
           type: AttributeType.STRING,
         },
-        write: Capacity.autoscaled({ max: 90 }),
-        read: Capacity.fixed(16),
+        writeCapacity: Capacity.autoscaled({ max: 90 }),
+        readCapacity: Capacity.fixed(16),
       }],
       replicas: [{
         region: 'us-west-2',
@@ -704,63 +778,25 @@ The following explains how this works for each,
 
     Here, the `write and read` capacity specified on table will be used by the replicas. And, the values
     specified for GSI, i.e. `write: Capacity.autoscaled({ max: 90 }) and read: Capacity.fixed(16)` will
-    be used by all GSIs.
+    be used by `UniqueGsiName` GSI.
 
-    If both are specified, the precedence will be
+    If both `write` capacity are specified, the precedence will be
 
     ```
-    GSI capacity at global table level  <---- Capacity at global table level
+    GSI write capacity at global table level  <---- Write capacity at global table level
     ```
 
   For only reads,
 
-  * A user can specify value at replica level props.
-
-    ```typescript
-    new GlobalTable(tableStack, 'GlobalTable', {
-      tableName: 'FooTable',
-      billingMode: BillingMode.PROVISIONED,
-      partitionKey: {
-        name: 'FooHashKey',
-        type: AttributeType.STRING,
-      },
-      sortKey: {
-        name: 'FooRangeKey',
-        type: AttributeType.STRING,
-      },
-      write: Capacity.autoscaled({ max: 70 }),
-      globalSecondaryIndex: [{
-        indexName: 'UniqueGsiName',
-        partitionKey: {
-          name: 'FooRangeKey',
-          type: AttributeType.STRING,
-        },
-      }],
-      replicas: [
-        {
-          region: 'us-east-1',
-          read: Capacity.fixed(10),
-          globalSecondaryIndexOptions: [
-            {
-              indexName: 'UniqueGsiName',
-            },
-          ],
-        },
-      ],
-    });
-    ```
-
-    Here, `read: Capacity.fixed(10)` is defined for `us-east-1` replica. This value for read capacity will
-    be used for each GSI in the region. And for write capacity, global table level
-    `write: Capacity.autoscaled({ max: 70 })` will be used for the replica and GSIs in the replica region.
-    The benefit here will be that the user will not need to define read capacity for each GSI and this still
-    gives the flexibility of configuring for just the replica and not affecting other replicas.
   * A user can specify value at replica level GSI props.
 
     ```typescript
     new GlobalTable(tableStack, 'GlobalTable', {
       tableName: 'FooTable',
-      billingMode: BillingMode.PROVISIONED,
+      billingMode: BillingMode.provisioned({
+        writeCapacity: Capacity.autoscaled({ max: 70 }),
+        readCapacity: Capacity.autoscaled({ max: 50 }),
+      }),
       partitionKey: {
         name: 'FooHashKey',
         type: AttributeType.STRING,
@@ -769,14 +805,13 @@ The following explains how this works for each,
         name: 'FooRangeKey',
         type: AttributeType.STRING,
       },
-      write: Capacity.autoscaled({ max: 70 }),
-      read: Capacity.autoscaled({ max: 50 }),
       globalSecondaryIndex: [{
         indexName: 'UniqueGsiName',
         partitionKey: {
           name: 'FooRangeKey',
           type: AttributeType.STRING,
         },
+        readCapacity: Capacity.autoscaled({ max: 20 })
       }],
       replicas: [
         {
@@ -784,24 +819,31 @@ The following explains how this works for each,
           globalSecondaryIndexOptions: [
             {
               indexName: 'UniqueGsiName',
-              read: Capacity.fixed(10),
+              readCapacity: Capacity.fixed(10),
             },
           ],
         },
+        {
+          region: 'us-west-2',
+        }
       ],
     });
     ```
 
-    Here, `read: Capacity.fixed(10)` is defined for a particular GSI and all other GSIs defined will
-    use capacity defined at global table level, i.e. `read: Capacity.autoscaled({ max: 50 }).`. The benefit
-    for this is allowing users with an option to define a per GSI(within replica) read capacity configuration.
+    Here, the `read` capacity for `UniqueGsiName` is defined at two places, one at the global
+    table level and the other in `us-east-1` replica. Now, the capacity defined in the replica
+    for `us-east-1` would take precedence over the value defined at global table level.
+    But, for replica `us-west-2`, since no replica specific GSI read capacity is defined, so it
+    would use the value defined at table level.
 
-  If values are specified for each of the above, then the precedence will be
+    The `write` capacity for the `UniqueGsiName` in each replica would be `writeCapacity: Capacity.autoscaled({ max: 70 })`
+    since no value is specified in the GSI configuration itself at table level.
 
-  ```
-  GSI capacity defined at replica level <---- GSI capacity defined at global table level
-  <---- Capacity defined at replica level <---- Capacity defined at global table level
-  ```
+    If values are specified for each of the above, then the precedence will be
+
+    ```
+    GSI read capacity defined at replica level <---- GSI read capacity defined at global table level
+    ```
 
 #### Per-replica KMS keys
 
