@@ -311,6 +311,31 @@ replica region. The key also needs to be in the same region as the replica.
 4. `MULTI_REGION_KEY`: [NEW] A multi region KMS key and its supporting stacks in replica regions will be
 provisioned automatically.
 
+The `encryption` mode selected remains the same for each replica. If you would like to provide KMS keys managed
+by you for each replica, then you can use the `KEY_ARNS` encryption mode and provide region specific key in
+`encryptionKey` property of each replica.
+
+```typescript
+new GlobalTable(tableStack, 'FooTable', {
+  tableName: 'FooGlobalTable',
+  partitionKey: {
+    name: 'FooHashKey',
+    type: AttributeType.STRING,
+  },
+  encryption: GlobalTableEncryption.KEY_ARNS,
+  replicas: [
+    {
+      region: 'us-west-2',
+      encryptionKey: 'FooKeyArn',
+    },
+    {
+      region: 'us-east-1',
+      encryptionKey: 'BarKeyArn',
+    },
+  ],
+});
+```
+
 __NOTE__:
 
 * Encryption mode `CUSTOMER_MANAGED` is now deprecated. You can switch to either `KEY_ARNS` or `MULTI_REGION_KEY` mode.
