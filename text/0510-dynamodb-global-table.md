@@ -113,7 +113,6 @@ There are per replica properties that are available.
 * `tableClass` --> Gets copied over from global table level props if defined.
 * `tags` --> Gets copied over from global table level props if defined.
 * `read` --> Gets copied over from global table level props if defined.
-* `encryptionKey` --> This needs to be defined per replica
 * `kinesisStream` --> This needs to be defined per replica
 * `globalSecondaryIndexOptions`
   * `indexName` --> Needs to be specified
@@ -307,45 +306,44 @@ __NOTE:__
 
 #### Encryption
 
-Encryption mode defines how the table, replicas and GSIs would be encrypted at rest. There are now four
+Encryption defines how the table, replicas and GSIs would be encrypted at rest. There are now four
 types of encryptions that are available for global tables:
 
-1. `AWS_OWNED`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default
+1. `TableEncryption.dynamodbOwnedKey`: This uses a KMS key for encryption that is owned by DynamoDB. This is the default
 for global tables.
-2. `AWS_MANAGED`: A KMS key is created in your account and is managed by AWS.
-3. `KEY_ARNS`: [NEW] You will provide KMS key arns for each replica. You will need to specify arns for each
-replica region. The key also needs to be in the same region as the replica.
-4. `MULTI_REGION_KEY`: [NEW] A multi region KMS key and its supporting stacks in replica regions will be
+2. `TableEncryption.awsManagedKey`: A KMS key is created in your account and is managed by AWS.
+3. `TableEncryption.customerManagedKey`: You will need to provide a KMS key for the table and key arns for each replica.
+The key also needs to be in the same region as the replica.
+4. `TableEncryption.multiRegionKey`: [NEW] A multi region KMS key and its supporting stacks in replica regions will be
 provisioned automatically.
 
 The `encryption` mode selected remains the same for each replica. If you will like to provide KMS keys managed
-by you for each replica, then you can use the `KEY_ARNS` encryption mode and provide region specific key in
-`encryptionKey` property of each replica.
+by you for each replica, then you can use `customerManagedKey` and provide table and region specific keys.
 
 ```typescript
+// Stack region: us-west-2. Table KMS key.
+const tableKmsKey: kms.IKey = new kms.Key(tableStack, 'FooTableKey');
+
 new GlobalTable(tableStack, 'FooTable', {
   tableName: 'FooGlobalTable',
   partitionKey: {
     name: 'FooHashKey',
     type: AttributeType.STRING,
   },
-  encryption: GlobalTableEncryption.KEY_ARNS,
+  encryption: TableEncryption.customerManagedKey(
+    tableKmsKey,
+    {
+      // Replica KMS key arn
+      'us-east-1': 'FooKeyArn',
+    },
+  ),
   replicas: [
     {
-      region: 'us-west-2',
-      encryptionKey: 'FooKeyArn',
-    },
-    {
       region: 'us-east-1',
-      encryptionKey: 'BarKeyArn',
     },
   ],
 });
 ```
-
-__NOTE__:
-
-* Encryption mode `CUSTOMER_MANAGED` is now deprecated. You can switch to either `KEY_ARNS` or `MULTI_REGION_KEY` mode.
 
 #### Grants
 
@@ -370,11 +368,9 @@ class FooStack extends Stack {
       replicas: [
         {
           region: 'us-west-2',
-          encryptionKey: 'FooKmsKeyArn',
         },
         {
           region: 'us-east-1',
-          encryptionKey: 'BarKmsKeyArn',
         },
       ],
     });
@@ -857,42 +853,57 @@ The following explains how this works for each,
 
 #### Per-replica KMS keys
 
-Global table offers users to specify user owned KMS keys for replicas. The user will need to define
-these keys for each replica.
+Global table offers users to specify user owned KMS keys for table and its replicas. The user will need to define
+these keys for the table and each replica. And, global table requires keys to be present in-region of the replica.
 
-Global table requires keys to be present in-region of the replica. To support this,
+Instead of the enum being used in Table construct, we will be switching to an enum like class `TableEncryption`. It would
+initially support, `dynamodbOwnedKey`, `awsManagedKey` and `customerManagedKey`. And, support for `multiRegionKey` would be
+added later.
 
-* A new option is added: `KEY_ARNS`, where the user can mention the KMS key arns in their replica
-configuration and we will import these to the user stack.
+* `TableEncryption.dynamodbOwnedKey()` --> Default
+* `TableEncryption.awsManagedKey()`
+* `TableEncryption.customerManagedKey(tableKey: IKey, replicaKeyArns?: { [region: string]: string})`
+* `TableEncryption.multiRegionKey()`
+
+* `customerManagedKey` option is updated, where the user can mention the KMS key for the table and KMS key arns for replicas
+and we will import these to the user stack.
 
   ```typescript
-  new GlobalTable(tableStack, 'GlobalTable', {
-    tableName: 'FooTable',
+  const app = new App();
+
+  const tableStack = new Stack(app, 'GlobalTableStack', {
+    env: {
+      region: 'us-west-2',
+    },
+  });
+
+  // Table(us-west-2) KMS key
+  const tableKmsKey: kms.IKey = new kms.Key(tableStack, 'FooTableKey');
+
+  new GlobalTable(tableStack, 'FooTable', {
+    tableName: 'FooGlobalTable',
     partitionKey: {
       name: 'FooHashKey',
       type: AttributeType.STRING,
     },
-    encryption: GlobalTableEncryption.KEY_ARNS,
+    encryption: TableEncryption.customerManagedKey(
+      tableKmsKey,
+      {
+        // us-east-1 replica KMS key
+        'us-east-1': 'FooKeyArn',
+      },
+    ),
     replicas: [
       {
-        region: 'us-west-2',
-        encryptionKey: 'arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456780001',
-      },
-      {
         region: 'us-east-1',
-        encryptionKey: 'arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456780002',
       },
     ],
   });
   ```
 
-  Here, `encryptionKey` is the KMS key arn and will need to be defined for each replica.
-* Another new option will be: `MULTI_REGION_KEY`. This will be a multi region KMS key that we provision
-for the customer and also provision the supporting stacks in regions where a table replica is present.
+* A new option will be introduced: `multiRegionKey`. This will be a multi region KMS key that we provision
+for the customer and will also provision the supporting stacks in regions where a table replica is present.
 This feature probably requires an RFC of its own and can be added at a later point after release.
-* The `CUSTOMER_MANAGED` encryption option, will be deprecated and users can then switch to `KEY_ARNS`
-or `MULTI_REGION_KEY` options. Our recommendation will be to use `MULTI_REGION_KEY` even if the table
-exists only in the stack region.
 
 #### Table references in downstream stacks
 
@@ -916,11 +927,9 @@ specific region.
         replicas: [
           {
             region: 'us-west-2',
-            encryptionKey: 'arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456780001',
           },
           {
             region: 'us-east-1',
-            encryptionKey: 'arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456780002',
           },
         ],
       });
@@ -955,10 +964,7 @@ specific region.
   ```
 
   Here, global table defined is `FooStack` has two replica regions. Here, `us-west-2` is the region
-  stack is being deployed to. Both of these have the KMS encryption key arns defined by the user and
-  these keys arns will be used by the global table to encrypt the respective replica.
-
-  Now, `BarStack` stack props accepts an `ITable` and provides needed permissions to the IAM user defined
+  stack is being deployed to. The `BarStack` stack props accepts an `ITable` and provides needed permissions to the IAM user defined
   in the stack. During initialization, the global table replica method `fooStack.globalTable.replica('us-east-1')`
   passes in the ITable reference for `us-east-1` replica. And, the iam user only gets access to reads for
   that `us-east-1` replica.
@@ -1045,8 +1051,8 @@ the capacity should look like for the table, replicas and GSIs.
 #### Kms key not created for customer managed keys
 
 In the proposed solution, if a user specifies customer managed key as
-their choice on encryption, then they
-will need to specify a key for each replica.
+their choice of encryption, then they will need to specify a key for the table and
+KMS key arns for each replica.
 
 Unlike the Table construct, I am not creating the KMS keys for the customers.
 I believe customer is making a conscious decision of using such encryption
@@ -1087,9 +1093,6 @@ Global Table construct instead.
 
 #### MULTI_REGION_KEY support
 
-After deprecating `CUSTOMER_MANAGED` encryption mode, one of the new alternative will be `KEY_ARNS` mode. In this
-mode, the users are responsible for creating the KMS keys, maintaining them and also adding ARNs to the global table
-construct. This will add churn for the users.
 An RFC can be created for finalizing user experience for provisioning multi region KMS keys. What this probably will
 involve is creating a multi region KMS key for the user and also creating stacks with replicated KMS key in requested
 regions.
@@ -1122,7 +1125,7 @@ Props that are different:
 * `encryption?: TableEncryption;`
   * There are more encryption options for GlobalTable.
 * `encryptionKey?: kms.IKey;`
-  * This is present but will be needed on a per replica basis.
+  * This is removed and keys instead will be needed on a per replica basis in encryption property.
 * `kinesisStream?: kinesis.IStream;`
   * This is present but will be needed on a per replica basis.
 * `writeCapacity?: number;`
@@ -1152,8 +1155,6 @@ Props that are different:
         one is added for the region stack is being deployed to.
       * `globalSecondaryIndexOptions?: ReplicaGSIOptions[];`
         * These are some options that can be specified for GSIs on a replica basis.
-      * `encryptionKey?: string;`
-        * This will be a KMS key arn which will be imported in the stack.
       * `contributorInsightsEnabled?: boolean;`
       * `deletionProtection?: boolean;`
       * `pointInTimeRecovery?: boolean;`
@@ -1161,11 +1162,10 @@ Props that are different:
       * `read?: Capacity;`
       * `kinesisStream?: kinesis.IStream;`
       * `tags?: CfnTag[];`
-* `encryption?: GlobalTableEncryption;`
-  * `CUSTOMER_MANAGED` will be deprecated.
-  * [NEW] `KEY_ARNS` option will now need users to pass in KMS key arns to the replicas and it will
-  be their responsibility to manage these. These arns will be imported as KMS keys.
-  * [NEW] `MULTI_REGION_KEY` option will provision a new multi region KMS key for the user and provision
+* `encryption?: TableEncryption;`
+  * Will change to an enum like class from an enum.
+  * `customerManaged` will be updated to support table and replica keys.
+  * [NEW] `multiRegionKey` option will provision a new multi region KMS key for the user and provision
   supporting stacks in mentioned regions.
 * `tags?: CfnTag[];`
   * Users will be able to pass in tags for the resource.
