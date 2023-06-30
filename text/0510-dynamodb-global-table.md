@@ -256,12 +256,11 @@ GSI's read capacity specified at global table level.
     }],
     replicas: [{
       region: 'us-east-1',
-      globalSecondaryIndexOptions: [
-        {
-          indexName: 'UniqueGsiName',
+      globalSecondaryIndexOptions: {
+        'UniqueGsiName': {
           readCapacity: Capacity.fixed(55),
         },
-      ],
+      },
     }],
   });
   ```
@@ -817,21 +816,20 @@ The following explains how this works for each,
           name: 'FooRangeKey',
           type: AttributeType.STRING,
         },
-        readCapacity: Capacity.autoscaled({ max: 20 })
+        readCapacity: Capacity.autoscaled({ max: 20 }),
       }],
       replicas: [
         {
           region: 'us-east-1',
-          globalSecondaryIndexOptions: [
-            {
-              indexName: 'UniqueGsiName',
+          globalSecondaryIndexOptions: {
+            'UniqueGsiName': {
               readCapacity: Capacity.fixed(10),
             },
-          ],
+          },
         },
         {
           region: 'us-west-2',
-        }
+        },
       ],
     });
     ```
@@ -1143,7 +1141,7 @@ Props that are different:
 * `writeCapacity?: Capacity;` and `readCapacity?: Capacity;`
   * Write capacity if mentioned, needs to be `Capacity.autoscaled`. And read capacity
   can be `Capacity.fixed` or `Capacity.autoscaled`.
-* `globalSecondaryIndex?: GlobalSecondaryIndexOptions[];` and `localSecondaryIndex?: LocalSecondaryIndexProps[];`
+* `globalSecondaryIndex?: GlobalSecondaryIndexProps[];` and `localSecondaryIndex?: LocalSecondaryIndexProps[];`
   * These are now available to be passed in via constructor too and not just by `add` methods.
 * `replicas?: ReplicaTableOptions[];`
   * This is the new way of specifying replicas. User can specify certain configuration options for replicas.
@@ -1153,7 +1151,7 @@ Props that are different:
       * `region: string;`
         * This is the only mandatory prop if a replica is defined. If none are defined, then
         one is added for the region stack is being deployed to.
-      * `globalSecondaryIndexOptions?: ReplicaGSIOptions[];`
+      * `globalSecondaryIndexOptions?: ReplicaGSIOptions;`
         * These are some options that can be specified for GSIs on a replica basis.
       * `contributorInsightsEnabled?: boolean;`
       * `deletionProtection?: boolean;`
