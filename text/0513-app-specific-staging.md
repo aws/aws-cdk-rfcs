@@ -236,8 +236,6 @@ Users generally don't appreciate change, especially if it saddles them with busy
 purely optional, and there are definite benefits to be had, synthesis+bootstrapping is already a sore spot for users
 (it’s hard to explain and therefore a bit under-documented) and introducing more churn may lead to backlash.
 
-One concern
-
 ### What is the high-level project plan?
 
 - We will release the new synthesizer as an optional feature, first initially only for the CLI.
