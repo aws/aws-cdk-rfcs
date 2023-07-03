@@ -46,6 +46,10 @@ As an opinionated construct, the Glue L2 construct will enforce
 best practices and not allow developers to create resources that use deprecated
 libraries and tool sets (e.g. deprecated versions of Python).
 
+Optional and required parameters for each job will be enforced via interface
+rather than validation; see [Glue's public documentation](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api.html)
+for more granular details.
+
 ### Spark Jobs
 
 1. **ETL Jobs**
@@ -90,11 +94,209 @@ glue.pySparkEtlJob(this, 'pySparkEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
    pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
-   extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar')],
    description: 'an example pySpark ETL job',
    numberOfWorkers: 20,
    role: iam.IRole,
 });
+```
+
+Scala Spark ETL Job Property Interface:
+
+```ts
+ScalaSparkEtlJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * Class name (required for Scala)
+     * Package and class name for the entry point of Glue Job execution for
+     * Java scripts
+     * */
+    className: string;
+
+    /**
+     * Extra Jars S3 URL (optional)
+     * S3 URL where additional jar dependencies are located
+     */
+    extraJarsS3Url?: string[];
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0 for ETL
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
+
+pySpark ETL Job Property Interface:
+
+```ts
+pySparkEtlJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0 for ETL
+     * */
+    glueVersion?: glue.GlueVersion;
+}
 ```
 
 2. **Streaming Jobs**
@@ -110,7 +312,7 @@ to G2 worker and 4.0 version for streaming jobs which developers can override.
 We will enable `—enable-metrics, —enable-spark-ui, —enable-continuous-cloudwatch-log`.
 
 ```ts
-new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
+new glue.pySparkStreamingJob(this, 'pySparkStreamingJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    role: iam.IRole,
 });
@@ -128,7 +330,7 @@ Optionally, developers can override the glueVersion and add extraJars and a
 description:
 
 ```ts
-new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
+new glue.pySparkStreamingJob(this, 'pySparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
    pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
@@ -137,16 +339,213 @@ new glue.PythonSparkStreamingJob(this, 'PythonSparkStreamingJob', {
    role: iam.IRole,
 });
 
-
 new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
    pythonVersion: glue.PythonVersion.3_9,
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
+   extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar'),],
    className: 'com.example.HelloWorld',
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
    role: iam.IRole,
 });
+```
+
+Scala Spark Streaming Job Property Interface:
+
+```ts
+ScalaSparkStreamingJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * Class name (required for Scala scripts)
+     * Package and class name for the entry point of Glue Job execution for
+     * Java scripts
+     * */
+    className: string;
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Extra Jars S3 URL (optional)
+     * S3 URL where additional jar dependencies are located
+     */
+    extraJarsS3Url?: string[];
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
+
+pySpark Streaming Job Property Interface:
+
+```ts
+pySparkStreamingJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0
+     * */
+    glueVersion?: glue.GlueVersion;
+}
 ```
 
 3. **Flex Jobs**
@@ -195,6 +594,205 @@ new glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
 });
 ```
 
+Scala Spark Flex Job Property Interface:
+
+```ts
+ScalaSparkFlexJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * Class name (required for Scala scripts)
+     * Package and class name for the entry point of Glue Job execution for
+     * Java scripts
+     * */
+    className: string;
+
+    /**
+     * Extra Jars S3 URL (optional)
+     * S3 URL where additional jar dependencies are located
+     */
+    extraJarsS3Url?: string[];
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
+
+pySpark Flex Job Property Interface:
+
+```ts
+PySparkFlexJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
+
 ### Python Shell Jobs
 
 A Python shell job runs Python scripts as a shell and supports a Python
@@ -227,6 +825,99 @@ new glue.PythonShellJob(this, 'PythonShellJob', {
 });
 ```
 
+Python Shell Job Property Interface:
+
+```ts
+PythonShellJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
+
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 3.0 for ETL
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
+
 ### Ray Jobs
 
 Glue ray only supports worker type Z.2X and Glue version 4.0. Runtime
@@ -250,33 +941,98 @@ new glue.GlueRayJob(this, 'GlueRayJob', {
 });
 ```
 
-### Required, Optional, and Overridable Parameters
+Ray Job Property Interface:
 
-Each of these parameters are documented in [Glue's public documentation](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api.html);
-this table lists the parameters that will or will not be required, optional,
-and/or overridable for the Glue L2 construct.
+```ts
+RayJobProps{
+    /**
+     * Script Code Location (required)
+     * Script to run when the Glue Job executes. Can be uploaded
+     * from the local directory structure using fromAsset
+     * or referenced via S3 location using fromBucket
+     * */
+    script: glue.Code;
 
-|Parameter|Required|Default Value|Overridable|
-|:---|:---|:---|:---|
-|ScriptLocation|Yes: S3 location|CommandName|yes S3 location|
-|NumberOfWorkers|No|10|Yes for ETL, STREAMING, RAY jobs|
-|Name|Yes|Default: Auto Generated name|Yes|
-|Role|Yes|None|Yes|
-|Description|No|None|Yes|
-|MaxConcurrentRuns|No|1|Yes|
-|DefaultArguments|No|None|Yes|
-|Connections|No|None|Yes|
-|MaxRetries|No|0|Yes|
-|Timeout|No|2 Days for non-streaming jobs|Yes|
-|SecurityConfiguration|No|None|Yes| |Tags|No|None|Yes|
-|GlueVersion|No|Default: 3.0 for ETL, RAY: 4.0|Yes|
-|Command name|No|ETL, PythonShell, Streaming and GlueRay|No|
-|Command Runtime|No|GlueRay: Ray2.4|No|
-|NonOverridableArguments|No|None|No|
-|ExecutionClass|No|STANDARD / FLEX|No|
-|Command PythonVersion|No|3 for ETL/Streaming, 3.9 for PythonShell|
-|LogUri|No|None|This option is not widely used|
-|MaxCapacity (Python Shell Jobs only)|No|0.0625|Yes|
+    /**
+     * IAM Role (required)
+     * IAM Role to use for Glue Job execution
+     * */
+    role: iam.IRole;
+
+    /**
+     * Name of the Glue Job (optional)
+     * Developer-specified name of the Glue Job
+     * */
+    name?: string;
+
+    /**
+     * Description (optional)
+     * Developer-specified description of the Glue Job
+     * */
+    description?: string;
+
+    /**
+     * Number of Workers (optional)
+     * Number of workers for Glue to use during Job execution
+     * @default 10
+     * */
+    numberOrWorkers?: int;
+
+    /**
+     * Max Concurrent Runs (optional)
+     * The maximum number of runs this Glue Job cna concurrently run
+     * @default 1
+     * */
+    maxConcurrentRuns?: int;
+
+    /**
+     * Default Arguments (optional)
+     * The default arguments for every run of this Glue Job,
+     * specified as name-value pairs.
+     * */
+    defaultArguments?: {[key: string], string }[];
+
+    /**
+     * Connections (optional)
+     * List of connections to use for this Glue Job
+     * */
+    connections?: IConnection[];
+
+    /**
+     * Max Retries (optional)
+     * Maximum number of retry attempts Glue will perform
+     * if the Job fails
+     * @default 0
+     * */
+    maxRetries?: int;
+
+    /**
+     * Timeout (optional)
+     * Timeout for the Glue Job, specified in minutes
+     * @default 2880 (2 days for non-streaming)
+     * */
+    timeout?: int;
+
+    /**
+     * Security Configuration (optional)
+     * Defines the encryption options for the Glue Job
+     * */
+    securityConfiguration?: ISecurityConfiguration;
+
+    /**
+     * Tags (optional)
+     * A list of key:value pairs of tags to apply to this Glue Job resource
+     * */
+    tags?: {[key: string], string }[];
+
+    /**
+     * Glue Version
+     * The version of Glue to use to execute this Job
+     * @default 4.0
+     * */
+    glueVersion?: glue.GlueVersion;
+}
+```
 
 ### Uploading scripts from the same repo to S3
 
@@ -321,8 +1077,8 @@ myWorkflow = new glue.Workflow(this, "GlueWorkflow", {
 });
 
 myWorkflow.onDemandTrigger(this, 'TriggerJobOnDemand', {
-    description: 'On demand run for ' + myGlueJob.name,
-    actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
+    description: 'On demand run for ' + glue.JobExecutable.name,
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
 });
 ```
 
@@ -340,20 +1096,20 @@ crawlers via conditional types.
 ```ts
 // Create Daily Schedule at 00 UTC
 myWorkflow.dailyScheduleTrigger(this, 'TriggerCrawlerOnDailySchedule', {
-    description: 'Scheduled run for ' + myGlueJob.name,
-    actions: [ myGlueCrawler]
+    description: 'Scheduled run for ' + glue.JobExecutable.name,
+    actions: [ jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
 });
 
 // Create Weekly schedule at 00 UTC on Sunday
 myWorkflow.weeklyScheduleTrigger(this, 'TriggerJobOnWeeklySchedule', {
-    description: 'Scheduled run for ' + myGlueJob.name,
-    actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
+    description: 'Scheduled run for ' + glue.JobExecutable.name,
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
 });
 
 // Create Custom schedule, e.g. Monthly on the 7th day at 15:30 UTC
 myWorkflow.customScheduleJobTrigger(this, 'TriggerCrawlerOnCustomSchedule', {
-    description: 'Scheduled run for ' + myGlueJob.name,
-    actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
+    description: 'Scheduled run for ' + glue.JobExecutable.name,
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
     schedule: events.Schedule.cron(day: '7', hour: '15', minute: '30')
 });
 ```
@@ -368,12 +1124,12 @@ to 1. For both triggers, `BatchWindow` will be default to 900 seconds.
 ```ts
 myWorkflow.notifyEventTrigger(this, 'MyNotifyTriggerBatching', {
     batchSize: int,
-    jobActions: [glueJob1, glueJob2, glueJob3],
-    actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
+    jobActions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...],
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ... ]
 });
 
 myWorkflow.notifyEventTrigger(this, 'MyNotifyTriggerNonBatching', {
-    actions: [glueJob1, glueJob2, glueJob3]
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
 });
 ```
 
@@ -386,10 +1142,10 @@ When the predicateCondition is true, the trigger actions will be executed.
 // Triggers on Job and Crawler status
 myWorkflow.conditionalTrigger(this, 'conditionalTrigger', {
     description: 'Conditional trigger for ' + myGlueJob.name,
-    actions: [glueJob1, glueJob2, glueJob3, glueCrawler]
+    actions: [jobOrCrawler: glue.JobExecutable | cdk.CfnCrawler?, ...]
     predicateCondition: glue.TriggerPredicateCondition.AND,
-    jobPredicates: [{'job': glueJobPred, 'state': glue.JobRunState.FAILED},
-                    {'job': glueJobPred1, 'state' : glue.JobRunState.SUCCEEDED}]
+    jobPredicates: [{'job': JobExecutable, 'state': glue.JobState.FAILED},
+                    {'job': JobExecutable, 'state' : glue.JobState.SUCCEEDED}]
 });
 ```
 
