@@ -248,7 +248,32 @@ purely optional, and there are definite benefits to be had, synthesis+bootstrapp
 - Customization by subclassing is possible, but we will probably have to selectively expose some protected helper
   functions to make it more convenient. We will do that when feature requests start coming in.
 - After a tryout period, we will move the synthesizer into the core library and document it as a possible alternative
-  in the developer guide.
+  in the developer guide, and we will probably vend a bootstrap template specifically for this synthesizer.
+
+### New bootstrap template
+
+By introducing a new template, we technically have an opportunity to rename roles and get rid of the `hnb659fds`
+identifier that customers hate. However, to make the migration from the current bootstrap stack as smooth as possible,
+we probably should NOT be taking this opportunity and just keep the same role names.
+
+The new bootstrap template will contain exactly the **CloudFormation Execution Role**, **Deployment Role**, and **Lookup Role**
+from the current template, and nothing else.
+
+We can put a version on it for informational purposes, but that version will not be checkable by CloudFormation deployments;
+perhaps it could be make checkable by the CLI during `cdk deploy` time. At least `cdk bootstrap` will be able to look at the
+version to prevent downgrading.
+
+The bootstrap template will be selected by either running `cdk bootstrap` in an app directory that uses the `AppStagingSynthesizer`, 
+or passing a command-line flag to CDK bootstrap: `cdk bootstrap --synthesizer=[legacy|default|appstaging]`. If `cdk bootstrap` detects
+it is changing the "type" of bootstrap stack, it will throw up a confirmation prompt with an explanation of the consequences:
+
+```
+$ cdk bootstrap --synthesizer=appstaging
+This operation will change the style of bootstrap stack from "default" version 18 to "appstaging" version 1.
+This bootstrap stack style has been designed for the AppStagingSynthesizer; make sure that you are using that synthesizer
+in the CDK apps you plan to deploy to this environment. For more information, see http://amzn.to/5vjQYrtejA.
+Continue (y/N)?
+```
 
 ### Are there any open issues that need to be addressed later?
 
