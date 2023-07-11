@@ -23,7 +23,7 @@ future state of the libraries and to discover projects for contribution.
 [460](https://github.com/aws/aws-cdk-rfcs/issues/460)|[Reduce aws-cdk-lib package size](https://github.com/aws/aws-cdk-rfcs/issues/460)||👷 implementing
 [474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0474-event-bridge-scheduler-l2.md)||👷 implementing
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)||📆 planning
-[502](https://https://github.com/aws/aws-cdk-rfcs/issues/502) | [L2 Constructs for VPCLattice] | [@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra) | ✍️ review
+[502](https://https://github.com/aws/aws-cdk-rfcs/issues/502) | [L2 Constructs for VPCLattice](https://github.com/aws/aws-cdk-rfcs/issues/502) | [@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra) | ✍️ review
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👍 approved
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|👍 approved
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
