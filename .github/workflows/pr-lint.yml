@@ -7,6 +7,7 @@ on:
     # workflows to trigger each other)
     branches-ignore:
       - 'auto/update-rfc-table'
+  workflow_dispatch: {}
 
 jobs:
   markdownlint:
