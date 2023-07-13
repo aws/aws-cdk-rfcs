@@ -106,7 +106,6 @@ export class LatticeTestStack extends core.Stack {
       httpMatch: {
         pathMatches: { path: '/hello' },
       },
-      // we will only allow access to this service from the ec2 instance
       accessMode: vpclattice.RuleAccessMode.UNAUTHENTICATED
     });
 
@@ -154,6 +153,17 @@ export class LatticeTestStack extends core.Stack {
   }
 }
 ```
+---
+## Vpc Lattice Networking. 
+
+When a vpc is associated with a vpclattice servicenetwork, the following occurs;
+
+- A service interface is placed in the vpc. Lattice uses link-local (169.254.x.x) address's for this. 
+- It associates a aws service domain  (*.on.aws)  with the vpc, which is how resources in the vpc are able to resolve the service interface. Generally you would then put a CNAME record at it. 
+- Optionally an array of securitygroups can be provided, which are applied on to the interface to filter what can connect
+
+https://d1.awsstatic.com/events/Summits/reinvent2022/NET215_NEW-LAUNCH!-Introducing-Amazon-VPC-Lattice-Simplifying-application-networking.pdf
+
 ---
 
 ## Proposed API Design for vpclattice:
@@ -401,7 +411,7 @@ export interface IService extends core.IResource {
   /**
    * The authType of the service.
    */
-  authType: AuthType | undefined;
+  authType: string | undefined;
   /**
    * A certificate that may be used by the service
    */
@@ -410,10 +420,6 @@ export interface IService extends core.IResource {
    * A custom Domain used by the service
    */
   customDomain: string | undefined;
-  /**
-   * A DNS Entry for the service
-   */
-  dnsEntry: aws_vpclattice.CfnService.DnsEntryProperty | undefined;
   /**
   * A name for the service
   */
@@ -473,7 +479,7 @@ export interface ServiceProps {
    * A custom hosname
    * @default no hostname is used
    */
-  readonly dnsEntry?: aws_vpclattice.CfnService.DnsEntryProperty | undefined;
+  readonly hostedZone?: r53.IHostedZone | undefined;
 
   /**
    * Share Service
@@ -613,7 +619,7 @@ export interface ListenerProps {
    *  * A default action that will be taken if no rules match.
    *  @default 404 NOT Found
   */
-  readonly defaultAction?: aws_vpclattice.CfnListener.DefaultActionProperty | undefined;
+  readonly defaultAction?: DefaultListenerAction | undefined;
   /**
   * protocol that the listener will listen on
   * @default HTTPS
@@ -622,8 +628,9 @@ export interface ListenerProps {
   /**
   * Optional port number for the listener. If not supplied, will default to 80 or 443, depending on the Protocol
   * @default 80 or 443 depending on the Protocol
+
   */
-  readonly port?: number | undefined
+  readonly port?: number | undefined;
   /**
   * The Name of the service.
   * @default CloudFormation provided name.
