@@ -78,18 +78,10 @@ export class LatticeTestStack extends core.Stack {
     // Create a Lattice Service
     // this will default to using IAM Authentication
     const myLatticeService = new Service(this, 'myLatticeService', {});
-    // add a listener to the service, using the defaults
-    // - HTTPS
-    // - Port 443
-    // - default action of providing 404 NOT Found,
-    // - cloudformation name
-    const myListener = new vpclattice.Listener(this, 'Listener', {
-      service: myLatticeService,
-    })
-
+    
   
     // add a listenerRule that will use the helloworld lambda as a Target
-    mylistener.addListenerRule({
+    const helloworld: RuleProp = {
       name: 'helloworld',
       priority: 10,
       action: [
@@ -107,10 +99,10 @@ export class LatticeTestStack extends core.Stack {
         pathMatches: { path: '/hello' },
       },
       accessMode: vpclattice.RuleAccessMode.UNAUTHENTICATED
-    });
+    };
 
     //add a listenerRule that will use the goodbyeworld lambda as a Target
-    mylistener.addListenerRule({
+    const goodbye: RuleProp = {
       name: 'goodbyeworld',
       priority: 20,
       action: [
@@ -130,10 +122,20 @@ export class LatticeTestStack extends core.Stack {
       // we will only allow access to this service from the ec2 instance
       allowedPrincipals: [support.ec2instance.role],
       accessMode: vpclattice.RuleAccessMode.AUTHENTICATED_ONLY,
-    });
+    };
 
-    
-    myLatticeService.applyAuthPolicy();
+    // add a listener to the service, using the defaults
+    // - HTTPS
+    // - Port 443
+    // - default action of providing 404 NOT Found,
+    // - cloudformation name
+    const myListener = new vpclattice.Listener(this, 'Listener', {
+      service: myLatticeService,
+      rules: [
+        helloworld,
+        goodbyeworld,
+      ]
+    })
 
     /**
      * Create a ServiceNetwork.
@@ -148,8 +150,6 @@ export class LatticeTestStack extends core.Stack {
         support.vpc1,
       ],
     });
-
-    serviceNetwork.applyAuthPolicyToServiceNetwork();
   }
 }
 ```
@@ -288,8 +288,7 @@ export interface ServiceNetworkProps {
   readonly name?: string;
 
   /**
-   * The type of  authentication to use with the Service Network. The only method avaialble is
-   * AWS_IAM, however in anticipation, it is expected that other types will be added. 
+   * The type of  authentication to use with the Service Network
    * @default 'AWS_IAM'
    */
   readonly authType?: AuthType | undefined;
@@ -312,12 +311,15 @@ export interface ServiceNetworkProps {
    */
   readonly vpcs?: ec2.IVpc[] | undefined;
   /**
-   * An access mode provides 'pre-canned' conditions for the policy
-   * @default no conditions
+   * Allow external principals
+   * @default false
    */
   readonly accessmode?: ServiceNetworkAccessMode | undefined;
+  /**
+   * Additional Optional Auth statements:
+   */
+  readonly authStatements?: iam.PolicyStatement[] | undefined;
 }
-
 ```
 `ServiceNetwork` will implement statics in addition to those in IServiceNetwork, to allow the import of the servicenetwork in other stacks ( potentially cross account ). `fromName` provides a lookup to obtain the Id, using a custom resource.  This provides a way to pass a concrete value between cross account stacks.  
 
@@ -331,18 +333,8 @@ public static fromName(scope: constructs.Construct, id: string, serviceNetworkNa
   }
 ```
 
-`ServiceNetwork` will implement methods for a variety of tasks;
+`ServiceNetwork` will implement public methods for a variety of tasks;
 
-
-```typescript
-// adds an iam statement to the the authpolicy. Use this to create policy that is bespoke to this application 
-addStatementToAuthPolicy(statement: iam.PolicyStatement)
-```
-
-```typescript
-// applies the AuthPolicy that has been created, to the serviceNetwork. 
-applyAuthPolicyToServiceNetwork()
-```
 
 ```typescript
 // creates and associates a logging subscription to provide visisiblity for the lattice service
@@ -374,9 +366,6 @@ export interface ServiceNetworkAssociationProps {
   readonly serviceId: string;
 }
 ```
-
-
-
 
 ### Service
 
@@ -433,6 +422,10 @@ export interface IService extends core.IResource {
   * associate the service with a servicenetwork.
   */
   associateWithServiceNetwork(serviceNetwork: IServiceNetwork): void;
+  /**
+   * apply an authpolicy to the servicenetwork
+   */
+  applyAuthPolicy(): iam.PolicyDocument;
 }
 
 ```
@@ -518,20 +511,6 @@ public grantAccess(principals: iam.IPrincipal[]) {  }
 
 ```typescript
   /**
-  * apply an authpolicy to the service
-  */
-  public applyAuthPolicy(): iam.PolicyDocument {  }
-```
-
-```typescript
-  /**
-  * Add a PolicyStatement to the auth policy 
-  */
-  public addPolicyStatement(statement: iam.PolicyStatement): void {  }
-```
-
-```typescript
-  /**
    * Share the service to other accounts via RAM
    */
   public shareToAccounts(props: ShareServiceProps): void {  }
@@ -608,7 +587,7 @@ export interface IListener extends core.IResource {
 }
 ```
 
-`Listener` will consome `ListenerProps`
+`Listener` will consume `ListenerProps`
 
 ```typescript
 /**
@@ -640,19 +619,12 @@ export interface ListenerProps {
    * The Id of the service that this listener is associated with.
    */
   readonly service: IService;
+  /**
+   * rules for the listener
+   */
+  readonly rules?: RuleProp[] | undefined;
 }
 ```
-
-`Listener` will implement methods 
-
-```typescript
- /**
-   * add a rule to the listener, which will implement AWS::VpcLattice::Rule
-   * @param props AddRuleProps
-   */
-  public addListenerRule(props: AddRuleProps): void { }
-```
-
 
 
 ### TargetGroup
