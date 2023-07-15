@@ -675,46 +675,14 @@ export interface TargetGroupProps {
 ## Classes
 
 
+### Targets
 
-### Target
+Lattice Targets will be created in `aws-vpclattice-targets` a seperate module. They will implment `ITarget` 
+
 
 `Target` is an abstract class with static function to return propertys for use in a `TargetGroup`  
 Targets can be lambda, ipAddress, ec2instances, or applicaiton loadbalancers.
 
-```typescript
-/**
- * Targets for target Groups
- */
-export abstract class Target {
-
-  /**
-   * Lambda Target
-   * @param lambda
-   */
-  public static lambda(lambda: aws_lambda.Function[]): Target {  };
-
-  /**
-   * IpAddress as Targets
-   * @param ipAddress
-   * @param config
-   */
-  public static ipAddress(ipAddress: string[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty ): Target {  };
-
-  /**
-   * EC2 Instances as Targets
-   * @param ec2instance
-   * @param config
-   */
-  public static ec2instance(ec2instance: ec2.Instance[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty): Target {  };
-
-  /**
-   * Application Load Balancer as Targets
-   * @param alb
-   * @param config
-   */
-  public static applicationLoadBalancer(alb: elbv2.ApplicationListener[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty): Target {  }
-
-```
 
 ### LoggingDestination
 
