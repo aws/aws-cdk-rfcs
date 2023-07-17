@@ -88,7 +88,7 @@ If you want to use an existing Amazon Cognito identity pool,
 you need to pass the `identityPool` and the `role` that associated with your identity pool.
 
 ```ts
-import * as identitypool from '@aws-cdk/aws-cognito-identitypool';
+import * as identitypool from '@aws-cdk/aws-cognito-identitypool-alpha';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 const identityPool = identitypool.IdentityPool.fromIdentityPoolId(this, 'IdentityPool', 'us-east-1:dj2823ryiwuhef937');
