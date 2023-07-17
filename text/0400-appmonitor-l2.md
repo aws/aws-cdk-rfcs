@@ -89,7 +89,7 @@ you need to pass the `identityPool` and the `role` that associated with your ide
 
 ```ts
 import * as identitypool from '@aws-cdk/aws-cognito-identitypool';
-import * as iam from '@aws-cdk/aws-iam';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 const identityPool = identitypool.IdentityPool.fromIdentityPoolId(this, 'IdentityPool', 'us-east-1:dj2823ryiwuhef937');
 const role = iam.Role.fromRoleName(this, 'Role', 'UnauthenticatedRole');
@@ -106,7 +106,7 @@ const appMonitor = new AppMonitor(this, 'AppMonitor', {
 If you want to use third-party authenticator, you can only pass a `role` that associated with your identity pool.
 
 ```ts
-import * as iam from '@aws-cdk/aws-iam';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 declare const role: iam.IRole;
 
@@ -138,8 +138,8 @@ so you can deploy directly to any S3 bucket using BucketDeployment.
 An example of deploying a static website and code snippet to S3 is shown below.
 
 ```ts
-import * as s3 from '@aws-cdk/aws-s3';
-import * as s3deployment from '@aws-cdk/aws-s3-deployment';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deployment from 'aws-cdk-lib/aws-s3-deployment';
 
 declare const myWebSiteBucket: s3.Bucket;
 const website = s3deployment.Source.asset(path.join(__dirname, 'my-website'));
@@ -267,8 +267,9 @@ class AppMonitor extends AppMonitorBase {
 
 enum Telemetry {
   PERFORMANCE = 'performance',
-  ERRORS = 'errors',
-  HTTP = 'http',
+  JAVASCRIPT_ERRORS = 'errors',
+  HTTP_ERRORS = 'http',
+  CUSTOM_EVENTS = 'custom_events',
 }
 
 interface AppMonitorProps {
@@ -276,7 +277,7 @@ interface AppMonitorProps {
   readonly appMonitorName?: string;
   readonly identityPool?: identitypool.IIdentityPool;
   readonly role?: iam.IRole;
-  readonly persistence?: boolean;
+  readonly cloudWatchLogEnabled?: boolean;
   readonly allowCookies?: boolean;
   readonly enableXRay?: boolean;
   readonly excludedPages?: string[];
