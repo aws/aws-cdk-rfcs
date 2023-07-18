@@ -6,49 +6,55 @@
 - [FAQ](#faq)
 - [Acceptance](#acceptance)
 
+---
 
---- 
 ## Project Information
 
-**Status** (DRAFT)
+### Status
 
-**Original Author(s):** @mrpackethead, , @taylaand,  @nbaillie
+(DRAFT)
 
-**Tracking Issue:** #502
+### Original Author(s)
 
-**API Bar Raiser:** @TheRealAmazonKendra
+@mrpackethead, , @taylaand,  @nbaillie
 
-**Public Issues ( aws-cdk)**
-* (vpclattice): L2 for Amazon VPC Lattice #25452
+### Tracking Issue
 
+502
 
-**Prototype Code**
-- https://github.com/raindancers/aws-cdk/tree/mrpackethead/aws-vpclattice-alpha/packages/%40aws-cdk/aws-vpclattice-alpha
-- https://github.com/raindancers/vpclattice-prealpha-demo
+### API Bar Raiser
 
-** Constructs.dev **
-- https://constructs.dev/packages/aws-vpclattice-prealpha
+@TheRealAmazonKendra
 
+## Public Issues
 
-**VpcLattice**
+( aws-cdk)(vpclattice): L2 for Amazon VPC Lattice #25452
+
+### Prototype Code
+
+- <https://github.com/raindancers/aws-cdk/tree/mrpackethead/aws-vpclattice-alpha/packages/%40aws-cdk/aws-vpclattice-alpha>
+- <https://github.com/raindancers/vpclattice-prealpha-demo>
+- <https://constructs.dev/packages/aws-vpclattice-prealpha>
+
+---
+
+## VpcLattice
 
 Amazon VPC Lattice is an application networking service that consistently connects, monitors, and secures communications between your services, helping to improve productivity so that your developers can focus on building features that matter to your business. You can define policies for network traffic management, access, and monitoring to connect compute services in a simplified and consistent way across instances, containers, and serverless applications.
 
-The L2 Construct seeks to assist the consumer to create a lattice service easily by abstracting some of the detail.  The major part of this is in creating the underlying auth policy and listener rules together, as their is significant intersection in the properties require for both. 
- 
+The L2 Construct seeks to assist the consumer to create a lattice service easily by abstracting some of the detail.  The major part of this is in creating the underlying auth policy and listener rules together, as their is significant intersection in the properties require for both.
+
 ---
 
 ## Example Implementation
 
-- A Service is created 
+- A Service is created
 - A Listener is added to the serviceand associated with a ServiceNetwork
 - A Rule is assocated with the listener which uses a Lambda function as a target
 - A Service Network is created
-- The Service is associated with the ServiceNetwork, and two vpcs are attached to it. 
-A Lattice Network is created, and associated with two different VPC's, VPC1 and VPC2.  
-Two lambdas are created,  lambda1 is providing a interface to an api,  lambda2 is making requests..  Lambda1 will be in VPC1, and Lambda2 in VPC2
-
-
+- The Service is associated with the ServiceNetwork, and two vpcs are attached to it.
+- A Lattice Network is created, and associated with two different VPC's, VPC1 and VPC2.
+- Two lambdas are created, lambda1 is providing a interface to an api,  lambda2 is making requests. Lambda1 will be in VPC1, and Lambda2 in VPC2
 
 ```typescript
 import * as core from 'aws-cdk-lib';
@@ -78,10 +84,18 @@ export class LatticeTestStack extends core.Stack {
     // Create a Lattice Service
     // this will default to using IAM Authentication
     const myLatticeService = new Service(this, 'myLatticeService', {});
-    
+    // add a listener to the service, using the defaults
+    // - HTTPS
+    // - Port 443
+    // - default action of providing 404 NOT Found,
+    // - cloudformation name
+    const myListener = new vpclattice.Listener(this, 'Listener', {
+      service: myLatticeService,
+    })
+
   
     // add a listenerRule that will use the helloworld lambda as a Target
-    const helloworld: RuleProp = {
+    mylistener.addListenerRule({
       name: 'helloworld',
       priority: 10,
       action: [
@@ -98,11 +112,12 @@ export class LatticeTestStack extends core.Stack {
       httpMatch: {
         pathMatches: { path: '/hello' },
       },
+      // we will only allow access to this service from the ec2 instance
       accessMode: vpclattice.RuleAccessMode.UNAUTHENTICATED
-    };
+    });
 
     //add a listenerRule that will use the goodbyeworld lambda as a Target
-    const goodbye: RuleProp = {
+    mylistener.addListenerRule({
       name: 'goodbyeworld',
       priority: 20,
       action: [
@@ -122,20 +137,10 @@ export class LatticeTestStack extends core.Stack {
       // we will only allow access to this service from the ec2 instance
       allowedPrincipals: [support.ec2instance.role],
       accessMode: vpclattice.RuleAccessMode.AUTHENTICATED_ONLY,
-    };
+    });
 
-    // add a listener to the service, using the defaults
-    // - HTTPS
-    // - Port 443
-    // - default action of providing 404 NOT Found,
-    // - cloudformation name
-    const myListener = new vpclattice.Listener(this, 'Listener', {
-      service: myLatticeService,
-      rules: [
-        helloworld,
-        goodbyeworld,
-      ]
-    })
+    
+    myLatticeService.applyAuthPolicy();
 
     /**
      * Create a ServiceNetwork.
@@ -150,63 +155,57 @@ export class LatticeTestStack extends core.Stack {
         support.vpc1,
       ],
     });
+
+    serviceNetwork.applyAuthPolicyToServiceNetwork();
   }
 }
 ```
----
-## Vpc Lattice Networking. 
-
-When a vpc is associated with a vpclattice servicenetwork, the following occurs;
-
-- A service interface is placed in the vpc. Lattice uses link-local (169.254.x.x) address's for this. 
-- It associates a aws service domain  (*.on.aws)  with the vpc, which is how resources in the vpc are able to resolve the service interface. Generally you would then put a CNAME record at it. 
-- Optionally an array of securitygroups can be provided, which are applied on to the interface to filter what can connect
-
-https://d1.awsstatic.com/events/Summits/reinvent2022/NET215_NEW-LAUNCH!-Introducing-Amazon-VPC-Lattice-Simplifying-application-networking.pdf
 
 ---
 
-## Proposed API Design for vpclattice:
+## Proposed API Design for vpclattice
+
 [(The Api is additionally documented on Constructs.dev here)](https://constructs.dev/packages/aws-vpclattice-prealpha/v/0.4.11/api/AuthType?lang=typescript)
-
 
 ### Constructs
 
 - ✓ [AssociateVpc](#associatevpc)
 - ✓ [ServiceNetwork](#servicenetwork)
 - ✓ [ServiceNetworkAssociation] (#servicenetworkassociation)
-- ✓ [Service](#serviceService)
+- ✓ [Service](service)
 - ✓ [ServiceAssociation]
 - ✓ [Listener](#listener)
 - ✓ [TargetGroup](#targetgroup)
 
 ### Classes
- - [HealthCheck]
- - [LoggingDestination]
- - [Target]
+
+- [HealthCheck]
+- [LoggingDestination]
+- [Target]
 
 ### Enums
- - [AuthType]
- - [FixedResponse]
- - [HTTPMethods]
- - [IpAddressType]
- - [MatchOperator]
- - [PathMatchType]
- - [Protocol]
- - [ProtocolVersion]
- - [RuleAccessMode]
- - [ServiceNetworkAccessMode]
- - [TargetType]
 
+- [AuthType]
+- [FixedResponse]
+- [HTTPMethods]
+- [IpAddressType]
+- [MatchOperator]
+- [PathMatchType]
+- [Protocol]
+- [ProtocolVersion]
+- [RuleAccessMode]
+- [ServiceNetworkAccessMode]
+- [TargetType]
 
 ---
-## Constructs
+
+## Constructs Details
 
 ### AssociateVpc
 
 Creates a CloudFormation `AWS::VpcLattice::ServiceNetworkVpcAssociation`
 
-This construct associates a VPC, with a service network.  It creates an endpoint interface in a VPC to enable the resources in the vpc 
+This construct associates a VPC, with a service network.  It creates an endpoint interface in a VPC to enable the resources in the vpc
 to be clients of the service network.
 
 The construct extends core.Resource, and will consume AssociateVpcProps.
@@ -232,8 +231,6 @@ export interface AssociateVpcProps {
 }
 ```
 
-
-
 ### ServiceNetwork
 
 Creates a cloudformation `AWS::VpcLattice::ServiceNetwork`  
@@ -241,7 +238,6 @@ Creates a cloudformation `AWS::VpcLattice::ServiceNetwork`
 A service network is a logical boundary for a collection of services. Services associated with the network can be authorized for discovery, connectivity, accessibility, and observability. To make requests to services in the network, your service or client must be in a VPC that is associated with the service network.
 
 ![Service Network](https://docs.aws.amazon.com/images/vpc-lattice/latest/ug/images/service-network.png)
-
 
 The construct will extend ServiceNetworkBase and implement IServiceNetwork.
 
@@ -277,7 +273,6 @@ export interface IServiceNetwork extends core.IResource {
 
 The Construct will consume ServiceNetworkProps.
 
-
 ```typescript
 export interface ServiceNetworkProps {
 
@@ -288,7 +283,8 @@ export interface ServiceNetworkProps {
   readonly name?: string;
 
   /**
-   * The type of  authentication to use with the Service Network
+   * The type of  authentication to use with the Service Network. The only method avaialble is
+   * AWS_IAM, however in anticipation, it is expected that other types will be added. 
    * @default 'AWS_IAM'
    */
   readonly authType?: AuthType | undefined;
@@ -311,16 +307,14 @@ export interface ServiceNetworkProps {
    */
   readonly vpcs?: ec2.IVpc[] | undefined;
   /**
-   * Allow external principals
-   * @default false
+   * An access mode provides 'pre-canned' conditions for the policy
+   * @default no conditions
    */
   readonly accessmode?: ServiceNetworkAccessMode | undefined;
-  /**
-   * Additional Optional Auth statements:
-   */
-  readonly authStatements?: iam.PolicyStatement[] | undefined;
 }
+
 ```
+
 `ServiceNetwork` will implement statics in addition to those in IServiceNetwork, to allow the import of the servicenetwork in other stacks ( potentially cross account ). `fromName` provides a lookup to obtain the Id, using a custom resource.  This provides a way to pass a concrete value between cross account stacks.  
 
 ```typescript
@@ -333,8 +327,18 @@ public static fromName(scope: constructs.Construct, id: string, serviceNetworkNa
   }
 ```
 
-`ServiceNetwork` will implement public methods for a variety of tasks;
+`ServiceNetwork` will implement methods for a variety of tasks;
 
+```typescript
+
+// adds an iam statement to the the authpolicy. Use this to create policy that is bespoke to this application 
+addStatementToAuthPolicy(statement: iam.PolicyStatement)
+```
+
+```typescript
+// applies the AuthPolicy that has been created, to the serviceNetwork. 
+applyAuthPolicyToServiceNetwork()
+```
 
 ```typescript
 // creates and associates a logging subscription to provide visisiblity for the lattice service
@@ -353,8 +357,8 @@ Associates a service with a service network.
 `ServiceNetworkAssociation` extends core.Resource and consumes ServiceNetworkAssociationProps
 Consider using `.associateWithServiceNetwork` method on `Service` in preference.
 
-
 ```typescript
+
 export interface ServiceNetworkAssociationProps {
   /**
    * lattice Service
@@ -373,11 +377,9 @@ Creates a cloudformation `AWS::VpcLattice::Service`
 
 A service within VPC Lattice is an independently deployable unit of software that delivers a specific task or function.  A service has listeners that use rules, that you configure to route traffic to your targets. Targets can be EC2 instances, IP addresses, serverless Lambda functions, Application Load Balancers, or Kubernetes Pods.  The following diagram shows the key components of a typical service within VPC Lattice.
 
-
 ![service](https://docs.aws.amazon.com/images/vpc-lattice/latest/ug/images/service.png)
 
-
-`Service` extends `core.Resource` and implments `IService` 
+`Service` extends `core.Resource` and implments `IService`
 
 ```typescript
 export interface IService extends core.IResource {
@@ -400,7 +402,7 @@ export interface IService extends core.IResource {
   /**
    * The authType of the service.
    */
-  authType: string | undefined;
+  authType: AuthType | undefined;
   /**
    * A certificate that may be used by the service
    */
@@ -409,6 +411,10 @@ export interface IService extends core.IResource {
    * A custom Domain used by the service
    */
   customDomain: string | undefined;
+  /**
+   * A DNS Entry for the service
+   */
+  dnsEntry: aws_vpclattice.CfnService.DnsEntryProperty | undefined;
   /**
   * A name for the service
   */
@@ -422,15 +428,12 @@ export interface IService extends core.IResource {
   * associate the service with a servicenetwork.
   */
   associateWithServiceNetwork(serviceNetwork: IServiceNetwork): void;
-  /**
-   * apply an authpolicy to the servicenetwork
-   */
-  applyAuthPolicy(): iam.PolicyDocument;
 }
 
 ```
 
 `Service` will take `ServiceProps` as props
+
 ```typescript
 /**
  * Properties for a Lattice Service
@@ -472,7 +475,7 @@ export interface ServiceProps {
    * A custom hosname
    * @default no hostname is used
    */
-  readonly hostedZone?: r53.IHostedZone | undefined;
+  readonly dnsEntry?: aws_vpclattice.CfnService.DnsEntryProperty | undefined;
 
   /**
    * Share Service
@@ -488,17 +491,19 @@ export interface ServiceProps {
 ```
 
 `Service` will implement a static for importing the service.  
+
 ```typescript
 public static fromId(scope: constructs.Construct, id: string, serviceId: string): IService {
     return new ImportedService(scope, id, serviceId);
   }
-```  
+```
+
 Note: unlike ServiceNetwork there are minimal reason to implmenet a import by name, (so a concrete reference can be used cross accounts), as a services 'boundarys' are within a single account.  THe fromId allows an import of the service from within an account, if required to implement multiple stacks.. (this however is probably an edge case as well).  The use case here is dependant on the security stance of how lattice will be configured and who has control of the service/servicenetworks. Its unclear if a crossAccount method should be implemeneted.
 
-
-
 `Service` will implement methods for the following
+
 ```typescript
+
 /**
    * .grantAccess on a lattice service, will permit the principals to
    * access all resoruces of the service. Consider using finer permissions
@@ -507,6 +512,20 @@ Note: unlike ServiceNetwork there are minimal reason to implmenet a import by na
    * @param principals
    */
 public grantAccess(principals: iam.IPrincipal[]) {  }
+```
+
+```typescript
+  /**
+  * apply an authpolicy to the service
+  */
+  public applyAuthPolicy(): iam.PolicyDocument {  }
+```
+
+```typescript
+  /**
+  * Add a PolicyStatement to the auth policy 
+  */
+  public addPolicyStatement(statement: iam.PolicyStatement): void {  }
 ```
 
 ```typescript
@@ -523,12 +542,11 @@ public grantAccess(principals: iam.IPrincipal[]) {  }
   public associateWithServiceNetwork(serviceNetwork: IServiceNetwork): void {  }
 ```
 
-
 ### ServiceAssociation
 
 Associates a ServiceNetwork to a Service
 
-`ServiceNetworkAssociation` extends core.Resource and consumes ServiceNetworkAssocationProps. 
+`ServiceNetworkAssociation` extends core.Resource and consumes ServiceNetworkAssocationProps.
 
 ```typescript
 /**
@@ -546,12 +564,6 @@ export interface ServiceNetworkAssociationProps {
 }
 ```
 
-
-
-
-
-
-
 ### Listener
 
 Creates a cloudformation `AWS::VpcLattice::Listener`
@@ -560,9 +572,7 @@ A listener is a process that checks for connection requests, using the protocol 
 
 It is not expected that a direct call to Listener will be made, instead the `.addListener()` should be used on a service
 
-
-`Listener` extends `core.resource` implements `IListener` 
-
+`Listener` extends `core.resource` implements `IListener`
 
 ``` typescript
 /**
@@ -587,7 +597,7 @@ export interface IListener extends core.IResource {
 }
 ```
 
-`Listener` will consume `ListenerProps`
+`Listener` will consome `ListenerProps`
 
 ```typescript
 /**
@@ -598,7 +608,7 @@ export interface ListenerProps {
    *  * A default action that will be taken if no rules match.
    *  @default 404 NOT Found
   */
-  readonly defaultAction?: DefaultListenerAction | undefined;
+  readonly defaultAction?: aws_vpclattice.CfnListener.DefaultActionProperty | undefined;
   /**
   * protocol that the listener will listen on
   * @default HTTPS
@@ -607,9 +617,8 @@ export interface ListenerProps {
   /**
   * Optional port number for the listener. If not supplied, will default to 80 or 443, depending on the Protocol
   * @default 80 or 443 depending on the Protocol
-
   */
-  readonly port?: number | undefined;
+  readonly port?: number | undefined
   /**
   * The Name of the service.
   * @default CloudFormation provided name.
@@ -619,13 +628,18 @@ export interface ListenerProps {
    * The Id of the service that this listener is associated with.
    */
   readonly service: IService;
-  /**
-   * rules for the listener
-   */
-  readonly rules?: RuleProp[] | undefined;
 }
 ```
 
+`Listener` will implement methods
+
+```typescript
+ /**
+   * add a rule to the listener, which will implement AWS::VpcLattice::Rule
+   * @param props AddRuleProps
+   */
+  public addListenerRule(props: AddRuleProps): void { }
+```
 
 ### TargetGroup
 
@@ -634,7 +648,6 @@ Creates a cloudformation `AWS::VpcLattice::TargetGroup`
 A VPC Lattice target group is a collection of targets, or compute resources, that run your application or service. Targets can be EC2 instances, IP addresses, Lambda functions, Application Load Balancers
 
 `TargetGroup` extends core.Resource and implements ITargetGroup
-
 
 ```typescript
 
@@ -672,17 +685,48 @@ export interface TargetGroupProps {
 ```
 
 ---
-## Classes
 
+## Classes Detail
 
-### Targets
-
-Lattice Targets will be created in `aws-vpclattice-targets` a seperate module. They will implment `ITarget` 
-
+### Target
 
 `Target` is an abstract class with static function to return propertys for use in a `TargetGroup`  
 Targets can be lambda, ipAddress, ec2instances, or applicaiton loadbalancers.
 
+```typescript
+/**
+ * Targets for target Groups
+ */
+export abstract class Target {
+
+  /**
+   * Lambda Target
+   * @param lambda
+   */
+  public static lambda(lambda: aws_lambda.Function[]): Target {  };
+
+  /**
+   * IpAddress as Targets
+   * @param ipAddress
+   * @param config
+   */
+  public static ipAddress(ipAddress: string[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty ): Target {  };
+
+  /**
+   * EC2 Instances as Targets
+   * @param ec2instance
+   * @param config
+   */
+  public static ec2instance(ec2instance: ec2.Instance[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty): Target {  };
+
+  /**
+   * Application Load Balancer as Targets
+   * @param alb
+   * @param config
+   */
+  public static applicationLoadBalancer(alb: elbv2.ApplicationListener[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty): Target {  }
+
+```
 
 ### LoggingDestination
 
@@ -716,7 +760,7 @@ export abstract class LoggingDestination {
 
 ### HeatlhCheck
 
-HealthChecks is an abstract class that is used to build a Health Check which can be optionally used as part of a listener rule.    
+HealthChecks is an abstract class that is used to build a Health Check which can be optionally used as part of a listener rule.
 
 ```typescript
 /**
@@ -892,47 +936,58 @@ export abstract class HealthCheck {
 
 };
 ```
+
 ---
-## Enums
-The enums in this construct are intended to provide a way to reduce deployment time errors. Many of the L1 constructs will accept `string` however there are only certain valid options. 
+
+## Enums Detail
+
+The enums in this construct are intended to provide a way to reduce deployment time errors. Many of the L1 constructs will accept `string` however there are only certain valid options.
 
 ### AuthType
-Lattice Services can use IAM for Authentication or NONE. 
+
+Lattice Services can use IAM for Authentication or NONE.
 
 ### FixedResponse
+
 Provides valid HTTP Responses such as NOT_FOUND and OK. This is intended for using primarly with configuring default rules.  This list may well need expanding
 
 ### HTTPMethods
+
 Valid HTTP Methods, these are used for constructing Rules.
 
 ### IpAddressType
+
 IPv4 and IPv6, used for creating rules
 
 ### MatchOperators
+
 Contains, Exact and Prefix used for creating rules
 
 ### PathMatchType
+
 Exact Prefix, used for creating path matches in rules.
 
 ### Protocol
-HTTP or HTTPS - used for creating rules. 
 
-### PRotocolVersion
-HTTP1, HTTP2 or GRPC - used for creating rules. 
+HTTP or HTTPS - used for creating rules.
+
+### ProtocolVersion
+
+HTTP1, HTTP2 or GRPC - used for creating rules.
 
 ### RuleAccessMode
+
 Used for creating Authenticaiton Policy Access Modes.
 
 ### ServiceNetworkAccessMode
+
 Used for creating Authenticaiton Policy Access Modes. (Note a different set of options from RuleAccessMode)
 
 ### TargetTypes
+
 LAMBDA, IP, INSTANCE, ALB. Used for creating targets.
 
-
 ---
-
-
 
 ## FAQ
 
@@ -955,19 +1010,22 @@ You can check common Amazon VPC Lattice Reference Architectures to understand th
 - Provides separation of concerns with a common interface for user personas
 
 **Why are we doing this?**  
+
 - To provide a CDK native interface for AWS VPC Lattice
 - Provide a way to deploy AWS VPC Lattice deterministically
 
 **Is this a breaking change**  
 No.
 
-**What are the drawbacks of this solution**  
+What are the drawbacks of this solution?
+
 - It is an opinionated pattern, however there are escapes to help customisation where needed.
 - It is a new AWS Service and its common usecases and features may change and evolve
 
 ---
-### Acceptance
-Ticking the box below indicates that the public API of this RFC has been signed-off by the API bar raiser (the api-approved label was applied to the RFC pull request):
 
+### Acceptance
+
+Ticking the box below indicates that the public API of this RFC has been signed-off by the API bar raiser (the api-approved label was applied to the RFC pull request):
 
 `[ ] Signed-off by API Bar Raiser @TheRealAmazonKendra`
