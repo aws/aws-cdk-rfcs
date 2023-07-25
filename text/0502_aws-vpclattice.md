@@ -169,7 +169,6 @@ export class LatticeTestStack extends core.Stack {
 
 ### Constructs
 
-- ✓ [AssociateVpc](#associatevpc)
 - ✓ [ServiceNetwork](#servicenetwork)
 - ✓ [ServiceNetworkAssociation] (#servicenetworkassociation)
 - ✓ [Service](service)
@@ -200,36 +199,6 @@ export class LatticeTestStack extends core.Stack {
 ---
 
 ## Constructs Details
-
-### AssociateVpc
-
-Creates a CloudFormation `AWS::VpcLattice::ServiceNetworkVpcAssociation`
-
-This construct associates a VPC, with a service network.  It creates an endpoint interface in a VPC to enable the resources in the vpc
-to be clients of the service network.
-
-The construct extends core.Resource, and will consume AssociateVpcProps.
-
-```typescript
-/**
- * Props to Associate a VPC with a Service Network
- */
-export interface AssociateVpcProps {
-  /**
-   * security groups for the lattice endpoint
-   * @default a security group that will permit inbound 443
-   */
-  readonly securityGroups?: ec2.ISecurityGroup[];
-  /**
-   * The VPC to associate with
-   */
-  readonly vpc: ec2.IVpc;
-  /**
-   * Service Network Identifier
-   */
-  readonly serviceNetworkId: string;
-}
-```
 
 ### ServiceNetwork
 
