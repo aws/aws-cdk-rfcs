@@ -86,6 +86,8 @@ glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
    extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar'),],
    description: 'an example Scala Spark ETL job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 
@@ -96,6 +98,8 @@ glue.pySparkEtlJob(this, 'pySparkEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example pySpark ETL job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 ```
@@ -128,6 +132,8 @@ ScalaSparkEtlJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -149,6 +155,14 @@ ScalaSparkEtlJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -183,7 +197,7 @@ ScalaSparkEtlJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -221,6 +235,8 @@ pySparkEtlJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -242,6 +258,14 @@ pySparkEtlJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -276,7 +300,7 @@ pySparkEtlJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -336,6 +360,8 @@ new glue.pySparkStreamingJob(this, 'pySparkStreamingJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 
@@ -347,6 +373,8 @@ new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    className: 'com.example.HelloWorld',
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 ```
@@ -373,6 +401,8 @@ ScalaSparkStreamingJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -400,6 +430,14 @@ ScalaSparkStreamingJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -433,7 +471,7 @@ ScalaSparkStreamingJobProps{
      * Timeout (optional)
      * Timeout for the Glue Job, specified in minutes
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -471,6 +509,8 @@ pySparkStreamingJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -492,6 +532,14 @@ pySparkStreamingJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -525,7 +573,7 @@ pySparkStreamingJobProps{
      * Timeout (optional)
      * Timeout for the Glue Job, specified in minutes
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -581,6 +629,8 @@ glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
    extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-python-scripts')],
    description: 'an example pySpark ETL job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 
@@ -590,6 +640,8 @@ new glue.pySparkFlexEtlJob(this, 'pySparkFlexEtlJob', {
    script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
    description: 'an example Flex job',
    numberOfWorkers: 20,
+   workerType: glue.WorkerType.G8X,
+   timeout: cdk.Duration.minutes(15),
    role: iam.IRole,
 });
 ```
@@ -622,6 +674,8 @@ ScalaSparkFlexJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -643,6 +697,14 @@ ScalaSparkFlexJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -677,7 +739,7 @@ ScalaSparkFlexJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -715,6 +777,8 @@ PySparkFlexJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -736,6 +800,14 @@ PySparkFlexJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -770,7 +842,7 @@ PySparkFlexJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -821,6 +893,8 @@ new glue.PythonShellJob(this, 'PythonShellJob', {
     script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-python-script'),
     description: 'an example Python Shell job',
     numberOfWorkers: 20,
+    workerType: glue.WorkerType.G8X,
+    timeout: cdk.Duration.minutes(15),
     role: iam.IRole,
 });
 ```
@@ -840,6 +914,8 @@ PythonShellJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -861,6 +937,14 @@ PythonShellJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -895,7 +979,7 @@ PythonShellJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
@@ -956,6 +1040,8 @@ RayJobProps{
     /**
      * IAM Role (required)
      * IAM Role to use for Glue Job execution
+     * Must be specified by the developer because the L2 doesn't have visibility
+     * into the actions the script(s) will take during the Job Execution
      * */
     role: iam.IRole;
 
@@ -977,6 +1063,14 @@ RayJobProps{
      * @default 10
      * */
     numberOrWorkers?: int;
+
+    /**
+     * Worker Type (optional)
+     * Type of Worker for Glue to use during Job execution
+     * Enum options: Standard, G.1X, G.2X, G.025X. G.4X, G.8X, Z.2X
+     * @default G.2X
+     * */
+    workerType?: glue.WorkerType;
 
     /**
      * Max Concurrent Runs (optional)
@@ -1011,7 +1105,7 @@ RayJobProps{
      * Timeout for the Glue Job, specified in minutes
      * @default 2880 (2 days for non-streaming)
      * */
-    timeout?: int;
+    timeout?: cdk.Duration;
 
     /**
      * Security Configuration (optional)
