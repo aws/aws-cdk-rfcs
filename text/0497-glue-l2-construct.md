@@ -81,9 +81,9 @@ description:
 ```ts
 glue.ScalaSparkEtlJob(this, 'ScalaSparkEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
-   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
+   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-script'),
    className: 'com.example.HelloWorld',
-   extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar'),],
+   extraJars: [glue.Code.fromBucket('bucket-name', 'path-to-extra-jars'),],
    description: 'an example Scala Spark ETL job',
    numberOfWorkers: 20,
    workerType: glue.WorkerType.G8X,
@@ -127,7 +127,7 @@ ScalaSparkEtlJobProps{
      * Extra Jars S3 URL (optional)
      * S3 URL where additional jar dependencies are located
      */
-    extraJarsS3Url?: string[];
+    extraJars?: string[];
 
     /**
      * IAM Role (required)
@@ -253,6 +253,12 @@ pySparkEtlJobProps{
     description?: string;
 
     /**
+     * Extra Jars S3 URL (optional)
+     * S3 URL where additional jar dependencies are located
+     */
+    extraJars?: string[];
+
+    /**
      * Number of Workers (optional)
      * Number of workers for Glue to use during Job execution
      * @default 10
@@ -368,8 +374,8 @@ new glue.pySparkStreamingJob(this, 'pySparkStreamingJob', {
 new glue.ScalaSparkStreamingJob(this, 'ScalaSparkStreamingJob', {
    glueVersion: glue.GlueVersion.V3_0,
    pythonVersion: glue.PythonVersion.3_9,
-   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
-   extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-scala-jar'),],
+   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-script'),
+   extraJars: [glue.Code.fromBucket('bucket-name', 'path-to-extra-jars'),],
    className: 'com.example.HelloWorld',
    description: 'an example Python Streaming job',
    numberOfWorkers: 20,
@@ -416,7 +422,7 @@ ScalaSparkStreamingJobProps{
      * Extra Jars S3 URL (optional)
      * S3 URL where additional jar dependencies are located
      */
-    extraJarsS3Url?: string[];
+    extraJars?: string[];
 
     /**
      * Description (optional)
@@ -624,9 +630,9 @@ provide extra jars, and a description
 ```ts
 glue.ScalaSparkFlexEtlJob(this, 'ScalaSparkFlexEtlJob', {
    glueVersion: glue.GlueVersion.V3_0,
-   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-jar'),
+   script: glue.Code.fromBucket('bucket-name', 's3prefix/path-to-scala-script'),
    className: 'com.example.HelloWorld',
-   extraJarsS3Url: [glue.Code.fromBucket('bucket-name', 'path-to-extra-python-scripts')],
+   extraJars: [glue.Code.fromBucket('bucket-name', 'path-to-extra-jars')],
    description: 'an example pySpark ETL job',
    numberOfWorkers: 20,
    workerType: glue.WorkerType.G8X,
@@ -669,7 +675,7 @@ ScalaSparkFlexJobProps{
      * Extra Jars S3 URL (optional)
      * S3 URL where additional jar dependencies are located
      */
-    extraJarsS3Url?: string[];
+    extraJars?: string[];
 
     /**
      * IAM Role (required)
