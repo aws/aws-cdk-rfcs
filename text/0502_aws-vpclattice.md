@@ -246,7 +246,7 @@ export interface ServiceNetworkProps {
    * AWS_IAM, however in anticipation, it is expected that other types will be added.
    * @default 'AWS_IAM'
    */
-  readonly authType?: AuthType | undefined;
+  readonly authorizer?: Authorizer | undefined;
 
   /**
    * Logging destinations
@@ -411,7 +411,7 @@ export interface ServiceProps {
    * The authType of the Service
    * @default 'AWS_IAM'
    */
-  readonly authType?: string | undefined;
+  readonly authorizer: IAuthorizer;
 
   /**
    * Listeners that will be attached to the service
@@ -651,6 +651,68 @@ export interface TargetGroupProps {
 ---
 
 ## Classes Detail
+
+### Authorizer
+
+`Authorizer` is an enum like class with static functions to return propertys for an Authorizer Type.  At present the only type of
+Authorizers are `NONE` or `AWS_IAM`.  In order to provide non breaking upgrades for the possiblity of other authorizers in the future
+this class is used rather than an enum.
+
+```typescript
+/**
+ * Authorization Types for VPC Lattice. The class type Enum is used to allow
+ * for the creation of other authentication methods easily in the future.
+ */
+export enum AuthorizerMode {
+  /**
+   * No Authorization is used for Lattice Requests
+   */
+  NONE = 'NONE',
+  /**
+   * IAM Policys are used for Lattice Requests.
+   */
+  AWS_IAM = 'AWS_IAM'
+}
+
+/**
+ * Authorizer Interface.
+*/
+export interface IAuthorizer {
+  /**
+   * Authorizer Mode
+   */
+  readonly type: AuthorizerMode;
+}
+
+/**
+ * Authorization Type for Lattice.
+ */
+export abstract class Authorizer implements IAuthorizer {
+
+  /**
+   * Use IAM Policy for Authorization
+   */
+  public static iam(): IAuthorizer {
+    return {
+      type: AuthorizerMode.AWS_IAM,
+    };
+  }
+  /**
+   * Use no Authorization for Lattice Requests
+   */
+  public static none(): IAuthorizer {
+    return {
+      type: AuthorizerMode.NONE,
+    };
+  }
+  /**
+   * THe AuthMode TYpe
+   */
+  public abstract readonly type: AuthorizerMode;
+
+  protected constructor() {};
+}
+```
 
 ### Target
 
@@ -918,10 +980,6 @@ export abstract class HealthCheck {
 
 The enums in this construct are intended to provide a way to reduce deployment time errors. Many of the L1 constructs will accept `string` however
 there are only certain valid options.
-
-### AuthType
-
-Lattice Services can use IAM for Authentication or NONE.
 
 ### FixedResponse
 
