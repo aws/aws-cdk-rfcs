@@ -1,4 +1,3 @@
 # VSCode Local history extension
 .history/
 *.swp
-.markdownlint.json
