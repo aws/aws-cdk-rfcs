@@ -140,11 +140,11 @@ future state of the libraries and to discover projects for contribution.
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||💡 proposed
 [513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/issues/513)||💡 proposed
-[521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Contructs. ](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
+[521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Contructs.](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
 [523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||💡 proposed
 [526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||💡 proposed
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Contructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||💡 proposed
-[530](https://github.com/aws/aws-cdk-rfcs/issues/530)|[RFC Pipeline does not run Linting automatically.. ](https://github.com/aws/aws-cdk-rfcs/issues/530)||💡 proposed
+[530](https://github.com/aws/aws-cdk-rfcs/issues/530)|[RFC Pipeline does not run Linting automatically..](https://github.com/aws/aws-cdk-rfcs/issues/530)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
@@ -315,6 +315,13 @@ that you may need to throw your code away or refactor it substantially, but our
 experience shows that good RFCs are the ones who dive into the details. A
 prototype is great way to make sure your design "holds water".
 
+> [!NOTE]
+> To ensure consistency, the Markdown you write will be checked for common >
+mistakes using a linter. To get early feedback while you are writing, use the
+[VSCode > markdownlint
+extensions](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint),
+> or run the `./lint.sh` script in the root of the repository.
+
 ### 5. Feedback
 
 Once you have an initial version of your RFC document (it is completely fine to
@@ -406,7 +413,7 @@ The following state diagram describes the RFC process:
 digraph states {
     node [shape=ellipse];
     edge [color=gray, fontsize=12]
-    
+
     idea [label = "Idea", shape = plaintext]
     proposed [label = "Proposed"];
     review [label = "In Review"];
@@ -416,7 +423,7 @@ digraph states {
     implementing [label = "Implementing"];
     done [label = "Done"];
     rejected [label = "Rejected"];
-    
+
     idea -> proposed [label = "github issue created"]
     proposed -> review [label = "pull request with rfc doc created"];
     review -> review [label = "doc revisions"];
@@ -428,7 +435,7 @@ digraph states {
     approved -> plannning [label = "pull request with implementation plan created"];
     plannning -> implementing [label = "rfc with implementation plan approved and merged"];
     implementing -> done [label = "implementation completed"];
-}  
+}
 -->
 
 1. **Proposed** - A tracking issue has been created with a basic outline of the
