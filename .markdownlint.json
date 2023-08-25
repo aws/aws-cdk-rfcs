@@ -3,11 +3,14 @@
   "commands-show-output": false,
   "fenced-code-language": false,
   "first-line-h1": false,
-  "line_length": {
+  "MD013": {
     "line_length": 150,
     "tables": false
   },
-  "MD046": "fenced",
+  "MD034": false,
+  "MD046": { "style": "fenced" },
+  "MD049": false,
+  "MD050": false,
   "no-duplicate-heading": {
     "siblings_only": true
   },

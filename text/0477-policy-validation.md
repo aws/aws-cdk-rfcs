@@ -95,7 +95,7 @@ Ensure S3 Buckets are encrypted with a KMS CMK (1 occurrences)
 Severity: medium
 
   Occurrences:
-  
+
     - Construct Path: MyStack/MyCustomL3Construct/Bucket
     - Stack Template Path: ./cdk.out/MyStack.template.json
     - Creation Stack:
@@ -121,7 +121,7 @@ Severity: medium
     > Add to construct properties for `cdk-app/MyStack/Bucket`
       `encryption: BucketEncryption.KMS`
 
-  
+
 Validation failed. See above reports for details
 ```
 
@@ -474,7 +474,7 @@ CDK at a larger scale.
 
 ### What is the technical solution (design) of this feature?
 
-See [Appendix A - High level design](#appendix-a-high-level-design).
+See [Appendix A - High level design](#appendix-a---high-level-design).
 
 ### Is this a breaking change?
 
@@ -615,7 +615,7 @@ plugin should conform to.
 
 Zero or more plugins may be added to the CDK application's `App` instance. At
 some point during synthesis (
-see [Appendix B - Implementation details](#appendix-b-implementation-details)
+see [Appendix B - Implementation details](#appendix-b---implementation-details)
 for
 some possibilities) the framework will pass the generated CloudFormation
 template to all the plugins, collect the output

@@ -258,8 +258,6 @@ detail pages.
      ------------|----------------------------------------------------------------
      `v${major}` | All versions part of this major version stream, and their status
 
-     [SemVer]: https://semver.org/spec/v2.0.0.html
-
      In order to ensure consistency of the contents of the `versions.json`
      object, its content will always be generated from the live inventory of
      objects in S3 (and not incrementally using the update trigger event), and
@@ -279,8 +277,6 @@ detail pages.
    `packages/${assembly.name}/v${assembly.version}/docs-${lang}.json`.
    This transformation is backed by the `jsii-rosetta` tool, which is part of
    the [jsii project][jsii], as well as custom code for generating language specific API references.
-
-   [jsii]: https://aws.github.io/jsii
 
    - The **Doc-Gen** functions run asynchronously, and the documentation definition
      eventually becomes available. If the object is not available yet,
