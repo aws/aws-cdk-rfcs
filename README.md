@@ -8,7 +8,6 @@ future state of the libraries and to discover projects for contribution.
 [jsii]: https://github.com/aws/jsii
 
 **Jump to**: [What is an RFC?](#what-is-an-rfc) |
-[When to submit?](#when-to-submit-an-rfc) |
 [RFC Process](#rfc-process) |
 [RFC Life Cycle](#the-rfc-life-cycle)
 
@@ -403,7 +402,7 @@ Throughout this process, update the tracking issue:
 - Plan approved and merged (label: `status/implementing`)
 - Implementation complete (label: `status/done`)
 
-## State Diagram
+## The RFC Life Cycle
 
 The following state diagram describes the RFC process:
 

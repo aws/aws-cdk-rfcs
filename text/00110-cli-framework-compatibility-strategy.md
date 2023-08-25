@@ -134,7 +134,7 @@ incompatible change to the _cloud-assembly-schema_ itself. This can, for
 example, be the removal of a property.
 
 > See concrete
-> [example](#rename-target-property-in-containerImageAssetMetadataEntry).
+> [example](#rename-target-property-in-containerimageassetmetadataentry).
 
 The proposed solution for this case is to run API compatibility checks using
 `jsii-diff`. We would treat _cloud-assembly-schema_ as a regular `jsii` module
@@ -416,7 +416,7 @@ function, and contains two validations:
 
 1. **Framework cannot be bigger than CLI.**
 
-   We have already [described](#step-3-validate-cli--framework) how to handle
+   We have already [described](#compatibility-validation) how to handle
    this validation.
 
 2. **CLI cannot be bigger than Framework.**
