@@ -8,7 +8,6 @@ future state of the libraries and to discover projects for contribution.
 [jsii]: https://github.com/aws/jsii
 
 **Jump to**: [What is an RFC?](#what-is-an-rfc) |
-[When to submit?](#when-to-submit-an-rfc) |
 [RFC Process](#rfc-process) |
 [RFC Life Cycle](#the-rfc-life-cycle)
 
@@ -16,7 +15,6 @@ future state of the libraries and to discover projects for contribution.
 \#|Title|Owner|Status
 ---|-----|-----|------
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0052-resource-importing-support.md)||👷 implementing
-[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0077-import-external-resources.md)||👷 implementing
 [340](https://github.com/aws/aws-cdk-rfcs/issues/340)|[Kinesis Data Firehose Delivery Stream L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0340-firehose-l2.md)|[@BenChaimberg](https://github.com/BenChaimberg)|👷 implementing
 [431](https://github.com/aws/aws-cdk-rfcs/issues/431)|[SageMaker Model Hosting L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0431-sagemaker-l2-endpoint.md)||👷 implementing
 [456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0456-elasticache-l2.md)||👷 implementing
@@ -121,7 +119,7 @@ future state of the libraries and to discover projects for contribution.
 [450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||💡 proposed
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||💡 proposed
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||💡 proposed
-[465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)|[@Naumel](https://github.com/Naumel)|💡 proposed
+[465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||💡 proposed
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amaxon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)||💡 proposed
 [469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||💡 proposed
@@ -141,6 +139,11 @@ future state of the libraries and to discover projects for contribution.
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||💡 proposed
 [513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/issues/513)||💡 proposed
+[521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Contructs.](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
+[523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||💡 proposed
+[526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||💡 proposed
+[528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Contructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||💡 proposed
+[530](https://github.com/aws/aws-cdk-rfcs/issues/530)|[RFC Pipeline does not run Linting automatically..](https://github.com/aws/aws-cdk-rfcs/issues/530)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0001-cdk-update.md)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
@@ -177,8 +180,10 @@ future state of the libraries and to discover projects for contribution.
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [272](https://github.com/aws/aws-cdk-rfcs/issues/272)|[CI/CD to Cloudfront Deploy](https://github.com/aws/aws-cdk-rfcs/issues/272)||👎 rejected
+[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0077-import-external-resources.md)||❓unknown
 [436](https://github.com/aws/aws-cdk-rfcs/issues/436)|[Amazon GameLift L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0436-gamelift-l2.md)||❓unknown
 [485](https://github.com/aws/aws-cdk-rfcs/issues/485)|[AWS Batch L2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0485-aws-batch.md)||❓unknown
+[527](https://github.com/aws/aws-cdk-rfcs/issues/527)|[Thanks for this context. If more options are likely to added, I'd prefer to see this as an enum like class instead of an actual enum so that it's more extensible if options or props need to be added to potential auth types.](https://github.com/aws/aws-cdk-rfcs/issues/527)||❓unknown
 <!--END_TABLE-->
 
 ## What is an RFC?
@@ -309,6 +314,13 @@ that you may need to throw your code away or refactor it substantially, but our
 experience shows that good RFCs are the ones who dive into the details. A
 prototype is great way to make sure your design "holds water".
 
+> [!NOTE]
+> To ensure consistency, the Markdown you write will be checked for common >
+mistakes using a linter. To get early feedback while you are writing, use the
+[VSCode > markdownlint
+extensions](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint),
+> or run the `./lint.sh` script in the root of the repository.
+
 ### 5. Feedback
 
 Once you have an initial version of your RFC document (it is completely fine to
@@ -390,7 +402,7 @@ Throughout this process, update the tracking issue:
 - Plan approved and merged (label: `status/implementing`)
 - Implementation complete (label: `status/done`)
 
-## State Diagram
+## The RFC Life Cycle
 
 The following state diagram describes the RFC process:
 
@@ -400,7 +412,7 @@ The following state diagram describes the RFC process:
 digraph states {
     node [shape=ellipse];
     edge [color=gray, fontsize=12]
-    
+
     idea [label = "Idea", shape = plaintext]
     proposed [label = "Proposed"];
     review [label = "In Review"];
@@ -410,7 +422,7 @@ digraph states {
     implementing [label = "Implementing"];
     done [label = "Done"];
     rejected [label = "Rejected"];
-    
+
     idea -> proposed [label = "github issue created"]
     proposed -> review [label = "pull request with rfc doc created"];
     review -> review [label = "doc revisions"];
@@ -422,7 +434,7 @@ digraph states {
     approved -> plannning [label = "pull request with implementation plan created"];
     plannning -> implementing [label = "rfc with implementation plan approved and merged"];
     implementing -> done [label = "implementation completed"];
-}  
+}
 -->
 
 1. **Proposed** - A tracking issue has been created with a basic outline of the
