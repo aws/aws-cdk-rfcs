@@ -32,7 +32,7 @@ EventBridge Pipes let you create source to target connections between several
 aws services. While transporting messages from a source to a target the messages
 can be filtered, transformed and enriched.
 
-![diagram of pipes](https://docs.aws.amazon.com/images/eventbridge/latest/userguide/images/pipes_overview.png)
+![diagram of pipes](https://d1.awsstatic.com/product-marketing/EventBridge/Product-Page-Diagram_Amazon-EventBridge-Pipes.cd7961854be4432d63f6158ffd18271d6c9fa3ec.png)
 
 For more details see the service
 
@@ -42,11 +42,16 @@ For more details see the service
 
 ## Pipe
 
-[EventBridge Pipes](https://aws.amazon.com/blogs/aws/new-create-point-to-point-integrations-between-event-producers-and-consumers-with-amazon-eventbridge-pipes/) is a fully managed service that enables point-to-point integrations between event producers and consumers. Pipes can be used to connect several AWS services to each other, or to connect AWS services to external services.
+[EventBridge Pipes](https://aws.amazon.com/blogs/aws/new-create-point-to-point-integrations-between-event-producers-and-consumers-with-amazon-eventbridge-pipes/)
+is a fully managed service that enables point-to-point integrations between
+event producers and consumers. Pipes can be used to connect several AWS services
+to each other, or to connect AWS services to external services.
 
-A Pipe has a Source and a Target. The source events can be filtered and enriched before reaching the target.
+A Pipe has a Source and a Target. The source events can be filtered and enriched
+before reaching the target.
 
 ### Example
+
 ```ts
 
 new Pipe(this, "pipe", {
@@ -55,12 +60,12 @@ new Pipe(this, "pipe", {
       {
         batchSize: 10,
     }),
-    
+
     filter: new Filter({
         eventPatterns: [{
                 detail: {
                     user: ["example"],
-                }, 
+                },
             }]
         ),
     }),
@@ -76,7 +81,7 @@ new Pipe(this, "pipe", {
               originalEvent : <aws.pipes.event.json>
         }),
     }),
-    
+
     target: new SqsTarget(
       queue: targetQueue,
       {
@@ -88,14 +93,14 @@ new Pipe(this, "pipe", {
             originalEvent : <aws.pipes.event.json>
         }),
     }),
-        
+
 })
 ```
 
 ## Source
 
-A source is a AWS Service that needs to be polled.
-The following Sources are possible:
+A source is a AWS Service that needs to be polled. The following Sources are
+possible:
 
 - [Amazon DynamoDB stream](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-dynamodb.html)
 - [Amazon Kinesis stream](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-kinesis.html)
@@ -116,8 +121,10 @@ new SqsSource(
 
 ## Filter
 
-A Filter can be used to filter the events from the source before they are forwarded to the enrichment step.
-Multiple filter expressions are possible. If one of the filter expressions matches the event is forwarded to the enrichment or target step.
+A Filter can be used to filter the events from the source before they are
+forwarded to the enrichment step. Multiple filter expressions are possible. If
+one of the filter expressions matches the event is forwarded to the enrichment
+or target step.
 
 ### Example
 
@@ -126,14 +133,16 @@ new Filter({
     eventPatterns: [{
             detail: {
                 user: ["example"],
-            }, 
+            },
         }]
     ),
 })
 ```
+
 ## Enrichment
 
-In the enrichment step the (un)filtered payloads from the source can be used to invoke one of the following services
+In the enrichment step the (un)filtered payloads from the source can be used to
+invoke one of the following services
 
 - API destination
 - Amazon API Gateway
@@ -141,8 +150,8 @@ In the enrichment step the (un)filtered payloads from the source can be used to 
 - Step Functions state machine
   - only express workflow
 
-
 ### Example
+
 ```ts
 new PipeLambdaEnrichment({
     function: enrichmentFunction,
@@ -158,8 +167,9 @@ new PipeLambdaEnrichment({
 
 ## Target
 
-A Target is the end of the Pipe. After the payload from the source is pulled, filtered and enriched it is forwarded to the target.
-For now the following targets are supported:
+A Target is the end of the Pipe. After the payload from the source is pulled,
+filtered and enriched it is forwarded to the target. For now the following
+targets are supported:
 
 - [API destination](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-api-destinations.html)
 - [API Gateway](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-api-gateway-target.html)
@@ -179,7 +189,8 @@ For now the following targets are supported:
   - Express workflows (ASYNC)
   - Standard workflows (SYNC or ASYNC)
 
-The target event can be transformed before it is forwarded to the target using the same input transformation as in the enrichment step.
+The target event can be transformed before it is forwarded to the target using
+the same input transformation as in the enrichment step.
 
 ### Example
 
@@ -198,8 +209,6 @@ new SqsTarget(
 })
 ```
 
-
-
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -214,71 +223,114 @@ RFC pull request):
 
 Q: How does this constructs improves developer experience?
 
-A: Pipes are a new service that not have a L2 construct in the CDK. This construct makes it easier to use Pipes in the CDK. 
-The construct apis reflect the AWS console so that the developer has a familiar experience. 
-Especially the filter and input transformations are not easy to develop. 
-Therefore the developer can use the provided tools in the aws console to develop the filter and input transformation and then use them directly in the cdk code. 
-Additionally the construct provides a more type safe way to define the required parts of a Pipe.
-Also the iam policy management is done by the construct which makes connecting the source, enrichment and target easier.
-
+A: Pipes are a new service that not have a L2 construct in the CDK. This
+construct makes it easier to use Pipes in the CDK. The construct apis reflect
+the AWS console so that the developer has a familiar experience. Especially the
+filter and input transformations are not easy to develop. Therefore the
+developer can use the provided tools in the aws console to develop the filter
+and input transformation and then use them directly in the cdk code.
+Additionally the construct provides a more type safe way to define the required
+parts of a Pipe. Also the iam policy management is done by the construct which
+makes connecting the source, enrichment and target easier.
 
 ### What are we launching today?
 
-Today we are launching a new construct that makes it easier to use EventBridge Pipes in the CDK.
-This construct is a L2 construct that introduces specific classes for the different parts of a Pipe. These specified classes provide the developer with a more type safe way to define the required parts of a Pipe. 
-On top of that the construct takes care of all the iam permissions that are required to connect the different parts of a Pipe.
+Today we are launching a new construct that makes it easier to use EventBridge
+Pipes in the CDK. This construct is a L2 construct that introduces specific
+classes for the different parts of a Pipe. These specified classes provide the
+developer with a more type safe way to define the required parts of a Pipe. On
+top of that the construct takes care of all the iam permissions that are
+required to connect the different parts of a Pipe.
 
-Each in EventBridge Pipe supported source is represented by a class that supports the specific properties of the source and a helper class for creating filter pattern for that source.
+Each in EventBridge Pipe supported source is represented by a class that
+supports the specific properties of the source.
 
-Besides the source classes there are also classes for the different supported targets. These classes support the specific properties of the target and also take care of the iam permissions that are required to push events to the target.
+Incoming events can be filtered using a filter expression. The filter expression
+lis constructed by the same helper classes that are used in other EventBridge
+constructs like EventBridge Rules.
 
-The enrichment step is also supported by a class that supports the specific properties of the enrichment step and also takes care of the iam permissions that are required to invoke the enrichment step.
+Besides the source classes there are also classes for the different supported
+targets. These classes support the specific properties of the target and also
+take care of the iam permissions that are required to push events to the target.
 
-With this construct it is now possible to define a Pipe in the CDK that is equivalent to the Pipe that is defined in the AWS console.
+The enrichment step is also supported by a class that supports the specific
+properties of the enrichment step and also takes care of the iam permissions
+that are required to invoke the enrichment step.
+
+With this construct it is now possible to define a Pipe in the CDK that is
+equivalent to the Pipe that is defined in the AWS console.
 
 ### Why should I use this feature?
 
-This construct makes it easier to use EventBridge Pipes in the CDK.
-It provides a more type safe way to define the required parts of a Pipe and also takes care of the iam permissions that are required to connect the different parts of a Pipe.
-It also splits the cloudformation template into multiple parts that are easier to understand and maintain. 
-The construct additionally provides source, enrichment and target specific implementations that make it easier to develop EventBridge Pipes.
+This construct makes it easier to use EventBridge Pipes in the CDK. It provides
+a more type safe way to define the required parts of a Pipe and also takes care
+of the iam permissions that are required to connect the different parts of a
+Pipe. It also splits the cloudformation template into multiple parts that are
+easier to understand and maintain. The construct additionally provides source,
+enrichment and target specific implementations that make it easier to develop
+EventBridge Pipes.
 
 ## Internal FAQ
 
 Q: Why isn't the filter patten part of the source class?
 
-A: The filter pattern isn't part of the source class because the AWS console as well has a separate filter pattern editor.
-An integration into the source class would make it harder for the developer to find the property for the filter pattern.
-This design decision still allows to build source specific filter patterns using the provided helper classes.
+A: The filter pattern isn't part of the source class because the AWS console as
+well has a separate filter pattern editor. An integration into the source class
+would make it harder for the developer to find the property for the filter
+pattern. This design decision still allows to build source specific filter
+patterns using the provided helper classes.
+
+Q: Why is the Match api from other EventBridge construct reused?
+
+A: The existing Match api is already familiar to the developer and therefore its
+easier to use the same api for the filter pattern.
+
 ### Why are we doing this?
 
-EventBridge Pipes are a crucial part of building cloud native pattern in an event driven architecture. 
-Pipes can reduce the need of building lambda functions for transporting data from a to b. 
-Implementing a Pipe in the CDK is currently not easy and each developer would need to understand the underlying cloudformation template to implement a Pipe.
+EventBridge Pipes are a crucial part of building cloud native pattern in an
+event driven architecture. Pipes can reduce the need of building lambda
+functions for transporting data from a to b. Implementing a Pipe in the CDK is
+currently not easy and each developer would need to understand the underlying
+cloudformation template to implement a Pipe.
 
 ### Why should we _not_ do this?
 
-The construct build opinionated classes for the different parts of a Pipe. 
-On top of that EventBridge Pipes can already be used in CDK today by using the low level cloudformation classes.
-
+The construct build opinionated classes for the different parts of a Pipe. On
+top of that EventBridge Pipes can already be used in CDK today by using the low
+level cloudformation classes.
 
 ### What is the technical solution (design) of this feature?
 
 An example implementation can be found here:
 https://github.com/RaphaelManke/aws-cdk-pipes-rfc-473
 
-
 The technical solution follows the following principles:
-- The construct usage is as simple as possible. The developer should not need to understand the underlying cloudformation template to use the construct.
+
+- The construct usage is as simple as possible. The developer should not need to
+  understand the underlying cloudformation template to use the construct.
 - The construct usage is similar to the usage of the AWS console.
-- The construct provides a more type safe way to define the required parts of a Pipe.
-- Each supported source is represented by a class that supports the specific properties of the source, the iam permissions and a helper class for creating filter pattern for that source.
-- Each supported target is represented by a class that supports the specific properties of the target, the iam permissions and support input transformations.
-- Each supported enrichment is represented by a class that supports the specific properties of the enrichment, the iam permissions and support input transformations.
-- The Pipe exposes useful properties like the arn and the name of the pipe or the iam role that is used by the pipe.
+- The construct provides a more type safe way to define the required parts of a
+  Pipe.
+- Each supported source is represented by a class that supports the specific
+  properties of the source, the iam permissions and a helper class for creating
+  filter pattern for that source.
+- Each supported target is represented by a class that supports the specific
+  properties of the target, the iam permissions and support input
+  transformations.
+- Each supported enrichment is represented by a class that supports the specific
+  properties of the enrichment, the iam permissions and support input
+  transformations.
+- The Filtering capability reuses the existing
+  [Match api](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events.Match.html)
+  from EventBridge
+- The Pipe exposes useful properties like the arn and the name of the pipe or
+  the iam role that is used by the pipe.
+- Resources that do not have a L2 construct will not considered for the first
+  version of the Pipe construct in regards of source or target classes.
 
 #### Interfaces
-**Pipe**
+
+##### Pipe
 
 ```ts
 export interface IPipe extends IResource {
@@ -306,7 +358,9 @@ export interface IPipe extends IResource {
   readonly pipeRole: IRole;
 }
 ```
+
 and the Pipe constructor properties interface:
+
 ```ts
 export interface IPipeProps {
   /**
@@ -318,18 +372,18 @@ export interface IPipeProps {
    */
   readonly filter?: IPipeSourceFilter;
   /**
-  *
-  */
+   *
+   */
   readonly enrichment?: IPipeEnrichment;
   /**
    * The target of the pipe
    */
   readonly target: IPipeTarget;
   /**
-  * Name of the pipe in the AWS console
-  *
-  * @link http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-pipes-pipe.html#cfn-pipes-pipe-name
-  */
+   * Name of the pipe in the AWS console
+   *
+   * @link http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-pipes-pipe.html#cfn-pipes-pipe-name
+   */
   readonly name?: string;
   /**
    * The role used by the pipe which has permissions to read from the source and write to the target.
@@ -360,7 +414,7 @@ export interface IPipeProps {
 }
 ```
 
-***Source***
+##### Source
 
 ```ts
 export interface IPipeSource {
@@ -370,20 +424,23 @@ export interface IPipeSource {
   grantRead(grantee: IRole): void;
 }
 ```
+
 and all Source constructor share the interface
+
 ```ts
 export interface IPipeSourceBaseProps {
-    /**
-    * The maximum number of records to include in each batch.
-    */
-    batchSize?: number;
-    
-    /**
-     * The maximum length of a time to wait for events.
-     */ 
-    maximumBatchingWindowInSeconds?: number;
+  /**
+   * The maximum number of records to include in each batch.
+   */
+  batchSize?: number;
+
+  /**
+   * The maximum length of a time to wait for events.
+   */
+  maximumBatchingWindowInSeconds?: number;
 }
 ```
+
 one specific source interface is e.g.:
 
 ```ts
@@ -404,14 +461,15 @@ export interface IPipeSourceProps extends IPipeSourceBaseProps{
 }
 ```
 
-
-_Note_: The source Parameters are dependent on the source type. 
-They are typed https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-pipes-pipe-pipesourceparameters.html. 
-Each implementation of the IPipeSource interface should support only those properties that are relevant.
-The sourceParametersIdentifier is used to identify the source parameters name in the cloudformation template.
-E.g. SQS has the identifier `SqsQueueParameters` in the pipe source parameters object.
+_Note_: The source Parameters are dependent on the source type. They are typed
+https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-pipes-pipe-pipesourceparameters.html.
+Each implementation of the IPipeSource interface should support only those
+properties that are relevant. The sourceParametersIdentifier is used to identify
+the source parameters name in the cloudformation template. E.g. SQS has the
+identifier `SqsQueueParameters` in the pipe source parameters object.
 
 Example for SQS:
+
 ```ts
 new SqsSource(
   source: queue,
@@ -421,10 +479,10 @@ new SqsSource(
 });
 ```
 
-***Source Filter***
+**_Source Filter_**
 
 ```ts
-export interface  IFilter {
+export interface IFilter {
   pattern: string;
 }
 
@@ -438,6 +496,7 @@ export interface IPipeSourceFilter {
 ```
 
 The Source Filter constructor properties interface:
+
 ```ts
 export interface IPipeSourceFilterProps {
   /**
@@ -447,11 +506,19 @@ export interface IPipeSourceFilterProps {
 }
 ```
 
-The Filter is a JSON object like the one that can be created in the AWS console. 
-The filter criteria is similar to the filter criteria of the [EventBridge Rule](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-events.Rule.html#eventpattern).
+The Filter is a JSON object like the one that can be created in the AWS console.
+The filter criteria is similar to the filter criteria of the
+[EventBridge Rule](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-events.Rule.html#eventpattern).
+Filters must be compatible with the EventBridge Rule filter pattern. This
+implies that the existing Match api can be used to define a filter pattern.
 
+```ts
+const filter = {
+  region: events.Match.anythingButPrefix('us-gov'),
+};
+```
 
-**Enrichment**
+##### Enrichment
 
 ```ts
 export interface IPipeEnrichment {
@@ -462,7 +529,7 @@ export interface IPipeEnrichment {
 }
 ```
 
-**Input Transformation**
+##### Input Transformation
 
 ```ts
 export interface IInputTransformation {
@@ -470,16 +537,17 @@ export interface IInputTransformation {
 }
 ```
 
-_Note:_ The input transformation is the same as the one from [EventBridge RuleTargetInput](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-events.RuleTargetInput.html)
+_Note:_ The input transformation is the same as the one from
+[EventBridge RuleTargetInput](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-events.RuleTargetInput.html)
 
-**Target**
+##### Target
 
 ```ts
 export interface IPipeTarget {
   targetArn: string;
   targetParameters: CfnPipe.PipeTargetParametersProperty;
 
-  grantPush(grantee: IRole): void;
+  grantInvoke(grantee: IRole): void;
 }
 ```
 
@@ -500,7 +568,7 @@ export interface IPipeSqsTargetProps {
    */
   readonly one?: string;
 
-   /**
+  /**
    * Another parameter of the target
    */
   readonly another?: number;
@@ -513,14 +581,19 @@ This is a new feature and therefore not a breaking change.
 
 ### What alternative solutions did you consider?
 
-1. Build the Pipe in as a builder pattern like construct. 
-   - A builder pattern like construct would reduce the required properties of the Pipe class.
-   But the Pipe class would still need all the same parts and would increase the risk that developers forget to add a part to the Pipe.
-   Additionally the cloudformation implementation requires that the pipe is defined in a single cloudformation resource.
+1. Build the Pipe in as a builder pattern like construct.
+   - A builder pattern like construct would reduce the required properties of
+     the Pipe class. But the Pipe class would still need all the same parts and
+     would increase the risk that developers forget to add a part to the Pipe.
+     Additionally the cloudformation implementation requires that the pipe is
+     defined in a single cloudformation resource.
 
 ### What are the drawbacks of this solution?
 
-The source, target and enrichment classes require a lot of work and knowledge by the construct developer because each touched service as different properties and restrictions (e.g [Implicit body data parsing](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-input-transformation.html#input-transform-implicit)).
+The source, target and enrichment classes require a lot of work and knowledge by
+the construct developer because each touched service as different properties and
+restrictions (e.g
+[Implicit body data parsing](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-input-transformation.html#input-transform-implicit)).
 
 ### What is the high-level project plan?
 
@@ -537,4 +610,5 @@ Not known yet.
 
 ## Appendix
 
-- Details on the implementation concept can be found here: https://github.com/RaphaelManke/aws-cdk-pipes-rfc-473/blob/78b04c7ef51a934a7b1355b09796529e011e524f/README.md
+- Details on the implementation concept can be found here:
+  https://github.com/RaphaelManke/aws-cdk-pipes-rfc-473/blob/78b04c7ef51a934a7b1355b09796529e011e524f/README.md
