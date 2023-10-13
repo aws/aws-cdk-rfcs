@@ -6,4 +6,5 @@ scriptdir=$(cd $(dirname $0) && pwd)
 linters=$PWD/tools/linters
 
 (cd $linters && npm ci)
-$linters/node_modules/.bin/markdownlint . --ignore node_modules --ignore tools
+cliargs="--ignore node_modules --ignore tools ${@:1}"
+$linters/node_modules/.bin/markdownlint . $cliargs
