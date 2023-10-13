@@ -10,7 +10,7 @@ const UNKNOWN_STATUS = 'status/unknown';
 // "done" items are last because they are less interesting in this list.
 
 const display = {
-  'status/done': '✅ done',
+  [UNKNOWN_STATUS]: '❓unknown',
   'status/implementing': '👷 implementing',
   'status/planning': '📆 planning',
   'status/approved': '👍 approved',
@@ -18,9 +18,9 @@ const display = {
   'status/api-approved': '📐 API approved',
   'status/review': '✍️ review',
   'status/proposed': '💡 proposed',
+  'status/done': '✅ done',
   'status/stale': '🤷‍♂️ stale',
   'status/rejected': '👎 rejected',
-  [UNKNOWN_STATUS]: '❓unknown',
 }
 
 
