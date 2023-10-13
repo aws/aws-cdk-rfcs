@@ -40,6 +40,7 @@ pull_request_rules:
         approved: true
     conditions:
       - author!=aws-cdk-automation
+      - label!=auto-approve
       - base=main
       - -merged
       - -closed
