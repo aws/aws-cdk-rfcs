@@ -450,7 +450,7 @@ on the `constructs` library.
 See the RFC for [monolithic packaging] for more details.
 
 [monolithic packaging]:
-  https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md
+  https://github.com/aws/aws-cdk-rfcs/blob/main/text/0006-monolothic-packaging.md
 
 ## Design
 
@@ -798,7 +798,7 @@ The prepare hook was used in the CDK in a few cases:
 
 The first two use cases have already been addressed by centralizing the
 "prepare" logic at the stage level (into
-[prepare-app.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/prepare-app.ts)).
+[prepare-app.ts](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/core/lib/private/prepare-app.ts)).
 
 #### What can we do on 1.x for 06-NO-PREPARE
 
@@ -818,7 +818,7 @@ The reason this is not available at the base class is because the abstraction
 did not "hold water" as the AWS CDK evolved and new CDKs emerged. In the AWS
 CDK, we eventually ended up with a centralized synthesis logic at the
 `Stage`-level
-([synthesis.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/synthesis.ts)).
+([synthesis.ts](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/core/lib/private/synthesis.ts)).
 The main reason was that we needed to "break" the recursion in various
 domain-specific points (e.g. stages, nested stacks) which meant that the generic
 logic of "traverse the entire tree and call `synthesize`" did not hold. In
@@ -1089,7 +1089,7 @@ for constructs 10.x.
   - [x] Change `addDependency` to accept `IDependable` instead of `IConstruct`.
   - [x] Return only local dependencies in `node.dependencies`
   - [ ] Migrate
-        [DependencyGraph](https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts)
+        [DependencyGraph](https://github.com/awslabs/cdk8s/blob/main/packages/cdk8s/src/dependency.ts)
         from cdk8s into `constructs`.
 - [04-STACK-ROOT](#04-stack-root)
   - N/A

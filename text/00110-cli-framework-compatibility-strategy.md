@@ -79,7 +79,7 @@ introducing breaking changes (cx-protocol version bump), are not very good:
   manifest upgrade. This is also something we need to **remember**.
 
 There are also some quirky implementation details, in
-[`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts):
+[`versioning.ts`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts):
 
 ```typescript
 const toolkitVersion = parseSemver(CLOUD_ASSEMBLY_VERSION);
@@ -107,7 +107,7 @@ if (semver.lt(frameworkVersion, toolkitVersion)) {
 This code (and comments) is contradictory to our current compatibility model,
 where we actually attempt to support two way compatibility. To facilitate this,
 we added the
-[`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60)
+[`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts#L60)
 function.
 
 Thats not to say that what we currently have can't work. But the fact that we
@@ -364,10 +364,10 @@ used to create it.
 
 To actually validate this behavior, we add a unit test for the `exec.ts` file.
 
-### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts)
+### Step 3: Remove [`versioning.ts`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts)
 
 Given all the above steps, we don't need the functionality provided by
-[`versioning.ts`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts).
+[`versioning.ts`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts).
 Lets dive deep into why is that exactly.
 
 #### Schema Evolution
@@ -386,7 +386,7 @@ This enables the CLI to essentially not be aware of any schema version expect
 for the last one.
 
 This is done in the
-[`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L60)
+[`upgradeAssemblyManifest`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts#L60)
 function.
 
 We stipulate that this is no longer needed. The compatibility checks will make
@@ -411,7 +411,7 @@ This brings us to the next item.
 #### Compatibility Validation
 
 This is done in the
-[`verifyManifestVersion`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/versioning.ts#L39)
+[`verifyManifestVersion`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/versioning.ts#L39)
 function, and contains two validations:
 
 1. **Framework cannot be bigger than CLI.**
@@ -517,7 +517,7 @@ This is a concrete example on how things can break when we introduce changes to
 the _cx-api_.
 
 1. Rename `target` in
-   [`ContainerImageAssetMetadataEntry`](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/cx-api/lib/assets.ts#L74)
+   [`ContainerImageAssetMetadataEntry`](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/cx-api/lib/assets.ts#L74)
    to `buildTarget`.
 2. Perform necessary changes in CLI and fix all relevant tests.
 

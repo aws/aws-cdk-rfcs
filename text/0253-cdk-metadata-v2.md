@@ -138,7 +138,7 @@ constructs, authored and vended by AWS.
 We decided against an open system, instead preferring to have a specific
 allow-list of packages (or package prefixes) we are going to report on. For
 example, the current list looks like this and can be found
-[here](https://github.com/aws/aws-cdk/blob/master/packages/@aws-cdk/core/lib/private/runtime-info.ts):
+[here](https://github.com/aws/aws-cdk/blob/main/packages/@aws-cdk/core/lib/private/runtime-info.ts):
 
 ```ts
 const ALLOWLIST_SCOPES = ['@aws-cdk', '@aws-solutions-konstruk', '@aws-solutions-constructs', '@amzn'];

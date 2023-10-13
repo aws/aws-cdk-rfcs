@@ -10,13 +10,15 @@ const UNKNOWN_STATUS = 'status/unknown';
 // "done" items are last because they are less interesting in this list.
 
 const display = {
+  'status/done': '✅ done',
   'status/implementing': '👷 implementing',
   'status/planning': '📆 planning',
   'status/approved': '👍 approved',
   'status/final-comment-period': '⏰ final comments',
+  'status/api-approved': '📐 API approved',
   'status/review': '✍️ review',
   'status/proposed': '💡 proposed',
-  'status/done': '✅ done',
+  'status/stale': '🤷‍♂️ stale',
   'status/rejected': '👎 rejected',
   [UNKNOWN_STATUS]: '❓unknown',
 }
@@ -34,7 +36,7 @@ async function render() {
     auth: process.env.GITHUB_TOKEN
   });
 
-  const issueByStatus = { };
+  const issueByStatus = {};
 
   for (const status of labels) {
     issueByStatus[status] = [];
@@ -73,7 +75,7 @@ async function render() {
 
     // we we already have a doc, then the link should go to it
     if (doc) {
-      link = `https://github.com/aws/aws-cdk-rfcs/blob/master/text/${doc}`;
+      link = `https://github.com/aws/aws-cdk-rfcs/blob/main/text/${doc}`;
     } else if (pr_number) {
       link = `https://github.com/aws/aws-cdk-rfcs/pull/${pr_number}`;
     } else {
@@ -144,7 +146,7 @@ function findMetadata(issue) {
     return { champion: '' };
   }
 
-  let [ , pr, champion ] = lines[titleIndex + 2].split('|');
+  let [, pr, champion] = lines[titleIndex + 2].split('|');
   champion = champion ? champion.trim() : '';
 
   const pr_number = (pr.startsWith('#') ? pr.substring(1) : '').trim();
