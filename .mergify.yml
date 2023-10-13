@@ -39,7 +39,7 @@ pull_request_rules:
       dismiss_reviews:
         approved: true
     conditions:
-      - author!=github-actions[bot]
+      - author!=aws-cdk-automation
       - base=main
       - -merged
       - -closed
