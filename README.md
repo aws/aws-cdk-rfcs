@@ -9,7 +9,7 @@ future state of the libraries and to discover projects for contribution.
 
 **Jump to**: [What is an RFC?](#what-is-an-rfc) |
 [RFC Process](#rfc-process) |
-[RFC Life Cycle](#the-rfc-life-cycle)
+[RFC State Diagram](#the-rfc-life-cycle)
 
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
@@ -320,6 +320,7 @@ mistakes using a linter. To get early feedback while you are writing, use the
 [VSCode > markdownlint
 extensions](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint),
 > or run the `./lint.sh` script in the root of the repository.
+> Run `./lint.sh --fix` auto fix all fixable violations.
 
 ### 5. Feedback
 
