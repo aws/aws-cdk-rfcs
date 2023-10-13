@@ -202,11 +202,11 @@ it.
 
 For example, useful information we can get from cfn-lint:
 
-* [OnlyOne](https://github.com/aws-cloudformation/cfn-python-lint/blob/master/src/cfnlint/data/AdditionalSpecs/OnlyOne.json),
+* [OnlyOne](https://github.com/aws-cloudformation/cfn-python-lint/blob/main/src/cfnlint/data/AdditionalSpecs/OnlyOne.json),
   mutually exclusive properties in a structure.
-* [Inclusive](https://github.com/aws-cloudformation/cfn-python-lint/blob/master/src/cfnlint/data/AdditionalSpecs/Inclusive.json),
+* [Inclusive](https://github.com/aws-cloudformation/cfn-python-lint/blob/main/src/cfnlint/data/AdditionalSpecs/Inclusive.json),
   a set of property dependencies.
-* [Exclusive](https://github.com/aws-cloudformation/cfn-python-lint/blob/master/src/cfnlint/data/AdditionalSpecs/Exclusive.json),
+* [Exclusive](https://github.com/aws-cloudformation/cfn-python-lint/blob/main/src/cfnlint/data/AdditionalSpecs/Exclusive.json),
   properties that preclude each other.
 
 Etc.
