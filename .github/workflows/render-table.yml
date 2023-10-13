@@ -27,7 +27,7 @@ jobs:
       - name: install dependencies
         run: |
           cd tools/rfc-render
-          npm install
+          npm ci
       - name: render table
         run: |
           node tools/rfc-render/inject-table.js README.md
