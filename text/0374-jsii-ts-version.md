@@ -341,6 +341,7 @@ gantt
   Current                 :crit, 2022-08-25, 12w
   %% 4.8 is the current TypeScript release at time of writing...
 ```
+
 </details>
 
 <details>
@@ -408,6 +409,7 @@ gantt
   Current                 :crit, 2022-08-25, 12w
   %% 4.8 is the current TypeScript release at time of writing...
 ```
+
 </details>
 
 ## Internal FAQ
