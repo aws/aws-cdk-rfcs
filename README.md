@@ -16,17 +16,12 @@ future state of the libraries and to discover projects for contribution.
 ---|-----|-----|------
 [456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0456-elasticache-l2.md)||👷 implementing
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)||📆 planning
-[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0077-import-external-resources.md)||👍 approved
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👍 approved
-[510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|👍 approved
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)||✍️ review
 [419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)||✍️ review
-[2](https://github.com/aws/aws-cdk-rfcs/issues/2)|[Support for CloudFormation Resource Imports](https://github.com/aws/aws-cdk-rfcs/issues/2)||💡 proposed
-[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|💡 proposed
-[5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||💡 proposed
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|[Master developer guide sources in main repo](https://github.com/aws/aws-cdk-rfcs/issues/9)||💡 proposed
 [10](https://github.com/aws/aws-cdk-rfcs/issues/10)|[New workshop modules](https://github.com/aws/aws-cdk-rfcs/issues/10)||💡 proposed
 [13](https://github.com/aws/aws-cdk-rfcs/issues/13)|[Improvements to Reference docs](https://github.com/aws/aws-cdk-rfcs/issues/13)||💡 proposed
@@ -129,6 +124,8 @@ future state of the libraries and to discover projects for contribution.
 [526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||💡 proposed
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||💡 proposed
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0001-cdk-update.md)||✅ done
+[4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|✅ done
+[5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||✅ done
 [6](https://github.com/aws/aws-cdk-rfcs/issues/6)|[Monolithic Packaging](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0006-monolothic-packaging.md)||✅ done
 [7](https://github.com/aws/aws-cdk-rfcs/issues/7)|[Lambda Bundles](https://github.com/aws/aws-cdk-rfcs/issues/7)||✅ done
 [16](https://github.com/aws/aws-cdk-rfcs/issues/16)|[RFC Process](https://github.com/aws/aws-cdk-rfcs/pull/53)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
@@ -141,6 +138,7 @@ future state of the libraries and to discover projects for contribution.
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0055-feature-flags.md)||✅ done
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||✅ done
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||✅ done
+[77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0077-import-external-resources.md)||✅ done
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0079-cdk-2.0.md)||✅ done
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[CI/CD Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0092-asset-publishing.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
 [95](https://github.com/aws/aws-cdk-rfcs/issues/95)|[Cognito Construct Library](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0095-cognito-construct-library)|[@nija-at](https://github.com/nija-at)|✅ done
@@ -167,6 +165,7 @@ future state of the libraries and to discover projects for contribution.
 [474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0474-event-bridge-scheduler-l2.md)||✅ done
 [485](https://github.com/aws/aws-cdk-rfcs/issues/485)|[AWS Batch L2](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0485-aws-batch.md)||✅ done
 [497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0497-glue-l2-construct.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|✅ done
+[510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|✅ done
 [513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/issues/513)||✅ done
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||🤷‍♂️ stale
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||🤷‍♂️ stale
