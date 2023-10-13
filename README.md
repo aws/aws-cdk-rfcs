@@ -20,7 +20,9 @@ future state of the libraries and to discover projects for contribution.
 [456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0456-elasticache-l2.md)||👷 implementing
 [460](https://github.com/aws/aws-cdk-rfcs/issues/460)|[Reduce aws-cdk-lib package size](https://github.com/aws/aws-cdk-rfcs/issues/460)||👷 implementing
 [474](https://github.com/aws/aws-cdk-rfcs/issues/474)|[EventBridge Scheduler L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0474-event-bridge-scheduler-l2.md)||👷 implementing
+[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)||📆 planning
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)||📆 planning
+[497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0497-glue-l2-construct.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|📆 planning
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👍 approved
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|👍 approved
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
@@ -58,7 +60,6 @@ future state of the libraries and to discover projects for contribution.
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0063-precreated-roles.md)||💡 proposed
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|💡 proposed
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
-[66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||💡 proposed
 [67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||💡 proposed
 [69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[One-off "job" Stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||💡 proposed
 [70](https://github.com/aws/aws-cdk-rfcs/issues/70)|[Cost Estimation Tools](https://github.com/aws/aws-cdk-rfcs/issues/70)||💡 proposed
@@ -75,7 +76,6 @@ future state of the libraries and to discover projects for contribution.
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Implement Custom Resources in the AWS Construct Library as CFN Registry Resource Types](https://github.com/aws/aws-cdk-rfcs/pull/170)||💡 proposed
 [159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||💡 proposed
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
-[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)||💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
 [193](https://github.com/aws/aws-cdk-rfcs/issues/193)|[Fixing of type unions](https://github.com/aws/aws-cdk-rfcs/pull/194)|[@RomainMuller](https://github.com/RomainMuller)|💡 proposed
 [201](https://github.com/aws/aws-cdk-rfcs/issues/201)|[Construct scope relocation](https://github.com/aws/aws-cdk-rfcs/issues/201)||💡 proposed
@@ -94,7 +94,6 @@ future state of the libraries and to discover projects for contribution.
 [256](https://github.com/aws/aws-cdk-rfcs/issues/256)|[ReactCDK: Add JSX/TSX Support](https://github.com/aws/aws-cdk-rfcs/pull/258)||💡 proposed
 [275](https://github.com/aws/aws-cdk-rfcs/issues/275)|[route53-patterns for cross account DNS delegation](https://github.com/aws/aws-cdk-rfcs/issues/275)||💡 proposed
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||💡 proposed
-[294](https://github.com/aws/aws-cdk-rfcs/issues/294)|[Policy Definition and Enforcement](https://github.com/aws/aws-cdk-rfcs/issues/294)||💡 proposed
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)||💡 proposed
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||💡 proposed
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
@@ -132,13 +131,11 @@ future state of the libraries and to discover projects for contribution.
 [491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||💡 proposed
 [492](https://github.com/aws/aws-cdk-rfcs/issues/492)|[Amazon OpenSearch Serverless L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/492)||💡 proposed
 [495](https://github.com/aws/aws-cdk-rfcs/issues/495)|[AWS IAM Identity Store L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/495)||💡 proposed
-[497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/issues/497)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|💡 proposed
 [499](https://github.com/aws/aws-cdk-rfcs/issues/499)|[AppConfig L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0499-appconfig-constructs.md)||💡 proposed
 [501](https://github.com/aws/aws-cdk-rfcs/issues/501)|[L2 Constructs for Lattice Service](https://github.com/aws/aws-cdk-rfcs/issues/501)||💡 proposed
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/502)||💡 proposed
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||💡 proposed
-[513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/issues/513)||💡 proposed
 [521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Contructs.](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
 [523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||💡 proposed
 [526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||💡 proposed
@@ -154,6 +151,7 @@ future state of the libraries and to discover projects for contribution.
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|[Release from a "release" branch](https://github.com/aws/aws-cdk-rfcs/issues/37)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0049-continuous-delivery.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0055-feature-flags.md)||✅ done
+[66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||✅ done
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||✅ done
 [79](https://github.com/aws/aws-cdk-rfcs/issues/79)|[CDK v2.0](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0079-cdk-2.0.md)||✅ done
 [92](https://github.com/aws/aws-cdk-rfcs/issues/92)|[CI/CD Asset Publishing](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0092-asset-publishing.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
@@ -168,6 +166,7 @@ future state of the libraries and to discover projects for contribution.
 [253](https://github.com/aws/aws-cdk-rfcs/issues/253)|[CDK Metadata v2](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0253-cdk-metadata-v2.md)||✅ done
 [282](https://github.com/aws/aws-cdk-rfcs/issues/282)|[CDK Pipelines security posture change approvals](https://github.com/aws/aws-cdk-rfcs/issues/282)||✅ done
 [287](https://github.com/aws/aws-cdk-rfcs/issues/287)|[Deprecated API Warnings](https://github.com/aws/aws-cdk-rfcs/blob/master/text/287-cli-deprecation-warnings.md)||✅ done
+[294](https://github.com/aws/aws-cdk-rfcs/issues/294)|[Policy Definition and Enforcement](https://github.com/aws/aws-cdk-rfcs/issues/294)||✅ done
 [308](https://github.com/aws/aws-cdk-rfcs/issues/308)|[CLI notices](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0308-cli-advisories.md)||✅ done
 [322](https://github.com/aws/aws-cdk-rfcs/issues/322)|[CDK Pipelines Updated API](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0322-cdk-pipelines-updated-api.md)||✅ done
 [324](https://github.com/aws/aws-cdk-rfcs/issues/324)|[Construct Hub](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0324-cdk-construct-hub.md)|[@RomainMuller](https://github.com/RomainMuller)|✅ done
@@ -177,6 +176,7 @@ future state of the libraries and to discover projects for contribution.
 [374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[The jsii compiler to follow TypeScript versioning](https://github.com/aws/aws-cdk-rfcs/issues/374)||✅ done
 [388](https://github.com/aws/aws-cdk-rfcs/issues/388)|[CLI Banners](https://github.com/aws/aws-cdk-rfcs/issues/388)||✅ done
 [477](https://github.com/aws/aws-cdk-rfcs/issues/477)|[Add policy validation to CDK](https://github.com/aws/aws-cdk-rfcs/blob/master/text/0477-policy-validation.md)|[@otaviomacedo](https://github.com/otaviomacedo)|✅ done
+[513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/issues/513)||✅ done
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [272](https://github.com/aws/aws-cdk-rfcs/issues/272)|[CI/CD to Cloudfront Deploy](https://github.com/aws/aws-cdk-rfcs/issues/272)||👎 rejected
