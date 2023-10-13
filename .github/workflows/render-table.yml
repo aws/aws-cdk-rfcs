@@ -1,16 +1,29 @@
 name: Render RFC Table
-on: 
+on:
   issues:
-    types: [opened,edited,deleted,transferred,assigned,unassigned,labeled,unlabeled]
+    types:
+      [
+        opened,
+        edited,
+        deleted,
+        transferred,
+        assigned,
+        unassigned,
+        labeled,
+        unlabeled,
+      ]
+  workflow_dispatch: {}
 
 jobs:
   render:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
-          node-version: 12.x
+          node-version: 18.x
       - name: install dependencies
         run: |
           cd tools/rfc-render
@@ -18,12 +31,16 @@ jobs:
       - name: render table
         run: |
           node tools/rfc-render/inject-table.js README.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        id: pr
+        uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
           commit-message: Update RFC table in README
           title: Update RFC table in README
           branch: auto/update-rfc-table
+      - name: Auto approve PR
+        if: ${{ steps.pr.outputs.pull-request-number }}
+        uses: hmarr/auto-approve-action@v3
+        with:
+          pull-request-number: ${{ steps.pr.outputs.pull-request-number }}

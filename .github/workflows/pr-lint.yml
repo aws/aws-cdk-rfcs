@@ -2,11 +2,7 @@ name: PR Lint
 
 on:
   pull_request:
-    # don't trigger when RFC table is updated since it comes from a github
-    # workflow and then this workflow will be blocked (github does not allow two
-    # workflows to trigger each other)
-    branches-ignore:
-      - 'auto/update-rfc-table'
+  workflow_dispatch: {}
 
 jobs:
   markdownlint:
@@ -15,6 +11,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 18.x
       - name: run linter
         run: ./lint.sh

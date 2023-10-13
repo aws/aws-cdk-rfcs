@@ -99,7 +99,7 @@ async function render() {
     for (const row of issues.sort(byNumber)) {
       const cols = [
         `[${row.number}](https://github.com/aws/aws-cdk-rfcs/issues/${row.number})`,
-        `[${row.title}](${row.link})`,
+        `[${row.title.trim()}](${row.link})`,
         renderUser(row.assignee),
         display[row.status],
       ];
@@ -140,8 +140,8 @@ function findMetadata(issue) {
   const body = issue.body || '';
   const lines = body.split('\n');
   const titleIndex = lines.findIndex(line => line.startsWith('|PR|Champion|'));
-  if (titleIndex === -1) { 
-    return { champion: '' }; 
+  if (titleIndex === -1) {
+    return { champion: '' };
   }
 
   let [ , pr, champion ] = lines[titleIndex + 2].split('|');
