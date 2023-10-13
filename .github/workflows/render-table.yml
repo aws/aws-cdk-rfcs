@@ -39,6 +39,7 @@ jobs:
           commit-message: Update RFC table in README
           title: Update RFC table in README
           branch: auto/update-rfc-table
+          labels: auto-approve
       - name: Auto approve PR
         if: ${{ steps.pr.outputs.pull-request-number }}
         uses: hmarr/auto-approve-action@v3
