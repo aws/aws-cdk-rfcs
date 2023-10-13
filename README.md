@@ -129,16 +129,13 @@ future state of the libraries and to discover projects for contribution.
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)||💡 proposed
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||💡 proposed
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||💡 proposed
-[313](https://github.com/aws/aws-cdk-rfcs/issues/313)|[Questions on the Go Bindings RFC](https://github.com/aws/aws-cdk-rfcs/issues/313)||💡 proposed
 [348](https://github.com/aws/aws-cdk-rfcs/issues/348)|[CloudFormationController - refactor CloudFormation stacks](https://github.com/aws/aws-cdk-rfcs/issues/348)||💡 proposed
 [370](https://github.com/aws/aws-cdk-rfcs/issues/370)|[CLI deploy with change set review confirmation](https://github.com/aws/aws-cdk-rfcs/issues/370)||💡 proposed
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
-[380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||💡 proposed
 [394](https://github.com/aws/aws-cdk-rfcs/issues/394)|[WAF v2 L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/394)||💡 proposed
 [399](https://github.com/aws/aws-cdk-rfcs/issues/399)|[SSM Document as Objects](https://github.com/aws/aws-cdk-rfcs/issues/399)||💡 proposed
 [400](https://github.com/aws/aws-cdk-rfcs/issues/400)|[RUM AppMonitor L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/400)||💡 proposed
 [402](https://github.com/aws/aws-cdk-rfcs/issues/402)|[Glue DataBrew L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/402)||💡 proposed
-[418](https://github.com/aws/aws-cdk-rfcs/issues/418)|[CDK Operator CLI](https://github.com/aws/aws-cdk-rfcs/issues/418)||💡 proposed
 [423](https://github.com/aws/aws-cdk-rfcs/issues/423)|[IoT Sitewise L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/423)||💡 proposed
 [426](https://github.com/aws/aws-cdk-rfcs/issues/426)|[AppConfig L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/426)||💡 proposed
 [428](https://github.com/aws/aws-cdk-rfcs/issues/428)|[Amazon CloudWatch Evidently L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/428)||💡 proposed
@@ -147,7 +144,6 @@ future state of the libraries and to discover projects for contribution.
 [441](https://github.com/aws/aws-cdk-rfcs/issues/441)|[Add Sagemaker endpoint L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/441)||💡 proposed
 [446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||💡 proposed
 [448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||💡 proposed
-[450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||💡 proposed
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)||💡 proposed
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||💡 proposed
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||💡 proposed
@@ -173,7 +169,9 @@ future state of the libraries and to discover projects for contribution.
 [523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||💡 proposed
 [526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||💡 proposed
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||💡 proposed
-[530](https://github.com/aws/aws-cdk-rfcs/issues/530)|[RFC Pipeline does not run Linting automatically..](https://github.com/aws/aws-cdk-rfcs/issues/530)||💡 proposed
+[380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||🤷‍♂️ stale
+[418](https://github.com/aws/aws-cdk-rfcs/issues/418)|[CDK Operator CLI](https://github.com/aws/aws-cdk-rfcs/issues/418)||🤷‍♂️ stale
+[450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||🤷‍♂️ stale
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [272](https://github.com/aws/aws-cdk-rfcs/issues/272)|[CI/CD to Cloudfront Deploy](https://github.com/aws/aws-cdk-rfcs/issues/272)||👎 rejected
