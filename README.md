@@ -360,7 +360,7 @@ Before you can merge your RFC, you will need the API Bar Raiser to sign-off on
 the public API of your feature. This is will normally be described under the
 **Working Backwards** section of your RFC.
 
-To sign-off, the API bar raiser will add the **api-approved** label to the RFC
+To sign-off, the API bar raiser will add the **status/api-approved** label to the RFC
 pull request.
 
 Once the API was signed-off, update your RFC document and add a `[x]` the
@@ -419,7 +419,7 @@ digraph states {
     review [label = "In Review"];
     fcp [label = "Final Comment Period"];
     approved [label = "Approved"];
-    plannning [label = "Planning"];
+    planning [label = "Planning"];
     implementing [label = "Implementing"];
     done [label = "Done"];
     rejected [label = "Rejected"];
@@ -432,8 +432,8 @@ digraph states {
     fcp -> review [label = "revision requested"];
     fcp -> approved [label = "pull request approved and merged"];
     fcp -> rejected [label = "rfc rejected"];
-    approved -> plannning [label = "pull request with implementation plan created"];
-    plannning -> implementing [label = "rfc with implementation plan approved and merged"];
+    approved -> planning [label = "pull request with implementation plan created"];
+    planning -> implementing [label = "rfc with implementation plan approved and merged"];
     implementing -> done [label = "implementation completed"];
 }
 -->
@@ -449,12 +449,14 @@ digraph states {
 4. **Approved** - The RFC PR is approved and merged to `master`, and the RFC is now
    ready to be implemented.
 5. **Planning** - A PR is created with the **Implementation Plan** section of the RFC.
-6. **Implementing** - Implemetation plan is approved and merged and the RFC is actively
+6. **Implementing** - Implementation plan is approved and merged and the RFC is actively
    being implemented.
 7. **Done** - Implementation is complete and merged across appropriate
    repositories.
 8. **Rejected** - During the review period, the RFC may be rejected and then it will
    be marked as such.
+9. **Stale** - The RFC did not get any significant enough progress or tracking and has become stale.
+   We welcome a re-submission with substantial enough changes to overcome the original issues.
 
 ---
 
