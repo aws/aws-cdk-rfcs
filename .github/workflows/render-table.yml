@@ -25,12 +25,9 @@ jobs:
         with:
           node-version: 18.x
       - name: install dependencies
-        run: |
-          cd tools/rfc-render
-          npm ci
-      - name: render table
-        run: |
-          node tools/rfc-render/inject-table.js README.md
+        run: npm --prefix tools/rfc-render ci
+      - name: render tables
+        run: npm --prefix tools/rfc-render run render:all
       - name: Create Pull Request
         id: pr
         uses: peter-evans/create-pull-request@v5

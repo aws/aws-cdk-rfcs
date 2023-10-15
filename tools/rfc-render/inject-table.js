@@ -1,36 +1,49 @@
+#!/usr/bin/env node
+
 const fs = require('fs').promises;
 const path = require('path');
 const { render } = require('./render-rfc-table');
+const { parseArgs } = require('util');
 
 async function main() {
+  const { values: { status = undefined }, positionals: [readme = 'README.md'] } = parseArgs({
+    options: {
+      status: {
+        type: 'string',
+        short: 's',
+        multiple: true,
+      }
+    },
+    strict: true,
+    allowPositionals: true,
+  })
 
-  if (!process.argv[2]) {
-    throw new Error(`Usage: ${process.argv[1]} README.md`);
-  }
-  
-  const readmeFile = path.resolve(process.argv[2]);
-  if (!readmeFile) {
-    throw new Error(`usage: ${process.argv[1]} README.md`);
-  }
+  const readmeFile = path.resolve(readme);
+  const statusList = status?.map(s => s.startsWith('status/') ? s : `status/${s}`);
 
-  console.error(`reading ${readmeFile}`);
+  console.info(`Injecting '${readmeFile}' with status: ${statusList ? statusList.join(', ') : '<all>'}`);
   const text = (await fs.readFile(readmeFile, 'utf-8'));
   const lines = text.split('\n');
+
 
   const begin = lines.indexOf('<!--BEGIN_TABLE-->');
   const end = lines.indexOf('<!--END_TABLE-->');
 
   if (begin === -1 || end === -1) {
-    throw new Error('unable to find begin/end markers in readme');
+    throw new Error(`unable to find begin/end markers in file ${readmeFile}`);
   }
 
-  const final = [ ...lines.slice(0, begin + 1), ...(await render()), ...lines.slice(end) ];
+  const final = [...lines.slice(0, begin + 1), ...(await render(statusList, Boolean(statusList))), ...lines.slice(end)];
 
-  console.error(`writing ${readmeFile}`);
+  console.error(`Writing ${readmeFile}`);
   await fs.writeFile(readmeFile, final.join('\n'));
+  console.error(`Done`);
 }
 
 main().catch(e => {
+  console.error();
   console.error(e);
-  process.exit(1);
+  console.error();
+  console.error(`Usage:\n\t${path.relative(process.cwd(), process.argv[1])} README.md [--status <STATUS_1>] [--status <STATUS_2>] [...]`)
+  process.exitCode = 1;
 });
