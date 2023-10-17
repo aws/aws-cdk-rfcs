@@ -17,6 +17,7 @@ future state of the libraries and to discover projects for contribution.
 [456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0456-elasticache-l2.md)||👷 implementing
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)||📆 planning
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👍 approved
+[473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[EventBridge Pipes L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)|[@mrgrain](https://github.com/mrgrain)|⏰ final comments
 [8](https://github.com/aws/aws-cdk-rfcs/issues/8)|[Project Structure Guidelines](https://github.com/aws/aws-cdk-rfcs/issues/8)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✍️ review
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||✍️ review
@@ -105,7 +106,6 @@ future state of the libraries and to discover projects for contribution.
 [469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||💡 proposed
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||💡 proposed
-[473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[EventBridge Pipes L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)|[@mrgrain](https://github.com/mrgrain)|💡 proposed
 [481](https://github.com/aws/aws-cdk-rfcs/issues/481)|[Add L2 constructs for Amazon Redshift Serverless](https://github.com/aws/aws-cdk-rfcs/issues/481)||💡 proposed
 [483](https://github.com/aws/aws-cdk-rfcs/issues/483)|[AppFlow L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/483)|[@iliapolo](https://github.com/iliapolo)|💡 proposed
 [487](https://github.com/aws/aws-cdk-rfcs/issues/487)|[New L2 Construct for Step Functions Map State in Distributed Mode](https://github.com/aws/aws-cdk-rfcs/issues/487)||💡 proposed
