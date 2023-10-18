@@ -11,12 +11,11 @@ async function issuesGroupedByStatus(filterStatus = undefined) {
   const files = await fs.readdir(path.join(__dirname, '..', '..', 'text'));
 
   const octo = new Octokit({
-    auth: process.env.GITHUB_TOKEN
+    auth: process.env.PROJEN_GITHUB_TOKEN || process.env.GITHUB_TOKEN
   });
 
   const issueByStatus = {};
 
-  // repo:aws/aws-cdk-rfcs is:issue label:status/stale,status/done
   const labelQuery = filterStatus ? `label:${filterStatus.join(',')}` : '';
   const fullQuery = `repo:aws/aws-cdk-rfcs is:issue ${labelQuery}`;
   console.log(fullQuery);
