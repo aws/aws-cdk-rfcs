@@ -17,6 +17,9 @@ on:
 jobs:
   render:
     runs-on: ubuntu-latest
+    concurrency:
+      group: update-table
+      cancel-in-progress: true
     permissions:
       pull-requests: write
     steps:
