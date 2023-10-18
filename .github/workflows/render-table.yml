@@ -30,6 +30,8 @@ jobs:
       - name: install dependencies
         run: npm --prefix tools/rfc-render ci
       - name: render tables
+        env:
+          PROJEN_GITHUB_TOKEN: ${{ secrets.PROJEN_GITHUB_TOKEN }}
         run: npm --prefix tools/rfc-render run render:all
       - name: Create Pull Request
         id: pr
