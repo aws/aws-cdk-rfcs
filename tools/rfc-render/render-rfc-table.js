@@ -13,8 +13,8 @@ async function render(renderStatus = undefined, groupByStatus = true) {
   lines.push('---|-----|-----|------');
 
   if (groupByStatus) {
-    for (const statusGroup of Object.values(issuesByStatus)) {
-      for (const row of statusGroup.sort(byNumber)) {
+    for (const statusGroup of (renderStatus || Object.keys(issuesByStatus))) {
+      for (const row of issuesByStatus[statusGroup]?.sort(byNumber) || []) {
         lines.push(renderRow(row));
       }
     }
