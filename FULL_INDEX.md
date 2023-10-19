@@ -159,7 +159,7 @@
 [497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0497-glue-l2-construct.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|✅ done
 [499](https://github.com/aws/aws-cdk-rfcs/issues/499)|[AppConfig L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0499-appconfig-constructs.md)||💡 proposed
 [501](https://github.com/aws/aws-cdk-rfcs/issues/501)|[L2 Constructs for Lattice Service](https://github.com/aws/aws-cdk-rfcs/issues/501)||💡 proposed
-[502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/502)||💡 proposed
+[502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/502)||⏰ final comments
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👍 approved
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|✅ done
