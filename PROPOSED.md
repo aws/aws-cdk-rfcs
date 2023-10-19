@@ -99,7 +99,6 @@
 [495](https://github.com/aws/aws-cdk-rfcs/issues/495)|[AWS IAM Identity Store L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/495)||💡 proposed
 [499](https://github.com/aws/aws-cdk-rfcs/issues/499)|[AppConfig L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0499-appconfig-constructs.md)||💡 proposed
 [501](https://github.com/aws/aws-cdk-rfcs/issues/501)|[L2 Constructs for Lattice Service](https://github.com/aws/aws-cdk-rfcs/issues/501)||💡 proposed
-[502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/502)||💡 proposed
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||💡 proposed
 [521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
@@ -109,4 +108,5 @@
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)||✍️ review
 [419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)||✍️ review
 [473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[EventBridge Pipes L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/473)|[@mrgrain](https://github.com/mrgrain)|⏰ final comments
+[502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/502)||⏰ final comments
 <!--END_TABLE-->
