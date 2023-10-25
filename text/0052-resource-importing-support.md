@@ -119,7 +119,7 @@ error, propagates it back to the user.
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
-signed-off by the API bar raiser (the `api-approved` label was applied to the
+signed-off by the API bar raiser (the `status/api-approved` label was applied to the
 RFC pull request):
 
 ```

@@ -1,17 +1,21 @@
 {
-  "name": "rfc-render",
+  "name": "@cdklabs/rfc-render",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "render:all": "npm run render:readme && npm run render:full && npm run render:proposed && npm run render:accepted && npm run render:closed",
+    "render:readme": "node inject-table.js ../../README.md -s unknown -s implementing -s planning -s approved -s final-comment-period -s api-approved -s review",
+    "render:full": "node inject-table.js ../../FULL_INDEX.md",
+    "render:proposed": "node inject-table.js ../../PROPOSED.md -s proposed -s review -s api-approved -s final-comment-period",
+    "render:accepted": "node inject-table.js ../../ACCEPTED.md -s approved -s planning -s implementing -s done",
+    "render:closed": "node inject-table.js ../../CLOSED.md -s rejected -s stale"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "AWS",
+  "private": true,
+  "license": "Apache-2.0",
   "dependencies": {
-    "@actions/core": "^1.9.1",
-    "@actions/github": "^2.1.0",
-    "@octokit/rest": "^16.38.3"
+    "@octokit/rest": "^20.0.2"
   }
 }

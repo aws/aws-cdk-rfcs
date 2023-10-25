@@ -232,9 +232,9 @@ import { assertions } from 'aws-cdk-lib';
 ```
 
 Read more about `aws-cdk-lib` at
-<https://github.com/aws/aws-cdk/tree/master/packages/aws-cdk-lib#readme> and about the
+<https://github.com/aws/aws-cdk/tree/main/packages/aws-cdk-lib#readme> and about the
 CDK module lifecycle at
-<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0107-construct-library-module-lifecycle.md>.
+<https://github.com/aws/aws-cdk-rfcs/blob/main/text/0107-construct-library-module-lifecycle.md>.
 
 ## Internal FAQ
 

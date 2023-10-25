@@ -36,6 +36,11 @@ pull_request_rules:
       - "#commented-reviews-by=0"
   - name: remove stale reviews
     actions:
-      dismiss_reviews: {}
+      dismiss_reviews:
+        approved: true
     conditions:
-      - base=master
+      - author!=aws-cdk-automation
+      - label!=auto-approve
+      - base=main
+      - -merged
+      - -closed

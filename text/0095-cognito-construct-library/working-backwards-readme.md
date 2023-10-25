@@ -321,7 +321,7 @@ to read more about user pool workflows using lambda triggers, and details around
 each trigger.
 
 Check out the
-[documentation](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-cognito/lib/user-pool.ts#L148)
+[documentation](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-cognito/lib/user-pool.ts#L148)
 to find the list of triggers supported by the CDK.
 
 Code sample:
