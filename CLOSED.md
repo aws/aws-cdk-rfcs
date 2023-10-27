@@ -30,6 +30,8 @@
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||🤷 stale
 [67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||🤷 stale
 [69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[One-off "job" Stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||🤷 stale
+[74](https://github.com/aws/aws-cdk-rfcs/issues/74)|[Common API for Resources with Web Addresses](https://github.com/aws/aws-cdk-rfcs/issues/74)||🤷 stale
+[78](https://github.com/aws/aws-cdk-rfcs/issues/78)|[Feature proposal: Workspaces](https://github.com/aws/aws-cdk-rfcs/issues/78)||🤷 stale
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||🤷 stale
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||🤷 stale
 [380](https://github.com/aws/aws-cdk-rfcs/issues/380)|[Remove Node.js as an installed pre-requisite for the jsii runtime](https://github.com/aws/aws-cdk-rfcs/issues/380)||🤷 stale
