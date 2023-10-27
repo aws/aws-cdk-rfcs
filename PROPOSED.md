@@ -21,10 +21,6 @@
 [86](https://github.com/aws/aws-cdk-rfcs/issues/86)|[AWS Account Alias Resource](https://github.com/aws/aws-cdk-rfcs/issues/86)||💡 proposed
 [159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||💡 proposed
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||💡 proposed
-[229](https://github.com/aws/aws-cdk-rfcs/issues/229)|[Construct library pattern for metrics](https://github.com/aws/aws-cdk-rfcs/issues/229)||💡 proposed
-[230](https://github.com/aws/aws-cdk-rfcs/issues/230)|[Construct library pattern for grants](https://github.com/aws/aws-cdk-rfcs/issues/230)||💡 proposed
-[231](https://github.com/aws/aws-cdk-rfcs/issues/231)|[Construct library pattern for resources that use a VPC](https://github.com/aws/aws-cdk-rfcs/issues/231)||💡 proposed
-[232](https://github.com/aws/aws-cdk-rfcs/issues/232)|[Construct library pattern for resources that need IAM roles](https://github.com/aws/aws-cdk-rfcs/issues/232)||💡 proposed
 [242](https://github.com/aws/aws-cdk-rfcs/issues/242)|[Bootstrap stacks as CDK apps](https://github.com/aws/aws-cdk-rfcs/issues/242)||💡 proposed
 [244](https://github.com/aws/aws-cdk-rfcs/issues/244)|[Migration path for EKS Developer Preview](https://github.com/aws/aws-cdk-rfcs/pull/245)||💡 proposed
 [247](https://github.com/aws/aws-cdk-rfcs/issues/247)|[CDK Common Stored Data Type Model](https://github.com/aws/aws-cdk-rfcs/issues/247)||💡 proposed
