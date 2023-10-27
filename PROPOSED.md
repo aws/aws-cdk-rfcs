@@ -19,8 +19,6 @@
 [82](https://github.com/aws/aws-cdk-rfcs/issues/82)|[Weak references](https://github.com/aws/aws-cdk-rfcs/issues/82)||💡 proposed
 [83](https://github.com/aws/aws-cdk-rfcs/issues/83)|[Global Name Prefix](https://github.com/aws/aws-cdk-rfcs/issues/83)||💡 proposed
 [86](https://github.com/aws/aws-cdk-rfcs/issues/86)|[AWS Account Alias Resource](https://github.com/aws/aws-cdk-rfcs/issues/86)||💡 proposed
-[139](https://github.com/aws/aws-cdk-rfcs/issues/139)|["fromLookup" for additional resources](https://github.com/aws/aws-cdk-rfcs/issues/139)||💡 proposed
-[158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Implement Custom Resources in the AWS Construct Library as CFN Registry Resource Types](https://github.com/aws/aws-cdk-rfcs/pull/170)||💡 proposed
 [159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||💡 proposed
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||💡 proposed
 [180](https://github.com/aws/aws-cdk-rfcs/issues/180)|[CustomResources: Allow usage across accounts](https://github.com/aws/aws-cdk-rfcs/issues/180)||💡 proposed
