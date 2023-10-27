@@ -30,30 +30,30 @@
 [27](https://github.com/aws/aws-cdk-rfcs/issues/27)|[200 resource limit tools & guidance](https://github.com/aws/aws-cdk-rfcs/issues/27)||🤷 stale
 [30](https://github.com/aws/aws-cdk-rfcs/issues/30)|[Improve synthesized template output](https://github.com/aws/aws-cdk-rfcs/issues/30)||🤷 stale
 [31](https://github.com/aws/aws-cdk-rfcs/issues/31)|[Integration tests](https://github.com/aws/aws-cdk-rfcs/issues/31)||✅ done
-[32](https://github.com/aws/aws-cdk-rfcs/issues/32)|[App-centric operational experience](https://github.com/aws/aws-cdk-rfcs/issues/32)||💡 proposed
+[32](https://github.com/aws/aws-cdk-rfcs/issues/32)|[App-centric operational experience](https://github.com/aws/aws-cdk-rfcs/issues/32)||🤷 stale
 [34](https://github.com/aws/aws-cdk-rfcs/issues/34)|[Third-party construct ecosystem](https://github.com/aws/aws-cdk-rfcs/issues/34)||✅ done
 [35](https://github.com/aws/aws-cdk-rfcs/issues/35)|[Publish construct library guidelines](https://github.com/aws/aws-cdk-rfcs/issues/35)||✅ done
 [36](https://github.com/aws/aws-cdk-rfcs/issues/36)|[Constructs Programming Model](https://github.com/aws/aws-cdk-rfcs/issues/36)||✅ done
 [37](https://github.com/aws/aws-cdk-rfcs/issues/37)|[Release from a "release" branch](https://github.com/aws/aws-cdk-rfcs/issues/37)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|✅ done
-[39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0039-reduce-module-size.md)||💡 proposed
-[40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||💡 proposed
-[48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)||💡 proposed
+[39](https://github.com/aws/aws-cdk-rfcs/issues/39)|[Release public artifacts (lambda layers for custom resources, docker images)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0039-reduce-module-size.md)||✅ done
+[40](https://github.com/aws/aws-cdk-rfcs/issues/40)|[Stack traces across language boundaries](https://github.com/aws/aws-cdk-rfcs/issues/40)||🤷 stale
+[48](https://github.com/aws/aws-cdk-rfcs/issues/48)|[Faster builds](https://github.com/aws/aws-cdk-rfcs/issues/48)||🤷 stale
 [49](https://github.com/aws/aws-cdk-rfcs/issues/49)|[CI/CD for CDK apps](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0049-continuous-delivery.md)|[@rix0rrr](https://github.com/rix0rrr)|✅ done
-[51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||💡 proposed
+[51](https://github.com/aws/aws-cdk-rfcs/issues/51)|[Standardize security groups](https://github.com/aws/aws-cdk-rfcs/issues/51)||🤷 stale
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0052-resource-importing-support.md)||✅ done
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0055-feature-flags.md)||✅ done
-[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||💡 proposed
+[58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||🤷 stale
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
-[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0063-precreated-roles.md)||💡 proposed
+[63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0063-precreated-roles.md)||✅ done
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|💡 proposed
-[65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||💡 proposed
+[65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||🤷 stale
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||✅ done
 [67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||🤷 stale
-[69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[One-off "job" Stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||💡 proposed
+[69](https://github.com/aws/aws-cdk-rfcs/issues/69)|[One-off "job" Stacks ("auto destruct")](https://github.com/aws/aws-cdk-rfcs/issues/69)||🤷 stale
 [70](https://github.com/aws/aws-cdk-rfcs/issues/70)|[Cost Estimation Tools](https://github.com/aws/aws-cdk-rfcs/issues/70)||💡 proposed
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||✅ done
 [72](https://github.com/aws/aws-cdk-rfcs/issues/72)|[Stack Policy](https://github.com/aws/aws-cdk-rfcs/issues/72)||💡 proposed
-[73](https://github.com/aws/aws-cdk-rfcs/issues/73)|[AWS Resource Model](https://github.com/aws/aws-cdk-rfcs/issues/73)||💡 proposed
+[73](https://github.com/aws/aws-cdk-rfcs/issues/73)|[AWS Resource Model](https://github.com/aws/aws-cdk-rfcs/issues/73)||✅ done
 [74](https://github.com/aws/aws-cdk-rfcs/issues/74)|[Common API for Resources with Web Addresses](https://github.com/aws/aws-cdk-rfcs/issues/74)||💡 proposed
 [77](https://github.com/aws/aws-cdk-rfcs/issues/77)|[CloudFormation Registry Support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0077-import-external-resources.md)||✅ done
 [78](https://github.com/aws/aws-cdk-rfcs/issues/78)|[Feature proposal: Workspaces](https://github.com/aws/aws-cdk-rfcs/issues/78)||💡 proposed
