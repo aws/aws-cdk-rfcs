@@ -114,7 +114,7 @@
 [348](https://github.com/aws/aws-cdk-rfcs/issues/348)|[CloudFormationController - refactor CloudFormation stacks](https://github.com/aws/aws-cdk-rfcs/issues/348)||💡 proposed
 [353](https://github.com/aws/aws-cdk-rfcs/issues/353)|[Constructs for all public CloudFormation resources and modules](https://github.com/aws/aws-cdk-rfcs/blob/main/text/353-cfn-registry-constructs.md)||✅ done
 [359](https://github.com/aws/aws-cdk-rfcs/issues/359)|[Construct Hub Deny List](https://github.com/aws/aws-cdk-rfcs/blob/main/text/359-construct-hub-deny-list.md)||✅ done
-[362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)||✍️ review
+[362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)|[@madeline-k](https://github.com/madeline-k)|✍️ review
 [370](https://github.com/aws/aws-cdk-rfcs/issues/370)|[CLI deploy with change set review confirmation](https://github.com/aws/aws-cdk-rfcs/issues/370)||💡 proposed
 [374](https://github.com/aws/aws-cdk-rfcs/issues/374)|[The jsii compiler to follow TypeScript versioning](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0374-jsii-ts-version.md)||✅ done
 [375](https://github.com/aws/aws-cdk-rfcs/issues/375)|[Support Encode Properties for CloudFormation CustomResource](https://github.com/aws/aws-cdk-rfcs/issues/375)||💡 proposed
@@ -125,7 +125,7 @@
 [400](https://github.com/aws/aws-cdk-rfcs/issues/400)|[RUM AppMonitor L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/400)||💡 proposed
 [402](https://github.com/aws/aws-cdk-rfcs/issues/402)|[Glue DataBrew L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/402)||💡 proposed
 [418](https://github.com/aws/aws-cdk-rfcs/issues/418)|[CDK Operator CLI](https://github.com/aws/aws-cdk-rfcs/issues/418)||🤷 stale
-[419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)||✍️ review
+[419](https://github.com/aws/aws-cdk-rfcs/issues/419)|[CDK environment setup for platform/system administrators](https://github.com/aws/aws-cdk-rfcs/issues/419)|[@rix0rrr](https://github.com/rix0rrr)|✍️ review
 [423](https://github.com/aws/aws-cdk-rfcs/issues/423)|[IoT Sitewise L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/423)||💡 proposed
 [426](https://github.com/aws/aws-cdk-rfcs/issues/426)|[AppConfig L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/426)||💡 proposed
 [428](https://github.com/aws/aws-cdk-rfcs/issues/428)|[Amazon CloudWatch Evidently L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/428)||💡 proposed
