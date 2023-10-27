@@ -78,7 +78,7 @@ const (
 )
 ```
 
-*_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/master/service/ecs/api.go#L20410-L20416) handles
+*_NOTE_*: This would be consistent with how the [aws-sdk-go](https://github.com/aws/aws-sdk-go/blob/main/service/ecs/api.go#L20410-L20416) handles
 enums.
 
 ### Possible Extensions
@@ -189,7 +189,7 @@ type iSecurityGroup struct {
 
 ### JSII Datatype Interfaces (Structs)
 
-In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L879-L888) attribute
+In jsii, the InterfaceType has a [datatype field](https://github.com/aws/jsii/blob/main/packages/%40jsii/spec/lib/assembly.ts#L879-L888) attribute
 that indicates that the interface only contains readonly properties. While this does corresponds directly to a Go struct, we would likely need to
 generate both a Go interface that contains getter methods that correspond to each property as well as a Go struct that implements that interface. This
 is in order to support subtyping, as the interface is typically what is passed as an argument into other functions, as well as to ensure forward
@@ -204,7 +204,7 @@ property that would be implemented by the corresponding struct (jsii datatype pr
 generated). Since Go does not allow a struct to have exported members with the same name as an interface method, we would have to prefix the interface
 methods; the recommendation here is to use a `Get` prefix.
 
-[Example](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596):
+[Example](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/aws-ecs/lib/container-definition.ts#L596):
 
 ```ts
 export interface HealthCheck {
@@ -746,7 +746,7 @@ Go, which is not an object-oriented language. While custom structs, which can be
 methods", can be used to encapsulate object-like behavior in Go, subtyping on these custom structs is not possible. In order to simulate subtyping, we
 would need to generate an interface in addition to a concrete struct for each jsii class.
 
-The jsii [ClassType](https://github.com/aws/jsii/blob/master/packages/%40jsii/spec/lib/assembly.ts#L803) provides information on whether a
+The jsii [ClassType](https://github.com/aws/jsii/blob/main/packages/%40jsii/spec/lib/assembly.ts#L803) provides information on whether a
 class is abstract, whether it extends another class, and whether it implements other interfaces. We will discuss each case in turn.
 
 ### Case 1: Simple class

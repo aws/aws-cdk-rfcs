@@ -655,7 +655,7 @@ For non-AWS service destinations, use `HttpDestination`.
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
-signed-off by the API bar raiser (the `api-approved` label was applied to the
+signed-off by the API bar raiser (the `status/api-approved` label was applied to the
 RFC pull request):
 
 - [X] Signed-off by API Bar Raiser @rix0rrr

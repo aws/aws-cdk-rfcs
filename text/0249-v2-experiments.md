@@ -361,5 +361,5 @@ These are the goals of this RFC, in order from most to least important:
 ### Appendix B: Previous RFC
 
 This is the second version of this RFC. A previous version was reviewed and approved, and can be found here:
-<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.expired.md>.
+<https://github.com/aws/aws-cdk-rfcs/blob/main/text/0249-v2-experiments.expired.md>.
 The original version is more implementation- and trade-off focused, whereas this RFC focused on the working-backwards artifacts.

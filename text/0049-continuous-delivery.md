@@ -118,7 +118,7 @@ bootstrap => source => build => synthesis => mutate => publish => deploy
 3. **build + synthesis**: compiles the CDK app code into an executable program
    (user-defined) and invokes the compiled executable through `cdk synth` to
    produce a
-   [cloud assembly](https://github.com/aws/aws-cdk/blob/master/design/cloud-assembly.md)
+   [cloud assembly](https://github.com/aws/aws-cdk/blob/main/design/cloud-assembly.md)
    from the app. The cloud assembly includes a CloudFormation template for each
    stack and asset sources (docker images, s3 files, etc) that must be packaged
    and published to the asset store in each environment that consumes them.
