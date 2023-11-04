@@ -51,5 +51,6 @@
 [521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/521)||💡 proposed
 [523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||💡 proposed
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||💡 proposed
+[579](https://github.com/aws/aws-cdk-rfcs/issues/579)|[Docker-less dependency resolution (CDK \ SAM)](https://github.com/aws/aws-cdk-rfcs/issues/579)||💡 proposed
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)|[@madeline-k](https://github.com/madeline-k)|✍️ review
 <!--END_TABLE-->
