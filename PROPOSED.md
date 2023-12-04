@@ -56,5 +56,6 @@
 [583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||💡 proposed
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||💡 proposed
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||💡 proposed
+[587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||💡 proposed
 [362](https://github.com/aws/aws-cdk-rfcs/issues/362)|[Construct Library for Contributor Insights Rules](https://github.com/aws/aws-cdk-rfcs/issues/362)|[@madeline-k](https://github.com/madeline-k)|✍️ review
 <!--END_TABLE-->
