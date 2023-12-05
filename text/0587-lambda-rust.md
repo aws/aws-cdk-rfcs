@@ -20,8 +20,6 @@ To use this module you will either need to have `cargo-lambda` installed or Dock
 
 See [Local Bundling/Docker Bundling](#local-bundling) for more information.
 
-This module also required that `aarch64-unknown-linux-gnu` toolchain has been installed.
-
 #### Rust Function
 
 By default, the construct will use directory where cdk was invoked as directory where Cargo file is located.
@@ -42,9 +40,8 @@ new RustFunction(this, "my_function");
 Alternatively, `bin` and `directory` properties can be specified to override this default behavior.
 
 ```typescript
-new RustFunction(this, "my-function", {
+new RustFunction(this, "my_function", {
     directory: '/path/to/directory/with/Cargo.toml',
-    // Optional
     bin: 'my_function',
 });
 ```
@@ -90,7 +87,7 @@ new RustFunction(this, 'SecondFunction', {
 
 #### Customizing the underlying Lambda function
 
-All properties of lambda.Function can be used to customize the underlying lambda.Function.
+All properties of `lambda.Function` can be used to customize the underlying `lambda.Function`.
 
 See also the [AWS Lambda construct library](https://github.com/aws/aws-cdk/tree/main/packages/aws-cdk-lib/aws-lambda).
 
