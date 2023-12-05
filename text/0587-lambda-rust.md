@@ -18,7 +18,7 @@ The `RustFunction` construct creates a Lambda function with automatic building a
 
 To use this module you will either need to have `cargo-lambda` installed or Docker installed.
 
-See Local Bundling/Docker Bundling for more information.
+See [Local Bundling/Docker Bundling](#local-bundling) for more information.
 
 This module also required that `aarch64-unknown-linux-gnu` toolchain has been installed.
 
@@ -248,9 +248,7 @@ every development steps will be handle by this new module.
 
 Rust Lambda function L2 support has been requested by our users for a long time.
 
-Today, building, optimizing, packaging and deploying  an AWS Lambda Rust function is not a straightforward task and
-it can be complex for developers to handle this process when defining a CI/CD pipeline.
-It require multiple steps and optimization to build and package a function to the targeted system architecture binary and make it ready for depoloyment.
+Today, building, optimizing, packaging and deploying  an AWS Lambda Rust function is not a straightforward task and it can be complex for developers to handle this process when defining a CI/CD pipeline. It require multiple steps and optimization to build and package a function to the targeted system architecture binary and make it ready for depoloyment.
 
 This module main objective is to simplify AWS CDK integration with Rust projects and improve customer experience when using both technologies.
 
