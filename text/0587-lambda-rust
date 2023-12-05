@@ -256,50 +256,35 @@ This module main objective is to simplify AWS CDK integration with Rust projects
 
 ### Why should we _not_ do this?
 
-> Is there a way to address this use case with the current product? What are the
-> downsides of implementing this feature?
+We currently offer 1 solution to deploy AWS Lambda Rust function,
+
+- By using the default AWS Lamdba Function L2 construct and by executing build and package phase independentely of the CDK process.
 
 ### What is the technical solution (design) of this feature?
 
-> Briefly describe the high-level design approach for implementing this feature.
->
-> As appropriate, you can add an appendix with a more detailed design document.
->
-> This is a good place to reference a prototype or proof of concept, which is
-> highly recommended for most RFCs.
+The technical solution (design) of this feature follows the
+[CDK design guidelines](https://github.com/aws/aws-cdk/blob/main/docs/DESIGN_GUIDELINES.md) and will inherit high level guidlines used by similar construct
+
+- [Amazon Lambda Node.js](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
+- [Amazon Lambda Go](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-lambda-go-alpha-readme.html)
 
 ### Is this a breaking change?
 
-> If the answer is no. Otherwise:
->
-> Describe what ways did you consider to deliver this without breaking users?
->
-> Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
-> changes and the migration path.
+This is a new feature and therefore not a breaking change.
 
 ### What alternative solutions did you consider?
 
 > Briefly describe alternative approaches that you considered. If there are
 > hairy details, include them in an appendix.
 
-### What are the drawbacks of this solution?
-
-> Describe any problems/risks that can be introduced if we implement this RFC.
-
 ### What is the high-level project plan?
 
-> Describe your plan on how to deliver this feature from prototyping to GA.
-> Especially think about how to "bake" it in the open and get constant feedback
-> from users before you stabilize the APIs.
->
-> If you have a project board with your implementation plan, this is a good
-> place to link to it.
-
-### Are there any open issues that need to be addressed later?
-
-> Describe any major open issues that this RFC did not take into account. Once
-> the RFC is approved, create GitHub issues for these issues and update this RFC
-> of the project board with these issue IDs.
+- [ ] Gather feedback on the RFC
+- [ ] Get bar raiser to sign off on RFC
+- [ ] Implement the constructs in a separate repository
+- [ ] Publish the construct library to alpha
+- [ ] Iterate and respond to issues
+- [ ] Move the construct library to the core library after stabilized
 
 ## Appendix
 
