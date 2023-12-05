@@ -1,39 +1,219 @@
-# {RFC_TITLE}
+# AWS Lambda Rust function L2 Construct
 
-* **Original Author(s):**: @{AUTHOR}
-* **Tracking Issue**: #{TRACKING_ISSUE}
+* **Original Author(s):**: @SteveHouel
+* **Tracking Issue**: #587
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
-> Write one sentence which is a brief description of the feature. It should describe:
->
-> * What is the user pain we are solving?
-> * How does it impact users?
+This library provides constructs and tooling to simplify Rust  function developement, packaging process and accelerate your deployment to AWS Lambda.
 
 ## Working Backwards
 
-> This section should contain one or more "artifacts from the future", as if the
-> feature was already released and we are publishing its CHANGELOG, README,
-> CONTRIBUTING.md and optionally a PRESS RELEASE. This is the most important
-> section of your RFC. It's a powerful thought exercise which will challenge you
-> to truly think about this feature from a user's point of view.
->
-> Choose *one or more* of the options below:
->
-> * **CHANGELOG**: Write the changelog entry for this feature in conventional
->   form (e.g. `feat(eks): cluster tags`). If this change includes a breaking
->   change, include a `BREAKING CHANGE` clause with information on how to
->   migrate. If migration is complicated, refer to a fictional GitHub issue and
->   add its contents here.
->
-> * **README**: If this is a new feature, write the README section which
->   describes this new feature. It should describe the feature and walk users
->   through usage examples and description of the various options and behavior.
->
-> * **PRESS RELEASE**: If this is a major feature (~6 months of work), write the
->   press release which announces this feature. The press release is a single
->   page that includes 7 paragraphs: (1) summary, (2) problem, (3) solution, (4)
->   leader quote, (5) user experience, (6) customer testimonial and (7) one
->   sentence call to action.
+The following is ReadMe for AWS Lambda Rust function construct.
+
+### Amazon Lambda Rust Library
+
+This library provides constructs for Rust Lambda functions.
+
+The `RustFunction` construct creates a Lambda function with automatic building and bundling of Rust code.
+
+To use this module you will either need to have `cargo-lambda` installed or Docker installed.
+
+See Local Bundling/Docker Bundling for more information.
+
+This module also required that `aarch64-unknown-linux-gnu` toolchain has been installed.
+
+#### Rust Function
+
+By default, the construct will use directory where cdk was invoked as directory where Cargo file is located.
+
+```plaintext
+.
+├── Cargo.toml
+└── src
+    └── main.rs
+```
+
+It will use the package name as defined in the main `Cargo.toml`:
+
+```typescript
+new RustFunction(this, "my_function");
+```
+
+Alternatively, `bin` and `directory` properties can be specified to override this default behavior.
+
+```typescript
+new RustFunction(this, "my-function", {
+    directory: '/path/to/directory/with/Cargo.toml',
+    // Optional
+    bin: 'my_function',
+});
+```
+
+For more complex project structure combining multiple Rust Lambda function, the construct offer the ability to use [Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) defined in your Cargo project.
+
+Given a sample project structure:
+
+```plaintext
+.
+├── Cargo.toml
+├── my_lambda_1
+│   ├── Cargo.toml
+│   └── src
+│       └── main.rs
+└── my_lambda_2
+    ├── Cargo.toml
+    └── src
+        └── main.rs
+```
+
+And with a given `Cargo.toml`:
+
+```toml
+[workspace]
+members = [
+    "my_lambda_1",
+    "my_lambda_2"
+]
+```
+
+Rust functions can be declared using `package` properties:
+
+```typescript
+new RustFunction(this, 'FirstFunction', {
+    package: 'my_lambda_1',
+});
+
+new RustFunction(this, 'SecondFunction', {
+    package: 'my_lambda_2',
+});
+```
+
+#### Customizing the underlying Lambda function
+
+All properties of lambda.Function can be used to customize the underlying lambda.Function.
+
+See also the [AWS Lambda construct library](https://github.com/aws/aws-cdk/tree/main/packages/aws-cdk-lib/aws-lambda).
+
+#### Local Bundling
+
+If `cargo-lambda` is available it will be used to bundle your code in your environment. Otherwise, bundling will happen in a Lambda compatible
+Docker container with the Docker platform based on the target architecture of the Lambda function and with all required tools.
+
+`cargo-lambda` can be installed with:
+
+```bash
+cargo install cargo-lambda
+```
+
+Or for macOS and Linux users, you can also use Homebrew:
+
+```bash
+brew tap cargo-lambda/cargo-lambda
+brew install cargo-lambda
+```
+
+By default, cargo-lambda compiles the code for Linux ARM architectures, you can compile for X86-64 architectures by providing the right property:
+
+```typescript
+new RustFunction(this, 'my_function', {
+  architecture: lambda.Architecture.X86-64
+});
+```
+
+Toolchain `aarch64-unknown-linux-gnu` must be installed to allow cargo-lambda to build for **Linux ARM** target.
+
+To force bundling in a Docker container even if `cargo-lambda` is available in your environment, set `bundling.forceDockerBundling` to true.
+
+This is useful if your function relies on Rust crates that should be installed in a Lambda compatible environment.
+This is usually the case with modules using native dependencies or specific processor architecture.
+
+#### Customizing Docker bundling
+
+Use `bundling.environment` to define environments variables when `cargo lambda` runs:
+
+```typescript
+new RustFunction(this, 'my_function', {
+  bundling: {
+    environment: {
+      CARGO_LAMBDA_COMPILER: 'cargo',
+    },
+  },
+});
+```
+
+Use the `bundling.buildArgs` to pass build arguments to `cargo lambda`:
+
+```typescript
+new go.RustFunction(this, 'my_function', {
+  bundling: {
+    buildArgs: ['--all-features'],
+  },
+});
+```
+
+Use the `bundling.dockerImage` to use a custom Docker bundling image:
+
+```typescript
+new go.RustFunction(this, 'my_function', {
+  bundling: {
+    dockerImage: DockerImage.fromBuild('/path/to/Dockerfile'),
+  },
+});
+```
+
+You can set additional Docker options to configure the build environment:
+
+```typescript
+new RustFunction(this, 'my_function', {
+ bundling: {
+     network: 'host',
+     securityOpt: 'no-new-privileges',
+     user: 'user:group',
+     volumesFrom: ['777f7dc92da7'],
+     volumes: [{ hostPath: '/host-path', containerPath: '/container-path' }],
+  },
+});
+```
+
+#### Command hooks
+
+It is possible to run additional commands by specifying the commandHooks prop:
+
+```typescript
+// This example only available in TypeScript
+// Run additional props via `commandHooks`
+new RustFunction(this, 'my_function_with_commands', {
+  bundling: {
+    commandHooks: {
+      beforeBundling(inputDir: string, outputDir: string): string[] {
+        return [
+          `echo hello > ${inputDir}/a.txt`,
+          `cp ${inputDir}/a.txt ${outputDir}`,
+        ];
+      },
+      afterBundling(inputDir: string, outputDir: string): string[] {
+        return [`cp ${inputDir}/b.txt ${outputDir}/txt`];
+      },
+      beforeInstall() {
+        return [];
+      },
+      // ...
+    },
+    // ...
+  },
+});
+```
+
+The following hooks are available:
+
+- **beforeBundling**: runs before all bundling commands
+- **beforeInstall**: runs before Cargo crates installation
+- **afterBundling**: runs after all bundling commands
+
+They all receive the directory containing the lock file (inputDir) and the directory where the bundled asset will be output (outputDir).
+They must return an array of commands to run. Commands are chained with &&.
+
+The commands will run in the environment in which bundling occurs: inside the container for Docker bundling or on the host OS for local bundling.
 
 ---
 
@@ -47,35 +227,32 @@ RFC pull request):
 
 ## Public FAQ
 
-> This section should include answers to questions readers will likely ask about
-> this release. Similar to the "working backwards", this section should be
-> written in a language as if the feature is now released.
->
-> The template includes a some common questions, feel free to add any questions
-> that might be relevant to this feature or omit questions that you feel are not
-> applicable.
-
 ### What are we launching today?
 
-> What exactly are we launching? Is this a new feature in an existing module? A
-> new module? A whole framework? A change in the CLI?
+We are launching L2 support for Rust Lambda function.
+
+This module has been create to help customers in all their development phases to build,
+package and deploy Lambda function when using Rust programming language.
 
 ### Why should I use this feature?
 
-> Describe use cases that are addressed by this feature.
+You should use this feature if,
+
+* You will build a new Rust project based on AWS Lambda function.
+Not need anymore to execute independentely every lifecycle steps of your Rust project. From crates install, code build and package,
+every development steps will be handle by this new module.
 
 ## Internal FAQ
 
-> The goal of this section is to help decide if this RFC should be implemented.
-> It should include answers to questions that the team is likely ask. Contrary
-> to the rest of the RFC, answers should be written "from the present" and
-> likely discuss design approach, implementation plans, alternative considered
-> and other considerations that will help decide if this RFC should be
-> implemented.
-
 ### Why are we doing this?
 
-> What is the motivation for this change?
+Rust Lambda function L2 support has been requested by our users for a long time.
+
+Today, building, optimizing, packaging and deploying  an AWS Lambda Rust function is not a straightforward task and
+it can be complex for developers to handle this process when defining a CI/CD pipeline.
+It require multiple steps and optimization to build and package a function to the targeted system architecture binary and make it ready for depoloyment.
+
+This module main objective is to simplify AWS CDK integration with Rust projects and improve customer experience when using both technologies.
 
 ### Why should we _not_ do this?
 
