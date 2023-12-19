@@ -171,5 +171,4 @@
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||💡 proposed
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||💡 proposed
 [587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||💡 proposed
-[590](https://github.com/aws/aws-cdk-rfcs/issues/590)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/590)||💡 proposed
 <!--END_TABLE-->
