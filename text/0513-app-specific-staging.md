@@ -23,7 +23,6 @@ account, and none of it was configurable.
 
 The process of preparing an AWS account to be used with a synthesizer is called "bootstrapping".
 
-
 ### V1
 
 In the original bootstrapping stack, we create an S3 bucket to hold files: large CloudFormation templates and assets
@@ -73,19 +72,19 @@ DOWNSIDES
 * Because all staging resources need to be provisioned a priori and need to serve all types of applications, we can't
   depend on application knowledge. Specifically, we won't know how many Docker images will be used in the application,
   so we create a single ECR repository to hold all images. This has a number of downsides:
-    * Docker caching relies on pulling the “latest” image from a repository and skipping layers that were already built.
-      This doesn’t work if images built off of various different Dockerfiles are in the same repository.
-    * Lifecycle policies cannot be used because different images from potentially different applications with very
-      different life cycles are all in the same repository. The same was already true for S3, but the problem is
-      less severe because S3 is pretty cheap while ECR is not.
-    * Some people were using the V1 Docker image publishing mechanism not as a vehicle for uploading Docker images to be used
-      by the CDK’s CloudFormation deployment, but simply as a mechanism for building and publishing Docker images, to be
-      used by a completely different deployment later. The lack of control over the target ECR repository breaks this
-      use case (required the development of an `aws-ecr-deployments` construct module, which does give the necessary
-      control but racks up costs by doubling ECR storage requirements, and still does not allow staging resource cleanup).
-    * We always create an empty ECR repository because we cannot know whether apps deployed into the account will need
-      it or not, so the ECR repository may go unused. AWS Security Hub will throw warnings about empty ECR repositories,
-      which makes customers uneasy.
+  * Docker caching relies on pulling the “latest” image from a repository and skipping layers that were already built.
+    This doesn’t work if images built off of various different Dockerfiles are in the same repository.
+  * Lifecycle policies cannot be used because different images from potentially different applications with very
+    different life cycles are all in the same repository. The same was already true for S3, but the problem is
+    less severe because S3 is pretty cheap while ECR is not.
+  * Some people were using the V1 Docker image publishing mechanism not as a vehicle for uploading Docker images to be used
+    by the CDK’s CloudFormation deployment, but simply as a mechanism for building and publishing Docker images, to be
+    used by a completely different deployment later. The lack of control over the target ECR repository breaks this
+    use case (required the development of an `aws-ecr-deployments` construct module, which does give the necessary
+    control but racks up costs by doubling ECR storage requirements, and still does not allow staging resource cleanup).
+  * We always create an empty ECR repository because we cannot know whether apps deployed into the account will need
+    it or not, so the ECR repository may go unused. AWS Security Hub will throw warnings about empty ECR repositories,
+    which makes customers uneasy.
 * Bootstrap stacks are expected to be account-wide, and mix assets from all applications. Some customers that deploy
   multiple applications into the same account are very sensitive to this mixing, and would rather keep these resources
   separate. They can do multiple bootstrap stacks in the same account, but this is all a bit onerous.
@@ -102,8 +101,8 @@ staging resources from the roles. Roles will still be bootstrapped (if used), bu
   applications mixing together, and it would also remove the need for garbage collection by allowing use of life cycle
   rules.
 * Since the roles are now the only things that need to be bootstrapped, that will have a number of advantages:
-    * Bootstrapping will be faster since the heavy resource of a KMS key is no longer involved.
-    * Because roles are a global resource, every account now only needs to be bootstrapped once. First of all the lack
+  * Bootstrapping will be faster since the heavy resource of a KMS key is no longer involved.
+  * Because roles are a global resource, every account now only needs to be bootstrapped once. First of all the lack
       of necessary control of regions will work a lot better with Control Tower+automatic Stack Sets (which does not
       allow region control).
 
@@ -133,8 +132,8 @@ Here’s what we’re going to do:
 * Assets will have a dependency on the support stack. This is a new concept that doesn’t currently exist because assets
   are an orchestration artifact that looks independent like stacks are, but they aren't really: in practice the orchestration
   ignores everything except stacks, and treats assets as being part of a stack.
-    * Docker assets may still be built before the first deployment (although for proper caching we need the repository
-      to exist first), but will only be uploaded when it’s their time in the orchestration workflow.
+  * Docker assets may still be built before the first deployment (although for proper caching we need the repository
+    to exist first), but will only be uploaded when it’s their time in the orchestration workflow.
 * For a minimal diff these resources could have fixed names, but we could add support for Stack Outputs and assets could
   have support for Parameters, so that we can thread generated bucket and repository names through the system. For now,
   we will do fixed names for the staging resources.
@@ -263,7 +262,7 @@ We can put a version on it for informational purposes, but that version will not
 perhaps it could be make checkable by the CLI during `cdk deploy` time. At least `cdk bootstrap` will be able to look at the
 version to prevent downgrading.
 
-The bootstrap template will be selected by either running `cdk bootstrap` in an app directory that uses the `AppStagingSynthesizer`, 
+The bootstrap template will be selected by either running `cdk bootstrap` in an app directory that uses the `AppStagingSynthesizer`,
 or passing a command-line flag to CDK bootstrap: `cdk bootstrap --synthesizer=[legacy|default|appstaging]`. If `cdk bootstrap` detects
 it is changing the "type" of bootstrap stack, it will throw up a confirmation prompt with an explanation of the consequences:
 
@@ -289,18 +288,18 @@ There are two types of assets:
   The service will make their own copy of these assets. For example, large CloudFormation templates and Lambda Code
   bundles are an example of this: the CloudFormation template will only read the template once during the deployment,
   and the Lambda service will make a private copy of the S3 file.
-    * Rollbacks by means of a pure-CloudFormation deployment (so not fresh deployment that involves a CLI call) may
-      require presence of the old handoff asset for a while, so it shouldn’t be deleted right away, but it is reasonable
-      to put a lifecycle policy on handoff assets, equal to the longest period of time a user should still reasonably
-      expect to want to do a rollback in (see the BONES sev2 and damage control campaign from a couple of years ago when
-      the BONES team decided a month was a reasonable period and some service team wanted to roll back to a version of 2
-      months old).
+  * Rollbacks by means of a pure-CloudFormation deployment (so not fresh deployment that involves a CLI call) may
+    require presence of the old handoff asset for a while, so it shouldn’t be deleted right away, but it is reasonable
+    to put a lifecycle policy on handoff assets, equal to the longest period of time a user should still reasonably
+    expect to want to do a rollback in (see the BONES sev2 and damage control campaign from a couple of years ago when
+    the BONES team decided a month was a reasonable period and some service team wanted to roll back to a version of 2
+    months old).
 * “Live” assets: these get continuously accessed in their staged location by the running application. Examples are ALL
   Docker images (ECS will constantly pull from the user’s ECR container, and never make their own copy), and some
   asset-assisted conveniences like CodeBuild shellables or CFN-init scripts.
-    * These can in principle only be garbage collected by mark-and-sweep: we must know they are not needed by any
-      current CDK stacks, nor by any CDK stack revisions the user might want to roll back to.
-    * However, for ECR images we can do slightly better: since we have an ECR repository per docker image per
-      application, we can use a lifecycle policy of the form “keep only the most recent 5 images.”
-    * That leaves only certain eccentric types of file assets which are not collectible (until the entire application
-      gets deleted). This might be a “good enough” position to be in.
+  * These can in principle only be garbage collected by mark-and-sweep: we must know they are not needed by any
+    current CDK stacks, nor by any CDK stack revisions the user might want to roll back to.
+  * However, for ECR images we can do slightly better: since we have an ECR repository per docker image per
+    application, we can use a lifecycle policy of the form “keep only the most recent 5 images.”
+  * That leaves only certain eccentric types of file assets which are not collectible (until the entire application
+    gets deleted). This might be a “good enough” position to be in.
