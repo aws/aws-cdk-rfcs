@@ -43,7 +43,7 @@ Each stage in this document describes 3 distinct sets of activities:
 - **Exit criteria:** When these criteria are all met, a module can progress into
   the next stage. Note that, while all of the criteria here are necessary, they
   may not be sufficient. The module still needs to be chosen for maturation
-  using the [prioritization framework](#Construct-prioritization-framework).
+  using the [prioritization framework](#construct-prioritization-tenets).
 
 ## Stage 0 - CFN Resources
 
@@ -108,7 +108,7 @@ changes, we will author a Request for Comments (RFC) that outlines our design
 and publish it on the roadmap for feedback. We will also use pull requests to
 conduct construct reviews. In all cases, relevant RFCs, PRs, bugs, and feature
 requests that are in scope are linked in the module’s tracking issue for
-visibility. See [Appendix A](#Appendix-A:-GitHub-Artifacts) for an illustration
+visibility. See [Appendix A](#appendix-a-github-artifacts) for an illustration
 of how these GitHub artifacts are used and related to each other.
 
 ### Entry activities
@@ -369,7 +369,7 @@ modules to work on next:
   constructs but are still experimental.
 - _“Do the most difficult work first”_ - prioritize modules that have a large
   and/or complex API surface area that we know will take significant effort.
-  [Appendix B](#appendix-b:-module-complexity-t-shirt-sizes) proposes
+  [Appendix B](#appendix-b-module-complexity-t-shirt-sizes) proposes
   “T-shirt”sizes for each module in the construct library to identify work that
   falls into this category, and module owners are responsible for estimate this
   effort.

@@ -2,8 +2,9 @@
 # executes markdownlint on all RFCs
 # --fix to fix errors
 set -euo pipefail
+scriptdir=$(cd $(dirname $0) && pwd)
 linters=$PWD/tools/linters
 
-npm install --prefix $linters
-find . -type f -name '*.md' -not -path '*/node_modules/*' -not -path '*/.github/*' |\
-  xargs -I'{}' $linters/node_modules/.bin/markdownlint -c $linters/markdownlint.json $@ '{}'
+(cd $linters && npm ci)
+cliargs="--ignore node_modules --ignore tools ${@:1}"
+$linters/node_modules/.bin/markdownlint . $cliargs

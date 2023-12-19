@@ -2,7 +2,7 @@
 name: "RFC Tracking Issue"
 about: "Tracking issue for an RFC"
 title: proposal title
-labels: management/tracking, status/proposed
+labels: status/proposed
 ---
 
 ## Description
@@ -27,7 +27,7 @@ Short description of the proposed feature.
 - [ ] Kick off meeting
 - [ ] RFC pull request submitted (label: `status/review`)
 - [ ] Community reach out (via Slack and/or Twitter)
-- [ ] API signed-off (label `api-approved` applied to pull request)
+- [ ] API signed-off (label `status/api-approved` applied to pull request)
 - [ ] Final comments period (label: `status/final-comments-period`)
 - [ ] Approved and merged (label: `status/approved`)
 - [ ] Execution plan submitted (label: `status/planning`)

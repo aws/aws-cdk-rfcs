@@ -13,8 +13,8 @@ ways that are not currently possible with the `Vpc` construct.
 The `VpcV2` is a new construct, that creates an AWS VPC. Compared to `Vpc`,
 it makes fewer assumptions and allows for more control over how you
 structure your VPC, subnets and related resources, such as NAT Gateways and
-VPC Endpoints. `VpcV2` also implements `IVpc`, which allows you to switch 
-from one implementation to the other without affecting other resources that 
+VPC Endpoints. `VpcV2` also implements `IVpc`, which allows you to switch
+from one implementation to the other without affecting other resources that
 reference an `IVpc`.
 
 ### IP addressing
@@ -93,8 +93,8 @@ const subnet = new SubnetV2(this, 'subnet', {
 vpc.isolatedSubnets.includes(subnet); // true
 ```
 
-When you create a subnet, it attaches itself to the VPC, so you query the 
-`IVpc` object for the subnets it contains. Subnets are isolated by default, 
+When you create a subnet, it attaches itself to the VPC, so you query the
+`IVpc` object for the subnets it contains. Subnets are isolated by default,
 until you add a custom route table to it (see more details below). For example:
 
 ```ts
@@ -271,7 +271,7 @@ tables etc.) You can then replicate this group across all availability
 zones:
 
 ```ts
-// This filter does a lookup and produces a list of availability zones 
+// This filter does a lookup and produces a list of availability zones
 // according to your deny-list
 const azs = AzFilter.excludeIds(['use1-az1']);
 
@@ -281,7 +281,7 @@ azs.forEach((az, i) => {
     // This value is passed to the availabilityZone property of Subnet
     az,
 
-    // You can call ipAddresses.allocateSubnetsCidr() to get chunks of this 
+    // You can call ipAddresses.allocateSubnetsCidr() to get chunks of this
     // space allocated to each subnet
     ipAddresses: ipProvider,
   });
@@ -322,7 +322,7 @@ const lb = new elbv2.ApplicationLoadBalancer(this, 'LB', {
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
-signed-off by the API bar raiser (the `api-approved` label was applied to the
+signed-off by the API bar raiser (the `status/api-approved` label was applied to the
 RFC pull request):
 
 ```
@@ -422,9 +422,9 @@ Experimental or Developer Preview.
 
 ### Why create new `V2` constructs?
 
-The current constructs are very opinionated, with a lot of behavior  
-defined in the constructor (which makes it impossible to turn those 
-behaviors off), and with an API that is hard to add to without making 
+The current constructs are very opinionated, with a lot of behavior
+defined in the constructor (which makes it impossible to turn those
+behaviors off), and with an API that is hard to add to without making
 breaking changes (e.g., `Subnet`).
 
 [IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/what-it-is-ipam.html
