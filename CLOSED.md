@@ -20,8 +20,28 @@
 [244](https://github.com/aws/aws-cdk-rfcs/issues/244)|[Migration path for EKS Developer Preview](https://github.com/aws/aws-cdk-rfcs/pull/245)||👎 rejected
 [256](https://github.com/aws/aws-cdk-rfcs/issues/256)|[ReactCDK: Add JSX/TSX Support](https://github.com/aws/aws-cdk-rfcs/pull/258)||👎 rejected
 [272](https://github.com/aws/aws-cdk-rfcs/issues/272)|[CI/CD to Cloudfront Deploy](https://github.com/aws/aws-cdk-rfcs/issues/272)||👎 rejected
+[348](https://github.com/aws/aws-cdk-rfcs/issues/348)|[CloudFormationController - refactor CloudFormation stacks](https://github.com/aws/aws-cdk-rfcs/issues/348)||👎 rejected
+[394](https://github.com/aws/aws-cdk-rfcs/issues/394)|[WAF v2 L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/394)||👎 rejected
+[399](https://github.com/aws/aws-cdk-rfcs/issues/399)|[SSM Document as Objects](https://github.com/aws/aws-cdk-rfcs/issues/399)||👎 rejected
+[402](https://github.com/aws/aws-cdk-rfcs/issues/402)|[Glue DataBrew L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/402)||👎 rejected
+[423](https://github.com/aws/aws-cdk-rfcs/issues/423)|[IoT Sitewise L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/423)||👎 rejected
+[428](https://github.com/aws/aws-cdk-rfcs/issues/428)|[Amazon CloudWatch Evidently L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/428)||👎 rejected
+[434](https://github.com/aws/aws-cdk-rfcs/issues/434)|[AWS Ground Station L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/434)||👎 rejected
+[446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||👎 rejected
+[448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||👎 rejected
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
+[458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||👎 rejected
+[465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||👎 rejected
+[469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||👎 rejected
+[481](https://github.com/aws/aws-cdk-rfcs/issues/481)|[Add L2 constructs for Amazon Redshift Serverless](https://github.com/aws/aws-cdk-rfcs/issues/481)||👎 rejected
+[483](https://github.com/aws/aws-cdk-rfcs/issues/483)|[AppFlow L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/483)|[@iliapolo](https://github.com/iliapolo)|👎 rejected
+[487](https://github.com/aws/aws-cdk-rfcs/issues/487)|[New L2 Construct for Step Functions Map State in Distributed Mode](https://github.com/aws/aws-cdk-rfcs/issues/487)||👎 rejected
+[521](https://github.com/aws/aws-cdk-rfcs/issues/521)|[Verified Access L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/521)||👎 rejected
+[523](https://github.com/aws/aws-cdk-rfcs/issues/523)|[Construct to create Cedar Policy](https://github.com/aws/aws-cdk-rfcs/issues/523)||👎 rejected
 [526](https://github.com/aws/aws-cdk-rfcs/issues/526)|[AppSync Merged API L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/526)||👎 rejected
+[528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||👎 rejected
+[579](https://github.com/aws/aws-cdk-rfcs/issues/579)|[Docker-less dependency resolution (CDK \ SAM)](https://github.com/aws/aws-cdk-rfcs/issues/579)||👎 rejected
+[587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||👎 rejected
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|[Master developer guide sources in main repo](https://github.com/aws/aws-cdk-rfcs/issues/9)||🤷 stale
 [10](https://github.com/aws/aws-cdk-rfcs/issues/10)|[New workshop modules](https://github.com/aws/aws-cdk-rfcs/issues/10)||🤷 stale
 [13](https://github.com/aws/aws-cdk-rfcs/issues/13)|[Improvements to Reference docs](https://github.com/aws/aws-cdk-rfcs/issues/13)||🤷 stale
@@ -78,4 +98,5 @@
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||🤷 stale
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amazon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)|[@rix0rrr](https://github.com/rix0rrr)|🤷 stale
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||🤷 stale
+[581](https://github.com/aws/aws-cdk-rfcs/issues/581)|[ARN retrieval function consistency for CDK constructs](https://github.com/aws/aws-cdk-rfcs/issues/581)||🤷 stale
 <!--END_TABLE-->
