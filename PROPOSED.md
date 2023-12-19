@@ -16,9 +16,6 @@
 [437](https://github.com/aws/aws-cdk-rfcs/issues/437)|[CDK post-deployment experience](https://github.com/aws/aws-cdk-rfcs/issues/437)||💡 proposed
 [489](https://github.com/aws/aws-cdk-rfcs/issues/489)|[Add API to register and execute code before or after CDK App lifecycle events](https://github.com/aws/aws-cdk-rfcs/issues/489)||💡 proposed
 [491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||💡 proposed
-[495](https://github.com/aws/aws-cdk-rfcs/issues/495)|[AWS IAM Identity Store L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/495)||💡 proposed
-[509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||💡 proposed
-[512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||💡 proposed
 [583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||💡 proposed
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||💡 proposed
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||💡 proposed
