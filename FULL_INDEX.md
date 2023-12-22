@@ -139,7 +139,7 @@
 [463](https://github.com/aws/aws-cdk-rfcs/issues/463)|[Glue View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/463)||🤷 stale
 [465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||👎 rejected
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amazon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)|[@rix0rrr](https://github.com/rix0rrr)|🤷 stale
-[469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||👎 rejected
+[469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||👎 rejected
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||🤷 stale
 [473](https://github.com/aws/aws-cdk-rfcs/issues/473)|[EventBridge Pipes L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0473-eventbridge-pipes.md)|[@mrgrain](https://github.com/mrgrain)|👷 implementing

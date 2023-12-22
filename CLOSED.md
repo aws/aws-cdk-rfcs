@@ -33,7 +33,6 @@
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||👎 rejected
 [465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||👎 rejected
-[469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||👎 rejected
 [470](https://github.com/aws/aws-cdk-rfcs/issues/470)|[Amazon Aurora Serverless v2 support](https://github.com/aws/aws-cdk-rfcs/issues/470)||👎 rejected
 [481](https://github.com/aws/aws-cdk-rfcs/issues/481)|[Add L2 constructs for Amazon Redshift Serverless](https://github.com/aws/aws-cdk-rfcs/issues/481)||👎 rejected
 [483](https://github.com/aws/aws-cdk-rfcs/issues/483)|[AppFlow L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/483)|[@iliapolo](https://github.com/iliapolo)|👎 rejected
