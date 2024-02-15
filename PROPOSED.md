@@ -14,4 +14,5 @@
 [469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [489](https://github.com/aws/aws-cdk-rfcs/issues/489)|[Add API to register and execute code before or after CDK App lifecycle events](https://github.com/aws/aws-cdk-rfcs/issues/489)||💡 proposed
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
+[613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
 <!--END_TABLE-->
