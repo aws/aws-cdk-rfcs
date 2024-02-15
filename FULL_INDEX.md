@@ -172,4 +172,5 @@
 [605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/issues/605)||📆 planning
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
 [611](https://github.com/aws/aws-cdk-rfcs/issues/611)|[Complete Construct Model](https://github.com/aws/aws-cdk-rfcs/issues/611)||❓unknown
+[613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
 <!--END_TABLE-->
