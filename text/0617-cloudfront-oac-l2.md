@@ -4,9 +4,20 @@
 * **Tracking Issue**: [#617](https://github.com/aws/aws-cdk-rfcs/issues/617)
 * **API Bar Raiser**: @colifran
 
-[CloudFront Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) (OAC) is the recommended way to send authenticated requests to an Amazon S3 origin using IAM service principals. It offers better security, supports server-side encryption with AWS KMS, and supports all Amazon S3 buckets in all AWS regions. 
+[CloudFront Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)
+(OAC) is the recommended way to send authenticated requests
+to an Amazon S3 origin using IAM service principals.
+It offers better security, supports server-side encryption with AWS KMS,
+and supports all Amazon S3 buckets in all AWS regions.
 
-Currently the `S3Origin` construct automatically creates an Origin Access Identity (OAI) to restrict access to an S3 Origin. However, using OAI is now considered [legacy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#private-content-restricting-access-to-s3-oai) and no longer recommended. CDK users who want to use OAC currently have to use the L1 construct `CfnOriginAccessControl`. They need to use escape hatches to attach the OAC to their CloudFront distribution and remove the OAI that is automatically configured. With a CloudFront OAC L2 construct, users will be able to easily set up their CloudFront origins using OAC instead of OAI.
+Currently the `S3Origin` construct automatically creates an Origin Access Identity (OAI)
+to restrict access to an S3 Origin. However, using OAI is now considered
+[legacy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#private-content-restricting-access-to-s3-oai)
+and no longer recommended.
+CDK users who want to use OAC currently have to use the L1 construct `CfnOriginAccessControl`.
+They need to use escape hatches to attach the OAC to their CloudFront distribution and remove
+the OAI that is automatically configured. With a CloudFront OAC L2 construct,
+users will be able to easily set up their CloudFront origins using OAC instead of OAI.
 
 ## Working Backwards
 
@@ -17,15 +28,28 @@ Currently the `S3Origin` construct automatically creates an Origin Access Identi
 ### README
 
 # Amazon CloudFront Construct Library
-Amazon CloudFront is a web service that speeds up distribution of your static and dynamic web content, such as .html, .css, .js, and image files, to your users. CloudFront delivers your content through a worldwide network of data centers called edge locations. When a user requests content that you're serving with CloudFront, the user is routed to the edge location that provides the lowest latency, so that content is delivered with the best possible performance.
+
+Amazon CloudFront is a web service that speeds up distribution of your static and
+dynamic web content, such as .html, .css, .js, and image files, to your users.
+CloudFront delivers your content through a worldwide network of data centers called
+edge locations. When a user requests content that you're serving with CloudFront,
+the user is routed to the edge location that provides the lowest latency, so that
+content is delivered with the best possible performance.
 
 ## Creating a Distribution
 
-CloudFront distributions deliver your content from one or more origins; an origin is the location where you store the original version of your content. Origins can be created from S3 buckets or a custom origin (HTTP server). Constructs to define origins are in the `aws-cdk-lib/aws-cloudfront-origins` module.
+CloudFront distributions deliver your content from one or more origins; an origin is
+the location where you store the original version of your content. Origins can be
+created from S3 buckets or a custom origin (HTTP server). Constructs
+to define origins are in the `aws-cdk-lib/aws-cloudfront-origins` module.
 
-Each distribution has a default behavior which applies to all requests to that distribution, and routes requests to a primary origin. Additional behaviors may be specified for an origin with a given URL path pattern. Behaviors allow routing with multiple origins, controlling which HTTP methods to support, whether to require users to use HTTPS, and what query strings or cookies to forward to your origin, among other settings.
+Each distribution has a default behavior which applies to all requests to that
+distribution, and routes requests to a primary origin. Additional behaviors may
+be specified for an origin with a given URL path pattern. Behaviors allow routing
+with multiple origins, controlling which HTTP methods to support, whether to require
+users to use HTTPS, and what query strings or cookies to forward to your origin, among other settings.
 
-#### From an S3 Bucket
+### From an S3 Bucket
 
 An S3 bucket can be added as an origin. If the bucket is configured as a website endpoint, the distribution can use S3 redirects and S3 custom error
 documents.
@@ -44,10 +68,14 @@ CloudFront's redirect and error handling will be used.
 
 ## Restricting access to an S3 origin
 
-CloudFront provides two ways to send authenticated requests to an Amazon S3 origin: origin access control (OAC) and origin access identity (OAI). OAC is the recommended option and OAI is considered legacy (see [Restricting access to an Amazon S3 Origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)). These can be used in conjunction with a bucket that is not public to require that your users access your content using CloudFront
-URLs and not S3 URLs directly.
+CloudFront provides two ways to send authenticated requests to an Amazon S3 origin:
+origin access control (OAC) and origin access identity (OAI).
+OAC is the recommended option and OAI is considered legacy
+(see [Restricting access to an Amazon S3 Origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)).
+These can be used in conjunction with a bucket that is not public to
+require that your users access your content using CloudFront URLs and not S3 URLs directly.
 
-> Note: OAC and OAI can only be used with an regular S3 bucket origin (not a bucket configured as a website endpoint). 
+> Note: OAC and OAI can only be used with an regular S3 bucket origin (not a bucket configured as a website endpoint).
 
 To setup origin access control for an S3 origin, you can create an `OriginAccessControl`
 resource and pass it into the `originAccessControl` property of the origin:
@@ -63,20 +91,26 @@ new cloudfront.Distribution(this, 'myDist', {
   },
 });
 ```
-It is recommended to set the `@aws-cdk/aws-cloudfront:useOriginAccessControl` feature flag to `true`, so an OAC will be automatically created instead of an OAI when `S3Origin` is instantiated. If you don't set this feature flag, and OAI will be created and granted access to the underlying bucket.
 
+It is recommended to set the `@aws-cdk/aws-cloudfront:useOriginAccessControl` feature flag to `true`, so an OAC will be automatically created instead
+of an OAI when `S3Origin` is instantiated. If you don't set this feature flag, and OAI will be created and granted access to the underlying bucket.
 
 ## Migrating from OAI to OAC
 
-If you are currently using OAI for your S3 origin and wish to migrate to OAC, first set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` to `true` in `cdk.json`. With this feature flag set, when you create a new `S3Origin` an Origin Access Control will be used instead of Origin Access Identity. You can create and pass in an `OriginAccessControl` or one will be automatically created by default.
+If you are currently using OAI for your S3 origin and wish to migrate to OAC, first set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl`
+to `true` in `cdk.json`.With this feature flag set, when you create a new `S3Origin` an Origin Access Control will be used instead of Origin Access Identity.
+You can create and pass in an `OriginAccessControl` or one will be automatically created by default.
 
 For more information, see [Migrating from origin access identity (OAI) to origin access control (OAC)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#migrate-from-oai-to-oac).
 
 ### Using pre-existing S3 buckets
 
-If you are using an imported bucket for your S3 Origin and want to use OAC, first import the bucket using one of the import methods (`fromBucketName`, `fromBucketArn` or `fromBucketAttributes`). 
+If you are using an imported bucket for your S3 Origin and want to use OAC, first import the bucket using one of the import methods (`fromBucketName`,
+`fromBucketArn` or `fromBucketAttributes`).
 
-The `S3Origin` construct will update the S3 bucket policy to allow CloudFront read-only access. If your bucket previously used OAI, there will be an attempt to remove both the policy statement that allows access to the OAI and the origin access identity itself.
+The `S3Origin` construct will update the S3 bucket policy to allow CloudFront read-only access.
+If your bucket previously used OAI, there will be an attempt to remove both the policy statement
+that allows access to the OAI and the origin access identity itself.
 
 ```ts
 const bucket = s3.Bucket.fromBucketArn(this, 'MyExistingBucket', 
@@ -96,7 +130,6 @@ const distribution = new cloudfront.Distribution(this, 'MyDistribution', {
 });
 ```
 
-
 # CloudFront Origins for the CDK CloudFront Library
 
 ## S3 Bucket
@@ -113,15 +146,20 @@ new cloudfront.Distribution(this, 'myDist', {
 
 The above will treat the bucket differently based on if `IBucket.isWebsite` is set or not. If the bucket is configured as a website, the bucket is
 treated as an HTTP origin, and the built-in S3 redirects and error pages can be used. Otherwise, the bucket is handled as a bucket origin and
-CloudFront's redirect and error handling will be used. 
+CloudFront's redirect and error handling will be used.
 
 ### Restricting access to an S3 Origin
 
-CloudFront provides two ways to send authenticated requests to an Amazon S3 origin: origin access control (OAC) and origin access identity (OAI). OAC is the recommended method and OAI is considered legacy (see [Restricting access to an Amazon Simple Storage Service origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)). Following AWS best practices, it is recommended you set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` to `true` to use OAC by default when creating new origins.
+CloudFront provides two ways to send authenticated requests to an Amazon S3 origin: origin access control (OAC) and origin access identity (OAI).
+OAC is the recommended method and OAI is considered legacy (see [Restricting access to an Amazon Simple Storage Service origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)).
+Following AWS best practices, it is recommended you set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` to `true` to use OAC by
+default when creating new origins.
 
-For an S3 bucket that is configured as a standard S3 bucket origin (not as a website endpoint), when the above feature flag is enabled the `S3Origin` construct will automatically create an OAC and grant it access to the underlying bucket.
+For an S3 bucket that is configured as a standard S3 bucket origin (not as a website endpoint), when the above feature flag is enabled the `S3Origin`
+construct will automatically create an OAC and grant it access to the underlying bucket.
 
-> [Note](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): When you use OAC with S3 bucket origins you must set the bucket's object ownership to Bucket owner enforced, or Bucket owner preferred (only if you require ACLs).
+> [Note](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): When you use OAC with S3
+bucket origins you must set the bucket's object ownership to Bucket owner enforced, or Bucket owner preferred (only if you require ACLs).
 
 ```ts
 const myBucket = new s3.Bucket(this, 'myBucket', {
@@ -155,7 +193,9 @@ If the feature flag is not enabled (i.e. set to `false`), an origin access ident
 
 #### Using OAC for a SSE-KMS encrypted S3 origin
 
-If the objects in the S3 bucket origin are encrypted using server-side encryption with AWS Key Management Service (SSE-KMS), the OAC must have permission to use the AWS KMS key. A statement needs to be added to the KMS key policy to give the OAC permission to use the KMS key. 
+If the objects in the S3 bucket origin are encrypted using server-side encryption with
+AWS Key Management Service (SSE-KMS), the OAC must have permission to use the AWS KMS key.
+A statement needs to be added to the KMS key policy to give the OAC permission to use the KMS key.
 
 ```ts
 const myKmsKey = new kms.Key(this, 'myKMSKey');
@@ -185,17 +225,23 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching a new L2 construct `OriginAccessControl` for CloudFront (`aws-cdk-lib/aws-cloudfront`). We are also launching some modifications to the existing `S3Origin` construct in the `aws-cdk-lib/aws-cloudfront-origins` module.
+We are launching a new L2 construct `OriginAccessControl` for CloudFront (`aws-cdk-lib/aws-cloudfront`). We are also launching some modifications to
+the existing`S3Origin` construct in the `aws-cdk-lib/aws-cloudfront-origins` module.
 
 ### Why should I use this feature?
 
-With this new feature, you can follow AWS best practices of using IAM service principals to authenticate with your AWS origin. This ensures users only access the content in your AWS origin through your specified CloudFront distribution. OAC also supports new AWS regions launched after December 2022 and S3 origins that use SSE-KMS encryption.
+With this new feature, you can follow AWS best practices of using IAM service principals to authenticate with your AWS origin. This ensures users only
+access the content in your AWS origin through your specified CloudFront distribution. OAC also supports new AWS regions launched after December 2022
+and S3 origins that use SSE-KMS encryption.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
-This feature has been highly requested by the community since August 2022 when Origin Access Control was launched (195 upvotes on the [GitHub issue](https://github.com/aws/aws-cdk/issues/21771)). Although the L1 construct `CfnOriginAccessControl` exists, users currently need to remove the OAI automatically configured by the existing `S3Origin` construct which is a subpar user experience. We want to make it easier for users to follow AWS best practices and secure their CloudFront origins. 
+This feature has been highly requested by the community since August 2022 when Origin Access Control was launched (195 upvotes on the
+[GitHub issue](https://github.com/aws/aws-cdk/issues/21771)). Although the L1 construct `CfnOriginAccessControl` exists, users currently need to remove
+the OAI automatically configured by the existing `S3Origin` construct which is a subpar user experience. We want to make it easier for users to follow
+AWS best practices and secure their CloudFront origins.
 
 ### Why should we _not_ do this?
 
@@ -203,7 +249,8 @@ Users who want to use OAC may have already found workarounds using the L1 constr
 
 ### What is the technical solution (design) of this feature?
 
-This feature will be introduced under a feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` as the current default configuration for S3 origins using OAI is still supported.
+This feature will be introduced under a feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` as the current default configuration
+for S3 origins using OAI is still supported.
 
 #### New `OriginAccessControl` L2 Construct
 
@@ -358,19 +405,31 @@ export class OriginAccessControl extends OriginAccessControlBase {
 
 }
 ```
+
 #### New `S3BucketOacOrigin` class
 
-A new class `S3BucketOacOrigin` will implement the `bind()` method to setup the OAC and update the bucket policy. 
+A new class `S3BucketOacOrigin` will implement the `bind()` method to setup the OAC and update the bucket policy.
 
-In the case where an imported bucket is being used for the S3 origin, calling `bucket.addToResourcePolicy()` will fail to add the policy statement. Existing [workarounds](https://github.com/aws/aws-cdk/issues/6548#issuecomment-869091553) require the user to create a new `BucketPolicy` for the bucket and add the policy statements using `bucketPolicy.document.addStatements()`. However, this overwrites the whole bucket policy instead of appending statements to the existing policy which is a subpar user experience. The proposed solution to this issue is to use a custom resource to retrieve the existing bucket policy and append the OAC policy statement via the `GetBucketPolicy()` and `PutBucketPolicy()` API calls after the CloudFront distribution has been created.
+In the case where an imported bucket is being used for the S3 origin, calling `bucket.addToResourcePolicy()` will fail to add the policy statement. Existing
+[workarounds](https://github.com/aws/aws-cdk/issues/6548#issuecomment-869091553) require the user to create a new `BucketPolicy` for the bucket and
+add the policy statements using `bucketPolicy.document.addStatements()`.
+However, this overwrites the whole bucket policy instead of appending statements to the
+existing policy which is a subpar user experience. The proposed solution to this issue is
+to use a custom resource to retrieve the existing bucket policy and append the
+OAC policy statement via the `GetBucketPolicy()` and `PutBucketPolicy()` API calls
+after the CloudFront distribution has been created.
 
-In the case where the S3 bucket uses SSE-KMS encryption (customer-managed key), a circular dependency error occurs when trying to deploy the template. When granting the CloudFront distribution access to use the KMS Key, there is a circular dependency:
+In the case where the S3 bucket uses SSE-KMS encryption (customer-managed key),
+a circular dependency error occurs when trying to deploy the template. When granting
+the CloudFront distribution access to use the KMS Key, there is a circular dependency:
+
 - CloudFront distribution references the S3 bucket
 - S3 bucket references the KMS key
 - KMS Key references the CloudFront distribution
 
-The proposed solution to this issue is to use a custom resource to retrieve and update the KMS key policy after the CloudFront distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API calls.
-
+The proposed solution to this issue is to use a custom resource
+to retrieve and update the KMS key policy after the CloudFront
+distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API calls.
 
 ```ts
 class S3BucketOacOrigin extends cloudfront.OriginBase {
@@ -386,7 +445,7 @@ class S3BucketOacOrigin extends cloudfront.OriginBase {
   public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
     if (!this.originAccessControl) {
       // Create a new origin access control if not specified
-      this.originAccessControl = new cloudfront.OriginAccessControl(scope, 'S3OriginAccessControl');
+      this.originAccessControl = new cloudfront.OriginAccessControl(scope,'S3OriginAccessControl');
     }
     const distribution = scope.node.scope as cloudfront.Distribution;
     const distributionId = Lazy.string({ produce: () => distribution.distributionId });
@@ -408,7 +467,8 @@ class S3BucketOacOrigin extends cloudfront.OriginBase {
 
     // Failed to update bucket policy, assume using imported bucket
     if (!result.statementAdded) {
-      Annotations.of(scope).addWarningV2('@aws-cdk/aws-cloudfront-origins:updateBucketPolicy', 'Cannot update bucket policy of an imported bucket. Update the policy manually instead.');
+      Annotations.of(scope).addWarningV2('@aws-cdk/aws-cloudfront-origins:updateBucketPolicy',
+      'Cannot update bucket policy of an imported bucket. Update the policy manually instead.');
       const provider = S3OriginAccessControlBucketPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
         {
           description: 'Lambda function that updates S3 bucket policy to allow CloudFront distribution access.',
@@ -477,7 +537,6 @@ class S3BucketOacOrigin extends cloudfront.OriginBase {
 }
 ```
 
-
 #### `S3Origin` Construct Modifications
 
 The `S3Origin` constructor will need additional logic to determine how to configure the S3 origin (either as website endpoint, using OAI, or using OAC).
@@ -511,7 +570,7 @@ export class S3Origin implements cloudfront.IOrigin {
 
 #### `Distribution` construct modifications
 
-In the `addOrigin()` method of `Distribution`, we will need to pass the `distributionId` to `origin.bind()` to specify the condition in the policy statement. 
+In the `addOrigin()` method of `Distribution`, we will need to pass the `distributionId` to `origin.bind()` to specify the condition in the policy statement.
 
 ```ts
   private addOrigin(origin: IOrigin, isFailoverOrigin: boolean = false): string {
@@ -530,6 +589,7 @@ In the `addOrigin()` method of `Distribution`, we will need to pass the `distrib
 ```
 
 Policy statement with condition referencing `distributionId`:
+
 ```
 {
     "Version": "2012-10-17",
@@ -549,14 +609,21 @@ Policy statement with condition referencing `distributionId`:
     }
 }
 ```
+
 ### Deprecating `CloudFrontWebDistribution`
 
-This RFC proposes changes to support using OAC with the `Distribution` construct, which is the modern, improved API for creating CloudFront distributions using CDK. `CloudFrontWebDistribution` is the original construct written for working with CloudFront distributions. The CDK docs provide a [section](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html#migrating-from-the-original-cloudfrontwebdistribution-to-the-newer-distribution-construct) to help users migrate from `CloudFrontWebDistribution` to `Distribution`, but it is not clearly stated anywhere that `CloudFrontWebDistribution` is deprecated. As OAC L2 support (and other new features) will only be provided for `Distribution` going forward, an official deprecation of `CloudFrontWebDistribution` will be part of this change.
+This RFC proposes changes to support using OAC with the `Distribution` construct, which is the modern, improved API for creating CloudFront
+distributions using CDK. `CloudFrontWebDistribution` is the original construct
+written for working with CloudFront distributions.
+The CDK docs provide a
+[section](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html#migrating-from-the-original-cloudfrontwebdistribution-to-the-newer-distribution-construct)
+to help users migrate from `CloudFrontWebDistribution` to `Distribution`,
+but it is not clearly stated anywhere that `CloudFrontWebDistribution` is deprecated. As OAC L2 support (and other new features) will only be provided
+for `Distribution` going forward, an official deprecation of `CloudFrontWebDistribution` will be part of this change.
 
 ### Is this a breaking change?
 
 No, this is not a breaking change. This is a new feature and configuring S3 origins using OAI will still be supported.
-
 
 ### What is the high-level project plan?
 
@@ -566,7 +633,7 @@ No, this is not a breaking change. This is a new feature and configuring S3 orig
 - [ ] Implement the construct in a separate repository
 - [ ] Make pull request to aws-cdk repository
 - [ ] Iterate and respond to PR feedback
-- [ ] Merge new construct and related changes 
+- [ ] Merge new construct and related changes
 
 ### Are there any open issues that need to be addressed later?
 
