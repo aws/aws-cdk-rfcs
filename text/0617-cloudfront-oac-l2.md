@@ -98,8 +98,9 @@ of an OAI when `S3Origin` is instantiated. If you don't set this feature flag, a
 ## Migrating from OAI to OAC
 
 If you are currently using OAI for your S3 origin and wish to migrate to OAC, first set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl`
-to `true` in `cdk.json`.With this feature flag set, when you create a new `S3Origin` an Origin Access Control will be used instead of Origin Access Identity.
-You can create and pass in an `OriginAccessControl` or one will be automatically created by default.
+to `true` in `cdk.json`. With this feature flag set, when you create a new `S3Origin` an Origin Access Control will be used instead of Origin Access Identity.
+You can create and pass in an `OriginAccessControl` or one will be automatically created by default. Run `cdk diff` before deploying to verify the
+changes to your stack.
 
 For more information, see [Migrating from origin access identity (OAI) to origin access control (OAC)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#migrate-from-oai-to-oac).
 
@@ -263,14 +264,6 @@ export interface IOriginAccessControl extends IResource {
   readonly originAccessControlId: string;
 }
 
-abstract class OriginAccessControlBase extends Resource implements IOriginAccessControl {
-  /**
-   * The unique identifier of the origin access control.
-   * @attribute
-   */
-  public abstract readonly originAccessControlId: string;
-}
-
 /**
  * Properties for creating a OriginAccessControl resource.
  */
@@ -287,17 +280,17 @@ export interface OriginAccessControlProps {
   readonly originAccessControlName?: string;
   /**
    * The type of origin that this origin access control is for.
-   * @default s3
+   * @default OriginAccessControlOriginType.S3
    */
   readonly originAccessControlOriginType?: OriginAccessControlOriginType;
   /**
    * Specifies which requests CloudFront signs.
-   * @default always
+   * @default SigningBehavior.ALWAYS
    */
   readonly signingBehavior?: SigningBehavior;
   /**
    * The signing protocol of the origin access control.
-   * @default sigv4
+   * @default SigningProtocol.SIGV4
    */
   readonly signingProtocol?: SigningProtocol;
 }
@@ -385,7 +378,9 @@ export class OriginAccessControl extends OriginAccessControlBase {
     const resource = new CfnOriginAccessControl(this, 'Resource', {
       originAccessControlConfig: {
         description: props.description,
-        name: props.originAccessControlName ?? this.generateName(),
+        name: props.originAccessControlName ?? Names.uniqueResourceName(this, {
+          maxLength: 64,
+        }),
         signingBehavior: props.signingBehavior ?? SigningBehavior.ALWAYS,
         signingProtocol: props.signingProtocol ?? SigningProtocol.SIGV4,
         originAccessControlOriginType: props.originAccessControlOriginType ?? OriginAccessControlOriginType.S3,
@@ -394,21 +389,13 @@ export class OriginAccessControl extends OriginAccessControlBase {
 
     this.originAccessControlId = resource.attrId;
   }
-
-  private generateName(): string {
-    const name = Stack.of(this).region + Names.uniqueId(this);
-    if (name.length > 64) {
-      return name.substring(0, 32) + name.substring(name.length - 32);
-    }
-    return name;
-  }
-
 }
 ```
 
-#### New `S3BucketOacOrigin` class
+#### Modifications to `S3BucketOrigin` class
 
-A new class `S3BucketOacOrigin` will implement the `bind()` method to setup the OAC and update the bucket policy.
+The `S3BucketOrigin` will have two methods, `withAccessIdentity()` and `withAccessControl`, which each return a class configured with
+the corresponding method of origin access control.
 
 In the case where an imported bucket is being used for the S3 origin, calling `bucket.addToResourcePolicy()` will fail to add the policy statement. Existing
 [workarounds](https://github.com/aws/aws-cdk/issues/6548#issuecomment-869091553) require the user to create a new `BucketPolicy` for the bucket and
@@ -417,7 +404,8 @@ However, this overwrites the whole bucket policy instead of appending statements
 existing policy which is a subpar user experience. The proposed solution to this issue is
 to use a custom resource to retrieve the existing bucket policy and append the
 OAC policy statement via the `GetBucketPolicy()` and `PutBucketPolicy()` API calls
-after the CloudFront distribution has been created.
+after the CloudFront distribution has been created. Users can choose to opt-in by setting the `overrideImportedBucketPolicy` property to `true`.
+This way we don't silently modify their imported bucket policy which could lead to unintended behaviour.
 
 In the case where the S3 bucket uses SSE-KMS encryption (customer-managed key),
 a circular dependency error occurs when trying to deploy the template. When granting
@@ -432,116 +420,225 @@ to retrieve and update the KMS key policy after the CloudFront
 distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API calls.
 
 ```ts
-class S3BucketOacOrigin extends cloudfront.OriginBase {
-  private originAccessControl!: cloudfront.IOriginAccessControl;
+/**
+ * An Origin specific to a S3 bucket (not configured for website hosting).
+ *
+ * Contains additional logic around bucket permissions and origin access control (via OAI or OAC).
+ */
+abstract class S3BucketOrigin extends cloudfront.OriginBase {
+  public static withAccessIdentity(bucket: s3.IBucket, props: S3OriginProps = {}): S3BucketOrigin {
+    return new (class OriginAccessIdentity extends S3BucketOrigin {
+      private originAccessIdentity?: cloudfront.IOriginAccessIdentity;
 
-  constructor(private readonly bucket: s3.IBucket, { originAccessControl, ...props }: S3OriginProps) {
-    super(bucket.bucketRegionalDomainName, props);
-    if (originAccessControl) {
-      this.originAccessControl = originAccessControl;
-    }
+      public constructor() {
+        super(bucket, props);
+        this.originAccessIdentity = props.originAccessIdentity;
+      }
+
+      public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
+        if (!this.originAccessIdentity) {
+          // Using a bucket from another stack creates a cyclic reference with
+          // the bucket taking a dependency on the generated S3CanonicalUserId for the grant principal,
+          // and the distribution having a dependency on the bucket's domain name.
+          // Fix this by parenting the OAI in the bucket's stack when cross-stack usage is detected.
+          const bucketStack = Stack.of(this.bucket);
+          const bucketInDifferentStack = bucketStack !== Stack.of(scope);
+          const oaiScope = bucketInDifferentStack ? bucketStack : scope;
+          const oaiId = bucketInDifferentStack ? `${Names.uniqueId(scope)}S3Origin` : 'S3Origin';
+
+          this.originAccessIdentity = new cloudfront.OriginAccessIdentity(oaiScope, oaiId, {
+            comment: `Identity for ${options.originId}`,
+          });
+        };
+        // Used rather than `grantRead` because `grantRead` will grant overly-permissive policies.
+        // Only GetObject is needed to retrieve objects for the distribution.
+        // This also excludes KMS permissions; currently, OAI only supports SSE-S3 for buckets.
+        // Source: https://aws.amazon.com/blogs/networking-and-content-delivery/serving-sse-kms-encrypted-content-from-s3-using-cloudfront/
+        this.bucket.addToResourcePolicy(new iam.PolicyStatement({
+          resources: [this.bucket.arnForObjects('*')],
+          actions: ['s3:GetObject'],
+          principals: [this.originAccessIdentity.grantPrincipal],
+        }));
+        return this._bind(scope, options);
+      }
+
+      protected renderS3OriginConfig(): cloudfront.CfnDistribution.S3OriginConfigProperty | undefined {
+        if (!this.originAccessIdentity) {
+          throw new Error('Origin access identity cannot be undefined');
+        }
+        return { originAccessIdentity: `origin-access-identity/cloudfront/${this.originAccessIdentity.originAccessIdentityId}` };
+      }
+    })();
   }
 
-  public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
-    if (!this.originAccessControl) {
-      // Create a new origin access control if not specified
-      this.originAccessControl = new cloudfront.OriginAccessControl(scope,'S3OriginAccessControl');
-    }
-    const distribution = scope.node.scope as cloudfront.Distribution;
-    const distributionId = Lazy.string({ produce: () => distribution.distributionId });
-    const oacReadOnlyBucketPolicyStatement = new iam.PolicyStatement(
-      {
-        sid: 'AllowS3OACAccess',
-        effect: iam.Effect.ALLOW,
-        principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
-        actions: ['s3:GetObject'],
-        resources: [this.bucket.arnForObjects('*')],
-        conditions: {
-          StringEquals: {
-            'AWS:SourceArn': `arn:${Aws.PARTITION}:cloudfront::${Aws.ACCOUNT_ID}:distribution/${distributionId}`,
+  public static withAccessControl(bucket: s3.IBucket, props: S3OriginProps = {}): S3BucketOrigin {
+    return new (class OriginAccessControl extends S3BucketOrigin {
+      private originAccessControl?: cloudfront.IOriginAccessControl;
+
+      constructor() {
+        super(bucket, props);
+        this.originAccessControl = props.originAccessControl;
+      }
+
+      public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
+        if (!this.originAccessControl) {
+          // Create a new origin access control if not specified
+          this.originAccessControl = new cloudfront.OriginAccessControl(scope, 'S3OriginAccessControl');
+        }
+        const distributionId = options.distributionId;
+        const result = this.grantDistributionAccessToBucket(distributionId);
+
+        // Failed to update bucket policy, assume using imported bucket
+        if (!result.statementAdded) {
+          if (props.overrideImportedBucketPolicy) {
+            this.grantDistributionAccessToImportedBucket(scope, distributionId);
+          } else {
+            Annotations.of(scope).addWarningV2('@aws-cdk/aws-cloudfront-origins:updateBucketPolicy',
+              'Cannot update bucket policy of an imported bucket. Set overrideImportedBucketPolicy to true or update the policy manually instead.');
+          }
+        }
+
+        if (this.bucket.encryptionKey) {
+          this.grantDistributionAccessToKey(scope, distributionId, this.bucket.encryptionKey);
+        }
+
+        const originBindConfig = this._bind(scope, options);
+
+        // Update configuration to set OriginControlAccessId property
+        return {
+          ...originBindConfig,
+          originProperty: {
+            ...originBindConfig.originProperty!,
+            originAccessControlId: this.originAccessControl.originAccessControlId,
           },
-        },
-      },
-    );
-    const result = this.bucket.addToResourcePolicy(oacReadOnlyBucketPolicyStatement);
+        };
+      }
 
-    // Failed to update bucket policy, assume using imported bucket
-    if (!result.statementAdded) {
-      Annotations.of(scope).addWarningV2('@aws-cdk/aws-cloudfront-origins:updateBucketPolicy',
-      'Cannot update bucket policy of an imported bucket. Update the policy manually instead.');
-      const provider = S3OriginAccessControlBucketPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
-        {
-          description: 'Lambda function that updates S3 bucket policy to allow CloudFront distribution access.',
+      /**
+      * If you're using origin access control (OAC) instead of origin access identity, specify an empty `OriginAccessIdentity` element.
+      * @see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-s3originconfig.html#cfn-cloudfront-distribution-s3originconfig-originaccessidentity
+      */
+      protected renderS3OriginConfig(): cloudfront.CfnDistribution.S3OriginConfigProperty | undefined {
+        return { originAccessIdentity: '' };
+      }
+
+      private grantDistributionAccessToBucket(distributionId: string): iam.AddToResourcePolicyResult {
+        const oacReadOnlyBucketPolicyStatement = new iam.PolicyStatement(
+          {
+            effect: iam.Effect.ALLOW,
+            principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+            actions: ['s3:GetObject'],
+            resources: [this.bucket.arnForObjects('*')],
+            conditions: {
+              StringEquals: {
+                'AWS:SourceArn': `arn:${Aws.PARTITION}:cloudfront::${Aws.ACCOUNT_ID}:distribution/${distributionId}`,
+              },
+            },
+          },
+        );
+        const result = this.bucket.addToResourcePolicy(oacReadOnlyBucketPolicyStatement);
+        return result;
+      }
+
+      /**
+       * Use custom resource to update bucket policy and remove OAI policy statement if it exists
+       */
+      private grantDistributionAccessToImportedBucket(scope: Construct, distributionId: string) {
+        const provider = S3OriginAccessControlBucketPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
+          {
+            description: 'Lambda function that updates S3 bucket policy to allow CloudFront distribution access.',
+          });
+        provider.addToRolePolicy({
+          Action: ['s3:getBucketPolicy', 's3:putBucketPolicy'],
+          Effect: 'Allow',
+          Resource: [this.bucket.bucketArn],
         });
-      provider.addToRolePolicy({
-        Action: ['s3:getBucketPolicy', 's3:putBucketPolicy'],
-        Effect: 'Allow',
-        Resource: [this.bucket.bucketArn],
-      });
 
-      new CustomResource(scope, 'S3OriginBucketPolicyCustomResource', {
-        resourceType: S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
-        serviceToken: provider.serviceToken,
-        properties: {
-          DistributionId: distributionId,
-          AccountId: this.bucket.env.account,
-          Partition: Stack.of(scope).partition,
-          BucketName: this.bucket.bucketName,
-          IsImportedBucket: !result.statementAdded,
-        },
-      });
-    }
-
-    if (this.bucket.encryptionKey) {
-      const provider = S3OriginAccessControlKeyPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_KEY_RESOURCE_TYPE,
-        {
-          description: 'Lambda function that updates SSE-KMS key policy to allow CloudFront distribution access.',
+        new CustomResource(scope, 'S3OriginBucketPolicyCustomResource', {
+          resourceType: S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
+          serviceToken: provider.serviceToken,
+          properties: {
+            DistributionId: distributionId,
+            AccountId: this.bucket.env.account,
+            Partition: Stack.of(scope).partition,
+            BucketName: this.bucket.bucketName,
+          },
         });
-      provider.addToRolePolicy({
-        Action: ['kms:PutKeyPolicy', 'kms:GetKeyPolicy', 'kms:DescribeKey'],
-        Effect: 'Allow',
-        Resource: [this.bucket.encryptionKey.keyArn],
-      });
+      }
 
-      new CustomResource(scope, 'S3OriginKMSKeyPolicyCustomResource', {
-        resourceType: S3_ORIGIN_ACCESS_CONTROL_KEY_RESOURCE_TYPE,
-        serviceToken: provider.serviceToken,
-        properties: {
-          DistributionId: distributionId,
-          KmsKeyId: this.bucket.encryptionKey.keyId,
-          AccountId: this.bucket.env.account,
-          Partition: Stack.of(scope).partition,
-        },
-      });
-    }
+      /**
+       * Use custom resource to update KMS key policy
+       */
+      private grantDistributionAccessToKey(scope: Construct, distributionId: string, key: IKey) {
+        const provider = S3OriginAccessControlKeyPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_KEY_RESOURCE_TYPE,
+          {
+            description: 'Lambda function that updates SSE-KMS key policy to allow CloudFront distribution access.',
+          });
+        provider.addToRolePolicy({
+          Action: ['kms:PutKeyPolicy', 'kms:GetKeyPolicy', 'kms:DescribeKey'],
+          Effect: 'Allow',
+          Resource: [key.keyArn],
+        });
 
-    const originBindConfig = super.bind(scope, options);
-
-    // Update configuration to set OriginControlAccessId property
-    return {
-      ...originBindConfig,
-      originProperty: {
-        ...originBindConfig.originProperty!,
-        originAccessControlId: this.originAccessControl.originAccessControlId,
-      },
-    };
+        new CustomResource(scope, 'S3OriginKMSKeyPolicyCustomResource', {
+          resourceType: S3_ORIGIN_ACCESS_CONTROL_KEY_RESOURCE_TYPE,
+          serviceToken: provider.serviceToken,
+          properties: {
+            DistributionId: distributionId,
+            KmsKeyId: key.keyId,
+            AccountId: this.bucket.env.account,
+            Partition: Stack.of(scope).partition,
+          },
+        });
+      }
+    });
   }
 
-  /**
-   * If you're using origin access control (OAC) instead of origin access identity, specify an empty `OriginAccessIdentity` element.
-   * @see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-s3originconfig.html#cfn-cloudfront-distribution-s3originconfig-originaccessidentity
-   */
-  protected renderS3OriginConfig(): cloudfront.CfnDistribution.S3OriginConfigProperty | undefined {
-    return { originAccessIdentity: '' };
+  protected constructor(protected readonly bucket: s3.IBucket, props: S3OriginProps = {}) {
+    super(bucket.bucketRegionalDomainName, props);
+  }
+
+  public abstract bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig;
+
+  protected abstract renderS3OriginConfig(): cloudfront.CfnDistribution.S3OriginConfigProperty | undefined;
+
+  protected _bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
+    return super.bind(scope, options);
   }
 }
 ```
 
 #### `S3Origin` Construct Modifications
 
-The `S3Origin` constructor will need additional logic to determine how to configure the S3 origin (either as website endpoint, using OAI, or using OAC).
+To support OAC, a property `originAccessControl` will be added to `S3OriginProps`. The `S3Origin` constructor will need additional logic to determine
+how to configure the S3 origin (either as website endpoint, using OAI, or using OAC).
 
 ```ts
+/**
+ * Properties to use to customize an S3 Origin.
+ */
+export interface S3OriginProps extends cloudfront.OriginProps {
+  /**
+   * An optional Origin Access Identity of the origin identity cloudfront will use when calling your s3 bucket.
+   *
+   * @default - An Origin Access Identity will be created.
+   */
+  readonly originAccessIdentity?: cloudfront.IOriginAccessIdentity;
+
+  /**
+   * An optional Origin Access Control
+   * @default - An Origin Access Control will be created.
+   */
+  readonly originAccessControl?: cloudfront.IOriginAccessControl;
+
+  /**
+   * When set to 'true', an attempt will be made to update the bucket policy to allow the
+   * CloudFront distribution access.
+   * @default false
+   */
+  readonly overrideImportedBucketPolicy?: boolean;
+}
+
 export class S3Origin implements cloudfront.IOrigin {
   private readonly origin: cloudfront.IOrigin;
 
@@ -556,9 +653,9 @@ export class S3Origin implements cloudfront.IOrigin {
         ...props,
       });
     } else if (props.originAccessIdentity || !FeatureFlags.of(bucket.stack).isEnabled(cxapi.CLOUDFRONT_USE_ORIGIN_ACCESS_CONTROL)) {
-      this.origin = new S3BucketOrigin(bucket, props);
+      this.origin = S3BucketOrigin.withAccessIdentity(bucket, props);
     } else {
-      this.origin = new S3BucketOacOrigin(bucket, props);
+      this.origin = S3BucketOrigin.withAccessControl(bucket, props);
     }
   }
 
@@ -582,7 +679,7 @@ In the `addOrigin()` method of `Distribution`, we will need to pass the `distrib
     } else {
       ...
       const distributionId = this.distributionId;
-      const originBindConfig = origin.bind(scope, { originId: generatedId, distributionId });
+      const originBindConfig = origin.bind(scope, { originId: generatedId, distributionId: Lazy.string({ produce: () => this.distributionId }) });
       ...
     }
   }
