@@ -109,7 +109,29 @@ For more information, see [Migrating from origin access identity (OAI) to origin
 If you are using an imported bucket for your S3 Origin and want to use OAC, first import the bucket using one of the import methods (`fromBucketName`,
 `fromBucketArn` or `fromBucketAttributes`).
 
-The `S3Origin` construct will update the S3 bucket policy to allow CloudFront read-only access.
+To update the bucket policy to allow CloudFront access you can set the `overrideImportedBucketPolicy` property to `true`. The `S3Origin` construct
+will update the S3 bucket policy by appending the following policy statement to allow CloudFront read-only access:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": {
+        "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+        "Effect": "Allow",
+        "Principal": {
+            "Service": "cloudfront.amazonaws.com"
+        },
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::<S3 bucket name>/*",
+        "Condition": {
+            "StringEquals": {
+                "AWS:SourceArn": "arn:aws:cloudfront::111122223333:distribution/<CloudFront distribution ID>"
+            }
+        }
+    }
+}
+```
+
 If your bucket previously used OAI, there will be an attempt to remove both the policy statement
 that allows access to the OAI and the origin access identity itself.
 
@@ -125,7 +147,8 @@ const oac = new cloudfront.OriginAccessControl(this, 'MyOAC', {
 const distribution = new cloudfront.Distribution(this, 'MyDistribution', {
   defaultBehavior: {
     origin: new origins.S3Origin(bucket, {
-      originAccessControl: oac
+      originAccessControl: oac,
+      overrideImportedBucketPolicy: true
     })
   }
 });
