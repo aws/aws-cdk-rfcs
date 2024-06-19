@@ -765,4 +765,4 @@ Supporting Origin Access Control for Lambda Function Url origins.
 
 ## Appendix
 
-- [Prototype branch](https://github.com/gracelu0/aws-cdk/tree/cloudfront-oac-l2-poc)
+- [Prototype branch](https://github.com/gracelu0/aws-cdk/tree/oac-l2)
