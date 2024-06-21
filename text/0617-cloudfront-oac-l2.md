@@ -84,7 +84,7 @@ resource and pass it into the `originAccessControl` property of the origin:
 const myBucket = new s3.Bucket(this, 'myBucket');
 const oac = new cloudfront.OriginAccessControl(this, 'myS3OAC');
 new cloudfront.Distribution(this, 'myDist', {
-  defaultBehavior: { 
+  defaultBehavior: {
     origin: new origins.S3Origin(myBucket, {
       originAccessControl: oac
     })
@@ -213,6 +213,23 @@ new cloudfront.Distribution(this, 'myDist', {
 });
 ```
 
+Alternatively, an existing origin access control can be imported:
+
+```ts
+const myBucket = new s3.Bucket(this, 'myBucket');
+const importedOAC = cloudfront.OriginAccessControl.fromOriginAccessControlAttributes(this, 'myImportedOAC', {
+  originAccessControlId: 'ABC123ABC123AB',
+  originAccessControlOriginType: cloudfront.OriginAccessControlOriginType.S3,
+});
+new cloudfront.Distribution(this, 'myDist', {
+  defaultBehavior: { 
+    origin: new origins.S3Origin(myBucket, {
+      originAccessControl: importedOAC
+    }),
+  },
+});
+```
+
 If the feature flag is not enabled (i.e. set to `false`), an origin access identity will be created by default.
 
 #### Using OAC for a SSE-KMS encrypted S3 origin
@@ -285,6 +302,11 @@ export interface IOriginAccessControl extends IResource {
    * @attribute
    */
   readonly originAccessControlId: string;
+  /**
+   * The type of origin that the origin access control is for.
+   * @attribute
+   */
+  readonly originAccessControlOriginType: string;
 }
 
 /**
@@ -326,18 +348,6 @@ export enum OriginAccessControlOriginType {
    * Uses an Amazon S3 bucket origin.
    */
   S3 = 's3',
-  /**
-   * Uses an AWS Elemental MediaStore origin.
-   */
-  MEDIASTORE = 'mediastore',
-  /**
-   * Uses a Lambda function URL origin.
-   */
-  LAMBDA = 'lambda',
-  /**
-   * Uses an AWS Elemental MediaPackage v2 origin.
-   */
-  MEDIAPACKAGEV2 = 'mediapackagev2',
 }
 
 /**
@@ -380,23 +390,31 @@ export enum SigningProtocol {
  */
 export class OriginAccessControl extends OriginAccessControlBase {
   /**
-   * Imports an origin access control from its id.
+   * Imports an origin access control from its id and origin type.
    */
-  public static fromOriginAccessControlId(scope: Construct, id: string, originAccessControlId: string): IOriginAccessControl {
-    class Import extends OriginAccessControlBase {
-      public readonly originAccessControlId = originAccessControlId;
-      constructor(s: Construct, i: string) {
-        super(s, i);
-
-        this.originAccessControlId = originAccessControlId;
-      }
+  public static fromOriginAccessControlAttributes(scope: Construct, id: string, attrs: OriginAccessControlAttributes): IOriginAccessControl {
+    class Import extends Resource implements IOriginAccessControl {
+      public readonly originAccessControlId = attrs.originAccessControlId;
+      public readonly originAccessControlOriginType = attrs.originAccessControlOriginType;
     }
     return new Import(scope, id);
   }
 
+  /**
+   * The unique identifier of this Origin Access Control.
+   * @attribute
+   */
   public readonly originAccessControlId: string;
+
+  /**
+   * The type of origin that the origin access control is for.
+   * @attribute
+   */
+  public readonly originAccessControlOriginType: string;
+
   constructor(scope: Construct, id: string, props: OriginAccessControlProps = {}) {
     super(scope, id);
+    this.originAccessControlOriginType = props.originAccessControlOriginType ?? OriginAccessControlOriginType.S3;
 
     const resource = new CfnOriginAccessControl(this, 'Resource', {
       originAccessControlConfig: {
@@ -406,7 +424,7 @@ export class OriginAccessControl extends OriginAccessControlBase {
         }),
         signingBehavior: props.signingBehavior ?? SigningBehavior.ALWAYS,
         signingProtocol: props.signingProtocol ?? SigningProtocol.SIGV4,
-        originAccessControlOriginType: props.originAccessControlOriginType ?? OriginAccessControlOriginType.S3,
+        originAccessControlOriginType: this.originAccessControlOriginType,
       },
     });
 
@@ -417,7 +435,7 @@ export class OriginAccessControl extends OriginAccessControlBase {
 
 #### Modifications to `S3BucketOrigin` class
 
-The `S3BucketOrigin` will have two methods, `withAccessIdentity()` and `withAccessControl`, which each return a class configured with
+The `S3BucketOrigin` will have two methods, `withAccessIdentity()` and `withAccessControl()`, which each return a class configured with
 the corresponding method of origin access control.
 
 In the case where an imported bucket is being used for the S3 origin, calling `bucket.addToResourcePolicy()` will fail to add the policy statement. Existing
@@ -508,6 +526,13 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
           // Create a new origin access control if not specified
           this.originAccessControl = new cloudfront.OriginAccessControl(scope, 'S3OriginAccessControl');
         }
+
+        if (this.originAccessControl.originAccessControlOriginType !== cloudfront.OriginAccessControlOriginType.S3) {
+          throw new Error(`Origin access control for an S3 origin must have origin type
+          '${cloudfront.OriginAccessControlOriginType.S3}', got origin type
+          '${this.originAccessControl.originAccessControlOriginType}'`);
+        }
+
         const distributionId = options.distributionId;
         const result = this.grantDistributionAccessToBucket(distributionId);
 
