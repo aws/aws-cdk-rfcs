@@ -2,7 +2,7 @@
 
 * **Original Author(s)**: @gracelu0
 * **Tracking Issue**: [#617](https://github.com/aws/aws-cdk-rfcs/issues/617)
-* **API Bar Raiser**: @colifran
+* **API Bar Raiser**: @TheRealAmazonKendra
 
 [CloudFront Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)
 (OAC) is the recommended way to send authenticated requests
@@ -116,7 +116,7 @@ will update the S3 bucket policy by appending the following policy statement to 
 {
     "Version": "2012-10-17",
     "Statement": {
-        "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+        "Sid": "GrantOACAccessToS3",
         "Effect": "Allow",
         "Principal": {
             "Service": "cloudfront.amazonaws.com"
@@ -132,8 +132,8 @@ will update the S3 bucket policy by appending the following policy statement to 
 }
 ```
 
-If your bucket previously used OAI, there will be an attempt to remove both the policy statement
-that allows access to the OAI and the origin access identity itself.
+> Note: If your bucket previously used OAI, you will need to manually remove the policy statement
+that gives the OAI access to your bucket from your bucket policy.
 
 ```ts
 const bucket = s3.Bucket.fromBucketArn(this, 'MyExistingBucket', 
@@ -259,7 +259,7 @@ signed-off by the API bar raiser (the `status/api-approved` label was applied to
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @colifran
+[ ] Signed-off by API Bar Raiser @TheRealAmazonKendra
 ```
 
 ## Public FAQ
@@ -589,7 +589,7 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
       }
 
       /**
-       * Use custom resource to update bucket policy and remove OAI policy statement if it exists
+       * Use custom resource to update bucket policy
        */
       private grantDistributionAccessToImportedBucket(scope: Construct, distributionId: string) {
         const provider = S3OriginAccessControlBucketPolicyProvider.getOrCreateProvider(scope, S3_ORIGIN_ACCESS_CONTROL_BUCKET_RESOURCE_TYPE,
@@ -660,6 +660,9 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
 
 To support OAC, a property `originAccessControl` will be added to `S3OriginProps`. The `S3Origin` constructor will need additional logic to determine
 how to configure the S3 origin (either as website endpoint, using OAI, or using OAC).
+Two additional properties `overrideImportedBucketPolicy` and `originAccessLevels` will be added to `S3OriginProps`
+to give the user flexibility to let CDK update their imported bucket policy and what level of
+permissions (combination of READ, WRITE, DELETE) to grant OAC.
 
 ```ts
 /**
@@ -680,12 +683,39 @@ export interface S3OriginProps extends cloudfront.OriginProps {
   readonly originAccessControl?: cloudfront.IOriginAccessControl;
 
   /**
-   * When set to 'true', an attempt will be made to update the bucket policy to allow the
-   * CloudFront distribution access.
+   * When set to 'true', a best-effort attempt will be made to update the bucket policy to allow the
+   * CloudFront distribution access. If the imported bucket was previously configured with OAI and being
+   * migrated to OAC, the OAI policy statements must be removed manually.
    * @default false
    */
   readonly overrideImportedBucketPolicy?: boolean;
+
+  /**
+   * The level of permissions granted in the bucket policy and key policy (if applicable)
+   * to the CloudFront distribution. This property only applies to OAC (not OAI).
+   * @default AccessLevel.READ
+   */
+  readonly originAccessLevels?: AccessLevel[];
 }
+
+/**
+ * The types of permissions to grant OAC access to th S3 origin
+ */
+export enum AccessLevel {
+  /**
+   * Grants 's3:GetObject' permission to OAC
+   */
+  READ = 'READ',
+  /**
+   * Grants 's3:PutObject' permission to OAC
+   */
+  WRITE = 'WRITE',
+  /**
+   * Grants 's3:DeleteObject' permission to OAC
+   */
+  DELETE = 'DELETE',
+}
+
 
 export class S3Origin implements cloudfront.IOrigin {
   private readonly origin: cloudfront.IOrigin;
@@ -739,7 +769,7 @@ Policy statement with condition referencing `distributionId`:
 {
     "Version": "2012-10-17",
     "Statement": {
-        "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+        "Sid": "GrantOACAccessToS3",
         "Effect": "Allow",
         "Principal": {
             "Service": "cloudfront.amazonaws.com"
