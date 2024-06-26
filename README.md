@@ -22,7 +22,7 @@ future state of the libraries and to discover projects for contribution.
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
 ---|-----|-----|------
-[617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0617-cloudfront-oac-l2.md)||👷 implementing
+[617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/617)||👷 implementing
 [64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|📆 planning
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)|[@evgenyka](https://github.com/evgenyka)|📆 planning
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
