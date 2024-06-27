@@ -309,10 +309,21 @@ export interface IOriginAccessControl extends IResource {
   readonly originAccessControlOriginType: string;
 }
 
+
 /**
- * Properties for creating a OriginAccessControl resource.
+ * Properties for creating a Origin Access Control resource.
  */
-export interface OriginAccessControlProps {
+export interface OriginAccessControlProps extends CommonOriginAccessControlProps {
+  /**
+   * The type of origin that this origin access control is for.
+   */
+  readonly originAccessControlOriginType: OriginAccessControlOriginType;
+}
+
+/**
+ * Common properties for creating a Origin Access Control resource.
+ */
+export interface CommonOriginAccessControlProps {
   /**
    * A description of the origin access control.
    * @default - no description
@@ -324,21 +335,12 @@ export interface OriginAccessControlProps {
    */
   readonly originAccessControlName?: string;
   /**
-   * The type of origin that this origin access control is for.
-   * @default OriginAccessControlOriginType.S3
+   * Specifies which requests CloudFront signs and the signing protocol.
+   * @default SIGV4_ALWAYS
    */
-  readonly originAccessControlOriginType?: OriginAccessControlOriginType;
-  /**
-   * Specifies which requests CloudFront signs.
-   * @default SigningBehavior.ALWAYS
-   */
-  readonly signingBehavior?: SigningBehavior;
-  /**
-   * The signing protocol of the origin access control.
-   * @default SigningProtocol.SIGV4
-   */
-  readonly signingProtocol?: SigningProtocol;
+  readonly signing?: Signing;
 }
+
 
 /**
  * Origin types supported by origin access control.
@@ -384,11 +386,44 @@ export enum SigningProtocol {
 }
 
 /**
+ * Options for how CloudFront signs requests.
+ */
+export class Signing {
+  /**
+   * Sign all origin requests using the AWS Signature Version 4 signing protocol.
+   */
+  public static readonly SIGV4_ALWAYS = new Signing(SigningProtocol.SIGV4, SigningBehavior.ALWAYS);
+  /**
+   * Do not sign any origin requests.
+   */
+  public static readonly SIGV4_NEVER = new Signing(SigningProtocol.SIGV4, SigningBehavior.NEVER);
+  /**
+   * Sign only if the viewer request doesn't contain the Authorization header
+   * using the AWS Signature Version 4 signing protocol.
+   */
+  public static readonly SIGV4_NO_OVERRIDE = new Signing(SigningProtocol.SIGV4, SigningBehavior.NO_OVERRIDE);
+
+  /**
+   * The signing protocol
+   */
+  public readonly protocol: SigningProtocol;
+  /**
+   * Which requests CloudFront signs.
+   */
+  public readonly behavior: SigningBehavior;
+
+  public constructor(protocol: SigningProtocol, behavior: SigningBehavior) {
+    this.protocol = protocol;
+    this.behavior = behavior;
+  }
+}
+
+/**
  * An Origin Access Control.
  * @resource AWS::CloudFront::OriginAccessControl
  * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudfront-originaccesscontrol.html
  */
-export class OriginAccessControl extends OriginAccessControlBase {
+export class OriginAccessControl extends Resource implements IOriginAccessControl {
   /**
    * Imports an origin access control from its id and origin type.
    */
@@ -399,22 +434,27 @@ export class OriginAccessControl extends OriginAccessControlBase {
     }
     return new Import(scope, id);
   }
-
   /**
-   * The unique identifier of this Origin Access Control.
-   * @attribute
+   * Creates an origin access control for a S3 origin.
    */
+  public static forS3(scope: Construct, id: string, props?: CommonOriginAccessControlProps): IOriginAccessControl {
+    return new OriginAccessControl(scope, id, {
+      ...props,
+      originAccessControlOriginType: OriginAccessControlOriginType.S3,
+    });
+  }
+
   public readonly originAccessControlId: string;
-
-  /**
-   * The type of origin that the origin access control is for.
-   * @attribute
-   */
   public readonly originAccessControlOriginType: string;
 
-  constructor(scope: Construct, id: string, props: OriginAccessControlProps = {}) {
+  constructor(scope: Construct, id: string, props: OriginAccessControlProps) {
     super(scope, id);
-    this.originAccessControlOriginType = props.originAccessControlOriginType ?? OriginAccessControlOriginType.S3;
+    this.originAccessControlOriginType = props.originAccessControlOriginType;
+
+    // Check if origin access control name is 64 characters or less
+    if (props.originAccessControlName) {
+      this.validateOriginAccessControlName(props.originAccessControlName);
+    }
 
     const resource = new CfnOriginAccessControl(this, 'Resource', {
       originAccessControlConfig: {
@@ -422,13 +462,19 @@ export class OriginAccessControl extends OriginAccessControlBase {
         name: props.originAccessControlName ?? Names.uniqueResourceName(this, {
           maxLength: 64,
         }),
-        signingBehavior: props.signingBehavior ?? SigningBehavior.ALWAYS,
-        signingProtocol: props.signingProtocol ?? SigningProtocol.SIGV4,
+        signingBehavior: props.signing?.behavior ?? SigningBehavior.ALWAYS,
+        signingProtocol: props.signing?.protocol ?? SigningProtocol.SIGV4,
         originAccessControlOriginType: this.originAccessControlOriginType,
       },
     });
 
     this.originAccessControlId = resource.attrId;
+  }
+
+  private validateOriginAccessControlName(name: string) {
+    if (!Token.isUnresolved(name) && name.length > 64) {
+      throw new Error(`Origin access control name must be 64 characters or less, '${name}' has length ${name.length}`);
+    }
   }
 }
 ```
@@ -468,7 +514,7 @@ distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API 
  */
 abstract class S3BucketOrigin extends cloudfront.OriginBase {
   public static withAccessIdentity(bucket: s3.IBucket, props: S3OriginProps = {}): S3BucketOrigin {
-    return new (class OriginAccessIdentity extends S3BucketOrigin {
+    return new (class S3BucketOriginWithAccessIdentity extends S3BucketOrigin {
       private originAccessIdentity?: cloudfront.IOriginAccessIdentity;
 
       public constructor() {
@@ -513,7 +559,7 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
   }
 
   public static withAccessControl(bucket: s3.IBucket, props: S3OriginProps = {}): S3BucketOrigin {
-    return new (class OriginAccessControl extends S3BucketOrigin {
+    return new (class S3BucketOriginWithAccessControl extends S3BucketOrigin {
       private originAccessControl?: cloudfront.IOriginAccessControl;
 
       constructor() {
@@ -524,7 +570,7 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
       public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
         if (!this.originAccessControl) {
           // Create a new origin access control if not specified
-          this.originAccessControl = new cloudfront.OriginAccessControl(scope, 'S3OriginAccessControl');
+          this.originAccessControl = cloudfront.OriginAccessControl.forS3(scope, 'S3OriginAccessControl');
         }
 
         if (this.originAccessControl.originAccessControlOriginType !== cloudfront.OriginAccessControlOriginType.S3) {
@@ -730,10 +776,15 @@ export class S3Origin implements cloudfront.IOrigin {
         protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY, // S3 only supports HTTP for website buckets
         ...props,
       });
-    } else if (props.originAccessIdentity || !FeatureFlags.of(bucket.stack).isEnabled(cxapi.CLOUDFRONT_USE_ORIGIN_ACCESS_CONTROL)) {
+    } else if (props.originAccessControl) {
+      this.origin = S3BucketOrigin.withAccessControl(bucket, props);
+    } else if (props.originAccessIdentity) {
       this.origin = S3BucketOrigin.withAccessIdentity(bucket, props);
     } else {
-      this.origin = S3BucketOrigin.withAccessControl(bucket, props);
+      this.origin = FeatureFlags.of(bucket.stack)
+        .isEnabled(cxapi.CLOUDFRONT_USE_ORIGIN_ACCESS_CONTROL_BY_DEFAULT) ?
+        S3BucketOrigin.withAccessControl(bucket, props) :
+        S3BucketOrigin.withAccessIdentity(bucket, props);
     }
   }
 
