@@ -92,12 +92,12 @@ new cloudfront.Distribution(this, 'myDist', {
 });
 ```
 
-It is recommended to set the `@aws-cdk/aws-cloudfront:useOriginAccessControl` feature flag to `true`, so an OAC will be automatically created instead
+It is recommended to set the `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault` feature flag to `true`, so an OAC will be automatically created instead
 of an OAI when `S3Origin` is instantiated. If you don't set this feature flag, and OAI will be created and granted access to the underlying bucket.
 
 ## Migrating from OAI to OAC
 
-If you are currently using OAI for your S3 origin and wish to migrate to OAC, first set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl`
+If you are currently using OAI for your S3 origin and wish to migrate to OAC, first set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault`
 to `true` in `cdk.json`. With this feature flag set, when you create a new `S3Origin` an Origin Access Control will be used instead of Origin Access Identity.
 You can create and pass in an `OriginAccessControl` or one will be automatically created by default. Run `cdk diff` before deploying to verify the
 changes to your stack.
@@ -176,7 +176,7 @@ CloudFront's redirect and error handling will be used.
 
 CloudFront provides two ways to send authenticated requests to an Amazon S3 origin: origin access control (OAC) and origin access identity (OAI).
 OAC is the recommended method and OAI is considered legacy (see [Restricting access to an Amazon Simple Storage Service origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)).
-Following AWS best practices, it is recommended you set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` to `true` to use OAC by
+Following AWS best practices, it is recommended you set the feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault` to `true` to use OAC by
 default when creating new origins.
 
 For an S3 bucket that is configured as a standard S3 bucket origin (not as a website endpoint), when the above feature flag is enabled the `S3Origin`
@@ -290,7 +290,7 @@ Users who want to use OAC may have already found workarounds using the L1 constr
 
 ### What is the technical solution (design) of this feature?
 
-This feature will be introduced under a feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControl` as the current default configuration
+This feature will be introduced under a feature flag `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault` as the current default configuration
 for S3 origins using OAI is still supported.
 
 #### New `OriginAccessControl` L2 Construct
@@ -717,14 +717,17 @@ permissions (combination of READ, WRITE, DELETE) to grant OAC.
 export interface S3OriginProps extends cloudfront.OriginProps {
   /**
    * An optional Origin Access Identity of the origin identity cloudfront will use when calling your s3 bucket.
-   *
-   * @default - An Origin Access Identity will be created.
+   * @default - If the `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault` feature flag is
+   * set to `false` or `undefined`, an Origin Access Identity will be created.
+   * Otherwise, no Origin Access Identity will be created.
    */
   readonly originAccessIdentity?: cloudfront.IOriginAccessIdentity;
 
   /**
    * An optional Origin Access Control
-   * @default - An Origin Access Control will be created.
+   * @default - If the `@aws-cdk/aws-cloudfront:useOriginAccessControlByDefault` feature flag is
+   * set to `true`, an Origin Access Control will be created.
+   * Otherwise, no Origin Access Control will be created.
    */
   readonly originAccessControl?: cloudfront.IOriginAccessControl;
 
