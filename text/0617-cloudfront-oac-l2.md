@@ -10,6 +10,13 @@ to an Amazon S3 origin using IAM service principals.
 It offers better security, supports server-side encryption with AWS KMS,
 and supports all Amazon S3 buckets in all AWS regions, including opt-in Regions launched after December 2022.
 
+CloudFront provides OAC for restricting access to four types of origins currently: S3 origins, Lambda function URL origins, Elemental MediaStore
+origins, and Elemental MediaPackage v2 origins.
+This RFC is scoped to adding OAC for S3 origins.
+See [Extending support to other origin types](#extending-support-to-other-origin-types) and
+[Adding `OriginAccessControl` support for other origin types](#adding-originaccesscontrol-support-for-other-origin-types) for how we would add support
+for other origin types.
+
 Currently the `S3Origin` construct automatically creates an Origin Access Identity (OAI)
 to restrict access to an S3 Origin. However, using OAI is now considered
 [legacy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#private-content-restricting-access-to-s3-oai)
@@ -77,7 +84,7 @@ new cloudfront.Distribution(this, 'myDist', {
 ## Migrating from OAI to OAC
 
 If you are currently using OAI for your S3 origin and wish to migrate to OAC,
-replace the `S3Origin` construct with `S3BucketOriginWithOAC`. You can create and pass in an `S3OriginAccessControl` or one will be automatically
+replace the `S3Origin` construct (now deprecated) with `S3BucketOriginWithOAC`. You can create and pass in an `S3OriginAccessControl` or one will be automatically
 created by default.
 The OAI will be deleted as part of the
 stack update. The logical IDs of the resources managed by
@@ -233,8 +240,9 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching a new L2 construct `OriginAccessControl` for CloudFront (`aws-cdk-lib/aws-cloudfront`). We are also deprecating the existing `S3Origin`
-construct in the `aws-cdk-lib/aws-cloudfront-origins` module and replacing it with `S3StaticWebsiteOrigin`, `S3BucketOriginWithOAI`, `S3BucketOriginWithOAC`,
+We are launching a new L2 construct `S3OriginAccessControl` for CloudFront (`aws-cdk-lib/aws-cloudfront`) to support OAC for S3 origins. We are also
+deprecating the existing `S3Origin` construct in the `aws-cdk-lib/aws-cloudfront-origins` module and replacing it with `S3StaticWebsiteOrigin`,
+`S3BucketOriginWithOAI`, `S3BucketOriginWithOAC`,
 and `S3BucketOriginPublic` to provide a more transparent user experience.
 
 ### Why should I use this feature?
@@ -461,6 +469,9 @@ export class S3OriginAccessControl extends OriginAccessControlBase {
 To extend OAC support to other origin types, e.g. Lambda function URL, we can create a new subclass (e.g. `LambdaOriginAccessControl`) that extends
 `OriginAccessControlBase`. The subclass should set the value of `originAccessControlOriginType` accordingly, e.g. to
 `OriginAccessControlOriginType.LAMBDA` for a Lambda Function Url OAC.
+The implementation would be analagous for MediaStore and MediaPackageV2 OACs, with
+each subclass setting the corresponding value of `originAccessControlOriginType`.
+This would be `OriginAccessControlOriginType.MEDIASTORE` and `OriginAccessControlOriginType.MEDIAPACKAGEV2` respectively.
 
 #### Deprecating `S3Origin` class
 
@@ -609,6 +620,114 @@ class S3StaticWebsiteOrigin extends HttpOrigin {
 }
 ```
 
+#### Extending support to other origin types
+
+##### Lambda Function URLs
+
+`FunctionUrlOrigin` construct exists for creating Lambda Function URL origins.
+To support OAC, we would need to add optional prop `originAccessControl` to `FunctionUrlOriginProps`. As well, we would need to add and implement a
+`bind` method to grant the Distribution permission and configure the `originAccessControlId` property.
+
+To create a distribution with Lambda Function URL origin and OAC:
+
+```ts
+const fn = new lambda.Function(this, 'Function', {
+  code: lambda.Code.fromInline('exports.handler = async () => { return "Hello from Lambda!"; }'),
+  handler: 'index.handler',
+  runtime: lambda.Runtime.NODEJS_18_X,
+});
+const fnUrl = fn.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.AWS_IAM });
+const lambdaDist = new cloudfront.Distribution(this, 'LambdaDistribution', {
+  defaultBehavior: {
+    origin: new origins.FunctionUrlOrigin(fnUrl, {
+      originAccessControl: new cloudfront.LambdaOriginAccessControl(this, 'MyLambdaOAC')
+    }),
+  },
+});
+```
+
+##### MediaStore containers
+
+No L2s exist for MediaStore nor a MediaStore origin currently. [HttpOrigin](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront_origins.HttpOrigin.html)
+is the generic class for creating a HTTP server where the user is required to pass in the domain name. It also implements function `renderCustomOriginConfig()`
+which configures the `CustomOriginConfig` property for Distribution.
+
+Implementing the L2s for
+[MediaStore resources](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_MediaStore.html) should be a prerequisite for
+creating a new MediaStore origin class.
+
+A class for MediaStore origins could be implemented as below (using the L1 in this example). It extends `HttpOrigin` and passes the container endpoint
+to the HttpOrigin constructor:
+
+```ts
+interface MediaStoreOriginProps extends HttpOriginProps { }
+
+class MediaStoreOrigin extends HttpOrigin {
+
+  constructor(container: mediastore.CfnContainer, props: MediaStoreOriginProps = {}) {
+    super(container.attrEndpoint, { ...props });
+  }
+}
+```
+
+Creating a Distribution with MediaStore origin and OAC:
+
+```ts
+const mediastoreDist = new cloudfront.Distribution(this, 'MediaStoreDistribution', {
+  defaultBehavior: {
+    origin: new origins.MediaStoreOrigin(container, {
+      originAccessControl: new cloudfront.MediaStoreOriginAccessControl(this, 'MediaStoreOAC')
+    }),
+  },
+});
+```
+
+##### MediaPackageV2 channels
+
+Similar to MediaStore containers, no L2s exist for MediaPackageV2 nor MediaPackageV2 origins currently.
+
+Implementing the L2s for
+[MediaPackageV2 resources](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_MediaPackageV2.html) should be a prerequisite for
+creating a new MediaPackageV2 origin class.
+
+Getting the domain name for the MediaPackageV2 origin is a bit more complicated than for the other origin types.
+The domain name for MediaPackageV2 origin endpoints is the prefix of the manifest URL, e.g. given the manifest URL
+`https://fc1i33.egress.a7b7cc.mediapackagev2.us-east-1.amazonaws.com/out/v1/my-oac-channel/channel/my-endpoint/my-manifest.m3u8`,
+the domain name is `https://fc1i33.egress.a7b7cc.mediapackagev2.us-east-1.amazonaws.com`.
+
+For the [OriginEndpoint](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-mediapackagev2-originendpoint.html) CloudFormation
+resource, there are multiple relevant [return values](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-mediapackagev2-originendpoint.html#aws-resource-mediapackagev2-originendpoint-return-values)
+that could be used to get the domain name (depending on how the origin is configured): `DashManifestUrls`, `HlsManifestUrls`,
+or `LowLatencyHlsManifestUrls`. The implementation details are out of scope
+for this RFC.
+
+A class for MediaPackageV2 origins could be
+implemented as below (using the L1 in this example). It extends `HttpOrigin` and passes the origin endpoint to the HttpOrigin constructor:
+
+```ts
+interface MediaPackageV2OriginProps extends HttpOriginProps { }
+
+class MediaPackageV2Origin extends HttpOrigin {
+
+  constructor(originEndpoint: mediapackagev2.CfnOriginEndpoint, props: MediaPackageV2OriginProps = {}) {
+    const endpointUrl = getUrlFromOriginEndpoint(originEndpoint);
+    super(endpointUrl, { ...props });
+  }
+}
+```
+
+Creating a Distribution with MediaPackageV2 origin and OAC:
+
+```ts
+const mediapackageV2Dist = new cloudfront.Distribution(this, 'MediaPackageV2Distribution', {
+  defaultBehavior: {
+    origin: new origins.MediaPackageV2Origin(originEndpoint, {
+      originAccessControl: new cloudfront.MediaPackageV2OriginAccessControl(this, 'MediaPackageV2OAC')
+    }),
+  },
+});
+```
+
 #### `Distribution` construct modifications
 
 In the `addOrigin()` method of `Distribution`, we will need to pass the `distributionId` to `origin.bind()` to specify the condition in the policy
@@ -652,7 +771,7 @@ Policy statement to grant Distribution access to S3 origin with condition refere
 }
 ```
 
-### Deprecating `CloudFrontWebDistribution`
+#### Deprecating `CloudFrontWebDistribution`
 
 This RFC proposes changes to support using OAC with the `Distribution` construct, which is the modern, improved API for creating CloudFront
 distributions using CDK. `CloudFrontWebDistribution` is the original construct
