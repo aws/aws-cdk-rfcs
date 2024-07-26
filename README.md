@@ -27,6 +27,7 @@ future state of the libraries and to discover projects for contribution.
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)||📆 planning
 [491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||📆 planning
+[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|📆 planning
 [583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||📆 planning
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||📆 planning
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||📆 planning
