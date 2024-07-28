@@ -16,5 +16,6 @@
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
 [613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
+[629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/617)||✍️ review
 <!--END_TABLE-->
