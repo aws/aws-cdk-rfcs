@@ -88,7 +88,7 @@ replace the `S3Origin` construct (now deprecated) with `S3BucketOrigin.withOrigi
 creates and sets up a OAC for you.
 The OAI will be deleted as part of the
 stack update. The logical IDs of the resources managed by
-the stack will be unchanged. Run `cdk diff` before deploying to verify the
+the stack (i.e. distribution, bucket) will be unchanged. Run `cdk diff` before deploying to verify the
 changes to your stack.
 
 Existing setup using OAI and `S3Origin`:
@@ -172,15 +172,17 @@ new cloudfront.Distribution(this, 'myDist', {
 });
 ```
 
-You can also customize the S3 origin access control that gets created:
+You can also pass in a custom S3 origin access control:
 
 ```ts
 const myBucket = new s3.Bucket(this, 'myBucket');
+const oac = new cloudfront.S3OriginAccessControl(this, 'MyOAC', { signing: cloudfront.Signing.SIGV4_NO_OVERRIDE });
+const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(
+  bucket, { originAccessControl: oac }
+)
 new cloudfront.Distribution(this, 'myDist', {
   defaultBehavior: {
-    origin: origins.S3BucketOrigin.withOriginAccessControl(
-      myBucket, { signing: cloudfront.Signing.SIGV4_NO_OVERRIDE } // Automatically creates an OAC with custom settings
-    )
+    origin: s3Origin
   },
 });
 ```
@@ -211,11 +213,12 @@ const myBucket = new s3.Bucket(this, 'myBucket');
 const myOai = new cloudfront.OriginAccessIdentity(this, 'myOAI', {
   comment: 'My custom OAI'
 });
+const s3Origin = origins.S3BucketOrigin.withOriginAccessIdentity(bucket, {
+  originAccessIdentity: myOai
+});
 new cloudfront.Distribution(this, 'myDist', {
   defaultBehavior: {
-    origin: origins.S3BucketOrigin.withOriginAccessIdentity(
-      myBucket, myOai
-    )
+    origin: s3Origin
   },
 });
 ```
@@ -554,12 +557,33 @@ origins. It also ensures users can only configure either OAI or OAC on their ori
 * `S3BucketOrigin` — abstract base class
 
 ```ts
-interface S3OriginBaseProps extends cloudfront.OriginProps {
-  readonly bucket: IBucket;
+interface S3BucketOriginBaseProps extends cloudfront.OriginProps {}
+
+interface S3BucketOriginWithOACProps extends S3BucketOriginBaseProps {
+  /**
+  * An optional Origin Access Control
+  * @default - an Origin Access Control will be created.
+  */
+  readonly originAccessControl?: cloudfront.IOriginAccessControl;
+
+  /**
+   * The level of permissions granted in the bucket policy and key policy (if applicable)
+   * to the CloudFront distribution.
+   * @default AccessLevel.READ
+   */
+  readonly originAccessLevels?: AccessLevel[];
+}
+
+interface S3BucketOriginWithOACProps extends S3BucketOriginBaseProps {
+  /**
+  * An optional Origin Access Identity
+  * @default - an Origin Access Identity will be created.
+  */
+  readonly originAccessIdentity?: cloudfront.IOriginAccessIdentity;
 }
 
 abstract class S3BucketOrigin extends cloudfront.OriginBase {
-  public static withOriginAccessControl(bucket: IBucket, props?: cloudfront.S3OriginAccessControlProps): cloudfront.IOrigin {
+  public static withOriginAccessControl(bucket: IBucket, props?: S3BucketOriginWithOACProps): cloudfront.IOrigin {
     return new class extends S3BucketOrigin {
       public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
         // Create OAC, update bucket policy and return bind configuration
@@ -567,7 +591,7 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
     }();
   }
 
-  public static withOriginAccessIdentity(bucket: IBucket, originAccessIdentity?: cloudfront.IOriginAccessIdentity): cloudfront.IOrigin {
+  public static withOriginAccessIdentity(bucket: IBucket, props?: S3BucketOriginWithOAIProps): cloudfront.IOrigin {
     return new class extends S3BucketOrigin {
       public bind(scope: Construct, options: cloudfront.OriginBindOptions): cloudfront.OriginBindConfig {
         // Setup OAI and return bind configuration
