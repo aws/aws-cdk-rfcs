@@ -176,4 +176,5 @@
 [617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/617)||✍️ review
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
+[631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
 <!--END_TABLE-->
