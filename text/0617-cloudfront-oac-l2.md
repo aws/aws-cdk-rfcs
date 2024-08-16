@@ -2,7 +2,7 @@
 
 * **Original Author(s)**: @gracelu0
 * **Tracking Issue**: [#617](https://github.com/aws/aws-cdk-rfcs/issues/617)
-* **API Bar Raiser**: @TheRealAmazonKendra
+* **API Bar Raiser**: @comcalvi
 
 [CloudFront Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html)
 (OAC) is the recommended way to send authenticated requests
@@ -272,7 +272,7 @@ signed-off by the API bar raiser (the `status/api-approved` label was applied to
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @TheRealAmazonKendra
+[x] Signed-off by API Bar Raiser @comcalvi
 ```
 
 ## Public FAQ
