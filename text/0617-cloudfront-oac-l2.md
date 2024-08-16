@@ -66,7 +66,16 @@ An S3 bucket can be used as an origin. An S3 bucket origin can either be configu
 
 To set up an origin using a standard S3 bucket, use the `S3BucketOrigin` class. The bucket
 is handled as a bucket origin and
-CloudFront's redirect and error handling will be used.
+CloudFront's redirect and error handling will be used. It is recommended to use `S3BucketOrigin.withOriginAccessControl()` to configure OAC for your origin.
+
+```ts
+const myBucket = new s3.Bucket(this, 'myBucket');
+new cloudfront.Distribution(this, 'myDist', {
+  defaultBehavior: { origin: origins.S3BucketOrigin.withOriginAccessControl(myBucket) },
+});
+```
+
+>Note: `S3Origin` has been deprecated. Use `S3BucketOrigin` for standard S3 origins and `S3StaticWebsiteOrigin` for static website S3 origins.
 
 ### S3 Bucket Configured as a Website Endpoint
 
@@ -87,8 +96,7 @@ If you are currently using OAI for your S3 origin and wish to migrate to OAC,
 replace the `S3Origin` construct (now deprecated) with `S3BucketOrigin.withOriginAccessControl()` which automatically
 creates and sets up a OAC for you.
 The OAI will be deleted as part of the
-stack update. The logical IDs of the resources managed by
-the stack (i.e. distribution, bucket) will be unchanged. Run `cdk diff` before deploying to verify the
+stack update. This migration will not cause resource replacement. Run `cdk diff` before deploying to verify the
 changes to your stack.
 
 Existing setup using OAI and `S3Origin`:
@@ -623,15 +631,22 @@ abstract class S3BucketOrigin extends cloudfront.OriginBase {
 
 For setting up OAC, when the S3 bucket uses SSE-KMS encryption (customer-managed key),
 a circular dependency error occurs when trying to deploy the template. When granting
-the CloudFront distribution access to use the KMS Key, there is a circular dependency:
+the CloudFront distribution access to use the KMS Key by updating the key policy, there is a circular dependency:
 
 - CloudFront distribution references the S3 bucket
 - S3 bucket references the KMS key
 - KMS Key references the CloudFront distribution
 
-The proposed solution to this issue is to use a custom resource
-to retrieve and update the KMS key policy after the CloudFront
-distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API calls.
+This issue exists because the key policy is defined by the `KeyPolicy` property and is not currently supported as a
+separation CloudFormation resource (i.e. AWS::KMS::KeyPolicy). There is an open GitHub feature request to CloudFormation for `AWS::KMS::KeyPolicy`
+but no near future plans to support.
+
+We could write a custom resource to support `AWS::KMS::KeyPolicy` functionality. It would retrieve and update the KMS key policy after the CloudFront
+distribution has been created via the `GetKeyPolicy()` and `PutKeyPolicy()` API calls. However, custom resources result in increased maintenance cost
+(for us and the customer). When `AWS::KMS::KeyPolicy` is supported, the risks of migrating from the custom resource to use it include
+behavioural changes due to implementation differences, resource replacement, service downtime, and more. The risks outweigh the benefits of
+simplifying the setup process for the user. Thus the proposed solution as part of this launch is to document workarounds for this circular dependency
+issue which may require some manual work from the user.
 
 #### S3 Static Website Origin
 
