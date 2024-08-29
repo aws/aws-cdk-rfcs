@@ -1,3 +1,4 @@
 # VSCode Local history extension
 .history/
 *.swp
+.idea/
