@@ -318,4 +318,3 @@ RFC process], [React RFC process], and [Ember RFC process]
 [ember rfc process]: https://github.com/emberjs/rfcs
 
 [#aws-cdk-rfcs]: https://cdk-dev.slack.com/archives/C025ZFGMUCD
-
