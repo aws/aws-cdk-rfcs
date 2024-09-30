@@ -11,6 +11,7 @@ jobs:
       # Checkout of the source to be validated
       - uses: actions/checkout@v4
         with:
+          ref: "${{ github.event.pull_request.merge_commit_sha }}"
           path: checkout_pr
 
       # Checkout of tools from 'main'; necessary to avoid compromise of GitHub token
