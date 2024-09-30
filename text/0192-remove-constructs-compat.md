@@ -450,7 +450,7 @@ on the `constructs` library.
 See the RFC for [monolithic packaging] for more details.
 
 [monolithic packaging]:
-  https://github.com/aws/aws-cdk-rfcs/blob/master/text/0006-monolothic-packaging.md
+  https://github.com/aws/aws-cdk-rfcs/blob/main/text/0006-monolothic-packaging.md
 
 ## Design
 
@@ -798,7 +798,7 @@ The prepare hook was used in the CDK in a few cases:
 
 The first two use cases have already been addressed by centralizing the
 "prepare" logic at the stage level (into
-[prepare-app.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/prepare-app.ts)).
+[prepare-app.ts](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/core/lib/private/prepare-app.ts)).
 
 #### What can we do on 1.x for 06-NO-PREPARE
 
@@ -812,13 +812,13 @@ The first two use cases have already been addressed by centralizing the
 ### 07-NO-SYNTHESIZE
 
 Version 4.x of the `constructs` library does not contain a lifecycle hook for
-synthesis as described [above](#the-synthesize-hook-is-no-longer-supported).
+synthesis as described [above](#07-no-synthesize-the-synthesize-hook-is-no-longer-supported).
 
 The reason this is not available at the base class is because the abstraction
 did not "hold water" as the AWS CDK evolved and new CDKs emerged. In the AWS
 CDK, we eventually ended up with a centralized synthesis logic at the
 `Stage`-level
-([synthesis.ts](https://github.com/aws/aws-cdk/blob/master/packages/%40aws-cdk/core/lib/private/synthesis.ts)).
+([synthesis.ts](https://github.com/aws/aws-cdk/blob/main/packages/%40aws-cdk/core/lib/private/synthesis.ts)).
 The main reason was that we needed to "break" the recursion in various
 domain-specific points (e.g. stages, nested stacks) which meant that the generic
 logic of "traverse the entire tree and call `synthesize`" did not hold. In
@@ -955,11 +955,11 @@ If we consider the various [reasons](#drawbacks) not to take this change, the
 main reason would be to simplify the
 [migration for users from 1.x to 2.x](#user-migration-effort). The major version
 2.x is already required to introduce monolithic packaging, and this change, for
-most users, is likely to be trivial (see [above](#breaking-changes)). Therefore,
+most users, is likely to be trivial (see above). Therefore,
 we believe this is probably not the correct motivation to reject this proposal.
 
-The [repository migration](#repository-migration-efforts) efforts and
-[co-existence of 2.x/1.x](#co-existence-of-2x1x) are both one-off costs this
+The [repository migration](#cdk-codebase-migration-efforts) efforts and
+co-existence of 2.x/1.x are both one-off costs this
 proposal suggests ways to reduce the chance for merge conflicts across these
 branches.
 
@@ -1089,7 +1089,7 @@ for constructs 10.x.
   - [x] Change `addDependency` to accept `IDependable` instead of `IConstruct`.
   - [x] Return only local dependencies in `node.dependencies`
   - [ ] Migrate
-        [DependencyGraph](https://github.com/awslabs/cdk8s/blob/master/packages/cdk8s/src/dependency.ts)
+        [DependencyGraph](https://github.com/awslabs/cdk8s/blob/main/packages/cdk8s/src/dependency.ts)
         from cdk8s into `constructs`.
 - [04-STACK-ROOT](#04-stack-root)
   - N/A
@@ -1201,6 +1201,3 @@ The original text follows:
 > See
 > [discussion](https://github.com/aws/aws-cdk-rfcs/pull/195/files#r460718960)
 > over the RFC PR.
-
-[`constructnode`]:
-  https://github.com/hashicorp/terraform-cdk/blob/5becfbc699180adfe920dec794200bbf56dda0a7/packages/cdktf/lib/terraform-element.ts#L21

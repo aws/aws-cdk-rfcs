@@ -1,15 +1,28 @@
 
 # See https://doc.mergify.io
 
+queue_rules:
+  - name: default
+    conditions:
+      - -title~=(WIP|wip)
+      - -label~=(blocked|do-not-merge)
+      - -merged
+      - -closed
+      - "#approved-reviews-by>=1"
+      - -approved-reviews-by~=author
+      - "#changes-requested-reviews-by=0"
+      - "#commented-reviews-by=0"
 pull_request_rules:
   - name: automatic merge
     actions:
       comment:
         message: Thank you for contributing! Your pull request is now being automatically merged.
-      merge:
-        strict: smart
+      queue:
         method: squash
-        strict_method: merge
+        name: default
+        commit_message_template: |-
+          {{ title }} (#{{ number }})
+          {{ body }}
       delete_head_branch: {}
       dismiss_reviews: {}
     conditions:
@@ -23,6 +36,11 @@ pull_request_rules:
       - "#commented-reviews-by=0"
   - name: remove stale reviews
     actions:
-      dismiss_reviews: {}
+      dismiss_reviews:
+        approved: true
     conditions:
-      - base=master
+      - author!=aws-cdk-automation
+      - label!=auto-approve
+      - base=main
+      - -merged
+      - -closed

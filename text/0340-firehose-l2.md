@@ -32,7 +32,7 @@ endpoint or third-party services such as Datadog, Dynatrace, LogicMonitor, Mongo
 Relic, and Sumo Logic.
 
 Kinesis Data Firehose delivery streams are distinguished from Kinesis data streams in
-their models of consumtpion. Whereas consumers read from a data stream by actively pulling
+their models of consumption. Whereas consumers read from a data stream by actively pulling
 data from the stream, a delivery stream pushes data to its destination on a regular
 cadence. This means that data streams are intended to have consumers that do on-demand
 processing, like AWS Lambda or Amazon EC2. On the other hand, delivery streams are
@@ -655,7 +655,7 @@ For non-AWS service destinations, use `HttpDestination`.
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
-signed-off by the API bar raiser (the `api-approved` label was applied to the
+signed-off by the API bar raiser (the `status/api-approved` label was applied to the
 RFC pull request):
 
 - [X] Signed-off by API Bar Raiser @rix0rrr

@@ -7,7 +7,7 @@ rfc pr: https://github.com/aws/aws-cdk-rfcs/pull/250
 # Summary
 
 **⚠️ NOTE:** This RFC is expired and has been superceded by
-<https://github.com/aws/aws-cdk-rfcs/blob/master/text/0249-v2-experiments.md>.
+<https://github.com/aws/aws-cdk-rfcs/blob/main/text/0249-v2-experiments.md>.
 This document is retained for historical context.
 
 ---
