@@ -12,17 +12,18 @@ queue_rules:
       - -approved-reviews-by~=author
       - "#changes-requested-reviews-by=0"
       - "#commented-reviews-by=0"
+    merge_method: squash
+    commit_message_template: |-
+      {{ title }} (#{{ number }})
+      {{ body }}
+
 pull_request_rules:
   - name: automatic merge
     actions:
       comment:
         message: Thank you for contributing! Your pull request is now being automatically merged.
       queue:
-        method: squash
         name: default
-        commit_message_template: |-
-          {{ title }} (#{{ number }})
-          {{ body }}
       delete_head_branch: {}
       dismiss_reviews: {}
     conditions:
