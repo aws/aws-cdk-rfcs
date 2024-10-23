@@ -1,8 +1,8 @@
 # Garbage Collection for Assets
 
-* **Original Author(s):**: @eladb, @kaizen3031593
+* **Original Author(s):**: @eladb, @kaizencc
 * **Tracking Issue**: #64
-* **API Bar Raiser**: @nlynch
+* **API Bar Raiser**: @rix0rrr
 
 The asset garbage collection CLI will identify and/or delete unused CDK assets,
 resulting in smaller bucket/repo size and less cost for customers.
@@ -11,7 +11,8 @@ resulting in smaller bucket/repo size and less cost for customers.
 
 **CHANGELOG**:
 
-- feat(cli): `cdk gc` - garbage collection of unused assets
+- feat(cli): garbage collect s3 assets (under --unstable flag)
+- feat(cli): garbage collect ecr assets (under --unstable flag)
 
 **Help**:
 
@@ -22,48 +23,97 @@ cdk gc [ENVIRONMENT...]
 Finds and deletes all unused S3 and ECR assets in the ENVIRONMENT
 
 Options:
-  -l, --list              lists, rather than deletes, all unused assets
-  -t, --type=[s3|ecr]     filters for type of asset
+  --type=[s3|ecr|all]                       filters for type of asset
+  --action=[print|tag|delete-tagged|full]   type of action to perform on unused assets
+  --rollback-buffer-days=number             number of days an asset should be isolated before deletion
+  --created-buffer-days=number              number of days old an asset must be before its elligible for deletion
+  --bootstrap-stack-name=string             name of a custom bootstrap stack if not CDK Toolkit
+  --confirm=boolean                         confirm with user before deleting assets
 
 Examples:
   cdk gc
   cdk gc aws://ACCOUNT/REGION
-  cdk gc --list --type=s3
+  cdk gc --type=s3 --action=delete-tagged
 ```
 
 **README:**
 
-The `cdk gc` command reduces the size of your S3 asset bucket and your ecr asset
-repository by identifying and deleting unused assets. The command will enter the
-specified environment or all environments in the CDK app and determine assets that are no
-longer referenced and can be safely deleted. You can also list unused assets using the
-`--list` option or filter for a specific type of asset using `--type`.
+> [!CAUTION]
+> CDK Garbage Collection is under development and therefore must be opted in via the `--unstable` flag: `cdk gc --unstable=gc`.
 
-**Usage:**
+`cdk gc` garbage collects unused assets from your bootstrap bucket via the following mechanism: 
 
-This command will garbage collect all unused assets in all environments that belong to the current CDK app (if `cdk.json` exists):
+- for each object in the bootstrap S3 Bucket, check to see if it is referenced in any existing CloudFormation templates
+- if not, it is treated as unused and gc will either tag it or delete it, depending on your configuration.
 
-```shell
-cdk gc
+The high-level mechanism works identically for unused assets in bootstrapped ECR Repositories.
+
+The most basic usage looks like this:
+
+```console
+cdk gc --unstable=gc
 ```
 
-This command will list all unused assets in all environments that belong to the current CDK app:
+This will garbage collect all unused assets in all environments of the existing CDK App.
 
-```shell
-cdk gc --list
+To specify one type of asset, use the `type` option (options are `all`, `s3`, `ecr`):
+
+```console
+cdk gc --unstable=gc --type=s3
 ```
 
-This command will garbage collect unused assets in the specified environment:
+Otherwise `cdk gc` defaults to collecting assets in both the bootstrapped S3 Bucket and ECR Repository.
 
-```shell
-cdk gc aws://ACCOUNT/REGION
+`cdk gc` will garbage collect S3 and ECR assets from the current bootstrapped environment(s) and immediately delete them. Note that, since the default bootstrap S3 Bucket is versioned, object deletion will be handled by the lifecycle
+policy on the bucket.
+
+Before we begin to delete your assets, you will be prompted:
+
+```console
+cdk gc --unstable=gc
+
+Found X objects to delete based off of the following criteria:
+- objects have been isolated for > 0 days
+- objects were created > 1 days ago
+
+Delete this batch (yes/no/delete-all)?
 ```
 
-This command will list unused S3 assets in the specified environment. The options for `--type` are `s3` or `ecr`:
+Since it's quite possible that the bootstrap bucket has many objects, we work in batches of 1000 objects or 100 images. 
+To skip the prompt either reply with `delete-all`, or use the `--confirm=false` option.
 
-```shell
-cdk gc aws://ACOUNT/REGION --type=s3
+```console
+cdk gc --unstable=gc --confirm=false
 ```
+
+If you are concerned about deleting assets too aggressively, there are multiple levers you can configure:
+
+- rollback-buffer-days: this is the amount of days an asset has to be marked as isolated before it is elligible for deletion.
+- created-buffer-days: this is the amount of days an asset must live before it is elligible for deletion. 
+
+When using `rollback-buffer-days`, instead of deleting unused objects, `cdk gc` will tag them with
+today's date instead. It will also check if any objects have been tagged by previous runs of `cdk gc`
+and delete them if they have been tagged for longer than the buffer days.
+
+When using `created-buffer-days`, we simply filter out any assets that have not persisted that number
+of days.
+
+```console
+cdk gc --unstable=gc --rollback-buffer-days=30 --created-buffer-days=1
+```
+
+You can also configure the scope that `cdk gc` performs via the `--action` option. By default, all actions
+are performed, but you can specify `print`, `tag`, or `delete-tagged`.
+
+- `print` performs no changes to your AWS account, but finds and prints the number of unused assets.
+- `tag` tags any newly unused assets, but does not delete any unused assets.
+- `delete-tagged` deletes assets that have been tagged for longer than the buffer days, but does not tag newly unused assets.
+
+```console
+cdk gc --unstable=gc --action=delete-tagged --rollback-buffer-days=30
+```
+
+This will delete assets that have been unused for >30 days, but will not tag additional assets.
 
 ---
 
@@ -74,18 +124,10 @@ signed-off by the API bar raiser (the `api-approved` label was applied to the
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @rix0rrr
 ```
 
 ## Public FAQ
-
-> This section should include answers to questions readers will likely ask about
-> this release. Similar to the "working backwards", this section should be
-> written in a language as if the feature is now released.
->
-> The template includes a some common questions, feel free to add any questions
-> that might be relevant to this feature or omit questions that you feel are not
-> applicable.
 
 ### What are we launching today?
 
@@ -100,17 +142,21 @@ unutilized assets.
 
 ### How does the command identify unused assets?
 
-`cdk gc` will look at all the deployed, healthy stacks in the environment and trace the
+`cdk gc` will look at all the deployed stacks in the environment and store the
 assets that are being referenced by these stacks. All assets that are not reached via
-tracing **and** are older than 30 days can be safely deleted.
+tracing are determined to be unused.
 
-The 30 day requirement acts as a safety margin for CloudFormation rollbacks. For example,
-if we deploy a change to a stack, the previous assets will no longer be traced. If we
-wanted to rollback to the previous version after running `cdk gc` with no time requirement
-those assets would not exist. In a regular `cdk deploy` cycle the CDK CLI can re-upload the
-assets but that is not true for Continuous Deployment systems. Waiting 30 days before any
-assets are deleted alleviates this concern for pessimistic CI/CD scenarios and allows for
-safe interperability.
+#### A note on pipeline rollbacks and the `--rollback-buffer-days` option:
+
+In some pipeline rollback scenarios, the default `cdk gc` options may be overzealous in
+deleting assets. A CI/CD system that offers indeterminate rollbacks without redeploying
+are expecting that previously deployed assets still exist. If `cdk gc` is run between
+the failed deployment and the rollback, the asset will be garbage collected. To mitigate
+this, we recommend the following setting: `--rollback-buffer-days=30`. This will ensure
+that all assets spend 30 days tagged as "unused" _before_ they are deleted, and should
+guard against even the most pessimistic of rollback scenarios.
+
+![Illustration of Pipeline Rollback](../images/PipelineRollback.png)
 
 ## Internal FAQ
 
@@ -136,12 +182,25 @@ github comment.
 
 ### What is the technical solution (design) of this feature?
 
-> Briefly describe the high-level design approach for implementing this feature.
->
-> As appropriate, you can add an appendix with a more detailed design document.
->
-> This is a good place to reference a prototype or proof of concept, which is
-> highly recommended for most RFCs.
+At a high level, we are operating `cdk gc` single-threaded on an environment.
+We start by querying CFN stacks and storing the templates in memory. Then we go through
+the bootstrapped bucket and check if the hash in the object's key exists in _any_ template.
+Depending on `cdk gc`'s configuration, we either tag the object as isolated, or delete it immediately.
+Also depending on if `--rollback-buffer-days` is set, we check if any isolated objects have previously
+been marked as isolated and are ready to be deleted, and if any in-use assets are erroneously marked
+as isolated that should be unmarked. Finally, we go through the bootstrapped repository and do the same
+thing for each image.
+
+> Why are we storing the entire template in memory and not just the asset hashes?
+We don't expect that the bottleneck for `cdk gc` is going to be memory storage but rather
+the (potentially) large number of AWS API calls. Storing hashes alone opens up the possibility
+of missing an asset hash an inadvertently deleting something in-use.
+
+> What happens if we run `cdk deploy` (or `cdk destroy`) while `cdk gc` is in progress?
+We mitigate this issue with the following redundancies:
+- we refresh the in-memory state of CloudFormation Stacks periodically to catch any new or updated stacks
+- as a baseline, we do not delete any assets that are created after `cdk gc` is started (and this can
+be increased via the `--created-buffer-days` option)
 
 ### Is this a breaking change?
 
@@ -157,7 +216,9 @@ at some point add this to the bootstrapping stack.
 
 ### What are the drawbacks of this solution?
 
-> Describe any problems/risks that can be introduced if we implement this RFC.
+The main drawback is that we will own a CLI command capable of deleting assets in customer
+accounts. They will rely on the correctness of the command to ensure that we are not deleting
+in-use assets and crashing live applications.
 
 ### What is the high-level project plan?
 
@@ -170,13 +231,4 @@ stack metadata that indicates which assets are being used.
 
 ### Are there any open issues that need to be addressed later?
 
-> Describe any major open issues that this RFC did not take into account. Once
-> the RFC is approved, create GitHub issues for these issues and update this RFC
-> of the project board with these issue IDs.
-
-## Appendix
-
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
+No
