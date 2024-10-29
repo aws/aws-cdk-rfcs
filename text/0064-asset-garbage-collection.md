@@ -64,8 +64,8 @@ cdk gc --unstable=gc --type=s3
 
 Otherwise `cdk gc` defaults to collecting assets in both the bootstrapped S3 Bucket and ECR Repository.
 
-`cdk gc` will garbage collect S3 and ECR assets from the current bootstrapped environment(s) and immediately 
-delete them. Note that, since the default bootstrap S3 Bucket is versioned, object deletion will be handled by 
+`cdk gc` will garbage collect S3 and ECR assets from the current bootstrapped environment(s) and immediately
+delete them. Note that, since the default bootstrap S3 Bucket is versioned, object deletion will be handled by
 the lifecycle policy on the bucket.
 
 Before we begin to delete your assets, you will be prompted:
@@ -116,7 +116,7 @@ cdk gc --unstable=gc --action=delete-tagged --rollback-buffer-days=30
 
 This will delete assets that have been unused for >30 days, but will not tag additional assets.
 
-#### Theoretical Race Condition with `REVIEW_IN_PROGRESS` stacks
+### Theoretical Race Condition with `REVIEW_IN_PROGRESS` stacks
 
 When gathering stack templates, we are currently ignoring `REVIEW_IN_PROGRESS` stacks as no template
 is available during the time the stack is in that state. However, stacks in `REVIEW_IN_PROGRESS` have already
@@ -212,11 +212,13 @@ been marked as isolated and are ready to be deleted, and if any in-use assets ar
 as isolated that should be unmarked.
 
 > Why are we storing the entire template in memory and not just the asset hashes?
+
 We don't expect that the bottleneck for `cdk gc` is going to be memory storage but rather
 the (potentially) large number of AWS API calls. Storing hashes alone opens up the possibility
 of missing an asset hash an inadvertently deleting something in-use.
 
 > What happens if we run `cdk deploy` (or `cdk destroy`) while `cdk gc` is in progress?
+
 We mitigate this issue with the following redundancies:
 
 - we refresh the in-memory state of CloudFormation Stacks periodically to catch any new or updated stacks
