@@ -115,6 +115,22 @@ cdk gc --unstable=gc --action=delete-tagged --rollback-buffer-days=30
 
 This will delete assets that have been unused for >30 days, but will not tag additional assets.
 
+#### Theoretical Race Condition with `REVIEW_IN_PROGRESS` stacks
+
+When gathering stack templates, we are currently ignoring `REVIEW_IN_PROGRESS` stacks as no template
+is available during the time the stack is in that state. However, stacks in `REVIEW_IN_PROGRESS` have already
+passed through the asset uploading step, where it either uploads new assets or ensures that the asset exists.
+Therefore it is possible the assets it references are marked as isolated and garbage collected before the stack
+template is available.
+
+Our recommendation is to not deploy stacks and run garbage collection at the same time. If that is unavoidable,
+setting `--created-buffer-days` will help as garbage collection will avoid deleting assets that are recently
+created. Finally, if you do result in a failed deployment, the mitigation is to redeploy, as the asset upload step
+will be able to reupload the missing asset.
+
+In practice, this race condition is only for a specific edge case and unlikely to happen but please open an
+issue if you think that this has happened to your stack.
+
 ---
 
 #
@@ -182,14 +198,17 @@ github comment.
 
 ### What is the technical solution (design) of this feature?
 
-At a high level, we are operating `cdk gc` single-threaded on an environment.
-We start by querying CFN stacks and storing the templates in memory. Then we go through
-the bootstrapped bucket and check if the hash in the object's key exists in _any_ template.
-Depending on `cdk gc`'s configuration, we either tag the object as isolated, or delete it immediately.
+![Garbage Collection Design](../images/garbagecollection.png)
+
+At a high level, garbage collection consists of two parallel processes - refreshing CFN stack templates
+in the background and garbage collecting objects/images in the foreground. CFN stack templates are queried
+every ~5 minutes and stored in memory. Then we go through the bootstrapped bucket/repository and check if
+the hash in the object's key exists in _any_ template.
+
+If `--rollback-buffer-days` is set, we tag the object as isolated, otherwise we delete it immediately.
 Also depending on if `--rollback-buffer-days` is set, we check if any isolated objects have previously
 been marked as isolated and are ready to be deleted, and if any in-use assets are erroneously marked
-as isolated that should be unmarked. Finally, we go through the bootstrapped repository and do the same
-thing for each image.
+as isolated that should be unmarked.
 
 > Why are we storing the entire template in memory and not just the asset hashes?
 We don't expect that the bottleneck for `cdk gc` is going to be memory storage but rather
@@ -201,6 +220,13 @@ We mitigate this issue with the following redundancies:
 - we refresh the in-memory state of CloudFormation Stacks periodically to catch any new or updated stacks
 - as a baseline, we do not delete any assets that are created after `cdk gc` is started (and this can
 be increased via the `--created-buffer-days` option)
+
+> Are there any race conditions between the refresher and garbage collection?
+Yes, a small one. Stacks in `REVIEW_IN_PROGRESS` do not yet have a template to query, but these stacks
+have already gone through asset uploading. There is a theoretical situation where a previously isolated
+asset is referenced by a `REVIEW_IN_PROGRESS` stack, and since we are unaware that that is happening,
+we may delete the asset in the meantime. In practice though, I am not expecting this to be a frequent
+scenario.
 
 ### Is this a breaking change?
 
