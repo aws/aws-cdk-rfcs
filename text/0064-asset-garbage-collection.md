@@ -41,7 +41,7 @@ Examples:
 > [!CAUTION]
 > CDK Garbage Collection is under development and therefore must be opted in via the `--unstable` flag: `cdk gc --unstable=gc`.
 
-`cdk gc` garbage collects unused assets from your bootstrap bucket via the following mechanism: 
+`cdk gc` garbage collects unused assets from your bootstrap bucket via the following mechanism:
 
 - for each object in the bootstrap S3 Bucket, check to see if it is referenced in any existing CloudFormation templates
 - if not, it is treated as unused and gc will either tag it or delete it, depending on your configuration.
@@ -64,8 +64,9 @@ cdk gc --unstable=gc --type=s3
 
 Otherwise `cdk gc` defaults to collecting assets in both the bootstrapped S3 Bucket and ECR Repository.
 
-`cdk gc` will garbage collect S3 and ECR assets from the current bootstrapped environment(s) and immediately delete them. Note that, since the default bootstrap S3 Bucket is versioned, object deletion will be handled by the lifecycle
-policy on the bucket.
+`cdk gc` will garbage collect S3 and ECR assets from the current bootstrapped environment(s) and immediately 
+delete them. Note that, since the default bootstrap S3 Bucket is versioned, object deletion will be handled by 
+the lifecycle policy on the bucket.
 
 Before we begin to delete your assets, you will be prompted:
 
@@ -79,7 +80,7 @@ Found X objects to delete based off of the following criteria:
 Delete this batch (yes/no/delete-all)?
 ```
 
-Since it's quite possible that the bootstrap bucket has many objects, we work in batches of 1000 objects or 100 images. 
+Since it's quite possible that the bootstrap bucket has many objects, we work in batches of 1000 objects or 100 images.
 To skip the prompt either reply with `delete-all`, or use the `--confirm=false` option.
 
 ```console
@@ -89,7 +90,7 @@ cdk gc --unstable=gc --confirm=false
 If you are concerned about deleting assets too aggressively, there are multiple levers you can configure:
 
 - rollback-buffer-days: this is the amount of days an asset has to be marked as isolated before it is elligible for deletion.
-- created-buffer-days: this is the amount of days an asset must live before it is elligible for deletion. 
+- created-buffer-days: this is the amount of days an asset must live before it is elligible for deletion.
 
 When using `rollback-buffer-days`, instead of deleting unused objects, `cdk gc` will tag them with
 today's date instead. It will also check if any objects have been tagged by previous runs of `cdk gc`
@@ -162,7 +163,7 @@ unutilized assets.
 assets that are being referenced by these stacks. All assets that are not reached via
 tracing are determined to be unused.
 
-#### A note on pipeline rollbacks and the `--rollback-buffer-days` option:
+#### A note on pipeline rollbacks and the `--rollback-buffer-days` option
 
 In some pipeline rollback scenarios, the default `cdk gc` options may be overzealous in
 deleting assets. A CI/CD system that offers indeterminate rollbacks without redeploying
@@ -217,6 +218,7 @@ of missing an asset hash an inadvertently deleting something in-use.
 
 > What happens if we run `cdk deploy` (or `cdk destroy`) while `cdk gc` is in progress?
 We mitigate this issue with the following redundancies:
+
 - we refresh the in-memory state of CloudFormation Stacks periodically to catch any new or updated stacks
 - as a baseline, we do not delete any assets that are created after `cdk gc` is started (and this can
 be increased via the `--created-buffer-days` option)
