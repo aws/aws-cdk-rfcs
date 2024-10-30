@@ -81,6 +81,51 @@ cluster.grantAccess('adminAccess', roleArn, [
 ```
 ## Cluster Configuration
 
+### New Feat: Create EKS Cluster in an isolated VPC
+To create a EKS Cluster in an isolated VPC, vpc endpoints need to be set for different AWS services (EC2, S3, STS, ECR and anything the service needs).
+```
+const vpc = new ec2.Vpc(this, 'vpc', {
+    subnetConfiguration: [
+        {
+            cidrMask: 24,
+            name: 'Private',
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+    ],
+    gatewayEndpoints: {
+        S3: {
+            service: ec2.GatewayVpcEndpointAwsService.S3,
+        },
+    },
+});
+vpc.addInterfaceEndpoint('stsEndpoint', {
+    service: ec2.InterfaceVpcEndpointAwsService.STS,
+    open: true,
+});
+
+vpc.addInterfaceEndpoint('ec2Endpoint', {
+    service: ec2.InterfaceVpcEndpointAwsService.EC2,
+    open: true,
+});
+
+vpc.addInterfaceEndpoint('ecrEndpoint', {
+    service: ec2.InterfaceVpcEndpointAwsService.ECR,
+    open: true,
+});
+
+vpc.addInterfaceEndpoint('ecrDockerEndpoint', {
+    service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
+    open: true,
+});
+
+const cluster = new eks.Cluster(this, 'MyMycluster123', {
+    version: eks.KubernetesVersion.V1_31,
+    authenticationMode: eks.AuthenticationMode.API,
+    vpc,
+    vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }]
+});
+```
+
 ### Logging Configuration
 Logging property is renamed from clusterLogging to logging since there is only one logging property in the construct.
 
@@ -218,11 +263,16 @@ Due to the fact that switching from a custom resource (Custom::AWSCDK-EKS-Cluste
 
 ### What are we launching today?
 
-We’re launching a new EKS module aws-eksv2-alpha. It's a rewrite of existing `aws-eks` module using native CFN L1 cluster resource instead of custom resource.
+We’re launching a new EKS module `aws-eksv2-alpha`. It's a rewrite of existing `aws-eks` module with some breaking changes based on community feedbacks.
 
 ### Why should I use this feature?
 
-The new EKS module provides faster deployment, less complexity, less cost and more features (e.g. isolated VPC and escape hatching). 
+The new EKS module provides faster deployment, less complexity, less cost and more features (e.g. isolated VPC and escape hatching).
+
+### What's the future plan for existing `aws-eks` module?
+
+- When the new alpha module is published, `aws-eks` module will enter `maintainence` mode which means we will only work on bugs on `aws-eks` module. New features will only be added to the new `aws-eksv2-alpha` module. (Note: this is the general guideline and we might be flexible on this)
+- When the new alpha module is stablized, `aws-eks` module will enter `deprecation` mode which means customers should migrate to the new module. They can till use the old module but we will not invest on features/bug fixes on it.
 
 ## Internal FAQ
 
@@ -237,14 +287,13 @@ The migration for customers is not easy and we can't guarantee it's a safe migra
 Yes it's breaking change hence it's put into a new alpha module. A few other breaking changes are shipped together to make it more ergonomic and aligned with the new cluster implementation.
 
 ### What is the high-level project plan?
-
-- [ ] Create prototype for design
+- [ ] Publish the RFC
 - [ ] Gather feedback on the RFC
 - [ ] Get bar raiser to sign off on RFC
-- [ ] Implement the construct in a separate repository
+- [ ] Create the new eksv2 alpha module and implementation
 - [ ] Make pull request to aws-cdk repository
 - [ ] Iterate and respond to PR feedback
-- [ ] Merge new construct and related changes
+- [ ] Merge new module
 
 ### Are there any open issues that need to be addressed later?
 
