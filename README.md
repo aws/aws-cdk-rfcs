@@ -23,7 +23,6 @@ future state of the libraries and to discover projects for contribution.
 \#|Title|Owner|Status
 ---|-----|-----|------
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|📆 planning
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)|[@evgenyka](https://github.com/evgenyka)|📆 planning
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)|[@mrgrain](https://github.com/mrgrain)|📆 planning
