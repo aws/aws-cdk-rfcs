@@ -1,17 +1,49 @@
 # EKS L2 Re-write
 
-* **Original Author(s)**: @xazhao
-* **Tracking Issue**: [#605](https://github.com/aws/aws-cdk-rfcs/issues/605)
-* **API Bar Raiser**: 
+- **Original Author(s)**: @xazhao
+- **Tracking Issue**: [#605](https://github.com/aws/aws-cdk-rfcs/issues/605)
+- **API Bar Raiser**:
 
-eks-v2-alpha is a re-write of existing aws-eks module. It uses native L1 CFN resource instead of custom resource to create EKS cluster and Fargate Profile. This re-write provides a better customer experience including faster deployment, less complexity/cost and more features like escape hatching and better VPC support. It also require less maintenance compare to the existing module. 
+The `eks-v2-alpha` module is a rewrite of the existing `aws-eks` module. This
+new iteration leverages native L1 CFN resources, replacing the previous custom
+resource approach for creating EKS clusters and Fargate Profiles. Beyond the
+resource types change, the module introduces several other breaking changes
+designed to better align the L2 construct with its updated implementation. These
+modifications collectively enhance the module's functionality and integration
+within the AWS ecosystem, providing a more robust and streamlined solution for
+managing Elastic Kubernetes Service (EKS) resources.
 
 ## Working Backwards
-This construct library is a re-write of `aws-eks` library. The new construct library uses the native L1 resource AWS::EKS::Cluster to provision a EKS cluster instead of relying on custom resource in old aws-eks library.
 
-This RFC is focus on difference between the new module and original EKS L2. Detailed use case will be published in the README of new eks-alpha-v2 module. If a feature of existing EKS construct is not included in this RFC, it will be same as existing EKS construct.
+This RFC primarily addresses the distinctions between the new module and the
+original EKS L2 construct. Comprehensive use cases and examples will be
+available in the README file of the forthcoming `eks-alpha-v2` module.
+
+It's important to note that any features of the existing EKS construct not
+explicitly mentioned in this RFC will remain unchanged and function as they do
+in the current implementation. This approach ensures clarity on the
+modifications while maintaining continuity for unaffected features.
+
+## Quick start
+
+Here is the minimal example of defining an AWS EKS cluster
+
+```
+import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
+
+// provisioning a cluster
+const cluster = new eksv2.Cluster(this, 'hello-eks', {
+  version: eks.KubernetesVersion.V1_31,
+  kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+});
+```
+
+Note: Compared to the previous L2, `kubectlLayer` property is required now The
+reason is if we set a default version, that version will be outdated one day and
+updating default version at that time will be a breaking change.
 
 ## Architecture
+
 ```
  +-----------------------------------------------+
  | EKS Cluster      | kubectl |  |
@@ -21,54 +53,73 @@ This RFC is focus on difference between the new module and original EKS L2. Deta
  | |                    |    |                 | |
  | | Managed Node Group |    | Fargate Profile | |
  | |                    |    |                 | |
- | +--------------------+    +-----------------+ |  
- +-----------------------------------------------+  
-    ^                                                           
-    | connect self managed capacity                             
-    +                              
- +--------------------+                       
- | Auto Scaling Group |             
+ | +--------------------+    +-----------------+ |
+ +-----------------------------------------------+
+    ^
+    | connect self managed capacity
+    +
  +--------------------+
- ```
+ | Auto Scaling Group |
+ +--------------------+
+```
 
- In a nutshell:
+In a nutshell:
 
-* EKS Cluster - The cluster endpoint created by EKS.
-* Managed Node Group - EC2 worker nodes managed by EKS.
-* Fargate Profile - Fargate worker nodes managed by EKS.
-* Auto Scaling Group - EC2 worker nodes managed by the user.
-* Kubectl Handler - Lambda function for invoking kubectl commands on the cluster - created by CDK
+- EKS Cluster - The cluster endpoint created by EKS.
+- Managed Node Group - EC2 worker nodes managed by EKS.
+- Fargate Profile - Fargate worker nodes managed by EKS.
+- Auto Scaling Group - EC2 worker nodes managed by the user.
+- Kubectl Handler - Lambda function for invoking kubectl commands on the
+  cluster - created by CDK
 
 ### Difference from original EKS L2
 
-ClusterHandler is removed in the new implementation because it uses native L1 resource AWS::EKS::Cluster to create the EKS cluster resource. Along with resource change, following properties on Cluster construct are removed:
+ClusterHandler is removed in the new implementation because it uses native L1
+resource AWS::EKS::Cluster to create the EKS cluster resource. Along with
+resource change, following properties on Cluster construct are removed:
 
-* clusterHandlerEnvironment
-* clusterHandlerSecurityGroup
-* clusterHandlerSecurityGroup
-* onEventLayer
+- clusterHandlerEnvironment
+- clusterHandlerSecurityGroup
+- clusterHandlerSecurityGroup
+- onEventLayer
 
 ## Resource Provisioning
-This change is not directly visible in API or construct props, but in implementation details. Two custom resources will be replaced with native CFN L1 resources:
 
-* `Custom::AWSCDK-EKS-Cluster` will be replaced with `AWS::EKS::Cluster`
-* `Custom::AWSCDK-EKS-FargateProfile` will be replaced with `AWS::EKS::FargateProfile`
+This change is not directly visible in API or construct props, but in
+implementation details. Two custom resources will be replaced with native CFN L1
+resources:
+
+- `Custom::AWSCDK-EKS-Cluster` will be replaced with `AWS::EKS::Cluster`
+- `Custom::AWSCDK-EKS-FargateProfile` will be replaced with
+  `AWS::EKS::FargateProfile`
 
 The resource type change will be reflected in cdk synth output template.
 
 ## Authentication
-`ConfigMap` authentication mode has been deprecated by EKS and the recommend mode is API. The new EKS L2 will go a step further and only support API authentication mode. All grant functions in EKS will use Access Entry to grant permissions to an IAM role/user. 
 
-`AwsAuth` construct was developed to manage mappings between IAM users/roles to Kubernetes RBAC configuration through ConfigMap. It’s exposed with awsAuth attribute of cluster construct. With the deprecation of `ConfigMap` mode, AwsAuth construct and the attribute are removed in the new EKS module.
+`ConfigMap` authentication mode has been deprecated by EKS and the recommend
+mode is API. The new EKS L2 will go a step further and only support API
+authentication mode. All grant functions in EKS will use Access Entry to grant
+permissions to an IAM role/user.
 
-`grant()` function are introduced to replace the awsAuth. It’s implemented using Access Entry.
+`AwsAuth` construct was developed to manage mappings between IAM users/roles to
+Kubernetes RBAC configuration through ConfigMap. It’s exposed with awsAuth
+attribute of cluster construct. With the deprecation of `ConfigMap` mode,
+AwsAuth construct and the attribute are removed in the new EKS module.
+
+`grant()` function are introduced to replace the awsAuth. It’s implemented using
+Access Entry.
 
 ### Difference from original EKS L2
+
 Before using awsAuth
+
 ```
 cluster.awsAuth.addMastersRole(role);
 ```
+
 After using Access Entry
+
 ```
 cluster.grantAdmin('adminAccess', roleArn, eks.AccessScopeType.CLUSTER);
 
@@ -79,10 +130,14 @@ cluster.grantAccess('adminAccess', roleArn, [
   }),
 ]);
 ```
+
 ## Cluster Configuration
 
 ### New Feat: Create EKS Cluster in an isolated VPC
-To create a EKS Cluster in an isolated VPC, vpc endpoints need to be set for different AWS services (EC2, S3, STS, ECR and anything the service needs).
+
+To create a EKS Cluster in an isolated VPC, vpc endpoints need to be set for
+different AWS services (EC2, S3, STS, ECR and anything the service needs).
+
 ```
 const vpc = new ec2.Vpc(this, 'vpc', {
     subnetConfiguration: [
@@ -127,9 +182,12 @@ const cluster = new eks.Cluster(this, 'MyMycluster123', {
 ```
 
 ### Logging Configuration
-Logging property is renamed from clusterLogging to logging since there is only one logging property in the construct.
+
+Logging property is renamed from clusterLogging to logging since there is only
+one logging property in the construct.
 
 Before
+
 ```
 const cluster = new eks.Cluster(this, 'Cluster', {
   // ...
@@ -140,7 +198,9 @@ const cluster = new eks.Cluster(this, 'Cluster', {
   ],
 });
 ```
+
 After
+
 ```
 const cluster = new eks.Cluster(this, 'Cluster', {
   version: eks.KubernetesVersion.V1_31,
@@ -152,18 +212,25 @@ const cluster = new eks.Cluster(this, 'Cluster', {
 ```
 
 ### Output Configuration
-A new property `outputInfo` will replace the current 3 output properties. Although 3 separate output properties provide customization on output configuration, it increased the cognitive load and doesn’t provide a clean usage. The proposal here is to have one single flag to control all of them.
+
+A new property `outputInfo` will replace the current 3 output properties.
+Although 3 separate output properties provide customization on output
+configuration, it increased the cognitive load and doesn’t provide a clean
+usage. The proposal here is to have one single flag to control all of them.
 
 Before
+
 ```
 const cluster = new eks.Cluster(this, 'Cluster', {
   version: eks.KubernetesVersion.V1_31,
-   outputMastersRoleArn: true,
+  outputMastersRoleArn: true,
   outputClusterName: true,
   outputConfigCommand: true,
 });
 ```
+
 After
+
 ```
 const cluster = new eks.Cluster(this, 'Cluster', {
   version: eks.KubernetesVersion.V1_31,
@@ -172,13 +239,18 @@ const cluster = new eks.Cluster(this, 'Cluster', {
 ```
 
 ### Kubectl Handler Configuration
-KubectlProvider is a lambda function that CDK deploys alongside the EKS cluster in order to execute kubectl commands against the cluster. 
 
-A common scenarios is that users create a CDK app that deploys the EKS cluster, which is then imported in other apps in order to deploy resources onto the cluster. 
+KubectlProvider is a lambda function that CDK deploys alongside the EKS cluster
+in order to execute kubectl commands against the cluster.
+
+A common scenarios is that users create a CDK app that deploys the EKS cluster,
+which is then imported in other apps in order to deploy resources onto the
+cluster.
 
 Difference
 
 Before
+
 ```
 const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 'KubectlProvider', {
   functionArn,
@@ -186,22 +258,31 @@ const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 
   handlerRole,
 });
 ```
+
 After
+
 ```
 const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
   functionArn: // Required. ARN of the original kubectl function
 });
 ```
+
 Following parameters are removed:
 
-* kubectlRoleArn
-* handlerRole
+- kubectlRoleArn
+- handlerRole
 
- `fromKubectlProviderAttributes()` is renamed to `fromKubectlProviderFunctionArn()`. 
+`fromKubectlProviderAttributes()` is renamed to
+`fromKubectlProviderFunctionArn()`.
 
-Reason: when the KubectlProvider was created in another stack, the lambda execution role already has permissions to access the cluster.
+Reason: when the KubectlProvider was created in another stack, the lambda
+execution role already has permissions to access the cluster.
 
-Besides that, KubectlProvider specific properties are moved into KubectlProviderOptions to better organize properties.
+Besides that, optional KubectlProvider specific properties are moved into
+KubectlProviderOptions to better organize properties.
+
+KubectlProviderOptions Definition
+
 ```
 export interface KubectlProviderOptions {
   readonly role?: iam.IRole;
@@ -210,83 +291,119 @@ export interface KubectlProviderOptions {
   readonly memory?: Size;
   readonly environment?: { [key: string]: string };
   /**
-   * Wich subnets should the provider functions be placed in.
+   * Which subnets should the provider functions be placed in.
    */
   readonly vpcSubnets?: ec2.SubnetSelection;
 }
 ```
 
-Before
+Usage - Before
+
 ```
 new eks.Cluster(this, 'MyCluster', {
   version: eks.KubernetesVersion.V1_31,
-  kubectlMemory: Size.gibibytes(4),
+  kubectlMemory: Size.gigabytes(4),
   kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
   kubectlEnvironment: {
     'http_proxy': 'http://proxy.myproxy.com',
   },
-  kubectlRole: iam.Role.fromRoleArn(this, 'MyRole', 'arn:aws:iam::123456789012:role/lambda-role');
+  kubectlRole: iam.Role.fromRoleArn(
+    this,
+    'MyRole',
+    'arn:aws:iam::123456789012:role/lambda-role'
+  );
 });
 ```
-After
+
+Usage - After
+
 ```
 new eks.Cluster(this, 'MyCluster', {
   version: eks.KubernetesVersion.V1_31,
+  kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
   kubectlProviderOptions: {
-    memory: Size.gibibytes(4),
-    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+    memory: Size.gigabytes(4),
     environment: {
       'http_proxy': 'http://proxy.myproxy.com',
     },
-    role: iam.Role.fromRoleArn(this, 'MyRole', 'arn:aws:iam::123456789012:role/lambda-role');
+    role: iam.Role.fromRoleArn(
+      this,
+      'MyRole',
+      'arn:aws:iam::123456789012:role/lambda-role'
+    );
 });
 ```
 
 ## Migration Path
+
 Note: We can't guarantee it's a safe migration.
 
-Due to the fact that switching from a custom resource (Custom::AWSCDK-EKS-Cluster) to a native L1 (AWS::EKS::Cluster) resource requires cluster replacement, CDK users who need to preserve their cluster will have to take additional actions.
+Due to the fact that switching from a custom resource
+(Custom::AWSCDK-EKS-Cluster) to a native L1 (AWS::EKS::Cluster) resource
+requires cluster replacement, CDK users who need to preserve their cluster will
+have to take additional actions.
 
-1. Set the authentication mode of cluster from `AuthenticationMode.CONFIG_MAP` to `AuthenticationMode.API_AND_CONFIG_MAP` and deploy
-2. Set the authentication mode of cluster from `AuthenticationMode.API_AND_CONFIG_MAP` to `AuthenticationMode.API` and deploy
-3. Set removal policy to RETAIN on the existing cluster (and manifests) and deploy.
+1. Set the authentication mode of cluster from `AuthenticationMode.CONFIG_MAP`
+   to `AuthenticationMode.API_AND_CONFIG_MAP` and deploy
+2. Set the authentication mode of cluster from
+   `AuthenticationMode.API_AND_CONFIG_MAP` to `AuthenticationMode.API` and
+   deploy
+3. Set removal policy to RETAIN on the existing cluster (and manifests) and
+   deploy.
 4. Remove cluster definition from their CDK app and deploy
 5. Add new cluster definition using the new constructs(EKSV2).
 6. Follow cdk import to import the existing cluster as the new definition.
-    1. All relevant EKS resources support import.
-    2. AWS::EKS::Cluster
-    3. AWS::EKS::FargateProfile
-    4. AWS::EKS::Nodegroup
+   1. All relevant EKS resources support import.
+   2. AWS::EKS::Cluster
+   3. AWS::EKS::FargateProfile
+   4. AWS::EKS::Nodegroup
 7. Add Manifests.
 
 ## Public FAQ
 
 ### What are we launching today?
 
-We’re launching a new EKS module `aws-eksv2-alpha`. It's a rewrite of existing `aws-eks` module with some breaking changes based on community feedbacks.
+We’re launching a new EKS module `aws-eksv2-alpha`. It's a rewrite of existing
+`aws-eks` module with some breaking changes based on community feedbacks.
 
 ### Why should I use this feature?
 
-The new EKS module provides faster deployment, less complexity, less cost and more features (e.g. isolated VPC and escape hatching).
+The new EKS module provides faster deployment, less complexity, less cost and
+more features (e.g. isolated VPC and escape hatching).
 
 ### What's the future plan for existing `aws-eks` module?
 
-- When the new alpha module is published, `aws-eks` module will enter `maintainence` mode which means we will only work on bugs on `aws-eks` module. New features will only be added to the new `aws-eksv2-alpha` module. (Note: this is the general guideline and we might be flexible on this)
-- When the new alpha module is stablized, `aws-eks` module will enter `deprecation` mode which means customers should migrate to the new module. They can till use the old module but we will not invest on features/bug fixes on it.
+- When the new alpha module is published, `aws-eks` module will enter
+  `maintenance` mode which means we will only work on bugs on `aws-eks` module.
+  New features will only be added to the new `aws-eksv2-alpha` module. (Note:
+  this is the general guideline and we might be flexible on this)
+- When the new alpha module is stabilized, `aws-eks` module will transition into
+  a deprecation phase. This implies that customers should plan to migrate their
+  workloads to the new module. While they can continue using the old module for
+  the time being, CDK team will prioritize new features/bug fix on the new
+  module
 
 ## Internal FAQ
 
 ### Why are we doing this?
-This feature has been highly requested by the community since Feb 2023. The current implementation using custom resource has some limitations and is harder to maintain. EKS L2 is a widely used module and we should rewrite it.
+
+This feature has been highly requested by the community since Feb 2023. The
+current implementation using custom resource has some limitations and is harder
+to maintain. EKS L2 is a widely used module and we should rewrite it.
 
 ### Why should we _not_ do this?
-The migration for customers is not easy and we can't guarantee it's a safe migration without down time.
+
+The migration for customers is not easy and we can't guarantee it's a safe
+migration without down time.
 
 ### Is this a breaking change?
 
-Yes it's breaking change hence it's put into a new alpha module. A few other breaking changes are shipped together to make it more ergonomic and aligned with the new cluster implementation.
+Yes it's breaking change hence it's put into a new alpha module. A few other
+breaking changes are shipped together to make it more ergonomic and aligned with
+the new cluster implementation.
 
 ### What is the high-level project plan?
+
 - [ ] Publish the RFC
 - [ ] Gather feedback on the RFC
 - [ ] Get bar raiser to sign off on RFC
@@ -300,7 +417,9 @@ Yes it's breaking change hence it's put into a new alpha module. A few other bre
 TBD
 
 ## Appendix
+
 #### EKS Cluster Props Difference
+
 Same props
 
 ```
@@ -324,7 +443,9 @@ readonly tags?: { [key: string]: string };
 readonly mastersRole?: iam.IRole;
 readonly bootstrapClusterCreatorAdminPermissions?: boolean;
 ```
+
 Props only in old EKS
+
 ```
 readonly clusterLogging?: ClusterLoggingTypes[];
 
@@ -344,9 +465,12 @@ readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup;
 readonly onEventLayer?: lambda.ILayerVersion;
 readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup;
 ```
+
 Props only in new EKS
+
 ```
 readonly logging?: ClusterLoggingTypes[];
+readonly kubectlLayer: lambda.ILayerVersion;
 readonly kubectlProviderOptions?: KubectlProviderOptions;
 readonly outputInfo?: boolean;
 ```
