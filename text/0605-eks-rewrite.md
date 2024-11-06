@@ -418,7 +418,7 @@ TBD
 
 ## Appendix
 
-#### EKS Cluster Props Difference
+### EKS Cluster Props Difference
 
 Same props
 
