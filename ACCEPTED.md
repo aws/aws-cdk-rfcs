@@ -10,7 +10,6 @@
 \#|Title|Owner|Status
 ---|-----|-----|------
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|📆 planning
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)|[@evgenyka](https://github.com/evgenyka)|📆 planning
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
 [300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)|[@mrgrain](https://github.com/mrgrain)|📆 planning
@@ -38,6 +37,7 @@
 [52](https://github.com/aws/aws-cdk-rfcs/issues/52)|[Support resource import](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0052-resource-importing-support.md)||✅ done
 [55](https://github.com/aws/aws-cdk-rfcs/issues/55)|[Feature Flags](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0055-feature-flags.md)||✅ done
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0063-precreated-roles.md)||✅ done
+[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0064-asset-garbage-collection.md)|[@kaizencc](https://github.com/kaizencc)|✅ done
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||✅ done
 [71](https://github.com/aws/aws-cdk-rfcs/issues/71)|[Deployment Triggers](https://github.com/aws/aws-cdk-rfcs/issues/71)||✅ done
 [73](https://github.com/aws/aws-cdk-rfcs/issues/73)|[AWS Resource Model](https://github.com/aws/aws-cdk-rfcs/issues/73)||✅ done

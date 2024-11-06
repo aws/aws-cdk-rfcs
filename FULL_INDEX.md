@@ -45,7 +45,7 @@
 [58](https://github.com/aws/aws-cdk-rfcs/issues/58)|[Improved ergonomics for stack default environment](https://github.com/aws/aws-cdk-rfcs/issues/58)||🤷 stale
 [60](https://github.com/aws/aws-cdk-rfcs/issues/60)|[Bazel Build System](https://github.com/aws/aws-cdk-rfcs/pull/61)||👎 rejected
 [63](https://github.com/aws/aws-cdk-rfcs/issues/63)|[CDK in Secure Environments](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0063-precreated-roles.md)||✅ done
-[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/issues/64)|[@kaizencc](https://github.com/kaizencc)|📆 planning
+[64](https://github.com/aws/aws-cdk-rfcs/issues/64)|[Garbage Collection for Assets](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0064-asset-garbage-collection.md)|[@kaizencc](https://github.com/kaizencc)|✅ done
 [65](https://github.com/aws/aws-cdk-rfcs/issues/65)|[CDK Code Generation from AWS Console](https://github.com/aws/aws-cdk-rfcs/issues/65)||🤷 stale
 [66](https://github.com/aws/aws-cdk-rfcs/issues/66)|[StackSets Support](https://github.com/aws/aws-cdk-rfcs/issues/66)||✅ done
 [67](https://github.com/aws/aws-cdk-rfcs/issues/67)|[Monitoring Packs](https://github.com/aws/aws-cdk-rfcs/issues/67)||🤷 stale
@@ -178,4 +178,5 @@
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
 [635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
+[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/issues/648)|[@sumupitchayan](https://github.com/sumupitchayan)|💡 proposed
 <!--END_TABLE-->
