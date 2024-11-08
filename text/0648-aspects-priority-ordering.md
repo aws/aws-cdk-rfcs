@@ -7,7 +7,133 @@
 
 Redesigning Aspect invocation in CDK by allowing users to specify the order in which Aspects are applied.
 
+## Background
+
+[Aspects](https://docs.aws.amazon.com/cdk/v2/guide/aspects.html) is a feature in CDK that allows you to apply operations or transformations across all
+constructs in a construct tree. Common use cases include tagging resources, enforcing encryption on S3 Buckets, or applying specific security or
+compliance rules to all resources in a stack.
+
+Conceptually, there are two types of Aspects:
+
+* **Read-only aspects** scan the construct tree but do not make changes to the tree. Common use cases of read-only aspects include performing validations
+(for example, enforcing that all S3 Buckets have versioning enabled) and logging (for example, collecting information about all deployed resources for
+audits or compliance).
+* **Mutating aspects** either (1.) add new nodes or (2.) mutate existing nodes of the tree in-place. One commonly used mutating Aspect is adding Tags to
+resources. An example of an Aspect that adds a node is one that automatically adds a security group to every EC2 instance in the construct tree if
+no default is specified.
+
+Here is a simple example of creating and applying an Aspect on a Stack to enable versioning on all S3 Buckets:
+
+```ts
+import { IAspect, IConstruct, Tags, Stack } from 'aws-cdk-lib';
+
+class EnableBucketVersioning implements IAspect {
+  visit(node: IConstruct) {
+    if (node instanceof CfnBucket) {
+      node.versioningConfiguration = {
+        status: 'Enabled'
+      };
+    }
+  }
+}
+
+const app = new App();
+const stack = new MyStack(app, 'MyStack');
+
+// Apply the aspect to enable versioning on all S3 Buckets
+Aspects.of(stack).add(new EnableBucketVersioning());
+```
+
+### The Problem with Aspects
+
+The current algorithm for invoking aspects (see invokeAspects in synthesize.ts) does not handle all use cases—specifically, when an Aspect adds a new
+node to the Construct tree and when Aspects are applied out of order.
+
+#### Aspects that Create New Nodes
+
+For Aspects that create new nodes, inherited Aspects are not always applied to the newly created node or resource as expected. This occurs because the
+algorithm only makes a single pass through the Construct tree, and therefore does not visit the newly added node.
+
+A customer reported this in GitHub issue #21341. They have one Aspect that adds Tags to all resources in a Stack and another Aspect applied on a
+construct that creates an S3 Bucket on the parent Stack of that construct. The expected behavior is for the new S3 Bucket to inherit the Tags from
+the parent Stack. However, while the bucket is created, it does not inherit any Tags. Below is the customer's reproducible example:
+
+```ts
+import { Aspects, Tags, IAspect, Stack, StackProps } from 'aws-cdk-lib';
+import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Construct, IConstruct } from 'constructs';
+
+export class AspectsIssueStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
+    super(scope, id, props);
+    
+    // Tags is an Aspect:
+    Tags.of(this).add('test-tag', 'test-value');
+    new MyConstruct(this, 'myConstruct');
+  }
+}
+
+class MyConstruct extends Construct {
+
+  constructor(scope: IConstruct, id: string) {
+    super(scope, id);
+    
+    const stack = Stack.of(scope);
+    const s3Bucket = new Bucket(stack, 'bucket-with-tags');
+    
+    Aspects.of(this).add(new MyAspect());
+  }
+}
+
+class MyAspect implements IAspect {
+  public visit(node: IConstruct): void {
+    // The bucket is added to the parent of the construct where the aspect it was initialized
+    const stack = Stack.of(node);
+    const s3Bucket = new Bucket(stack, 'bucket-without-tags-that-should-have');
+  }
+}
+```
+
+The current algorithm starts at the root and invokes all Aspects on the root level. It then recurses through the tree, visiting each of the root's
+child nodes and invoking each child node's inherited and local Aspects.
+
+See the sequence of Aspect invocation below:
+
+1. Start at root (Stack)
+2. Visit Child (Abstraction)
+3. MyAspect creates NewBucket as another Child at the root level
+4. But traversal has already finished with this level, so New Bucket is never visited again to be Tagged
+
+![Illustration of current Aspect invocation order](../images/AspectsDiagram1.png)
+
+Since MyAspect creates a node at the same level of the tree as the Abstraction where it is applied, the new node will never be visited. This is
+because the current implementation recurses through each of the root node's children before the New Bucket is added as a child node.
+
+#### Aspect Invocation Ordering
+
+The other issue with the current Aspects invocation algorithm is the ordering in which Aspects are applied. Currently, Aspects are applied in the
+exact order they are added. If multiple Aspects modify the same construct or attribute, the order of their application can affect the final outcome.
+This may lead to unexpected behavior for users, as modifications made by one Aspect could be overwritten or altered by subsequent Aspects.
+
+Additionally, this ordering can pose a problem for validation, as aspects may not have seen the final output if they execute before mutating aspects.
+As an example, lets say we have three Aspects:
+
+1. `ValidateEncryptionAspect` - validates that all S3 buckets must have encryption enabled
+2. `DefaultEncryptionAsset` - sets a default encryption configuration for all S3 buckets
+3. `EnvironmentBasedEncryptionAspect` - changes the encryption of S3 buckets based on some environment variable
+
+Problems that could occur here are:
+
+1. The validation aspect runs first and fails because the default encryption hasn't been applied yet
+2. The default encryption gets overwritten by the environment-based encryption
+3. The validation never sees the final encryption configuration set by the environment aspect
+
+A real-world consequence of this might be that your validation passes in development but fails in production because the environment variables changed
+the final configuration after validation.
+
 ## Working Backwards
+
+To fix these problems with Aspects in CDK, we are redesigning Aspects so that they are applied in order based on a user-specified priority.
 
 ### CHANGELOG
 
@@ -17,18 +143,6 @@ Redesigning Aspect invocation in CDK by allowing users to specify the order in w
 * Added default priority ranges to assist with common use cases (e.g., mutating aspects, readonly aspects) and to improve the execution flow of aspects.
 
 ### README
-
-Aspects is a feature in CDK that allows you to apply operations or transformations across all constructs in a construct tree. Common use cases include
-tagging resources, enforcing encryption on S3 Buckets, or applying specific security or compliance rules to all resources in a stack.
-
-Conceptually, there are two types of Aspects:
-
-* Read-only aspects scan the construct tree but do not make changes to the tree. Common use cases of read-only aspects include performing validations
-(for example, enforcing that all S3 Buckets have versioning enabled) and logging (for example, collecting information about all deployed resources for
-audits or compliance).
-* Mutating aspects either (1.) add new nodes or (2.) mutate existing nodes of the tree in-place. One commonly used mutating Aspect is adding Tags to
-resources. An example of an Aspect that adds a node is one that automatically adds a security group to every EC2 instance in the construct tree if no
-default is specified.
 
 Users can ensure Aspects are applied in a predictable and controlled order by using the optional priority parameter when applying an Aspect. Priority
 values must be non-negative integers, where a higher number means the Aspect will be applied later, and a lower number means it will be applied sooner.
@@ -46,6 +160,11 @@ any readonly aspects.
 Correctly applying Aspects with priority values ensures that mutating aspects (such as adding tags or resources) run before validation aspects, and new
 nodes created by mutating aspects inherit aspects from their parent constructs. This allows users to avoid misconfigurations and ensure that the final
 construct tree is fully validated before being synthesized.
+
+The following diagram shows how the ordering of Aspect invocation on a tree with two Aspects, including one that adds a new node at the root. At the
+bottom, it shows how the current Aspect invocation order compared to the aspect invocation ordering of this proposed solution:
+
+![Illustration of propsed Aspect invocation order](../images/ProposedAspectInvocationOrder.png)
 
 Applying Aspects with Priority:
 
