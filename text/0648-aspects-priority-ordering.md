@@ -150,8 +150,9 @@ values must be non-negative integers, where a higher number means the Aspect wil
 CDK provides standard priority values for mutating and readonly aspects to help ensure consistency across different construct libraries:
 
 ```ts
-const MUTATING_PRIORITY = 100;
-const READONLY_PRIORITY = 300;
+const MUTATING_PRIORITY = 200;
+const READONLY_PRIORITY = 1000;
+const DEFAULT_PRIORITY = 600;
 ```
 
 If no priority is provided, the default value will be 200. This ensures that aspects without a specified priority run after mutating aspects but before
@@ -186,8 +187,8 @@ class ValidationAspect implements IAspect {
 
 const stack = new Stack();
 
-Aspects.of(stack).add(new MyAspect(), 100);  // Run first (mutating aspects)
-Aspects.of(stack).add(new ValidationAspect(), 300);  // Run later (readonly aspects)
+Aspects.of(stack).add(new MyAspect(), 200);  // Run first (mutating aspects)
+Aspects.of(stack).add(new ValidationAspect(), 1000);  // Run later (readonly aspects)
 ```
 
 Using Aspects from a Third-Party Library
@@ -203,7 +204,7 @@ const construct = new ThirdPartyConstruct(stack, 'third-party-construct');
 
 // Author's aspect - adding to the stack
 const validationAspect = new ValidationAspect();
-Aspects.of(stack).add(validationAspect, 300);  // Run later (validation)
+Aspects.of(stack).add(validationAspect, 1000);  // Run later (validation)
 
 // Getting the Aspect from the ThirdPartyConstruct
 const thirdPartyAspect = Aspects.of(construct).list()[0];
@@ -228,7 +229,7 @@ Aspects.of(stack).add(new MyOtherAspect(), 75);
 ```
 
 In all scenarios, application authors can use priority values to ensure their aspects run in the desired order relative to other aspects, whether
-those are their own or from third-party libraries. The standard priority ranges (100 for mutating, 200 default, 300 for readonly) provide
+those are their own or from third-party libraries. The standard priority ranges (200 for mutating, 600 default, 1000 for readonly) provide
 guidance while still allowing full flexibility through custom priority values.
 
 ---
