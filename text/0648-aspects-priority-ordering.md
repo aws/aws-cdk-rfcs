@@ -46,17 +46,18 @@ Aspects.of(stack).add(new EnableBucketVersioning());
 
 ### The Problem with Aspects
 
-The current algorithm for invoking aspects (see invokeAspects in synthesize.ts) does not handle all use cases—specifically, when an Aspect adds a new
-node to the Construct tree and when Aspects are applied out of order.
+The current algorithm for invoking aspects (see invokeAspects in [synthesis.ts](https://github.com/aws/aws-cdk/blob/8b495f9ec157c0b00674715f62b1bbcabf2096ac/packages/aws-cdk-lib/core/lib/private/synthesis.ts#L217))
+does not handle all use cases — specifically, when an Aspect adds a new node to the Construct tree and when Aspects are applied out of order.
 
 #### Aspects that Create New Nodes
 
 For Aspects that create new nodes, inherited Aspects are not always applied to the newly created node or resource as expected. This occurs because the
 algorithm only makes a single pass through the Construct tree, and therefore does not visit the newly added node.
 
-A customer reported this in GitHub issue [#21341](https://github.com/aws/aws-cdk/issues/21341). They have one Aspect that adds Tags to all resources in a Stack and another Aspect applied on a
-construct that creates an S3 Bucket on the parent Stack of that construct. The expected behavior is for the new S3 Bucket to inherit the Tags from
-the parent Stack. However, while the bucket is created, it does not inherit any Tags. Below is the customer's reproducible example:
+A customer reported this in GitHub issue [#21341](https://github.com/aws/aws-cdk/issues/21341). They have one Aspect that adds Tags to all resources
+in a Stack and another Aspect applied on a construct that creates an S3 Bucket on the parent Stack of that construct. The expected behavior is for
+the new S3 Bucket to inherit the Tags from the parent Stack. However, while the bucket is created, it does not inherit any Tags. Below is the
+customer's reproducible example:
 
 ```ts
 import { Aspects, Tags, IAspect, Stack, StackProps } from 'aws-cdk-lib';
@@ -147,6 +148,27 @@ To fix these problems with Aspects in CDK, we are redesigning Aspects so that th
 Users can ensure Aspects are applied in a predictable and controlled order by using the optional priority parameter when applying an Aspect. Priority
 values must be non-negative integers, where a higher number means the Aspect will be applied later, and a lower number means it will be applied sooner.
 
+```ts
+export interface AspectOptions {
+  /**
+   * The priority value to apply on an Aspect.
+   * Priority must be a non-negative integer.
+   */
+  readonly priority?: number;
+}
+
+export class Aspects {
+  /**
+   * Adds an aspect to apply this scope before synthesis.
+   * @param aspect The aspect to add.
+   * @param options Options to apply on this aspect.
+   */
+  public add(aspect: IAspect, options?: AspectOptions) {
+    ...
+  }
+}
+```
+
 CDK provides standard priority values for mutating and readonly aspects to help ensure consistency across different construct libraries:
 
 ```ts
@@ -155,7 +177,7 @@ const READONLY_PRIORITY = 1000;
 const DEFAULT_PRIORITY = 600;
 ```
 
-If no priority is provided, the default value will be 200. This ensures that aspects without a specified priority run after mutating aspects but before
+If no priority is provided, the default value will be 600. This ensures that aspects without a specified priority run after mutating aspects but before
 any readonly aspects.
 
 Correctly applying Aspects with priority values ensures that mutating aspects (such as adding tags or resources) run before validation aspects, and new
@@ -167,7 +189,7 @@ bottom, it shows how the current Aspect invocation order compared to the aspect 
 
 ![Illustration of propsed Aspect invocation order](../images/ProposedAspectInvocationOrder.png)
 
-Applying Aspects with Priority:
+#### Applying Aspects with Priority
 
 ```ts
 import { Aspects, Stack, IAspect, Tags } from 'aws-cdk-lib';
@@ -187,11 +209,48 @@ class ValidationAspect implements IAspect {
 
 const stack = new Stack();
 
-Aspects.of(stack).add(new MyAspect(), 200);  // Run first (mutating aspects)
-Aspects.of(stack).add(new ValidationAspect(), 1000);  // Run later (readonly aspects)
+Aspects.of(stack).add(new MyAspect(), { priority: 200 } );  // Run first (mutating aspects)
+Aspects.of(stack).add(new ValidationAspect(), { priority: 1000 } );  // Run later (readonly aspects)
 ```
 
-Using Aspects from a Third-Party Library
+We also give customers the ability to view all of their applied aspects and override the priority on these aspects.
+We added the `AspectApplication` class to represent an Aspect that is applied to a node of the construct tree with a priority:
+
+```ts
+/**
+ * Object respresenting an Aspect application. Stores the Aspect, the pointer to the construct it was applied
+ * to, and the priority value of that Aspect.
+ */
+export class AspectApplication {
+  /**
+   * The construct that the Aspect was applied to.
+   */
+  public readonly construct: IConstruct;
+
+  /**
+   * The Aspect that was applied.
+   */
+  public readonly aspect: IAspect;
+
+  /**
+   * The priority value of this Aspect. Must be non-negative integer.
+   */
+  private _priority: number;
+}
+```
+
+Users can access AspectApplications on a node by calling `list` from the Aspects class as follows:
+
+```ts
+const app = new App();
+const stack = new MyStack(app, 'MyStack');
+
+Aspects.of(stack).add(new MyAspect());
+
+let aspectApplications: AspectApplication[] = Aspects.of(root).list;
+```
+
+#### Aspects with Third-Party Constructs
 
 When a third-party construct adds and applies its own aspect, we can override that Aspect priority like so:
 
@@ -204,12 +263,12 @@ const construct = new ThirdPartyConstruct(stack, 'third-party-construct');
 
 // Author's aspect - adding to the stack
 const validationAspect = new ValidationAspect();
-Aspects.of(stack).add(validationAspect, 1000);  // Run later (validation)
+Aspects.of(stack).add(validationAspect, { priority: 1000 } );  // Run later (validation)
 
 // Getting the Aspect from the ThirdPartyConstruct
-const thirdPartyAspect = Aspects.of(construct).list()[0];
+const thirdPartyAspectApplication: AspectApplication = Aspects.of(construct).list[0];
 // Overriding the Aspect Priority from the ThirdPartyConstruct to run first
-Aspects.of(construct).setPriority(thirdPartyAspect, 0);
+thirdPartyAspectApplication.priority = 0;
 ```
 
 When using aspects from a library but controlling their application:
@@ -222,10 +281,10 @@ const stack: Stack;
 
 // Application author has full control of ordering
 const securityAspect = new SecurityAspect();
-Aspects.of(stack).add(securityAspect, 50);
+Aspects.of(stack).add(securityAspect, { priority: 50 } );
 
 // Add own aspects in relation to third-party one
-Aspects.of(stack).add(new MyOtherAspect(), 75);
+Aspects.of(stack).add(new MyOtherAspect(), { priority: 75 } );
 ```
 
 In all scenarios, application authors can use priority values to ensure their aspects run in the desired order relative to other aspects, whether
