@@ -54,7 +54,7 @@ node to the Construct tree and when Aspects are applied out of order.
 For Aspects that create new nodes, inherited Aspects are not always applied to the newly created node or resource as expected. This occurs because the
 algorithm only makes a single pass through the Construct tree, and therefore does not visit the newly added node.
 
-A customer reported this in GitHub issue #21341. They have one Aspect that adds Tags to all resources in a Stack and another Aspect applied on a
+A customer reported this in GitHub issue [#21341](https://github.com/aws/aws-cdk/issues/21341). They have one Aspect that adds Tags to all resources in a Stack and another Aspect applied on a
 construct that creates an S3 Bucket on the parent Stack of that construct. The expected behavior is for the new S3 Bucket to inherit the Tags from
 the parent Stack. However, while the bucket is created, it does not inherit any Tags. Below is the customer's reproducible example:
 
