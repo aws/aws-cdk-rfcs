@@ -34,7 +34,6 @@ import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
 // provisioning a cluster
 const cluster = new eksv2.Cluster(this, 'hello-eks', {
   version: eks.KubernetesVersion.V1_31,
-  kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
 });
 ```
 
@@ -74,11 +73,21 @@ In a nutshell:
 
 ### Difference from original EKS L2
 
-ClusterHandler is removed in the new implementation because it uses native L1
-resource AWS::EKS::Cluster to create the EKS cluster resource. Along with
+1. `Kubectl Handler` will only be created when you pass in `kubectlProviderOptions` property. By default, it will not create the custom resource. 
+```
+const cluster = new eks.Cluster(this, 'hello-eks', {
+  version: eks.KubernetesVersion.V1_31,
+  kubectlProviderOptions: {
+    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+  }
+});
+```
+2. ClusterHandler is removed in the new implementation because it uses native L1
+resource `AWS::EKS::Cluster` to create the EKS cluster resource.
+ 3. Along with
 resource change, following properties on Cluster construct are removed:
 
-- clusterHandlerEnvironment
+-  clusterHandlerEnvironment
 - clusterHandlerSecurityGroup
 - clusterHandlerSecurityGroup
 - onEventLayer
@@ -136,7 +145,7 @@ cluster.grantAccess('adminAccess', roleArn, [
 ### New Feat: Create EKS Cluster in an isolated VPC
 
 To create a EKS Cluster in an isolated VPC, vpc endpoints need to be set for
-different AWS services (EC2, S3, STS, ECR and anything the service needs).
+different AWS services (EC2, S3, STS, ECR and anything the service needs). See https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html for more details.
 
 ```
 const vpc = new ec2.Vpc(this, 'vpc', {
@@ -181,64 +190,7 @@ const cluster = new eks.Cluster(this, 'MyMycluster123', {
 });
 ```
 
-### Logging Configuration
-
-Logging property is renamed from clusterLogging to logging since there is only
-one logging property in the construct.
-
-Before
-
-```
-const cluster = new eks.Cluster(this, 'Cluster', {
-  // ...
-  version: eks.KubernetesVersion.V1_31,
-  clusterLogging: [
-    eks.ClusterLoggingTypes.API,
-    eks.ClusterLoggingTypes.AUTHENTICATOR,
-  ],
-});
-```
-
-After
-
-```
-const cluster = new eks.Cluster(this, 'Cluster', {
-  version: eks.KubernetesVersion.V1_31,
-  logging: [
-    eks.ClusterLoggingTypes.API,
-    eks.ClusterLoggingTypes.AUTHENTICATOR,
-  ],
-});
-```
-
-### Output Configuration
-
-A new property `outputInfo` will replace the current 3 output properties.
-Although 3 separate output properties provide customization on output
-configuration, it increased the cognitive load and doesn’t provide a clean
-usage. The proposal here is to have one single flag to control all of them.
-
-Before
-
-```
-const cluster = new eks.Cluster(this, 'Cluster', {
-  version: eks.KubernetesVersion.V1_31,
-  outputMastersRoleArn: true,
-  outputClusterName: true,
-  outputConfigCommand: true,
-});
-```
-
-After
-
-```
-const cluster = new eks.Cluster(this, 'Cluster', {
-  version: eks.KubernetesVersion.V1_31,
-  outputInfo: true,
-});
-```
-
-### Kubectl Handler Configuration
+### Use existing Cluster/Kubectl Handler
 
 KubectlProvider is a lambda function that CDK deploys alongside the EKS cluster
 in order to execute kubectl commands against the cluster.
@@ -247,96 +199,43 @@ A common scenarios is that users create a CDK app that deploys the EKS cluster,
 which is then imported in other apps in order to deploy resources onto the
 cluster.
 
-Difference
+To deploy manifest on imported clusters, you can decide whether to create `kubectl Handler` by using `kubectlProviderOptions` property.
 
-Before
-
+1. Import the cluster without kubectl Handler. It can't invoke AddManifest().
 ```
-const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 'KubectlProvider', {
-  functionArn,
-  kubectlRoleArn: 'arn:aws:iam::123456789012:role/kubectl-role',
-  handlerRole,
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
 });
+cluster.addManifest(); # X - not working
 ```
 
-After
+2. Import the cluster and create a new kubectl Handler
+```
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+  kubectlProviderOptions: {
+    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+  }
+});
 
+```
+
+3. Import the cluster/kubectl Handler
 ```
 const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
-  functionArn: // Required. ARN of the original kubectl function
+  functionArn: ''
 });
-```
 
-Following parameters are removed:
-
-- kubectlRoleArn
-- handlerRole
-
-`fromKubectlProviderAttributes()` is renamed to
-`fromKubectlProviderFunctionArn()`.
-
-Reason: when the KubectlProvider was created in another stack, the lambda
-execution role already has permissions to access the cluster.
-
-Besides that, optional KubectlProvider specific properties are moved into
-KubectlProviderOptions to better organize properties.
-
-KubectlProviderOptions Definition
-
-```
-export interface KubectlProviderOptions {
-  readonly role?: iam.IRole;
-  readonly awscliLayer?: lambda.ILayerVersion;
-  readonly kubectlLayer?: lambda.ILayerVersion;
-  readonly memory?: Size;
-  readonly environment?: { [key: string]: string };
-  /**
-   * Which subnets should the provider functions be placed in.
-   */
-  readonly vpcSubnets?: ec2.SubnetSelection;
-}
-```
-
-Usage - Before
-
-```
-new eks.Cluster(this, 'MyCluster', {
-  version: eks.KubernetesVersion.V1_31,
-  kubectlMemory: Size.gigabytes(4),
-  kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
-  kubectlEnvironment: {
-    'http_proxy': 'http://proxy.myproxy.com',
-  },
-  kubectlRole: iam.Role.fromRoleArn(
-    this,
-    'MyRole',
-    'arn:aws:iam::123456789012:role/lambda-role'
-  );
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+  kubectlProvider: kubectlProvider
 });
+
+cluster.addManifest();
 ```
 
-Usage - After
 
-```
-new eks.Cluster(this, 'MyCluster', {
-  version: eks.KubernetesVersion.V1_31,
-  kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
-  kubectlProviderOptions: {
-    memory: Size.gigabytes(4),
-    environment: {
-      'http_proxy': 'http://proxy.myproxy.com',
-    },
-    role: iam.Role.fromRoleArn(
-      this,
-      'MyRole',
-      'arn:aws:iam::123456789012:role/lambda-role'
-    );
-});
-```
-
-## Migration Path
-
-Note: We can't guarantee it's a safe migration.
+## Migration Path (TBD)
 
 Due to the fact that switching from a custom resource
 (Custom::AWSCDK-EKS-Cluster) to a native L1 (AWS::EKS::Cluster) resource
@@ -404,13 +303,13 @@ the new cluster implementation.
 
 ### What is the high-level project plan?
 
-- [ ] Publish the RFC
-- [ ] Gather feedback on the RFC
+- [X] Publish the RFC
+- [X] Gather feedback on the RFC
 - [ ] Get bar raiser to sign off on RFC
-- [ ] Create the new eksv2 alpha module and implementation
-- [ ] Make pull request to aws-cdk repository
-- [ ] Iterate and respond to PR feedback
+- [ ] Implementation
 - [ ] Merge new module
+- [ ] Publish migration guide/develop migration tool
+- [ ] Stabilize the module once it's ready
 
 ### Are there any open issues that need to be addressed later?
 
@@ -473,4 +372,21 @@ readonly logging?: ClusterLoggingTypes[];
 readonly kubectlLayer: lambda.ILayerVersion;
 readonly kubectlProviderOptions?: KubectlProviderOptions;
 readonly outputInfo?: boolean;
+```
+
+
+KubectlProviderOptions Definition
+
+```
+export interface KubectlProviderOptions {
+  readonly role?: iam.IRole;
+  readonly awscliLayer?: lambda.ILayerVersion;
+  readonly kubectlLayer?: lambda.ILayerVersion;
+  readonly memory?: Size;
+  readonly environment?: { [key: string]: string };
+  /**
+   * Which subnets should the provider functions be placed in.
+   */
+  readonly vpcSubnets?: ec2.SubnetSelection;
+}
 ```
