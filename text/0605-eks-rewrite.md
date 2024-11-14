@@ -13,33 +13,45 @@ modifications collectively enhance the module's functionality and integration
 within the AWS ecosystem, providing a more robust and streamlined solution for
 managing Elastic Kubernetes Service (EKS) resources.
 
-## Working Backwards
-
 This RFC primarily addresses the distinctions between the new module and the
 original EKS L2 construct. Comprehensive use cases and examples will be
 available in the README file of the forthcoming `eks-alpha-v2` module.
 
-It's important to note that any features of the existing EKS construct not
-explicitly mentioned in this RFC will remain unchanged and function as they do
-in the current implementation. This approach ensures clarity on the
-modifications while maintaining continuity for unaffected features.
+Compared to the original EKS module, it has following major changes:
+
+- Use native L1 `AWS::EKS::Cluster` resource to replace custom resource `Custom::AWSCDK-EKS-Cluster`
+- Use native L1 `AWS::EKS::FargateProfile` resource to replace custom resource `Custom::AWSCDK-EKS-FargateProfile`
+- `Kubectl Handler` will not be created by default. It will only be created if users specify it.
+- Deprecate `AwsAuth` construct. Permissions to the cluster will be managed by Access Entry.
+- API changes to make them more ergonomic.
+- Remove nested stacks
+
+## Working Backwards
+
+## Readme
+
+Note: Full readme is too long for this RFC. This readme is simplified version that only focus on
+use cases that are different from the original EKS module. Full readme will be published in
+the alpha module.
+
+This library is a rewrite of existing EKS module including breaking changes to 
+address some pain points on the existing EKS module. It allows you to define 
+Amazon Elastic Container Service for Kubernetes (EKS) clusters. In addition, 
+the library also supports defining Kubernetes resource manifests within EKS clusters.
+
 
 ## Quick start
 
 Here is the minimal example of defining an AWS EKS cluster
 
 ```
-import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
+import * as eks from '@aws-cdk/aws-eksv2-alpha';
 
 // provisioning a cluster
-const cluster = new eksv2.Cluster(this, 'hello-eks', {
+const cluster = new eks.Cluster(this, 'hello-eks', {
   version: eks.KubernetesVersion.V1_31,
 });
 ```
-
-Note: Compared to the previous L2, `kubectlLayer` property is required now The
-reason is if we set a default version, that version will be outdated one day and
-updating default version at that time will be a breaking change.
 
 ## Architecture
 
@@ -47,7 +59,7 @@ updating default version at that time will be a breaking change.
  +-----------------------------------------------+
  | EKS Cluster      | kubectl |  |
  | -----------------|<--------+| Kubectl Handler |
- | AWS::EKS::Cluster                             |
+ | AWS::EKS::Cluster             (Optional)      |
  | +--------------------+    +-----------------+ |
  | |                    |    |                 | |
  | | Managed Node Group |    | Fargate Profile | |
@@ -68,85 +80,49 @@ In a nutshell:
 - Managed Node Group - EC2 worker nodes managed by EKS.
 - Fargate Profile - Fargate worker nodes managed by EKS.
 - Auto Scaling Group - EC2 worker nodes managed by the user.
-- Kubectl Handler - Lambda function for invoking kubectl commands on the
+- Kubectl Handler (Optional) - Lambda function for invoking kubectl commands on the
   cluster - created by CDK
 
-### Difference from original EKS L2
-
-1. `Kubectl Handler` will only be created when you pass in `kubectlProviderOptions` property. By default, it will not create the custom resource. 
+## Provisioning cluster
+Creating a new cluster is done using the `Cluster` constructs. The only required property is the kubernetes version.
 ```
-const cluster = new eks.Cluster(this, 'hello-eks', {
+new eks.Cluster(this, 'HelloEKS', {
   version: eks.KubernetesVersion.V1_31,
+});
+```
+You can also use `FargateCluster` to provision a cluster that uses only fargate workers.
+```
+new eks.FargateCluster(this, 'HelloEKS', {
+  version: eks.KubernetesVersion.V1_31,
+});
+```
+
+**Note: Unlike the previous EKS cluster, `Kubectl Handler` will not
+be created by default. It will only be deployed when `kubectlProviderOptions`
+property is used.**
+```
+new eks.Cluster(this, 'hello-eks', {
+  version: eks.KubernetesVersion.V1_31,
+  # Using this property will create `Kubectl Handler` as custom resource handler
   kubectlProviderOptions: {
     kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
   }
 });
 ```
-2. ClusterHandler is removed in the new implementation because it uses native L1
-resource `AWS::EKS::Cluster` to create the EKS cluster resource.
- 3. Along with
-resource change, following properties on Cluster construct are removed:
+### VPC Support
 
--  clusterHandlerEnvironment
-- clusterHandlerSecurityGroup
-- clusterHandlerSecurityGroup
-- onEventLayer
-
-## Resource Provisioning
-
-This change is not directly visible in API or construct props, but in
-implementation details. Two custom resources will be replaced with native CFN L1
-resources:
-
-- `Custom::AWSCDK-EKS-Cluster` will be replaced with `AWS::EKS::Cluster`
-- `Custom::AWSCDK-EKS-FargateProfile` will be replaced with
-  `AWS::EKS::FargateProfile`
-
-The resource type change will be reflected in cdk synth output template.
-
-## Authentication
-
-`ConfigMap` authentication mode has been deprecated by EKS and the recommend
-mode is API. The new EKS L2 will go a step further and only support API
-authentication mode. All grant functions in EKS will use Access Entry to grant
-permissions to an IAM role/user.
-
-`AwsAuth` construct was developed to manage mappings between IAM users/roles to
-Kubernetes RBAC configuration through ConfigMap. It’s exposed with awsAuth
-attribute of cluster construct. With the deprecation of `ConfigMap` mode,
-AwsAuth construct and the attribute are removed in the new EKS module.
-
-`grant()` function are introduced to replace the awsAuth. It’s implemented using
-Access Entry.
-
-### Difference from original EKS L2
-
-Before using awsAuth
-
+You can specify the VPC of the cluster using the vpc and vpcSubnets properties:
 ```
-cluster.awsAuth.addMastersRole(role);
+declare const vpc: ec2.Vpc;
+new eks.Cluster(this, 'HelloEKS', {
+  version: eks.KubernetesVersion.V1_31,
+  vpc,
+  vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
+});
 ```
+If you do not specify a VPC, one will be created on your behalf, which you can then access via cluster.vpc. The cluster VPC will be associated to any EKS managed capacity (i.e Managed Node Groups and Fargate Profiles).
 
-After using Access Entry
-
-```
-cluster.grantAdmin('adminAccess', roleArn, eks.AccessScopeType.CLUSTER);
-
-# A general grant function is also provided
-cluster.grantAccess('adminAccess', roleArn, [
-  eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
-    accessScopeType: eks.AccessScopeType.CLUSTER,
-  }),
-]);
-```
-
-## Cluster Configuration
-
-### New Feat: Create EKS Cluster in an isolated VPC
-
-To create a EKS Cluster in an isolated VPC, vpc endpoints need to be set for
-different AWS services (EC2, S3, STS, ECR and anything the service needs). See https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html for more details.
-
+The cluster can be placed inside an isolated VPC. The cluster’s VPC subnets must have a VPC interface endpoint for any AWS services that your Pods need access to. See https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html
 ```
 const vpc = new ec2.Vpc(this, 'vpc', {
     subnetConfiguration: [
@@ -155,72 +131,76 @@ const vpc = new ec2.Vpc(this, 'vpc', {
             name: 'Private',
             subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-    ],
-    gatewayEndpoints: {
-        S3: {
-            service: ec2.GatewayVpcEndpointAwsService.S3,
-        },
-    },
-});
-vpc.addInterfaceEndpoint('stsEndpoint', {
-    service: ec2.InterfaceVpcEndpointAwsService.STS,
-    open: true,
-});
-
-vpc.addInterfaceEndpoint('ec2Endpoint', {
-    service: ec2.InterfaceVpcEndpointAwsService.EC2,
-    open: true,
-});
-
-vpc.addInterfaceEndpoint('ecrEndpoint', {
-    service: ec2.InterfaceVpcEndpointAwsService.ECR,
-    open: true,
-});
-
-vpc.addInterfaceEndpoint('ecrDockerEndpoint', {
-    service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
-    open: true,
+    ]
 });
 
 const cluster = new eks.Cluster(this, 'MyMycluster123', {
     version: eks.KubernetesVersion.V1_31,
-    authenticationMode: eks.AuthenticationMode.API,
     vpc,
     vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }]
 });
 ```
 
-### Use existing Cluster/Kubectl Handler
+### Kubectl Support
+You can choose to have CDK create a `Kubectl Handler` - a Python Lambda Function to
+apply k8s manifests using `kubectl apply`. This handler will not be created by default.
 
-KubectlProvider is a lambda function that CDK deploys alongside the EKS cluster
-in order to execute kubectl commands against the cluster.
-
-A common scenarios is that users create a CDK app that deploys the EKS cluster,
-which is then imported in other apps in order to deploy resources onto the
-cluster.
-
-To deploy manifest on imported clusters, you can decide whether to create `kubectl Handler` by using `kubectlProviderOptions` property.
-
-1. Import the cluster without kubectl Handler. It can't invoke AddManifest().
+To create a `Kubectl Handler`, use `kubectlProviderOptions` when creating the cluster.
+`kubectlLayer` is the only required property in `kubectlProviderOptions`.
 ```
-const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
-});
-cluster.addManifest(); # X - not working
-```
-
-2. Import the cluster and create a new kubectl Handler
-```
-const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
+new eks.Cluster(this, 'hello-eks', {
+  version: eks.KubernetesVersion.V1_31,
+  # Using this property will create `Kubectl Handler` as custom resource handler
   kubectlProviderOptions: {
     kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
   }
 });
 
+`Kubectl Handler` created along with the cluster will be granted admin permissions to the cluster.
 ```
 
-3. Import the cluster/kubectl Handler
+## Permissions and Security
+Amazon EKS supports three modes of authentication: CONFIG_MAP, API_AND_CONFIG_MAP, and API. 
+`ConfigMap` authentication mode has been deprecated by EKS and the recommended mode is API. 
+The new EKS L2 will go a step further and only support API authentication mode.
+All grant functions in EKS will use Access Entry to grant
+permissions to an IAM role/user.
+
+As a result, `AwsAuth` construct in the previous EKS module will not be provided in the new module.
+`grant()` functions are introduced to replace the awsAuth. It’s implemented using
+Access Entry.
+
+Grant Admin Access to an IAM role
+```
+cluster.grantAdmin('adminAccess', roleArn, eks.AccessScopeType.CLUSTER);
+```
+You can also use general `grantAccess()` to attach a policy to an IAM role/user.
+See https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html for all access policies
+```
+# A general grant function is also provided
+cluster.grantAccess('adminAccess', roleArn, [
+  eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+    accessScopeType: eks.AccessScopeType.CLUSTER,
+  }),
+]);
+```
+
+### Use existing Cluster/Kubectl Handler
+
+This module allows defining Kubernetes resources such as Kubernetes manifests and Helm charts
+on clusters that are not defined as part of your CDK app.
+
+There are 2 scenarios here:
+1. Import the cluster without creating a new kubectl Handler
+```
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+});
+```
+This imported cluster is not associated with a `Kubectl Handler`. It means we won't be able to 
+invoke `addManifest()` function on the cluster.
+
+To apply a manifest, you need to import the kubectl handler and attach it to the cluster
 ```
 const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
   functionArn: ''
@@ -234,6 +214,73 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 cluster.addManifest();
 ```
 
+2. Import the cluster and create a new kubectl Handler
+```
+const cluster = eks.Cluster.fromClusterWithKubectlProvider(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+  kubectlProviderOptions: {
+    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+  }
+});
+```
+This import function will always create a new kubectl handler for the cluster.
+
+#### Alternative Solution
+We can have one single `fromClusterAttributes()` and have different behaviors based on the input.
+
+- Import the cluster without kubectl Handler. It can't invoke AddManifest().
+```
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+});
+```
+- Import the cluster and create a new kubectl Handler
+```
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+  kubectlProviderOptions: {
+    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+  }
+});
+```
+- Import the cluster/kubectl Handler
+```
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
+  functionArn: ''
+});
+const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
+  clusterName: 'my-cluster-name',
+  kubectlProvider: kubectlProvider
+});
+```
+
+Note: `fromKubectlProviderAttributes()` is renamed to
+`fromKubectlProviderFunctionArn()`.
+Before
+
+```
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 'KubectlProvider', {
+  functionArn,
+  kubectlRoleArn: 'arn:aws:iam::123456789012:role/kubectl-role',
+  handlerRole,
+});
+```
+
+After
+
+```
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
+  functionArn: // Required. ARN of the original kubectl function
+});
+```
+
+Following parameters are removed:
+
+- kubectlRoleArn
+- handlerRole
+
+Reason: when the KubectlProvider was created in another stack, the lambda
+execution role already has permissions to access the cluster.
 
 ## Migration Path (TBD)
 
@@ -288,7 +335,14 @@ more features (e.g. isolated VPC and escape hatching).
 
 This feature has been highly requested by the community since Feb 2023. The
 current implementation using custom resource has some limitations and is harder
-to maintain. EKS L2 is a widely used module and we should rewrite it.
+to maintain. We can also use this chance to solve some major pain points in the current EKS L2.
+
+Issues will be solved:
+- https://github.com/aws/aws-cdk/issues/24059
+- https://github.com/aws/aws-cdk/issues/25544
+- https://github.com/aws/aws-cdk/issues/24174
+- https://github.com/aws/aws-cdk/issues/19753
+- https://github.com/aws/aws-cdk/issues/19218
 
 ### Why should we _not_ do this?
 
