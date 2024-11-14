@@ -2,7 +2,7 @@
 
 - **Original Author(s)**: @xazhao
 - **Tracking Issue**: [#605](https://github.com/aws/aws-cdk-rfcs/issues/605)
-- **API Bar Raiser**:
+- **API Bar Raiser**: @iliapolo
 
 The `eks-v2-alpha` module is a rewrite of the existing `aws-eks` module. This
 new iteration leverages native L1 CFN resources, replacing the previous custom
@@ -24,6 +24,7 @@ Compared to the original EKS module, it has following major changes:
 - `Kubectl Handler` will not be created by default. It will only be created if users specify it.
 - Deprecate `AwsAuth` construct. Permissions to the cluster will be managed by Access Entry.
 - API changes to make them more ergonomic.
+- Remove the limit of 1 cluster per stack
 - Remove nested stacks
 
 ## Working Backwards
@@ -254,34 +255,6 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 });
 ```
 
-Note: `fromKubectlProviderAttributes()` is renamed to
-`fromKubectlProviderFunctionArn()`.
-Before
-
-```
-const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 'KubectlProvider', {
-  functionArn,
-  kubectlRoleArn: 'arn:aws:iam::123456789012:role/kubectl-role',
-  handlerRole,
-});
-```
-
-After
-
-```
-const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
-  functionArn: // Required. ARN of the original kubectl function
-});
-```
-
-Following parameters are removed:
-
-- kubectlRoleArn
-- handlerRole
-
-Reason: when the KubectlProvider was created in another stack, the lambda
-execution role already has permissions to access the cluster.
-
 ## Migration Path (TBD)
 
 Due to the fact that switching from a custom resource
@@ -310,12 +283,14 @@ have to take additional actions.
 ### What are we launching today?
 
 We’re launching a new EKS module `aws-eksv2-alpha`. It's a rewrite of existing
-`aws-eks` module with some breaking changes based on community feedbacks.
+`aws-eks` module with some breaking changes to address pain points in `aws-eks` module.
 
 ### Why should I use this feature?
 
-The new EKS module provides faster deployment, less complexity, less cost and
-more features (e.g. isolated VPC and escape hatching).
+The new EKS module has following benefits:
+- faster deployment
+- option to not use custom resource
+- remove limitations on the previous EKS module (isolated VPC, 1 cluster limit per stack etc)
 
 ### What's the future plan for existing `aws-eks` module?
 
@@ -337,17 +312,17 @@ This feature has been highly requested by the community since Feb 2023. The
 current implementation using custom resource has some limitations and is harder
 to maintain. We can also use this chance to solve some major pain points in the current EKS L2.
 
-Issues will be solved:
-- https://github.com/aws/aws-cdk/issues/24059
-- https://github.com/aws/aws-cdk/issues/25544
-- https://github.com/aws/aws-cdk/issues/24174
-- https://github.com/aws/aws-cdk/issues/19753
-- https://github.com/aws/aws-cdk/issues/19218
+Issues will be solved with the new module:
+- https://github.com/aws/aws-cdk/issues/24059 (Custom Resource)
+- https://github.com/aws/aws-cdk/issues/25544 (Custom Resource related)
+- https://github.com/aws/aws-cdk/issues/24174 (Custom Resource related)
+- https://github.com/aws/aws-cdk/issues/19753 (ConfigMap)
+- https://github.com/aws/aws-cdk/issues/19218 (ConfigMap)
 
 ### Why should we _not_ do this?
 
-The migration for customers is not easy and we can't guarantee it's a safe
-migration without down time.
+Some customer might be happy with the current EKS module and don't need to migrate to the new module.
+Therefore, we should write a blog post/tool to help the migration.
 
 ### Is this a breaking change?
 
@@ -361,19 +336,17 @@ the new cluster implementation.
 - [X] Gather feedback on the RFC
 - [ ] Get bar raiser to sign off on RFC
 - [ ] Implementation
-- [ ] Merge new module
+- [ ] Merge new alpha module
 - [ ] Publish migration guide/develop migration tool
-- [ ] Stabilize the module once it's ready
+- [ ] Prioritize make the module stable after 3 months bake time
 
 ### Are there any open issues that need to be addressed later?
 
-TBD
+N/A
 
 ## Appendix
 
 ### EKS Cluster Props Difference
-
-Same props
 
 ```
 readonly version: KubernetesVersion;
@@ -395,42 +368,26 @@ readonly serviceIpv4Cidr?: string;
 readonly tags?: { [key: string]: string };
 readonly mastersRole?: iam.IRole;
 readonly bootstrapClusterCreatorAdminPermissions?: boolean;
-```
-
-Props only in old EKS
-
-```
 readonly clusterLogging?: ClusterLoggingTypes[];
 
-readonly awscliLayer?: lambda.ILayerVersion;
-readonly kubectlEnvironment?: { [key: string]: string };
-readonly kubectlLambdaRole?: iam.IRole;
-readonly kubectlLayer?: lambda.ILayerVersion;
-readonly kubectlMemory?: Size;
+readonly kubectlProviderOptions?: KubectlProviderOptions; # new property
 
-readonly outputMastersRoleArn?: boolean;
-readonly outputClusterName?: boolean;
-readonly outputConfigCommand?: boolean;
+readonly outputMastersRoleArn?: boolean; # will be removed
+readonly outputClusterName?: boolean; # will be removed
+readonly outputConfigCommand?: boolean; # will be removed
+readonly authenticationMode?: AuthenticationMode; # will be removed
+readonly clusterHandlerEnvironment?: { [key: string]: string }; # will be removed
+readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup; # will be removed
+readonly onEventLayer?: lambda.ILayerVersion; # will be removed
+readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup; # will be removed
 
-readonly authenticationMode?: AuthenticationMode;
-readonly clusterHandlerEnvironment?: { [key: string]: string };
-readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup;
-readonly onEventLayer?: lambda.ILayerVersion;
-readonly clusterHandlerSecurityGroup?: ec2.ISecurityGroup;
+readonly awscliLayer?: lambda.ILayerVersion; # move to kubectlProviderOptions
+readonly kubectlEnvironment?: { [key: string]: string }; # move to kubectlProviderOptions
+readonly kubectlLambdaRole?: iam.IRole; # move to kubectlProviderOptions
+readonly kubectlLayer?: lambda.ILayerVersion; # move to kubectlProviderOptions
+readonly kubectlMemory?: Size; # move to kubectlProviderOptions
 ```
-
-Props only in new EKS
-
-```
-readonly logging?: ClusterLoggingTypes[];
-readonly kubectlLayer: lambda.ILayerVersion;
-readonly kubectlProviderOptions?: KubectlProviderOptions;
-readonly outputInfo?: boolean;
-```
-
-
-KubectlProviderOptions Definition
-
+### KubectlProviderOptions Definition
 ```
 export interface KubectlProviderOptions {
   readonly role?: iam.IRole;
@@ -444,3 +401,31 @@ export interface KubectlProviderOptions {
   readonly vpcSubnets?: ec2.SubnetSelection;
 }
 ```
+
+Note: `fromKubectlProviderAttributes()` is renamed to
+`fromKubectlProviderFunctionArn()`.
+Before
+
+```
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderAttributes(this, 'KubectlProvider', {
+  functionArn,
+  kubectlRoleArn: 'arn:aws:iam::123456789012:role/kubectl-role',
+  handlerRole,
+});
+```
+
+After
+
+```
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
+  functionArn: // Required. ARN of the original kubectl function
+});
+```
+
+Following parameters are removed:
+
+- kubectlRoleArn
+- handlerRole
+
+Reason: when the KubectlProvider was created in another stack, the lambda
+execution role already has permissions to access the cluster.
