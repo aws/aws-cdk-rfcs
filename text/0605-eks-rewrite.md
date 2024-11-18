@@ -23,9 +23,11 @@ Compared to the original EKS module, it has following major changes:
 - Use native L1 `AWS::EKS::FargateProfile` resource to replace custom resource `Custom::AWSCDK-EKS-FargateProfile`
 - `Kubectl Handler` will not be created by default. It will only be created if users specify it.
 - Deprecate `AwsAuth` construct. Permissions to the cluster will be managed by Access Entry.
-- API changes to make them more ergonomic.
 - Remove the limit of 1 cluster per stack
 - Remove nested stacks
+- API changes to make them more ergonomic.
+
+With the new EKS module, customers can deploy an EKS cluster without custom resources.
 
 ## Working Backwards
 
@@ -48,7 +50,6 @@ Here is the minimal example of defining an AWS EKS cluster
 ```
 import * as eks from '@aws-cdk/aws-eksv2-alpha';
 
-// provisioning a cluster
 const cluster = new eks.Cluster(this, 'hello-eks', {
   version: eks.KubernetesVersion.V1_31,
 });
@@ -255,28 +256,43 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 });
 ```
 
-## Migration Path (TBD)
+## Migration Guide
+**This is a draft plan. The migration guide will not be included in the alpha module release at the beginning.
+Instead we should test the migration thoroughly and publish with a blog post before stabilizing the module.
+We can potentially provide a tool to help the migration.**
+
+**Prerequisite:** Exposed removal policy in the current EKS Cluster construct so that customers can remove
+the cluster definition from CDK app without actual deleting the cluster.
+
+Tracking issue: https://github.com/aws/aws-cdk/issues/25544
 
 Due to the fact that switching from a custom resource
 (Custom::AWSCDK-EKS-Cluster) to a native L1 (AWS::EKS::Cluster) resource
 requires cluster replacement, CDK users who need to preserve their cluster will
 have to take additional actions.
 
-1. Set the authentication mode of cluster from `AuthenticationMode.CONFIG_MAP`
-   to `AuthenticationMode.API_AND_CONFIG_MAP` and deploy
-2. Set the authentication mode of cluster from
-   `AuthenticationMode.API_AND_CONFIG_MAP` to `AuthenticationMode.API` and
-   deploy
-3. Set removal policy to RETAIN on the existing cluster (and manifests) and
-   deploy.
-4. Remove cluster definition from their CDK app and deploy
-5. Add new cluster definition using the new constructs(EKSV2).
-6. Follow cdk import to import the existing cluster as the new definition.
+1. Change the authentication mode of cluster from `CONFIG_MAP` to `API`.
+
+   This is a two steps change. First you need to change `CONFIG_MAP` to `API_AND_CONFIG_MAP` to enable access entry.
+   Then for all mappings in aws-auth ConfigMap, you can migrate to access entries. 
+   After this migration is done, change `API_AND_CONFIG_MAP` to `API` to disable `ConfigMap`.
+
+2. Set removal policy to RETAIN on the existing cluster (and manifests) and deploy.
+
+   This is to make sure the cluster won't be deleted when we clean up CDK app definitions in the next step.
+
+3. Remove cluster definition from their CDK app and deploy. After cleaning up cluster definition in CDK, 
+   EKS resources will still be there instead of being deleted.
+
+4. Add new cluster definition using the new constructs(EKSV2).
+
+5. Follow cdk import to import the existing cluster as the new definition.
    1. All relevant EKS resources support import.
    2. AWS::EKS::Cluster
    3. AWS::EKS::FargateProfile
    4. AWS::EKS::Nodegroup
-7. Add Manifests.
+
+6. After `cdk import`, running `cdk diff` to see if there's any unexpected changes.
 
 ## Public FAQ
 
