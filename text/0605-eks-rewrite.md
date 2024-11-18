@@ -334,6 +334,7 @@ Issues will be solved with the new module:
 - https://github.com/aws/aws-cdk/issues/24174 (Custom Resource related)
 - https://github.com/aws/aws-cdk/issues/19753 (ConfigMap)
 - https://github.com/aws/aws-cdk/issues/19218 (ConfigMap)
+- https://github.com/aws/aws-cdk/issues/31942 (One cluster per stack limit)
 
 ### Why should we _not_ do this?
 
@@ -352,8 +353,8 @@ the new cluster implementation.
 - [X] Gather feedback on the RFC
 - [ ] Get bar raiser to sign off on RFC
 - [ ] Implementation
-- [ ] Merge new alpha module
-- [ ] Publish migration guide/develop migration tool
+- [ ] Publish new alpha module
+- [ ] Publish migration guide/blog post/develop migration tool
 - [ ] Prioritize make the module stable after 3 months bake time
 
 ### Are there any open issues that need to be addressed later?
