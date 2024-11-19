@@ -289,6 +289,11 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 });
 ```
 
+With this solution, there are two mutual exclusive properties `kubectlProvider` and `kubectlProviderOptions`.
+- `kubectlProvider` means we will pass in a kubectl provider so don't create one.
+- `kubectlProviderOptions` means please create a kubectl provider for the cluster.
+This solution utilize a single API for importing cluster but could possibly cause some confusions. 
+
 ## Migration Guide
 
 **This is a general guideline. After migrating to the new construct, run `cdk diff` to make sure no unexpected changes.**
