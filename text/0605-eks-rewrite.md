@@ -22,7 +22,7 @@ Compared to the original EKS module, it has following major changes:
 - Use native L1 `AWS::EKS::Cluster` resource to replace custom resource `Custom::AWSCDK-EKS-Cluster`
 - Use native L1 `AWS::EKS::FargateProfile` resource to replace custom resource `Custom::AWSCDK-EKS-FargateProfile`
 - `Kubectl Handler` will not be created by default. It will only be created if users specify it.
-- Deprecate `AwsAuth` construct. Permissions to the cluster will be managed by Access Entry.
+- Remove `AwsAuth` construct. Permissions to the cluster will be managed by Access Entry.
 - Remove the limit of 1 cluster per stack
 - Remove nested stacks
 - API changes to make them more ergonomic.
