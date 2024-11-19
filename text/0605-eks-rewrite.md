@@ -304,28 +304,38 @@ Due to the fact that switching from a custom resource
 requires cluster replacement, CDK users who need to preserve their cluster will
 have to take additional actions.
 
-1. Change the authentication mode of cluster from `CONFIG_MAP` to `API`.
+1. **Set removal policy to RETAIN on the existing cluster and deploy (this feature will be added later).**
+
+   To make sure the cluster is not being deleted, set the removal policy to `RETAIN` on the cluster.
+   It will keep EKS related resources from being deleted when we clean up previous EKS constructs in the stack.
+
+   ```
+    new eks.Cluster(this, 'hello-eks', {
+      ...
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+   ```
+
+2. **Change the authentication mode of cluster from `CONFIG_MAP` to `API`.**
+
+   Since the new EKS module will only support `API` authentication mode, you will need to migrate your cluster to `API` mode.
 
    This is a two steps change. First you need to change `CONFIG_MAP` to `API_AND_CONFIG_MAP` to enable access entry.
    Then for all mappings in aws-auth ConfigMap, you can migrate to access entries.
    After this migration is done, change `API_AND_CONFIG_MAP` to `API` to disable `ConfigMap`.
 
-2. Set removal policy to RETAIN on the existing cluster (and manifests) and deploy.
+3. **Remove cluster definition from their CDK app and deploy.**
 
-   This is to make sure the cluster won't be deleted when we clean up CDK app definitions in the next step.
+4. **Add new cluster definition using the new constructs(eks-v2-alpha).**
 
-3. Remove cluster definition from their CDK app and deploy. After cleaning up cluster definition in CDK,
-   EKS resources will still be there instead of being deleted.
+5. **User `cdk import` to import the existing cluster as the new definition.**
+   `cdk import` will ask you for id/arn/name for EKS related resources. It may include following:
+    - `AWS::EKS::Cluster`
+    - `AWS::EKS::FargateProfile`
+    - `AWS::EKS::Nodegroup`
+    - `AWS::EKS::AccessEntry`
 
-4. Add new cluster definition using the new constructs(EKS-V2).
-
-5. Follow cdk import to import the existing cluster as the new definition.
-   1. All relevant EKS resources support import.
-   2. AWS::EKS::Cluster
-   3. AWS::EKS::FargateProfile
-   4. AWS::EKS::Nodegroup
-
-6. After `cdk import`, running `cdk diff` to see if there's any unexpected changes.
+6. **After `cdk import`, running `cdk diff` to see if there's any unexpected changes.**
 
 ## Public FAQ
 
