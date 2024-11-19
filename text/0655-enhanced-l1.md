@@ -154,7 +154,7 @@ One potential drawback would be the mismatch between L1 and their corresponding 
 
 ### POC
 
-We created an initial POC which involved adding the new data sources to the service spec and tweaking the generation script to include validations plus create new properties when new types were introduced. We can continue that work by making the necessary changes to spec2cdk and generating CDK code from the new data.
+We created an initial internal POC which involved adding the new data sources to the service spec and tweaking the generation script to include validations plus create new properties when new types were introduced. We can continue that work by making the necessary changes to spec2cdk and generating CDK code from the new data.
 
 ## Resource interface
 
@@ -233,5 +233,5 @@ Note that we won’t be able to change `I<Resource>` to `ICfn<Resource>` everywh
 
 ### POC
 
-There were some experiments done around this idea before. We concluded that generating `ICfn<Resource>` is fairly straight forward but actually backporting the interface to our existing L2 API is manual and runs the risk of accidentally creating breaking changes e.x turning a public property `IBucket` into `ICfnBucket` (since users could be referencing `IBucket` -specific properties) or renaming a parameter to an API can cause breaking changes in Python. If we move forward with this we'll continue the work from the experiments while keeping the findings in mind.
+There were some internal experiments done around this idea before. We concluded that generating `ICfn<Resource>` is fairly straight forward but actually backporting the interface to our existing L2 API is manual and runs the risk of accidentally creating breaking changes e.x turning a public property `IBucket` into `ICfnBucket` (since users could be referencing `IBucket` -specific properties) or renaming a parameter to an API can cause breaking changes in Python. If we move forward with this we'll continue the work from the experiments while keeping the findings in mind.
 
