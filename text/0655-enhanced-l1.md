@@ -1,4 +1,4 @@
-# Priority-Ordered Aspect Invocation
+# Enhanced L1 constructs in CDK
 
 * **Original Author(s):**: @aaythapa
 * **Tracking Issue**: #655
