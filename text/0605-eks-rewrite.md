@@ -86,7 +86,7 @@ In a nutshell:
 - Managed Node Group - EC2 worker nodes managed by EKS.
 - Fargate Profile - Fargate worker nodes managed by EKS.
 - Auto Scaling Group - EC2 worker nodes managed by the user.
-- Kubectl Handler (Optional) - Lambda function for invoking kubectl commands on the
+- Kubectl Handler (Optional) - Custom resource (i.e Lambda Function) for invoking kubectl commands on the
   cluster - created by CDK
 
 ## Provisioning cluster
