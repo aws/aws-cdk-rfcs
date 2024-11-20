@@ -213,7 +213,7 @@ cluster.grantAccess('adminAccess', roleArn, [
 This module allows defining Kubernetes resources such as Kubernetes manifests and Helm charts
 on clusters that are not defined as part of your CDK app.
 
-There are 2 scenarios here:
+There are 3 scenarios here:
 
 1. Import the cluster without creating a new kubectl Handler
 
@@ -226,7 +226,7 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 This imported cluster is not associated with a `Kubectl Handler`. It means we won't be able to
 invoke `addManifest()` function on the cluster.
 
-To apply a manifest, you need to import the kubectl handler and attach it to the cluster
+2. Import the cluster and the kubectl Handler
 
 ```
 const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
@@ -234,66 +234,22 @@ const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'Kubect
 });
 
 const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
-  kubectlProvider: kubectlProvider
-});
-
-cluster.addManifest();
-```
-
-2. Import the cluster and create a new kubectl Handler
-
-```
-const cluster = eks.Cluster.fromClusterWithKubectlProvider(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
-  kubectlProviderOptions: {
-    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
-  }
+  clusterName: 'my-cluster',
+  kubectlProvider
 });
 ```
 
-This import function will always create a new kubectl handler for the cluster.
-
-#### Alternative Solution
-
-We can have one single `fromClusterAttributes()` and have different behaviors based on the input.
-
-- Import the cluster without kubectl Handler. It can't invoke AddManifest().
-
+3. Import the cluster and create a new kubectl Handler
 ```
+const kubectlProvider = new eks.KubectlProvider(this, 'KubectlProvier', {
+  clusterName: 'my-cluster',
+});
+
 const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
+  clusterName: 'my-cluster',
+  kubectlProvider
 });
 ```
-
-- Import the cluster and create a new kubectl Handler
-
-```
-const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
-  kubectlProviderOptions: {
-    kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
-  }
-});
-```
-
-- Import the cluster/kubectl Handler
-
-```
-const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
-  functionArn: ''
-});
-const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
-  clusterName: 'my-cluster-name',
-  kubectlProvider: kubectlProvider
-});
-```
-
-With this solution, there are two mutual exclusive properties `kubectlProvider` and `kubectlProviderOptions`.
-- `kubectlProvider` means we will pass in a kubectl provider so don't create one.
-- `kubectlProviderOptions` means please create a kubectl provider for the cluster.
-This solution utilize a single API for importing cluster but could possibly cause some confusions. 
-
 ## Migration Guide
 
 **This is a general guideline. After migrating to the new construct, run `cdk diff` to make sure no unexpected changes.**
