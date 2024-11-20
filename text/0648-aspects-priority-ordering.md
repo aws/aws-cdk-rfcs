@@ -235,7 +235,7 @@ export class AspectApplication {
   /**
    * The priority value of this Aspect. Must be non-negative integer.
    */
-  private _priority: number;
+  private priority: number;
 }
 ```
 
@@ -342,10 +342,24 @@ need to refactor existing code to accommodate the new priority system, especiall
 
 ### What is the technical solution (design) of this feature?
 
-The feature introduces an optional priority parameter when aspects are added. Aspects are then sorted by their priority before being applied to constructs.
-This ensures that mutating aspects are applied first and validation aspects follow, if the application author specifies so. Additionally, the algorithm
+The feature introduces an optional priority parameter when aspects are added. Aspects are then applied to the construct tree in order of increasing priority
+values. This ensures that mutating aspects are applied first and validation aspects follow, if the application author specifies so. Additionally, the algorithm
 ensures that newly created nodes inherit aspects from their parent constructs, even if those nodes are added later in the process. See Appendix for
 Pseudocode for the new `invokeAspects` function.
+
+We are using a Priority Queue to iterate through Aspects. If an Aspect dynamically adds a new node to the construct tree which itself contains an
+Aspect, that new Node's Aspect will be added to the queue in the new Aspect invocation algorithm.
+
+Important things to note:
+
+1. Aspects can add other Aspects to the construct tree, as long as the added Aspect does not have a lower priority value than the Aspect that created it.
+If it does, then we throw an error.
+2. (TBD) The current Aspect invocation algorithm does not invoke nested Aspects (Aspects that are directly created by another Aspect). Currently, we add
+a warning and do not invoke the nested Aspect. It is up to us whether or not we should continue enforcing this behavior.
+
+- We discussed this previously and mentioned that invoking nested Aspects introduces the risk of infinite recursion. We could mitigate this risk by
+counting the number of iterations in the while loop of the new `invokeAspects` function and throwing an error if the number of iterations reaches
+a certain threshold (100 could be the maximum number of iterations, for example).
 
 ### Is this a breaking change?
 
@@ -436,6 +450,54 @@ We have discussed whether or not to add the `priority` property to the `IAspect`
 For now, we are not but we can discuss this in the RFC process.
 
 ## Appendix
+
+### New Invoke Aspects Algorithm with Priority Queue (Pseudocode)
+
+```
+function invoke_aspects(root):
+  aspects_set = get_all_aspects_applications(root)
+
+  priority_queue = new PriorityQueue();
+  for aspect in aspects_set:
+    priority_queue.enqueue(aspect, aspect.priority)
+  
+  while priority_queue is not empty:
+
+    // Dequeue and invoke the highest priority aspect
+    cur_aspect = priority_queue.dequeue()
+    invoke_aspect(cur_aspect)
+
+    // Scan the tree to dynamically add new aspects to the queue
+    updated_aspects = get_all_aspect_applications(root)
+    for aspect in updated_aspects:
+      if (aspect is not cur_aspect) and aspect not in priority_queue:
+        priority_queue.enqueue(aspect)
+
+  return
+  
+// Helper function for invoking an individual Aspect
+function invoke_aspect(node, aspect):
+  aspect.visit(node)
+  // Recurse and Invoke the aspect on all the node's children (inherited Aspect)
+  for child of node.children:
+    invoke_aspect(child, aspect)
+  return
+  
+// Helper function for collecting all Aspect Applications of a construct tree
+function get_all_aspects_applications(root):
+  aspects_set = {}
+
+  recurse(root)
+
+  return aspects_set
+
+  function recurse(node):
+    for aspectApp of node.aspects:
+      aspects_set.add(aspectApp)
+  
+    for child of node.children:
+      recurse(child)
+```
 
 ### New Invoke Aspects Algorithm (Pseudocode)
 
