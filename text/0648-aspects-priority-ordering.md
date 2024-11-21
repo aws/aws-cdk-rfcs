@@ -342,17 +342,27 @@ need to refactor existing code to accommodate the new priority system, especiall
 
 ### What is the technical solution (design) of this feature?
 
-The feature introduces an optional priority parameter when aspects are added. Aspects are then applied to the construct tree in order of increasing priority
+Definitions:
+
+1. An Aspect Application defines an Aspect that is added to a construct with a certain priority: application(A, C, P)
+2. An Aspect Invocation defines an Aspect that is being invoked on a certain constrict with a priority: invocation(A, C, P)
+
+Our design must fit the following constraints:
+
+1. Every Aspect application should be invoked at most once.
+2. For each node, lower priority value Aspects are invoked before Aspects with higher priority values.
+3. Inherited Aspects should be invoked before locally applied Aspects on a node (if they are the same priority).
+4. If an Aspect creates a new Node, that new Node should inherit the Aspects from its parent.
+
+The feature introduces an optional priority parameter when aspects are apdded. Aspects are then invoked on the construct tree in order of increasing priority
 values. This ensures that mutating aspects are applied first and validation aspects follow, if the application author specifies so. Additionally, the algorithm
 ensures that newly created nodes inherit aspects from their parent constructs, even if those nodes are added later in the process. See Appendix for
 Pseudocode for the new `invokeAspects` function.
 
-We are using a Priority Queue to iterate through Aspects. If an Aspect dynamically adds a new node to the construct tree which itself contains an
-Aspect, that new Node's Aspect will be added to the queue in the new Aspect invocation algorithm.
-
 Important things to note:
 
-1. Aspects can add other Aspects to the construct tree, as long as the added Aspect does not have a lower priority value than the Aspect that created it.
+1. Aspects can add other Aspects to the construct tree, as long as the added Aspect's priority is greater than or equal to that of the last Aspect
+that was invoked on that node.
 If it does, then we throw an error.
 2. (TBD) The current Aspect invocation algorithm does not invoke nested Aspects (Aspects that are directly created by another Aspect). Currently, we add
 a warning and do not invoke the nested Aspect. It is up to us whether or not we should continue enforcing this behavior.
