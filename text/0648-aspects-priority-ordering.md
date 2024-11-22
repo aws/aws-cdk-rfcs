@@ -138,14 +138,9 @@ To fix these problems with Aspects in CDK, we are redesigning Aspects so that th
 
 ### CHANGELOG
 
-#### feat(core): Priority-Ordered Aspect Invocation
-
-* Introduced a priority-based ordering system for aspects in the CDK to allow users to control the order in which aspects are applied across constructs.
-* Added default priority ranges to assist with common use cases (e.g., mutating aspects, readonly aspects) and to improve the execution flow of aspects.
-
 ### README
 
-Users can ensure Aspects are applied in a predictable and controlled order by using the optional priority parameter when applying an Aspect. Priority
+Users can specify the order in which Aspects are applied on a construct by using the optional priority parameter when applying an Aspect. Priority
 values must be non-negative integers, where a higher number means the Aspect will be applied later, and a lower number means it will be applied sooner.
 
 ```ts
@@ -271,6 +266,9 @@ const thirdPartyAspectApplication: AspectApplication = Aspects.of(construct).lis
 thirdPartyAspectApplication.priority = 0;
 ```
 
+An important thing to note about the `list` function is that it will not return Aspects that are applied to a node by another
+Aspect - these Aspects are only added to the construct tree when `invokeAspects` is called during synthesis.
+
 When using aspects from a library but controlling their application:
 
 ```ts
@@ -333,7 +331,7 @@ to the same construct.
 ### Why are we doing this?
 
 Currently, users face challenges with the order of aspect application, especially when mutating aspects are invoked out of order.
-The goal of this feature is to give users fine-grained control over the execution order, ensuring that their infrastructure is set up and validated correctly.
+The goal of this feature is to give users control over the execution order, ensuring that their infrastructure is set up and validated correctly.
 
 ### Why should we _not_ do this?
 
@@ -342,38 +340,42 @@ need to refactor existing code to accommodate the new priority system, especiall
 
 ### What is the technical solution (design) of this feature?
 
-Definitions:
+The behavior we want to guarantee in this algorithm is:
 
-1. An Aspect Application defines an Aspect that is added to a construct with a certain priority: application(A, C, P)
-2. An Aspect Invocation defines an Aspect that is being invoked on a certain constrict with a priority: invocation(A, C, P)
+1. Every Aspect Application should be invoked at most once for every construct
+    * Aspects cannot be invoked multiple times for each node.
+2. Inheritance of Aspects by New Nodes
+    * If an Aspect creates a new node, that node should inherit the Aspects from its parent.
+3. On each Node, lower priority Aspects are invoked before Aspects with higher priority values.
+4. For Aspects of the same priority value, inherited Aspects should be invoked before locally applied Aspects on a node.
+5. An Aspect with priority P1 cannot run on a node if the last invoked Aspect on that node is P2, where P1 < P2
 
-Our design must fit the following constraints:
-
-1. Every Aspect application should be invoked at most once.
-2. For each node, lower priority value Aspects are invoked before Aspects with higher priority values.
-3. Inherited Aspects should be invoked before locally applied Aspects on a node (if they are the same priority).
-4. If an Aspect creates a new Node, that new Node should inherit the Aspects from its parent.
+Additionally, we will remove a constraint from the existing algorithm which prevent nested Aspects from being invoked. The current algorithm emits a warning
+if an Aspect creates another Aspect and does not invoke that new Aspect.
 
 The feature introduces an optional priority parameter when aspects are apdded. Aspects are then invoked on the construct tree in order of increasing priority
 values. This ensures that mutating aspects are applied first and validation aspects follow, if the application author specifies so. Additionally, the algorithm
 ensures that newly created nodes inherit aspects from their parent constructs, even if those nodes are added later in the process. See Appendix for
 Pseudocode for the new `invokeAspects` function.
 
-Important things to note:
+Our new `invokeAspects` function will use a stabilization loop to recurse the construct tree and invoke Aspects. The stabilization loop is necessary in
+order to ensure that new nodes created by Aspects (as well as new Aspects created by Aspects) get visited.
 
-1. Aspects can add other Aspects to the construct tree, as long as the added Aspect's priority is greater than or equal to that of the last Aspect
-that was invoked on that node.
-If it does, then we throw an error.
-2. (TBD) The current Aspect invocation algorithm does not invoke nested Aspects (Aspects that are directly created by another Aspect). Currently, we add
-a warning and do not invoke the nested Aspect. It is up to us whether or not we should continue enforcing this behavior.
+Pros
 
-- We discussed this previously and mentioned that invoking nested Aspects introduces the risk of infinite recursion. We could mitigate this risk by
-counting the number of iterations in the while loop of the new `invokeAspects` function and throwing an error if the number of iterations reaches
-a certain threshold (100 could be the maximum number of iterations, for example).
+* Solves the first constraint without requiring changes from the customer. Newly created nodes will automatically inherit and apply their parent’s Aspects.
+* Provides standard ranges for Aspect priority and the ability to override them if needed.
+
+Cons
+
+* The stabilization loop can change customers' infrastructure.
+
+Since the stabilization loop is potentially a breaking change for some customers, we will gate this feature with a feature flag. Customers that decide
+to opt-in to the stabilization loop will be able to do so while existing customers will not suffer a breaking change.
 
 ### Is this a breaking change?
 
-No
+No (since we will release this under a feature flag).
 
 ### What alternative solutions did you consider?
 
@@ -421,32 +423,30 @@ necessary (e.g., ensuring aspects that create nodes are executed before those th
   the full ability to control their aspect invocation ordering.
 * Existing users would need to modify their code to adapt to this new encoding of aspects.
 
-#### 2. Multiple Passes of the Construct Tree with a Stabilization Loop
+#### 2. Aspect Invocation by Global-Priority Order
 
-We can perform multiple passes over the construct tree to ensure that if an Aspect creates a new node, that node will inherit its parent’s Aspects and
-be visited. To prevent infinite recursion, we can set a maximum iteration depth (e.g., 100 passes). If invokeAspects hits this limit while still mutating
-the tree, it will throw an error. View pseudocode for this alternate solution in the Appendix.
+Instead of using the stabilization loop, we can invoke Aspects by global priority and use a Priority Queue to iterate through Aspects to invoke in the
+construct tree. See Pseudocode for Alternate solution #2 in the Appendix.
 
 Pros:
 
-* Solves the first constraint without requiring changes from the customer. Newly created nodes will automatically inherit and apply their parent’s Aspects.
+* Easy to understand and implement.
+* Provides standard ranges for Aspects and the ability to override them if needed.
 
 Cons:
 
-* This solution doesn’t address the third constraint of Aspect ordering. We would still need a way to specify the order for cases where mutating and
-validation Aspects apply to the same node.
-* Validation aspects may still run before mutating ones, causing them to throw Errors and fail when they shouldn’t.
-* * This solution will change customer’s infrastructure.
-    * This reason alone is enough not to pursue this solution. A solution that will change customer’s infrastructure without them making any changes
-    to their CDK code would be considered breaking.
-* Additionally, this solution would be difficult to understand for customers, compared to assigning priority values.
-  * Some times it will work as expected, but other times it will not (since we still have no way to prioritize the ordering of how mutating Aspects are
-  applied).
+* There are some edge cases that would not be supported by this solution.
+  * Take the following example: let's say you have 3 Aspects applied at the root, `A`, `B`, `C` with each having a higher priority than the last. The
+  invocation ordering here would be `A` gets invoked first. Then, let's say `B` creates a new node that is a child of the root. Since Aspect `A` has
+  already been invoked, that means that the new child node will not inherit Aspect `A` from the root.
+    * This example proves that this solution is insufficient and that we do indeed need the stabilization loop.
 
 ### What are the drawbacks of this solution?
 
 The primary risk is that users may not immediately understand the need to specify priorities, leading to issues if aspects are applied in the wrong
 order. Additionally, this change may require users to revisit and update their existing code to take advantage of the new ordering system.
+
+The stabilization loop may also be confusing to some users.
 
 ### What is the high-level project plan?
 
@@ -461,7 +461,52 @@ For now, we are not but we can discuss this in the RFC process.
 
 ## Appendix
 
-### New Invoke Aspects Algorithm with Priority Queue (Pseudocode)
+### New Invoke Aspects Algorithm Solution (Pseudocode)
+
+```
+// Invoke Aspects Function called on the Construct Tree.
+function invokeAspects:
+    for i in 0...100:
+    
+        // The recurse function will return a boolean indicating if it did anything to the tree.
+        const didAnythingToTree = recurse(root, [])
+      
+        // If this pass of the recursion did not do anything, we are finished.
+        if (!didAnything):
+            return
+    
+    // Throw error if we don't return in the first 100 passes of the tree.
+    throw Error('Maximum iterations reached')
+     
+// Helper function for recursing construct tree
+function recurse(node, inheritedAspects):
+
+    let didSomething = False
+    
+    // Here we combine current node's aspects with its inherited aspects and sort them by priority
+    let aspectsOfThisNode = sortAspects(inheritedAspects + node.aspects)
+    
+    for aspect of aspectsOfThisNode:
+        
+        // We will track whether or not an aspect has been invoked for a node, probably using a Map.
+        if alreadyInvoked(aspect, node):
+            continue
+        
+        // Throw if the Aspect's priority is less than that of the invoked Aspect on this node.
+        if aspect.priority < lastInvokedAspectOnNode(node).priority:
+            throw Error('Cannot invoke Aspect with lower priority on node')
+        
+        aspect.visit(node)
+        didSomething = True
+        
+        // Continue recursion on each of the node's children
+        for child of node.children:
+            didSomething |= recurse(child, aspectsOfThisNode)
+     
+     return didSomething
+```
+
+### Alternate Solution #2: Global Ordering using Priority Queue (Pseudocode)
 
 ```
 function invoke_aspects(root):
@@ -507,91 +552,4 @@ function get_all_aspects_applications(root):
   
     for child of node.children:
       recurse(child)
-```
-
-### New Invoke Aspects Algorithm (Pseudocode)
-
-```
-function invoke_aspects(root):
-  aspects_map = collect_all_aspects(root)
-  
-  // Iterate through aspects sorted on priority:
-  for prio in aspects_map.keys().sorted():
-    for (aspect, node) in aspect_map[prio]:
-        invoke_aspect(node, aspect)
-  
-  return
-  
-// Helper function for invoking an individual Aspect
-function invoke_aspect(node, aspect):
-  aspect.visit(node)
-  // Recurse and Invoke the aspect on all the node's children (inherited Aspect)
-  for child of node.children:
-    invoke_aspect(child, aspect)
-  
-// Helper function for collecting all Aspects of the construct tree
-function collect_all_Aspects(root):
-  // Map of {priority : (Node, Aspect)[]}
-  aspects_map = {}
-    
-  function aspects_from_node(node):
-    for aspect of node.aspects:
-      cur_prio = aspect.prio
-      if cur_prio not in aspects_map:
-        aspects_map[cur_prio] = []
-      
-      // Add Aspect to the map
-      aspects_map[cur_prio] += (node, aspect)
-      
-    // Recurse through children
-    for child of node.children:
-      aspects_from_node(child)
-  
-  aspects_from_node(root)
-  
-  return aspects_map
-```
-
-### Alternate Solution #2 - Pseudocode
-
-Here's what the `invokeAspects` function would look like for alternate solution #2, multiple passes of the construct tree with a stabilization loop:
-
-```
-// Invoke Aspects Function called on the Construct Tree.
-function invokeAspects:
-    for i in 0...100:
-    
-        // The recurse function will return a boolean indicating if it did anything to the tree.
-        const didAnythingToTree = recurse(root, [])
-      
-        // If this pass of the recursion did not do anything, we are finished.
-        if (!didAnything):
-            return
-    
-    // Throw error if we don't return in the first 100 passes of the tree.
-    throw Error('Maximum recursions reached')
-     
-// Helper function for recursing construct tree
-function recurse(node, inheritedAspects):
-
-    let didSomething = False
-    
-    // Here we combine current node's aspects with its inherited aspects
-    let aspectsOfThisNode = inheritedAspects + node.aspects
-    
-    for aspect of aspectsOfThisNode:
-        
-        // We will track whether or not an aspect has been invoked for a node, probably using a Map.
-        if alreadyInvoked(aspect, node):
-            continue
-        
-        aspect.visit(node)
-        didSomething = True
-        
-        // Continue recursion on each of the node's children
-        for child of node.children:
-            // 
-            didSomething |= recurse(child, aspectsOfThisNode)
-     
-     return didSomething
 ```
