@@ -25,8 +25,7 @@ The package provides implementations for the following actions:
 ```ts
 // Create a [Programmatic Toolkit]
 await using cdk = new Toolkit({
-  ioHost: new CloudWatchLogsIoHost('my-log-stream'), // write all output to CW logs
-  // awsSdkProvider: new DefaultAwsSdk(), // optional
+  ioHost: new CloudWatchLogsIoHost('my-log-stream'), // optional, e.g. an IoHost to write any output to CloudWatch Logs
 });
 
 // Define the CloudExecutable
@@ -55,12 +54,11 @@ const cdk = new Toolkit()
 ```
 
 You can customize the functionality of the toolkit.
-The main options are provided through `ioHost` and `awsSdkProvider`.
+Currently only `ioHost` is available for customization:
 
 ```ts
 const cdk = new Toolkit({
-  ioHost: new MyIoHost(),
-  awsSdkProvider: new MyAwsSdkProvider(),
+  ioHost: new MyIoHost(), // optional
 })
 ```
 
@@ -89,12 +87,17 @@ interface IoRequest<T, U> extends IoMessage<T> {
 }
 ```
 
+A list of all messages and requests is available at [TODO: link to auto-generated list of messages].
+
 ##### Changes and Breaking Changes to messages and requests
 
-Messages and requests play an important role in structuring interactions with the Toolkit.
-Because messages will be emitted in many places, they will change frequently.
-An integrator needs to take great care when handling messages and basing implementation on them.
-A list of all messages and requests is available at [TODO: link to auto-generated list of messages].
+The [Programmatic Toolkit] is committed to providing a stable and reliable API for integrators.
+As a foundational piece of infrastructure that other tools and systems will depend on, we take backwards compatibility seriously.
+Once the API reaches general availability, we will follow semantic versioning principles and only introduce breaking changes in major versions.
+
+Messages and requests are a core part of our public contract with integrators.
+We recognize that integrators will build critical workflows around these structured interactions.
+Therefore, we provide clear guarantees about what changes are considered breaking versus non-breaking to help integrators build with confidence.
 
 For a given message code, the following changes are considered breaking:
 
@@ -126,7 +129,7 @@ interface IIoHost {
    * Notifies the host of a message.
    * The caller waits until the notification completes.
    */
-  async notify(msg: IoMessage<T>);
+  notify<T>(msg: IoMessage<T>): Promise<void>;
   
   /**
    * Notifies the host of a message that requires a response.
@@ -134,13 +137,13 @@ interface IIoHost {
    * If the host does not return a response the suggested
    * default response from the input message will be used.
    */
-  async requestResponse(msg: IoRequest<T,U>): U | undefined;
+  requestResponse<T, U>(msg: IoRequest<T,U>): Promise<U | undefined>;
 }
 ```
 
-For every message, the toolkit calls `notify` or `requestResponse` is called respectively.
+For every message, the toolkit calls `notify` or `requestResponse`, respectively.
 
-The a generic `IoEmitter` is available to provide a familiar event emitter interface.
+A generic `IoEmitter` is available to provide a familiar event emitter interface.
 This implementation will do nothing for messages and requests that don't have a registered listener, i.e. the default response will be used as required.
 
 ```ts
@@ -152,22 +155,13 @@ io.once('deploy:confirm-security', async (msg: IoRequest<boolean>): boolean => {
 })
 ```
 
-The `CommandLineIoHost` is available, implementing all the interaction behavior for the AWS CDK CLI [TODO: this might end up in a separate package]:
+The `CdkCommandLineIoHost` is available, implementing all the interaction behavior for the AWS CDK CLI [TODO: this might end up in a separate package]:
 
 ```ts
-const io = new CdkCliHost({
-  isInteractive: true
+const io = new CdkCommandLineIoHost({
+  useTTY: true // optional, defaults to auto detecting if TTY should be used
 })
 ```
-
-##### SdkProvider
-
-  [Alternative: Make this `CredentialsProvider` or `SdkConfigProvider` instead]
-
-The `AwsSdkProvider` defines how the toolkit interacts with AWS services.
-A default provider is available.
-You can provide a custom class implementing the `IAwsSdkProvider` interface.
-A standard `SdkProviderForCdk` is available that includes all features of the AWS CDK CLI [TODO: this might end up in a separate package].
 
 #### Cloud Executables
 
@@ -176,11 +170,12 @@ AWS CDK apps might need to be synthesized multiple times with additional context
 This concept is what the Cloud Executable represents.
 
 The most flexible way to obtain a Cloud Executable is from a function returning a `CloudAssembly`.
-Providing a function allows your implementation to integrate with the [Programmatic Toolkit]'s multi-pass requirement.
+Providing a function allows your implementation to integrate with the [Programmatic Toolkit]'s automatic context fetching system.
 The function will be called one or more times with the known context values of the current iteration.
 It must then use these values to synthesize and return a `CloudAssembly`.
+If the Cloud Assembly contains metadata that indicates that context information is missing, the toolkit will perform lookup AWS API calls using the appropriate credentials, and invoke the cloud executable again.
 For all features (e.g. lookups) to work correctly, the `App()` must be instantiated with the received context values.
-Since it is not possible to update the context of an app, it must be created inside the function scope.
+Since it is not possible to update the context of a `cdk.App`, it must be created inside the function scope.
 
 A basic implementation would look like this:
 
@@ -261,60 +256,33 @@ try {
 }
 ```
 
-##### Recoverable Errors [TODO: Naming. All errors in JS are recoverable. Ruby calls this rescue/retry]
-
-  [Alternative: Do not do this at all]
-  [Alternative: Formalize a retry budget]
-
-While most errors are terminal, it's possible to recover from some.
-For example if an authentication token is expired, an integrator may prompt the user to re-authenticate via a browser login, before continuing with the action.
-With recoverable errors, the integrator can return to normal program flow after an issue has been addressed.
-
-In the [Programmatic Toolkit], recoverable errors are implemented as a special type of request.
-By default, errors are not attempted to recover.
-
-```ts
-interface RecoverableError extends IoRequest<T, U> {
-  level: 'error';
-  defaultResponse: {
-    retry: boolean; // indicates if the block should retried
-    // ... other response values
-  };
-  data: {
-    isRecoverable: true;
-    attempt: number; // the number of the current attempt, starting with 1
-  }
-}
-```
-
-When `IoHost.requestResponse()` is called with a recoverable error, the integrator may choose to return `retry: true` to indicate the block should be retried.
-A single retry is allowed, if the block fails again with the same error it will be raised as an exception.
-Retries are not guaranteed and integrators must handle the case where a requested retry is not executed.
-Recoverable errors are rare as they require special programming and not always possible.
-
 ##### Synth-time Errors
 
-There is a subtle semantic difference between errors that originate from the [Programmatic Toolkit] and from a Cloud Executable, i.e. from a user's app:
+There is an important semantic difference between errors that originate from the [Programmatic Toolkit] and from a Cloud Executable, i.e. from a user's app:
 Errors from the [Programmatic Toolkit] are typically misconfigurations and maybe fixable by an integrator,
 while errors from a Cloud Executable are usually code problems and only fixable by the user.
 
-The [Programmatic Toolkit] emits all synth-time errors as recoverable errors.
-When implementing a custom Cloud Executable in code, you may prefer to handle synth-time errors directly in code:
+The [Programmatic Toolkit] treats and throws synth-time errors like any errors.
+When implementing a custom Cloud Executable in code, an integrator may choose to handle synth-time errors in the toolkit code or in the Cloud Executable.
 
-  [Alternative: Don't allow retries on user code]
-  [Alternative: Implement retries as regular requests]
 
 ```ts
-class MyCloudExecutable implements ICloudExecutable {
-  async exec(context: Record<string, any>): cxapi.CloudAssembly {
+const cx: ICloudExecutable = CloudExecutable.fromCloudAssemblyProducer(
+  async (context: Record<string, any>): cxapi.CloudAssembly => {
     try {
       const app = new cdk.App({ context });
       const stack = new cdk.Stack(app);
       return app.synth();
     } catch(e: unknown) {
-      // handle errors here
+      // handle app errors here
     }
   }
+);
+ 
+try {
+  await cdk.synth(cx);
+} catch (err: unknown) {
+  // handle app errors here
 }
 ```
 
@@ -427,7 +395,7 @@ Programmatic usage will become an equally considered use case, in fact the propo
 ### Why should we _not_ do this?
 
 There are requirements that cannot be satisfied with the current available options.
-Specifically hooks, control over logging, structured errors and typed returns are not possible.
+Specifically event hooks, control over logging, structured errors and typed returns are not possible (refer to the appendix for details).
 
 Implementing the [Programmatic Toolkit] proposal will make it more difficult to add new features to the CLI.
 It creates a new level of abstraction, that needs to be considered going forward.
@@ -443,7 +411,7 @@ User apps are defined as a Cloud Executable and can be created in multiple ways 
 
 A new [Programmatic Toolkit] package is introduced to contain the implementation for all actions.
 A new [Toolkit] class provides access to the actions and offers control over configuration and certain features.
-Specifically **SDK configuration** (`SdkProvider`) [TODO: Maybe just auth] and **interactive controls** (`IoHost`) will become part of the public contract.
+To start with, only **interactive controls** (`IoHost`) will become part of the public contract.
 
 <img alt="Today Users call the CLI and Integrators either call the CLI or use cli-lib-alpha which is a wrapper around the CLI." src="../images/0300/tomorrow.png" width="500">
 
@@ -451,8 +419,8 @@ To keep the solution maintainable, the codebase will restructured into three mai
 
 * `@aws-cdk/toolkit` the main package containing all implementation of actions and public interfaces.
 * `aws-cdk` the existing CLI. Contains a wrapper to translate command line input to [Programmatic Toolkit] calls.
-  CLI focused implementations of `IoHost`, `SdkProvider` defaults.
-* `@aws-cdk/jsii-toolkit` a jsii wrapper for the toolkit, contains jsii compatible version of `IoHost`, `SdkProvider` defaults.
+  CLI focused implementation of `IoHost` and defaults.
+* `@aws-cdk/jsii-toolkit` a jsii wrapper for the toolkit, contains jsii compatible version of `IoHost` and defaults.
 
 To limit the maintenance burden for the team, we will use a codegen solution where possible for the two wrapper packages.
 Detailed design for this is tbd, but can change over time since it's not public facing.
@@ -466,7 +434,7 @@ This is important because programmatic use is inherently different to interactiv
 
 A good example for this is `cdk deploy` and the `--rollback` / `--no-rollback` options.
 Typically `--no-rollback` is used to increase iteration speed during development and a production deployment would run with `--rollback`.
-However there are situations in which a rollback is still preferable.
+However there are situations in which deploying in rollback mode is necessary, or even an explicit rollback needs to be performed before a deployment can continue.
 For example if the stack is in a failed state or if the update contains a replacement which must always be run with rollbacks enabled.
 In an interactive CLI it makes sense to prompt the user for their input if these situations are detected, even if the user originally had `--no-rollback` specified.
 
@@ -494,11 +462,41 @@ A detailed definition of what would constitute a breaking change is included in 
 To support integrations, we will need to publish a list of all messages.
 We will use static code analysis to automatically compile and publish this list without adding additional maintenance burden on to the team.
 
+#### Synth-time Errors
+
+This includes making changes to all errors thrown from the construct library.
+If an integrator includes the CDK App in the same process, errors can either be handled directly or will be rethrown.
+Cloud Executables that are going through a child process will eventually print all errors to stderr.
+For these we are going to detect errors from the output streams and convert them to JavaScript errors.
+The Toolkit will then throw them as before.
+
+#### Future Extensions
+
+This proposal focuses on a feature set required for GA.
+However the design allows for easy future extensions:
+
+- Additional actions can be migrated to the [Programmatic Toolkit]
+- The `IoHost` can be extended to include other I/O tasks like filesystem interactions.
+  This would allow implementations that are truly, in-memory like in browser environments.
+- The Toolkit setup can allow additional configuration, like providing a custom SDK or authentication configuration.
+
+### Is this a breaking change?
+
+No.
+
+### What alternative solutions did you consider?
+
 #### SdkProvider
+
+> Designing and committing to a public interface for SDK Provider will require some dedicated design.
+> The recent SDKv3 migration highlighted that the current design needs work.
+> Exposing the full SDK to users also puts a lot of requirements and work on them.
+> Instead we might want to consider a more focused approach like an interface for authentication config.
+> This is still in scope for phase 3, but we will run a separate RFC and design for it.
 
 The main purpose of this feature is to expose SDK configuration to an integrator.
 We will be providing our default implementation as a drop-in solution for CLI-like environments.
-However other possible scenarios like Electron or even web apps will require much different setups.
+However other possible scenarios like standalone apps or an IDE plugin will require very different setups.
 
 Authentication is the primary focus of this public contract.
 However from our own experience we are aware that authentication can also extend to other parts of SDK configuration.
@@ -507,25 +505,66 @@ For example proxies require HTTP transport configuration and default timeouts an
 The existing plugin system is a superset of the SDK v3's `AwsCredentialIdentityProvider` type as it introduces a mode (reading or writing).
 The public contract will subsume and formalize this.
 
+#### Readme
 
-<img alt="Today Users call the CLI and Integrators either call the CLI or use cli-lib-alpha which is a wrapper around the CLI." src="../images/0300/today.png" height="400">
+The `AwsSdkProvider` defines how the toolkit interacts with AWS services.
+A default provider is available.
+You can provide a custom class implementing the `IAwsSdkProvider` interface.
+A standard `SdkProviderForCdk` is available that includes all features of the AWS CDK CLI [TODO: this might end up in a separate package].
 
-### Is this a breaking change?
+#### Event stream
 
-No.
+> Streams are non blocking by design.
+> They can support two-way communication, but synchronization would require protocol messages, which is unnecessary complex.
+> The jsii implementation cannot make use of JavaScript's native stream primitives and an alternative wrapper implementation would be required anyway.
 
-### What alternative solutions did you consider?
+An integrator passes a duplex stream into the toolkit at initialization time.
+The toolkit would write any events (messages) onto this stream for the caller to consume.
+Every message causes the execution to paused until the integrator answers with a continue message.
+Requests are a special type of message.
+The response to a request, may contain data from the integrator that answers the request.
 
-> Briefly describe alternative approaches that you considered. If there are
-> hairy details, include them in an appendix.
+#### Synth-time Errors via Cloud Assembly
 
-<!-- Event Stream
-Only read, and non-blocking. Doesn’t support hooks and wait for me to do this thing.
+> Disregarded, as this approach requires changes to Cloud Assembly contract.
+> We would also need to adjust the App to always write a Cloud Assembly, even if it's just the error case.
+> It also doesn't cover TypeScript or other language errors that can never be caught from within the App.
+> The benefit of reading JSON from a file compared to stderr/stdout is minimal.
+> Main difference would be that we don't have to try and detect the error data on the output stream.
 
-Synth-time Errors - I/O based
-One alternative is to use I/O based protocols, either writing errors to disk in a special format or printing them to stderr in a more structured way.
-The pro of this approach is that it would allow support for other jsii languages NFR4,jsii package However, the con is that it requires writing to disk, or parsing from a string which can be error-prone.
-This approach was disregarded for its complexity in implementation and added surface area. It is also not strictly required for FR3,Structured errors and could be added as a later extension. -->
+Synth-time errors are written to disk as part of the Cloud Assembly, similar to warnings today.
+This would need to be an error-only Cloud Assembly, as the rest of it won't be available.
+The toolkit reads the error information from the Cloud Assembly and converts them to JavaScript errors that are thrown.
+
+#### Recoverable Errors
+
+> Disregarded, because recoverable Errors are just a specific implementation of `IoRequest`s.
+> They would force us to write code more transactional, but not having this feature doesn't prevent us from doing so anyway.
+> If we end up implementing a lot of transactional retries, we can revisit this decision and add recoverable errors as a generic reusable way.
+
+While most errors are terminal, it's possible to recover from some.
+For example if an authentication token is expired, an integrator may prompt the user to re-authenticate via a browser login, before continuing with the action.
+With recoverable errors, the integrator can return to normal program flow after an issue has been addressed.
+
+In the [Programmatic Toolkit], recoverable errors are implemented as a special type of request.
+By default, errors are not attempted to recover.
+
+```ts
+interface RecoverableError<T, U> extends IoRequest<T, U> {
+  level: 'error';
+  defaultResponse: {
+    retry: boolean; // indicates if the block should retried
+    // ... other response values
+  };
+  isRecoverable: true;
+  attempt: number; // the number of the current attempt, starting with 1
+}
+```
+
+When `IoHost.requestResponse()` is called with a recoverable error, the integrator may choose to return `retry: true` to indicate the block should be retried.
+A single retry is allowed, if the block fails again with the same error it will be raised as an exception.
+Retries are not guaranteed and integrators must handle the case where a requested retry is not executed.
+Recoverable errors are rare as they require special programming and not always possible.
 
 ### What are the drawbacks of this solution?
 
@@ -582,51 +621,42 @@ The project will be delivered incrementally over multiple months.
 We start with core functionalities and the most commonly used actions.
 A more detailed project plan will be provided when it is available.
 
-#### Milestone 1 // 8 two-dev-weeks
+#### Phase 1 // 6 two-dev-weeks
 
-Covers foundational features and the most commonly used actions.
+Foundational features and the most commonly used actions.
 
 * Actions: synth, deploy, watch, destroy
-* Event system
-* structured errors
-* new packages
-* align configuration
-* implement options for cli-lib
-* generate options from toolkit interface
+* IoHost for messages & requests
+* Structured errors
+* New packages
+* Toolkit class and changes to Cloud Executable
 
-#### Milestone 2 // 8 two-dev-weeks
+#### Phase 2 // 14 two-dev-weeks
 
 Added support for actions required to cover the complete lifecycle of a CDK app.
 Typed returns to increase support for even more complex scenarios.
 Use [Programmatic Toolkit] in `integ-runner` and integration tests.
+Jsii version of [Programmatic Toolkit].
 
 * Actions: bootstrap, list, diff, rollback
 * Typed Returns for all current actions
-* events for above actions
-* integration Tests
-* integ-runner
+* Messages & requests for above actions
+* integ-runner uses [Programmatic Toolkit]
+* new jsii package, replacement of cli-lib-alpha
 
-#### Milestone 3 // 4 two-dev-weeks
+#### Phase 3 // tbd
 
-GA. Added support for operational actions and release of the jsii toolkit.
+GA. Added support for remaining actions. More configuration options.
 
-* Actions: context, metadata, notices, acknowledge, doctor, docs, gc
-* Typed Returns for all above actions
-* events for above actions
-* new jsii package, removal of cli-lib-alpha
-
-#### Milestone 4 // 4 two-dev-weeks
-
-GA. Added support for highly interactive actions.
-
-* Actions: init, migrate, import
-* Typed Returns for all above actions
-* events for above actions
-* Hooks?
+* Actions: init, migrate, import, context, metadata, notices, acknowledge, doctor, docs, gc
+* Messages & requests for above actions
+* Typed Returns for above actions
+* SdkProvider or SdkAuthConfig
 
 ### Are there any open issues that need to be addressed later?
 
 None. The project plan above covers all intended functionality.
+Possible extensions are noted in the design.
 
 ## Appendix
 
@@ -670,8 +700,9 @@ A tool absorbing CDK actions management will realistically be build in TypeScrip
 A jsii package will benefit the scripting community and use in Notebooks.
 There are naturally some TypeScript features that will be impossible to implement for jsii, e.g. Error types or custom SDK providers.
 
-*T2 Real use cases vs T4 jsii ecosystem* - The tension is that there is little evidence that users want a jsii version of this.
-Some requests are documented for Python to improve Notebooks support.
+*T2 Real use cases vs T4 jsii ecosystem* - The tension here is the absence of requests for jsii support.
+This indicates a lack of interest that users would actually want a jsii version.
+Only some requests are documented for Python support to improve integration with Notebooks.
 But participating in the jsii ecosystem means to always publish for all languages even if there is no explicit ask.
 
 ### C. Requirements
