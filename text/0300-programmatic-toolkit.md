@@ -165,7 +165,7 @@ const io = new CdkCommandLineIoHost({
 
 #### Cloud Executables
 
-A Cloud Executable is the primitive that defines a deployable AWS CDK application.
+A Cloud Executable is the primitive that defines instructions on how to create a deployable AWS CDK application.
 AWS CDK apps might need to be synthesized multiple times with additional context values before they are ready.
 This concept is what the Cloud Executable represents.
 
