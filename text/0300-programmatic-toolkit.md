@@ -514,7 +514,7 @@ A standard `SdkProviderForCdk` is available that includes all features of the AW
 
 #### Event stream
 
-> Streams are non blocking by design.
+> Disregarded. Streams are non blocking by design.
 > They can support two-way communication, but synchronization would require protocol messages, which is unnecessary complex.
 > The jsii implementation cannot make use of JavaScript's native stream primitives and an alternative wrapper implementation would be required anyway.
 
