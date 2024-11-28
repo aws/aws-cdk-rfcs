@@ -240,6 +240,7 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
 ```
 
 3. Import the cluster and create a new kubectl Handler
+
 ```
 const kubectlProvider = new eks.KubectlProvider(this, 'KubectlProvier', {
   clusterName: 'my-cluster',
@@ -250,6 +251,7 @@ const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
   kubectlProvider
 });
 ```
+
 ## Migration Guide
 
 **This is a general guideline. After migrating to the new construct, run `cdk diff` to make sure no unexpected changes.**
