@@ -13,9 +13,10 @@ modifications collectively enhance the module's functionality and integration
 within the AWS ecosystem, providing a more robust and streamlined solution for
 managing Elastic Kubernetes Service (EKS) resources.
 
-This RFC primarily addresses the distinctions between the new module and the
-original EKS L2 construct. Comprehensive use cases and examples will be
-available in the README file of the forthcoming `eks-alpha-v2` module.
+This RFC primarily focus on API changes in the new module. The project plan about the new module
+e.g. how does it exists with existing EKS module is out of scope and will be decided later.
+
+Comprehensive use cases and examples will be available in the README file of the forthcoming `eks-alpha-v2` module.
 
 Compared to the original EKS module, it has following major changes:
 
@@ -309,23 +310,11 @@ We’re launching a new EKS module `aws-eks-v2-alpha`. It's a rewrite of existin
 
 ### Why should I use this feature?
 
-The new EKS module has following benefits:
+The new EKS alpha module has following benefits:
 
 - faster deployment
 - option to not use custom resource
 - remove limitations on the previous EKS module (isolated VPC, 1 cluster limit per stack etc)
-
-### What's the future plan for existing `aws-eks` module?
-
-- When the new alpha module is published, `aws-eks` module will enter
-  `maintenance` mode which means we will only work on bugs on `aws-eks` module.
-  New features will only be added to the new `aws-eksv2-alpha` module. (Note:
-  this is the general guideline and we might be flexible on this)
-- When the new alpha module is stabilized, `aws-eks` module will transition into
-  a deprecation phase. This implies that customers should plan to migrate their
-  workloads to the new module. While they can continue using the old module for
-  the time being, CDK team will prioritize new features/bug fix on the new
-  module
 
 ## Internal FAQ
 
@@ -354,16 +343,6 @@ Therefore, we should write a blog post/tool to help the migration.
 Yes it's breaking change hence it's put into a new alpha module. A few other
 breaking changes are shipped together to make it more ergonomic and aligned with
 the new cluster implementation.
-
-### What is the high-level project plan?
-
-- [X] Publish the RFC
-- [X] Gather feedback on the RFC
-- [ ] Get bar raiser to sign off on RFC
-- [ ] Implementation
-- [ ] Publish new alpha module
-- [ ] Publish migration guide/blog post
-- [ ] Prioritize make the module stable after 3 months bake time
 
 ### Are there any open issues that need to be addressed later?
 
