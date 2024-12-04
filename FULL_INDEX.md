@@ -178,6 +178,6 @@
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
 [635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
-[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✍️ review
+[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✅ done
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
 <!--END_TABLE-->
