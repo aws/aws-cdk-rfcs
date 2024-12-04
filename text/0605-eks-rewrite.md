@@ -18,7 +18,7 @@ e.g. how does it co-exists with the current EKS module is out of scope and will 
 
 Comprehensive use cases and examples will be available in the README file of the forthcoming `eks-alpha-v2` module.
 
-Compared to the original EKS module, it has following major changes:
+Compared to the original EKS module, it has the following major changes:
 
 - Use native L1 `AWS::EKS::Cluster` resource to replace custom resource `Custom::AWSCDK-EKS-Cluster`
 - Use native L1 `AWS::EKS::FargateProfile` resource to replace custom resource `Custom::AWSCDK-EKS-FargateProfile`
