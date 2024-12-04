@@ -16,7 +16,7 @@ managing Elastic Kubernetes Service (EKS) resources.
 This RFC primarily focus on API changes in the new module. The project plan about the new module
 e.g. how does it co-exists with the current EKS module is out of scope and will be decided later.
 
-Comprehensive use cases and examples will be available in the README file of the forthcoming `eks-alpha-v2` module.
+Comprehensive use cases and examples will be available in the README file of the forthcoming `eks-v2-alpha` module.
 
 Compared to the original EKS module, it has the following major changes:
 
