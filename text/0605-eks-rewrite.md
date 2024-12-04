@@ -202,7 +202,7 @@ You can also use general `grantAccess()` to attach a policy to an IAM role/user.
 See https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html for all access policies
 
 ```
-# A general grant function is also provided
+# A general grant function is also provided, where you can explicitly set policies.
 cluster.grantAccess('adminAccess', roleArn, [
   eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
     accessScopeType: eks.AccessScopeType.CLUSTER,
