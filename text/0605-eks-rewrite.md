@@ -306,7 +306,7 @@ have to take additional actions.
 
 ### What are we launching today?
 
-We’re launching a new EKS module `aws-eks-v2-alpha`. It's a rewrite of existing
+We’re launching a new EKS alpha module `aws-eks-v2-alpha`. It's a rewrite of existing
 `aws-eks` module with some breaking changes to address pain points in `aws-eks` module.
 
 ### Why should I use this feature?
