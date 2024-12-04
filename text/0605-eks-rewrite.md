@@ -231,9 +231,7 @@ invoke `addManifest()` function on the cluster.
 2. Import the cluster and the kubectl Handler
 
 ```
-const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', {
-  functionArn: ''
-});
+const kubectlProvider = eks.KubectlProvider.fromKubectlProviderArn(this, 'KubectlProvider', 'function-arn');
 
 const cluster = eks.Cluster.fromClusterAttributes(this, 'MyCluster', {
   clusterName: 'my-cluster',
