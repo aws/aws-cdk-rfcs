@@ -44,6 +44,7 @@ address some pain points on the existing EKS module including:
 - Can't deploy EKS cluster without custom resources
 - The stack uses nested stacks
 - Can't create multiple cluster per stack
+- Can't use escape hatches
 
 It allows you to define Amazon Elastic Container Service for Kubernetes (EKS) clusters. In addition,
 the library also supports defining Kubernetes resource manifests within EKS clusters.
