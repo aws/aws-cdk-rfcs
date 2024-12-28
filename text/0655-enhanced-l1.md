@@ -44,7 +44,17 @@ This disconnect between L1s and L2s creates challenges for developers trying to 
 
 ## Proposed Solution
 
+To resolve these issues in L1s we're proposing enhancing the current L1s by
+1. Expanding the current list of data sources from which we generate L1s.
+2. Introducing enums for relevant properties.
+3. Implementing validation for relevant properties.
+4. Adding resource interfaces L1s to make them interoperable with L2s
+
+These changes will be implemented in a backward-compatible way to ensure they don't break existing customers.
+
 ### Adding enums and validation
+
+This section describes the implementation approach for incorporating enum types and input validation into the L1 construct generation process.
 
 #### Getting the data 
 
@@ -126,9 +136,9 @@ The challenge lies in delivering these changes in a backward-compatible way. We 
 
 The best approach is to deprecate the older types/files and generate new ones with distinct names. There are several ways we could implement this:
 
-1. Add new properties to existing L1 files: Differentiate the new properties by adding a suffix, e.g., `runtime` vs. `runtime_v2`. This follows an established pattern in the CDK, where certain properties have versioned variants (e.x here)
-    1. Drawback: The UX may be confusing as developers have to decide which version of a property they want to use
-2. Create new L1 files in the existing library: Here, the suffix would be added to the file name rather than the properties, e.g., `aws_lambda` vs. `aws_lambda_v2`.
+1. Add new properties to existing L1 files: Differentiate the new properties by adding a suffix, e.g., `runtime` vs. `runtime_v2`. This follows an established pattern in the CDK, where certain properties have versioned variants (e.x [here](https://github.com/aws/aws-cdk/blob/b6ad97f4b4e1c185ddc53f60e15b0dabd8022694/packages/aws-cdk-lib/aws-lambda/lib/function.ts#L571-L596)). The old properties will be tagged as `@deprecated`
+    1. Drawback: The UX may be confusing as developers have to decide which version of a property they want to use. Additionally,property that were required before have a new optional versions. E.x before `runtime` would be required but now we have to set both `runtime` and `runtime_v2` to optional. While we can add validation to ensure at least one is set, this approach sacrifices strong typing. 
+2. Create new L1 files in the existing library: Here, the suffix would be added to the file name rather than the properties, e.g., `aws_lambda` vs. `aws_lambda_v2`. The older file will be tagged as `@deprecated`
     1. Drawback: This would overload the current library and may be redundant in some cases as not all properties have a _v2 so we would essentially be copying over the same thing to the new `_v2` file. For libraries with `_v2` files there may be very minimal changes.
 3. Generate a new library with the new L1s: The suffix would be applied to the library name itself, e.g., `aws-cdk-lib` vs. `aws-cdk-lib-v2`.
     1. Drawback: While this would provide a clean break between the old L1s and the new we would have to maintain both versions of the library, adding more overhead. It would also present an issue every time we have new type changes, we’d have to make multiple `_v<number>` libraries
