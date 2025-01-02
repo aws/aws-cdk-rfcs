@@ -2,7 +2,7 @@
 
 ## Purpose of the Council
 
-## To improve visibility into CDK, increase feedback opportunities, and build a stronger, more inclusive community, the AWS CDK team proposes forming a Contributor Council.
+To improve visibility into CDK, increase feedback opportunities, and build a stronger, more inclusive community, the AWS CDK team proposes forming a Contributor Council.
 
 *Original Author(s)*: [@haubles](https://github.com/haubles), [@billfine](https://github.com/billfine)
 
