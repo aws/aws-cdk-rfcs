@@ -1,0 +1,76 @@
+name: Working Groups Suggestion
+description: Suggest a new sub working groupfor the CDK Contributor Council
+title: "[Working Group Suggestion]: "
+labels: ["working-group-suggestion", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new working group! Please fill out this form with as much detail as possible.
+
+  - type: input
+    id: working-group-name
+    attributes:
+      label: Working Group Name
+      description: Provide a clear and concise name for the proposed working group
+      placeholder: "e.g., Documentation Standards working group"
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose-mission
+    attributes:
+      label: Purpose and Mission
+      description: Describe the main purpose and mission of this working group. What problems will it solve?
+      placeholder: |
+        Please include:
+        - Main objectives
+        - Key responsibilities
+        - How it aligns with the project's goals
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-outcomes
+    attributes:
+      label: Expected Outcomes
+      description: What are the specific outcomes and deliverables expected from this working group?
+      placeholder: |
+        Example outcomes:
+        - Standardized documentation templates
+        - Monthly progress reports
+        - Specific improvements or changes
+    validations:
+      required: true
+
+  - type: textarea
+    id: resource-requirements
+    attributes:
+      label: Resource Requirements
+      description: What resources would this working group need to function effectively?
+      placeholder: |
+        Consider:
+        - Number of working group members
+        - Time commitments
+        - Tools or infrastructure
+        - Other resources
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any other relevant information about the proposed working group
+      placeholder: "Add any other context or details about your suggestion here"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this suggestion, you agree to follow our project's Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
