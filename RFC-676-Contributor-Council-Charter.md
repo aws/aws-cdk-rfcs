@@ -79,7 +79,7 @@ We are also sharing our desire to partner with community members and organizatio
 
 We envision these working groups as mechanisms for building alongside and in mutual benefit for the entire community. We suggest, but are not limited or tied to, several areas of interest: Distinguished Contributors, community-led constructs, community rewards, and/or events (summits, bug bashes, CDK Day, et cetera). 
 
-If you are interested in joining a working group, or have an idea for one not listed here, please fill out this [form](https://github.com/aws/aws-cdk-rfcs/issues/new/choose).
+If you are interested in joining a working group, or have an idea for one not listed here, please fill out this [form](https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=working-group-suggestion%2Cneeds-review&projects=&template=committee-suggestion.yml&title=%5BWorking+Group+Suggestion%5D%3A+).
 
 ## Why should I participate in the Contributor Council?
 
@@ -120,7 +120,7 @@ Timing and processes are to be determined alongside the community, and are subje
 #### Phase One — Community Input
 
 * This RFC PR kicks off a 30-day period of community input.   
-* Community input will be gathered from this PR, the [TRACKING-ISSUE](https://github.com/aws/aws-cdk-rfcs/issues/676), and the [Working Group Interest Form](https://github.com/aws/aws-cdk-rfcs/issues/new/choose).   
+* Community input will be gathered from this PR, the [TRACKING-ISSUE](https://github.com/aws/aws-cdk-rfcs/issues/676), and the [Working Group Interest Form](https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=working-group-suggestion%2Cneeds-review&projects=&template=committee-suggestion.yml&title=%5BWorking+Group+Suggestion%5D%3A+).   
 * After 30 days, the AWS CDK team will incorporate community input into CONTRIBUTOR-COUNCIL-CHARTER.md.   
 * The Charter will be considered ratified upon merging CONTRIBUTOR-COUNCIL-CHARTER.md into the CDK repository.
 
