@@ -45,10 +45,9 @@ This disconnect between L1s and L2s creates challenges for developers trying to 
 ## Proposed Solution
 
 To resolve these issues in L1s we're proposing enhancing the current L1s by
-1. Expanding the current list of data sources from which we generate L1s.
-2. Introducing enums for relevant properties.
-3. Implementing validation for relevant properties.
-4. Adding resource interfaces L1s to make them interoperable with L2s
+1. Introducing enums for relevant properties.
+2. Implementing validation for relevant properties.
+3. Adding resource interfaces L1s to make them interoperable with L2s
 
 These changes will be implemented in a backward-compatible way to ensure they don't break existing customers.
 
