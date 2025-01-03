@@ -623,15 +623,15 @@ We go to our ops team and ask them to prepare three AWS accounts for our
 application:
 
 1. `111111111DEP`: Deployment account
-2. `2222222222US`: US account
-3. `3333333333EU`: EU account
+2. `3333333333US`: US account
+3. `4444444444EU`: EU account
 
 The ops team will also bootstrap our environments:
 
 ```shell
 $ cdk bootstrap aws://111111111DEP/us-west-2
-$ cdk bootstrap aws://2222222222US/us-east-1 --trust-account 111111111DEP
-$ cdk bootstrap aws://3333333333EU/eu-west-2 --trust-account 111111111DEP
+$ cdk bootstrap aws://3333333333US/us-east-1 --trust-account 111111111DEP
+$ cdk bootstrap aws://4444444444EU/eu-west-2 --trust-account 111111111DEP
 ```
 
 > NOTE: each bootstrap command will be executed with the appropriate AWS
@@ -648,7 +648,7 @@ The bootstrapping process will create the following resources:
     by 111111111DEP), with pass-role to the CloudFormation role
   - `aws-cdk-admin-111111111DEP-us-west-2`: IAM role for CloudFormation
     (assumable by the CloudFormation service principal)
-- 2222222222US/us-east-1:
+- 3333333333US/us-east-1:
   - `aws-cdk-files-2222222222EU-us-east-1`: S3 bucket
   - `aws-cdk-images-2222222222EU-us-east-1`: ECR repository
   - `aws-cdk-publish-2222222222EU-us-east-1`: IAM role for publishing (assumable
@@ -657,14 +657,14 @@ The bootstrapping process will create the following resources:
     by 111111111DEP), with pass-role to the CloudFormation role
   - `aws-cdk-admin-2222222222EU-us-east-1`: IAM role for CloudFormation
     (assumable by the CloudFormation service principal)
-- 3333333333EU/eu-west-2:
-  - `aws-cdk-files-3333333333EU-eu-west-2`: S3 bucket
-  - `aws-cdk-images-3333333333EU-eu-west-2`: ECR repository
-  - `aws-cdk-publish-3333333333EU-eu-west-2`: IAM role for publishing (assumable
+- 4444444444EU/eu-west-2:
+  - `aws-cdk-files-4444444444EU-eu-west-2`: S3 bucket
+  - `aws-cdk-images-4444444444EU-eu-west-2`: ECR repository
+  - `aws-cdk-publish-4444444444EU-eu-west-2`: IAM role for publishing (assumable
     by 111111111DEP), permissions to read/write from the S3/ECR
-  - `aws-cdk-deploy-3333333333EU-eu-west-2`: IAM role for deployment (assumable
+  - `aws-cdk-deploy-4444444444EU-eu-west-2`: IAM role for deployment (assumable
     by 111111111DEP), with pass-role to the CloudFormation role
-  - `aws-cdk-admin-3333333333EU-eu-west-2`: IAM role for CloudFormation
+  - `aws-cdk-admin-4444444444EU-eu-west-2`: IAM role for CloudFormation
     (assumable by the CloudFormation service principal)
 
 Notice that all bootstrapping resources have conventional physical names so
@@ -742,38 +742,38 @@ wish to deploy this stack:
   "artifacts": {
     "vpc-us": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://2222222222US/us-east-1",
+      "environment": "aws://3333333333US/us-east-1",
       "properties": {
         "templateFile": "vpc-us.template.json",
-        "deployRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-deploy-2222222222EU-us-east-1",
-        "adminRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-admin-2222222222EU-us-east-1"
+        "deployRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-deploy-2222222222EU-us-east-1",
+        "adminRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-admin-2222222222EU-us-east-1"
       }
     },
     "service-us": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://2222222222US/us-east-1",
+      "environment": "aws://3333333333US/us-east-1",
       "properties": {
         "templateFile": "service-us.template.json",
-        "deployRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-deploy-2222222222EU-us-east-1",
-        "adminRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-admin-2222222222EU-us-east-1"
+        "deployRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-deploy-2222222222EU-us-east-1",
+        "adminRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-admin-2222222222EU-us-east-1"
       }
     },
     "vpc-eu": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://3333333333EU/eu-west-2",
+      "environment": "aws://4444444444EU/eu-west-2",
       "properties": {
         "templateFile": "vpc-eu.template.json",
-        "deployRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-deploy-3333333333EU-eu-west-2",
-        "adminRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-admin-3333333333EU-eu-west-2"
+        "deployRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-deploy-4444444444EU-eu-west-2",
+        "adminRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-admin-4444444444EU-eu-west-2"
       }
     },
     "service-eu": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://3333333333EU/eu-west-2",
+      "environment": "aws://4444444444EU/eu-west-2",
       "properties": {
         "templateFile": "service-eu.template.json",
-        "deployRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-deploy-3333333333EU-eu-west-2",
-        "adminRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-admin-3333333333EU-eu-west-2"
+        "deployRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-deploy-4444444444EU-eu-west-2",
+        "adminRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-admin-4444444444EU-eu-west-2"
       }
     },
     "pipeline-main": {
@@ -822,14 +822,14 @@ The `assets.json` file will look like this:
       },
       "destinations": [
         {
-          "repositoryName": "aws-cdk-images-2222222222US-us-east-1",
+          "repositoryName": "aws-cdk-images-3333333333US-us-east-1",
           "imageName": "d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a",
-          "assumeRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-publish-2222222222US-us-east-1"
+          "assumeRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-publish-3333333333US-us-east-1"
         },
         {
-          "repositoryName": "aws-cdk-images-3333333333EU-eu-west-2",
+          "repositoryName": "aws-cdk-images-4444444444EU-eu-west-2",
           "imageName": "d31ca1aef8d1b68217852e7aea70b1e857d107b47637d5160f9f9a1b24882d2a",
-          "assumeRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-publish-3333333333EU-eu-west-2"
+          "assumeRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-publish-4444444444EU-eu-west-2"
         }
       ]
     }
@@ -843,14 +843,14 @@ The `assets.json` file will look like this:
       },
       "destinations": [
         {
-          "bucketName": "aws-cdk-files-2222222222US-us-east-1",
+          "bucketName": "aws-cdk-files-3333333333US-us-east-1",
           "objectKey": "a0bae29e7b47044a66819606c65d26a92b1e844f4b3124a5539efc0167a09e57",
-          "assumeRoleArn": "arn:aws:iam::2222222222US:role/aws-cdk-publish-2222222222US-us-east-1"
+          "assumeRoleArn": "arn:aws:iam::3333333333US:role/aws-cdk-publish-3333333333US-us-east-1"
         },
         {
-          "bucketName": "aws-cdk-files-3333333333EU-us-west-2",
+          "bucketName": "aws-cdk-files-4444444444EU-us-west-2",
           "objectKey": "a0bae29e7b47044a66819606c65d26a92b1e844f4b3124a5539efc0167a09e57",
-          "assumeRoleArn": "arn:aws:iam::3333333333EU:role/aws-cdk-publish-3333333333EU-eu-west-2"
+          "assumeRoleArn": "arn:aws:iam::4444444444EU:role/aws-cdk-publish-4444444444EU-eu-west-2"
         }
       ]
     }

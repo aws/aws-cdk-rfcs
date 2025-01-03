@@ -12,12 +12,12 @@
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)|[@otaviomacedo](https://github.com/otaviomacedo)|📆 planning
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
-[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)|[@mrgrain](https://github.com/mrgrain)|📆 planning
 [491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||📆 planning
 [583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||📆 planning
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||📆 planning
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||📆 planning
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
+[605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||👷 implementing
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0001-cdk-update.md)||✅ done
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|✅ done
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||✅ done
@@ -71,4 +71,5 @@
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|✅ done
 [513](https://github.com/aws/aws-cdk-rfcs/issues/513)|[Application Specific Staging Resources](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0513-app-specific-staging.md)||✅ done
 [617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0617-cloudfront-oac-l2.md)||✅ done
+[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✅ done
 <!--END_TABLE-->

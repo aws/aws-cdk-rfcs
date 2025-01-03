@@ -101,7 +101,7 @@
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||🤷 stale
 [282](https://github.com/aws/aws-cdk-rfcs/issues/282)|[CDK Pipelines security posture change approvals](https://github.com/aws/aws-cdk-rfcs/issues/282)||✅ done
 [294](https://github.com/aws/aws-cdk-rfcs/issues/294)|[Policy Definition and Enforcement](https://github.com/aws/aws-cdk-rfcs/issues/294)||✅ done
-[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)|[@mrgrain](https://github.com/mrgrain)|📆 planning
+[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/issues/300)|[@mrgrain](https://github.com/mrgrain)|⏰ final comments
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||🤷 stale
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||🤷 stale
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||🤷 stale
@@ -169,7 +169,7 @@
 [585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||📆 planning
 [586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||📆 planning
 [587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||👎 rejected
-[605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/issues/605)||✍️ review
+[605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||👷 implementing
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
 [611](https://github.com/aws/aws-cdk-rfcs/issues/611)|[Complete Construct Model](https://github.com/aws/aws-cdk-rfcs/issues/611)||❓unknown
 [613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
@@ -178,6 +178,9 @@
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
 [635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
-[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/issues/648)|[@sumupitchayan](https://github.com/sumupitchayan)|✍️ review
+[648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✅ done
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
+[670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/670)||💡 proposed
+[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals SLO L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
+[676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 <!--END_TABLE-->
