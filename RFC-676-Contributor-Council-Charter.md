@@ -181,8 +181,7 @@ Timing and processes are to be determined alongside the community, and are subje
 
 * This RFC PR kicks off a 30-day period of community input.
 * Community input will be gathered from this PR, the [TRACKING-ISSUE](https://github.com/aws/aws-cdk-rfcs/issues/676), and the
-[Working Group Interest Form](https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=working-group-suggestion%2Cneeds-review&projects=
-&template=committee-suggestion.yml&title=%5BWorking+Group+Suggestion%5D%3A+).
+[Working Group Interest Form](https://github.com/aws/aws-cdk-rfcs/issues/new?assignees=&labels=working-group-suggestion%2Cneeds-review&projects=&template=committee-suggestion.yml&title=%5BWorking+Group+Suggestion%5D%3A+).
 * After 30 days, the AWS CDK team will incorporate community input into CONTRIBUTOR-COUNCIL-CHARTER.md.
 * The Charter will be considered ratified upon merging CONTRIBUTOR-COUNCIL-CHARTER.md into the CDK repository.
 
