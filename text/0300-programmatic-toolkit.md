@@ -114,7 +114,7 @@ interface IoRequest<T, U> extends IoMessage<T> {
 The [Programmatic Toolkit] will always send all messages for all levels.
 It's up to the integrator to decide which messages should be written to an output system like a console.
 
-A list of all messages and requests is available at [TODO: link to auto-generated list of messages].
+A list of all messages and requests is available at (to be provided).
 
 ##### Changes and Breaking Changes to messages and requests
 
@@ -131,8 +131,8 @@ For a given message code, the following changes are considered breaking:
 - a backwards incompatible change to type definition of message data,
   e.g. changing the type of a property from `string` to a `boolean` or removing a non-optional property
 - removing data from a message that previously had data attached
-- removal of a message or request
-- changing the type from request to message
+- removal of a message or request other than code (to be named list of generic messages)
+- changing the type from message to request or vice versa
 
 For the avoidance of doubt, the following changes are explicitly **not** considered breaking:
 
@@ -141,7 +141,8 @@ For the avoidance of doubt, the following changes are explicitly **not** conside
 - a change to the default response of a request
 - a change to the order messages and requests are emitted in
 - the addition of new messages and requests
-- a change to the data possibly attached to the message as long as it adheres to the same type
+- the removal of standard log messages with code (to be named)
+- a change to the data possibly attached to a message as long as it adheres to the same type
 - adding data to a message that previously had no data
 - a backwards compatible change to the type definition of message data, e.g. adding a new property to an interface
 
@@ -183,7 +184,7 @@ io.once('deploy:confirm-security', async (msg: IoRequest<boolean>): boolean => {
 })
 ```
 
-The `CdkCommandLineIoHost` is available, implementing all the interaction behavior for the AWS CDK CLI [TODO: this might end up in a separate package]:
+The `CdkCommandLineIoHost` is available from package (to be named), implementing all the interaction behavior for the AWS CDK CLI:
 
 ```ts
 const io = new CdkCommandLineIoHost({
@@ -209,7 +210,7 @@ Since it is not possible to update the context of a `cdk.App`, it must be create
 A basic implementation would look like this:
 
 ```ts
-const cx: ICloudExecutable = CloudExecutable.fromCloudAssemblyProducer(
+const cx: ICloudAssemblySource = CloudExecutable.fromCloudAssemblyProducer(
   async (context: Record<string, any>): cxapi.CloudAssembly => {
     const app = new cdk.App({ context });
     const stack = new cdk.Stack(app);
@@ -221,13 +222,13 @@ const cx: ICloudExecutable = CloudExecutable.fromCloudAssemblyProducer(
 Existing applications, can also be used by simply passing an AWS CDK app directory (containing a `cdk.json` file):
 
 ```ts
-const cx: ICloudExecutable = CloudExecutable.fromCdkApp("/path/to/cdk/app");
+const cx: ICloudAssemblySource = CloudExecutable.fromCdkApp("/path/to/cdk/app");
 ```
 
 Alternatively the `cdk.out` directory from a previous synth can be used as well:
 
 ```ts
-const cx: ICloudExecutable = CloudExecutable.fromCdkOut("/path/to/cdk.out");
+const cx: ICloudAssemblySource = CloudExecutable.fromCdkOut("/path/to/cdk.out");
 ```
 
 #### Actions - synth
@@ -235,7 +236,7 @@ const cx: ICloudExecutable = CloudExecutable.fromCdkOut("/path/to/cdk.out");
 The `synth` action takes a Cloud Executable and synthesizes it in to a `CloudAssembly`.
 
 ```ts
-const cx: ICloudExecutable =  await cdk.synth(cx, { stacks: ['MyTestStack'] });
+const cx: ICloudAssemblySource =  await cdk.synth(cx, { stacks: ['MyTestStack'] });
 ```
 
 It returns a Cloud Executable that is cached on disk and can be used as input for other actions.
@@ -268,7 +269,7 @@ The toolkit might throw other exceptions.
 These are bugs and you should report them by [raising an issue](https://github.com/aws/aws-cdk/issues/new?assignees=&labels=bug%2Cneeds-triage&projects=&template=bug-report.yml&title=%28toolkit%29%3A+Untyped+Exception+%28short+description%29).
 To assist integrators with detecting the type of error, the following helper methods are available.
 Even though errors are typed, you should not rely on `instanceof` checks
-because it can behave unexpectedly when working with multiple copies of the same package. [TODO: insert reference link]
+because it can behave unexpectedly when working with multiple copies of the same package.
 
 ```ts
 try {
@@ -295,7 +296,7 @@ The [Programmatic Toolkit] treats and throws synth-time errors like any errors.
 When implementing a custom Cloud Executable in code, an integrator may choose to handle synth-time errors in the toolkit code or in the Cloud Executable.
 
 ```ts
-const cx: ICloudExecutable = CloudExecutable.fromCloudAssemblyProducer(
+const cx: ICloudAssemblySource = CloudExecutable.fromCloudAssemblyProducer(
   async (context: Record<string, any>): cxapi.CloudAssembly => {
     try {
       const app = new cdk.App({ context });
@@ -595,7 +596,7 @@ The public contract will subsume and formalize this.
 The `AwsSdkProvider` defines how the toolkit interacts with AWS services.
 A default provider is available.
 You can provide a custom class implementing the `IAwsSdkProvider` interface.
-A standard `SdkProviderForCdk` is available that includes all features of the AWS CDK CLI [TODO: this might end up in a separate package].
+A standard `SdkProviderForCdk` is available from package (to be named) that includes all features of the AWS CDK CLI.
 
 #### Event stream
 
