@@ -21,7 +21,7 @@ extend support to other platforms in the future.
 #### ApplicationSignalsTaskDefinition
 
 `ApplicationSignalsTaskDefinition` is a construct to update an existing TaskDefinition with Application Signals auto-instrumentation configurations,
-and attach required IAM permission **CloudWatchAgentServerPolicy** to the Task role.
+and attach required IAM permission **CloudWatchAgentServerPolicy** to the Task role, mentioned in the [ECS onboarding guidance](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Signals-ECS-Sidecar.html#CloudWatch-Application-Signals-Enable-ECS-IAM).
 
 |Name |Type |Description |
 |--- |--- |--- |
@@ -37,7 +37,7 @@ and attach required IAM permission **CloudWatchAgentServerPolicy** to the Task r
 |--- |--- |--- |
 |instrumentationLanguage |InstrumentationLanguage (enum) |The langugage SDK to be auto-instrumented.<br>One of the following enum values:<br>`JAVA`<br>`PYTHON`<br>`DOTNET`<br>`NODEJS` |
 |sdkVersion |Instrumentation (enum) |The ADOT language SDK version to be used. |
-|runtimePlatform? |[ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) | The runtime platform.<br>The value inherits from the [ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) specified through the input task definition or defaults to linux-x64 if undefined. |
+|runtimePlatform? |[ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) | The runtime platform.<br>The value inherits from the [ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) specified through the input task definition or defaults to linux-x64 if it isn't custom defined. |
 
 #### EnvironmentExtension
 
@@ -53,38 +53,38 @@ and attach required IAM permission **CloudWatchAgentServerPolicy** to the Task r
 |enableSidecar? |boolean |Inject CloudWatch agent as a sidecar container.<br>Default: true. |
 |container? |[ecs.ContainerDefinitionOptions](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.ContainerDefinitionOptions.html) |The CloudWatch agent container definitionoptionaldefault: a basic agent container with latest public image, see [Default CloudWatch Agent Container Definition](#default-cloudwatch-agent-container-definition). |
 
-#### Constants
+#### Environment variables injected by Application Signals auto-instrumentation
 
-The constants are provided to list all the [Environment variables injected by Application Signals auto-instrumentation](#environment-variables-injected-by-application-signals-auto-instrumentation),
-along with their potential override values.
+The following constants are provided to list all the environment variables injected by the Application Signals auto-instrumentation,
+along with their potential override values. The default value is noted with `*` if multiple options are available.
 
 ##### Common Exporting Constants
 
 | Constant Name | Values |
 |---|---|
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `OTEL_EXPORTER_OTLP_PROTOCOL_HTTP_PROTOBUF` |
-| `OTEL_AWS_APPLICATION_SIGNALS` | `OTEL_AWS_APPLICATION_SIGNALS_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_DISABLED` |
-| `OTEL_AWS_APPLICATION_SIGNALS_RUNTIME` |`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_DISABLED` |
+| `OTEL_AWS_APPLICATION_SIGNALS` | *`OTEL_AWS_APPLICATION_SIGNALS_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_DISABLED` |
+| `OTEL_AWS_APPLICATION_SIGNALS_RUNTIME` |*`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_DISABLED` |
 | `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT` | `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT_LOCAL_CWA` |
 
 ##### Logs Exporting Constants
 
 | Constant Name | Values |
 |---|---|
-| `OTEL_LOGS_EXPORTER` | `OTEL_LOGS_EXPORTER_NONE`<br>`OTEL_LOGS_EXPORTER_OTLP`|
+| `OTEL_LOGS_EXPORTER` | *`OTEL_LOGS_EXPORTER_NONE`<br>`OTEL_LOGS_EXPORTER_OTLP`|
 
 ##### Metrics Exporting Constants
 
 | Constant Name | Values |
 |---|---|
-| `OTEL_METRICS_EXPORTER` | `OTEL_METRICS_EXPORTER_NONE`<br>`OTEL_METRICS_EXPORTER_OTLP` |
+| `OTEL_METRICS_EXPORTER` | *`OTEL_METRICS_EXPORTER_NONE`<br>`OTEL_METRICS_EXPORTER_OTLP` |
 
 ##### Trace Exporting Constants
 
 | Constant Name | Values |
 |---|---|
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_LOCAL_CWA` |
-| `OTEL_TRACES_SAMPLER` | `OTEL_TRACES_SAMPLER_XRAY`<br>`OTEL_TRACES_SAMPLER_XRAY`<br>`OTEL_TRACES_SAMPLER_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_ALWAYS_OFF`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_OFF` |
+| `OTEL_TRACES_SAMPLER` | *`OTEL_TRACES_SAMPLER_XRAY`<br>`OTEL_TRACES_SAMPLER_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_ALWAYS_OFF`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_OFF` |
 | `OTEL_TRACES_SAMPLER_ARG` | `OTEL_TRACES_SAMPLER_ARG_LOCAL_CWA` |
 | `OTEL_PROPAGATORS` | `OTEL_PROPAGATORS_APPLICATION_SIGNALS` |
 
@@ -102,14 +102,14 @@ along with their potential override values.
 | `OTEL_PYTHON_CONFIGURATOR` | `OTEL_PYTHON_CONFIGURATOR_AWS_CONFIGURATOR` |
 | `PYTHONPATH` | `PYTHONPATH_ADOT` |
 
-##### .NET Instrumentation Constants
+##### DOTNET Instrumentation Constants
 
 | Constant Name | Values |
 |---|---|
 | `OTEL_DOTNET_DISTRO` | `OTEL_DOTNET_DISTRO_AWS_DISTRO` |
 | `OTEL_DOTNET_CONFIGURATOR` | `OTEL_DOTNET_CONFIGURATOR_AWS_CONFIGURATOR` |
 | `OTEL_DOTNET_AUTO_PLUGINS` | `OTEL_DOTNET_AUTO_PLUGINS_ADOT` |
-| `CORECLR_ENABLE_PROFILING` | `CORECLR_ENABLE_PROFILING_ENABLED`<br>`CORECLR_ENABLE_PROFILING_DISABLED` |
+| `CORECLR_ENABLE_PROFILING` | *`CORECLR_ENABLE_PROFILING_ENABLED`<br>`CORECLR_ENABLE_PROFILING_DISABLED` |
 | `CORECLR_PROFILER` | `CORECLR_PROFILER_OTEL` |
 | `CORECLR_PROFILER_PATH` | `CORECLR_PROFILER_PATH_LINUX_X64`<br>`CORECLR_PROFILER_PATH_WINDOWS_X64` |
 | `DOTNET_STARTUP_HOOKS` | `DOTNET_STARTUP_HOOKS_LINUX_ADOT`<br>`DOTNET_STARTUP_HOOKS_WINDOWS_ADOT` |
@@ -204,13 +204,13 @@ new ApplicationSignalsIntegration(this, 'ApplicationSignalsIntegration', taskDef
     sdkVersion: Instrumentation.PYTHON_V0_7_0
   },
   overrideEnvironments: [{
-    name: "OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT",
+    name: constants.CommonExporting.OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT,
     value: "http://cwagent-4316-http:4316/v1/metrics"
   }, {
-    name: "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+    name: constants.TraceExporting.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
     value: "http://cwagent-4316-http:4316/v1/traces"
   }, {
-    name: "OTEL_TRACES_SAMPLER_ARG",
+    name: constants.TraceExporting.OTEL_TRACES_SAMPLER_ARG,
     value: "endpoint=http://cwagent-2000-http:2000"
   }],
   serviceName: 'sample-app',
@@ -326,7 +326,8 @@ At high level, the customers are required to execute the following steps to onbo
     1. Configuring the bind mount volume to provide a volume for auto-instrumentation.
     2. Adding a new non-essential CloudWatch agent sidecar.
         1. *Not required when using CloudWatch agent as daemon on ECS on EC2.*
-    3. Adding a new non-essential `init` container with ADOT auto-instrumentation image.
+    3. Adding a new non-essential init container with ADOT auto-instrumentation image.
+    To avoid container name conflicts, the name of the init container will be generated with an unique identifier.
     4. Adding the required environment variables to the user application container.
     5. Mounting the volume defined in \<2.i\> to the container created in \<2.iii\> and the container updated in \<2.iv\>.
 3. Deploy the application with the updated task definition.
@@ -356,7 +357,7 @@ and sending them to the CloudWatch Agent. The CloudWatch Agent will further proc
 
 #### 2. Automated solution
 
-The new feature introduces an L2 construct (ApplicationSignalsTaskDefinition) that automates step 2 (including the 5 sub-steps by automatically
+The new feature introduces an L2 construct (ApplicationSignalsTaskDefinition) that automates step 1 and step 2 (including the 5 sub-steps by automatically
 handling all TaskDefinition configurations. A key advantage of this approach is its seamless integration with existing CDK workflows. Customers can
 maintain their current TaskDefinition configuration process while enabling Application Signals by simply wrapping their existing TaskDefinition with
 `ApplicationSignalsTaskDefinition`. All necessary modifications and configurations are handled automatically behind the scenes, requiring no changes
@@ -368,15 +369,15 @@ Other than the original TaskDefinition, the new construct requires essential inf
 [InstrumentationProps](#instrumentationprops) for appropriate configuration injection.
 
 1. The application language and the SDK version
-    1. To decide the right image and image tag of the init container.
-       E.g. `public.ecr.aws/aws-observability/adot-autoinstrumentation-$lang:$$adot_sdk_version`
+    1. To decide the right image and image tag of the init container,
+       e.g. `public.ecr.aws/aws-observability/adot-autoinstrumentation-$lang:$$adot_sdk_version`
     2. To decide the language specific environment varirables to be injected into the application container.
        See [Environment variables injected by Application Signals auto-instrumentation](#environment-variables-injected-by-application-signals-auto-instrumentation).
 2. The OS and the CPU architecture
     1. To decide the image tag of CloudWatch Agent.
        E.g. the linux tag is `latest` and the windows image tag is `latest-windowsservercore2022`.
     2. To decide what value to be set in `CORECLR_PROFILER_PATH`  for .NET applications.
-       See [DOTNET Linux x64](#dotnet-linux-x64), [DOTNET Linux ARM64](#dotnet-linux-arm64) and [DOTNET Windows](#dotnet-windows)
+       See [DOTNET Instrumentation Constants](#dotnet-instrumentation-constants)
 
 ```js
 export enum InstrumentationLanguage {
@@ -447,187 +448,3 @@ N/A
 * [ ]  Merge new construct and related changes
 
 ### Are there any open issues that need to be addressed later?
-
-## Appendix
-
-### Environment variables injected by Application Signals auto-instrumentation
-
-#### Common
-
-```js
-const DEFAULT_ENVS = [
-  {
-    "name": "OTEL_LOGS_EXPORTER",
-    "value": "none"
-  },
-  {
-    "name": "OTEL_METRICS_EXPORTER",
-    "value": "none"
-  },
-  {
-    "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
-    "value": "http/protobuf"
-  },
-  {
-    "name": "OTEL_AWS_APPLICATION_SIGNALS_ENABLED",
-    "value": "true"
-  },
-  {
-    "name": "OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT",
-    "value": "http://localhost:4316/v1/metrics"
-  },
-  {
-    "name": "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
-    "value": "http://localhost:4316/v1/traces"
-  },
-  {
-    "name": "OTEL_TRACES_SAMPLER",
-    "value": "xray"
-  },
-  {
-    "name": "OTEL_TRACES_SAMPLER_ARG",
-    "value": "endpoint=http://localhost:2000"
-  },
-  {
-    "name": "OTEL_PROPAGATORS",
-    "value": "tracecontext,baggage,b3,xray"
-  }
-];
-```
-
-#### Java
-
-```js
-const JAVA_ENVS = [
-  {
-    "name": "JAVA_TOOL_OPTIONS",
-    "value": " -javaagent:/otel-auto-instrumentation/javaagent.jar"
-  }
-]
-```
-
-#### Python
-
-```js
-const PYTHON_ENVS = [
-  {
-    "name": "OTEL_PYTHON_DISTRO",
-    "value": "aws_distro"
-  },
-  {
-    "name": "OTEL_PYTHON_CONFIGURATOR",
-    "value": "aws_configurator"
-  },
-  {
-    "name": "PYTHONPATH",
-    "value": "/otel-auto-instrumentation-python/opentelemetry/instrumentation/auto_instrumentation:/otel-auto-instrumentation-python"
-  }
-];
-```
-
-#### DOTNET Common
-
-```js
-const DOTNET_COMMON_ENVS = [
-  {
-    "name": "OTEL_DOTNET_DISTRO",
-    "value": "aws_distro"
-  },
-  {
-    "name": "OTEL_DOTNET_CONFIGURATOR",
-    "value": "aws_configurator"
-  },
-  {
-    "name": "OTEL_DOTNET_AUTO_PLUGINS",
-    "value": "AWS.Distro.OpenTelemetry.AutoInstrumentation.Plugin, AWS.Distro.OpenTelemetry.AutoInstrumentation"
-  },
-];
-```
-
-#### DOTNET Linux Common
-
-```js
-const DOTNET_LINUX_ENVS = [
-  {
-    "name": "CORECLR_ENABLE_PROFILING",
-    "value": "1"
-  },
-  {
-    "name": "CORECLR_PROFILER",
-    "value": "{918728DD-259F-4A6A-AC2B-B85E1B658318}"
-  },
-  {
-    "name": "CORECLR_PROFILER_PATH",
-    "value": "/otel-auto-instrumentation-dotnet/linux-x64/OpenTelemetry.AutoInstrumentation.Native.so"
-  },
-  {
-    "name": "DOTNET_STARTUP_HOOKS",
-    "value": "/otel-auto-instrumentation-dotnet/net/OpenTelemetry.AutoInstrumentation.StartupHook.dll"
-  },
-  {
-    "name": "DOTNET_ADDITIONAL_DEPS",
-    "value": "/otel-auto-instrumentation-dotnet/AdditionalDeps"
-  },
-  {
-    "name": "OTEL_DOTNET_AUTO_HOME",
-    "value": "/otel-auto-instrumentation-dotnet"
-  },
-  {
-    "name": "DOTNET_SHARED_STORE",
-    "value": "/otel-auto-instrumentation-dotnet/store"
-  }
-];
-```
-
-#### DOTNET Linux x64
-
-```js
-{
-  "name": "CORECLR_PROFILER_PATH",
-  "value": "/otel-auto-instrumentation-dotnet/linux-x64/OpenTelemetry.AutoInstrumentation.Native.so"
-}
-```
-
-#### DOTNET Linux ARM64
-
-```js
-{
-  "name": "CORECLR_PROFILER_PATH",
-  "value": "/otel-auto-instrumentation-dotnet/linux-arm/OpenTelemetry.AutoInstrumentation.Native.so"
-}
-```
-
-#### DOTNET Windows
-
-```js
-const DOTNET_WINDOWS_ENVS = [
-  {
-    "name": "CORECLR_ENABLE_PROFILING",
-    "value": "1"
-  },
-  {
-    "name": "CORECLR_PROFILER",
-    "value": "{918728DD-259F-4A6A-AC2B-B85E1B658318}"
-  },
-  {
-    "name": "CORECLR_PROFILER_PATH",
-    "value": "C:\\otel-auto-instrumentation-dotnet\\win-x64\\OpenTelemetry.AutoInstrumentation.Native.dll"
-  },
-  {
-    "name": "DOTNET_STARTUP_HOOKS",
-    "value": "C:\\otel-auto-instrumentation-dotnet\\net\\OpenTelemetry.AutoInstrumentation.StartupHook.dll"
-  },
-  {
-    "name": "DOTNET_ADDITIONAL_DEPS",
-    "value": "C:\\otel-auto-instrumentation-dotnet\\AdditionalDeps"
-  },
-  {
-    "name": "OTEL_DOTNET_AUTO_HOME",
-    "value": "C:\\otel-auto-instrumentation-dotnet"
-  },
-  {
-    "name": "DOTNET_SHARED_STORE",
-    "value": "C:\\otel-auto-instrumentation-dotnet\\store"
-  }
-];
-```
