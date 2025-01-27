@@ -1,6 +1,6 @@
 # Bedrock L2 Construct
 
-* **Original Author(s):**: @dineshSajwan
+* **Original Author(s):**: @dineshSajwan , @krokoko
 * **Tracking Issue**: #686
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
