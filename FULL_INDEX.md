@@ -187,4 +187,5 @@
 [686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/issues/686)||💡 proposed
 [689](https://github.com/aws/aws-cdk-rfcs/issues/689)|[Proposed AWS CDK Council Charter](https://github.com/aws/aws-cdk-rfcs/issues/689)||❓unknown
 [691](https://github.com/aws/aws-cdk-rfcs/issues/691)|[AWS Bedrock Integration Working Group](https://github.com/aws/aws-cdk-rfcs/issues/691)||❓unknown
+[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
 <!--END_TABLE-->
