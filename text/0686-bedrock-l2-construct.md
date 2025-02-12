@@ -608,92 +608,6 @@ const cfnGuardrail = new CfnGuardrail(this, 'MyCfnGuardrail', {
 const importedGuardrail = bedrock.Guardrail.fromCfnGuardrail(cfnGuardrail);
 ```
 
-Python
-
-```python
-    guardrail = bedrock.Guardrail(self, 'myGuardrails',
-        name='my-BedrockGuardrails',
-        description= "Legal ethical guardrails.")
-
-    # Optional - Add Sensitive information filters
-
-    guardrail.add_pii_filter(
-        type= bedrock.pii_type.General.ADDRESS,
-        action= bedrock.GuardrailAction.ANONYMIZE,
-    )
-
-    guardrail.add_regex_filter(
-        name= "TestRegexFilter",
-        description= "This is a test regex filter",
-        pattern= "/^[A-Z]{2}d{6}$/",
-        action= bedrock.GuardrailAction.ANONYMIZE,
-    )
-
-    # Optional - Add contextual grounding
-
-    guardrail.add_contextual_grounding_filter(
-        type= bedrock.ContextualGroundingFilterType.GROUNDING,
-        threshold= 0.95,
-    )
-
-    # Optional - Add Denied topics . You can use default Topic or create your custom Topic with createTopic function. The default Topics can also be overwritten.
-
-    guardrail.add_contextual_grounding_filter(
-        type= bedrock.ContextualGroundingFilterType.RELEVANCE,
-        threshold= 0.95,
-    )
-
-    guardrail.add_denied_topic_filter(bedrock.Topic.FINANCIAL_ADVICE)
-
-    guardrail.add_denied_topic_filter(
-      bedrock.Topic.custom(
-        name= "Legal_Advice",
-        definition=
-            "Offering guidance or suggestions on legal matters, legal actions, interpretation of laws, or legal rights and responsibilities.",
-        examples= [
-            "Can I sue someone for this?",
-            "What are my legal rights in this situation?",
-            "Is this action against the law?",
-            "What should I do to file a legal complaint?",
-            "Can you explain this law to me?",
-        ]
-      )
-    )
-
-    # Optional - Add Word filters. You can upload words from a file with addWordFilterFromFile function.
-    guardrail.add_word_filter("drugs")
-    guardrail.add_managed_word_list_filter(bedrock.ManagedWordFilterType.PROFANITY)
-    guardrail.add_word_filter_from_file("./scripts/wordsPolicy.csv")
-
-    # versioning - if you change any guardrail configuration, a new version will be created
-    guardrail.create_version("testversion")
-
-    # Importing existing guardrail
-    imported_guardrail = bedrock.Guardrail.from_guardrail_attributes(self, "TestGuardrail",
-      guardrail_arn="arn:aws:bedrock:us-east-1:123456789012:guardrail/oygh3o8g7rtl",
-      guardrail_version="1",
-      kms_key=kms_key
-    )
-
-    # Importing Guardrails created through the L1 CDK CfnGuardrail construct
-    cfn_guardrail = cfnbedrock.CfnGuardrail(self, "MyCfnGuardrail",
-        blocked_input_messaging="blockedInputMessaging",
-        blocked_outputs_messaging="blockedOutputsMessaging",
-        name="name",
-
-        # the properties below are optional
-        word_policy_config=cfnbedrock.CfnGuardrail.WordPolicyConfigProperty(
-            words_config=[cfnbedrock.CfnGuardrail.WordConfigProperty(
-                text="drugs"
-            )]
-        )
-    )
-
-    imported_guardrail = bedrock.Guardrail.from_cfn_guardrail(cfn_guardrail)
-
-
-
-```
 
 ## Prompt management
 
@@ -831,21 +745,6 @@ new Prompt(stack, 'Prompt', {
   promptName: 'prompt-router-test',
   variants: [variant],
 });
-```
-
-**Python**
-
-```py
-variant = bedrock.PromptVariant.text(
-    variant_name='variant1',
-    prompt_text='What is the capital of France?',
-    model=bedrock.PromptRouter.from_default_id(bedrock.DefaultPromptRouterIdentifier.ANTHROPIC_CLAUDE_V1, region),
-)
-
-bedrock.Prompt(self, 'Prompt',
-    prompt_name='prompt-router-test',
-    variants=[variant],
-)
 ```
 
 ### Prompt Version
