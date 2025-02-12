@@ -209,8 +209,6 @@ include Amazon S3 buckets, Web Crawlers, SharePoint sites, Salesforce instances,
   `kb.addSalesforceDataSource(..)`.
 
 ```ts
-const app = new cdk.App();
-const stack = new cdk.Stack(app, 'aws-cdk-bedrock-data-sources-integ-test');
 
 const kb = new KnowledgeBase(stack, 'MyKnowledgeBase', {
   name: 'MyKnowledgeBase',
