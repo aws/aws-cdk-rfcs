@@ -185,4 +185,8 @@
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
 [686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/issues/686)||💡 proposed
+[689](https://github.com/aws/aws-cdk-rfcs/issues/689)|[Proposed AWS CDK Council Charter](https://github.com/aws/aws-cdk-rfcs/issues/689)||❓unknown
+[691](https://github.com/aws/aws-cdk-rfcs/issues/691)|[AWS Bedrock Integration Working Group](https://github.com/aws/aws-cdk-rfcs/issues/691)||❓unknown
+[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
+[695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 <!--END_TABLE-->
