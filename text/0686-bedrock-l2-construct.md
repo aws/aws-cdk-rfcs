@@ -4,42 +4,91 @@
 * **Tracking Issue**: #686
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
+The Bedrock L2 construct simplifies the creation of multiple Bedrock features by wrapping the Bedrock L1 construct. It exposes functions
+for creating features with minimal code. Key features include Bedrock Agent, Knowledge Base, Guardrails, Inference Profiles, and Prompt.
 
-The Bedrock L2 construct simplifies the creation of multiple Bedrock features by providing a wrapper over the Bedrock L1 construct. It exposes functions that enable users to create features with minimal code. Key features include Bedrock Agent, Knowledge Base, Guardrails, Inference Profiles, and Prompt.
+A quick comparison between L1 and L2 Bedrock constructs:
 
+1. Quick and easy creation of constructs:
+   - Knowledge base, agent, Guardrails, action groups, prompt management and inference profiles are simplified
+   - Support multiple datasource , vector stores and kendra with one knowledge base constructor.
 
-**CHANGELOG**: 
+2. Manage IAM role policies for Bedrock constructs:
+   - Add Bedrock policy on Knowledge Base to invoke embedding model
+   - Add resource policy on agent to invoke foundation model
+
+3. Helper methods for better user experience:
+   - associateToAgent: Add Knowledge Base to an agent
+   - addActionGroup, addActionGroups
+   - addKnowledgeBase
+   - addGuardrail
+   - addS3DataSource, addWebCrawlerDataSource, addSharePointDataSource etc.
+
+4. Managing node dependency, for example:
+   - Create vector store before creating Knowledge Base
+   - Lazy rendering of guardrails and Knowledge Base with agent
+
+5. Validation and user-friendly error handling with functions like:
+   - validateKnowledgeBase
+   - validateKnowledgeBaseAssociations
+   - validateGuardrail
+
+6. Support creating resources from existing attributes with functions like:
+   - fromAttributes
+   - fromDataSourceId
+   - fromAgentAttrs
+
+**CHANGELOG**:
 ```feat(bedrock): bedrock L2 construct```
 
-**README**: 
-[Amazon Bedrock](https://aws.amazon.com/bedrock/) is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies and Amazon through a single API, along with a broad set of capabilities you need to build generative AI applications with security, privacy, and responsible AI.
+**README**:
+[Amazon Bedrock](https://aws.amazon.com/bedrock/) is a fully managed service.
+It offers a choice of high-performing foundation models (FMs) from leading AI companies and Amazon through a single API.
 
-This construct library facilitates the deployment of Knowledge Bases, Bedrock Agents, Guardrails, Prompt Management, and Inference Pipelines. It leverages underlying CloudFormation L1 resources to provision these Bedrock features.
+This construct library facilitates the deployment of Knowledge Bases, Bedrock Agents, Guardrails, Prompt Management, and Inference Pipelines.
+It leverages underlying CloudFormation L1 resources to provision these Bedrock features.
 
 For more details please refer here [Amazon Bedrock README](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/src/cdk-lib/bedrock/README.md).
 
-
 ## Knowledge Base
 
-Amazon Bedrock Knowledge Bases enable you to provide foundation models and agents with contextual information from your company’s private data sources. This enhances the relevance, accuracy, and customization of their responses.
+Amazon Bedrock Knowledge Bases enable you to provide foundation models and agents with contextual information from your company’s private data sources.
+This enhances the relevance, accuracy, and customization of their responses.
 
-### Create a Knowledge Base
+### Create a Vector Knowledge Base
 
-A vector index on a vector store is required to create a Knowledge Base. This construct currently supports [Amazon OpenSearch Serverless](../opensearchserverless), [Amazon RDS Aurora PostgreSQL](../amazonaurora/), [Pinecone](../pinecone/) . By default, this resource will create an OpenSearch Serverless vector collection and index for each Knowledge Base you create, but you can provide an existing collection and/or index to have more control. For other resources you need to have the vector stores already created and credentials stored in AWS Secrets Manager. For Aurora, the construct provides an option to create a default `AmazonAuroraDefaultVectorStore` construct that will provision the vector store backed by Amazon Aurora for you. To learn more you can read [here](../amazonaurora/README.md).
+To create a vector knowledge Base, a vector index on a vector store is required. The resource accepts:
 
-The resource accepts an `instruction` prop that is provided to any Bedrock Agent it is associated with so the agent can decide when to query the Knowledge Base.
+1. `storageConfiguration` prop: An existing vector store from:
+   - [Amazon OpenSearch Serverless](../opensearchserverless)
+   - [Amazon RDS Aurora PostgreSQL](../amazonaurora/)
+   - [Pinecone](../pinecone/)
 
-Amazon Bedrock Knowledge Bases currently only supports S3 as a data source. The `S3DataSource` resource is used to configure how the Knowledge Base handles the data source.
+2. `instruction` prop: Provided to associated Bedrock Agents to determine when to query the Knowledge Base
+
+3. embeddingsModel: Foundation model supported with bedrock.
 
 Example of `OpenSearch Serverless`:
 
 ```ts
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import { bedrock } from '@cdklabs/generative-ai-cdk-constructs';
+import { bedrock } from 'aws-cdk-lib/aws-bedrock';
 
 const kb = new bedrock.KnowledgeBase(this, 'KnowledgeBase', {
   embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
   instruction: 'Use this knowledge base to answer questions about books. ' + 'It contains the full text of novels.',
+  storageConfiguration:[{
+    type:'OPENSEARCH_SERVERLESS',
+    opensearchServerlessConfiguration:{
+          collectionArn: params.vectorStore.collectionArn,
+          fieldMapping: {
+            vectorField: params.vectorField,
+            textField: params.textField,
+            metadataField: params.metadataField,
+          },
+          vectorIndexName: params.indexName,
+        },
+  }]
 });
 
 const docBucket = new s3.Bucket(this, 'DocBucket');
@@ -55,44 +104,15 @@ new bedrock.S3DataSource(this, 'DataSource', {
 });
 ```
 
-Example of `Amazon RDS Aurora PostgreSQL`:
-
-
-
-```ts
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import { amazonaurora, bedrock } from '@cdklabs/generative-ai-cdk-constructs';
-
-// Dimension of your vector embedding
-embeddingsModelVectorDimension = 1024;
-const auroraDb = new amazonaurora.AmazonAuroraVectorStore(stack, 'AuroraDefaultVectorStore', {
-  embeddingsModelVectorDimension: embeddingsModelVectorDimension,
-});
-
-const kb = new bedrock.KnowledgeBase(this, 'KnowledgeBase', {
-  vectorStore: auroraDb,
-  embeddingsModelVectorDimension: embeddingsModelVectorDimension,
-  instruction: 'Use this knowledge base to answer questions about books. ' + 'It contains the full text of novels.',
-});
-
-const docBucket = new s3.Bucket(this, 'DocBucket');
-
-new bedrock.S3DataSource(this, 'DataSource', {
-  bucket: docBucket,
-  knowledgeBase: kb,
-  dataSourceName: 'books',
-  chunkingStrategy: bedrock.ChunkingStrategy.FIXED_SIZE,
-});
-```
-
-
-Example of importing existing `Amazon RDS Aurora PostgreSQL` using `fromExistingAuroraVectorStore()` method.
-**Note** - you need to provide `clusterIdentifier`, `databaseName`, `vpc`, `secret` and `auroraSecurityGroupId` used in deployment of your existing RDS Amazon Aurora DB, as well as `embeddingsModel` that you want to be used by a Knowledge Base for chunking:
-
+For Amazon RDS Aurora PostgreSQL it supports fromExistingAuroraVectorStore() method.
+N
+ote - you need to provide clusterIdentifier, databaseName, vpc, secret and auroraSecurityGroupId used in
+deployment of your existing RDS Amazon Aurora DB, as well as embeddingsModel that you want to be used by a Knowledge Base
+for chunking:
 
 ```ts
 import * as s3 from "aws-cdk-lib/aws-s3";
-import { amazonaurora, bedrock } from '@cdklabs/generative-ai-cdk-constructs';
+import { amazonaurora, bedrock } from 'aws-cdk-lib/aws-bedrock';
 
 const auroraDb = aurora.AmazonAuroraVectorStore.fromExistingAuroraVectorStore(stack, 'ExistingAuroraVectorStore', {
   clusterIdentifier: 'aurora-serverless-vector-cluster',
@@ -142,10 +162,9 @@ new bedrock.S3DataSource(this, "DataSource", {
 
 Example of `Pinecone` (manual, you must have Pinecone vector store created):
 
-
 ```ts
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import { pinecone, bedrock } from '@cdklabs/generative-ai-cdk-constructs';
+import { pinecone, bedrock } from 'aws-cdk-lib/aws-bedrock';
 
 const pineconeds = new pinecone.PineconeVectorStore({
   connectionString: 'https://your-index-1234567.svc.gcp-starter.pinecone.io',
@@ -170,7 +189,6 @@ new bedrock.S3DataSource(this, 'DataSource', {
 });
 ```
 
-
 #### Knowledge Base - Data Sources
 
 Data sources are the various repositories or systems from which information is extracted and ingested into the
@@ -189,7 +207,6 @@ include Amazon S3 buckets, Web Crawlers, SharePoint sites, Salesforce instances,
   `kb.addSharePointDataSource(..)`.
 - **Salesforce**. You can either create a new data source using the `bedrock.SalesforceDataSource(..)` class, or using the
   `kb.addSalesforceDataSource(..)`.
-
 
 ```ts
 const app = new cdk.App();
@@ -290,7 +307,6 @@ kb.addSharePointDataSource({
 
 - **Default Chunking**: Applies Fixed Chunking with the default chunk size of 300 tokens and 20% overlap.
 
-
   ```ts
   ChunkingStrategy.DEFAULT;
   ```
@@ -299,7 +315,6 @@ kb.addSharePointDataSource({
   containing a predetermined number of tokens. This strategy is useful when the data is uniform
   in size and structure.
   Typescript
-
 
   ```ts
   // Fixed Size Chunking with sane defaults.
@@ -312,7 +327,6 @@ kb.addSharePointDataSource({
 - **Hierarchical Chunking**: This strategy organizes data into layers of chunks, with the first
   layer containing large chunks and the second layer containing smaller chunks derived from the first.
   It is ideal for data with inherent hierarchies or nested structures.
-
 
   ```ts
   // Hierarchical Chunking with the default for Cohere Models.
@@ -334,7 +348,6 @@ kb.addSharePointDataSource({
   content derived from the text using natural language processing. It helps preserve contextual
   relationships and ensures accurate and contextually appropriate results.
 
-
   ```ts
   // Semantic Chunking with sane defaults.
   ChunkingStrategy.SEMANTIC;
@@ -345,7 +358,6 @@ kb.addSharePointDataSource({
 
 - **No Chunking**: This strategy treats each file as one chunk. If you choose this option,
   you may want to pre-process your documents by splitting them into separate files.
-
 
   ```ts
   ChunkingStrategy.NONE;
@@ -366,7 +378,6 @@ two parsing strategies:
   the contents of the document. It is particularly useful for improved processing of PDF files
   with tables and images. To use this strategy, set the `parsingStrategy` in a data source as below.
 
-
   ```ts
   bedrock.ParsingStategy.foundationModel({
     model: BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
@@ -382,7 +393,6 @@ Custom Transformation uses AWS Lambda functions to process documents, enabling y
 perform custom operations such as data extraction, normalization, or enrichment. To
 create a custom transformation, set the `customTransformation` in a data source as below.
 
-
 ```ts
 CustomTransformation.lambda({
 lambdaFunction: lambdaFunction,
@@ -390,14 +400,71 @@ s3BucketUri: `s3://${bucket.bucketName}/chunk-processor/`,
 }),
 ```
 
+### Kendra Knowledge Base
+
+#### Create a Kendra Knowledge Base
+
+Amazon Bedrock Knowledge Bases enables building sophisticated RAG-powered digital assistants using Amazon Kendra GenAI index. Key benefits include:
+
+* **Content Reusability**
+  - Use indexed content across multiple Bedrock applications
+  - No need to rebuild indexes or re-ingest data
+
+* **Enhanced Capabilities**
+  - Leverage Bedrock's advanced GenAI features
+  - Benefit from Kendra's high-accuracy information retrieval
+
+* **Customization**
+  - Tailor digital assistant behavior using Bedrock tools
+  - Maintain semantic accuracy of Kendra GenAI index
+
+#### Kendra Knowledge Base properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| kendraIndex | IKendraGenAiIndex | Yes | The Kendra Index to use for the knowledge base. |
+| name | string | No | The name of the knowledge base. If not provided, a name will be auto-generated. |
+| description | string | No | Description of the knowledge base. |
+| instruction | string | No | Instructions for the knowledge base. |
+| existingRole | iam.IRole | No | An existing IAM role to use for the knowledge base. If not provided, a new role will be created. |
+
+#### Initializer
+
+TypeScript
+
+```ts
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import { bedrock, kendra } from 'aws-cdk-lib/aws-bedrock';
+
+const cmk = new kms.Key(stack, 'cmk', {});
+
+// you can create a new index using the api below 
+const index = new kendra.KendraGenAiIndex(this, 'index', {
+  name: 'kendra-index-cdk',
+  kmsKey: cmk,
+  documentCapacityUnits: 1, // 40K documents
+  queryCapacityUnits: 1,    // 0.2 QPS
+});
+
+// or import an existing one
+const index = kendra.KendraGenAiIndex.fromAttrs(this, 'myindex', {
+  indexId: 'myindex',
+  role: myRole
+});
+
+new bedrock.KendraKnowledgeBase(this, 'kb', {
+  name: 'kendra-kb-cdk',
+  kendraIndex: index,
+});
+```
+
 ## Agents
 
-Amazon Bedrock Agents allow generative AI applications to automate complex, multistep tasks by seamlessly integrating with your company’s systems, APIs, and data sources.
+Amazon Bedrock Agents allow generative AI applications to automate complex, multistep tasks by seamlessly integrating with your APIs, and data sources.
 
 ### Create an Agent
 
 The following example creates an Agent with a simple instruction and default prompts that consults a Knowledge Base.
-
 
 ```ts
 const agent = new bedrock.Agent(this, 'Agent', {
@@ -409,7 +476,6 @@ agent.addKnowledgeBase(kb);
 ```
 
 You can also use system defined inference profiles to enable cross region inference requests for supported models. For instance:
-
 
 ```ts
 const cris = bedrock.CrossRegionInferenceProfile.fromConfig({
@@ -427,7 +493,8 @@ For more information on cross region inference, please refer to [System defined 
 
 ### Action Groups
 
-An action group defines functions your agent can call. The functions are Lambda functions. The action group uses an OpenAPI schema to tell the agent what your functions do and how to call them.
+An action group defines functions your agent can call. The functions are Lambda functions. The action group uses an OpenAPI schema to tell
+the agent what your functions do and how to call them.
 
 ```ts
 const actionGroupFunction = new lambda_python.PythonFunction(this, 'ActionGroupFunction', {
@@ -448,14 +515,17 @@ agent.addActionGroup(actionGroup);
 
 ### Prepare the Agent
 
-The `Agent` constructs take an optional parameter `shouldPrepareAgent` to indicate that the Agent should be prepared after any updates to an agent, Knowledge Base association, or action group. This may increase the time to create and update those resources. By default, this value is false .
+he Agent constructs take an optional parameter shouldPrepareAgent to indicate that the Agent should be prepared after any updates to
+an agent, Knowledge Base association, or action group. This may increase the time to create and update those resources. By default, this
+value is false.
 
-Creating an agent alias will not prepare the agent, so if you create an alias with `addAlias` or by providing an `aliasName` when creating the agent then you should set `shouldPrepareAgent` to **_true_**.
+Creating an agent alias will not prepare the agent, so if you create an alias with addAlias or by providing an aliasName when creating
+the agent then you should set shouldPrepareAgent to true .
 
 #### Prompt Overrides
 
-Bedrock Agents allows you to customize the prompts and LLM configuration for its different steps. You can disable steps or create a new prompt template. Prompt templates can be inserted from plain text files.
-
+Bedrock Agents allows you to customize the prompts and LLM configuration for its different steps. You can disable steps or create a new
+prompt template. Prompt templates can be inserted from plain text files.
 
 ```ts
 import { readFileSync } from 'fs';
@@ -489,16 +559,22 @@ const agent = new bedrock.Agent(this, 'Agent', {
 
 ### Agent Alias
 
-After you have sufficiently iterated on your working draft and are satisfied with the behavior of your agent, you can set it up for deployment and integration into your application by creating aliases of your agent.
+After iterating on your working draft and being satisfied with your agent's behavior, you can prepare it for deployment
+and integration into your application by creating aliases.
 
-To deploy your agent, you need to create an alias. During alias creation, Amazon Bedrock automatically creates a version of your agent. The alias points to this newly created version. You can point the alias to a previously created version if necessary. You then configure your application to make API calls to that alias.
+To deploy your agent:
 
-By default, the `Agent` resource does not create any aliases, and you can use the 'DRAFT' version.
+1. Create an alias
+2. During alias creation, Amazon Bedrock automatically creates a version of your agent
+3. The alias points to this newly created version
+4. You can point the alias to a previously created version if needed
+5. Configure your application to make API calls to that alias
+
+By default, the `Agent` resource doesn't create any aliases. You can use the 'DRAFT' version if no alias is created.
 
 #### Specific version
 
 You can use the `AgentAlias` resource if you want to create an Alias for an existing Agent.
-
 
 ```ts
 const agentAlias2 = new bedrock.AgentAlias(this, 'myalias2', {
@@ -511,20 +587,21 @@ const agentAlias2 = new bedrock.AgentAlias(this, 'myalias2', {
 
 ## Bedrock Guardrails
 
-Amazon Bedrock's Guardrails feature enables you to implement robust governance and control mechanisms for your generative AI applications, ensuring alignment with your specific use cases and responsible AI policies. Guardrails empowers you to create multiple tailored policy configurations, each designed to address the unique requirements and constraints of different use cases. These policy configurations can then be seamlessly applied across multiple foundation models (FMs) and Agents, ensuring a consistent user experience and standardizing safety, security, and privacy controls throughout your generative AI ecosystem.
+Amazon Bedrock's Guardrails feature enables you to implement robust governance and control mechanisms for your generative AI applications,
+ensuring alignment with your specific use cases and responsible AI policies. Guardrails empowers you to create multiple tailored policy
+configurations, each designed to address the unique requirements and constraints of different use cases. These policy configurations can
+then be seamlessly applied across multiple foundation models (FMs) and Agents, ensuring a consistent user experience and standardizing
 
-With Guardrails, you can define and enforce granular, customizable policies to precisely govern the behavior of your generative AI applications. You can configure the following policies in a guardrail to avoid undesirable and harmful content and remove sensitive information for privacy protection.
+* Content filters – Adjust filter strengths to block input prompts or model responses containing harmful content.
 
-Content filters – Adjust filter strengths to block input prompts or model responses containing harmful content.
+* Denied topics – Define a set of topics that are undesirable in the context of your application.
+These topics will be blocked if detected in user queries or model responses.
 
-Denied topics – Define a set of topics that are undesirable in the context of your application. These topics will be blocked if detected in user queries or model responses.
+* Word filters – Configure filters to block undesirable words, phrases, and profanity. Such words can include offensive terms, competitor names etc.
 
-Word filters – Configure filters to block undesirable words, phrases, and profanity. Such words can include offensive terms, competitor names etc.
-
-Sensitive information filters – Block or mask sensitive information such as personally identifiable information (PII) or custom regex in user inputs and model responses.
+* Sensitive information filters – Block or mask sensitive information such as personally identifiable information (PII) in user inputs and model responses.
 
 You can create a Guardrail with a minimum blockedInputMessaging ,blockedOutputsMessaging and default content filter policy.
-
 
 ```ts
 const guardrails = new bedrock.Guardrail(this, 'bedrockGuardrails', {
@@ -608,7 +685,6 @@ const cfnGuardrail = new CfnGuardrail(this, 'MyCfnGuardrail', {
 const importedGuardrail = bedrock.Guardrail.fromCfnGuardrail(cfnGuardrail);
 ```
 
-
 ## Prompt management
 
 Amazon Bedrock provides the ability to create and save prompts using Prompt management so that you can save
@@ -617,7 +693,6 @@ adjust the prompt for different use case.
 
 The `Prompt` resource allows you to create a new prompt.
 Example of a basic Text `Prompt`:
-
 
 ```ts
 const cmk = new kms.Key(this, 'cmk', {});
@@ -646,7 +721,6 @@ const prompt1 = new Prompt(this, 'prompt1', {
 
 Example of a "Chat" `Prompt`. Use this template type when the model supports the Converse API or the Anthropic Claude Messages API.
 This allows you to include a System prompt and previous User messages and Assistant messages for context.
-
 
 ```ts
 const cmk = new kms.Key(this, 'cmk', {});
@@ -706,7 +780,6 @@ specify the variants on prompt creation, or by using the `.addVariant(..)` metho
 
 Example of `PromptVariant`:
 
-
 ```ts
 ...
 
@@ -727,12 +800,19 @@ prompt1.addVariant(variant2);
 
 ### Prompt routing
 
-Amazon Bedrock intelligent prompt routing provides a single serverless endpoint for efficiently routing requests between different foundational models within the same model family.
-It can help you optimize for response quality and cost. They offer a comprehensive solution for managing multiple AI models through a single serverless endpoint, 
-simplifying the process for you. Intelligent prompt routing predicts the performance of each model for each request, and dynamically routes each request to the model 
-that it predicts is most likely to give the desired response at the lowest cost.
-More information about prompt routing in the [documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-routing.html)
+Amazon Bedrock intelligent prompt routing offers a single serverless endpoint for efficient request routing between different foundational
+models in the same family. It optimizes response quality and cost, providing a comprehensive solution for managing multiple AI models
+through one endpoint.
 
+This feature simplifies the process by:
+
+1. Predicting each model's performance for every request
+2. Dynamically routing requests to the most suitable model
+3. Aiming for the desired response at the lowest cost
+
+Intelligent prompt routing streamlines AI model management, potentially improving both quality and cost-effectiveness of responses.
+
+For more detailed information about prompt routing, refer to the [Amazon Bedrock documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-routing.html).
 
 ```ts
 const variant = PromptVariant.text({
@@ -759,7 +839,6 @@ You can create a Prompt version by using the `PromptVersion` class or by using t
 on a `Prompt` object. It is recommended to use the `.createVersion(..)` method. It uses a hash based mechanism
 to update the version whenever a certain configuration property changes.
 
-
 ```ts
 new PromptVersion(prompt1, 'my first version');
 ```
@@ -772,10 +851,22 @@ prompt1.createVersion('my first version');
 
 ## System defined inference profiles
 
-You can build a CrossRegionInferenceProfile using a system defined inference profile. The inference profile will route requests to the Regions defined in the cross region (system-defined) inference profile that you choose. You can find the system defined inference profiles by navigating to your console (Amazon Bedrock -> Cross-region inference) or programmatically, for instance using [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock/client/list_inference_profiles.html).
+You can build a CrossRegionInferenceProfile using a system-defined inference profile. This profile routes requests to Regions specified in
+the chosen cross-region (system-defined) inference profile.
 
-Before using creating a CrossRegionInferenceProfile, ensure that you have access to the models and regions defined in the inference profiles. For instance, if you see the system defined inference profile "us.anthropic.claude-3-5-sonnet-20241022-v2:0" defined in your region, the table mentions that inference requests will be routed to US East (Virginia) us-east-1, US East (Ohio) us-east-2 and US West (Oregon) us-west-2. Thus, you need to have model access enabled in those regions for the model `anthropic.claude-3-5-sonnet-20241022-v2:0`. You can then create the CrossRegionInferenceProfile as follows:
+To find system-defined inference profiles:
 
+1. Navigate to your console (Amazon Bedrock -> Cross-region inference)
+2. Use programmatic methods, e.g., [boto3's list_inference_profiles](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock/client/list_inference_profiles.html)
+
+Before creating a CrossRegionInferenceProfile:
+
+1. Ensure access to models and regions defined in the inference profiles
+2. For example, if "us.anthropic.claude-3-5-sonnet-20241022-v2:0" is defined in your region:
+   - Requests route to: US East (Virginia) us-east-1, US East (Ohio) us-east-2, US West (Oregon) us-west-2
+   - Enable model access in these regions for `anthropic.claude-3-5-sonnet-20241022-v2:0`
+
+After confirming access, you can create the CrossRegionInferenceProfile as needed.
 
 ```ts
 const cris = bedrock.CrossRegionInferenceProfile.fromConfig({
@@ -784,14 +875,25 @@ const cris = bedrock.CrossRegionInferenceProfile.fromConfig({
 });
 ```
 
-
 ## Application inference profile
 
-You can create an application inference profile with one or more Regions to track usage and costs when invoking a model.
+Create an application inference profile to track usage and costs when invoking a model across one or more Regions.
 
-To create an application inference profile for one Region, specify a foundation model. Usage and costs for requests made to that Region with that model will be tracked.
+For a single Region:
 
-To create an application inference profile for multiple Regions, specify a cross region (system-defined) inference profile. The inference profile will route requests to the Regions defined in the cross region (system-defined) inference profile that you choose. Usage and costs for requests made to the Regions in the inference profile will be tracked. You can find the system defined inference profiles by navigating to your console (Amazon Bedrock -> Cross-region inference) or programmatically, for instance using [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock/client/list_inference_profiles.html):
+1. Specify a foundation model
+2. Usage and costs for requests to that Region with that model will be tracked
+
+For multiple Regions:
+
+1. Specify a cross-region (system-defined) inference profile
+2. Requests route to Regions defined in the chosen cross-region profile
+3. Usage and costs for requests to these Regions are tracked
+
+Find system-defined inference profiles:
+
+1. Navigate to your console: Amazon Bedrock -> Cross-region inference
+2. Use programmatic methods, e.g., [boto3's list_inference_profiles](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock/client/list_inference_profiles.html)
 
 ```
 bedrock = session.client("bedrock", region_name="us-east-1")
@@ -822,7 +924,6 @@ You can restrict to specific resources by applying "Resources" tag in the IAM po
 ```
 "Resource": ["arn:aws:bedrock:*:*:application-inference-profile/*"]
 ```
-
 
 ```ts
 // Create an application inference profile for one Region
@@ -876,6 +977,7 @@ RFC pull request):
 ### What are we launching today?
 
 We are excited to announce the launch of our new L2 construct for Amazon Bedrock. This construct includes several key features:
+
 - Bedrock Agent: A core component for managing and orchestrating Bedrock resources.
 - Knowledge Base: A repository for storing and managing knowledge assets.
 - Guardrails: Mechanisms to ensure safe and compliant use of Bedrock services.
@@ -884,8 +986,8 @@ We are excited to announce the launch of our new L2 construct for Amazon Bedrock
 
 ### Why should I use this feature?
 
-This L2 construct for Amazon Bedrock enables the creation of multiple features with minimal code, adhering to AWS best practices. It facilitates seamless integration of existing features, for example, allowing users to bring their own vector store and associate it with the knowledge base.
-
+This L2 construct for Amazon Bedrock enables the creation of multiple features with minimal code, adhering to AWS best practices.
+It facilitates seamless integration of existing features, e.g, allowing users to bring their own vector store and associate it with the knowledge base.
 
 ## Internal FAQ
 
@@ -898,22 +1000,30 @@ This L2 construct for Amazon Bedrock enables the creation of multiple features w
 
 ### Why are we doing this?
 
-The Bedrock L2 construct is currently open-sourced in the [generative-ai-cdk-constructs](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/src/cdk-lib/bedrock/README.md) repository. This construct is one of the most widely used and highly appreciated in the repository, with nearly 1,500 active AWS accounts leveraging it. It has been downloaded over 300,000 times from npm and PyPI libraries. Popular tools and libraries utilizing this Bedrock construct include:
+The Bedrock L2 construct, currently open-sourced in the [generative-ai-cdk-constructs](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/src/cdk-lib/bedrock/README.md)
+repository, is widely used and appreciated:
+
+- Nearly 1,500 active AWS accounts use it
+- Over 300,000 downloads from npm and PyPI libraries
+
+Popular tools using this construct include:
+
 - Lambda PowerTools: [Documentation](https://docs.powertools.aws.dev/lambda/python/latest/core/event_handler/bedrock_agents/#using-aws-cloud-developer-kit-cdk)
 - Claude Chatbot: [GitHub Repository](https://github.com/aws-samples/bedrock-claude-chat)
 
-The construct has received numerous positive testimonials from customers. Inclusion in the official CDK repository will facilitate scaling this construct, enabling it to serve multiple customers more effectively.
-
+The construct has received positive customer testimonials. Including it in the official CDK repository will help scale and serve customers
+more effectively.
 
 ### Why should we _not_ do this?
 
-The construct is published via the [generative-ai-cdk-constructs](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/src/cdk-lib/bedrock/README.md) repository. However, due to the increasing demands and expanding use cases, maintaining it within this repository has become challenging.
-
+The construct is currently in the [generative-ai-cdk-constructs](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/src/cdk-lib/bedrock/README.md)
+repository. However, increasing demands and expanding use cases make maintenance challenging within this repository.
 
 ### What is the technical solution (design) of this feature?
 
-
-This construct library includes CloudFormation L1 resources for deploying Bedrock features. It provides interfaces for Agent, Guardrails, Knowledge Base, and Prompt, among others. Detailed [API documentation](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/README.md#interfaces) is available here. 
+This construct library includes CloudFormation L1 resources for Bedrock features. It provides interfaces for Agent, Guardrails, Knowledge
+Base, and Prompt, among others. Detailed [API documentation](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/README.md#interfaces)
+is available.
 
 ## Interfaces
 
@@ -1017,7 +1127,6 @@ This construct library includes CloudFormation L1 resources for deploying Bedroc
 - [Topic](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/classes/Topic.md)
 - [WebCrawlerDataSource](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/classes/WebCrawlerDataSource.md)
 
-
 ## Enumerations
 
 - [AgentStepType](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/enumerations/AgentStepType.md)
@@ -1041,8 +1150,6 @@ This construct library includes CloudFormation L1 resources for deploying Bedroc
 - [SharePointObjectType](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/enumerations/SharePointObjectType.md)
 - [TransformationStep](https://github.com/awslabs/generative-ai-cdk-constructs/blob/main/apidocs/namespaces/bedrock/enumerations/TransformationStep.md)
 
-
-
 ### Is this a breaking change?
 
 No.
@@ -1057,12 +1164,13 @@ The Knowledge Base vector stores (OpenSearch and Aurora clusters) utilize custom
 
 ### What is the high-level project plan?
 
-The construct has been published and is open-sourced in this [repository](https://github.com/awslabs/generative-ai-cdk-constructs/), where we continuously gather feedback from users. It also includes a metrics dashboard to measure usage.
+The construct is published and open-sourced in this [repository](https://github.com/awslabs/generative-ai-cdk-constructs/). We:
+
+1. Continuously gather user feedback
+2. Maintain a metrics dashboard to measure usage
 
 ### Are there any open issues that need to be addressed later?
 
 While there are no major issues, all the latest requested open issues are tracked [here](https://github.com/awslabs/generative-ai-cdk-constructs/issues).
 
 ## Appendix
-
-
