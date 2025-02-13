@@ -86,7 +86,7 @@ export interface IPropertyInjector {
   /**
    * The FQN of the Construct class.
    */
-  constructFqn: string;
+  readonly constructFqn: string;
 
   /**
    * The injector to be applied to the constructor of the Construct.
@@ -263,7 +263,7 @@ Your existing code will continue to work.
 
 ### Which Constructs will support IPropertyInjector?
 
-Each of the Constructs below will also get a new UNIQUE_FQN property.
+Below is a list of Constructs we plan to support in the initial release.  Each of the Constructs will also get a new UNIQUE_FQN property.
 
 <!--BEGIN_TABLE-->
 Package|Construct
