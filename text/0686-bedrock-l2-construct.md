@@ -52,8 +52,16 @@ For more details please refer here [Amazon Bedrock README](https://github.com/aw
 
 ## Knowledge Base
 
-Amazon Bedrock Knowledge Bases enable you to provide foundation models and agents with contextual information from your company’s private data sources.
-This enhances the relevance, accuracy, and customization of their responses.
+Amazon Bedrock Knowledge Bases provides foundation models and agents with contextual data from private sources. This capability enhances
+response relevance, accuracy, and customization for your specific use cases.
+
+## Supported Knowledge Base Types
+
+The service implements an IKnowledgeBase interface that supports Vector Knowledge Base, Kendra Knowledge Base, and SQL Knowledge Base.
+This abstracted interface design enables seamless integration across multiple knowledge base types, providing flexibility in how you store and
+access your data.
+
+![bedrockKnowledgebase](../images/bedrockKnowledgebase.png)
 
 ### Create a Vector Knowledge Base
 
