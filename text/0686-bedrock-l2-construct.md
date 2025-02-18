@@ -55,7 +55,7 @@ For more details please refer here [Amazon Bedrock README](https://github.com/aw
 Amazon Bedrock Knowledge Bases provides foundation models and agents with contextual data from private sources. This capability enhances
 response relevance, accuracy, and customization for your specific use cases.
 
-## Supported Knowledge Base Types
+### Supported Knowledge Base Types
 
 The service implements an IKnowledgeBase interface that supports Vector Knowledge Base, Kendra Knowledge Base, and SQL Knowledge Base.
 This abstracted interface design enables seamless integration across multiple knowledge base types, providing flexibility in how you store and
@@ -74,7 +74,7 @@ To create a vector knowledge Base, a vector index on a vector store is required.
 
 2. `instruction` prop: Provided to associated Bedrock Agents to determine when to query the Knowledge Base
 
-3. embeddingsModel: Foundation model supported with bedrock.
+3. `embeddingsModel` prop: Foundation model supported with bedrock.
 
 Example of `OpenSearch Serverless`:
 
@@ -99,102 +99,6 @@ const kb = new bedrock.KnowledgeBase(this, 'KnowledgeBase', {
   }]
 });
 
-const docBucket = new s3.Bucket(this, 'DocBucket');
-
-new bedrock.S3DataSource(this, 'DataSource', {
-  bucket: docBucket,
-  knowledgeBase: kb,
-  dataSourceName: 'books',
-  chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
-    maxTokens: 500,
-    overlapPercentage: 20,
-  }),
-});
-```
-
-For Amazon RDS Aurora PostgreSQL it supports fromExistingAuroraVectorStore() method.
-N
-ote - you need to provide clusterIdentifier, databaseName, vpc, secret and auroraSecurityGroupId used in
-deployment of your existing RDS Amazon Aurora DB, as well as embeddingsModel that you want to be used by a Knowledge Base
-for chunking:
-
-```ts
-import * as s3 from "aws-cdk-lib/aws-s3";
-import { amazonaurora, bedrock } from 'aws-cdk-lib/aws-bedrock';
-
-const auroraDb = aurora.AmazonAuroraVectorStore.fromExistingAuroraVectorStore(stack, 'ExistingAuroraVectorStore', {
-  clusterIdentifier: 'aurora-serverless-vector-cluster',
-  databaseName: 'bedrock_vector_db',
-  schemaName: 'bedrock_integration',
-  tableName: 'bedrock_kb',
-  vectorField: 'embedding',
-  textField: 'chunks',
-  metadataField: 'metadata',
-  primaryKeyField: 'id',
-  embeddingsModel: bedrock.BedrockFoundationModel.COHERE_EMBED_ENGLISH_V3,
-  vpc: cdk.aws_ec2.Vpc.fromLookup(stack, 'VPC', {
-    vpcId: 'vpc-0c1a234567ee8bc90',
-  }),
-  auroraSecurityGroupId: 'sg-012ef345678c98a76',,
-  secret: cdk.aws_rds.DatabaseSecret.fromSecretCompleteArn(
-    stack,
-    'Secret',
-    cdk.Stack.of(stack).formatArn({
-      service: 'secretsmanager',
-      resource: 'secret',
-      resourceName: 'rds-db-credentials/cluster-1234567890',
-      region: cdk.Stack.of(stack).region,
-      account: cdk.Stack.of(stack).account,
-      arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME,
-    }),
-  ),
-});
-
-const kb = new bedrock.KnowledgeBase(this, "KnowledgeBase", {
-  vectorStore: auroraDb,
-  embeddingsModel: bedrock.BedrockFoundationModel.COHERE_EMBED_ENGLISH_V3,
-  instruction:
-    "Use this knowledge base to answer questions about books. " +
-    "It contains the full text of novels.",
-});
-
-const docBucket = new s3.Bucket(this, "DocBucket");
-
-new bedrock.S3DataSource(this, "DataSource", {
-  bucket: docBucket,
-  knowledgeBase: kb,
-  dataSourceName: "books",
-  chunkingStrategy: bedrock.ChunkingStrategy.FIXED_SIZE,
-});
-```
-
-Example of `Pinecone` (manual, you must have Pinecone vector store created):
-
-```ts
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import { pinecone, bedrock } from 'aws-cdk-lib/aws-bedrock';
-
-const pineconeds = new pinecone.PineconeVectorStore({
-  connectionString: 'https://your-index-1234567.svc.gcp-starter.pinecone.io',
-  credentialsSecretArn: 'arn:aws:secretsmanager:your-region:123456789876:secret:your-key-name',
-  textField: 'question',
-  metadataField: 'metadata',
-});
-
-const kb = new bedrock.KnowledgeBase(this, 'KnowledgeBase', {
-  vectorStore: pineconeds,
-  embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
-  instruction: 'Use this knowledge base to answer questions about books. ' + 'It contains the full text of novels.',
-});
-
-const docBucket = new s3.Bucket(this, 'DocBucket');
-
-new bedrock.S3DataSource(this, 'DataSource', {
-  bucket: docBucket,
-  knowledgeBase: kb,
-  dataSourceName: 'books',
-  chunkingStrategy: bedrock.ChunkingStrategy.FIXED_SIZE,
-});
 ```
 
 #### Knowledge Base - Data Sources
@@ -215,6 +119,8 @@ include Amazon S3 buckets, Web Crawlers, SharePoint sites, Salesforce instances,
   `kb.addSharePointDataSource(..)`.
 - **Salesforce**. You can either create a new data source using the `bedrock.SalesforceDataSource(..)` class, or using the
   `kb.addSalesforceDataSource(..)`.
+
+#### Add web crawler data source
 
 ```ts
 
@@ -241,7 +147,11 @@ kb.addWebCrawlerDataSource({
     s3BucketUri: `s3://${bucket.bucketName}/chunk-processor/`,
   }),
 });
+```
 
+#### Add S3 data source
+
+```ts
 kb.addS3DataSource({
   bucket,
   chunkingStrategy: ChunkingStrategy.SEMANTIC,
@@ -249,7 +159,11 @@ kb.addS3DataSource({
     model: BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
   }),
 });
+```
 
+### Add Confluence data source
+
+```ts
 kb.addConfluenceDataSource({
   dataSourceName: 'TestDataSource',
   authSecret: secret,
@@ -268,7 +182,11 @@ kb.addConfluenceDataSource({
     },
   ],
 });
+```
 
+#### Add Salesforce data source
+
+```ts
 kb.addSalesforceDataSource({
   authSecret: secret,
   endpoint: 'https://your-instance.my.salesforce.com',
@@ -286,7 +204,11 @@ kb.addSalesforceDataSource({
     },
   ],
 });
+```
 
+#### Add Sharepoint data source
+
+```ts
 kb.addSharePointDataSource({
   dataSourceName: 'SharepointDataSource',
   authSecret: secret,
@@ -403,65 +325,7 @@ create a custom transformation, set the `customTransformation` in a data source 
 CustomTransformation.lambda({
 lambdaFunction: lambdaFunction,
 s3BucketUri: `s3://${bucket.bucketName}/chunk-processor/`,
-}),
-```
-
-### Kendra Knowledge Base
-
-#### Create a Kendra Knowledge Base
-
-Amazon Bedrock Knowledge Bases enables building sophisticated RAG-powered digital assistants using Amazon Kendra GenAI index. Key benefits include:
-
-* **Content Reusability**
-  - Use indexed content across multiple Bedrock applications
-  - No need to rebuild indexes or re-ingest data
-
-* **Enhanced Capabilities**
-  - Leverage Bedrock's advanced GenAI features
-  - Benefit from Kendra's high-accuracy information retrieval
-
-* **Customization**
-  - Tailor digital assistant behavior using Bedrock tools
-  - Maintain semantic accuracy of Kendra GenAI index
-
-#### Kendra Knowledge Base properties
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| kendraIndex | IKendraGenAiIndex | Yes | The Kendra Index to use for the knowledge base. |
-| name | string | No | The name of the knowledge base. If not provided, a name will be auto-generated. |
-| description | string | No | Description of the knowledge base. |
-| instruction | string | No | Instructions for the knowledge base. |
-| existingRole | iam.IRole | No | An existing IAM role to use for the knowledge base. If not provided, a new role will be created. |
-
-#### Initializer
-
-TypeScript
-
-```ts
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import { bedrock, kendra } from 'aws-cdk-lib/aws-bedrock';
-
-const cmk = new kms.Key(stack, 'cmk', {});
-
-// you can create a new index using the api below 
-const index = new kendra.KendraGenAiIndex(this, 'index', {
-  name: 'kendra-index-cdk',
-  kmsKey: cmk,
-  documentCapacityUnits: 1, // 40K documents
-  queryCapacityUnits: 1,    // 0.2 QPS
-});
-
-// or import an existing one
-const index = kendra.KendraGenAiIndex.fromAttrs(this, 'myindex', {
-  indexId: 'myindex',
-  role: myRole
-});
-
-new bedrock.KendraKnowledgeBase(this, 'kb', {
-  name: 'kendra-kb-cdk',
-  kendraIndex: index,
-});
+})
 ```
 
 ## Agents
