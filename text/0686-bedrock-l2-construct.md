@@ -548,21 +548,6 @@ const importedGuardrail = bedrock.Guardrail.fromGuardrailAttributes(stack, 'Test
   kmsKey: kmsKey, //optional
 });
 
-// Importing Guardrails created through the L1 CDK CfnGuardrail construct
-const cfnGuardrail = new CfnGuardrail(this, 'MyCfnGuardrail', {
-  blockedInputMessaging: 'blockedInputMessaging',
-  blockedOutputsMessaging: 'blockedOutputsMessaging',
-  name: 'namemycfnguardrails',
-  wordPolicyConfig: {
-    wordsConfig: [
-      {
-        text: 'drugs',
-      },
-    ],
-  },
-});
-
-const importedGuardrail = bedrock.Guardrail.fromCfnGuardrail(cfnGuardrail);
 ```
 
 ## Prompt management
