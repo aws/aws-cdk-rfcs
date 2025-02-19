@@ -385,7 +385,7 @@ agent.addActionGroup(actionGroup);
 
 ### Prepare the Agent
 
-he Agent constructs take an optional parameter shouldPrepareAgent to indicate that the Agent should be prepared after any updates to
+The Agent constructs take an optional parameter shouldPrepareAgent to indicate that the Agent should be prepared after any updates to
 an agent, Knowledge Base association, or action group. This may increase the time to create and update those resources. By default, this
 value is false.
 
@@ -452,6 +452,16 @@ const agentAlias2 = new bedrock.AgentAlias(this, 'myalias2', {
   agent: agent,
   agentVersion: '1', // optional
   description: 'mytest'
+});
+
+```
+
+You can also import an existing alias
+
+```ts
+const existingAgentAlias = AgentAlias.fromAttributes(this, 'ImportedAgentAlias', {
+  agentId: 'existing-agent-id',
+  aliasId: 'existing-alias-id'
 });
 ```
 
