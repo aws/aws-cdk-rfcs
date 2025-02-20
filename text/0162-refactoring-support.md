@@ -186,6 +186,15 @@ from stack refactoring support:
 - Renaming a stack.
 - Renaming a construct, intentionally or by mistake.
 
+### Can the CLI help me resolve ambiguity when refactoring resources?
+
+Not at the moment. One of the tenets behind this feature is that it should work
+in any environment, including CI/CD pipelines, where there is no user to answer
+questions. Although we could easily extend this feature to include ambiguity
+resolution for the interactive case, it wouldn't transfer well to the
+non-interactive case. If you are interested in an in-depth explanation of the
+problem and a possible solution, check Appendix A.
+
 ## Internal FAQ
 
 ### Why are we doing this?
@@ -286,8 +295,157 @@ edge case is unlikely to happen, we are going to address it later.
 
 ## Appendix
 
-Feel free to add any number of appendices as you see fit. Appendices are
-expected to allow readers to dive deeper to certain sections if they like. For
-example, you can include an appendix which describes the detailed design of an
-algorithm and reference it from the FAQ.
+### A. Ambiguity
 
+The only safe way to resolve ambiguity in cases such as renaming multiple
+identical resources, is to ask the developer what their intent is. But what if
+the developer is not present to answer questions (in a CI/CD pipeline, for
+instance)? A necessary condition in this case is that the developer's intent has
+been captured earlier, encoded as a mapping between resource locations, and
+stored somewhere.
+
+But this is not sufficient. Note that every mapping is created from a pair of
+source and target states, out of which the ambiguities arose. To be able to
+safely carry a mapping over to other environments, two additional conditions
+must be met:
+
+1. The source state on which a mapping is applied must be the same as the source
+   state where the mapping was captured.
+2. The target state used to create the mapping should indeed be what the user
+   wants as a result.
+
+I am using the abstract term "state" here, but how could such a state be
+instantiated in practice? Let's consider some options and see how they can fail
+to satisfy the conditions above.
+
+First, we need to establish a point when the mapping is created (and the
+developer is involved to resolve possible ambiguities). Let's call this the
+"decision point". As a first attempt, let's try to use every deployment in the
+development cycle as the decision point. In this solution, the development
+account is the source state, and the cloud assembly to be deployed is the target
+state. If any ambiguities were resolved, they are saved in a mapping file, under
+version control. On every deployment, to other environments, the mapping file is
+used to perform the refactoring.
+
+This sounds like it could work, but if the development environment is not in the
+same state as the one where the mapping is applied, condition 1 is violated. And
+if the developer fails, for whatever reason, to run a deployment against their
+environment before commiting a change to the version control system (which I
+will henceforth assume is Git), condition 2 is violated.
+
+Since we are talking about Git, what about using each commit as a decision
+point? In this case, the source and target states would come from the
+synthesized cloud assemblies in the previous and current commit, respectively.
+We still have a mapping file, containing ambiguity resolutions, which are added
+to the commit, using a Git hook. For this solution to work, we need an
+additional constraint: that every revision produces a valid cloud assembly,
+which can also be enforced with a Git hook.
+
+Let's evaluate this solution in terms of the two conditions above. Because the
+developer doesn't have a choice anymore of which target state to use (or target
+state, for that matter), condition 2 is satisfied. But remember that the scope
+of the mapping file is the difference between two consecutive revisions. If the
+developer's local branch is multiple commits ahead of the revision that was
+deployed to production, the source state in production is not the same as the
+one in the mapping file, violating condition 1.
+
+#### Making history
+
+An improvement we can make is to implement an event sourcing system. Instead of
+storing a single mapping between two states, we store the whole history of the
+stacks. A **history** is a chain of **events** in chronological order. An event
+is a set of operations (create, update, delete, and refactor) on a set of
+stacks.
+
+The decision point remains the same, but now we append a new event to a version
+controlled history file on every commit. This event includes all creates,
+updates and deletes, plus all refactors, whether they were automatically
+detected or manually resolved.
+
+As with any event sourcing system, if we want to produce a snapshot of the
+stacks at a given point in time, all we need to do is replay the events in
+order, up to that point. We are now ready to state the key invariant of this
+system:
+
+> **Invariant**: For every revision `r`, the cloud assembly synthesized from
+> `r` is equal to the snapshot at `r`.
+
+In other words, the current state should be consistent with the history that led
+up to that state.
+
+One final piece to add to the system: every environment should also have its own
+history file, which should also maintain a similar invariant (through CFN hooks,
+for example). Having all this in place, we can execute the following algorithm
+on every deployment:
+
+    ---------------------------------
+      Key: 
+        H(E): environment history
+        H(A): application history
+        LCA: lowest common ancestor
+    ---------------------------------
+
+    if H(E) is a prefix of H(A):
+      Compute the diff between H(A) and H(E);
+      Extract the mapping from the diff;
+      Apply the mapping to the stacks in the environment;
+      Deploy;
+    else:
+      Compute the diff from the LCA of H(A) and H(E);
+      Extract the mapping from the diff;
+      if the mapping is empty or the override flag is on:
+        Deploy;
+      else:
+        Error: source state doesn't match the mapping.
+
+For example, suppose the histories at play are (`*` denotes the current state):
+
+    H(E) = e1 ◄── e2*
+    H(A) = e1 ◄── e2 ◄── e3 ◄── e4
+
+Then the diff between them is `e3 ◄── e4`. If these events contain any refactor,
+we just apply them, and then deploy the application. The resulting environment
+history is the merge of the two:
+
+    H(E) = e1 ◄── e2 ◄── e3 ◄── e4*
+
+Now suppose the histories involved are:
+
+    H(E) = e1 ◄── e2 ◄── e3*
+    H(A) = e1 ◄── e2 ◄── e4 ◄── e5
+
+In this case, `H(E)` is not a prefix of `H(A)`, but they share a common
+ancestor. Their LCA is `e2`. Computing the diff from there we get `e4 ◄── e5`.
+If there are no refactors to apply from this diff, we can go ahead and deploy
+the application. Again, the new state results from the merge of `H(E)` and
+`H(A)`:
+
+    H(E) = e1 ◄── e2 ◄── e3         
+                   ▲                  
+                   │                  
+                   └──── e4 ◄── e5*
+
+By default, if there are refactors to be done, this is considered an error,
+because we can't guarantee that the refactor makes sense (let alone that this
+was the developer's intent). But the application developer can decide to accept
+the risk of replacement beforehand, by setting an override flag, in which case
+we go ahead and deploy, but skip the refactoring step. The resulting history of
+the environment is the same as in the diagram above.
+
+#### The future
+
+Once we have a system like this in place, we can expand the scope to which the
+automatic refactoring applies. Consider the case in which you want to rename a
+certain resource and, at the same time, make some minor changes, such as  
+adding or updating a couple of properties. This is another ambiguous case,
+because it's not clear what the intent is: update with rename, or replacement?
+But with the history system, we can detect such cases, interact with the
+developer, and store the decision in the history.
+
+Since this historical model contains all the information about the state of the
+stacks in an environment, it could also be used for other purposes. For example,
+development tools could use the history to provide a "time machine" feature,
+that allows developers to see the state of the infrastructure at any point in
+time. CloudFormation itself could build on that, and provide a way to roll back
+or forward to another state. Potentially, this could also help with drift
+resolution (or prevention).
