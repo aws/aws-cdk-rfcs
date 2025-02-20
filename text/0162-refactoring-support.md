@@ -16,16 +16,16 @@ CloudFormation will create a new resource with the new logical ID and possibly
 delete the old one. In any case, for stateful resources, this may cause
 interruption of service or data loss, or both.
 
-Historically, the advice has been to avoid changing logical IDs of resources.
-However, this is not always possible, or goes against good engineering
-practices. For example, you may have duplicated code across different CDK
-applications, and you want to consolidate it into a single reusable construct
-(usually referred to as an L3 construct). The very introduction of a new node
-for the L3 construct in the construct tree will lead to the renaming of the
-logical IDs of the resources in that subtree. You may also need to move
-resources around in the tree to make it more readable, or even between stacks to
-better isolate concerns. Not to mention accidental renames, which have also
-impacted customers in the past.
+Historically, the advice for developers has been to avoid changing logical IDs
+of resources. However, this is not always possible, or goes against good
+engineering practices. For example, you may have duplicated code across
+different CDK applications, and you want to consolidate it into a single
+reusable construct (usually referred to as an L3 construct). The very
+introduction of a new node for the L3 construct in the construct tree will lead
+to the renaming of the logical IDs of the resources in that subtree. You may
+also need to move resources around in the tree to make it more readable, or even
+between stacks to better isolate concerns. Not to mention accidental renames,
+which have also impacted customers in the past.
 
 To address all these problems, the CDK CLI now automatically detects these
 cases, and refactors the stack on your behalf, using the new CloudFormation
@@ -41,7 +41,7 @@ then proceed with the deployment.
 
 For example, suppose your CDK application has a single stack, called `MyStack`,
 containing an S3 bucket, a CloudFront distribution and a Lambda function. The
-construct tree (L1 resources omitted for brevity) looks like this:
+construct tree (L1 constructs omitted for brevity) looks like this:
 
     App
     └ MyStack
@@ -49,8 +49,8 @@ construct tree (L1 resources omitted for brevity) looks like this:
       ├ Distribution
       └ Function
 
-Now suppose you want to make the following changes, after having deployed it to
-your AWS account:
+Now suppose you make the following changes, after having deployed it to your AWS
+account:
 
 - Rename the bucket from `Bucket` to the more descriptive name `Origin`.
 - Create a new L3 construct called `Website` that groups the bucket and the
@@ -176,15 +176,14 @@ cases automatically, and refactors the stack before the actual deployment.
 
 ### Why should I use this feature?
 
-If you ever find yourself needing to do one of the following, you will benefit
-from stack refactoring support:
+If you ever find yourself doing one of the following, you will benefit from
+stack refactoring support:
 
-- Moving constructs between different stacks, either in the same or to a
-  different CDK application.
-- Moving constructs within the same stack. This could be just for organization
-  purposes, or to create reusable components.
-- Renaming a stack.
-- Renaming a construct, intentionally or by mistake.
+- Renaming constructs, either intentionally or by mistake.
+- Moving constructs within the same stack. This could be just for better
+  organization, or to create reusable components.
+- Moving constructs between different stacks.
+- Renaming stacks.
 
 ### Can the CLI help me resolve ambiguity when refactoring resources?
 
@@ -201,11 +200,11 @@ problem and a possible solution, check Appendix A.
 
 This feature was initially requested back in May 2020. It is one of the top 5
 most up-voted RFCs, with 94 thumbs-up. Despite being almost 5 years old, it has
-continued to be highly discussed and debated for almost 5 years by CDK customers
-and the community. The solution we currently provide, the `renameLogicalId`
-method, is perceived by customers as a workaround, adding unnecessary cognitive
-load for developers. Code refactoring is a fundamental job-to-be-done that
-developers expect to be supported natively by the tool.
+continued to be highly discussed and debated by CDK customers and the community.
+The solution we currently provide, the `renameLogicalId` method, is perceived by
+customers as a workaround, adding unnecessary cognitive load for developers.
+Code refactoring is a fundamental job-to-be-done that developers expect to be
+supported natively by the tool.
 
 In addition to this, the recent launch of CloudFormation's stack refactoring API
 made it possible to support refactoring on the service side. We are building on
@@ -213,8 +212,12 @@ top of that API to bring a seamless experience to CDK users.
 
 ### Why should we _not_ do this?
 
-> Is there a way to address this use case with the current product? What are the
-> downsides of implementing this feature?
+The main attraction of this feature is also, in a way, its greatest deterrent:
+that the refactoring happens automatically, and that the CLI makes decisions
+that the user may not even be aware they need to make (accidental renames, for
+example). This may cause anxiety for some users, who might not understand what
+exactly happened after a successful deployment that had refactoring involved. We
+can mitigate this risk with good documentation and careful interaction design.
 
 ### What is the technical solution (design) of this feature?
 
@@ -255,8 +258,11 @@ No.
 
 ### What alternative solutions did you consider?
 
-> Briefly describe alternative approaches that you considered. If there are
-> hairy details, include them in an appendix.
+The most straightforward alternative is to implement a wrapper around the
+CloudFormation API, and have the user provide all the parameters: which
+resources to move from which stack to which stack. But the CDK CLI can provide a
+better experience by automatically detecting these cases, and interacting with
+the user when necessary.
 
 ### What are the drawbacks of this solution?
 
@@ -272,9 +278,9 @@ This improved deployment experience actually consists of two separate steps,
 behind the scenes: refactoring followed by deployment. And the whole workflow is
 controlled by the CLI. As a result, this is not an atomic operation: it is
 possible that the refactoring step succeeds, but before the CLI has a chance to
-deploy, it gets interrupted, for whatever reason (computer crash, network
-failures, etc.) In this case, the user will be left with a stack that is neither
-in the original state nor in the desired state.
+deploy, it gets interrupted (computer crash, network failures, etc.) In this
+case, the user will be left with a stack that is neither in the original state
+nor in the desired state.
 
 In particular, the logical ID won't match the CDK construct path, stored in the
 resource's metadata. This has consequences for the CloudFormation console, which
@@ -295,7 +301,7 @@ edge case is unlikely to happen, we are going to address it later.
 
 ## Appendix
 
-### A. Ambiguity
+### A. Ambiguity resolution
 
 The only safe way to resolve ambiguity in cases such as renaming multiple
 identical resources, is to ask the developer what their intent is. But what if
@@ -315,8 +321,8 @@ must be met:
    wants as a result.
 
 I am using the abstract term "state" here, but how could such a state be
-instantiated in practice? Let's consider some options and see how they can fail
-to satisfy the conditions above.
+instantiated in practice? Let's consider some options and see how they fail to
+satisfy the conditions above.
 
 First, we need to establish a point when the mapping is created (and the
 developer is involved to resolve possible ambiguities). Let's call this the
@@ -324,25 +330,25 @@ developer is involved to resolve possible ambiguities). Let's call this the
 development cycle as the decision point. In this solution, the development
 account is the source state, and the cloud assembly to be deployed is the target
 state. If any ambiguities were resolved, they are saved in a mapping file, under
-version control. On every deployment, to other environments, the mapping file is
+version control. On every deployment to other environments, the mapping file is
 used to perform the refactoring.
 
-This sounds like it could work, but if the development environment is not in the
+It sounds like this could work, but if the development environment is not in the
 same state as the one where the mapping is applied, condition 1 is violated. And
 if the developer fails, for whatever reason, to run a deployment against their
-environment before commiting a change to the version control system (which I
-will henceforth assume is Git), condition 2 is violated.
+environment before commiting an ambiguous change to the version control system
+(which I will henceforth assume is Git), condition 2 is violated.
 
-Since we are talking about Git, what about using each commit as a decision
-point? In this case, the source and target states would come from the
-synthesized cloud assemblies in the previous and current commit, respectively.
+Since we are talking about Git, what about using each commit operation as a
+decision point? In this case, the source and target states would come from the
+synthesized cloud assemblies in the previous and current revision, respectively.
 We still have a mapping file, containing ambiguity resolutions, which are added
 to the commit, using a Git hook. For this solution to work, we need an
-additional constraint: that every revision produces a valid cloud assembly,
-which can also be enforced with a Git hook.
+additional constraint, which can also be enforced with a Git hook: that every
+revision produces a valid cloud assembly.
 
 Let's evaluate this solution in terms of the two conditions above. Because the
-developer doesn't have a choice anymore of which target state to use (or target
+developer doesn't have a choice anymore of which target state to use (or source
 state, for that matter), condition 2 is satisfied. But remember that the scope
 of the mapping file is the difference between two consecutive revisions. If the
 developer's local branch is multiple commits ahead of the revision that was
@@ -351,11 +357,11 @@ one in the mapping file, violating condition 1.
 
 #### Making history
 
-An improvement we can make is to implement an event sourcing system. Instead of
-storing a single mapping between two states, we store the whole history of the
-stacks. A **history** is a chain of **events** in chronological order. An event
-is a set of operations (create, update, delete, and refactor) on a set of
-stacks.
+An improvement we can make is to turn this into an event sourcing system.
+Instead of storing a single mapping between two states, we store the whole
+history of the stacks. A **history** is a chain of events in chronological
+order. An **event** is a set of operations (create, update, delete, and
+refactor) on a set of stacks.
 
 The decision point remains the same, but now we append a new event to a version
 controlled history file on every commit. This event includes all creates,
@@ -391,9 +397,10 @@ on every deployment:
       Apply the mapping to the stacks in the environment;
       Deploy;
     else:
-      Compute the diff from the LCA of H(A) and H(E);
+      a = LCA of H(A) and H(E);
+      Compute the sub-chain of H(A) from a to the end;
       Extract the mapping from the diff;
-      if the mapping is empty or the override flag is on:
+      if the mapping is empty:
         Deploy;
       else:
         Error: source state doesn't match the mapping.
@@ -414,10 +421,10 @@ Now suppose the histories involved are:
     H(E) = e1 ◄── e2 ◄── e3*
     H(A) = e1 ◄── e2 ◄── e4 ◄── e5
 
-In this case, `H(E)` is not a prefix of `H(A)`, but they share a common
-ancestor. Their LCA is `e2`. Computing the diff from there we get `e4 ◄── e5`.
-If there are no refactors to apply from this diff, we can go ahead and deploy
-the application. Again, the new state results from the merge of `H(E)` and
+In this case, `H(E)` is not a prefix of `H(A)`, but they have common ancestors.
+Their LCA is `e2`. Computing the sub-chain from there we get `e4 ◄── e5`. If
+there are no refactors to apply from this diff, we can go ahead and deploy the
+application. Again, the new state results from the merge of `H(E)` and
 `H(A)`:
 
     H(E) = e1 ◄── e2 ◄── e3         
@@ -425,12 +432,9 @@ the application. Again, the new state results from the merge of `H(E)` and
                    │                  
                    └──── e4 ◄── e5*
 
-By default, if there are refactors to be done, this is considered an error,
-because we can't guarantee that the refactor makes sense (let alone that this
-was the developer's intent). But the application developer can decide to accept
-the risk of replacement beforehand, by setting an override flag, in which case
-we go ahead and deploy, but skip the refactoring step. The resulting history of
-the environment is the same as in the diagram above.
+If there are refactors to be done, this is considered an error, because we can't
+guarantee that the refactor makes sense (let alone that this was the developer's
+intent).
 
 #### The future
 
