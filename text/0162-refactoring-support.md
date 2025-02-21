@@ -301,7 +301,7 @@ edge case is unlikely to happen, we are going to address it later.
 
 ## Appendix
 
-### A. Ambiguity resolution
+### A. Ideas on ambiguity resolution
 
 The only safe way to resolve ambiguity in cases such as renaming multiple
 identical resources, is to ask the developer what their intent is. But what if
@@ -438,13 +438,14 @@ intent).
 
 #### The future
 
-Once we have a system like this in place, we can expand the scope to which the
-automatic refactoring applies. Consider the case in which you want to rename a
-certain resource and, at the same time, make some minor changes, such as  
-adding or updating a couple of properties. This is another ambiguous case,
-because it's not clear what the intent is: update with rename, or replacement?
-But with the history system, we can detect such cases, interact with the
-developer, and store the decision in the history.
+There is still some work to be done to prove this system works in practice. But
+assuming it does, we could use it to expand the scope to which the automatic
+refactoring applies. Consider the case in which you want to rename a certain
+resource and, at the same time, make some minor changes, such as adding or
+updating a couple of properties. This is another ambiguous case, because it's
+not clear what the intent is: update with rename, or replacement? But with the
+history system, we can detect such cases, interact with the developer, and store
+the decision in the history.
 
 Since this historical model contains all the information about the state of the
 stacks in an environment, it could also be used for other purposes. For example,
