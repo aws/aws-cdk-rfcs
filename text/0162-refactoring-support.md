@@ -154,6 +154,25 @@ configure this setting in the `cdk.json` file:
 }
 ```
 
+If you want to execute only the automatic refactoring, without deploying new
+resources or removing existing ones, you can use the `cdk refactor` command.
+
+### Trigger
+
+This feature will also be available as a [CDK Trigger], which you can enable by
+passing the flag `autoRefactor` to your application:
+
+```typescript
+const app = new App({
+  autoRefactor: true,
+  ...
+});
+```
+
+If this is enabled, the CLI will skip the refactoring step during deployment,
+and a Lambda function will execute it instead, as part of the provisioning
+process by CloudFormation.
+
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -193,6 +212,18 @@ questions. Although we could easily extend this feature to include ambiguity
 resolution for the interactive case, it wouldn't transfer well to the
 non-interactive case. If you are interested in an in-depth explanation of the
 problem and a possible solution, check Appendix A.
+
+### What if I can't use the CDK CLI in my pipeline?
+
+Some customers have their own mechanisms for deploying stacks to AWS, that don't
+use the CDK CLI. If that is your case, there is still a way you can use this
+feature. The refactoring logic will also be released as a Node.js library and a
+standalone CLI tool (names TBD). If you can incorporate any of these into your
+deployment tooling, you will have the same functionality as the `refactor`
+command in the main CDK CLI. This command uses assumes a specific role, with a
+narrow set of permissions.
+
+Alternatively, you can use this feature via a [trigger](#trigger).
 
 ## Internal FAQ
 
@@ -264,13 +295,21 @@ resources to move from which stack to which stack. But the CDK CLI can provide a
 better experience by automatically detecting these cases, and interacting with
 the user when necessary.
 
+Another alternative is to use aliases, following [Pulumi's model]
+[pulumi-aliases], for example. This feature would be similar to the  
+`renameLogicalId` function, but operating on a higher level of abstraction, by
+taking into account the construct tree and construct IDs. But, just like
+`renameLogicalId`, it could be perceived as a workaround, that adds scar tissue
+to the code every time refactoring is done. However, we could revisit this
+decision if enough customers indicate their preference for it in this RFC.
+
 ### What are the drawbacks of this solution?
 
 See the open issues section below.
 
 ### What is the high-level project plan?
 
-See https://github.com/orgs/aws/projects/272.
+See the [project board].
 
 ### Are there any open issues that need to be addressed later?
 
@@ -454,3 +493,9 @@ that allows developers to see the state of the infrastructure at any point in
 time. CloudFormation itself could build on that, and provide a way to roll back
 or forward to another state. Potentially, this could also help with drift
 resolution (or prevention).
+
+[pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
+
+[project board]: https://github.com/orgs/aws/projects/272
+
+[CDK Trigger]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.triggers-readme.html
