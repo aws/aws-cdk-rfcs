@@ -2,7 +2,7 @@
 
 - **Original Author(s):**: @otaviomacedo
 - **Tracking Issue**: #162
-- **API Bar Raiser**: @{BAR_RAISER_USER}
+- **API Bar Raiser**: @rix0rrr
 
 An improvement to the CDK CLI `deploy` command, to protect against replacement
 of resources when they change location. The CLI now detects this case, and
@@ -202,7 +202,7 @@ the RFC pull request):
 
 ```
 
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @rix0rrr
 
 ```
 
