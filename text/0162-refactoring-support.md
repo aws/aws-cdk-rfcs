@@ -5,27 +5,27 @@
 - **API Bar Raiser**: @{BAR_RAISER_USER}
 
 An improvement to the CDK CLI `deploy` command, to protect against replacement
-of resources that had their logical IDs modified. The CLI now detects these
-cases automatically, and refactors the stack before the actual deployment.
+of resources when they change location. The CLI now detects this case, and
+automatically refactors the stack before the actual deployment.
 
 ## Working Backwards
 
 AWS CloudFormation identifies resources by their logical ID. As a consequence,
 if you change the logical ID of a resource after it has been deployed,
 CloudFormation will create a new resource with the new logical ID and possibly
-delete the old one. In any case, for stateful resources, this may cause
-interruption of service or data loss, or both.
+delete the old one. For stateful resources, this may cause interruption of
+service or data loss, or both.
 
-Historically, the advice for developers has been to avoid changing logical IDs
-of resources. However, this is not always possible, or goes against good
-engineering practices. For example, you may have duplicated code across
-different CDK applications, and you want to consolidate it into a single
-reusable construct (usually referred to as an L3 construct). The very
-introduction of a new node for the L3 construct in the construct tree will lead
-to the renaming of the logical IDs of the resources in that subtree. You may
-also need to move resources around in the tree to make it more readable, or even
-between stacks to better isolate concerns. Not to mention accidental renames,
-which have also impacted customers in the past.
+Historically, our advice for developers has been to avoid changing logical IDs
+of resources. In practice, however, this is not always possible, or goes against
+good engineering practices. For example, you may have duplicated code across
+different CDK applications which you want to consolidate into a single reusable
+construct (usually referred to as an L3 construct). The very introduction of a
+new node for the L3 construct in the construct tree will lead to the renaming of
+the logical IDs of the resources in that subtree. You may also need to move
+resources around in the tree to make it more readable, or even between stacks to
+better isolate concerns. Not to mention accidental renames, which have also
+impacted customers in the past.
 
 To address all these problems, the CDK CLI now automatically detects these
 cases, and refactors the stack on your behalf, using the new CloudFormation
@@ -55,12 +55,12 @@ account:
 - Rename the bucket from `Bucket` to the more descriptive name `Origin`.
 - Create a new L3 construct called `Website` that groups the bucket and the
   distribution, to make this pattern reusable in different applications.
-- Move the `Website` construct to a new stack called `Web`, for better
-  separation of concerns.
+- Move the web-related constructs (now under the `Website` L3) construct to a
+  new stack called `Web`, for better separation of concerns.
 - Rename the original stack to `Service`, to better reflect its new specific
   role in the application.
 
-The construct tree now looks like this:
+The refactored construct tree looks like this:
 
     App
     ├ Web
@@ -76,14 +76,32 @@ CDK computes the logical IDs of the resources based on their path in the tree,
 all three resources will have different logical IDs in the synthesized template,
 compared to what is already deployed.
 
-If you run `cdk deploy` now, by default the CLI will detect this change and
-automatically refactor the stacks. You will see the following output:
+If you run `cdk deploy` now, by default the CLI will detect these changes and
+present you with a selection prompt:
+
+    The following resources were moved or renamed:
+
+    ┌───────────────────────────────┬───────────────────────────────┬──────────────────────────┐
+    │ Resource Type                 │ Old Logical ID                │ New Logical ID           │
+    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
+    │ AWS::S3::Bucket               │ MyStack.Queue1A4198146        │ Web.Bucket843D52FF       │
+    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
+    │ AWS::CloudFront::Distribution │ MyStack.DistributionE3BB089E  │ Web.Distribution7142E1F1 │
+    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
+    │ AWS::Lambda::Function         │ MyStack.FunctionA5EA2BD8      │ Service.Function8F0BB69B │
+    └───────────────────────────────┴───────────────────────────────┴──────────────────────────┘
+
+    ? What do you want to do? (Use arrow keys)
+    ❯ Execute the refactor and deploy
+      Deploy without refactoring (will cause resource replacement)
+      Quit
+
+If you choose to refactor and deploy, the CLI will show the progress as the
+refactor is executed:
 
     Refactoring...
     Creating stack refactor...
 
-     Prg | Time       | Status               | Resource Type                 | Old Logical ID               | New Logical ID               
-     ----|------------|----------------------|-------------------------------|------------------------------|-----------------------------
      0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::S3::Bucket               | MyStack.Bucket5766466B       | Web.Bucket843D52FF           
      0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::CloudFront::Distribution | MyStack.DistributionE3BB089E | Web.Distribution7142E1F1     
      1/3 | 2:03:18 PM | REFACTOR_COMPLETE    | AWS::S3::Bucket               | MyStack.Bucket5766466B       | Web.Bucket843D52FF           
@@ -93,22 +111,24 @@ automatically refactor the stacks. You will see the following output:
     
     ✅  Stack refactor complete
 
-In case you do want to replace the resources, you can override this default
-behavior and skip the refactoring, by passing the `--skip-refactoring` flag to
-the CLI, or by configuring this setting in the `cdk.json` file:
+You can configure the refactoring behavior by passing the `--refactoring` flag
+to the CLI, or by configuring this setting in the `cdk.json` file:
 
 ```json
 {
   "app": "...",
-  "skipRefactoring": true
+  "refactoring": "EXECUTE_AND_DEPLOY"
 }
 ```
 
 ### Ambiguity
 
-In some cases, the CLI may not be able to automatically refactor the stack. To
-understand this, consider the following example, where there are two _identical_
-resources, called `Queue1` and `Queue2`, in the same stack:
+In the unlikely event that there are two or more _identical_ resources (that is,
+resources with the same properties, except for the `Metadata` field), and you
+rename or move two of them at the same time, the CLI will not be able to
+automatically determine which resource should be replaced by which. For example,
+suppose you have two identical queues, named `Queue1` and `Queue2`, in the same
+stack:
 
     App
     └ Stack
@@ -125,7 +145,7 @@ If they get renamed to, let's say, `Queue3` and `Queue4`,
 Then the CLI will not be able to establish a 1:1 mapping between the old and new
 names. In this case, it will ask you to confirm the changes:
 
-    Resource Name Changes
+    Ambiguous Resource Name Changes
     ┌───┬──────────────────────┐
     │   │ Resource             │
     ├───┼──────────────────────┤
@@ -144,13 +164,14 @@ names. In this case, it will ask you to confirm the changes:
 
     Do you wish to deploy these changes (y/n)?
 
-To skip this prompt, pass the `--ignore-ambiguous-renaming` flag to the CLI, or
-configure this setting in the `cdk.json` file:
+To skip this prompt and go straight to deployment, pass the
+`--ignore-ambiguous-refactoring` flag to the CLI, or configure this setting in
+the `cdk.json` file:
 
 ```json
 {
   "app": "...",
-  "ignoreAmbiguousRenaming": true
+  "ignoreAmbiguousRefactoring": true
 }
 ```
 
@@ -189,9 +210,10 @@ the RFC pull request):
 
 ### What are we launching today?
 
-An improvement to the CDK CLI `deploy` command, to protect against replacement
-of resources that had their logical IDs modified. The CLI now detects these
-cases automatically, and refactors the stack before the actual deployment.
+A new developer experience for CDK users, that allows them to change the
+location of a construct (stack plus logical ID) without causing resource
+replacement. This new experience is available in the CDK CLI `deploy`
+and `refactor` commands, as well as a CDK trigger.
 
 ### Why should I use this feature?
 
@@ -206,12 +228,12 @@ stack refactoring support:
 
 ### Can the CLI help me resolve ambiguity when refactoring resources?
 
-Not at the moment. One of the tenets behind this feature is that it should work
-in any environment, including CI/CD pipelines, where there is no user to answer
-questions. Although we could easily extend this feature to include ambiguity
-resolution for the interactive case, it wouldn't transfer well to the
-non-interactive case. If you are interested in an in-depth explanation of the
-problem and a possible solution, check Appendix A.
+Not at the moment. One of the constraints we imposed on this feature is that it
+should work in any environment, including CI/CD pipelines, where there is no
+user to answer questions. Although we could easily extend this feature to
+include ambiguity resolution for the interactive case, it wouldn't transfer well
+to the non-interactive case. If you are interested in an in-depth explanation of
+the problem and a possible solution, check Appendix A.
 
 ### What if I can't use the CDK CLI in my pipeline?
 
@@ -225,12 +247,19 @@ narrow set of permissions.
 
 Alternatively, you can use this feature via a [trigger](#trigger).
 
+### What if the deployment fails?
+
+After refactoring the stack, the CLI will proceed with the deployment
+(assuming that is your choice). If the deployment fails, and CloudFormation
+rolls it back, the CLI will execute a second refactor, in reverse, to bring the
+resources back to their original locations.
+
 ## Internal FAQ
 
 ### Why are we doing this?
 
-This feature was initially requested back in May 2020. It is one of the top 5
-most up-voted RFCs, with 94 thumbs-up. Despite being almost 5 years old, it has
+This feature was initially requested in May 2020. It is one of the top 5 most
+up-voted RFCs, with 94 thumbs-up. Despite being almost 5 years old, it has
 continued to be highly discussed and debated by CDK customers and the community.
 The solution we currently provide, the `renameLogicalId` method, is perceived by
 customers as a workaround, adding unnecessary cognitive load for developers.
@@ -247,31 +276,31 @@ The main attraction of this feature is also, in a way, its greatest deterrent:
 that the refactoring happens automatically, and that the CLI makes decisions
 that the user may not even be aware they need to make (accidental renames, for
 example). This may cause anxiety for some users, who might not understand what
-exactly happened after a successful deployment that had refactoring involved. We
-can mitigate this risk with good documentation and careful interaction design.
+exactly is happening, and what the consequences are. We can mitigate this risk
+with good documentation and careful interaction design.
 
 ### What is the technical solution (design) of this feature?
 
 High level description of the algorithm:
 
-First, it lists all the stacks: both local and deployed. Then it builds an index
-of all resources from all stacks. This index maps the _content_ address
-(physical ID or digest) of each resource to all the _location_ addresses (stack
-name + logical ID) they can be found in. Resources that have different locations
-in new stacks compared to the old ones are considered to have been moved. For
-each of those, it creates a mapping from the old location to the new one.
+First, list all the stacks: both local and deployed. Then build an index of all
+resources from all stacks. This index maps the _content_ address (physical ID or
+digest) of each resource to all the _location_ addresses (stack name + logical
+ID) they can be found in. Resources that have different locations in new stacks
+compared to the old ones are considered to have been moved. For each of those,
+it creates a mapping from the old location to the new one.
 
 Since the CloudFormation API expects not only the mappings, but also the
 templates in their final states, we need to compute those as well. This is done
 by applying all the mappings locally, essentially emulating what CloudFormation
 will eventually do. For example, if a mapping says that a resource has moved
-from stack A with name Foo, to stack B with name Bar, we will remove Foo from
-the template for stack A, and add a new resource called Bar to the template for
-stack B.
+from stack `A` with name `Foo`, to stack `B` with name `Bar`, we will remove
+`Foo` from the template for stack `A`, and add a new resource called `Bar` to
+the template for stack `B`.
 
 At this point, if there is any ambiguity (more than one source or more than one
-destination for a given mapping), it stops and asks the user whether they want
-to proceed.
+destination for a given mapping), stop and ask the user whether they want to
+proceed.
 
 Assuming there were no ambiguities, or the user wants to proceed anyway, it is
 ready to call the API to actually perform the refactor, using the mappings and
@@ -289,19 +318,29 @@ No.
 
 ### What alternative solutions did you consider?
 
-The most straightforward alternative is to implement a wrapper around the
+The most straightforward alternative is to implement a simple wrapper around the
 CloudFormation API, and have the user provide all the parameters: which
 resources to move from which stack to which stack. But the CDK CLI can provide a
 better experience by automatically detecting these cases, and interacting with
 the user when necessary.
 
-Another alternative is to use aliases, following [Pulumi's model]
-[pulumi-aliases], for example. This feature would be similar to the  
+Another alternative is to use aliases, using [Pulumi's model]
+[pulumi-aliases] as inspiration. This feature would be similar to the  
 `renameLogicalId` function, but operating on a higher level of abstraction, by
 taking into account the construct tree and construct IDs. But, just like
 `renameLogicalId`, it could be perceived as a workaround, that adds scar tissue
-to the code every time refactoring is done. However, we could revisit this
-decision if enough customers indicate their preference for it in this RFC.
+to the code at every refactor. However, we could revisit this decision if enough
+customers indicate their preference for it in this RFC.
+
+A possible variation of the solution presented in this RFC is to do something
+similar to resource lookup: for every environment where the application could be
+deployed to, the CLI would have configured in a file what refactors have to be
+done. The entries to this file could be automatically generated by some CLI
+command, run individually in each environment. But this solution requires a lot
+more work and coordination among the parties involved (developers,
+administrators, security engineers, etc.), and is more error-prone: failure to
+record a refactor in the file could lead to inconsistencies between the
+environments, and even unintended resource replacements.
 
 ### What are the drawbacks of this solution?
 
@@ -317,15 +356,15 @@ This improved deployment experience actually consists of two separate steps,
 behind the scenes: refactoring followed by deployment. And the whole workflow is
 controlled by the CLI. As a result, this is not an atomic operation: it is
 possible that the refactoring step succeeds, but before the CLI has a chance to
-deploy, it gets interrupted (computer crash, network failures, etc.) In this
-case, the user will be left with a stack that is neither in the original state
-nor in the desired state.
+deploy the changes, it gets interrupted (computer crash, network failures, etc.)
+In this case, the user will be left with a stack that is neither in the original
+state nor in the desired state.
 
 In particular, the logical ID won't match the CDK construct path, stored in the
 resource's metadata. This has consequences for the CloudFormation console, which
 will show a Tree view that is not consistent with the Flat view.
 
-Some possible solutions to consider, from more specific to more general:
+Possible solutions to consider, from more specific to more general:
 
 - CloudFormation to ignore changes in the `Metadata[aws:cdk:path]` resource
   attribute in refactor operations.
@@ -491,8 +530,17 @@ stacks in an environment, it could also be used for other purposes. For example,
 development tools could use the history to provide a "time machine" feature,
 that allows developers to see the state of the infrastructure at any point in
 time. CloudFormation itself could build on that, and provide a way to roll back
-or forward to another state. Potentially, this could also help with drift
-resolution (or prevention).
+or forward to another state.
+
+Another problem that could be solved with the historical model is the infamous
+"deadly embrace", where a consumer stack depends on a producer stack via
+CloudFormation Exports, and you want to remove the use from the consumer. At the
+moment, customers have to use the `stack.exportValue(...)` method, and do two
+deployments. The history would give the CLI all the information it needs to do
+this without user intervention.
+
+Potentially, this could also help with drift resolution (or prevention), if
+CloudFormation itself starts using the history internally.
 
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
 
