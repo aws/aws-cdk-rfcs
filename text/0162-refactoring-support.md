@@ -4,9 +4,9 @@
 - **Tracking Issue**: #162
 - **API Bar Raiser**: @rix0rrr
 
-An improvement to the CDK CLI `deploy` command, to protect against replacement
-of resources when they change location. The CLI now detects this case, and
-automatically refactors the stack before the actual deployment.
+An improvement to the CDK CLI and toolkit library, to protect against
+replacement of resources when they change location. The CLI now detects this
+case, and automatically refactors the stack before the actual deployment.
 
 ## Working Backwards
 
@@ -123,12 +123,11 @@ to the CLI, or by configuring this setting in the `cdk.json` file:
 
 ### Ambiguity
 
-In the unlikely event that there are two or more _identical_ resources (that is,
-resources with the same properties, except for the `Metadata` field), and you
-rename or move two of them at the same time, the CLI will not be able to
-automatically determine which resource should be replaced by which. For example,
-suppose you have two identical queues, named `Queue1` and `Queue2`, in the same
-stack:
+In the unlikely event that there are two or more _equivalent_ resources
+(see Appendix B) in the same template, and you rename or move them at the same
+time, the CLI will not be able to automatically determine which resource should
+be replaced by which. For example, suppose you have two identical queues, named
+`Queue1` and `Queue2`, in the same stack:
 
     App
     └ Stack
@@ -175,24 +174,11 @@ the `cdk.json` file:
 }
 ```
 
-If you want to execute only the automatic refactoring, without deploying new
-resources or removing existing ones, you can use the `cdk refactor` command.
-
-### Trigger
-
-This feature will also be available as a [CDK Trigger], which you can enable by
-passing the flag `autoRefactor` to your application:
-
-```typescript
-const app = new App({
-  autoRefactor: true,
-  ...
-});
-```
-
-If this is enabled, the CLI will skip the refactoring step during deployment,
-and a Lambda function will execute it instead, as part of the provisioning
-process by CloudFormation.
+If you want to execute only the automatic refactoring, use the `cdk 
+refactor` command. The behavior is basically the same as with `cdk deploy`: it
+will detect whether there are refactors to be made, ask for confirmation if
+necessary (depending on the flag values), and refactor the stacks involved. But
+it will stop there and not proceed with the deployment.
 
 ---
 
@@ -213,7 +199,7 @@ the RFC pull request):
 A new developer experience for CDK users, that allows them to change the
 location of a construct (stack plus logical ID) without causing resource
 replacement. This new experience is available in the CDK CLI `deploy`
-and `refactor` commands, as well as a CDK trigger.
+and `refactor` commands.
 
 ### Why should I use this feature?
 
@@ -239,13 +225,10 @@ the problem and a possible solution, check Appendix A.
 
 Some customers have their own mechanisms for deploying stacks to AWS, that don't
 use the CDK CLI. If that is your case, there is still a way you can use this
-feature. The refactoring logic will also be released as a Node.js library and a
-standalone CLI tool (names TBD). If you can incorporate any of these into your
-deployment tooling, you will have the same functionality as the `refactor`
-command in the main CDK CLI. This command uses assumes a specific role, with a
-narrow set of permissions.
-
-Alternatively, you can use this feature via a [trigger](#trigger).
+feature: the refactoring logic will also be released in the CDK toolkit library,
+that can be used programmatically by your own tools. If you can incorporate it
+into your deployment tooling, you will have the same functionality as the
+`refactor` command in the CDK CLI.
 
 ### What if the deployment fails?
 
@@ -328,9 +311,9 @@ Another alternative is to use aliases, using [Pulumi's model]
 [pulumi-aliases] as inspiration. This feature would be similar to the  
 `renameLogicalId` function, but operating on a higher level of abstraction, by
 taking into account the construct tree and construct IDs. But, just like
-`renameLogicalId`, it could be perceived as a workaround, that adds scar tissue
-to the code at every refactor. However, we could revisit this decision if enough
-customers indicate their preference for it in this RFC.
+`renameLogicalId`, it could be perceived as a workaround. However, we are open
+to revisiting this decision if enough customers indicate their preference for it
+in this RFC.
 
 A possible variation of the solution presented in this RFC is to do something
 similar to resource lookup: for every environment where the application could be
@@ -542,8 +525,34 @@ this without user intervention.
 Potentially, this could also help with drift resolution (or prevention), if
 CloudFormation itself starts using the history internally.
 
+### B. Equivalence between resources
+
+To detect which resources should be refactored, we need to indentify which
+resources have only changed their location, but have remained "the same", in
+some sense. This can be made precise by defining an [equivalence relation] on
+the set of resources.
+
+Before that, let's define a digest function, `d`:
+
+    d(resource) = hash(type + physicalId)                       , if physicalId is defined
+                = hash(type + properties + dependencies.map(d)) , otherwise
+
+where `hash` is a cryptographic hash function. In other words, if a resource has
+a physical ID, its type and physical ID uniquely identify that resource. So we
+compute the hash from these two fields. Otherwise, the hash is computed from its
+type, its own properties (that is, excluding properties that refer to other
+resources), and the digests of each of its dependencies.
+
+The digest of a resource, defined recursively this way, remains stable even if
+one or more of its dependencies gets renamed. Since the resources in a
+CloudFormation template form an acyclic graph, this function is well-defined.
+
+The equivalence relation then follows directly: two resources `r1` and `r2`
+are equivalent if `d(r1) = d(r2)`.
+
+
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
 
 [project board]: https://github.com/orgs/aws/projects/272
 
-[CDK Trigger]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.triggers-readme.html
+[equivalence relation]: https://en.wikipedia.org/wiki/Equivalence_relation
