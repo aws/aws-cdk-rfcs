@@ -331,7 +331,37 @@ See the open issues section below.
 
 ### What is the high-level project plan?
 
-See the [project board].
+#### Phase 1 (dry-run)
+
+In this phase we are going to implement the detection of resource moves, and 
+show the user what changes are going to be made. The only new command 
+available at this phase is `cdk refactor --dry-run`. Execution of this 
+command without the `--dry-run` flag will result in an error.
+
+High-level tasks:
+
+- Implement resource equivalence without physical ID.
+- Implement the computation of mappings.
+- Implement the display of the mappings to the user.
+- Implement ambiguity detection.
+- Implement the display of the ambiguities to the user.
+- Add physical ID to resource equivalence.
+
+#### Phase 2 (application)
+
+Once the detection of all cases is implemented in phase 1, we are ready to 
+implement the application of the changes.
+
+High-level tasks:
+
+- Add new permissions to the bootstrap stack.
+- Implement the actual refactoring.
+- Implement rollback.
+- Implement the progress bar to display the refactoring progress.
+- Implement feature flags.
+- Handle cross-stack references.
+- Add the refactor step to the `deploy` command.
+- Write a blog post.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -552,7 +582,5 @@ are equivalent if `d(r1) = d(r2)`.
 
 
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
-
-[project board]: https://github.com/orgs/aws/projects/272
 
 [equivalence relation]: https://en.wikipedia.org/wiki/Equivalence_relation
