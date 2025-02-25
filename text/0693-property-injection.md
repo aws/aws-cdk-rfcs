@@ -305,6 +305,7 @@ aws-cdk-lib.aws-ec2|SubnetConfiguration
 aws-cdk-lib.aws-ec2|Volume
 aws-cdk-lib.aws-ec2|Vpc
 aws-cdk-lib.aws-ecr|Repository
+aws-cdk-lib.aws-ecr-assets|DockerImageAsset
 aws-cdk-lib.aws-ecs|BaseService
 aws-cdk-lib.aws-ecs|Cluster
 aws-cdk-lib.aws-ecs|ContainerDefinition
