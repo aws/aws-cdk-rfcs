@@ -14,7 +14,7 @@ What are the key pieces of Blueprint?
 
 `IPropertyInjector` - An IPropertyInjector defines a way to inject additional properties that are not specified in the props.  It is specific to one Construct and operates on that Construct’s properties.  This will be called `Injector` for short.
 
-`propertyInjectors` - A collection of Injectors attached to App, Stage, or Stack.  Any matching Construct created in this App, Stage, or Stack will have the Injector applied to it.
+`propertyInjectors` - A collection of injectors attached to the construct tree. Injectors can be attached to any construct, but in practice we expect most of them will be attached to `App`, `Stage` or `Stack`.
 
 What is the Blueprint design philosophy?
 
@@ -27,7 +27,7 @@ In the Working Backwards example below, the Org defines standard defaults for de
 ### Development Team Experience
 
 Development teams can start using Blueprint by attaching propertyInjectors to App.
-In the example below, this dev team wants use the Property Injectors provided by its org for S3 Buckets and Lambda Fucntions. 
+In the example below, this dev team wants use the Property Injectors provided by its org for S3 Buckets and Lambda Functions. 
 
 ```ts
 import { BucketPropsInjector, FunctionPropsInjector } from '@my-org/standard-props-injectors';
@@ -39,6 +39,16 @@ const app = new App({
     new FunctionPropsInjector(),
   ],
 });
+```
+
+Alternatively, you can use this syntax:
+```ts
+const app = new App({});
+
+PropertyInjectors.of(app).add(
+  new BucketPropsInjector(),
+  new FunctionPropsInjector(),
+);
 ```
 
 Dev teams can also attach propertyInjectors to Stacks as well.  This will override the Bucket Injector provided in App.
@@ -62,50 +72,17 @@ See [Scope Tree Traversal](#scope-tree-traversal) for more information.
 
 As an org with many dev teams, we can standardize how AWS Resources are created by providing dev teams with Injectors.
 
-AWS CDK will expose this `IPropertyInjector` interface for orgs to implement:
-
-```ts
-/**
- * This defines the context ofInjection.
- */
-export interface InjectionContext {
-  /**
-   * scope from the Construct constructor
-   */
-  readonly scope: Construct;
-  /**
-   * id from the Construct constructor
-   */
-  readonly id: string;
-}
-
-/**
- * This attaches the inject function to the Construct that it operates on.
- */
-export interface IPropertyInjector {
-  /**
-   * The FQN of the Construct class.
-   */
-  readonly constructFqn: string;
-
-  /**
-   * The injector to be applied to the constructor of the Construct.
-   */
-  inject(originalProps: any, context: InjectionContext): any;
-}
-```
-
 Here is a simple PropertyInjector to make sure the S3 Bucket is not publically accessible and SSL is used.
 
 ```ts
 class MyBucketPropsInjector implements IPropertyInjector {
-  public readonly constructFqn: string;
+  public readonly constructUniqueId: string;
 
   constructor() {
-    this.constructFqn = Bucket.UNIQUE_FQN;
+    this.constructUniqueId = Bucket.PROPERTY_INJECTION_ID;
   }
 
-  inject(originalProps: BucketProps, _context: InjectionContext): BucketProps {
+  public inject(originalProps: BucketProps, _context: InjectionContext): BucketProps {
     return {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
@@ -116,14 +93,15 @@ class MyBucketPropsInjector implements IPropertyInjector {
 ```
 
 Notes:
-* We will add Bucket.UNIQUE_FQN to unique identify this Construct.  This is a new Property that we will add to Bucket and other supported Constructs.
+* We will add Bucket.PROPERTY_INJECTION_ID to unique identify this Construct.  This is a new Property that we will add to Bucket and other supported Constructs.
 * This TypeScript code will set blockPublicAccess to BlockPublicAccess.BLOCK_ALL and enforceSSL to true if these properties are not specified in originalProps.  This implementation allows the dev teams to override the org's recommended defaults.
+* In this implementation of `IPropertyInjector`, we allow dev teams to overwrite the recommended defaults.  However, orgs also can implement `IPropertyInjector` that explicitly overwrites dev team decisions.
 
 ## CDK Implementation Detail
 
 ### Add propertyInjectors to App, Stage, and Stack
 
-In the constructor of App, we will add the propertyInjectors.
+In the constructor of App, we will add the propertyInjectors to AppProps.
 
 ```ts
 export class App extends Stage {
@@ -139,11 +117,11 @@ export class App extends Stage {
 ...
 ```
 
-We will need similar code to add `PropertyInjectors` to Stack.
+We will also add `propertyInjectors` to `StackProps` and `StageProps`.  In their constructor, we will pass `propertyInjectors` to `PropertyInjectors`.
 
 ### PropertyInjectors
 
-The PropertyInjectors class has a map of constructFQN to IPropertyInjector.  This means that we can have only have one IPropertyInjector per Construct.  We put all the changes we want to make for a Construct in one place.
+The PropertyInjectors class has a map of constructUniqueId to IPropertyInjector.  This means that we can have only have one IPropertyInjector per Construct.  We put all the changes we want to make for a Construct in one place.
 
 ```ts
 const PROPERTY_INJECTORS_SYMBOL = Symbol.for('@aws-cdk/core.PropertyInjectors');
@@ -177,21 +155,21 @@ export class PropertyInjectors {
    */
   public add(...propsInjectors: IPropertyInjector[]) {
     for (const pi of propsInjectors) {
-      if (this._injectors.has(pi.constructFqn)) {
-        warn(`WARN: Overwriting injector for ${pi.constructFqn}`);
+      if (this._injectors.has(pi.constructUniqueId)) {
+        warn(`WARN: Overwriting injector for ${pi.constructUniqueId}`);
       }
-      this._injectors.set(pi.constructFqn, pi);
-      log(`=== Added ${pi.constructFqn} to ${this._scope}`);  
+      this._injectors.set(pi.constructUniqueId, pi);
+      log(`=== Added ${pi.constructUniqueId} to ${this._scope}`);  
     }
   }
   
   /**
-   * Get the PropertyInjector that is registered to the Construct's fqn.
-   * @param fqn
+   * Get the PropertyInjector that is registered to the Construct's uniqueId.
+   * @param uniqueId
    * @returns
    */
-  public for(fqn: string): IPropertyInjector | undefined {
-    return this._injectors.get(fqn);
+  public for(uniqueId: string): IPropertyInjector | undefined {
+    return this._injectors.get(uniqueId);
   }
 }
 ```
@@ -202,17 +180,17 @@ In [Scope Tree Traversal](#scope-tree-traversal), we will discuss how to find th
 
 ### Update Construct constructors
 
-Below are changes we will make to S3 Bucket.  We need to add `UNIQUE_FQN` and in the constructor, call `applyInjectors`.
+Below are changes we will make to S3 Bucket.  We need to add `PROPERTY_INJECTION_ID` and in the constructor, call `applyInjectors`.
 
 ```ts
 export class Bucket extends BucketBase {
   /**
    * Uniquely identifies this class.
    */
-  public static readonly UNIQUE_FQN = 'aws-cdk-lib.aws-s3.Bucket';
+  public static readonly PROPERTY_INJECTION_ID = 'aws-cdk-lib.aws-s3.Bucket';
   ...
   constructor(scope: Construct, id: string, props: BucketProps = {}) {
-    props = applyInjectors(Bucket.UNIQUE_FQN, props, {
+    props = applyInjectors(Bucket.PROPERTY_INJECTION_ID, props, {
       scope,
       id,
     });
@@ -223,7 +201,7 @@ export class Bucket extends BucketBase {
 }
 ```
 
-`applyInjectors` finds the injector associated with `Bucket.UNIQUE_FQN` by calling `findInjectorsFromConstruct`,
+`applyInjectors` finds the injector associated with `Bucket.PROPERTY_INJECTION_ID` by calling `findInjectorsFromConstruct`,
 and once the injector is found, it applies the changes to the props.  See the next section for how we walk up the scope tree to find the injector.
 
 
@@ -259,11 +237,11 @@ Your existing code will continue to work.
 
 * Introduce `IPropertyInjector` for organizations to implement.
 * Introduce `PropertyInjectors` and allow it to be attached to App, Stage, and Stack.  Also see [Can I attach IPropertyInjector to other constructs?](#can-i-attach-ipropertyinjector-to-other-constructs)
-* These [Constructs](#which-constructs-will-support-ipropertyinjector) will have their constructors modified so that they will call `applyInjectors` to look for the appropiate Injector to modify the props before `super` is called.  These Constructs will also have an UNIQUE_FQN property.
+* These [Constructs](#which-constructs-will-support-ipropertyinjector) will have their constructors modified so that they will call `applyInjectors` to look for the appropiate Injector to modify the props before `super` is called.  These Constructs will also have an PROPERTY_INJECTION_ID property.
 
 ### Which Constructs will support IPropertyInjector?
 
-Below is a list of Constructs we plan to support in the initial release.  Each of the Constructs will also get a new UNIQUE_FQN property.
+Below is a list of Constructs we plan to support in the initial release.  Each of the Constructs will also get a new PROPERTY_INJECTION_ID property.
 
 <!--BEGIN_TABLE-->
 Package|Construct
@@ -387,17 +365,17 @@ Bucket Injectors that need to create a Bucket will need to take special care to 
 
 ```ts
 class SpecialBucketInjector implements IPropertyInjector {
-  public readonly constructFqn: string;
+  public readonly constructUniqueId: string;
 
   // this variable will track if this Injector should be skipped.
   private _skip: boolean;
 
   constructor() {
     this._skip = false;
-    this.constructFqn = Bucket.UNIQUE_FQN;
+    this.constructUniqueId = Bucket.PROPERTY_INJECTION_ID;
   }
 
-  inject(originalProps: BucketProps, context: InjectionContext): BucketProps {
+  public inject(originalProps: BucketProps, context: InjectionContext): BucketProps {
     if (this._skip) {
       return originalProps;
     }
@@ -441,8 +419,8 @@ const myStack = new Stack(stage, 'MyApp-stack', {
 });
 ```
 
-Assuming both have `constructFqn` of `Bucket.UNIQUE_FQN`.
-`BetaBucketPropsInjector` will overwrite `DefaultBucketPropsInjector`.  Any Bucket created in `myStack` will have `BetaBucketPropsInjector` applied to it.  This is because we use a Map keyed by constructFqn to store the Injectors and the second one will overwrite the first one.
+Assuming both have `constructUniqueId` of `Bucket.PROPERTY_INJECTION_ID`.
+`BetaBucketPropsInjector` will overwrite `DefaultBucketPropsInjector`.  Any Bucket created in `myStack` will have `BetaBucketPropsInjector` applied to it.  This is because we use a Map keyed by constructUniqueId to store the Injectors and the second one will overwrite the first one.
 
 
 ### Can I attach IPropertyInjector to other constructs?
