@@ -23,12 +23,12 @@ different CDK applications into a single reusable construct (often called an L3
 construct). Introducing a new node for the L3 construct in the construct tree
 will rename the logical IDs of the resources in that subtree.
 
-Additionally, you might need to move resources within the tree for better
-readability or between stacks to isolate concerns. Accidental renames have also
-caused issues for customers in the past. Perhaps even worse, if you depend on a
-third-party construct library, you are not in control of the logical IDs of
-those resources. If the library changes the logical IDs from one version to
-another, you will be affected without any action on your part.
+Also, you might need to move resources within the tree for better readability or
+between stacks to isolate concerns. Accidental renames have also caused issues
+for customers in the past. Perhaps even worse, if you depend on a third-party
+construct library, you are not in control of the logical IDs of those resources.
+If the library changes the logical IDs from one version to another, you will be
+affected without any action on your part.
 
 To address all these problems, the CDK CLI now automatically detects these
 cases, and refactors the stack on your behalf, using the new CloudFormation
@@ -76,7 +76,7 @@ The refactored construct tree looks like this:
 Even though none of the resources have changed, their paths have
 (from `MyStack/Bucket/Resource` to `Web/Website/Origin/Resource` etc.) Since the
 CDK computes the logical IDs of the resources from their path in the tree, all
-three resources will have different logical IDs changed.
+three resources will have their logical IDs changed.
 
 If you run `cdk deploy` now, by default the CLI will detect these changes and
 present you with a selection prompt:
@@ -343,7 +343,7 @@ better experience by automatically detecting these cases, and interacting with
 the user when necessary.
 
 Another alternative is to use aliases, using [Pulumi's model]
-[pulumi-aliases] as inspiration. This feature would be similar to the  
+[pulumi-aliases] as inspiration. This feature would be similar to the
 `renameLogicalId` function, but operating on a higher level of abstraction, by
 taking into account the construct tree and construct IDs. And, just like
 `renameLogicalId`, it could be perceived as a workaround. However, we are open
