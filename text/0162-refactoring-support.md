@@ -137,12 +137,29 @@ resources back to their original locations.
 
 ### Ambiguity
 
-In the unlikely event that there are two or more _equivalent_ resources
-(see Appendix A) in the same template, and you rename or move them at the same
-time, the CLI will not be able to automatically determine which resource should
-be replaced by which. For example, suppose you have two queues in the same
-stack, named `Queue1` and `Queue2`, with the same properties, and without a
-hard-coded physical ID:
+Imagine a person walking down the street, and someone takes two snapshots of
+them, a few seconds apart. When you look at the snapshots, you can tell that
+it's the _same person_, but at different locations, and not two different
+people. What leads you this conclusion? The fact that the person's features
+(face, clothes, height, etc.) are exactly the same in both photographs. But if
+the photos are of two identical siblings wearing the same clothes, you won't be
+able to tell which one is which, from one photo to the next.
+
+The same principle applies here: you can think of stack name + logical ID as a
+place, and the resource properties as its "personal" features. If a resource has
+different properties before and after a potential deployment, the best we can do
+is assume they are different resources. If the properties are the same from one
+point in time to the other, they very likely are the same resource (although the
+developer still has the last word on this). But if there are two resources that
+have the same properties in the same stack, they are like the twin siblings
+case: there's no way to tell them which is which in case they both move to a
+different place.
+
+Indistinguishable resources in this sense are said to be _equivalent_ (see
+Appendix A for a more formal definition). In the unlikely event that two or more
+equivalent resources move, the CLI won't be able to proceed. For example,
+suppose you have two queues in the same stack, named `Queue1` and `Queue2`, with
+the same properties, and without a hard-coded physical ID:
 
     App
     └ Stack
@@ -156,8 +173,8 @@ If they get renamed to, let's say, `Queue3` and `Queue4`,
       ├ Queue3
       └ Queue4
 
-Then the CLI will not be able to establish a 1:1 mapping between the old and new
-names. In this case, it will ask you to confirm the changes:
+then the CLI will not be able to establish a 1:1 mapping between the old and new
+names. In this case, it will show you the ambiguity, and stop the deployment:
 
     Ambiguous Resource Name Changes
     ┌───┬──────────────────────┐
@@ -277,8 +294,8 @@ ID) they can be found in.
 
 Resources that have different locations before and after, are considered to have
 been moved. For each of those, create a mapping from the source (the currently
-deployed location) to the destination (the new location, in the local 
-template). Example:
+deployed location) to the destination (the new location, in the local template).
+Example:
 
     // Keys are the content address of the resources
     // Values are the location addresses
