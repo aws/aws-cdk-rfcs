@@ -141,9 +141,10 @@ Imagine a person walking down the street, and someone takes two snapshots of
 them, a few seconds apart. When you look at the snapshots, you can tell that
 it's the _same person_, but at different locations, and not two different
 people. What leads you this conclusion? The fact that the person's features
-(face, clothes, height, etc.) are exactly the same in both photographs. But if
-the photos are of two identical siblings wearing the same clothes, you won't be
-able to tell which one is which, from one photo to the next.
+(face, clothes, height, etc.) are exactly the same in both photographs. But if,
+instead of one person walking, you have two identical siblings, wearing the same
+clothes, you won't be able to tell which one is which, from one photo to the
+next.
 
 The same principle applies here: you can think of stack name + logical ID as a
 place, and the resource properties as its "personal" features. If a resource has
