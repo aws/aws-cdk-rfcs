@@ -1,21 +1,27 @@
-# Blueprint via Property Injection
+# Property Injection Implementation of Blueprints
 
 * **Original Author(s):**: @pcheungamz
 * **Tracking Issue**: [#693](https://github.com/aws/aws-cdk-rfcs/issues/693)
 * **API Bar Raiser**: @rix0rrr
 
-Blueprint is a way for orgs to enforce standards by setting default values to CDK Constructs.
-The Blueprint standards can be shared and applied to many development teams.
-This is done via injecting default property values at creation time.
+`Property injection` is a new mechanism that makes it possible to control the properties that are used to instantiate a construct via an out-of-band mechanism.
+Constructs explicitly opt in to being injectable; all L2 constructs in the AWS CDK standard library will be property injectable.
 
-**Why do we need Blueprint?**
+Property injection allows the implementation of `Blueprints`:
+a collection of property injectors vended inside a large organization to make it easy for application builders to apply
+organizational best practices when configuring constructs.
+"Blueprints" is a branding term, and they do not imply or require any new technical capability besides property injection.
+Blueprints by themselves are not a compliance enforcement mechanism;
+instead they are a mechanism to make it easier for developers to hit compliance targets that are already being enforced via other means.
+
+**Why do we need Blueprints?**
 
 Let's say our org wants to prevent publically accessible S3 Buckets.
 You can extend the Bucket class, set `blockPublicAccess: BlockPublicAccess.BLOCK_ALL` and tell all development teams to use our new class.
 Or we can also require all development teams to use `blockPublicAccess: BlockPublicAccess.BLOCK_ALL` in their code.
-With Blueprint, we no longer have to subclass Bucket and it is easy for development teams to use.
+With Blueprints, we no longer have to subclass Bucket and it is easy for development teams to use.
 
-**What are the key pieces of Blueprint?**
+**What are the key pieces of Blueprints?**
 
 `IPropertyInjector` - An IPropertyInjector defines a way to inject additional properties that are not specified in the props.
 It is specific to one Construct and operates on that Construct’s properties.  This will be called `Injector` for short.
@@ -23,7 +29,7 @@ It is specific to one Construct and operates on that Construct’s properties.  
 `propertyInjectors` - A collection of injectors attached to the construct tree.
 Injectors can be attached to any construct, but in practice we expect most of them will be attached to `App`, `Stage` or `Stack`.
 
-**What is the Blueprint design philosophy?**
+**What is the Blueprints design philosophy?**
 
 An Org sets the standards and default value, and it is the responsibility of the development teams to adhere to that.
 We also recognize that there are situations where the development team might need to override the standard.
@@ -37,7 +43,7 @@ Development teams can also write their own Injectors and share them across teams
 
 ### Development Team Experience
 
-Development teams can start using Blueprint by attaching propertyInjectors to App.
+Development teams can start using Blueprints by attaching propertyInjectors to App.
 In the example below, this dev team wants use the Property Injectors provided by its org for S3 Buckets and Lambda Functions.
 
 ```ts
@@ -222,6 +228,51 @@ export class Bucket extends BucketBase {
 
 `applyInjectors` finds the injector associated with `Bucket.PROPERTY_INJECTION_ID` by calling `findInjectorsFromConstruct`,
 and once the injector is found, it applies the changes to the props.  See the next section for how we walk up the scope tree to find the injector.
+
+### An Alternate Way to Update Construct constructors using Decorators
+
+**Note: We are still studying the feasibility of this approach.  It is blocked by a JSII Error.**
+
+We first define a Decorator called `propertyInjectionDecorator`.
+
+```ts
+export function propertyInjectionDecorator<T extends Constructor>(constructor: T) {
+  log('In propertyInjectionDecorator');
+  return class extends constructor {
+    constructor(...args: any[]) {
+      const scope = args[0];
+      const id = args[1];
+      let props = args[2];
+
+      log(`Ctor scope: ${scope}, id: ${id}, old props: ${inspect(props)}`);
+      const fqn = (constructor as any)['PROPERTY_INJECTION_ID'] as string;
+      log('Ctor fqn:', fqn);
+
+      props = applyInjectors(fqn, props, {
+        scope,
+        id,
+      });
+
+      log(`Ctor new props: ${inspect(props)}`);
+
+      super(scope, id, props);
+    }
+  };
+}
+```
+
+In the Construct, define this:
+
+```ts
+@propertyInjectionDecorator
+export class Bucket extends BucketBase {
+```
+
+This is more ergonamonic than the previous implementation because:
+
+* No change in the constuctor.
+* Very clear to see that this class is decorated with `propertyInjectionDecorator`.
+* `PROPERTY_INJECTION_ID` is inferred.  We don't need to worry about specifying the wrong `PROPERTY_INJECTION_ID` when calling `applyInjectors`.
 
 ### Scope Tree Traversal
 
