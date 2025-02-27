@@ -21,10 +21,14 @@ this is sometimes impractical or conflicts with good software engineering
 practices. For instance, you may want to consolidate duplicated code across
 different CDK applications into a single reusable construct (often called an L3
 construct). Introducing a new node for the L3 construct in the construct tree
-will rename the logical IDs of the resources in that subtree. Additionally, you
-might need to move resources within the tree for better readability or between
-stacks to isolate concerns. Accidental renames have also caused issues for
-customers in the past.
+will rename the logical IDs of the resources in that subtree.
+
+Additionally, you might need to move resources within the tree for better
+readability or between stacks to isolate concerns. Accidental renames have also
+caused issues for customers in the past. Perhaps even worse, if you depend on a
+third-party construct library, you are not in control of the logical IDs of
+those resources. If the library changes the logical IDs from one version to
+another, you will be affected without any action on your part.
 
 To address all these problems, the CDK CLI now automatically detects these
 cases, and refactors the stack on your behalf, using the new CloudFormation
@@ -82,7 +86,7 @@ present you with a selection prompt:
     ┌───────────────────────────────┬───────────────────────────────┬──────────────────────────┐
     │ Resource Type                 │ Old Logical ID                │ New Logical ID           │
     ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
-    │ AWS::S3::Bucket               │ MyStack.Queue1A4198146        │ Web.Bucket843D52FF       │
+    │ AWS::S3::Bucket               │ MyStack.Bucket5766466B        │ Web.Bucket843D52FF       │
     ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
     │ AWS::CloudFront::Distribution │ MyStack.DistributionE3BB089E  │ Web.Distribution7142E1F1 │
     ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
@@ -118,6 +122,18 @@ to the CLI, or by configuring this setting in the `cdk.json` file:
   "refactoring": "EXECUTE_AND_DEPLOY"
 }
 ```
+
+Please note that the same CDK application can have multiple stacks for different
+environments. In that case, the CLI will group the stacks by environment and
+perform the refactoring separately in each one. Trying to move resources between
+stacks that belong in different environments will result in an error.
+
+### Rollbacks
+
+After refactoring the stack, the CLI will proceed with the deployment
+(assuming that is your choice). If the deployment fails, and CloudFormation
+rolls it back, the CLI will execute a second refactor, in reverse, to bring the
+resources back to their original locations.
 
 ### Ambiguity
 
@@ -157,21 +173,7 @@ names. In this case, it will ask you to confirm the changes:
     If you want to take advantage of automatic resource refactoring, avoid 
     renaming or moving multiple identical resources at the same time.
 
-    If these changes were intentional, and you want to proceed with the
-    resource replacements, please confirm below.
-
-    Do you wish to deploy these changes (y/n)?
-
-To skip this prompt and go straight to deployment, pass the
-`--ignore-ambiguous-refactoring` flag to the CLI, or configure this setting in
-the `cdk.json` file:
-
-```json
-{
-  "app": "...",
-  "ignoreAmbiguousRefactoring": true
-}
-```
+### Refactor only
 
 If you want to execute only the automatic refactoring, use the `cdk refactor`
 command. The behavior is basically the same as with `cdk deploy`: it will detect
@@ -228,6 +230,7 @@ stack refactoring support:
   organization, or to create reusable components.
 - Moving constructs between different stacks.
 - Renaming stacks.
+- Upgrading dependencies on construct libraries.
 
 ### Can the CLI help me resolve ambiguity when refactoring resources?
 
@@ -237,13 +240,6 @@ user to answer questions. Although we could easily extend this feature to
 include ambiguity resolution for the interactive case, it wouldn't transfer well
 to the non-interactive case. If you are interested in an in-depth explanation of
 the problem and a possible solution, check Appendix B.
-
-### What if the deployment fails?
-
-After refactoring the stack, the CLI will proceed with the deployment
-(assuming that is your choice). If the deployment fails, and CloudFormation
-rolls it back, the CLI will execute a second refactor, in reverse, to bring the
-resources back to their original locations.
 
 ## Internal FAQ
 
@@ -277,9 +273,28 @@ High level description of the algorithm:
 First, list all the stacks: both local and deployed. Then build an index of all
 resources from all stacks. This index maps the _content_ address (physical ID or
 digest) of each resource to all the _location_ addresses (stack name + logical
-ID) they can be found in. Resources that have different locations before and
-after, are considered to have been moved. For each of those, create a mapping
-from the old location to the new one.
+ID) they can be found in.
+
+Resources that have different locations before and after, are considered to have
+been moved. For each of those, create a mapping from the source (the currently
+deployed location) to the destination (the new location, in the local 
+template). Example:
+
+    // Keys are the content address of the resources
+    // Values are the location addresses
+    { 
+      "5e19886121239b7a": { // Moved and renamed -> goes to mapping
+        "before": ["stack1/logicalId1"],
+        "after": "["stack2/logicalId2"]
+      },    
+      "24ad8195002086b6": { // Removed -> ignored 
+        "before": ["stack1/logicalId3"]
+      },
+      "07266c4dd0146e8a": { // Unchanged -> ignored 
+        "before": ["stack1/logicalId4"]
+        "after": ["stack1/logicalId4"]
+      }
+    }
 
 Since the CloudFormation API expects not only the mappings, but also the
 templates in their final states, we need to compute those as well. This is done
@@ -296,12 +311,6 @@ proceed.
 Assuming there were no ambiguities, or the user wants to proceed anyway, it is
 ready to call the API to actually perform the refactor, using the mappings and
 templates computed previously.
-
-As every AWS API call, refactoring is restricted to a given environment
-(account and region). Given that one CDK app can have stacks for multiple
-environments, the CLI will group the stacks by environment and perform the
-refactoring separately in each one. Trying to move resources between stacks that
-belong in different environments will result in an error.
 
 ### Is this a breaking change?
 
@@ -409,7 +418,7 @@ the set of resources.
 
 Before that, let's define a digest function, `d`:
 
-    d(resource) = hash(type + physicalId)                       , if physicalId is defined
+    d(resource) = hash(type + physicalId)                       , if physicalId was defined by the user
                 = hash(type + properties + dependencies.map(d)) , otherwise
 
 where `hash` is a cryptographic hash function. In other words, if a resource has
