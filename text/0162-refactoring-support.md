@@ -5,7 +5,7 @@
 - **API Bar Raiser**: @rix0rrr
 
 An improvement to the CDK CLI and toolkit library, to protect against
-replacement of resources when they change location. The CLI now detects this
+replacement of resources when they change location. The Toolkit now detects this
 case, and automatically refactors the stack before the actual deployment.
 
 ## Working Backwards
