@@ -16,16 +16,15 @@ CloudFormation will create a new resource with the new logical ID and possibly
 delete the old one. For stateful resources, this may cause interruption of
 service or data loss, or both.
 
-Historically, our advice for developers has been to avoid changing logical IDs
-of resources. In practice, however, this is not always possible, or goes against
-good engineering practices. For example, you may have duplicated code across
-different CDK applications which you want to consolidate into a single reusable
-construct (usually referred to as an L3 construct). The very introduction of a
-new node for the L3 construct in the construct tree will lead to the renaming of
-the logical IDs of the resources in that subtree. You may also need to move
-resources around in the tree to make it more readable, or even between stacks to
-better isolate concerns. Not to mention accidental renames, which have also
-impacted customers in the past.
+Historically, we have advised developers to avoid changing logical IDs. However,
+this is sometimes impractical or conflicts with good software engineering
+practices. For instance, you may want to consolidate duplicated code across
+different CDK applications into a single reusable construct (often called an L3
+construct). Introducing a new node for the L3 construct in the construct tree
+will rename the logical IDs of the resources in that subtree. Additionally, you
+might need to move resources within the tree for better readability or between
+stacks to isolate concerns. Accidental renames have also caused issues for
+customers in the past.
 
 To address all these problems, the CDK CLI now automatically detects these
 cases, and refactors the stack on your behalf, using the new CloudFormation
@@ -41,7 +40,7 @@ then proceed with the deployment.
 
 For example, suppose your CDK application has a single stack, called `MyStack`,
 containing an S3 bucket, a CloudFront distribution and a Lambda function. The
-construct tree (L1 constructs omitted for brevity) looks like this:
+construct tree looks like this (L1 constructs omitted for brevity):
 
     App
     └ MyStack
@@ -72,9 +71,8 @@ The refactored construct tree looks like this:
 
 Even though none of the resources have changed, their paths have
 (from `MyStack/Bucket/Resource` to `Web/Website/Origin/Resource` etc.) Since the
-CDK computes the logical IDs of the resources based on their path in the tree,
-all three resources will have different logical IDs in the synthesized template,
-compared to what is already deployed.
+CDK computes the logical IDs of the resources from their path in the tree, all
+three resources will have different logical IDs changed.
 
 If you run `cdk deploy` now, by default the CLI will detect these changes and
 present you with a selection prompt:
@@ -124,10 +122,11 @@ to the CLI, or by configuring this setting in the `cdk.json` file:
 ### Ambiguity
 
 In the unlikely event that there are two or more _equivalent_ resources
-(see Appendix B) in the same template, and you rename or move them at the same
+(see Appendix A) in the same template, and you rename or move them at the same
 time, the CLI will not be able to automatically determine which resource should
-be replaced by which. For example, suppose you have two identical queues, named
-`Queue1` and `Queue2`, in the same stack:
+be replaced by which. For example, suppose you have two queues in the same
+stack, named `Queue1` and `Queue2`, with the same properties, and without a
+hard-coded physical ID:
 
     App
     └ Stack
@@ -174,11 +173,29 @@ the `cdk.json` file:
 }
 ```
 
-If you want to execute only the automatic refactoring, use the `cdk 
-refactor` command. The behavior is basically the same as with `cdk deploy`: it
-will detect whether there are refactors to be made, ask for confirmation if
-necessary (depending on the flag values), and refactor the stacks involved. But
-it will stop there and not proceed with the deployment.
+If you want to execute only the automatic refactoring, use the `cdk refactor`
+command. The behavior is basically the same as with `cdk deploy`: it will detect
+whether there are refactors to be made, ask for confirmation if necessary (
+depending on the flag values), and refactor the stacks involved. But it will
+stop there and not proceed with the deployment. If you only want to see what
+changes would be made, use the `--dry-run` flag.
+
+### Programmatic access
+
+The same refactoring feature is also available in the CDK toolkit library:
+
+```typescript
+declare const toolkit: Toolkit;
+declare const cx: ICloudAssemblySource;
+
+// To execute possible refactors as part of the deploy operation:
+await toolkit.deploy(cx, {
+  refactoring: RefactoringMode.EXECUTE_AND_DEPLOY
+});
+
+// Or, if you just want to refactor the stacks:
+await toolkit.refactor(cxSource);
+```
 
 ---
 
@@ -199,7 +216,7 @@ the RFC pull request):
 A new developer experience for CDK users, that allows them to change the
 location of a construct (stack plus logical ID) without causing resource
 replacement. This new experience is available in the CDK CLI `deploy`
-and `refactor` commands.
+and `refactor` commands, as well as in the toolkit library.
 
 ### Why should I use this feature?
 
@@ -207,7 +224,7 @@ If you ever find yourself doing one of the following, you will benefit from
 stack refactoring support:
 
 - Renaming constructs, either intentionally or by mistake.
-- Moving constructs within the same stack. This could be just for better
+- Moving constructs within the construct tree. This could be just for better
   organization, or to create reusable components.
 - Moving constructs between different stacks.
 - Renaming stacks.
@@ -219,16 +236,7 @@ should work in any environment, including CI/CD pipelines, where there is no
 user to answer questions. Although we could easily extend this feature to
 include ambiguity resolution for the interactive case, it wouldn't transfer well
 to the non-interactive case. If you are interested in an in-depth explanation of
-the problem and a possible solution, check Appendix A.
-
-### What if I can't use the CDK CLI in my pipeline?
-
-Some customers have their own mechanisms for deploying stacks to AWS, that don't
-use the CDK CLI. If that is your case, there is still a way you can use this
-feature: the refactoring logic will also be released in the CDK toolkit library,
-that can be used programmatically by your own tools. If you can incorporate it
-into your deployment tooling, you will have the same functionality as the
-`refactor` command in the CDK CLI.
+the problem and a possible solution, check Appendix B.
 
 ### What if the deployment fails?
 
@@ -269,9 +277,9 @@ High level description of the algorithm:
 First, list all the stacks: both local and deployed. Then build an index of all
 resources from all stacks. This index maps the _content_ address (physical ID or
 digest) of each resource to all the _location_ addresses (stack name + logical
-ID) they can be found in. Resources that have different locations in new stacks
-compared to the old ones are considered to have been moved. For each of those,
-it creates a mapping from the old location to the new one.
+ID) they can be found in. Resources that have different locations before and
+after, are considered to have been moved. For each of those, create a mapping
+from the old location to the new one.
 
 Since the CloudFormation API expects not only the mappings, but also the
 templates in their final states, we need to compute those as well. This is done
@@ -310,7 +318,7 @@ the user when necessary.
 Another alternative is to use aliases, using [Pulumi's model]
 [pulumi-aliases] as inspiration. This feature would be similar to the  
 `renameLogicalId` function, but operating on a higher level of abstraction, by
-taking into account the construct tree and construct IDs. But, just like
+taking into account the construct tree and construct IDs. And, just like
 `renameLogicalId`, it could be perceived as a workaround. However, we are open
 to revisiting this decision if enough customers indicate their preference for it
 in this RFC.
@@ -333,10 +341,10 @@ See the open issues section below.
 
 #### Phase 1 (dry-run)
 
-In this phase we are going to implement the detection of resource moves, and 
-show the user what changes are going to be made. The only new command 
-available at this phase is `cdk refactor --dry-run`. Execution of this 
-command without the `--dry-run` flag will result in an error.
+In this phase we are going to implement the detection of resource moves, and
+show the user what changes are going to be made. The only new command available
+at this phase is `cdk refactor --dry-run`. Execution of this command without the
+`--dry-run` flag will result in an error.
 
 High-level tasks:
 
@@ -349,7 +357,7 @@ High-level tasks:
 
 #### Phase 2 (application)
 
-Once the detection of all cases is implemented in phase 1, we are ready to 
+Once the detection of all cases is implemented in phase 1, we are ready to
 implement the application of the changes.
 
 High-level tasks:
@@ -371,7 +379,7 @@ controlled by the CLI. As a result, this is not an atomic operation: it is
 possible that the refactoring step succeeds, but before the CLI has a chance to
 deploy the changes, it gets interrupted (computer crash, network failures, etc.)
 In this case, the user will be left with a stack that is neither in the original
-state nor in the desired state.
+nor in the desired state.
 
 In particular, the logical ID won't match the CDK construct path, stored in the
 resource's metadata. This has consequences for the CloudFormation console, which
@@ -387,19 +395,48 @@ Possible solutions to consider, from more specific to more general:
   then have a new command to execute both in a single atomic operation (let's
   say, a `executeChangeSetAndRefactor()`).
 
-Since all these solutions depend on changes on the CloudFormation side, and this
+Since all these options depend on changes on the CloudFormation side, and this
 edge case is unlikely to happen, we are going to address it later.
 
 ## Appendix
 
-### A. Ideas on ambiguity resolution
+### A. Equivalence between resources
 
-The only safe way to resolve ambiguity in cases such as renaming multiple
-identical resources, is to ask the developer what their intent is. But what if
-the developer is not present to answer questions (in a CI/CD pipeline, for
-instance)? A necessary condition in this case is that the developer's intent has
-been captured earlier, encoded as a mapping between resource locations, and
-stored somewhere.
+To detect which resources should be refactored, we need to indentify which
+resources have only changed their location, but have remained "the same", in
+some sense. This can be made precise by defining an [equivalence relation] on
+the set of resources.
+
+Before that, let's define a digest function, `d`:
+
+    d(resource) = hash(type + physicalId)                       , if physicalId is defined
+                = hash(type + properties + dependencies.map(d)) , otherwise
+
+where `hash` is a cryptographic hash function. In other words, if a resource has
+a physical ID, we can use the physical ID plus its type to uniquely identify
+that resource. In this case, the digest can be computed from these two fields
+alone. A corollary is that such resources can be renamed and have their
+properties updated at the same time, and still be considered equivalent.
+
+Otherwise, the digest is computed from its type, its own properties (that is,
+excluding properties that refer to other resources), and the digests of each of
+its dependencies.
+
+The digest of a resource, defined recursively this way, remains stable even if
+one or more of its dependencies gets renamed. Since the resources in a
+CloudFormation template form a directed acyclic graph, this function is
+well-defined.
+
+The equivalence relation then follows directly: two resources `r1` and `r2`
+are equivalent if `d(r1) = d(r2)`.
+
+### B. Ideas on ambiguity resolution
+
+Let's start with a basic premise: the only safe way to resolve ambiguity is to
+ask the developer what their intent is. But what if they are not present to
+answer questions (in a CI/CD pipeline, for instance)? A necessary condition in
+this case is that the developer's intent has been captured earlier, encoded as a
+mapping between resource locations, and stored somewhere.
 
 But this is not sufficient. Note that every mapping is created from a pair of
 source and target states, out of which the ambiguities arose. To be able to
@@ -411,18 +448,16 @@ must be met:
 2. The target state used to create the mapping should indeed be what the user
    wants as a result.
 
-I am using the abstract term "state" here, but how could such a state be
-instantiated in practice? Let's consider some options and see how they fail to
-satisfy the conditions above.
+How are these "states" instantiated in practice? Let's consider some options.
 
 First, we need to establish a point when the mapping is created (and the
 developer is involved to resolve possible ambiguities). Let's call this the
 "decision point". As a first attempt, let's try to use every deployment in the
-development cycle as the decision point. In this solution, the development
-account is the source state, and the cloud assembly to be deployed is the target
-state. If any ambiguities were resolved, they are saved in a mapping file, under
-version control. On every deployment to other environments, the mapping file is
-used to perform the refactoring.
+development cycle as a decision point. In this solution, the development account
+is the source state, and the cloud assembly to be deployed is the target state.
+If any ambiguities are resolved, they are saved in a mapping file, under version
+control. On every deployment to other environments, the mapping file is used to
+perform the refactoring.
 
 It sounds like this could work, but if the development environment is not in the
 same state as the one where the mapping is applied, condition 1 is violated. And
@@ -471,7 +506,7 @@ In other words, the current state should be consistent with the history that led
 up to that state.
 
 One final piece to add to the system: every environment should also have its own
-history file, which should also maintain a similar invariant (through CFN hooks,
+history file, which should also maintain the same invariant (through CFN hooks,
 for example). Having all this in place, we can execute the following algorithm
 on every deployment:
 
@@ -529,21 +564,21 @@ intent).
 
 #### The future
 
-There is still some work to be done to prove this system works in practice. But
-assuming it does, we could use it to expand the scope to which the automatic
-refactoring applies. Consider the case in which you want to rename a certain
-resource and, at the same time, make some minor changes, such as adding or
-updating a couple of properties. This is another ambiguous case, because it's
-not clear what the intent is: update with rename, or replacement? But with the
-history system, we can detect such cases, interact with the developer, and store
-the decision in the history.
+There is still some work to be done to prove this out. But assuming it does
+work, we could use it to expand the scope to which the automatic refactoring
+applies. Consider the case in which you want to rename a certain resource and,
+at the same time, make some minor changes, such as adding or updating a couple
+of properties. This is another ambiguous case, because it's not clear what the
+intent is: update with rename, or replacement? But with the history system, we
+can detect such cases, interact with the developer, and store the decision in
+the history.
 
 Since this historical model contains all the information about the state of the
 stacks in an environment, it could also be used for other purposes. For example,
 development tools could use the history to provide a "time machine" feature,
-that allows developers to see the state of the infrastructure at any point in
+that allows developers to see the state of their infrastructure at any point in
 time. CloudFormation itself could build on that, and provide a way to roll back
-or forward to another state.
+or forward to an arbitrary state.
 
 Another problem that could be solved with the historical model is the infamous
 "deadly embrace", where a consumer stack depends on a producer stack via
@@ -554,32 +589,6 @@ this without user intervention.
 
 Potentially, this could also help with drift resolution (or prevention), if
 CloudFormation itself starts using the history internally.
-
-### B. Equivalence between resources
-
-To detect which resources should be refactored, we need to indentify which
-resources have only changed their location, but have remained "the same", in
-some sense. This can be made precise by defining an [equivalence relation] on
-the set of resources.
-
-Before that, let's define a digest function, `d`:
-
-    d(resource) = hash(type + physicalId)                       , if physicalId is defined
-                = hash(type + properties + dependencies.map(d)) , otherwise
-
-where `hash` is a cryptographic hash function. In other words, if a resource has
-a physical ID, its type and physical ID uniquely identify that resource. So we
-compute the hash from these two fields. Otherwise, the hash is computed from its
-type, its own properties (that is, excluding properties that refer to other
-resources), and the digests of each of its dependencies.
-
-The digest of a resource, defined recursively this way, remains stable even if
-one or more of its dependencies gets renamed. Since the resources in a
-CloudFormation template form an acyclic graph, this function is well-defined.
-
-The equivalence relation then follows directly: two resources `r1` and `r2`
-are equivalent if `d(r1) = d(r2)`.
-
 
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
 
