@@ -58,7 +58,7 @@ account:
 - Rename the bucket from `Bucket` to the more descriptive name `Origin`.
 - Create a new L3 construct called `Website` that groups the bucket and the
   distribution, to make this pattern reusable in different applications.
-- Move the web-related constructs (now under the `Website` L3) construct to a
+- Move the web-related constructs (now under the `Website` L3) to a
   new stack called `Web`, for better separation of concerns.
 - Rename the original stack to `Service`, to better reflect its new specific
   role in the application.
