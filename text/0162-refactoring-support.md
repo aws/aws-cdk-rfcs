@@ -58,8 +58,8 @@ account:
 - Rename the bucket from `Bucket` to the more descriptive name `Origin`.
 - Create a new L3 construct called `Website` that groups the bucket and the
   distribution, to make this pattern reusable in different applications.
-- Move the web-related constructs (now under the `Website` L3) to a
-  new stack called `Web`, for better separation of concerns.
+- Move the web-related constructs (now under the `Website` L3) to a new stack
+  called `Web`, for better separation of concerns.
 - Rename the original stack to `Service`, to better reflect its new specific
   role in the application.
 
@@ -115,22 +115,74 @@ refactor is executed:
     
     ✅  Stack refactor complete
 
-You can configure the refactoring behavior by passing the `--refactoring` flag
-to the CLI, or by configuring this setting in the `cdk.json` file:
-
-```json
-{
-  "app": "...",
-  "refactoring": "EXECUTE_AND_DEPLOY"
-}
-```
-
 Please note that the same CDK application can have multiple stacks for different
 environments. In that case, the CLI will group the stacks by environment and
 perform the refactoring separately in each one. So, although you can move
 resources between stacks, both stacks involved in the move must be in the same
 environment. Trying to move resources across environments will result in an
 error.
+
+If you want to execute only the automatic refactoring, use the `cdk refactor`
+command. The behavior is basically the same as with `cdk deploy`: it will detect
+whether there are refactors to be made, ask for confirmation if necessary (
+depending on the flag values), and refactor the stacks involved. But it will
+stop there and not proceed with the deployment. If you only want to see what
+changes would be made, use the `--dry-run` flag.
+
+### Settings
+
+By default, refactoring is disabled on deployments. To override this behavior,
+you can either use a command line flag (`--refactor-action`) or set the
+`refactorAction` field in the `cdk.json` file. The flag/setting can have one of
+the following values:
+
+- `CONFIRM`: this enables the behavior described in the previous section, where
+  the CLI shows the changes and asks for confirmation. This only works in
+  interactive mode (TTY).
+- `REFACTOR`: automatically detects resource moves, executes the refactors, and
+  deploys the stacks.
+- `SKIP`: goes straight to deployment, skipping refactoring. This is the default
+  behavior.
+- `QUIT`: process stops, returning a non-zero exit status.
+
+The last three values are the same options as the prompt.
+
+If there are ambiguities, the CLI will look for a mapping file to resolve them.
+If the file does not exist or doesn't apply, the CLI will fail. Otherwise, it
+will apply the mappings and proceed with the deployment.
+
+These options are summarized in the following flowchart:
+
+```mermaid
+flowchart TD
+    map{Mapping file}
+    amb{Ambiguities}
+    conf[/"Refactor action\n (cli flag or config)"/]
+    ask[/"Ask user"/]
+    comm>"Same options as the 'Refactor action' flag (except CONFIRM). 
+    Omitted to avoid cluttering the diagram."]
+    tty{is TTY}
+    DEPLOY([Deploy only])
+    APPLY([Apply mapping and deploy])
+    FAIL([Fail])
+    AUTO([Auto refactor and deploy])
+
+    conf -->|null or SKIP| DEPLOY
+    conf -->|CONFIRM| tty
+    map -->|No| FAIL
+  map -->|Yes| APPLY
+  conf -->|QUIT| FAIL
+    conf -->|REFACTOR| amb
+    amb -->|No| AUTO
+    amb -->|YES| map
+    tty -->|Yes| ask
+    tty -->|No| FAIL
+    ask --> comm
+```
+
+Also note that this feature is still experimental, so you have to pass
+`--unstable=refactor` flag to confirm you are aware of this to both `deploy` 
+and `refactor` commands.
 
 ### Rollbacks
 
@@ -198,15 +250,6 @@ names. In this case, it will show you the ambiguity, and stop the deployment:
 
     If you want to take advantage of automatic resource refactoring, avoid 
     renaming or moving multiple identical resources at the same time.
-
-### Refactor only
-
-If you want to execute only the automatic refactoring, use the `cdk refactor`
-command. The behavior is basically the same as with `cdk deploy`: it will detect
-whether there are refactors to be made, ask for confirmation if necessary (
-depending on the flag values), and refactor the stacks involved. But it will
-stop there and not proceed with the deployment. If you only want to see what
-changes would be made, use the `--dry-run` flag.
 
 ### Programmatic access
 
