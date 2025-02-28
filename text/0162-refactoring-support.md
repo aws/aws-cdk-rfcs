@@ -47,10 +47,10 @@ containing an S3 bucket, a CloudFront distribution and a Lambda function. The
 construct tree looks like this (L1 constructs omitted for brevity):
 
     App
-    └ MyStack
-      ├ Bucket
-      ├ Distribution
-      └ Function
+    └─ MyStack
+       ├─ Bucket
+       ├─ Distribution
+       └─ Function
 
 Now suppose you make the following changes, after having deployed it to your AWS
 account:
@@ -66,20 +66,22 @@ account:
 The refactored construct tree looks like this:
 
     App
-    ├ Web
-    │  └ Website
-    │    ├ Origin
-    │    └ Distribution
-    └ Service
-      └ Function
+    ├─ Web
+    │  └─ Website
+    │     ├─ Origin
+    │     └─ Distribution
+    └─ Service
+       └─ Function
 
 Even though none of the resources have changed, their paths have
 (from `MyStack/Bucket/Resource` to `Web/Website/Origin/Resource` etc.) Since the
 CDK computes the logical IDs of the resources from their path in the tree, all
-three resources will have their logical IDs changed.
+three resources will have their logical IDs changed. Without refactoring
+support, all three resources would be replaced.
 
-If you run `cdk deploy` now, by default the CLI will detect these changes and
-present you with a selection prompt:
+With refactoring support, if you run `cdk deploy` after making these changes, by
+default the CLI will detect these changes and present you with a selection
+prompt:
 
     The following resources were moved or renamed:
 
@@ -125,8 +127,10 @@ to the CLI, or by configuring this setting in the `cdk.json` file:
 
 Please note that the same CDK application can have multiple stacks for different
 environments. In that case, the CLI will group the stacks by environment and
-perform the refactoring separately in each one. Trying to move resources between
-stacks that belong in different environments will result in an error.
+perform the refactoring separately in each one. So, although you can move
+resources between stacks, both stacks involved in the move must be in the same
+environment. Trying to move resources across environments will result in an
+error.
 
 ### Rollbacks
 
@@ -135,14 +139,18 @@ After refactoring the stack, the CLI will proceed with the deployment
 rolls it back, the CLI will execute a second refactor, in reverse, to bring the
 resources back to their original locations.
 
+If you don't want the CLI to perform the rollback refactor, you can use the
+`--no-rollback` flag, which also controls the rollback behavior of the
+deployment.
+
 ### Ambiguity
 
 Imagine a person walking down the street, and someone takes two snapshots of
 them, a few seconds apart. When you look at the snapshots, you can tell that
-it's the _same person_, but at different locations, and not two different
-people. What leads you this conclusion? The fact that the person's features
-(face, clothes, height, etc.) are exactly the same in both photographs. But if,
-instead of one person walking, you have two identical siblings, wearing the same
+it's the _same person_ at different places, rather than two different people.
+You are justified in this conclusion because the person's features (face,
+clothes, height, etc.) are exactly the same in both photographs. But if, instead
+of one person walking, you have a pair of identical twins, wearing the same
 clothes, you won't be able to tell which one is which, from one photo to the
 next.
 
@@ -154,25 +162,25 @@ point in time to the other, they very likely are the same resource (although the
 developer still has the last word on this). But if there are two resources that
 have the same properties in the same stack, they are like the twin siblings
 case: there's no way to tell them which is which in case they both move to a
-different place.
+different stack or get renamed.
 
 Indistinguishable resources in this sense are said to be _equivalent_ (see
 Appendix A for a more formal definition). In the unlikely event that two or more
 equivalent resources move, the CLI won't be able to proceed. For example,
 suppose you have two queues in the same stack, named `Queue1` and `Queue2`, with
-the same properties, and without a hard-coded physical ID:
+the same properties, and without a user defined physical ID:
 
     App
-    └ Stack
-      ├ Queue1
-      └ Queue2
+    └─ Stack
+       ├─ Queue1
+       └─ Queue2
 
 If they get renamed to, let's say, `Queue3` and `Queue4`,
 
     App
-    └ Stack
-      ├ Queue3
-      └ Queue4
+    └─ Stack
+       ├─ Queue3
+       └─ Queue4
 
 then the CLI will not be able to establish a 1:1 mapping between the old and new
 names. In this case, it will show you the ambiguity, and stop the deployment:
@@ -214,10 +222,25 @@ await toolkit.deploy(cx, {
 });
 
 // Or, if you just want to refactor the stacks:
-await toolkit.refactor(cxSource);
+await toolkit.refactor(cx);
+```
+
+In case of ambiguity, the toolkit will throw an `AmbiguityError`:
+
+```typescript
+try {
+  await toolkit.refactor(cxSource);
+} catch (e) {
+  if (e instanceof AmbiguityError) {
+    // Handle ambiguity
+  } else {
+    throw e;
+  }
+}
 ```
 
 ---
+
 
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied to
@@ -342,14 +365,6 @@ resources to move from which stack to which stack. But the CDK CLI can provide a
 better experience by automatically detecting these cases, and interacting with
 the user when necessary.
 
-Another alternative is to use aliases, using [Pulumi's model]
-[pulumi-aliases] as inspiration. This feature would be similar to the
-`renameLogicalId` function, but operating on a higher level of abstraction, by
-taking into account the construct tree and construct IDs. And, just like
-`renameLogicalId`, it could be perceived as a workaround. However, we are open
-to revisiting this decision if enough customers indicate their preference for it
-in this RFC.
-
 A possible variation of the solution presented in this RFC is to do something
 similar to resource lookup: for every environment where the application could be
 deployed to, the CLI would have configured in a file what refactors have to be
@@ -359,6 +374,13 @@ more work and coordination among the parties involved (developers,
 administrators, security engineers, etc.), and is more error-prone: failure to
 record a refactor in the file could lead to inconsistencies between the
 environments, and even unintended resource replacements.
+
+Customers have also suggested aliases, using [Pulumi's model][pulumi-aliases] as
+inspiration. This feature would be similar to the `renameLogicalId` function,
+but operating on a higher level of abstraction, by taking into account the
+construct tree and construct IDs. And, just like `renameLogicalId`, it could be
+perceived as a workaround. However, we are open to implementing this as an
+additional feature if enough customers indicate their preference for it.
 
 ### What are the drawbacks of this solution?
 
