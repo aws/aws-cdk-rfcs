@@ -115,6 +115,17 @@ refactor is executed:
     
     ✅  Stack refactor complete
 
+If you want to execute only the automatic refactoring, use the `cdk refactor`
+command. The behavior is basically the same as with `cdk deploy`: it will detect
+whether there are refactors to be made, ask for confirmation if necessary
+(depending on the flag values), and refactor the stacks involved. But it will
+stop there and not proceed with the deployment. If you only want to see what
+changes would be made, use the `--dry-run` flag.
+
+To perform refactoring, the CLI needs new permissions in the bootstrap stack.
+Before using this feature, run `cdk bootstrap` for every target environment, to
+add these new permissions.
+
 Please note that the same CDK application can have multiple stacks for different
 environments. In that case, the CLI will group the stacks by environment and
 perform the refactoring separately in each one. So, although you can move
@@ -122,69 +133,78 @@ resources between stacks, both stacks involved in the move must be in the same
 environment. Trying to move resources across environments will result in an
 error.
 
-If you want to execute only the automatic refactoring, use the `cdk refactor`
-command. The behavior is basically the same as with `cdk deploy`: it will detect
-whether there are refactors to be made, ask for confirmation if necessary (
-depending on the flag values), and refactor the stacks involved. But it will
-stop there and not proceed with the deployment. If you only want to see what
-changes would be made, use the `--dry-run` flag.
-
 ### Settings
 
-By default, refactoring is disabled on deployments. To override this behavior,
-you can either use a command line flag (`--refactor-action`) or set the
-`refactorAction` field in the `cdk.json` file. The flag/setting can have one of
-the following values:
+The behavior of the refactoring feature can be controlled by a few settings.
 
-- `CONFIRM`: this enables the behavior described in the previous section, where
-  the CLI shows the changes and asks for confirmation. This only works in
-  interactive mode (TTY).
-- `REFACTOR`: automatically detects resource moves, executes the refactors, and
-  deploys the stacks.
-- `SKIP`: goes straight to deployment, skipping refactoring. This is the default
-  behavior.
-- `QUIT`: process stops, returning a non-zero exit status.
+For both `deploy` and `refactor`:
 
-The last three values are the same options as the prompt.
+- `--export-mapping=<FILE>`: writes the mapping to a file. The file can be used
+  later to apply the same refactors to other environments.
+- `--import-mapping=<FILE>`: use the mapping from a file, instead of computing
+  it. The file can be generated using the `--export-mapping` option.
+- `--dry-run`: shows on stdout what would happen, but doesn't execute.
+- `--unstable=refactor`: enables the feature. If the flag is not set, the
+  command fails with an error message explaining that the feature is
+  experimental.
 
-If there are ambiguities, the CLI will look for a mapping file to resolve them.
-If the file does not exist or doesn't apply, the CLI will fail. Otherwise, it
-will apply the mappings and proceed with the deployment.
+For `deploy` only:
 
-These options are summarized in the following flowchart:
+- `--refactoring-action=[ACTION]`: the action to take in case there is a
+  refactor to be made. Possible values for `ACTION` are:
+    - `confirm`: ask the user what to do. This is the scenario described in the
+      **How it works** section.
+    - `refactor`: automatically refactor and deploy.
+    - `quit`: stop with a non-zero exit code.
+    - `skip`: deploy without refactoring. This is the default value.
 
-```mermaid
-flowchart TD
-    map{Mapping file}
-    amb{Ambiguities}
-    conf[/"Refactor action\n (cli flag or config)"/]
-    ask[/"Ask user"/]
-    comm>"Same options as the 'Refactor action' flag (except CONFIRM). 
-    Omitted to avoid cluttering the diagram."]
-    tty{is TTY}
-    DEPLOY([Deploy only])
-    APPLY([Apply mapping and deploy])
-    FAIL([Fail])
-    AUTO([Auto refactor and deploy])
+All these settings are also available in the `cdk.json` file:
 
-    conf -->|null or SKIP| DEPLOY
-    conf -->|CONFIRM| tty
-    map -->|No| FAIL
-  map -->|Yes| APPLY
-  conf -->|QUIT| FAIL
-    conf -->|REFACTOR| amb
-    amb -->|No| AUTO
-    amb -->|YES| map
-    tty -->|Yes| ask
-    tty -->|No| FAIL
-    ask --> comm
+```json
+{
+  "app": "...",
+  "refactor": {
+    "refactoringAction": "confirm",
+    "exportMapping": "output.json",
+    "dryRun": true
+  }
+}
 ```
 
-Also note that this feature is still experimental, so you have to pass
-`--unstable=refactor` flag to confirm you are aware of this to both `deploy` 
-and `refactor` commands.
+### Explicit mapping
 
-### Rollbacks
+Although the CLI will automatically refactor only what is unambiguous, you may
+still need to have more control over the refactoring process. Companies usually
+have stringent policies on how changes are made to the production environment,
+for example. One such policy is that every change must be explicitly declared in
+some sort of code, including refactors.
+
+In a situation like this, you can import and export mapping files. Here is how
+it works: at development time, you made a change that the CLI detected as a
+refactor. Since you want that refactor to be propagated to other environments,
+you export the mapping file, with the command
+`cdk refactor --export-mapping=file.json`.
+
+There are at least two possible paths from here, depending on the company's
+policies:
+
+1. You send the exported file to an operations team, who will review it. If
+   approved, they manually run the command
+   `cdk refactor --import-mapping=file.json` on every protected environment in
+   advance (i.e., before your changes get deployed to those environments). When
+   you import a mapping, the CLI won't try to detect refactors.
+2. The `--apply-mapping` option is also available for the `deploy` command. So
+   you can commit the mapping file to version control, and configure the CLI to
+   use apply it on every deployment. This is a more convenient option, because
+   it requires less coordination between different roles, but the mapping file
+   must be removed from the repository once the refactor has been applied.
+   Otherwise, the next deployment will fail.
+
+In general, if the protected environment is not in the same state as the
+environment where the mapping was generated, the `refactor --apply-mapping`
+command will fail.
+
+### Rollback
 
 After refactoring the stack, the CLI will proceed with the deployment
 (assuming that is your choice). If the deployment fails, and CloudFormation
@@ -251,6 +271,11 @@ names. In this case, it will show you the ambiguity, and stop the deployment:
     If you want to take advantage of automatic resource refactoring, avoid 
     renaming or moving multiple identical resources at the same time.
 
+    If you want to provide an explicit mapping, use the --import-mapping option.
+
+As the message suggests, you can use the `--import-mapping` option as a way to
+resolve ambiguities.
+
 ### Programmatic access
 
 The same refactoring feature is also available in the CDK toolkit library:
@@ -281,7 +306,6 @@ try {
   }
 }
 ```
-
 ---
 
 
@@ -315,15 +339,6 @@ stack refactoring support:
 - Moving constructs between different stacks.
 - Renaming stacks.
 - Upgrading dependencies on construct libraries.
-
-### Can the CLI help me resolve ambiguity when refactoring resources?
-
-Not at the moment. One of the constraints we imposed on this feature is that it
-should work in any environment, including CI/CD pipelines, where there is no
-user to answer questions. Although we could easily extend this feature to
-include ambiguity resolution for the interactive case, it wouldn't transfer well
-to the non-interactive case. If you are interested in an in-depth explanation of
-the problem and a possible solution, check Appendix B.
 
 ## Internal FAQ
 
@@ -398,7 +413,11 @@ templates computed previously.
 
 ### Is this a breaking change?
 
-No.
+No. By default, the CLI will skip refactoring on deployment. The user must
+explicitly enable it by passing a value other than `skip` to the
+`--refactoring-action` (or `refactoringAction` in `cdk.json`) option. Also, this
+feature will initially be launched as experimental, and the user must
+acknowledge this by passing the `--unstable=refactor` flag.
 
 ### What alternative solutions did you consider?
 
@@ -522,165 +541,58 @@ well-defined.
 The equivalence relation then follows directly: two resources `r1` and `r2`
 are equivalent if `d(r1) = d(r2)`.
 
-### B. Ideas on ambiguity resolution
+### B. Handling of settings
 
-Let's start with a basic premise: the only safe way to resolve ambiguity is to
-ask the developer what their intent is. But what if they are not present to
-answer questions (in a CI/CD pipeline, for instance)? A necessary condition in
-this case is that the developer's intent has been captured earlier, encoded as a
-mapping between resource locations, and stored somewhere.
+Pseudocode for `deploy`:
 
-But this is not sufficient. Note that every mapping is created from a pair of
-source and target states, out of which the ambiguities arose. To be able to
-safely carry a mapping over to other environments, two additional conditions
-must be met:
+    // either from CLI option or config file
+    switch (refactoring action): 
+        case quit:
+            Stop with non-zero exit code;
 
-1. The source state on which a mapping is applied must be the same as the source
-   state where the mapping was captured.
-2. The target state used to create the mapping should indeed be what the user
-   wants as a result.
+        case refactor:
+            m = getMapping();
+            if (not --dry-run):
+                Apply m;
+                Deploy;
 
-How are these "states" instantiated in practice? Let's consider some options.
+        case skip or null:
+            Deploy;
 
-First, we need to establish a point when the mapping is created (and the
-developer is involved to resolve possible ambiguities). Let's call this the
-"decision point". As a first attempt, let's try to use every deployment in the
-development cycle as a decision point. In this solution, the development account
-is the source state, and the cloud assembly to be deployed is the target state.
-If any ambiguities are resolved, they are saved in a mapping file, under version
-control. On every deployment to other environments, the mapping file is used to
-perform the refactoring.
+        case confirm:
+            m = getMapping().
+            if (not --dry-run):
+                Ask user what to do;
+                switch (user's choice):
+                    case quit:
+                        Stop with non-zero exit code;
+                    case refactor: 
+                        Apply m;
+                        Deploy;
+                    case skip:
+                        Deploy;
 
-It sounds like this could work, but if the development environment is not in the
-same state as the one where the mapping is applied, condition 1 is violated. And
-if the developer fails, for whatever reason, to run a deployment against their
-environment before commiting an ambiguous change to the version control system
-(which I will henceforth assume is Git), condition 2 is violated.
+    function getMapping():
+        if (not --unstable=refactor):
+            Fail with a specific error message;
 
-Since we are talking about Git, what about using each commit operation as a
-decision point? In this case, the source and target states would come from the
-synthesized cloud assemblies in the previous and current revision, respectively.
-We still have a mapping file, containing ambiguity resolutions, which are added
-to the commit, using a Git hook. For this solution to work, we need an
-additional constraint, which can also be enforced with a Git hook: that every
-revision produces a valid cloud assembly.
+        if (--import-mapping):
+            m = mapping from the file;
+        else:
+            m = compute the mapping;
 
-Let's evaluate this solution in terms of the two conditions above. Because the
-developer doesn't have a choice anymore of which target state to use (or source
-state, for that matter), condition 2 is satisfied. But remember that the scope
-of the mapping file is the difference between two consecutive revisions. If the
-developer's local branch is multiple commits ahead of the revision that was
-deployed to production, the source state in production is not the same as the
-one in the mapping file, violating condition 1.
+        Render m to stdout;
 
-#### Making history
+        if (--export-mapping):
+            Write m to the file;
 
-An improvement we can make is to turn this into an event sourcing system.
-Instead of storing a single mapping between two states, we store the whole
-history of the stacks. A **history** is a chain of events in chronological
-order. An **event** is a set of operations (create, update, delete, and
-refactor) on a set of stacks.
+        return m;
 
-The decision point remains the same, but now we append a new event to a version
-controlled history file on every commit. This event includes all creates,
-updates and deletes, plus all refactors, whether they were automatically
-detected or manually resolved.
+The pseudocode for the `refactor` command is simply:
 
-As with any event sourcing system, if we want to produce a snapshot of the
-stacks at a given point in time, all we need to do is replay the events in
-order, up to that point. We are now ready to state the key invariant of this
-system:
-
-> **Invariant**: For every revision `r`, the cloud assembly synthesized from
-> `r` is equal to the snapshot at `r`.
-
-In other words, the current state should be consistent with the history that led
-up to that state.
-
-One final piece to add to the system: every environment should also have its own
-history file, which should also maintain the same invariant (through CFN hooks,
-for example). Having all this in place, we can execute the following algorithm
-on every deployment:
-
-    ---------------------------------
-      Key: 
-        H(E): environment history
-        H(A): application history
-        LCA: lowest common ancestor
-    ---------------------------------
-
-    if H(E) is a prefix of H(A):
-      Compute the diff between H(A) and H(E);
-      Extract the mapping from the diff;
-      Apply the mapping to the stacks in the environment;
-      Deploy;
-    else:
-      a = LCA of H(A) and H(E);
-      Compute the sub-chain of H(A) from a to the end;
-      Extract the mapping from the diff;
-      if the mapping is empty:
-        Deploy;
-      else:
-        Error: source state doesn't match the mapping.
-
-For example, suppose the histories at play are (`*` denotes the current state):
-
-    H(E) = e1 ◄── e2*
-    H(A) = e1 ◄── e2 ◄── e3 ◄── e4
-
-Then the diff between them is `e3 ◄── e4`. If these events contain any refactor,
-we just apply them, and then deploy the application. The resulting environment
-history is the merge of the two:
-
-    H(E) = e1 ◄── e2 ◄── e3 ◄── e4*
-
-Now suppose the histories involved are:
-
-    H(E) = e1 ◄── e2 ◄── e3*
-    H(A) = e1 ◄── e2 ◄── e4 ◄── e5
-
-In this case, `H(E)` is not a prefix of `H(A)`, but they have common ancestors.
-Their LCA is `e2`. Computing the sub-chain from there we get `e4 ◄── e5`. If
-there are no refactors to apply from this diff, we can go ahead and deploy the
-application. Again, the new state results from the merge of `H(E)` and
-`H(A)`:
-
-    H(E) = e1 ◄── e2 ◄── e3         
-                   ▲                  
-                   │                  
-                   └──── e4 ◄── e5*
-
-If there are refactors to be done, this is considered an error, because we can't
-guarantee that the refactor makes sense (let alone that this was the developer's
-intent).
-
-#### The future
-
-There is still some work to be done to prove this out. But assuming it does
-work, we could use it to expand the scope to which the automatic refactoring
-applies. Consider the case in which you want to rename a certain resource and,
-at the same time, make some minor changes, such as adding or updating a couple
-of properties. This is another ambiguous case, because it's not clear what the
-intent is: update with rename, or replacement? But with the history system, we
-can detect such cases, interact with the developer, and store the decision in
-the history.
-
-Since this historical model contains all the information about the state of the
-stacks in an environment, it could also be used for other purposes. For example,
-development tools could use the history to provide a "time machine" feature,
-that allows developers to see the state of their infrastructure at any point in
-time. CloudFormation itself could build on that, and provide a way to roll back
-or forward to an arbitrary state.
-
-Another problem that could be solved with the historical model is the infamous
-"deadly embrace", where a consumer stack depends on a producer stack via
-CloudFormation Exports, and you want to remove the use from the consumer. At the
-moment, customers have to use the `stack.exportValue(...)` method, and do two
-deployments. The history would give the CLI all the information it needs to do
-this without user intervention.
-
-Potentially, this could also help with drift resolution (or prevention), if
-CloudFormation itself starts using the history internally.
+    m = getMapping();
+    if (not --dry-run):
+        Apply m;
 
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
 
