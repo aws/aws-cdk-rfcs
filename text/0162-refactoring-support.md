@@ -115,6 +115,12 @@ refactor is executed:
     
     ✅  Stack refactor complete
 
+If you pass any filters to the `deploy` command, the refactor will work on those
+stacks plus any other stacks the refactor touches. For example, if you choose to
+only deploy stack A, and a resource was moved from stack A to stack B, the
+refactor will involve both stacks. But even if there was a rename in, let's say,
+stack C, it will not be refactored.
+
 If you want to execute only the automatic refactoring, use the `cdk refactor`
 command. The behavior is basically the same as with `cdk deploy`: it will detect
 whether there are refactors to be made, ask for confirmation if necessary
@@ -306,6 +312,7 @@ try {
   }
 }
 ```
+
 ---
 
 
