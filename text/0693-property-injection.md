@@ -203,7 +203,7 @@ PropertyInjectors can be attached to any scope, but the typical use case is to a
 
 In [Scope Tree Traversal](#scope-tree-traversal), we will discuss how to find the correct injector when they are specified in app, stack, etc.
 
-### Update Construct constructors
+### Update Construct constructors - Alternate Option
 
 Below are changes we will make to S3 Bucket.  We need to add `PROPERTY_INJECTION_ID` and in the constructor, call `applyInjectors`.
 
@@ -229,9 +229,10 @@ export class Bucket extends BucketBase {
 `applyInjectors` finds the injector associated with `Bucket.PROPERTY_INJECTION_ID` by calling `findInjectorsFromConstruct`,
 and once the injector is found, it applies the changes to the props.  See the next section for how we walk up the scope tree to find the injector.
 
-### An Alternate Way to Update Construct constructors using Decorators
+### Update Construct constructors - Preferred Option
 
-**Note: We are still studying the feasibility of this approach.  It is blocked by a JSII Error.**
+**This option is now possible thanks to
+[this commit](https://github.com/aws/aws-cdk/commit/b48a5ad0d0c96c80252aae3ff32df41c1fb89099)**
 
 We first define a Decorator called `propertyInjectionDecorator`.
 
@@ -524,3 +525,87 @@ const bucketA = new Bucket(function, 'test-mybucket', {
 
 `bucketA` will get BucketInjector `b3` applied to it, regardless of what Bucket Injector was defined in Stack or App.
 The typical use case is to attach IPropertyInjectors to App, Stage, and Stack.  So we have added `propertyInjectors` to their props for ease of use.
+
+### Can I overwrite a default value in an Injector with undefined?
+
+Using this Injector as an example:
+
+```ts
+class MyBucketPropsInjector implements IPropertyInjector {
+  public readonly constructUniqueId: string;
+
+  constructor() {
+    this.constructUniqueId = Bucket.PROPERTY_INJECTION_ID;
+  }
+
+  public inject(originalProps: BucketProps, _context: InjectionContext): BucketProps {
+    return {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      ...originalProps,
+    };
+  }
+}
+```
+
+TypeScript clients can use:
+
+```ts
+new Bucket(this, 'My-test-bucket', {
+  blockPublicAccess: undefined,
+});
+```
+
+to create a Bucket with `blockPublicAccess: undefined`.
+
+However, `undefined` is not support in Python and Java.  If Python client set `blockPublicAccess` to `None`,
+it woudl be as if `blockPublicAccess` was never passed in, so the Injector would use `BLOCK_ALL` as default.
+To get around this, orgs can allow Dev Team to subclass the Injector and specify `blockPublicAccess: undefined`.
+
+One example is:
+
+```ts
+class MyBucketPropsInjector implements IPropertyInjector {
+  public readonly constructUniqueId: string;
+
+  constructor() {
+    this.constructUniqueId = Bucket.PROPERTY_INJECTION_ID;
+  }
+
+  protected getDefaultBlockPublicAccess() {
+    return BlockPublicAccess.BLOCK_ALL;
+  }
+
+  public inject(originalProps: BucketProps, _context: InjectionContext): BucketProps {
+    return {
+      blockPublicAccess: getDefaultBlockPublicAccess(),
+      enforceSSL: true,
+      ...originalProps,
+    };
+  }
+}
+```
+
+```ts
+export MyTeamInjector extends MyBucketPropsInjector {
+  protected getDefaultBlockPublicAccess() {
+    return undefined;
+  }
+}
+```
+
+The Python client uses `MyTeamInjector`, then they can specify `blockPublicAccess` at Bucket creation time with
+
+```py
+bucket = s3.Bucket(
+    self, "MyBucket",
+    block_public_access=None,
+)
+```
+
+```py
+bucket = s3.Bucket(
+    self, "MyBucket",
+    block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+)
+```
