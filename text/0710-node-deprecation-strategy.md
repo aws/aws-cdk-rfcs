@@ -97,6 +97,6 @@ In this proposal, we formalize a policy for all Node.js versions going forward.
 
 ## Conclusion
 
-This RFC seeks to introduce a formal Node.js version support policy for AWS CDK: the AWS CDK stops supporting a Node.js version six months after that version’s official EOL date. This provides a predictable, security-forward posture that balances end-user needs for stability with the AWS CDK’s continued modernization.
+This RFC seeks to introduce a formal Node.js version support policy for AWS CDK, which is for the AWS CDK to stop supporting a Node.js version six months after that version’s official EOL date. This provides a predictable, security-forward posture that balances end-user needs for stability with the AWS CDK’s continued modernization.
 
 Feedback is welcome! If you have any questions or concerns, please comment on this issue and if needed we can refine the proposal.
