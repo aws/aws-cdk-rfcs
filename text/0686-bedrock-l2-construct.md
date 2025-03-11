@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @dineshSajwan , @krokoko
 * **Tracking Issue**: #686
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @xazhao
 
 The Bedrock L2 construct simplifies the creation of multiple Bedrock features by wrapping the Bedrock L1 construct. It exposes functions
 for creating features with minimal code. Key features include Bedrock Agent, Knowledge Base, Guardrails, Inference Profiles, and Prompt.
