@@ -21,7 +21,7 @@
 [635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||💡 proposed
-[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals SLO L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
+[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[RFC 670: AWS CloudWatch Application Signals L2 Constructs for SLO #673](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
 [693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
