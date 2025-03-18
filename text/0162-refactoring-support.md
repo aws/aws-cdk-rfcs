@@ -4,9 +4,10 @@
 - **Tracking Issue**: #162
 - **API Bar Raiser**: @rix0rrr
 
-An improvement to the CDK CLI and toolkit library, to protect against
-replacement of resources when they change location. The Toolkit now detects this
-case, and automatically refactors the stack before the actual deployment.
+An improvement to the CDK CLI and toolkit library, to protect against accidental
+replacement of resources during deployment. The Toolkit now detects this case,
+and automatically refactors the stack before the actual deployment. The same
+feature is also available as its own command.
 
 ## Working Backwards
 
@@ -16,12 +17,12 @@ CloudFormation will create a new resource with the new logical ID and possibly
 delete the old one. For stateful resources, this may cause interruption of
 service or data loss, or both.
 
-Historically, we have advised developers to avoid changing logical IDs. However,
-this is sometimes impractical or conflicts with good software engineering
-practices. For instance, you may want to consolidate duplicated code across
-different CDK applications into a single reusable construct (often called an L3
-construct). Introducing a new node for the L3 construct in the construct tree
-will rename the logical IDs of the resources in that subtree.
+Historically, we have advised developers to avoid changing logical IDs. But this
+is sometimes impractical or conflicts with good software engineering practices.
+For instance, you may want to consolidate duplicated code across different CDK
+applications into a single reusable construct (an "L3 construct"). Introducing a
+new node for the L3 construct in the construct tree will rename the logical IDs
+of the resources in that subtree.
 
 Also, you might need to move resources within the tree for better readability or
 between stacks to isolate concerns. Accidental renames have also caused issues
@@ -52,12 +53,12 @@ construct tree looks like this (L1 constructs omitted for brevity):
        ├─ Distribution
        └─ Function
 
-Now suppose you make the following changes, after having deployed it to your AWS
+And suppose you make the following changes, after having deployed it to your AWS
 account:
 
 - Rename the bucket from `Bucket` to the more descriptive name `Origin`.
-- Create a new L3 construct called `Website` that groups the bucket and the
-  distribution, to make this pattern reusable in different applications.
+- Move the bucket and the distribution under a new L3 construct called
+  `Website`, to make this pattern reusable in different applications.
 - Move the web-related constructs (now under the `Website` L3) to a new stack
   called `Web`, for better separation of concerns.
 - Rename the original stack to `Service`, to better reflect its new specific
@@ -76,12 +77,15 @@ The refactored construct tree looks like this:
 Even though none of the resources have changed, their paths have
 (from `MyStack/Bucket/Resource` to `Web/Website/Origin/Resource` etc.) Since the
 CDK computes the logical IDs of the resources from their path in the tree, all
-three resources will have their logical IDs changed. Without refactoring
-support, all three resources would be replaced.
+three resources will have their logical IDs changed.
 
-With refactoring support, if you run `cdk deploy` after making these changes, by
-default the CLI will detect these changes and present you with a selection
-prompt:
+From your perspective, the changes above are mere moves and renames, but what
+CloudFormation sees is the deletion of old resources and the creation of new
+ones. By opting in to the CDK refactoring support, the CDK CLI will work on your
+behalf to notify CloudFormation of your intention.
+
+In interactive mode -- we'll look at the settings in a moment --, this is how
+the CLI will present the refactoring to you:
 
     The following resources were moved or renamed:
 
@@ -115,44 +119,77 @@ refactor is executed:
     
     ✅  Stack refactor complete
 
-If you pass any filters to the `deploy` command, the refactor will work on those
-stacks plus any other stacks the refactor touches. For example, if you choose to
-only deploy stack A, and a resource was moved from stack A to stack B, the
-refactor will involve both stacks. But even if there was a rename in, let's say,
-stack C, it will not be refactored.
+A few things to note about this feature:
 
-If you want to execute only the automatic refactoring, use the `cdk refactor`
-command. The behavior is basically the same as with `cdk deploy`: it will detect
-whether there are refactors to be made, ask for confirmation if necessary
-(depending on the flag values), and refactor the stacks involved. But it will
-stop there and not proceed with the deployment. If you only want to see what
-changes would be made, use the `--dry-run` flag.
+- If you want to execute only the automatic refactoring, use the more specific  
+  `cdk refactor` command. The behavior is basically the same as with `cdk 
+  deploy`: it will detect whether there are refactors to be made, ask for
+  confirmation if necessary (depending on the flag values), and refactor the
+  stacks involved. But it will stop there and not proceed with the deployment.
+  If you only want to see what changes would be made, use the `--dry-run` flag.
+- If you pass any filters to the `deploy` command, the refactor will work on
+  those stacks plus any other stacks the refactor touches. For example, if you
+  choose to only deploy stack A, and a resource was moved from stack A to stack
+  B, the refactor will involve both stacks. But if there was a rename in, let's
+  say, stack C, it will not be refactored. The same set of filters is available
+  for the `refactor` command.
+- To perform refactoring, the CLI needs new permissions in the bootstrap stack.
+  Before using this feature, run `cdk bootstrap` for every target environment,
+  to add these new permissions.
+- A given CDK application can have multiple stacks, for different environments.
+  In that case, the CLI will group the stacks by environment and perform the
+  refactoring separately in each one. So, although you can move resources
+  between stacks, both stacks involved in the move must be in the same
+  environment. Trying to move resources across environments will result in an
+  error.
 
-To perform refactoring, the CLI needs new permissions in the bootstrap stack.
-Before using this feature, run `cdk bootstrap` for every target environment, to
-add these new permissions.
+### Explicit mapping
 
-Please note that the same CDK application can have multiple stacks for different
-environments. In that case, the CLI will group the stacks by environment and
-perform the refactoring separately in each one. So, although you can move
-resources between stacks, both stacks involved in the move must be in the same
-environment. Trying to move resources across environments will result in an
-error.
+Although the CLI will automatically refactor only what is unambiguous, you may
+still need to have more control over the refactoring process. Companies usually
+have stringent policies on how changes are made to the production environment,
+for example. It could be that your company requires that every change must be
+explicitly declared in some sort of code, including refactors (as opposed to
+computed on-the-fly).
+
+In a situation like this, you can import and export mapping files. Here is how
+it works: at development time, you made a change that the CLI detected as a
+refactor. Since you want that refactor to be propagated to other environments,
+you export the mapping file, with the command
+`cdk refactor --export-mapping=file.json`.
+
+There are at least two possible paths from here, depending on your constraints:
+
+1. You send the exported file to an operations team, who will review it. If
+   approved, they manually run the command
+   `cdk refactor --import-mapping=file.json` on every protected environment in
+   advance (i.e., before your changes get deployed to those environments). When
+   you import a mapping, the CLI won't try to detect refactors.
+2. The `--apply-mapping` option is also available for the `deploy` command. So
+   you can commit the mapping file to version control, and configure your
+   pipeline to use it on every deployment. This is a more convenient option,
+   because it requires less coordination between different roles, but the
+   mapping file must be removed from the repository once the refactor has been
+   applied. Otherwise, the next deployment will fail.
+
+In general, if the protected environment is not in the same state as the
+environment where the mapping was generated, the `refactor --apply-mapping`
+command will fail.
 
 ### Settings
 
-The behavior of the refactoring feature can be controlled by a few settings.
+You have a few settings available to control the behavior of the refactoring
+feature.
 
 For both `deploy` and `refactor`:
 
 - `--export-mapping=<FILE>`: writes the mapping to a file. The file can be used
-  later to apply the same refactors to other environments.
+  later to apply the same refactors in other environments.
 - `--import-mapping=<FILE>`: use the mapping from a file, instead of computing
-  it. The file can be generated using the `--export-mapping` option.
-- `--dry-run`: shows on stdout what would happen, but doesn't execute.
-- `--unstable=refactor`: enables the feature. If the flag is not set, the
-  command fails with an error message explaining that the feature is
-  experimental.
+  it. This file can be generated using the `--export-mapping` option.
+- `--unstable=refactor`: used to acknowledge that this feature is experimental.
+  If the flag is not set, and the CLI would try to perform some refactor, the
+  command fails with an error message explaining why.
 
 For `deploy` only:
 
@@ -163,6 +200,10 @@ For `deploy` only:
     - `refactor`: automatically refactor and deploy.
     - `quit`: stop with a non-zero exit code.
     - `skip`: deploy without refactoring. This is the default value.
+
+For `refactor` only:
+
+- `--dry-run`: prints the mapping to the console, but does not apply it.
 
 All these settings are also available in the `cdk.json` file:
 
@@ -177,38 +218,27 @@ All these settings are also available in the `cdk.json` file:
 }
 ```
 
-### Explicit mapping
+It's worth noting that there are at least two cases in which the mapping
+produced by the CLI may not be what you want:
 
-Although the CLI will automatically refactor only what is unambiguous, you may
-still need to have more control over the refactoring process. Companies usually
-have stringent policies on how changes are made to the production environment,
-for example. One such policy is that every change must be explicitly declared in
-some sort of code, including refactors.
+- Ambiguity: you may find yourself in the very unlikely situation in which two
+  or more resources have the same type and properties, and they are moved or
+  renamed at the same time. Since there are at least two valid ways to map the
+  old IDs to the new ones, the CLI can't guarantee that it will make the right
+  choice. For instance, suppose you have two identical S3 buckets, with logical
+  IDs `FinancialData` and `CustomerData`, and you want to rename them to
+  `FinancialReports` and `CustomerInfo`, respectively. But the CLI may end up
+  doing the opposite, so that, after the refactor, the bucket that contains
+  financial reports will happen to be called `CustomerData` in CloudFormation.
+  Its physical ID and properties remain unchanged, though.
+- When you actually want to replace resources, despite them having the same
+  properties before and after the deployment. In this case, you can remove the
+  unwanted mapping from the mapping file.
 
-In a situation like this, you can import and export mapping files. Here is how
-it works: at development time, you made a change that the CLI detected as a
-refactor. Since you want that refactor to be propagated to other environments,
-you export the mapping file, with the command
-`cdk refactor --export-mapping=file.json`.
-
-There are at least two possible paths from here, depending on the company's
-policies:
-
-1. You send the exported file to an operations team, who will review it. If
-   approved, they manually run the command
-   `cdk refactor --import-mapping=file.json` on every protected environment in
-   advance (i.e., before your changes get deployed to those environments). When
-   you import a mapping, the CLI won't try to detect refactors.
-2. The `--apply-mapping` option is also available for the `deploy` command. So
-   you can commit the mapping file to version control, and configure the CLI to
-   use apply it on every deployment. This is a more convenient option, because
-   it requires less coordination between different roles, but the mapping file
-   must be removed from the repository once the refactor has been applied.
-   Otherwise, the next deployment will fail.
-
-In general, if the protected environment is not in the same state as the
-environment where the mapping was generated, the `refactor --apply-mapping`
-command will fail.
+We recommend that you always use the `confirm` option at development time. This
+way, you can see what changes the CLI is going to make, and decide whether they
+are correct. This gives you a chance to modify any incorrect mappings (by, for
+example, exporting the mapping, editing it, and importing it again).
 
 ### Rollback
 
@@ -220,67 +250,6 @@ resources back to their original locations.
 If you don't want the CLI to perform the rollback refactor, you can use the
 `--no-rollback` flag, which also controls the rollback behavior of the
 deployment.
-
-### Ambiguity
-
-Imagine a person walking down the street, and someone takes two snapshots of
-them, a few seconds apart. When you look at the snapshots, you can tell that
-it's the _same person_ at different places, rather than two different people.
-You are justified in this conclusion because the person's features (face,
-clothes, height, etc.) are exactly the same in both photographs. But if, instead
-of one person walking, you have a pair of identical twins, wearing the same
-clothes, you won't be able to tell which one is which, from one photo to the
-next.
-
-The same principle applies here: you can think of stack name + logical ID as a
-place, and the resource properties as its "personal" features. If a resource has
-different properties before and after a potential deployment, the best we can do
-is assume they are different resources. If the properties are the same from one
-point in time to the other, they very likely are the same resource (although the
-developer still has the last word on this). But if there are two resources that
-have the same properties in the same stack, they are like the twin siblings
-case: there's no way to tell them which is which in case they both move to a
-different stack or get renamed.
-
-Indistinguishable resources in this sense are said to be _equivalent_ (see
-Appendix A for a more formal definition). In the unlikely event that two or more
-equivalent resources move, the CLI won't be able to proceed. For example,
-suppose you have two queues in the same stack, named `Queue1` and `Queue2`, with
-the same properties, and without a user defined physical ID:
-
-    App
-    └─ Stack
-       ├─ Queue1
-       └─ Queue2
-
-If they get renamed to, let's say, `Queue3` and `Queue4`,
-
-    App
-    └─ Stack
-       ├─ Queue3
-       └─ Queue4
-
-then the CLI will not be able to establish a 1:1 mapping between the old and new
-names. In this case, it will show you the ambiguity, and stop the deployment:
-
-    Ambiguous Resource Name Changes
-    ┌───┬──────────────────────┐
-    │   │ Resource             │
-    ├───┼──────────────────────┤
-    │ - │ Stack.Queue1A4198146 │
-    │   │ Stack.Queue2B0BA5D32 │
-    ├───┼──────────────────────┤
-    │ + │ Stack.Queue3C7606C37 │
-    │   │ Stack.Queue4D681F510 │
-    └───┴──────────────────────┘
-
-    If you want to take advantage of automatic resource refactoring, avoid 
-    renaming or moving multiple identical resources at the same time.
-
-    If you want to provide an explicit mapping, use the --import-mapping option.
-
-As the message suggests, you can use the `--import-mapping` option as a way to
-resolve ambiguities.
 
 ### Programmatic access
 
@@ -297,20 +266,6 @@ await toolkit.deploy(cx, {
 
 // Or, if you just want to refactor the stacks:
 await toolkit.refactor(cx);
-```
-
-In case of ambiguity, the toolkit will throw an `AmbiguityError`:
-
-```typescript
-try {
-  await toolkit.refactor(cxSource);
-} catch (e) {
-  if (e instanceof AmbiguityError) {
-    // Handle ambiguity
-  } else {
-    throw e;
-  }
-}
 ```
 
 ---
@@ -331,7 +286,7 @@ the RFC pull request):
 ### What are we launching today?
 
 A new developer experience for CDK users, that allows them to change the
-location of a construct (stack plus logical ID) without causing resource
+location of a construct (stack and/or logical ID) without causing resource
 replacement. This new experience is available in the CDK CLI `deploy`
 and `refactor` commands, as well as in the toolkit library.
 
@@ -347,12 +302,22 @@ stack refactoring support:
 - Renaming stacks.
 - Upgrading dependencies on construct libraries.
 
+### What if I incorrectly refactor a stack?
+
+The CLI offers mechanisms to prevent accidental refactoring, such as dry runs,
+interactive mode, and importing and exporting of mapping files. Nevertheless,
+mistakes can happen. The first thing to be aware of is that refactors don't
+affect the resources themselves. The worst that can happen is you ending up with
+incorrect resource IDs in CloudFormation. The second thing is that refactors can
+be always be reverted. Simply edit the mapping file if you have one (or create
+one from scratch if you don't), and apply it to the affected stacks.
+
 ## Internal FAQ
 
 ### Why are we doing this?
 
 This feature was initially requested in May 2020. It is one of the top 5 most
-up-voted RFCs, with 94 thumbs-up. Despite being almost 5 years old, it has
+up-voted RFCs, with 97 thumbs-up. Despite being almost 5 years old, it has
 continued to be highly discussed and debated by CDK customers and the community.
 The solution we currently provide, the `renameLogicalId` method, is perceived by
 customers as a workaround, adding unnecessary cognitive load for developers.
@@ -374,56 +339,20 @@ with good documentation and careful interaction design.
 
 ### What is the technical solution (design) of this feature?
 
-High level description of the algorithm:
-
-First, list all the stacks: both local and deployed. Then build an index of all
-resources from all stacks. This index maps the _content_ address (physical ID or
-digest) of each resource to all the _location_ addresses (stack name + logical
-ID) they can be found in.
-
-Resources that have different locations before and after, are considered to have
-been moved. For each of those, create a mapping from the source (the currently
-deployed location) to the destination (the new location, in the local template).
-Example:
-
-    // Keys are the content address of the resources
-    // Values are the location addresses
-    { 
-      "5e19886121239b7a": { // Moved and renamed -> goes to mapping
-        "before": ["stack1/logicalId1"],
-        "after": "["stack2/logicalId2"]
-      },    
-      "24ad8195002086b6": { // Removed -> ignored 
-        "before": ["stack1/logicalId3"]
-      },
-      "07266c4dd0146e8a": { // Unchanged -> ignored 
-        "before": ["stack1/logicalId4"]
-        "after": ["stack1/logicalId4"]
-      }
-    }
-
-Since the CloudFormation API expects not only the mappings, but also the
-templates in their final states, we need to compute those as well. This is done
-by applying all the mappings locally, essentially emulating what CloudFormation
-will eventually do. For example, if a mapping says that a resource has moved
-from stack `A` with name `Foo`, to stack `B` with name `Bar`, we will remove
-`Foo` from the template for stack `A`, and add a new resource called `Bar` to
-the template for stack `B`.
-
-At this point, if there is any ambiguity (more than one source or more than one
-destination for a given mapping), stop and ask the user whether they want to
-proceed.
-
-Assuming there were no ambiguities, or the user wants to proceed anyway, it is
-ready to call the API to actually perform the refactor, using the mappings and
-templates computed previously.
+There are two aspects of the solution that deserve attention: the computation of
+a mapping from old locations to new ones, given the difference between what is
+deployed and what has just been synthesized. The location of a resource is
+defined as the combination of its logical ID and the stack where it is declared.
+The algorithm for this is described in Appendix B. The other aspect is how the
+CLI handles the various settings available to the user. This is treated in
+Appendix C.
 
 ### Is this a breaking change?
 
 No. By default, the CLI will skip refactoring on deployment. The user must
 explicitly enable it by passing a value other than `skip` to the
 `--refactoring-action` (or `refactoringAction` in `cdk.json`) option. Also, this
-feature will initially be launched as experimental, and the user must
+feature will initially be launched in experimental mode, and users must
 acknowledge this by passing the `--unstable=refactor` flag.
 
 ### What alternative solutions did you consider?
@@ -447,9 +376,10 @@ environments, and even unintended resource replacements.
 Customers have also suggested aliases, using [Pulumi's model][pulumi-aliases] as
 inspiration. This feature would be similar to the `renameLogicalId` function,
 but operating on a higher level of abstraction, by taking into account the
-construct tree and construct IDs. And, just like `renameLogicalId`, it could be
-perceived as a workaround. However, we are open to implementing this as an
-additional feature if enough customers indicate their preference for it.
+construct tree and construct IDs. Despite the abstraction awareness, however, it
+would suffer from the same perceived crudeness of `renameLogicalId`. In any
+event, we are open to implementing this as an additional feature if enough
+customers indicate their preference for it.
 
 ### What are the drawbacks of this solution?
 
@@ -469,9 +399,9 @@ High-level tasks:
 - Implement resource equivalence without physical ID.
 - Implement the computation of mappings.
 - Implement the display of the mappings to the user.
-- Implement ambiguity detection.
-- Implement the display of the ambiguities to the user.
+- Implement mapping import and export.
 - Add physical ID to resource equivalence.
+- Update the documentation.
 
 #### Phase 2 (application)
 
@@ -488,6 +418,13 @@ High-level tasks:
 - Handle cross-stack references.
 - Add the refactor step to the `deploy` command.
 - Write a blog post.
+- Update the documentation.
+
+#### Phase 3 (similarity)
+
+This is a research phase. We are going to investigate the possibility of 
+matching resources that are not identical property-wise, but are similar enough
+that they may indicate a move. See Appendix E for more details.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -527,7 +464,7 @@ the set of resources.
 
 Before that, let's define a digest function, `d`:
 
-    d(resource) = hash(type + physicalId)                       , if physicalId was defined by the user
+    d(resource) = hash(type + physicalId)                       , if physicalId is defined
                 = hash(type + properties + dependencies.map(d)) , otherwise
 
 where `hash` is a cryptographic hash function. In other words, if a resource has
@@ -548,9 +485,51 @@ well-defined.
 The equivalence relation then follows directly: two resources `r1` and `r2`
 are equivalent if `d(r1) = d(r2)`.
 
-### B. Handling of settings
+### B. Matching algorithm
 
-Pseudocode for `deploy`:
+High level description:
+
+First, list all the stacks: both local and deployed. Then build an index of all
+resources from all stacks. This index maps the _content_ address (physical ID or
+digest) of each resource to all the _location_ addresses (stack name + logical
+ID) they can be found in. The content address is computed using the digest
+function described in the previous section.
+
+Resources that have different locations before and after, are considered to have
+been moved. For each of those, create a mapping from the source (the currently
+deployed location) to the destination (the new location, in the local template).
+Example:
+
+    // Keys are the content address of the resources
+    // Values are the location addresses
+    { 
+      "5e19886121239b7a": { // Moved and renamed -> goes to mapping
+        "before": ["stack1/logicalId1"],
+        "after": "["stack2/logicalId2"]
+      },    
+      "24ad8195002086b6": { // Removed -> ignored 
+        "before": ["stack1/logicalId3"]
+      },
+      "07266c4dd0146e8a": { // Unchanged -> ignored 
+        "before": ["stack1/logicalId4"]
+        "after": ["stack1/logicalId4"]
+      }
+    }
+
+Since the CloudFormation API expects not only the mappings, but also the
+templates in their final states, we need to compute those as well. This is done
+by applying all the mappings locally, essentially emulating what CloudFormation
+will eventually do. For example, if a mapping says that a resource has moved
+from stack `A` with name `Foo`, to stack `B` with name `Bar`, we will remove
+`Foo` from the template for stack `A`, and add a new resource called `Bar` to
+the template for stack `B`.
+
+We are now ready to call the API to actually perform the refactor, using the
+mappings and templates computed previously.
+
+### C. Handling of settings
+
+Pseudocode for `deploy`, assuming there is a refactor to be made:
 
     // either from CLI option or config file
     switch (refactoring action): 
@@ -586,9 +565,9 @@ Pseudocode for `deploy`:
         if (--import-mapping):
             m = mapping from the file;
         else:
-            m = compute the mapping;
+            m = compute the mapping, using the matching algorithm;
 
-        Render m to stdout;
+        Format and print m;
 
         if (--export-mapping):
             Write m to the file;
@@ -601,6 +580,86 @@ The pseudocode for the `refactor` command is simply:
     if (not --dry-run):
         Apply m;
 
+### D. Cross-stack references
+
+Consider the case where there are three stacks: `Consumer`, `Producer1` and
+`Producer2`. There is a bucket in `Producer1` that is referenced by a function
+in `Consumer`. And you move the bucket to the stack `Producer2`:
+
+             ┌───────────────────┐          ┌───────────────────┐              
+             │ Consumer          │          │ Producer1         │             
+             │                   │          │                   │              
+             │      ┌─────────┐  │  before  │ ┌────────┐        │              
+             │      │function │─ ─ ─ ─ ─ ─ ─ >│ bucket │        │
+             │      └─────────┘  │          │ └────────┘        │              
+             └───────────│───────┘          └───────────────────┘              
+                         │                  ┌───────────────────┐              
+                         │                  │ Producer2         │              
+                         │                  │                   │              
+                         │                  │ ┌─────────┐       │              
+                         └───────────────────>│ bucket  │       │              
+                                    after   │ └─────────┘       │              
+                                            └───────────────────┘
+
+In the CloudFormation templates, this is represented by an exported output in
+`Producer1`, which is referenced by an `Fn::ImportValue` in `Consumer`. What
+ultimately needs to happen is that the exported output in `Producer1` must be
+removed, and a new one must be added in `Producer2`. The `Fn::ImportValue` in
+`Consumer` must be updated to point to the new output.
+
+This is manifestation of the deadly embrace problem. We can't do this in a
+single step because it would create a dangling reference (and therefore
+CloudFormation would reject it). The solution is also similar to what we suggest
+for solving the deadly embrace, but is done automatically here:
+
+1. Update the value of the output in `Producer1` to the hard-coded physical ID
+   of the bucket.
+2. Call the refactor API to move the bucket from `Producer1` to `Producer2`,
+   preserving the old output in `Producer1` while creating a new output in
+   `Producer2`, that references the bucket.
+3. Update the `Fn::ImportValue` in `Consumer` to point to the new output in
+   `Producer2`.
+4. Remove the output in `Producer1`.
+
+### E. Similarity between resources
+
+There are cases in which developers may wish to move a resource, and, at the
+same time, modify some of its properties. Indeed, this may not even be a choice.
+Some CDK constructs, for example, add tags to the underlying resource that are
+based on the construct path. Intuitively, developers would expect that small
+changes like this would be taken into account by the matching algorithm.
+
+The current proposal, however, does not solve this problem, because it uses a
+digest function to compare resources. As such, given two resources, they are
+considered either equivalent or not, with no middle ground.
+
+So we need a more flexible way of comparing resources. Instead of requiring them
+to be exactly the same, we need to know whether two resources are "similar
+enough". To achieve this, we need a few things:
+
+- **A distance function**. To generalize the notion of strict equality to a more
+  flexible notion of similarity, we need to come up with a distance function,
+  that is, a function that takes two resources as input, and produces a number
+  as output. The higher the number, the more different the resources are.
+- **A threshold for the distance**. This is a cut-off value that we can use to
+  decide whether two resources are similar enough to be candidates for
+  refactoring. It will depend on the distance function we choose and also on
+  experimentation.
+- **Graph isomorphism**. Since we will not have a digest anymore to quickly find
+  pairs of equivalent nodes between two resource graphs, we have to use the
+  graph structure itself to find possible pairs. Slightly more formally, we need
+  to find an [isomorphism] between two (sub-)graphs: a one-to-one function that
+  maps nodes in one graph to nodes in the other, such that the overall structure
+  is preserved. Only pairs of nodes that are part of the isomorphism will have
+  their distances calculated.
+
+All this takes a bit of research and prototyping. Since this would be a
+generalization of the current proposal, rather than a completely different
+solution, we don't need to implement it straight away. So we will leave it to
+phase 3 to do this research, and possibly implement it.
+
 [pulumi-aliases]: https://www.pulumi.com/docs/iac/concepts/options/aliases/
 
 [equivalence relation]: https://en.wikipedia.org/wiki/Equivalence_relation
+
+[isomorphism]: https://en.wikipedia.org/wiki/Graph_isomorphism
