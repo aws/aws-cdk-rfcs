@@ -654,10 +654,11 @@ enough". To achieve this, we need a few things:
   experimentation.
 - **Graph isomorphism**. Since we will not have a digest anymore to quickly find
   pairs of equivalent nodes between two resource graphs, we have to use the
-  graph structure itself to find possible pairs. Slightly more formally, we need
-  to find an [isomorphism] between two (sub-)graphs: a one-to-one function that
-  maps nodes in one graph to nodes in the other, such that the overall structure
-  is preserved. Only pairs of nodes that are part of the isomorphism will have
+  graph structure itself to find possible pairs (which the digest function also
+  incorporates implicitly). Slightly more formally, we need to find
+  an [isomorphism] between two (sub-)graphs: a one-to-one function that maps
+  nodes in one graph to nodes in the other, such that the overall structure is
+  preserved. Only pairs of nodes that are part of the isomorphism will have
   their distances calculated.
 - **Improved UX**. Since we are now working with similarities, there is more
   room for incorrect matches. We need to provide a way for the user to choose
