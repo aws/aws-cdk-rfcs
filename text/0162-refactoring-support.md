@@ -89,15 +89,15 @@ the CLI will present the refactoring to you:
 
     The following resources were moved or renamed:
 
-    ┌───────────────────────────────┬───────────────────────────────┬──────────────────────────┐
-    │ Resource Type                 │ Old Logical ID                │ New Logical ID           │
-    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
-    │ AWS::S3::Bucket               │ MyStack.Bucket5766466B        │ Web.Bucket843D52FF       │
-    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
-    │ AWS::CloudFront::Distribution │ MyStack.DistributionE3BB089E  │ Web.Distribution7142E1F1 │
-    ├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
-    │ AWS::Lambda::Function         │ MyStack.FunctionA5EA2BD8      │ Service.Function8F0BB69B │
-    └───────────────────────────────┴───────────────────────────────┴──────────────────────────┘
+    ┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────────┐
+    │ Resource Type                 │ Old Construct Path            │ New Construct Path                │
+    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+    │ AWS::S3::Bucket               │ MyStack/Bucket/Resource       │ Web/Website/Origin/Resource       │
+    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+    │ AWS::CloudFront::Distribution │ MyStack/Distribution/Resource │ Web/Website/Distribution/Resource │
+    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+    │ AWS::Lambda::Function         │ MyStack/Function/Resource     │ Service/Function/Resource         │
+    └───────────────────────────────┴───────────────────────────────┴───────────────────────────────────┘
 
     ? What do you want to do? (Use arrow keys)
     ❯ Execute the refactor and deploy
@@ -110,12 +110,12 @@ refactor is executed:
     Refactoring...
     Creating stack refactor...
 
-     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::S3::Bucket               | MyStack.Bucket5766466B       | Web.Bucket843D52FF           
-     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::CloudFront::Distribution | MyStack.DistributionE3BB089E | Web.Distribution7142E1F1     
-     1/3 | 2:03:18 PM | REFACTOR_COMPLETE    | AWS::S3::Bucket               | MyStack.Bucket5766466B       | Web.Bucket843D52FF           
-     1/3 | 2:03:18 PM | REFACTOR_IN_PROGRESS | AWS::Lambda::Function         | MyStack.FunctionA5EA2BD8     | Service.Function8F0BB69B     
-     2/3 | 2:03:19 PM | REFACTOR_COMPLETE    | AWS::CloudFront::Distribution | MyStack.DistributionE3BB089E | Web.DistributionE3BB089E 
-     3/3 | 2:03:20 PM | REFACTOR_COMPLETE    | AWS::Lambda::Function         | MyStack.FunctionA5EA2BD8     | Service.FunctionA5EA2BD8     
+     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
+     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource     
+     1/3 | 2:03:18 PM | REFACTOR_COMPLETE    | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
+     1/3 | 2:03:18 PM | REFACTOR_IN_PROGRESS | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
+     2/3 | 2:03:19 PM | REFACTOR_COMPLETE    | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource 
+     3/3 | 2:03:20 PM | REFACTOR_COMPLETE    | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
     
     ✅  Stack refactor complete
 
@@ -167,14 +167,18 @@ There are at least two possible paths from here, depending on your constraints:
    you import a mapping, the CLI won't try to detect refactors.
 2. The `--apply-mapping` option is also available for the `deploy` command. So
    you can commit the mapping file to version control, and configure your
-   pipeline to use it on every deployment. This is a more convenient option,
-   because it requires less coordination between different roles, but the
-   mapping file must be removed from the repository once the refactor has been
-   applied. Otherwise, the next deployment will fail.
+   pipeline to use it on every deployment. This is a more convenient option, as
+   it requires less coordination between different roles. Every time a refactor
+   is applied, a record of it is stored in the environment. This is to prevent
+   the same refactor from being applied multiple times.
 
 In general, if the protected environment is not in the same state as the
 environment where the mapping was generated, the `refactor --apply-mapping`
 command will fail.
+
+You can also use explicit mappings to define your own refactors, when the CLI
+didn't detect them automatically. This may happen a resource is moved and
+modified at the same time, for example.
 
 ### Settings
 
@@ -309,8 +313,10 @@ interactive mode, and importing and exporting of mapping files. Nevertheless,
 mistakes can happen. The first thing to be aware of is that refactors don't
 affect the resources themselves. The worst that can happen is you ending up with
 incorrect resource IDs in CloudFormation. The second thing is that refactors can
-be always be reverted. Simply edit the mapping file if you have one (or create
-one from scratch if you don't), and apply it to the affected stacks.
+be always be reverted. Every time the CLI generates a mapping file, it also
+generates its inverse mapping file (`<filename>-rollback.json`). So, if you
+accidentally refactor a stack, you can run the inverse file to bring the
+resources back to their original state.
 
 ## Internal FAQ
 
@@ -422,7 +428,7 @@ High-level tasks:
 
 #### Phase 3 (similarity)
 
-This is a research phase. We are going to investigate the possibility of 
+This is a research phase. We are going to investigate the possibility of
 matching resources that are not identical property-wise, but are similar enough
 that they may indicate a move. See Appendix E for more details.
 
@@ -596,9 +602,9 @@ in `Consumer`. And you move the bucket to the stack `Producer2`:
                          │                  ┌───────────────────┐              
                          │                  │ Producer2         │              
                          │                  │                   │              
-                         │                  │ ┌─────────┐       │              
-                         └───────────────────>│ bucket  │       │              
-                                    after   │ └─────────┘       │              
+                         │                  │ ┌────────┐        │              
+                         └───────────────────>│ bucket │        │              
+                                    after   │ └────────┘        │              
                                             └───────────────────┘
 
 In the CloudFormation templates, this is represented by an exported output in
@@ -625,9 +631,10 @@ for solving the deadly embrace, but is done automatically here:
 
 There are cases in which developers may wish to move a resource, and, at the
 same time, modify some of its properties. Indeed, this may not even be a choice.
-Some CDK constructs, for example, add tags to the underlying resource that are
-based on the construct path. Intuitively, developers would expect that small
-changes like this would be taken into account by the matching algorithm.
+Some CDK constructs (`ec2.Vpc` and `ec2.VpcV2` to name a couple), add tags to
+the underlying resource that are based on the construct path. Intuitively,
+developers would expect that small changes like this would be taken into account
+by the matching algorithm.
 
 The current proposal, however, does not solve this problem, because it uses a
 digest function to compare resources. As such, given two resources, they are
@@ -652,6 +659,10 @@ enough". To achieve this, we need a few things:
   maps nodes in one graph to nodes in the other, such that the overall structure
   is preserved. Only pairs of nodes that are part of the isomorphism will have
   their distances calculated.
+- **Improved UX**. Since we are now working with similarities, there is more
+  room for incorrect matches. We need to provide a way for the user to choose
+  among the potential matches, possibly in multiple passes, until the final
+  mapping is produced.
 
 All this takes a bit of research and prototyping. Since this would be a
 generalization of the current proposal, rather than a completely different
