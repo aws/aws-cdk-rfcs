@@ -165,20 +165,26 @@ There are at least two possible paths from here, depending on your constraints:
    `cdk refactor --resource-mapping=file.json` on every protected environment in
    advance (i.e., before your changes get deployed to those environments). When
    you import a mapping, the CLI won't try to detect refactors.
-2. The `--resource-mapping` option is also available for the `deploy` command. So
-   you can commit the mapping file to version control, and configure your
+2. The `--resource-mapping` option is also available for the `deploy` command.
+   So you can commit the mapping file to version control, and configure your
    pipeline to use it on every deployment. This is a more convenient option, as
    it requires less coordination between different roles. Every time a refactor
    is applied, a record of it is stored in the environment. This is to prevent
    the same refactor from being applied multiple times.
 
-In general, if the protected environment is not in the same state as the
-environment where the mapping was generated, the `refactor --resource-mapping`
-command will fail.
-
 You can also use explicit mappings to define your own refactors, when the CLI
 didn't detect them automatically. This may happen a resource is moved and
 modified at the same time, for example.
+
+Be aware that a mapping file is considered the source of truth and therefore
+overwrites the CLI's automatic detection. When applying an explicit mapping, it
+is your responsibility to ensure that the environment is in the same state as
+when the mapping was generated. If they are not, two failure modes might
+manifest: either the source logical ID does not exist, in which case the CLI
+will not perform the refactor and stop with an error message, or the source
+logical ID does exist but refers to a different resource than you intended, in
+which case the CLI will go ahead and perform the refactor, but with the wrong
+results.
 
 ### Settings
 
@@ -187,8 +193,8 @@ feature.
 
 For both `deploy` and `refactor`:
 
-- `--record-resource-mapping=<FILE>`: writes the mapping to a file. The file can be used
-  later to apply the same refactors in other environments.
+- `--record-resource-mapping=<FILE>`: writes the mapping to a file. The file can
+  be used later to apply the same refactors in other environments.
 - `--resource-mapping=<FILE>`: use the mapping from a file, instead of computing
   it. This file can be generated using the `--record-resource-mapping` option.
 - `--unstable=refactor`: used to acknowledge that this feature is experimental.
