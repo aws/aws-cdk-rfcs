@@ -11,11 +11,12 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 
 ### CHANGELOG
 
-`feat(cloudwatch): introduce new Application Signals L2 constructs for simplifying SLO creation and management`
+`feat(applicationSignals): introduce new Application Signals L2 constructs for simplifying SLO creation and management`
 
 ### README
 
 #### IntervalProps
+`IntervalProps` implements IInterval
 
 |Name |Type |Description |
 |--- |--- |--- |
@@ -23,6 +24,7 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 |unit |DurationUnit |Unit of duration <br>One of the following enum values:<br>`HOUR`<br>`DAY`<br>`MINUTE`|
 
 #### CalendarIntervalProps
+`CalendarIntervalProps` implements IInterval
 
 |Name |Type |Description |
 |--- |--- |--- |
@@ -37,6 +39,17 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 |attainmentGoal? |number |Optional The target goal percentage.<br> default is 99.9 |
 |warningThreshold? |number |Optional warning threshold percentage.<br> default is 30 |
 |interval |IInterval |Interval configuration |
+
+#### KeyAttributesProps
+`KeyAttributes` is a construct that helps configure and validate Application Signals key attributes for services.
+
+|Name |Type | Description                                                                                                |
+|--- |--- |------------------------------------------------------------------------------------------------------------|
+|type |[KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE |
+|name |string | The name of the service                                                                                    |
+|environment |string | The environment of the service                                                                             |
+|identifier? |string | Optional additional identifier for the service                                                             |
+
 
 #### MetricDimension
 
@@ -55,16 +68,17 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 
 #### SliMetricBaseProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|metricThreshold |number |Threshold for the metric |
-|metricType? |MetricType(enum) |Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
-|keyAttributes? |string |Optional key attributes |
-|operationName? |string |Optional operation name |
-|comparisonOperator? |ComparisonOperator(enum( |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` 
+|Name | Type                     |Description |
+|--- |--------------------------|--- |
+|metricThreshold | number                   |Threshold for the metric |
+|metricType? | MetricType(enum)         |Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
+|keyAttributes? | string                   |Optional key attributes |
+|operationName? | string                   |Optional operation name |
+|comparisonOperator? | ComparisonOperator(enum) |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` 
 
 
 #### PeriodBasedMetricProps
+`PeriodBasedMetricBaseProps`implements SliMetricBaseProps
 
 |Name |Type |Description |
 |--- |--- |--- |
@@ -73,6 +87,7 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 |metricDataQueries |MetricDataQuery[] |Array of metric queries |
 
 #### RequestBasedMetricProps
+`RequestMetricBaseProps`implements SliMetricBaseProps
 
 |Name |Type |Description |
 |--- |--- |--- |
@@ -85,9 +100,9 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 |Name |Type |Description |
 |--- |--- |--- |
 |name |string |The name of the SLO |
-|keyAttributes |IResolvable \| { [string]: string } |The key attributes for the SLO |
+|keyAttributes | { [string]: string } |The key attributes for the SLO |
 |operationName? |string |The operation name for the SLO (optional) |
-|goal |SLOGoalConfig |The goal configuration for the SLO |
+|goal |GoalConfig |The goal configuration for the SLO |
 |sliMetric? |PeriodBasedMetricProps |Period-based metric configuration |
 |description? |string |A description for the SLO (optional) |
 |burnRateWindows? |number[] |Burn rate windows (Optional) |
@@ -97,9 +112,9 @@ and robust set of L2 CDK constructs that simplify the creation of SLOs while pro
 |Name |Type |Description |
 |--- |--- |--- |
 |name |string |The name of the SLO |
-|keyAttributes |IResolvable \| { [string]: string } |The key attributes for the SLO |
+|keyAttributes | { [string]: string } |The key attributes for the SLO |
 |operationName? |string |The operation name for the SLO (optional) |
-|goal |SLOGoalConfig |The goal configuration for the SLO |
+|goal |GoalConfig |The goal configuration for the SLO |
 |sliMetric? |RequestBasedMetricProps |Request-based metric configuration |
 |description? |string |A description for the SLO (optional) |
 |burnRateWindows? |number[] |Burn rate windows (Optional) |
@@ -145,9 +160,10 @@ const availabilitySlo = ServiceLevelObjective.periodBased(this, 'ApiAvailability
     metricThreshold: 99,
     metricType: MetricType.AVAILABILITY,
     operationName: 'OrderProcessing',
-    keyAttributes: {
-      service: 'OrderService',
-    },
+    keyAttributes: KeyAttributes.service({
+     name: 'MyService',
+     environment: 'Development',
+   });
     periodSeconds: 300,
     statistic: 'Average',
   },
