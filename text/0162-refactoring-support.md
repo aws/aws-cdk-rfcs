@@ -156,16 +156,16 @@ In a situation like this, you can import and export mapping files. Here is how
 it works: at development time, you made a change that the CLI detected as a
 refactor. Since you want that refactor to be propagated to other environments,
 you export the mapping file, with the command
-`cdk refactor --export-mapping=file.json`.
+`cdk refactor --record-resource-mapping=file.json`.
 
 There are at least two possible paths from here, depending on your constraints:
 
 1. You send the exported file to an operations team, who will review it. If
    approved, they manually run the command
-   `cdk refactor --import-mapping=file.json` on every protected environment in
+   `cdk refactor --resource-mapping=file.json` on every protected environment in
    advance (i.e., before your changes get deployed to those environments). When
    you import a mapping, the CLI won't try to detect refactors.
-2. The `--apply-mapping` option is also available for the `deploy` command. So
+2. The `--resource-mapping` option is also available for the `deploy` command. So
    you can commit the mapping file to version control, and configure your
    pipeline to use it on every deployment. This is a more convenient option, as
    it requires less coordination between different roles. Every time a refactor
@@ -173,7 +173,7 @@ There are at least two possible paths from here, depending on your constraints:
    the same refactor from being applied multiple times.
 
 In general, if the protected environment is not in the same state as the
-environment where the mapping was generated, the `refactor --apply-mapping`
+environment where the mapping was generated, the `refactor --resource-mapping`
 command will fail.
 
 You can also use explicit mappings to define your own refactors, when the CLI
@@ -187,10 +187,10 @@ feature.
 
 For both `deploy` and `refactor`:
 
-- `--export-mapping=<FILE>`: writes the mapping to a file. The file can be used
+- `--record-resource-mapping=<FILE>`: writes the mapping to a file. The file can be used
   later to apply the same refactors in other environments.
-- `--import-mapping=<FILE>`: use the mapping from a file, instead of computing
-  it. This file can be generated using the `--export-mapping` option.
+- `--resource-mapping=<FILE>`: use the mapping from a file, instead of computing
+  it. This file can be generated using the `--record-resource-mapping` option.
 - `--unstable=refactor`: used to acknowledge that this feature is experimental.
   If the flag is not set, and the CLI would try to perform some refactor, the
   command fails with an error message explaining why.
@@ -199,10 +199,7 @@ For `deploy` only:
 
 - `--refactoring-action=[ACTION]`: the action to take in case there is a
   refactor to be made. Possible values for `ACTION` are:
-    - `confirm`: ask the user what to do. This is the scenario described in the
-      **How it works** section.
     - `refactor`: automatically refactor and deploy.
-    - `quit`: stop with a non-zero exit code.
     - `skip`: deploy without refactoring. This is the default value.
 
 For `refactor` only:
@@ -233,8 +230,8 @@ produced by the CLI may not be what you want:
   IDs `FinancialData` and `CustomerData`, and you want to rename them to
   `FinancialReports` and `CustomerInfo`, respectively. But the CLI may end up
   doing the opposite, so that, after the refactor, the bucket that contains
-  financial reports will happen to be called `CustomerData` in CloudFormation.
-  Its physical ID and properties remain unchanged, though.
+  financial reports will happen to be called `CustomerData` in CloudFormation,
+  and vice versa. Its physical ID and properties remain unchanged, though.
 - When you actually want to replace resources, despite them having the same
   properties before and after the deployment. In this case, you can remove the
   unwanted mapping from the mapping file.
@@ -537,54 +534,44 @@ mappings and templates computed previously.
 
 Pseudocode for `deploy`, assuming there is a refactor to be made:
 
+    if (not --unstable=refactor):
+        Fail with a specific error message;
+
     // either from CLI option or config file
     switch (refactoring action): 
-        case quit:
-            Stop with non-zero exit code;
+        case skip or null:
+            Do nothing;
 
         case refactor:
-            m = getMapping();
-            if (not --dry-run):
-                Apply m;
-                Deploy;
+            if (--resource-mapping):
+                m = mapping from the file;
+                outputMapping(m);
+                if (not --dry-run):
+                    Apply m;
+            else if (tty):
+                m = compute the mapping, using the matching algorithm;
+                outputMapping(m);
+                if (not --dry-run):
+                    Ask user what to do;
+                    switch (user's choice):
+                        case quit:
+                            Stop with non-zero exit code;
+                        case refactor: 
+                            Apply m;
+                        case skip:
+                            Do nothing;
+            else:
+                Fail with a specific error message;
 
-        case skip or null:
-            Deploy;
+    // Whatever the user chose, if we got this far, we can now deploy
+    Deploy;
 
-        case confirm:
-            m = getMapping().
-            if (not --dry-run):
-                Ask user what to do;
-                switch (user's choice):
-                    case quit:
-                        Stop with non-zero exit code;
-                    case refactor: 
-                        Apply m;
-                        Deploy;
-                    case skip:
-                        Deploy;
-
-    function getMapping():
-        if (not --unstable=refactor):
-            Fail with a specific error message;
-
-        if (--import-mapping):
-            m = mapping from the file;
-        else:
-            m = compute the mapping, using the matching algorithm;
-
+    function outputMapping(m):
         Format and print m;
-
-        if (--export-mapping):
+        if (--record-resource-mapping):
             Write m to the file;
 
-        return m;
-
-The pseudocode for the `refactor` command is simply:
-
-    m = getMapping();
-    if (not --dry-run):
-        Apply m;
+The pseudocode for the `refactor` command is simply the `refactor` branch above.
 
 ### D. Cross-stack references
 
