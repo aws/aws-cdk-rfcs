@@ -174,17 +174,9 @@ There are at least two possible paths from here, depending on your constraints:
 
 You can also use explicit mappings to define your own refactors, when the CLI
 didn't detect them automatically. This may happen a resource is moved and
-modified at the same time, for example.
-
-Be aware that a mapping file is considered the source of truth and therefore
-overwrites the CLI's automatic detection. When applying an explicit mapping, it
-is your responsibility to ensure that the environment is in the same state as
-when the mapping was generated. If they are not, two failure modes might
-manifest: either the source logical ID does not exist, in which case the CLI
-will not perform the refactor and stop with an error message, or the source
-logical ID does exist but refers to a different resource than you intended, in
-which case the CLI will go ahead and perform the refactor, but with the wrong
-results.
+modified at the same time, for example. You may also be in a situation in which
+the CLI detected a refactor, but you actually intend to replace it. To
+accomplish this, you can remove the unwanted mapping from the mapping file.
 
 ### Settings
 
@@ -225,23 +217,6 @@ All these settings are also available in the `cdk.json` file:
 }
 ```
 
-It's worth noting that there are at least two cases in which the mapping
-produced by the CLI may not be what you want:
-
-- Ambiguity: you may find yourself in the very unlikely situation in which two
-  or more resources have the same type and properties, and they are moved or
-  renamed at the same time. Since there are at least two valid ways to map the
-  old IDs to the new ones, the CLI can't guarantee that it will make the right
-  choice. For instance, suppose you have two identical S3 buckets, with logical
-  IDs `FinancialData` and `CustomerData`, and you want to rename them to
-  `FinancialReports` and `CustomerInfo`, respectively. But the CLI may end up
-  doing the opposite, so that, after the refactor, the bucket that contains
-  financial reports will happen to be called `CustomerData` in CloudFormation,
-  and vice versa. Its physical ID and properties remain unchanged, though.
-- When you actually want to replace resources, despite them having the same
-  properties before and after the deployment. In this case, you can remove the
-  unwanted mapping from the mapping file.
-
 We recommend that you always use the `confirm` option at development time. This
 way, you can see what changes the CLI is going to make, and decide whether they
 are correct. This gives you a chance to modify any incorrect mappings (by, for
@@ -274,6 +249,75 @@ await toolkit.deploy(cx, {
 // Or, if you just want to refactor the stacks:
 await toolkit.refactor(cx);
 ```
+
+### Limitations and failure modes
+
+#### Pipelines with version superseding
+
+As we have seen, there are two ways to apply refactors: automatically, by
+consuming a mapping file, or interactively, when the CLI computes the refactor
+to be made, and the user is asked whether to proceed. If you want to use this
+feature in a CI/CD pipeline, so that the refactors are applied automatically,
+you must use commit the mapping file along with your code and use it on each
+relevant stage of your pipeline.
+
+However, this only works if all versions are deployed. But in many pipeline
+implementations, this is not true, and some versions may be skipped (for reasons
+that are not relevant here). In this situation, the mapping files may be out of
+date; they may assume a source state that is no longer true. Some examples:
+
+Some version of your CDK application creates a resource with a certain logical
+ID that a later refactor references. But that version was skipped, and
+consequently the resource was never deployed. The refactor, then, references
+something that doesn't exist, which results in a CLI error, blocking the
+pipeline:
+
+```
+Action:   [Create "A"]  [Rename "A" to "B"]
+               │             │      
+Time:      ────┼─────────────┼────────────────>
+               │             │      
+Deployed?      No            Yes
+                      ("A" doesn't exist)
+```
+
+Due to skipped deployments, the refactor may end up referring to logical IDs
+that refer to different resources than intended. Suppose that, at some point,
+you had a resource called "A". In subsequent versions, "A" was deleted, and then
+replaced with a different resource that happened to also be named "A". If a
+mapping file references "A", the intention would be the most recent resource.
+But the resource that is found is the old one. In this case, the refactor will
+happen, but with a different result than intended:
+
+```
+Action:   [Create "A"]  [Delete "A"]  [Create diff. "A"]  [Rename "A" to "B"]
+               │             │          │                     │
+Time:      ────┼─────────────┼──────────┼─────────────────────┼─────────────>
+               │             │          │                     │
+Deployed?     Yes            No         No                   Yes
+                                                 (Applies to wrong resource)
+```
+
+If this is the case in your CI/CD pipeline, we don't recommend you use this
+feature.
+
+#### Ambiguity
+
+You may find yourself in the very unlikely situation in which two or more
+resources have the same type and properties, and they are moved or renamed at
+the same time. Since there are at least two valid ways to map the old IDs to the
+new ones, the CLI can't guarantee that it will make the right choice. For
+instance, suppose you have two identical S3 buckets, with logical IDs
+`FinancialData` and `CustomerData`, and you want to rename them to
+`FinancialReports` and `CustomerInfo`, respectively. But the CLI could end up
+doing the opposite, so that, after the refactor, the bucket that contains
+financial reports would be called `CustomerData` in CloudFormation, and vice
+versa.
+
+Even though all the resources involved in this scenario would remain unchanged,
+we have decided to err on the side of caution and not perform the refactor. If,
+as the result of computing a refactor, the CLI detects such a case of ambiguity,
+it will fail with an error message explaining the situation.
 
 ---
 
