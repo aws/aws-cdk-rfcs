@@ -19,7 +19,7 @@ constructs that simplify the creation of SLOs while providing the flexibility.
 ### README
 
 Amazon CloudWatch Application Signals Service Level Objectives (SLOs) L2 construct
-enables you to create and manage Service Level Objectives (SLOs) for your applications 
+enables you to create and manage Service Level Objectives (SLOs) for your applications
 using Amazon CloudWatch Application Signals. SLOs help ensure your critical business
 operations meet customer expectations by setting and tracking specific reliability and availability targets.
 
