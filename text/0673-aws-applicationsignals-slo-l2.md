@@ -18,9 +18,10 @@ constructs that simplify the creation of SLOs while providing the flexibility.
 
 ### README
 
-Amazon CloudWatch Application Signals Service Level Objectives (SLOs) L2 construct enables you to create and manage
-Service Level Objectives (SLOs) for your applications using Amazon CloudWatch Application Signals. SLOs help
-ensure your critical business operations meet customer expectations by setting and tracking specific reliability and availability targets.
+Amazon CloudWatch Application Signals Service Level Objectives (SLOs) L2 construct
+enables you to create and manage Service Level Objectives (SLOs) for your applications 
+using Amazon CloudWatch Application Signals. SLOs help ensure your critical business
+operations meet customer expectations by setting and tracking specific reliability and availability targets.
 
 The ServiceLevelObjective construct provides two types of SLOs:<br>
 Period-based SLOs: Evaluate performance against goals using defined time periods.<br>
@@ -117,9 +118,9 @@ const requestSlo = ServiceLevelObjective.requestBased(this, 'RequestSLO', {
 
 ### API Design
 
-This L2 construct simplifies SLO creation while maintaining the flexibility needed for various use cases. 
-It handles the complexity of creating and managing SLOs, allowing you to focus on defining your service
-reliability targets.
+This L2 construct simplifies SLO creation while maintaining the
+flexibility needed for various use cases. It handles the complexity of
+creating and managing SLOs, allowing you to focus on defining your service reliability targets.
 
 #### IntervalProps
 
@@ -176,13 +177,13 @@ reliability targets.
 
 #### SliMetricBaseProps
 
-|Name | Type                     |Description |
-|--- |--------------------------|--- |
-|metricThreshold | number                   |Threshold for the metric |
-|metricType? | MetricType(enum)         |Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
-|keyAttributes? | KeyAttributes            |Optional key attributes |
-|operationName? | string                   |Optional operation name |
-|comparisonOperator? | ComparisonOperator(enum) |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` |
+|Name | Type |Description |
+|--- |---|---|
+|metricThreshold | number                  | Threshold for the metric|
+|metricType? | MetricType(enum)        | Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
+|keyAttributes? | KeyAttributes           | Optional key attributes|
+|operationName? | string                  | Optional operation name |
+|comparisonOperator? | ComparisonOperator(enum) | Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` |
 
 #### PeriodBasedMetricProps
 
@@ -277,9 +278,9 @@ Replaced string literals with enums (DurationUnit, MetricType, ComparisonOperato
 
 #### 3. New Features
 
-1. Introduced separate Period-based and Request-based SLO patterns
-2. Added validation logic for configuration values
-3. Implemented reusable interval configurations
+1. Introduced separate Period-based and Request-based SLO patterns.
+2. Added validation logic for configuration values.
+3. Implemented reusable interval configurations.
 
 ### Is this a breaking change?
 
