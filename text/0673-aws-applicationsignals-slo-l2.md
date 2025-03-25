@@ -7,7 +7,7 @@
 The `ServiceLevelObjective` module is a collection of L2 constructs which leverages native L1 CFN resources, simplifying the
 Application Signals Service Level Objectives (SLOs) creation process to monitor the reliability of a service against customer expectations.
 The current process of creating SLOs using AWS CDK is complex and requires significant input from users, leading to potential errors and
-a time-consuming setup process. This design document addresses these challenges by proposing a predefined constants, and robust set of L2 CDK 
+a time-consuming setup process. This design document addresses these challenges by proposing a predefined constants, and robust set of L2 CDK
 constructs that simplify the creation of SLOs while providing the flexibility.
 
 ## Working Backwards
@@ -18,8 +18,9 @@ constructs that simplify the creation of SLOs while providing the flexibility.
 
 ### README
 
-Amazon CloudWatch Application Signals Service Level Objectives (SLOs) L2 construct enables you to create and manage Service Level Objectives (SLOs) for your applications using Amazon CloudWatch Application Signals. SLOs help ensure your critical business operations meet customer expectations by
-setting and tracking specific reliability and availability targets.
+Amazon CloudWatch Application Signals Service Level Objectives (SLOs) L2 construct enables you to create and manage
+Service Level Objectives (SLOs) for your applications using Amazon CloudWatch Application Signals. SLOs help
+ensure your critical business operations meet customer expectations by setting and tracking specific reliability and availability targets.
 
 The ServiceLevelObjective construct provides two types of SLOs:<br>
 Period-based SLOs: Evaluate performance against goals using defined time periods.<br>
@@ -116,7 +117,9 @@ const requestSlo = ServiceLevelObjective.requestBased(this, 'RequestSLO', {
 
 ### API Design
 
-This L2 construct simplifies SLO creation while maintaining the flexibility needed for various use cases. It handles the complexity of creating and managing SLOs, allowing you to focus on defining your service reliability targets.
+This L2 construct simplifies SLO creation while maintaining the flexibility needed for various use cases. 
+It handles the complexity of creating and managing SLOs, allowing you to focus on defining your service
+reliability targets.
 
 #### IntervalProps
 
@@ -149,12 +152,12 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 
 `KeyAttributes` is a construct that helps configure and validate Application Signals key attributes for services.
 
-|Name |Type | Description                                                                                                |
-|--- |--- |------------------------------------------------------------------------------------------------------------|
+|Name |Type | Description |
+|--- |--- |---|
 |type |[KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE |
-|name |string | The name of the service                                                                                    |
-|environment |string | The environment of the service                                                                             |
-|identifier? |string | Optional additional identifier for the service                                                             |
+|name |string | The name of the service |
+|environment |string | The environment of the service |
+|identifier? |string | Optional additional identifier for the service |
 
 #### MetricDimension
 
@@ -179,7 +182,7 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 |metricType? | MetricType(enum)         |Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
 |keyAttributes? | KeyAttributes            |Optional key attributes |
 |operationName? | string                   |Optional operation name |
-|comparisonOperator? | ComparisonOperator(enum) |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` 
+|comparisonOperator? | ComparisonOperator(enum) |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` |
 
 #### PeriodBasedMetricProps
 
@@ -224,8 +227,6 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 |sliMetric? |RequestBasedMetricProps |Request-based metric configuration |
 |description? |string |A description for the SLO (optional) |
 |burnRateWindows? |number[] |Burn rate windows (Optional) |
-
----
 
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied to the
@@ -276,7 +277,7 @@ Replaced string literals with enums (DurationUnit, MetricType, ComparisonOperato
 
 #### 3. New Features
 
-1. Introduced separate Period-based and Request-based SLO patterns 
+1. Introduced separate Period-based and Request-based SLO patterns
 2. Added validation logic for configuration values
 3. Implemented reusable interval configurations
 
