@@ -156,7 +156,6 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 |environment |string | The environment of the service                                                                             |
 |identifier? |string | Optional additional identifier for the service                                                             |
 
-
 #### MetricDimension
 
 |Name |Type |Description |
@@ -181,7 +180,6 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 |keyAttributes? | KeyAttributes            |Optional key attributes |
 |operationName? | string                   |Optional operation name |
 |comparisonOperator? | ComparisonOperator(enum) |Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` 
-
 
 #### PeriodBasedMetricProps
 
@@ -226,8 +224,6 @@ This L2 construct simplifies SLO creation while maintaining the flexibility need
 |sliMetric? |RequestBasedMetricProps |Request-based metric configuration |
 |description? |string |A description for the SLO (optional) |
 |burnRateWindows? |number[] |Burn rate windows (Optional) |
-
-
 
 ---
 
