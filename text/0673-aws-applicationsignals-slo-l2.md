@@ -120,7 +120,7 @@ const requestSlo = ServiceLevelObjective.requestBased(this, 'RequestSLO', {
 
 This L2 construct simplifies SLO creation while maintaining the
 flexibility needed for various use cases. It handles the complexity of
-creating and managing SLOs, allowing you to focus on defining your service reliability targets.
+creating and managing SLOs, allowing focus on defining the service reliability targets.
 
 #### IntervalProps
 
