@@ -187,9 +187,10 @@
 [686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)||⏰ final comments
 [689](https://github.com/aws/aws-cdk-rfcs/issues/689)|[Proposed AWS CDK Council Charter](https://github.com/aws/aws-cdk-rfcs/issues/689)||❓unknown
 [691](https://github.com/aws/aws-cdk-rfcs/issues/691)|[AWS Bedrock Integration Working Group](https://github.com/aws/aws-cdk-rfcs/issues/691)||❓unknown
-[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
+[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
 [710](https://github.com/aws/aws-cdk-rfcs/issues/710)|[Node.js Version Support Policy for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/710)||💡 proposed
+[715](https://github.com/aws/aws-cdk-rfcs/issues/715)|[CDK Migration Tools](https://github.com/aws/aws-cdk-rfcs/issues/715)||💡 proposed
 <!--END_TABLE-->
