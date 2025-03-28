@@ -24,10 +24,11 @@
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[RFC 670: AWS CloudWatch Application Signals L2 Constructs for SLO #673](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
-[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
+[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
 [710](https://github.com/aws/aws-cdk-rfcs/issues/710)|[Node.js Version Support Policy for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/710)||💡 proposed
+[715](https://github.com/aws/aws-cdk-rfcs/issues/715)|[CDK Migration Tools](https://github.com/aws/aws-cdk-rfcs/issues/715)||💡 proposed
 [686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)||⏰ final comments
 <!--END_TABLE-->
