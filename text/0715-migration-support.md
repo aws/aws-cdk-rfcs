@@ -404,3 +404,9 @@ High-level tasks:
 
 Milestone 2 will be a future release to help automate the code migration process as well.
 This is still under investigation and may or may not be included in the CDK migration support.
+
+### Will this tool support every future V1 to V2 construct?
+
+The CDK Migration Tool is designed to support common and high-impact migration scenarios for widely adopted
+constructs and modules. While we aim to expand coverage over time, we cannot guarantee support for every
+future V1-to-V2 migration path due to variations in technical complexity and resource constraints.
