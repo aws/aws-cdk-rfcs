@@ -1,4 +1,4 @@
-# CDK Migration Support
+# CDK Construct Upgrade Support
 
 - **Original Author(s):**: @GavinZZ
 - **Tracking Issue**: #715
@@ -42,7 +42,7 @@ In a high-level overview, for each supported migration, we provide:
 to their modern equivalents.
 2. A CDK CLI command `cdk construct-upgrade` to validate code changes and execute deployments safely.
 
-As of the initial release of CDK migration tool, we expect users to follow the migration guide to refactor
+As of the initial release of CDK construct upgrade tool, we expect users to follow the migration guide to refactor
 their CDK code, replacing legacy constructs (e.g., Table) with modern equivalents (e.g., TableV2). Users
 retain flexibility in implementation—modifications can be applied manually or through AI-assisted code
 transformation tools (e.g., LLMs).
@@ -57,7 +57,7 @@ to store the latest validation status. Once every check is successful, users can
 `cdk construct-upgrade` CLI command and it will automatically deduce from `upgrade.context.json` file
 that validation is complete and needs to proceed with actual execution and deployment step.
 
-In the initial release of CDK migration tool, we target to support VPC related constructs migration
+In the initial release of CDK construct upgrade tool, we target to support VPC related constructs migration
 from `aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` as well as `Table` to `TableV2` construct
 migration in `aws-cdk-lib/aws-dynamodb`. We will gradually include more construct or module
 migration in the future.
@@ -170,7 +170,7 @@ Resources
 [-] AWS::DynamoDB::Table MyTable orphan
 [-] AWS::IAM::ManagedPolicy destroy
 [-] Custom::DynamoDBReplica destroy
-[-] AWS::CloudFormation::Stack destroy
+[-] AWS::CloudFormation::NestedStack destroy
 [+] AWS::DynamoDB::GlobalTable MyGlobalTable add
 
 Do you wish migrate these resources (y/n)?
@@ -349,7 +349,7 @@ V2 resource, remove it from stack and import it using V1 CDK code.
 
 ### Why are we doing this?
 
-A number of CDK customers have requested this feature. CDK migration support
+A number of CDK customers have requested this feature. CDK construct upgrade support
 will show customer obsession by offering customers a safe and monitored method
 for migrations and it will increase the adoption rate for new constructs and modules
 as CDK will gradually reduce the level of supports for the outdated constructs and modules
@@ -367,7 +367,7 @@ acknowledge this by passing the `--unstable=migrate` flag.
 
 #### Milestone 1
 
-Milestone 1 is the initial, experimental release of CDK migration feature. This goal of this
+Milestone 1 is the initial, experimental release of CDK miconstruct upgrade feature. This goal of this
 milestone is to combine s guided documentation, automate validations, and deployment safeguards
 to ensure a controlled transition. We expect users to follow the documentation and do the
 code migration process themselves.
@@ -403,10 +403,10 @@ High-level tasks:
 #### Milestone 2
 
 Milestone 2 will be a future release to help automate the code migration process as well.
-This is still under investigation and may or may not be included in the CDK migration support.
+This is still under investigation and may or may not be included in the CDK construct upgrade support.
 
 ### Will this tool support every future V1 to V2 construct?
 
-The CDK Migration Tool is designed to support common and high-impact migration scenarios for widely adopted
+The CDK construct upgrade tool is designed to support common and high-impact migration scenarios for widely adopted
 constructs and modules. While we aim to expand coverage over time, we cannot guarantee support for every
 future V1-to-V2 migration path due to variations in technical complexity and resource constraints.
