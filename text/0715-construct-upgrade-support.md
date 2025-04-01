@@ -40,21 +40,21 @@ In a high-level overview, for each supported migration, we provide:
 
 1. A comprehensive, step-by-step migration guide enabling users to transition from legacy constructs/modules
 to their modern equivalents.
-2. A CDK CLI command `cdk upgrade` to validate code changes and execute deployments safely.
+2. A CDK CLI command `cdk construct upgrade` to validate code changes and execute deployments safely.
 
 As of the initial release of CDK migration tool, we expect users to follow the migration guide to refactor
 their CDK code, replacing legacy constructs (e.g., Table) with modern equivalents (e.g., TableV2). Users
 retain flexibility in implementation—modifications can be applied manually or through AI-assisted code
 transformation tools (e.g., LLMs).
 
-After the code modification to use the new construct, CDK CLI command `cdk upgrade` will help validate
+After the code modification to use the new construct, CDK CLI command `cdk construct upgrade` will help validate
 existing CDK stack and environment area ready for migration, flagging warnings and blockers like CloudFormation
 drift. Additionally, CDK CLI command will cross compare the old and new CloudFormation generated
 template, analyze CloudFormation change set.
 
-Once users run `cdk upgrade` CLI command, it will save a `upgrade.context.json` file locally
+Once users run `cdk construct upgrade` CLI command, it will save a `upgrade.context.json` file locally
 to store the latest validation status. Once every check is successful, users can re-trigger
-`cdk upgrade` CLI command and it will automatically deduce from `upgrade.context.json` file
+`cdk construct upgrade` CLI command and it will automatically deduce from `upgrade.context.json` file
 that validation is complete and needs to proceed with actual execution and deployment step.
 
 In the initial release of CDK migration tool, we target to support VPC related constructs migration
@@ -129,11 +129,11 @@ const table = new TableV2(this, 'MyGlobalTable', {
 > to delete your existing table and create a new one, due to differences in logical IDs
 > and resource types.
 
-The next step is to run the CDK CLI command `cdk upgrade`. This command
+The next step is to run the CDK CLI command `cdk construct upgrade`. This command
 will trigger the validation process to make sure the changes are valid and safe to deploy.
 
 ```sh
-cdk upgrade --unstable=migrate --migration-id dynamodb --dry-run
+cdk construct upgrade --unstable=migrate --migration-id dynamodb --dry-run
 ```
 
 CDK will do a dry-run validation on current stack status, compare the current and new CFN
@@ -161,7 +161,7 @@ Once the `migrationStatus` from the validation output is `Ready`, this implies t
 validated the code changes that no stateful resource replacement or service downtime would
 happen and is ready to proceed to the actual deployment step.
 
-To execute the migration, run `cdk upgrade --unstable=migrate --migration-id dynamodb`.
+To execute the migration, run `cdk construct upgrade --unstable=migrate --migration-id dynamodb`.
 The CLI will show you the changes it is going to make, and ask for your confirmation:
 
 ```sh
@@ -214,8 +214,8 @@ There are at least two possible paths forward, depending on the circumstances:
 approved, they manually dry run the validations on every protected environment in advance
 (i.e., before your changes get deployed to those environments).
 2. Commit the upgraded CDK stack code to version control, and configure your pipeline to run the new
-CDK CLI command `cdk upgrade`. This is a more convenient option, as it requires less coordination between
-different roles and will fail to deploy if any errors happen at validations. `cdk upgrade` will
+CDK CLI command `cdk construct upgrade`. This is a more convenient option, as it requires less coordination between
+different roles and will fail to deploy if any errors happen at validations. `cdk construct upgrade` will
 do validation prior to deployment.
 
 ### Settings
@@ -224,7 +224,7 @@ You have a few settings available to control the behavior of the CDK CLI command
 for migration feature.
 
 ```sh
-cdk upgrade [stack-id] \
+cdk construct upgrade [stack-id] \
     --module [vpc, dynamodb] \
     [OPTIONS]
 ```
