@@ -220,7 +220,7 @@ do validation prior to deployment.
 
 ### Settings
 
-You have a few settings available to control the behavior of the CDK CLI command 
+You have a few settings available to control the behavior of the CDK CLI command
 for migration feature.
 
 ```sh
@@ -297,7 +297,8 @@ As we have seen, there are two migration strategies, In-Place migration strategy
 and Retain-Remove-Import strategy.
 
 For In-Place migration strategy, it will use CDK/CFN refactoring feature, so it
-will experience the [same limitation](https://github.com/aws/aws-cdk-rfcs/blob/otaviom/refactoring-support/text/0162-refactoring-support.md#pipelines-with-version-superseding) as described in the CDK Refactoring RFC.
+will experience the [same limitation](https://github.com/aws/aws-cdk-rfcs/blob/otaviom/refactoring-support/text/0162-refactoring-support.md#pipelines-with-version-superseding)
+as described in the CDK Refactoring RFC.
 
 For Retain-Remove-Import migration strategy, because we use `CDK import` feature,
 it requires importing through resource physical names. In case of DynamoDB
