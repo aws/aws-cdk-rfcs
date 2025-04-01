@@ -2,7 +2,7 @@
 
 - **Original Author(s):**: @GavinZZ
 - **Tracking Issue**: #715
-- **API Bar Raiser**: TBD
+- **API Bar Raiser**: @iliapolo
 
 An improvement to the CDK CLI and CDK construct library, to support developers in
 migrating their CDK applications from supported V1 constructs/modules to the
@@ -311,7 +311,7 @@ Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied to
 the RFC pull request):
 
-[ ] Signed-off by API Bar Raiser @
+[ ] Signed-off by API Bar Raiser @@iliapolo
 
 ## Public FAQ
 
