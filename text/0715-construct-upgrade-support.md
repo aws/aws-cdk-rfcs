@@ -225,7 +225,7 @@ for migration feature.
 
 ```sh
 cdk construct-upgrade [stack-id] \
-    --module [vpc, dynamodb] \
+    --migration-id [id] \
     [OPTIONS]
 ```
 
