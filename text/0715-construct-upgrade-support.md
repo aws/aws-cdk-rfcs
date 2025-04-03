@@ -5,8 +5,9 @@
 - **API Bar Raiser**: @iliapolo
 
 An improvement to the CDK CLI and CDK construct library, to support developers in
-migrating their CDK applications from supported V1 constructs/modules to the
-latest V2 constructs/modules. An example
+migrating their CDK applications from supported older constructs or modules to the
+latest constructs/modules. An example would be `Table` to `TableV2` construct
+migration in `aws-cdk-lib/aws-dynamodb`.
 
 ## Working Backwards
 
@@ -52,10 +53,13 @@ existing CDK stack and environment area ready for migration, flagging warnings a
 drift. Additionally, CDK CLI command will cross compare the old and new CloudFormation generated
 template, analyze CloudFormation change set.
 
-Once users run `cdk construct-upgrade` CLI command, it will save a `upgrade.context.json` file locally
-to store the latest validation status. Once every check is successful, users can re-trigger
-`cdk construct-upgrade` CLI command and it will automatically deduce from `upgrade.context.json` file
-that validation is complete and needs to proceed with actual execution and deployment step.
+Users can choose to run `cdk construct-upgrade` CLI command with:
+
+1. `--dry-run` option to perform validation only and generate the the validation JSON file. Users can re-run
+`cdk construct-upgrade` CLI command and it will automatically deduce from `construct-upgrade.context.json` file
+if validations are complete to execution and deployment step.
+2. If `--dry-run` option is not specified, the CLI command will perform validation and automatically proceed
+with execution and deployment if validations are successful.
 
 In the initial release of CDK construct upgrade tool, we target to support VPC related constructs migration
 from `aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` as well as `Table` to `TableV2` construct
@@ -74,10 +78,10 @@ map logical ID changes. Then apply CloudFormation stack refactor feature by call
 `aws cloudformation execute-stack-refactor --stack-refactor-id <id>` to proceed migration.
 
 2. Retain-Remove-Import Migration - This approach expects users to have `RemovalPolicy.RETAIN` set
-on the V1 construct in the stack. Users also need to configure table construct so that the custom resource
+on the V1 construct in the stack. Typically, users need to configure V1 construct so that the custom resource
 deletion does not delete the stateful resources. If not already set, deploy the retain policy change. Then
-users can start to modify their CDK stack code locally to remove the migrated construct from the stack and
-update CDK stack using V2 construct with the same configurations. Replace any reference to the old construct
+users can start to modify their CDK stack code locally to remove the old construct from the stack and
+update CDK stack using latest construct with the same configurations. Replace any reference to the old construct
 with the new construct. Call `cdk deploy --import-existing-resources`. The flag `--import-existing-resources`
 will use CDK import internally and link to the orphan Table and replica resources to the new definition.
 
@@ -133,7 +137,7 @@ The next step is to run the CDK CLI command `cdk construct-upgrade`. This comman
 will trigger the validation process to make sure the changes are valid and safe to deploy.
 
 ```sh
-cdk construct-upgrade --unstable=migrate --migration-id dynamodb --dry-run
+cdk construct-upgrade --unstable=migrate --target dynamodb --dry-run
 ```
 
 CDK will do a dry-run validation on current stack status, compare the current and new CFN
@@ -141,7 +145,7 @@ template files, analyze dependency changes, analyze CloudFormation change set, v
 policies (if applies), validate stack refactor JSON file, and etc.
 
 The output of the validation will be shown in the CLI output as well as in a context file,
-`upgrade.context.json` file. A sample output is shown below:
+`construct-upgrade.context.json` file. A sample output is shown below:
 
 ```json
 {
@@ -161,7 +165,7 @@ Once the `migrationStatus` from the validation output is `Ready`, this implies t
 validated the code changes that no stateful resource replacement or service downtime would
 happen and is ready to proceed to the actual deployment step.
 
-To execute the migration, run `cdk construct-upgrade --unstable=migrate --migration-id dynamodb`.
+To execute the migration, run `cdk construct-upgrade --unstable=migrate --target dynamodb`.
 The CLI will show you the changes it is going to make, and ask for your confirmation:
 
 ```sh
@@ -225,7 +229,7 @@ for migration feature.
 
 ```sh
 cdk construct-upgrade [stack-id] \
-    --migration-id [id] \
+    --target [id] \
     [OPTIONS]
 ```
 
@@ -236,21 +240,21 @@ Arguments:
 
 Options:
 
-- --migration-id (Required)
+- --target (Required)
     specify the migration target. Valid values are [vpc, dynamodb]
 - --dry-run (Optional)
     This flag is default to false. When the flag is set to true, the CLI acts as dry-run
     and will only trigger validation. The output of the validations will be presented to users
-    in the log and be written into `upgrade.context.json` file.
+    in the log and be written into `construct-upgrade.context.json` file.
 - --strict (Optional)  
     Treats validation warnings as errors.  
-- --context-file (Optional)
-    specify custom context file instead of default `upgrade.context.json`
+- --validation-file (Optional)
+    specify custom context file instead of default `construct-upgrade.context.json`
 - --accept-violations (Optional)
     Specify this flag to override and ignore any failures or errors in the validations. Use
     at users’ own risk.
 - --abort (Optional)
-    Abort the migration and discard the upgrade.context.json context file.
+    Abort the migration and discard the construct-upgrade.context.json context file.
 - Other options that are common to CDK CLI like --quiet, --help, etc
 
 All these settings are also available in the `cdk.json` file:
@@ -261,7 +265,7 @@ All these settings are also available in the `cdk.json` file:
   "migration": {
     "migrationId": "dynamodb",
     "dryRun": true,
-    "contextFile": "upgrade.context.json",
+    "contextFile": "construct-upgrade.context.json",
     "acceptViolation": false,
     ...
   }
