@@ -17,12 +17,13 @@ CloudFormation will create a new resource, with the new logical ID, and possibly
 delete the old one. For stateful resources, this may cause interruption of
 service or data loss, or both.
 
-Historically, we have advised developers to avoid changing logical IDs. But this
-is sometimes impractical or conflicts with good software engineering practices.
-For instance, you may want to consolidate duplicated code across different CDK
-applications into a single reusable construct (an "L3 construct"). Introducing a
-new node for the L3 construct in the construct tree will rename the logical IDs
-of the resources in that subtree.
+Since the CDK generates logical IDs from construct IDs, our current advice to
+developers is to avoid changing construct IDs, to prevent this problem. But this
+is sometimes impractical, or conflicts with good software engineering practices.
+For instance, you may want to consolidate duplicated code from different CDK
+applications into a single reusable construct (an "L3 construct"). But, by
+introducing a new node for the L3 construct in the construct tree, all L1
+resources underneath that L3 will have their logical IDs changed.
 
 Also, you might need to move resources within the tree for better readability,
 or between stacks to isolate concerns. Accidental renames have also caused
@@ -68,10 +69,10 @@ The refactored construct tree looks like this:
     └─ Service
        └─ Function
 
-Even though none of the resources have changed, their paths have (from
-`MyStack/Bucket/Resource` to `Web/Website/Origin/Resource` etc.) Since the CDK
-computes the logical IDs of the resources from their path in the tree, all three
-resources will have their logical IDs changed.
+Even though none of the resources has changed, their paths have (from
+`MyStack/Bucket` to `Web/Website/Origin` etc.) Since the CDK computes the
+logical IDs of the resources from their path in the tree, all three resources
+will have their logical IDs changed.
 
 From your perspective, the changes above are mere moves and renames, but what
 CloudFormation sees is the deletion of old resources and the creation of new
@@ -109,6 +110,14 @@ If you answer yes, the CLI will show the progress as the refactor is executed:
     
     ✅  Stack refactor complete
 
+The same mapping shown in the table above will also be printed as part of the
+output of the `diff` command:
+
+    Resources
+    [≡] AWS::SQS::Queue MyStack/Bucket/Resource -> Web/Website/Origin/Resource
+    [≡] AWS::CloudFront::Distribution MyStack/Distribution/Resource -> Web/Website/Distribution/Resource
+    [≡] AWS::Lambda::Function MyStack/Function/Resource -> Service/Function/Resource
+
 You can also refactor the resources as part of a deployment, by running `cdk 
 deploy --refactoring-action=refactor --unstable=refactor`. You will be shown the
 same table as above, but a different set of options to choose from:
@@ -138,49 +147,59 @@ A few things to note about this feature:
 
 ### Explicit mapping
 
-The previous section describes an interaction between you and the CDK CLI, in
-which you are presented with a candidate for refactoring, and you decide whether
-you want it to happen. In a CI/CD pipeline, however, there is no human to make
-this decision. In this case, you can use explicit mappings to define your own
-refactors.
+#### Refactor file
 
-Here is how it works: at development time, you made a change that the CLI
-detected as a refactor. Since you want that refactor to be propagated to other
-environments, you export the mapping file, with the command
-`cdk refactor --record-resource-mapping=file.json`.
+The previous section describes the case in which the CLI automatically computes
+the mappings, by comparing the current and proposed states. But if you don't
+want this automatic detection to happen, you can provide your own mapping, via a
+_refactor file_.
 
-There are at least two possible paths from here, depending on your
-circumstances:
+The refactor file contains a map of current locations to new locations. When
+provided, this file serves as an allow-list: instead of computing the mapping,
+it will try to perform all the refactors in the list, and nothing else. The keys
+refer to existing locations; their corresponding values refer to the new
+locations they should be moved to. Both keys and values should follow the
+pattern `"<stack name>.<logical ID>"`:
 
-1. You send the exported file to an operations team, who will review it. If
-   approved, they manually run the command
-   `cdk refactor --resource-mapping=file.json` on every protected environment in
-   advance (i.e., before your changes get deployed to those environments). When
-   you import a mapping, the CLI won't try to detect refactors.
-2. The `--resource-mapping` option is also available for the `deploy` command.
-   So you can commit the mapping file to version control, and configure your
-   pipeline to use it on every deployment. This is a more convenient option, as
-   it requires less coordination between different roles. Every time a refactor
-   is applied, a record of it is stored in the environment. This is to prevent
-   the same refactor from being applied multiple times.
+    {
+      "StackA.OldName": "StackB.NewName",
+      "StackC.Foo": "StackC.Bar"
+    }
 
-You can also use explicit mappings to define your own refactors, when the CLI
-didn't detect them automatically. This may happen a resource is moved and
-modified at the same time, for example. You may also be in a situation in which
-the CLI detected a refactor, but you actually intend to replace it. To
-accomplish this, you can remove the unwanted mapping from the mapping file.
+You can pass this mapping to the CLI via the `--refactor-mapping` option to both
+`deploy` and `refactor` commands.
+
+This is a regular JSON file, that you can write yourself. But to make it
+convenient for you, every time the CLI computes a mapping, it will automatically
+generate a refactor file at the root of your CDK application, with a timestamp
+in the name. Example: `.refactor-2025-04-03_12-05-49.json`. You can use these
+files as a starting point to edit the mapping, combine multiple mappings into
+one, split mappings into multiple files, etc.
+
+#### Skip file
+
+You can also do the opposite: pass a _skip file_, that represents a deny-list.
+If provided, this will tell the CLI to exclude those locations from the mapping
+it computed:
+
+    ["StackA.Foo", "StackB.Bar"]
+
+This is useful when there are resources that you intentionally want to be
+replaced, despite the CLI detecting it as part of a refactor.
+
+If both are provided, the refactor file takes precedence.
 
 ### Settings
 
-You have a few settings available to control the behavior of the refactoring
+There are a few settings you can use to control the behavior of the refactoring
 feature.
 
 For both `deploy` and `refactor`:
 
-- `--record-resource-mapping=<FILE>`: writes the mapping to a file. The file can
-  be used later to apply the same refactors in other environments.
-- `--resource-mapping=<FILE>`: use the mapping from a file, instead of computing
-  it. This file can be generated using the `--record-resource-mapping` option.
+- `--refactor-mapping=<FILE>`: use the mapping from a file, instead of computing
+  it.
+- `--skip-refactoring=<FILE>`: removes the elements listed in the file from the
+  computed mapping.
 - `--unstable=refactor`: used to acknowledge that this feature is experimental.
   If the flag is not set, and the CLI would try to perform some refactor, the
   command fails with an error message explaining why.
@@ -188,13 +207,17 @@ For both `deploy` and `refactor`:
 For `deploy` only:
 
 - `--refactoring-action=[ACTION]`: the action to take in case there is a
-  refactor to be made. Possible values for `ACTION` are:
+  refactor to be made (either computed automatically or provided via a mapping
+  file). Possible values for `ACTION` are:
     - `refactor`: automatically refactor and deploy.
-    - `skip`: deploy without refactoring. This is the default value.
+    - `skip`: deploy without refactoring. Default value on non-interactive mode.
+    - `fail`: exit with non-zero status code.
+    - `ask`: ask the user what to do. Default value on interactive mode.
 
 For `refactor` only:
 
-- `--dry-run`: prints the mapping to the console, but does not apply it.
+- `--dry-run`: print the mapping to the console, but do not apply it.
+- `--force`: go ahead with refactoring, without prompting the user.
 
 All these settings are also available in the `cdk.json` file:
 
@@ -203,7 +226,6 @@ All these settings are also available in the `cdk.json` file:
   "app": "...",
   "refactor": {
     "refactoringAction": "refactor",
-    "exportMapping": "output.json",
     "dryRun": true
   }
 }
@@ -211,10 +233,11 @@ All these settings are also available in the `cdk.json` file:
 
 ### Rollback
 
-After refactoring the stack, the CLI will proceed with the deployment
-(assuming that is your choice). If the deployment fails, and CloudFormation
-rolls it back, the CLI will execute a second refactor, in reverse, to bring the
-resources back to their original locations.
+During the execution of a `deploy` command, the CLI will do the refactor and
+then proceed to the actual deployment (assuming the right set of flags). If the
+deployment fails, and CloudFormation rolls it back, the CLI will execute a
+second refactor, in reverse, to bring the resources back to their original
+locations.
 
 If you don't want the CLI to perform the rollback refactor, you can use the
 `--no-rollback` flag, which also controls the rollback behavior of the
@@ -237,36 +260,49 @@ await toolkit.deploy(cx, {
 await toolkit.refactor(cx);
 ```
 
+### Skipping classes of constructs
+
+In the CDK construct library there are some constructs that rely on
+CloudFormation's behavior to force the replacement of resources. API Gateway's
+`Deployment` and Lambda's `Version` are two examples of this strategy. By
+default, the CLI will detect these changes as refactors and not replacements. We
+have already seen a mechanism to override this: skip files. But it would be too
+inconvenient to have to maintain skip files and remembering to update it every
+time the logical ID changes.
+
+To solve this, CDK constructs can be automatically excluded by calling the new
+method `Stack.skipRefactoring(constructToBeSkipped)`. By calling this method,
+you are signalling to the CLI, via the cloud assembly, that the corresponding
+CloudFormation resource should (logically) be added to the skip file. Normally,
+this method will be called from the constructor of the class itself:
+`Stack.skipRefactoring(this)`.
+
 ### Limitations and failure modes
 
 #### Pipelines with version superseding
 
-As we have seen, there are two ways to apply refactors: automatically, by
-consuming a mapping file, or interactively, when the CLI computes the refactor
-to be made, and the user is asked whether to proceed. If you want to use this
-feature in a CI/CD pipeline, so that the refactors are applied automatically,
-you must use commit the mapping file along with your code and use it on each
-relevant stage of your pipeline.
+As we have seen, it is possible to automatically apply a refactor in a
+non-interactive environment, such as a CI/CD pipeline. And, in particular, you
+can specify the mapping explicitly, via a mapping file, version-controlled along
+with the rest of your CDK application.
 
-However, this only works if all versions are deployed. In many pipeline
-implementations, some versions may be skipped for various reasons. In such
-cases, the mapping files may become outdated, assuming a source state that is no
-longer accurate. Here are some examples:
+However, this set-up only works if all versions are deployed. In a CI/CD
+pipeline, versions may be skipped for various reasons. In such cases, the
+mapping files may become outdated, assuming a source state that is no longer
+accurate. Here are some examples:
 
 **Scenario 1**: Some version of your CDK application creates a resource with a
-certain logical ID that a later refactor references. But that version was
+certain logical ID, that a later refactor references. But that version was
 skipped, and consequently the resource was never deployed. The refactor, then,
 references something that doesn't exist, which results in a CLI error, blocking
 the pipeline:
 
-```
-Action:   [Create "A"]  [Rename "A" to "B"]
-               │             │      
-Time:      ────┼─────────────┼────────────>
-               │             │      
-Deployed?      No            Yes
-                      ("A" doesn't exist)
-```
+    Action:   [Create "A"]  [Rename "A" to "B"]
+                   │             │      
+    Time:      ────┼─────────────┼────────────>
+                   │             │      
+    Deployed?      No            Yes
+                          ("A" doesn't exist)
 
 **Scenario 2**: Due to skipped deployments, the refactor may end up referring to
 logical IDs that refer to different resources than intended. Suppose that, at
@@ -276,35 +312,50 @@ named "A". If a mapping file references "A", the intention would be the most
 recent resource. But the resource that is found is the old one. In this case,
 the refactor will happen, but with a different result than intended:
 
-```
-Action:   [Create "A"]  [Delete "A"]  [Create diff. "A"]  [Rename "A" to "B"]
-               │             │          │                     │
-Time:      ────┼─────────────┼──────────┼─────────────────────┼─────────────>
-               │             │          │                     │
-Deployed?     Yes            No         No                   Yes
-                                                 (Applies to wrong resource)
-```
+    Action:   [Create "A"]  [Delete "A"]  [Create diff. "A"]  [Rename "A" to "B"]
+                   │             │          │                     │
+    Time:      ────┼─────────────┼──────────┼─────────────────────┼─────────────>
+                   │             │          │                     │
+    Deployed?     Yes            No         No                   Yes
+                                                     (Applies to wrong resource)
 
-If this is the case in your CI/CD pipeline, we don't recommend you use this
-feature.
+Keeping refactor files both in sync with the state of the CDK app, and also
+consistent with the states where it will be applied is a difficult problem. We
+recommend that you use refactor files sparingly, only in cases that automatic
+refactoring doesn't cover, such as ambiguity (see next section).
 
 #### Ambiguity
 
 You may find yourself in the very unlikely situation in which two or more
 resources have the same type and properties, and they are moved or renamed at
 the same time. Since there are at least two valid ways to map the old IDs to the
-new ones, the CLI can't guarantee that it will make the right choice. For
-instance, suppose you have two identical S3 buckets, with logical IDs
-`FinancialData` and `CustomerData`, and you want to rename them to
+new ones, the CLI can't guarantee that it will make the right choice, according
+to your intention.
+
+For instance, you may have two S3 buckets with identical sets of properties, and
+logical IDs `FinancialData` and `CustomerData`. You want to rename them to
 `FinancialReports` and `CustomerInfo`, respectively. But the CLI could end up
 doing the opposite, so that, after the refactor, the bucket that contains
-financial reports would be called `CustomerData` in CloudFormation, and vice
-versa.
+financial reports would have the logical ID `CustomerData`, and vice versa.
 
 Even though all the resources involved in this scenario would remain unchanged,
 we have decided to err on the side of caution and not perform the refactor. If,
 as the result of computing a refactor, the CLI detects such a case of ambiguity,
 it will fail with an error message explaining the situation.
+
+If you still want to perform a refactor, you have to explicitly provide the
+mapping. There are two ways to do this: you can either create a refactor file
+from scratch, or you can pass another command line option to only override the
+ambiguous part of the mapping.
+
+For example, if the CLI detects that there are two resources in `StackA`, `X`
+and `Y`, that are identical, and both were renamed to `Y` and `Z`, you can tell
+it exactly which mapping you want:
+
+    cdk refactor --override='{"StackA.X": "StackA.Z", "StackA.Y": "StackA.W"}'
+
+The CLI will then apply this mapping, along with all other non-ambiguous
+mappings, it has computed.
 
 ---
 
@@ -343,14 +394,19 @@ stack refactoring support:
 ### What if I incorrectly refactor a stack?
 
 The CLI offers mechanisms to prevent accidental refactoring, such as dry runs,
-interactive mode, and importing and exporting of mapping files. Nevertheless,
-mistakes can happen. The first thing to be aware of is that refactors don't
-affect the resources themselves. The worst that can happen is you ending up with
-incorrect resource IDs in CloudFormation. The second thing is that refactors can
-be always be reverted. Every time the CLI generates a mapping file, it also
-generates its inverse mapping file (`<filename>-rollback.json`). So, if you
-accidentally refactor a stack, you can run the inverse file to bring the
-resources back to their original state.
+interactive mode, and refactor and skip files. Nevertheless, mistakes can
+happen. The first thing to be aware of is that refactors don't affect the
+resources themselves. Thus, an incorrect refactor will not cause any immediate
+problems other than logical IDs that don't match the intent of the resources
+they refer to. (Although, in the long run, this confusion may lead to other
+mistakes).
+
+The second thing is that refactors can be always be reverted. As mentioned
+before, the CLI generates a timestamped refactor file every time it executes a
+refactor. If you want to undo a refactor done by mistake, use the option
+`--revert`:
+
+    cdk refactor --revert=file.json --unstable=refactor
 
 ## Internal FAQ
 
@@ -379,22 +435,28 @@ interaction design.
 
 ### What is the technical solution (design) of this feature?
 
-There are two aspects of the solution that deserve attention:
+There are a few aspects of the solution that deserve attention:
 
-1. The computation of a mapping, given the difference between what is deployed
-   and what has just been synthesized. The location of a resource is defined as
-   the combination of its logical ID and the stack where it is declared. The
-   algorithm for this is described in Appendix B.
-2. How the CLI handles the various settings available to the user. This is
-   treated in Appendix C.
+- The core concept underlying this feature is the notion of equivalence between
+  resources. This is explained in Appendix A.
+- The computation of a mapping, given the difference between what is deployed
+  and what has just been synthesized. The location of a resource is defined as
+  the combination of its logical ID and the stack where it is declared. The
+  algorithm for this is described in Appendix B.
+- How the CLI handles the various settings available to the user. This is
+  treated in Appendix C.
+- Cross-stack references. This is an especially complex case, in which resources
+  that are being referenced from outside its stack, and they are moved to
+  another stack. This involves more than just one API call. Appendix D describes
+  the steps to accomplish the goal.
 
 ### Is this a breaking change?
 
-No. By default, the CLI will skip refactoring on deployment. The user must
-explicitly enable it by passing a value other than `skip` to the
-`--refactoring-action` (or `refactoringAction` in `cdk.json`) option. Also, this
-feature will initially be launched in experimental mode, and users must
-acknowledge this by passing the `--unstable=refactor` flag.
+No. By default, on non-interactive mode, the CLI will skip refactoring on
+deployment. The user must explicitly enable it by passing a value other than
+`skip` to the `--refactoring-action` (or `refactoringAction` in `cdk.json`)
+option. Also, this feature will initially be launched in experimental mode, and
+users must acknowledge this by passing the `--unstable=refactor` flag.
 
 ### What alternative solutions did you consider?
 
@@ -440,7 +502,9 @@ High-level tasks:
 - Implement resource equivalence without physical ID.
 - Implement the computation of mappings.
 - Implement the display of the mappings to the user.
-- Implement mapping import and export.
+- Implement refactor file support.
+- Implement skip file support.
+- Add refactors to the diff command.
 - Add physical ID to resource equivalence.
 - Update the documentation.
 
@@ -455,7 +519,6 @@ High-level tasks:
 - Implement the actual refactoring.
 - Implement rollback.
 - Implement the progress bar to display the refactoring progress.
-- Implement feature flags.
 - Handle cross-stack references.
 - Add the refactor step to the `deploy` command.
 - Write a blog post.
@@ -570,46 +633,110 @@ mappings and templates computed previously.
 
 ### C. Handling of settings
 
-Pseudocode for `deploy`, assuming there is a refactor to be made:
+#### Command: `refactor` (non-interactive case)
 
-    if (not --unstable=refactor):
-        Fail with a specific error message;
+```mermaid
+flowchart LR
+    mapping{Refactor file present?}
+    empty{Empty mapping?}
+    dryrun{--dry-run?}
+    compute[Compute mapping]
+    use[Use mapping]
+    print[Print mapping]
+    mapping ---|No| compute
+    mapping ---|Yes| use
+    compute --- empty
+    use --- empty
+    empty ---|Yes| Exit
+    empty ---|No| print
+    print --- dryrun
+    dryrun ---|Yes| Exit
+    dryrun ---|No| Refactor
+    Refactor --- Exit
+```
 
-    // either from CLI option or config file
-    switch (refactoring action): 
-        case skip or null:
-            // Do nothing;
+#### Command: `refactor` (interactive case)
 
-        case refactor:
-            if (--resource-mapping):
-                m = mapping from the file;
-                outputMapping(m);
-                if (not --dry-run):
-                    Apply m;
-            else if (tty):
-                m = compute the mapping, using the matching algorithm;
-                outputMapping(m);
-                if (not --dry-run):
-                    Ask user what to do;
-                    switch (user's choice):
-                        case quit:
-                            Stop with non-zero exit code;
-                        case refactor: 
-                            Apply m;
-                        case skip:
-                            // Do nothing;
-            else:
-                Fail with a specific error message;
+```mermaid
+flowchart LR
+    mapping{Refactor file present?}
+    empty{Empty mapping?}
+    dryrun{--dry-run?}
+    force{--force?}
+    compute[Compute mapping]
+    use[Use mapping]
+    print[Print mapping]
+    ask[Ask user]
+    mapping ---|No| compute
+    mapping ---|Yes| use
+    compute --- empty
+    use --- empty
+    empty ---|Yes| Exit
+    empty ---|No| print
+    print --- dryrun
+    dryrun ---|Yes| Exit
+    dryrun ---|No| force
+    force ---|Yes| Refactor
+    force ---|No| ask
+    ask ---|Yes| Refactor
+    ask ---|No| Exit
+    Refactor --- Exit
+```
 
-    // Whatever the user chose, if we got this far, we can now deploy
-    Deploy;
+#### Command: `deploy` (non-interactive case)
 
-    function outputMapping(m):
-        Format and print m;
-        if (--record-resource-mapping):
-            Write m to the file;
+```mermaid
+flowchart LR
+    skip{--action == SKIP or null}
+    action{--action}
+    mapping{Refactor file present?}
+    empty{Empty mapping?}
+    compute[Compute mapping]
+    use[Use mapping]
+    print[Print mapping]
+    skip ---|Yes| Deploy
+    skip ---|No| mapping
+    mapping ---|No| compute
+    mapping ---|Yes| use
+    compute --- empty
+    use --- empty
+    empty ---|Yes| Deploy
+    empty ---|No| print
+    print --- action
+    action ---|REFACTOR| Refactor
+    action ---|FAIL or ASK| Fail
+    Refactor --- Deploy
+```
 
-The pseudocode for the `refactor` command is simply the `refactor` branch above.
+#### Command: `deploy` (interactive case)
+
+```mermaid
+flowchart LR
+    skip{--action == SKIP}
+    action{--action}
+    mapping{Refactor file present?}
+    empty{Empty mapping?}
+    compute[Compute mapping]
+    use[Use mapping]
+    ask[Ask user]
+    print[Print mapping]
+    skip ---|Yes| Deploy
+    skip ---|No| mapping
+    mapping ---|No| compute
+    mapping ---|Yes| use
+    compute --- empty
+    use --- empty
+    empty ---|Yes| Deploy
+    empty ---|No| print
+    print --- action
+    action ---|REFACTOR| Refactor
+    action ---|FAIL| Fail
+    action ---|ASK or null| ask
+    ask ---|REFACTOR| Refactor
+    ask ---|QUIT| Fail
+    ask ---|SKIP| Deploy
+    Refactor --- Deploy
+```
 
 ### D. Cross-stack references
 
