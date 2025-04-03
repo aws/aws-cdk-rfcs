@@ -6,8 +6,7 @@
 
 An improvement to the CDK CLI and CDK construct library, to support developers in
 migrating their CDK applications from supported older constructs or modules to the
-latest constructs/modules. An example would be `Table` to `TableV2` construct
-migration in `aws-cdk-lib/aws-dynamodb`.
+latest constructs/modules.
 
 ## Working Backwards
 
