@@ -202,6 +202,10 @@ Updating stack...
 You can also migrate the resources as part of a deployment, by running `cdk
 deploy --import-existing-resources`. You will be shown the same table as above.
 
+To perform validation, the CLI needs new permissions such as drift detection permission in the
+bootstrap stack. Before using this feature, run `cdk bootstrap` for every target environment,
+to add these new permissions.
+
 ### Enterprise and CI/CD Pipeline
 
 Enterprise developers often lack production AWS credentials, making pre-deployment
