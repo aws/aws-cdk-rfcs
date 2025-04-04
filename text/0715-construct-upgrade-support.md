@@ -60,6 +60,9 @@ if validations are complete to execution and deployment step.
 2. If `--dry-run` option is not specified, the CLI command will perform validation and automatically proceed
 with execution and deployment if validations are successful.
 
+Alternatively, users can use `cdk deploy` with construct upgrade option to validate their construct upgrade
+changes and deploy the stacks `cdk deploy --validate-construct-upgrade`.
+
 In the initial release of CDK construct upgrade tool, we target to support VPC related constructs migration
 from `aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` as well as `Table` to `TableV2` construct
 migration in `aws-cdk-lib/aws-dynamodb`. We will gradually include more construct or module
@@ -199,8 +202,8 @@ Updating stack...
 ✅  Stack deployment complete
 ```
 
-You can also migrate the resources as part of a deployment, by running `cdk
-deploy --import-existing-resources`. You will be shown the same table as above.
+You can also migrate the resources as part of a deployment, by running the following command
+`cdk deploy --import-existing-resources --validate-construct-upgrade`. You will be shown the same table as above.
 
 To perform validation, the CLI needs new permissions such as drift detection permission in the
 bootstrap stack. Before using this feature, run `cdk bootstrap` for every target environment,
