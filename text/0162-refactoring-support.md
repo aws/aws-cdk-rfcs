@@ -352,7 +352,7 @@ For example, if the CLI detects that there are two resources in `StackA`, `X`
 and `Y`, that are identical, and both were renamed to `Y` and `Z`, you can tell
 it exactly which mapping you want:
 
-    cdk refactor --override='{"StackA.X": "StackA.Z", "StackA.Y": "StackA.W"}'
+    cdk refactor --map StackA.X:StackA.Z --map StackA.Y:StackA.W
 
 The CLI will then apply this mapping, along with all other non-ambiguous
 mappings, it has computed.
