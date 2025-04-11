@@ -152,13 +152,16 @@ creating and managing SLOs, allowing focus on defining the service reliability t
 #### KeyAttributes
 
 `KeyAttributes` is a construct that helps configure and validate Application Signals key attributes for services.
+If this SLO is related to a metric collected by Application Signals, you must use this field to specify which service
+the SLO metric is related to. To do so, you must specify at least the Type, Name, and Environment attributes.
 
-|Name |Type | Description |
-|--- |--- |---|
-|type |[KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE |
-|name |string | The name of the service |
-|environment |string | The environment of the service |
-|identifier? |string | Optional additional identifier for the service |
+|Name |Type | Description                                                                                                                                 |
+|--- |--- |---------------------------------------------------------------------------------------------------------------------------------------------|
+|type |[KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE`<br>`RESOURCE`<br>`AWS::RESOURCE` |
+|name |string | The name of the service. This is used only if the value of the Type field is Service, RemoteService, or AWS::Service.                       |
+|environment |string | The environment of the service                                                                                                              |
+|resourceType? |string | Optional specifies the type of the resource. Used only when type is Resource or AWS::Resource. |
+|identifier? |string | Optional additional identifier for the service. identifies the resource objects of this resource. This is used only if the value of the Type field is Resource or AWS::Resource.                                                                                            |
 
 #### MetricDimension
 
