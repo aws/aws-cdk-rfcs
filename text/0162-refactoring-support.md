@@ -375,7 +375,6 @@ it exactly which mapping you want:
 ```
 cdk refactor --map StackA.X:StackA.Z --map StackA.Y:StackA.W
 ```
-    
 
 The CLI will then apply this mapping, along with all other non-ambiguous
 mappings, it has computed.
