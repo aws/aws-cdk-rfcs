@@ -42,11 +42,13 @@ Suppose your CDK application has a single stack, called `MyStack`, containing an
 S3 bucket, a CloudFront distribution and a Lambda function. The construct tree
 looks like this (L1 constructs omitted for brevity):
 
-    App
-    └─ MyStack
-       ├─ Bucket
-       ├─ Distribution
-       └─ Function
+```
+App
+└─ MyStack
+   ├─ Bucket
+   ├─ Distribution
+   └─ Function
+```
 
 And suppose you make the following changes, after having deployed it to your AWS
 account:
@@ -61,13 +63,15 @@ account:
 
 The refactored construct tree looks like this:
 
-    App
-    ├─ Web
-    │  └─ Website
-    │     ├─ Origin
-    │     └─ Distribution
-    └─ Service
-       └─ Function
+```
+App
+├─ Web
+│  └─ Website
+│     ├─ Origin
+│     └─ Distribution
+└─ Service
+   └─ Function
+```
 
 Even though none of the resources has changed, their paths have (from
 `MyStack/Bucket` to `Web/Website/Origin` etc.) Since the CDK computes the
@@ -82,50 +86,58 @@ behalf to notify CloudFormation of your intention.
 To execute a refactor, run `cdk refactor --unstable=refactor`. The CLI will show
 you the changes it is going to make, and ask for your confirmation:
 
-    The following resources were moved or renamed:
+```
+The following resources were moved or renamed:
 
-    ┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────────┐
-    │ Resource Type                 │ Old Construct Path            │ New Construct Path                │
-    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
-    │ AWS::S3::Bucket               │ MyStack/Bucket/Resource       │ Web/Website/Origin/Resource       │
-    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
-    │ AWS::CloudFront::Distribution │ MyStack/Distribution/Resource │ Web/Website/Distribution/Resource │
-    ├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
-    │ AWS::Lambda::Function         │ MyStack/Function/Resource     │ Service/Function/Resource         │
-    └───────────────────────────────┴───────────────────────────────┴───────────────────────────────────┘
+┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────────┐
+│ Resource Type                 │ Old Construct Path            │ New Construct Path                │
+├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+│ AWS::S3::Bucket               │ MyStack/Bucket/Resource       │ Web/Website/Origin/Resource       │
+├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+│ AWS::CloudFront::Distribution │ MyStack/Distribution/Resource │ Web/Website/Distribution/Resource │
+├───────────────────────────────┼───────────────────────────────┼───────────────────────────────────┤
+│ AWS::Lambda::Function         │ MyStack/Function/Resource     │ Service/Function/Resource         │
+└───────────────────────────────┴───────────────────────────────┴───────────────────────────────────┘
 
-    Do you wish refactor these resources (y/n)?
+Do you wish refactor these resources (y/n)?
+```
 
 If you answer yes, the CLI will show the progress as the refactor is executed:
 
-    Refactoring...
-    Creating stack refactor...
+```
+Refactoring...
+Creating stack refactor...
 
-     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
-     0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource     
-     1/3 | 2:03:18 PM | REFACTOR_COMPLETE    | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
-     1/3 | 2:03:18 PM | REFACTOR_IN_PROGRESS | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
-     2/3 | 2:03:19 PM | REFACTOR_COMPLETE    | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource 
-     3/3 | 2:03:20 PM | REFACTOR_COMPLETE    | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
-    
-    ✅  Stack refactor complete
+ 0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
+ 0/3 | 2:03:17 PM | REFACTOR_IN_PROGRESS | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource     
+ 1/3 | 2:03:18 PM | REFACTOR_COMPLETE    | AWS::S3::Bucket               | MyStack/Bucket/Resource       | Web/Website/Origin/Resource           
+ 1/3 | 2:03:18 PM | REFACTOR_IN_PROGRESS | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
+ 2/3 | 2:03:19 PM | REFACTOR_COMPLETE    | AWS::CloudFront::Distribution | MyStack/Distribution/Resource | Web/Website/Distribution/Resource 
+ 3/3 | 2:03:20 PM | REFACTOR_COMPLETE    | AWS::Lambda::Function         | MyStack/Function/Resource     | Service/Function/Resource     
+
+✅  Stack refactor complete
+```
 
 The same mapping shown in the table above will also be printed as part of the
 output of the `diff` command:
 
-    Resources
-    [≡] AWS::SQS::Queue MyStack/Bucket/Resource -> Web/Website/Origin/Resource
-    [≡] AWS::CloudFront::Distribution MyStack/Distribution/Resource -> Web/Website/Distribution/Resource
-    [≡] AWS::Lambda::Function MyStack/Function/Resource -> Service/Function/Resource
+```
+Resources
+[≡] AWS::SQS::Queue MyStack/Bucket/Resource -> Web/Website/Origin/Resource
+[≡] AWS::CloudFront::Distribution MyStack/Distribution/Resource -> Web/Website/Distribution/Resource
+[≡] AWS::Lambda::Function MyStack/Function/Resource -> Service/Function/Resource
+```
 
-You can also refactor the resources as part of a deployment, by running `cdk 
+You can also refactor the resources as part of a deployment, by running `cdk
 deploy --refactoring-action=refactor --unstable=refactor`. You will be shown the
 same table as above, but a different set of options to choose from:
 
-    ? What do you want to do? (Use arrow keys)  
-    ❯ Execute the refactor and deploy  
-      Deploy without refactoring (will cause resource replacement)  
-      Quit
+```
+? What do you want to do? (Use arrow keys)  
+❯ Execute the refactor and deploy  
+  Deploy without refactoring (will cause resource replacement)  
+  Quit
+```
 
 A few things to note about this feature:
 
@@ -161,10 +173,12 @@ refer to existing locations; their corresponding values refer to the new
 locations they should be moved to. Both keys and values should follow the
 pattern `"<stack name>.<logical ID>"`:
 
-    {
-      "StackA.OldName": "StackB.NewName",
-      "StackC.Foo": "StackC.Bar"
-    }
+```json
+{
+  "StackA.OldName": "StackB.NewName",
+  "StackC.Foo": "StackC.Bar"
+}
+```
 
 You can pass this mapping to the CLI via the `--refactor-mapping` option to both
 `deploy` and `refactor` commands.
@@ -182,7 +196,9 @@ You can also do the opposite: pass a _skip file_, that represents a deny-list.
 If provided, this will tell the CLI to exclude those locations from the mapping
 it computed:
 
-    ["StackA.Foo", "StackB.Bar"]
+```
+["StackA.Foo", "StackB.Bar"]
+```
 
 This is useful when there are resources that you intentionally want to be
 replaced, despite the CLI detecting it as part of a refactor.
@@ -209,10 +225,10 @@ For `deploy` only:
 - `--refactoring-action=[ACTION]`: the action to take in case there is a
   refactor to be made (either computed automatically or provided via a mapping
   file). Possible values for `ACTION` are:
-    - `refactor`: automatically refactor and deploy.
-    - `skip`: deploy without refactoring. Default value on non-interactive mode.
-    - `fail`: exit with non-zero status code.
-    - `ask`: ask the user what to do. Default value on interactive mode.
+  - `refactor`: automatically refactor and deploy.
+  - `skip`: deploy without refactoring. Default value on non-interactive mode.
+  - `fail`: exit with non-zero status code.
+  - `ask`: ask the user what to do. Default value on interactive mode.
 
 For `refactor` only:
 
@@ -297,12 +313,14 @@ skipped, and consequently the resource was never deployed. The refactor, then,
 references something that doesn't exist, which results in a CLI error, blocking
 the pipeline:
 
-    Action:   [Create "A"]  [Rename "A" to "B"]
-                   │             │      
-    Time:      ────┼─────────────┼────────────>
-                   │             │      
-    Deployed?      No            Yes
-                          ("A" doesn't exist)
+```
+Action:   [Create "A"]  [Rename "A" to "B"]
+               │             │      
+Time:      ────┼─────────────┼────────────>
+               │             │      
+Deployed?      No            Yes
+                      ("A" doesn't exist)
+```
 
 **Scenario 2**: Due to skipped deployments, the refactor may end up referring to
 logical IDs that refer to different resources than intended. Suppose that, at
@@ -312,12 +330,14 @@ named "A". If a mapping file references "A", the intention would be the most
 recent resource. But the resource that is found is the old one. In this case,
 the refactor will happen, but with a different result than intended:
 
-    Action:   [Create "A"]  [Delete "A"]  [Create diff. "A"]  [Rename "A" to "B"]
-                   │             │          │                     │
-    Time:      ────┼─────────────┼──────────┼─────────────────────┼─────────────>
-                   │             │          │                     │
-    Deployed?     Yes            No         No                   Yes
-                                                     (Applies to wrong resource)
+```
+Action:   [Create "A"]  [Delete "A"]  [Create diff. "A"]  [Rename "A" to "B"]
+               │             │          │                     │
+Time:      ────┼─────────────┼──────────┼─────────────────────┼─────────────>
+               │             │          │                     │
+Deployed?     Yes            No         No                   Yes
+                                                 (Applies to wrong resource)
+```
 
 Keeping refactor files both in sync with the state of the CDK app, and also
 consistent with the states where it will be applied is a difficult problem. We
@@ -352,13 +372,14 @@ For example, if the CLI detects that there are two resources in `StackA`, `X`
 and `Y`, that are identical, and both were renamed to `Y` and `Z`, you can tell
 it exactly which mapping you want:
 
-    cdk refactor --override='{"StackA.X": "StackA.Z", "StackA.Y": "StackA.W"}'
+```
+cdk refactor --override='{"StackA.X": "StackA.Z", "StackA.Y": "StackA.W"}'
+```
 
 The CLI will then apply this mapping, along with all other non-ambiguous
 mappings, it has computed.
 
 ---
-
 
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied to
@@ -366,7 +387,7 @@ the RFC pull request):
 
 ```
 
-[ ] Signed-off by API Bar Raiser @rix0rrr
+[x] Signed-off by API Bar Raiser @rix0rrr
 
 ```
 
@@ -406,7 +427,9 @@ before, the CLI generates a timestamped refactor file every time it executes a
 refactor. If you want to undo a refactor done by mistake, use the option
 `--revert`:
 
-    cdk refactor --revert=file.json --unstable=refactor
+```shell
+cdk refactor --revert=file.json --unstable=refactor
+```
 
 ## Internal FAQ
 
@@ -568,8 +591,10 @@ the set of resources.
 
 Before that, let's define a digest function, `d`:
 
-    d(resource) = hash(type + physicalId)                       , if physicalId is defined
-                = hash(type + properties + dependencies.map(d)) , otherwise
+```
+d(resource) = hash(type + physicalId)                       , if physicalId is defined
+            = hash(type + properties + dependencies.map(d)) , otherwise
+```
 
 where `hash` is a cryptographic hash function. In other words, if a resource has
 a physical ID, we can use the physical ID plus its type to uniquely identify
@@ -604,21 +629,23 @@ been moved. For each of those, create a mapping from the source (the currently
 deployed location) to the destination (the new location, in the local template).
 Example:
 
-    // Keys are the content address of the resources
-    // Values are the location addresses
-    { 
-      "5e19886121239b7a": { // Moved and renamed -> goes to mapping
-        "before": ["stack1/logicalId1"],
-        "after": "["stack2/logicalId2"]
-      },    
-      "24ad8195002086b6": { // Removed -> ignored 
-        "before": ["stack1/logicalId3"]
-      },
-      "07266c4dd0146e8a": { // Unchanged -> ignored 
-        "before": ["stack1/logicalId4"]
-        "after": ["stack1/logicalId4"]
-      }
-    }
+```
+// Keys are the content address of the resources
+// Values are the location addresses
+{ 
+  "5e19886121239b7a": { // Moved and renamed -> goes to mapping
+    "before": ["stack1/logicalId1"],
+    "after": "["stack2/logicalId2"]
+  },    
+  "24ad8195002086b6": { // Removed -> ignored 
+    "before": ["stack1/logicalId3"]
+  },
+  "07266c4dd0146e8a": { // Unchanged -> ignored 
+    "before": ["stack1/logicalId4"]
+    "after": ["stack1/logicalId4"]
+  }
+}
+```
 
 Since the CloudFormation API expects not only the mappings, but also the
 templates in their final states, we need to compute those as well. This is done
@@ -744,20 +771,22 @@ Consider the case where there are three stacks: `Consumer`, `Producer1` and
 `Producer2`. There is a bucket in `Producer1` that is referenced by a function
 in `Consumer`. And you move the bucket to the stack `Producer2`:
 
-             ┌───────────────────┐          ┌───────────────────┐              
-             │ Consumer          │          │ Producer1         │             
-             │                   │          │                   │              
-             │      ┌─────────┐  │  before  │ ┌────────┐        │              
-             │      │function │─ ─ ─ ─ ─ ─ ─ >│ bucket │        │
-             │      └─────────┘  │          │ └────────┘        │              
-             └───────────│───────┘          └───────────────────┘              
-                         │                  ┌───────────────────┐              
-                         │                  │ Producer2         │              
-                         │                  │                   │              
-                         │                  │ ┌────────┐        │              
-                         └───────────────────>│ bucket │        │              
-                                    after   │ └────────┘        │              
-                                            └───────────────────┘
+```
+         ┌───────────────────┐          ┌───────────────────┐              
+         │ Consumer          │          │ Producer1         │             
+         │                   │          │                   │              
+         │      ┌─────────┐  │  before  │ ┌────────┐        │              
+         │      │function │─ ─ ─ ─ ─ ─ ─ >│ bucket │        │
+         │      └─────────┘  │          │ └────────┘        │              
+         └───────────│───────┘          └───────────────────┘              
+                     │                  ┌───────────────────┐              
+                     │                  │ Producer2         │              
+                     │                  │                   │              
+                     │                  │ ┌────────┐        │              
+                     └───────────────────>│ bucket │        │              
+                                after   │ └────────┘        │              
+                                        └───────────────────┘
+```
 
 In the CloudFormation templates, this is represented by an exported output in
 `Producer1`, which is referenced by an `Fn::ImportValue` in `Consumer`. What
