@@ -45,6 +45,14 @@ to their modern equivalents.
 - A new CDK CLI command `cdk construct-upgrade --unstable=construct-upgrade` to validate code changes and
 execute deployments safely.
 
+> For more details on the CLI usage, please visit [CLI Settings](#settings)
+>
+> ```sh
+> cdk construct-upgrade --unstable=construct-upgrade [stacks] \
+>    --target [id] \
+>    [OPTIONS]
+>```
+
 Note that each migration guide follows a standardized structure that includes dependency changes, behavioral
 analysis, risk assessments, and rollback instructions. This ensures consistency, clarity, and safety across
 all migrations. See [Appendix A](#appendix-a-migration-guide) for a detailed breakdown of the proposed migration
@@ -272,6 +280,7 @@ defined in `refactor.json` by validating against the deployed V1 template and sy
     },
     ......
 ]
+```
 
 The validation begins by verifying that every source LogicalId in `refactor.json` corresponds to a resource
 in the deployed V1 template, while every target LogicalId maps to a resource in the synthesized V2 template.
@@ -281,7 +290,7 @@ Resource types must also align: for example, a resource in V1 template of type `
 a resource in V2 template of a compatible type (e.g., `AWS::EC2::VPCV2`).
 
 This validation is specific to the context of construct upgrade framework and will be implemented as part of
-`cdk construct-upgrade` CLI command.
+`cdk construct-upgrade --unstable=construct-upgrade` CLI command.
 
 > Note that CDK team is working on a [cdk refactor feature](https://github.com/aws/aws-cdk-rfcs/pull/705)
 > to support CloudFormation Stack refactoring with CDK CLI. Once implemented, we will onboard to use CDK
@@ -321,8 +330,8 @@ configurations. For example, when migrating `Table` to `TableV2` for DynamoDB, t
 validations to ensure that custom resource deletions do not affect replica tables, that `TableName` and
 `SkipReplicaDeletion` properties are correctly set, and that `DeletionProtection` is enabled for safety.
 
-These CDk-provided validations are part of the `cdk construct-upgrade` CLI command and will be triggered
-based on the target migrated module.
+These CDK-provided validations are part of the `cdk construct-upgrade --unstable=construct-upgrade` CLI
+command and will be triggered based on the target migrated module.
 
 To enhance flexibility, the framework will also allow users to implement their own custom validations.
 Users can specify a file or code to containing custom validation logic. This capability allows users
@@ -453,7 +462,7 @@ const table = new TableV2(this, 'MyTable', {
 > to delete your existing table and create a new one, due to differences in logical IDs
 > and resource types.
 
-The next step is to run the CDK CLI command `cdk construct-upgrade`. This command
+The next step is to run the CDK CLI command `cdk construct-upgrade --unstable=construct-upgrade`. This command
 will trigger the validation process to make sure the changes are valid and safe to deploy.
 This migration will use the `Retain-Remove-Import` migration strategy because the underlying
 resource type has changed from `AWS::DynamoDBB::Table` to `AWS::DynamoDB::GlobalTable`.
@@ -518,7 +527,7 @@ same table as above.
 
 ### Re-bootstrap required
 
-Before using the `cdk construct-upgrade` command or `cdk deploy --unstable=construct-upgrade`
+Before using the `cdk construct-upgrade --unstable=construct-upgrade` command or `cdk deploy --unstable=construct-upgrade`
 commadn you need to ensure that the necessary permissions are granted to the environment.
 Specifically, drift detection permissions are required in the bootstrap stack to perform
 the validation correctly. Here is a list of required permissions:
@@ -605,7 +614,7 @@ You have a few settings available to control the behavior of the new CDK CLI com
 for construct upgrade feature.
 
 ```sh
-cdk construct-upgrade [stacks] \
+cdk construct-upgrade --unstable=construct-upgrade [stacks] \
     --target [id] \
     [OPTIONS]
 ```
@@ -635,6 +644,14 @@ Options:
     When used, it loosens the validation criteria to focus only on the changes directly related to
     the migrated resource. This is not a recommended behaviour but allow developers to continue
     with daily feature work while migrating.
+- --require-approval (Optional)
+    Specify what security-sensitive changes require manual approval.
+      - any-change – Manual approval required for any change to the stack.
+      - broadening – Manual approval required if changes involve a broadening of permissions or security group rules.
+      - never – Approval is not required.
+    Valid values: any-change, broadening, never
+    Default value: broadening
+
 - Other options that are common to CDK CLI like --quiet, --help, etc
 
 All these settings are also available in the `cdk.json` file:
