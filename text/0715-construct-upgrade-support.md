@@ -22,7 +22,7 @@ new construct, designed to succeed the original Vpc related constructs in `aws-c
 * The `TableV2` construct in `aws-cdk-lib/aws-dynamodb` replaces legacy Table implementations
 while retaining API compatibility.
 
-These updates unlock enhanced capabilities. Migration between versions, however, often requires
+These updates unlock enhanced capabilities. Construct upgrade between variants, however, often requires
 code changes that could trigger CloudFormation resource replacements (e.g., NAT gateways being
 recreated, DynamoDB global tables being recreated). Recreation of resources leads to data loss for
 stateful resources, and can lead to loss of availability for others.
@@ -42,7 +42,8 @@ In a high-level overview, for each supported migration, the construct upgrade fr
 
 - A comprehensive, step-by-step migration guide enabling users to transition from legacy constructs/modules
 to their modern equivalents.
-- A new CDK CLI command `cdk construct-upgrade` to validate code changes and execute deployments safely.
+- A new CDK CLI command `cdk construct-upgrade --unstable=construct-upgrade` to validate code changes and
+execute deployments safely.
 
 Note that each migration guide follows a standardized structure that includes dependency changes, behavioral
 analysis, risk assessments, and rollback instructions. This ensures consistency, clarity, and safety across
@@ -52,25 +53,35 @@ guide format.
 With the initial release of the CDK construct upgrade tool, developers would use the migration guide to
 update their CDK code, replacing legacy constructs (e.g., Table) with modern equivalents (e.g., TableV2).
 
-After updating the code to use the new construct, users would use the CDK CLI command `cdk construct-upgrade`
+After updating the code to use the new construct, users would use the CDK CLI command `cdk construct-upgrade --unstable=construct-upgrade`
 to validates the existing CDK stack and environment, ensuring they are ready for migration. The tool flags any
 warnings or blockers, such as CloudFormation drift, and cross-compares the old and new CloudFormation templates.
 It analyzes the CloudFormation change set and validates any library-specific configurations. See
 [Construct Upgrade Validations](#construct-upgrade-validations) for a detailed breakdown of the validations.
 
-Users choose to run the `cdk construct-upgrade` CLI command with the `--dry-run` option to perform validation
+Users choose to run the `cdk construct-upgrade --unstable=construct-upgrade` CLI command with the `--dry-run` option to perform validation
 described to produce the result into stdout. If the `--dry-run` option is not specified, the CLI command will
 perform validation and proceed with CloudFormation deployment if the validations are successful.
 
-Alternatively, users can use `cdk deploy --unsable=construct-upgrade` option to validate their construct upgrade
+Alternatively, users can use `cdk deploy --unstable=construct-upgrade` option to validate their construct upgrade
 changes before deployment.
 
-In the initial release of the CDK construct upgrade tool, the CLI supports migration of VPC-related constructs
-from `aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` and `Table` to `TableV2` in `aws-cdk-lib/aws-dynamodb`.
-These two target modules come with comprehensive migration guides and validations provided by the CDK team to
-ensure safe deployment. However, the tool is designed to be open and pluggable, allowing users to support other
+```sh
+# This will validate and deploy the construct upgrade changes
+cdk construct-upgrade [stack] --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
+
+# Alternatively, this can be separated into multi-step process
+cdk construct-upgrade [stack] --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2 --dry-run
+cdk deploy --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
+```
+
+In the initial release of the CDK construct upgrade tool, the CLI supports migration of constructs across modules,
+with generic validation logic applicable to all supported constructs. However, VPC-related constructs from
+`aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` and `Table` to `TableV2` in `aws-cdk-lib/aws-dynamodb` come
+with enhanced construct-specific validations and comprehensive migration guides provided by the CDK team to
+ensure safe deployment. Additionally, the tool is designed to be open and pluggable, allowing users to support other
 construct migrations by incorporating their own custom validations. This flexibility enables users to extend
-the tool to cover additional constructs that may not yet be officially supported.
+the tool to cover additional constructs that may not yet be officially supported with construct-specific validations.
 
 ### Construct Upgrade Strategies
 
@@ -87,10 +98,15 @@ is needed for the CloudFormation stack refactoring feature to map logical ID cha
 the new one. This file helps ensure that CloudFormation can track the logical resource IDs during the
 migration process, avoiding issues with resource recreation.
 
-Next users can run the new CLI command `cdk construct-upgrade` to proceeds with validations. If validations
-are successful, the framework continues to invoke the `aws cloudformation execute-stack-refactor --stack-refactor-id <id>`
-command. This command triggers the stack refactoring operation, which helps to retain the existing resources
-and applies the necessary updates to the infrastructure.
+> Note that CDK team is working on a [cdk refactor feature](https://github.com/aws/aws-cdk-rfcs/pull/705)
+> to support CloudFormation Stack refactoring with CDK CLI. Once implemented, we will onboard to use CDK
+> refactor feature instead and users do not need to manually create the `refactor.json` file and will be
+> inferred based on the construct tree and paths.
+
+Next users can run the new CLI command `cdk construct-upgrade --unstable=construct-upgrade` to proceeds with validations. If validations
+are successful, this CLI command continues to execute and deploy the CDK stack using CloudFormation stack refactor
+command (or CDK refactor command if available). It triggers the stack refactoring operation, which
+helps to retain the existing resources and applies the necessary updates to the infrastructure.
 
 2. Retain-Remove-Import Migration - This approach is used when the underlying resource has significant changes,
 such as transitioning from a custom resource to a native L1 resource, as seen in the migration from `Table` to
@@ -104,12 +120,12 @@ resources retained by default. Once this step is completed, users can continue t
 their CDK stack code to remove the old construct and replace it with the new one (e.g., replacing the legacy
 `Table` with the new `TableV2` construct).
 
-Once the code migration is complete, user can run the CLI command `cdk construct-upgrade` which will do the
-validations and run `cdk deploy --import-existing-resources`. The `--import-existing-resources` flag is used
-to leverage the CDK import feature, which allows users to import existing resources back into the CDK stack.
-This ensures that any orphaned resources (e.g., existing DynamoDB tables and replicas) are correctly linked
-to the new construct definition, preserving their state and data while updating the infrastructure to use
-the modernized construct.
+Once the code migration is complete, user can run the CLI command `cdk construct-upgrade --unstable=construct-upgrade` which will do the
+validations. If validations are successful, this new CLI command will trigger `cdk deploy --import-existing-resources`
+implicitly. The `--import-existing-resources` flag is used to leverage the CDK import feature, which allows
+users to import existing resources back into the CDK stack. This ensures that any orphaned resources
+(e.g., existing DynamoDB tables and replicas) are correctly linked to the new construct definition, preserving
+their state and data while updating the infrastructure to use the modernized construct.
 
 This strategy is necessary for cases where resources like `Table` have undergone significant changes in their
 underlying architecture, such as moving from a custom resource implementation to a native L1 implementation.
@@ -129,61 +145,162 @@ complete list of validations that CDK performs:
 
 One of the validation workflow is to trigger CloudFormation drift detection for the CDK stacks. This feature
 is generic and can be applied to all CDK users. It will be an added functionality in the `cdk diff` command
-through the option `cdk-diff --detect-drift`.
+through the option `cdk diff --detect-drift`. The command will return the drift detection results in a format
+similar to the current `cdk diff` output.
+
+> Note that this command will not fail if drift is detected. This is intentional, as `cdk diff` is meant to
+> provide information about changes and is designed to be status-agnostic.
 
 The new `cdk construct-upgrade` CLI command will implicitly call the `cdk diff --detect-drift` command as part of
 its validation process. This ensures that any drift in the CloudFormation stacks is detected and reported,
 preventing issues that might arise during the construct upgrade workflow.
 
+> Note that drifts can exist in a stack for unrelated resources (while not recommended), we will provide a
+> way for users to skip the drift detection change on unrelated resources through the use of `--ignore-unrelated`
+> flag in `cdk construct-upgrade --unstable=construct-upgrade` CLI command, see [CLI Settings](#settings)
+
 #### CloudFormation Change Set Analysis
 
-Another validation is to validate CloudFormation change set diff. The `cdk diff` command already trigger
-CloudFormation change set generation, providing high-level details such as "add", "delete", "update", etc.
-However, this validation will enhance the cdk diff functionality by adding the `cdk diff --full` option,
-which shows the full change set diff, including detailed information on each resource change.
+Another validation is to validate CloudFormation change set diff. The `cdk diff` command implicitly calls
+CloudFormation change set creation, providing high-level details such as "add", "delete", "modify", "import",
+and etc. like the following:
 
-The new `cdk construct-upgrade CLI` command will implicitly call `cdk diff --full` to retrieve the comprehensive
-change set diff. This allows for more granular analysis of the changes, ensuring that unintended modifications
-are detected, and that actions like "Modify", "Add" and "Remove" are properly validated for correctness. The tool
-will analyze the changes to ensure that each "Remove" action has a corresponding "Add" of similar types, and
-verify that resource configuration modifications are safe and intentional.
+```md
+[-] AWS::DynamoDB::Table MyTable orphan
+[+] AWS::DynamoDB::GlobalTable MyTable
+```
 
-For example, when upgrading a `Vpc` construct to a `VpcV2` construct, from the CloudFormation change set
-perspective, this change would be viewed as the removal of the old Vpc logical ID and the creation of a new
-VpcV2 logical ID. Through this analysis, CDK ensures that the new stack matches the existing resources and
-configurations. This is crucial to avoid unintended downtime or misconfiguration when upgrading to the
-new construct, as any discrepancy in the resources and their configurations could lead to deployment issues.
+To build on this, we are introducing a new `--json` flag to the `cdk diff` command like `cdk diff --json` which
+will return the full JSON changes in the change set diff.
+
+```json
+[
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "Action": "Add", // "Modify" | "Remove" | "Import"
+      "LogicalResourceId": "someLogicalId",
+      "PhysicalResourceId": "somePhysicalId",
+      "ResourceType": "AWS::Module::Resource",
+      "Replacement": "True", // "False" | "Conditional",
+      "Scope": ["Properties"],
+      "BeforeContext": "{\"someJSON\": 1010}",
+      "AfterContext": "{\"hindsight\": 2020}"
+    }
+  },
+  ......
+]
+```
+
+The new `cdk construct-upgrade --unstable=construct-upgrade --target [target]` CLI command will implicitly
+invoke `cdk diff --json` to retrieve a detailed CloudFormation change set in JSON format. To avoid being
+overly restrictive, the validation will primarily focus on the main resources change. The main resources
+can be determined based on the `--target` option. See [CLI Settings](#settings).
+
+The details of this validation differs for each migration strategy but regardless of the migration strategy, this
+validation step is necessary.
+
+For `In-Place Migration` strategy, `construct-upgrade` CLI command will retrieve the JSON format change set, ensure
+no unintended modifications are present and validate that each `Remove` action on main resources has a corresponding
+`Add` of the same resource type. Additionally validate that the `beforeContext` and `afterContext` values for each
+`Remove` and `Add` pair are identical, as CloudFormation stack refactors prohibit configuration changes.
+
+For the `Retain-Remove-Import Migration` strategy, we will introduce an additional option `--import` in the
+`cdk diff` command like `cdk diff --json --import` which will create a change set on the existing stack with
+`import` change set type. An example is as follows:
+
+```json
+{
+  "type": "Resource",
+  "resourceChange": {
+    "action": "Import", // NOTE THAT THIS SHOWS "IMPORT"
+    "logicalResourceId": "MyTable794EDED1",
+    "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
+    "resourceType": "AWS::DynamoDB::GlobalTable",
+    "replacement": "True",
+    "scope": [],
+    "details": [],
+    "afterContext": "..."
+  }
+},
+{
+  "type": "Resource",
+  "resourceChange": {
+    "policyAction": "Delete",
+    "action": "Remove",
+    "logicalResourceId": "MyTable794EDED1",
+    "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
+    "resourceType": "AWS::DynamoDB::Table",
+    "scope": [],
+    "details": [],
+    "beforeContext": "..."
+  }
+},
+```
+
+The `construct-upgrade` CLI command will implicitly call `cdk diff --json --import` which will create an `IMPORT`
+change set as above and it will validate if the main resources' action is `Import` instead of `Add`. Note that
+auxiliary resources—such as IAM roles, policies, or custom resources may be added or removed as part of
+construct upgrade, and will not be strictly validated.
 
 #### [In-Place Migration Only] CloudFormation stack refactoring Validation
 
-For In-Place migration, we need to ensure correct logical ID mappings to prevent unintended resource
-replacement. The process begins by parsing and comparing the deployed V1 template with the local synthesized
-V2 template.
+For in-place migrations, the construct-upgrade CLI command ensures the correctness of logical ID mappings
+defined in `refactor.json` by validating against the deployed V1 template and synthesized V2 template.
 
-For logical IDs that appear only in the V1 template, we map those resources to a list of matching
-resources in the V2 template, considering changes in construct versions (e.g., VPC → VPCv2). If no matching
-resources are found, we check the planning context to ensure the resource is either being replaced
-(e.g., custom resource to native L1) or upgraded (e.g., Table → GlobalTable).
+```json
+[
+    {
+        "Source": {
+            "StackName": "<stack-name>",
+            "LogicalResourceId": "vpcv1A85508D7"
+        },
+        "Destination": {
+            "StackName": "<stack-name>",
+            "LogicalResourceId": "vpcA2121C38"
+        }
+    },
+    {
+        "Source": {
+            "StackName": "<stack-name>",
+            "LogicalResourceId": "vpcv1ipv6cidr87175A16"
+        },
+        "Destination": {
+            "StackName": "<stack-name>",
+            "LogicalResourceId": "vpcamazonProvided373FDA5C"
+        }
+    },
+    ......
+]
 
-For logical IDs that appear only in the V2 template, we ensure that the planning context indicates these are
-expected additions, such as new CloudFormation resources like GlobalTable.
+The validation begins by verifying that every source LogicalId in `refactor.json` corresponds to a resource
+in the deployed V1 template, while every target LogicalId maps to a resource in the synthesized V2 template.
 
-After ensuring logical ID mappings are correct, we validate the refactor.json file against these mappings.
-This ensures that the actions in the `refactor.json` align with the expected changes between the V1 and V2
-templates. If any discrepancies are found, the construct upgrade process is blocked.
+Orphaned entries — such as unmapped logical IDs or resources missing from either template — will block the upgrade.
+Resource types must also align: for example, a resource in V1 template of type `AWS::EC2::VPC` can only map to
+a resource in V2 template of a compatible type (e.g., `AWS::EC2::VPCV2`).
 
 This validation is specific to the context of construct upgrade framework and will be implemented as part of
 `cdk construct-upgrade` CLI command.
+
+> Note that CDK team is working on a [cdk refactor feature](https://github.com/aws/aws-cdk-rfcs/pull/705)
+> to support CloudFormation Stack refactoring with CDK CLI. Once implemented, we will onboard to use CDK
+> refactor feature instead and users do not need to manually create the `refactor.json` file and will be
+> inferred based on the construct tree and paths. This step is still needed to validate the inferred
+> refactor.json file by CDK.
 
 #### [Retain-Remove-Import Migration Only] Retain Policy Validation
 
 For Retain-Remove-Import migrations, it's crucial to ensure that the `RemovalPolicy.RETAIN` deletion policy
 is applied correctly to the migrated resources in the stack, especially for resources like DynamoDB tables.
-The process will block the migration if the `RETAIN` deletion policy is missing.
+The process will block the migration if the `RETAIN` deletion policy is missing and ask users to deploy their
+V1 stack by setting `RETAIN` for deletion policy.
 
 In the future update, we aim to improve this process by making this a streamlined process in the framework.
-During `cdk construct-upgrade` CLI command, if we detect that the retain policy is not enabled, we will
-prompt the user with a message like:
+During `cdk construct-upgrade` CLI command, if we detect that the retain policy is not enabled, we can
+do the following:
+
+Prompt the user with a message like:
 
 ```sh
 Detected AWS::DynamoDB::Table with logical ID 'MyTable' does not have RETAIN set as the deletion policy.
@@ -192,17 +309,17 @@ CDK will deploy your stack with the deletion policy set to RETAIN on 'MyTable'.
 Would you like to proceed (y/n)?
 ```
 
-If the user confirms by selecting "y", the migration will proceed.
-
-This validation is specific to the context of construct upgrade framework and will be implemented as part of
-`cdk construct-upgrade` CLI command.
+If the user confirms by selecting "y", the migration will proceed to retrieve the deployed CloudFormation
+stack template, modify the `MyTable` resource in the template by setting `DeletionPolicy: Retain` and deploy
+the stack template. Once the deployment is successful, it will proceed with the usual flow to continue
+with validations as well as execution and deployment.
 
 #### Custom validations
 
 Custom validations ensure that the construct upgrade process adheres to best practices with custom
 configurations. For example, when migrating `Table` to `TableV2` for DynamoDB, the CDK team provides
-validations to ensure that custom resource deletions do not affect replica tables, that `TableName`
-properties are correctly set, and that `DeletionProtection` is enabled for safety.
+validations to ensure that custom resource deletions do not affect replica tables, that `TableName` and
+`SkipReplicaDeletion` properties are correctly set, and that `DeletionProtection` is enabled for safety.
 
 These CDk-provided validations are part of the `cdk construct-upgrade` CLI command and will be triggered
 based on the target migrated module.
@@ -339,7 +456,7 @@ const table = new TableV2(this, 'MyTable', {
 The next step is to run the CDK CLI command `cdk construct-upgrade`. This command
 will trigger the validation process to make sure the changes are valid and safe to deploy.
 This migration will use the `Retain-Remove-Import` migration strategy because the underlying
-resource type has changed from using a custom resource to native CloudFormation resource.
+resource type has changed from `AWS::DynamoDBB::Table` to `AWS::DynamoDB::GlobalTable`.
 
 ```sh
 cdk construct-upgrade --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
@@ -430,7 +547,7 @@ At development time, here is how it works for common enterprise scenarios. Devel
 their CDK stack code to use new construct. They can use `dry-run` feature which will allow users to
 run the validations on the test/dev account without deploying.
 
-```sh
+```md
 Construct Upgrade Validation
   Status: SUCCESS
   Subreports:
