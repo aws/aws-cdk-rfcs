@@ -426,14 +426,21 @@ stack to use the latest construct `TableV2` which offers more advanced features
 to define table replica configurations.
 
 ```ts
-const table = new dynamodb.Table(this, 'MyTable', {
-  partitionKey: {
-    name: 'PK',
-    type: AttributeType.STRING,
-  },
-  tableName: 'MyTable',
-  replicationRegions: ['us-west-2']
-});
+export class DemoStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const table = new dynamodb.Table(this, 'MyTable', {
+      partitionKey: {
+        name: 'PK',
+        type: dynamodb.AttributeType.STRING,
+      },
+      deletionProtection: true,
+      replicationRegions: ['us-west-2'],
+    });
+    table.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
+  }
+}
 ```
 
 CDK provides a DynamoDB table migration guide that guides users on the code migration
@@ -443,19 +450,25 @@ to use `TableV2` construct.
 In case of DynamoDB Table migration, the new CDK code would become:
 
 ```ts
-const table = new TableV2(this, 'MyTable', {
-  partitionKey: {
-    name: 'PK',
-    type: AttributeType.STRING,
-  },
-  tableName: 'MyTable',
-  deletionProtection: true,
-  replicas: [
-    {
-      region: 'us-west-2',
-    }
-  ]
-});
+export class DemoStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const table = new dynamodb.TableV2(this, 'MyTable', {
+      partitionKey: {
+        name: 'PK',
+        type: dynamodb.AttributeType.STRING,
+      },
+      tableName: 'DemoStack-MyTable794EDED1-11W4MR8VZ0UPE',
+      deletionProtection: true,
+      replicas: [
+        {
+          region: 'us-west-2',
+        }
+      ]
+    });
+  }
+}
 ```
 
 > Note that directly deploying the above CDK would cause CloudFormation
@@ -471,35 +484,35 @@ resource type has changed from `AWS::DynamoDBB::Table` to `AWS::DynamoDB::Global
 cdk construct-upgrade --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
 ```
 
-CDK will run validations on current stack status, compare the current and new CFN
-template files, analyze dependency changes, analyze CloudFormation change set, validate retain
-policies (if applies), validate stack refactor JSON file (if applies), and etc.
+CDK will run validations described in the [Construct Upgrade Validations](#construct-upgrade-validations) section
+on current stack status, compare the current and new CFN template files, analyze dependency changes, analyze
+CloudFormation change set, validate retain policies (if applies), validate stack refactor JSON file (if applies), and etc.
+
+> Note that this is just for demo purpose, the final output of the CLI command may look differently.
 
 ```sh
-Resources
-
-[-] AWS::DynamoDB::Table MyTable orphan
-[+] AWS::DynamoDB::GlobalTable MyTable import
-[-] AWS::IAM::ManagedPolicy destroy
-[-] Custom::DynamoDBReplica destroy
-[-] AWS::CloudFormation::NestedStack destroy
-
 Construct Upgrade Validation
   Status: SUCCESS
   Subreports:
     DriftDetectionSubreport: PASS
-    ResourceMappingSubreport: PASS
+      └ No drift is detected
     ChangeSetSubreport: PASS
+      └ [-] AWS::DynamoDB::Table MyTable orphan
+      └ [+] AWS::DynamoDB::GlobalTable MyTable import
+      └ [-] AWS::IAM::ManagedPolicy destroy
+      └ [-] Custom::DynamoDBReplica destroy
+      └ [-] AWS::CloudFormation::NestedStack destroy
     StackRefactoringSubreport: PASS
     DeletionPolicySubreport: PASS
+    CustomValidationSubreport: PASS
 
 Do you wish deploy these changes (y/n)?
 ```
 
 Once the `Status` from the validation output status is `SUCCESS`, this implies that CDK has
 validated the code changes that no stateful resource replacement or service downtime would
-happen and is ready to proceed to the actual deployment step. If you answer yes, the CLI will
-show the progress as the deployment is executed:
+happen and is ready to proceed to the actual deployment step. If you answer `y` for yes,
+the CLI will show the progress as the deployment is executed:
 
 ```sh
 Updating stack...
@@ -556,15 +569,21 @@ At development time, here is how it works for common enterprise scenarios. Devel
 their CDK stack code to use new construct. They can use `dry-run` feature which will allow users to
 run the validations on the test/dev account without deploying.
 
-```md
+```sh
 Construct Upgrade Validation
   Status: SUCCESS
   Subreports:
     DriftDetectionSubreport: PASS
-    ResourceMappingSubreport: PASS
+      └ No drift is detected
     ChangeSetSubreport: PASS
+      └ [-] AWS::DynamoDB::Table MyTable orphan
+      └ [+] AWS::DynamoDB::GlobalTable MyTable import
+      └ [-] AWS::IAM::ManagedPolicy destroy
+      └ [-] Custom::DynamoDBReplica destroy
+      └ [-] AWS::CloudFormation::NestedStack destroy
     StackRefactoringSubreport: PASS
     DeletionPolicySubreport: PASS
+    CustomValidationSubreport: PASS
 ```
 
 Depending on the deployment workflow and environment constraints, there are two common enterprise
