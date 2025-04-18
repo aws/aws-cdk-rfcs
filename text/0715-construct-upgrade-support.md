@@ -75,11 +75,13 @@ Alternatively, users can use `cdk deploy --unstable=construct-upgrade` option to
 changes before deployment.
 
 ```sh
-# This will validate and deploy the construct upgrade changes
-cdk construct-upgrade [stack] --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
+# Dry run the validations without deploy the construct upgrade changes
+cdk construct-upgrade --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2 --dry-run
 
-# Alternatively, this can be separated into multi-step process
-cdk construct-upgrade [stack] --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2 --dry-run
+# This will validate and deploy the construct upgrade changes
+cdk construct-upgrade --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
+
+# Alternatively, users can use a generic `cdk deploy` with construct upgrade option
 cdk deploy --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV2
 ```
 
@@ -160,12 +162,10 @@ similar to the current `cdk diff` output.
 > provide information about changes and is designed to be status-agnostic.
 
 The new `cdk construct-upgrade` CLI command will implicitly call the `cdk diff --detect-drift` command as part of
-its validation process. This ensures that any drift in the CloudFormation stacks is detected and reported,
-preventing issues that might arise during the construct upgrade workflow.
-
-> Note that drifts can exist in a stack for unrelated resources (while not recommended), we will provide a
-> way for users to skip the drift detection change on unrelated resources through the use of `--ignore-unrelated`
-> flag in `cdk construct-upgrade --unstable=construct-upgrade` CLI command, see [CLI Settings](#settings)
+its validation process. To avoid being overly restrictive, the validation will primarily focus on the main resources
+change. The main resources can be determined based on the `--target` option. See [CLI Settings](#settings).This
+ensures that any drift with main resources in the CloudFormation stacks is detected and reported, preventing
+issues that might arise during the construct upgrade workflow.
 
 #### CloudFormation Change Set Analysis
 
@@ -218,38 +218,41 @@ For the `Retain-Remove-Import Migration` strategy, we will introduce an addition
 `import` change set type. An example is as follows:
 
 ```json
-{
-  "type": "Resource",
-  "resourceChange": {
-    "action": "Import", // NOTE THAT THIS SHOWS "IMPORT"
-    "logicalResourceId": "MyTable794EDED1",
-    "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
-    "resourceType": "AWS::DynamoDB::GlobalTable",
-    "replacement": "True",
-    "scope": [],
-    "details": [],
-    "afterContext": "..."
+$ cdk diff --json --import
+[
+  {
+    "type": "Resource",
+    "resourceChange": {
+      "action": "Import", // NOTE THAT THIS SHOWS "IMPORT"
+      "logicalResourceId": "MyTable794EDED1",
+      "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
+      "resourceType": "AWS::DynamoDB::GlobalTable",
+      "replacement": "True",
+      "scope": [],
+      "details": [],
+      "afterContext": "..."
+    }
+  },
+  {
+    "type": "Resource",
+    "resourceChange": {
+      "policyAction": "Delete",
+      "action": "Remove",
+      "logicalResourceId": "MyTable794EDED1",
+      "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
+      "resourceType": "AWS::DynamoDB::Table",
+      "scope": [],
+      "details": [],
+      "beforeContext": "..."
+    }
   }
-},
-{
-  "type": "Resource",
-  "resourceChange": {
-    "policyAction": "Delete",
-    "action": "Remove",
-    "logicalResourceId": "MyTable794EDED1",
-    "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
-    "resourceType": "AWS::DynamoDB::Table",
-    "scope": [],
-    "details": [],
-    "beforeContext": "..."
-  }
-},
+]
 ```
 
 The `construct-upgrade` CLI command will implicitly call `cdk diff --json --import` which will create an `IMPORT`
 change set as above and it will validate if the main resources' action is `Import` instead of `Add`. Note that
 auxiliary resources—such as IAM roles, policies, or custom resources may be added or removed as part of
-construct upgrade, and will not be strictly validated.
+construct upgrade for this strategy, and will omitted during the validations.
 
 #### [In-Place Migration Only] CloudFormation stack refactoring Validation
 
@@ -421,7 +424,7 @@ the tool more adaptable and extensible.
 ### Examples
 
 Suppose your CDK application has a single stack, called `MyStack`, containing a
-DynamoDB `Table` construct with replica. Now you want to migrate to use existing
+DynamoDB `Table` construct with replica. Now you want to migrate existing
 stack to use the latest construct `TableV2` which offers more advanced features
 to define table replica configurations.
 
@@ -461,6 +464,7 @@ export class DemoStack extends cdk.Stack {
       },
       tableName: 'DemoStack-MyTable794EDED1-11W4MR8VZ0UPE',
       deletionProtection: true,
+      SkipReplicaDeletion: true,
       replicas: [
         {
           region: 'us-west-2',
@@ -654,15 +658,6 @@ Options:
 - --dry-run (Optional)
     This flag is default to false. When the flag is set to true, the CLI acts as dry-run
     and will only trigger validation.
-- --ignore-unrelated (Optional)
-    This flag is default to false. Validations performed by `cdk construct-upgrade` ensure that
-    all changes in the stack are relevant to the migration being performed. For instance, when
-    migrating a DynamoDB table, any changes in other resources (like Lambda functions) are flagged,
-    even though they may be entirely unrelated to the migration.
-    The introduction of this flag allows for more flexible validations during the migration process.
-    When used, it loosens the validation criteria to focus only on the changes directly related to
-    the migrated resource. This is not a recommended behaviour but allow developers to continue
-    with daily feature work while migrating.
 - --require-approval (Optional)
     Specify what security-sensitive changes require manual approval.
       - any-change – Manual approval required for any change to the stack.
@@ -923,3 +918,118 @@ migration guide. A migration guide should follow a standardized structure and wi
 - Examples: Annotated code snippets for common use cases.
 - Risks and limitations: List risks and limitations on the migration approach
 - Rollback steps: Provide the rollback process if anything goes wrong in between
+
+### Appendix B: VPC related migration example
+
+Suppose your CDK application has a single stack, called `MyStack`, containing a
+`aws-ec2.Vpc` construct. Now you want to migrate existing stack to use the latest
+`aws-ec2-alpha.VpcV2` which offers more advanced features and better DX:
+
+```ts
+# User existing stack
+this.vpc = new cdk.aws_ec2.Vpc(this, 'vpcv1', {
+    ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+    ipProtocol: ec2.IpProtocol.DUAL_STACK,
+    availabilityZones: ['us-west-1a'], // Only using one AZ
+    natGateways: 0, // Only 1 NAT Gateway
+    natGatewaySubnets: {
+      subnetType: ec2.SubnetType.PUBLIC, // NAT Gateway in a public subnet
+    },
+    createInternetGateway: false, // Creating Internet Gateway
+    subnetConfiguration: [
+    {
+        name: 'publicSubnet',
+        subnetType: cdk.aws_ec2.SubnetType.PUBLIC,
+        cidrMask: 24,
+    }
+    ],
+    restrictDefaultSecurityGroup: false, // Allow unrestricted access to default security group
+});
+```
+
+Step 1: redefine the stack using ec2-alpha module following guide
+
+```ts
+this.vpc = new ec2alpha.VpcV2(this, 'vpc', {
+    primaryAddressBlock: ec2alpha.IpAddresses.ipv4('10.0.0.0/16'),
+    secondaryAddressBlocks: [ec2alpha.IpAddresses.amazonProvidedIpv6({
+    cidrBlockName: 'amazonProvided',
+    })]
+});
+
+const publicSubnet = new ec2alpha.SubnetV2(this, 'publicSubnet', {
+    ipv4CidrBlock: new ec2alpha.IpCidr('10.0.0.0/24'),
+    ipv6CidrBlock: new ec2alpha.IpCidr(cdk.Fn.select(0, cdk.Fn.cidr(
+    cdk.Fn.select(0, this.vpc.ipv6CidrBlocks), 1, '64'))),
+    availabilityZone: 'us-west-1a',
+    subnetType: ec2.SubnetType.PUBLIC,
+    assignIpv6AddressOnCreation: true,
+    vpc: this.vpc,
+});
+```
+
+Step 2: build refactor.json file
+
+```json
+[
+    {
+        "Source": {
+            "StackName": <stack-name>,
+            "LogicalResourceId": "vpcv1A85508D7"
+        },
+        "Destination": {
+            "StackName": <stack-name>,
+            "LogicalResourceId": "vpcA2121C38"
+        }
+    },
+    {
+        "Source": {
+            "StackName": <stack-name>,
+            "LogicalResourceId": "vpcv1ipv6cidr87175A16"
+        },
+        "Destination": {
+            "StackName": <stack-name>,
+            "LogicalResourceId": "vpcamazonProvided373FDA5C"
+        }
+    },
+    ......
+]
+```
+
+Step 3: run `cdk construct-upgrade --unstable=construct-upgrade --target @aws-cdk.aws-ec2-alpha.VpcV2`
+
+CDK will run validations described in the [Construct Upgrade Validations](#construct-upgrade-validations) section
+on current stack status, compare the current and new CFN template files, analyze dependency changes, analyze
+CloudFormation change set, validate retain policies (if applies), validate stack refactor JSON file (if applies), and etc.
+
+> Note that this is just for demo purpose, the final output of the CLI command may look differently.
+
+```sh
+Construct Upgrade Validation
+  Status: SUCCESS
+  Subreports:
+    DriftDetectionSubreport: PASS
+      └ No drift is detected
+    ChangeSetSubreport: PASS
+    StackRefactoringSubreport: PASS
+    DeletionPolicySubreport: PASS
+    CustomValidationSubreport: PASS
+
+Do you wish deploy these changes (y/n)?
+```
+
+Once the `Status` from the validation output status is `SUCCESS`, this implies that CDK has
+validated the code changes that no stateful resource replacement or service downtime would
+happen and is ready to proceed to the actual deployment step. If you answer `y` for yes,
+the CLI will show the progress as the deployment is executed:
+
+```sh
+Updating stack...
+
+2:03:17 PM | REFACTOR_IN_PROGRESS   | AWS::EC2::VPC 
+2:03:17 PM | REFACTOR_IN_PROGRESS   | AWS::EC2::Subnet
+2:03:17 PM | REFACTOR_COMPLETE   | AWS::EC2::VPC 
+2:03:17 PM | REFACTOR_COMPLETE   | AWS::EC2::VPC  
+
+✅  Stack deployment complete
+```
