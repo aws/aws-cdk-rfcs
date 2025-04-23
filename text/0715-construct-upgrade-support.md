@@ -165,10 +165,12 @@ similar to and along with the current `cdk diff` output.
 Sample output of `cdk diff --detect-drift` command is as follows:
 
 ```s
+# Drift detection reports
 Drifts
 [~] AWS::Lambda::Function MyFunction drifted
 [~] AWS::DynamoDB::Table MyTable drifted
 
+# Regular `cdk diff` reports
 Resources
 [-] AWS::DynamoDB::Table MyTable orphan
 [+] AWS::DynamoDB::GlobalTable MyTable import
@@ -188,40 +190,16 @@ and etc. like the following:
 
 ```s
 [-] AWS::DynamoDB::Table MyTable orphan
-[+] AWS::DynamoDB::GlobalTable MyTable
-```
-
-To build on this, we are introducing a new `--json` flag to the `cdk diff` command like `cdk diff --json` which
-will return the full JSON changes in the change set diff for programmatic process.
-
-```json
-[
-  {
-    "Type": "Resource",
-    "ResourceChange": {
-      "Action": "Add", // "Modify" | "Remove" | "Import"
-      "LogicalResourceId": "someLogicalId",
-      "PhysicalResourceId": "somePhysicalId",
-      "ResourceType": "AWS::Module::Resource",
-      "Replacement": "True", // "False" | "Conditional",
-      "Scope": ["Properties"],
-      "BeforeContext": "{\"someJSON\": 1010}",
-      "AfterContext": "{\"hindsight\": 2020}"
-    }
-  },
-  ......
-]
+[+] AWS::DynamoDB::GlobalTable MyTable import
 ```
 
 The new `cdk construct-upgrade --unstable=construct-upgrade --target [target]` CLI command will implicitly
-invoke `cdk diff --json` to retrieve a detailed CloudFormation change set in JSON format. To avoid being
+invoke `cdk diff` to retrieve a detailed CloudFormation change set in JSON format. To avoid being
 overly restrictive, the validation will primarily focus on the main resources change. The main resources
 can be determined based on the `--target` option, see [CLI Settings](#settings).
 
-The details of change set validation differs for each migration strategy but regardless of the migration strategy:
-
-> Note that auxiliary resources—such as IAM roles, policies, or custom resources may be added or removed as part of
-> construct upgrade for this strategy, and will omitted during the validations.
+The details of change set validation differs for each migration strategy. The migration strategy can be determined
+based on the `--target` option as well.
 
 For `In-Place Migration` strategy, `construct-upgrade` CLI command will retrieve the JSON format change set, ensure
 no unintended modifications are present and validate that each `Remove` action on main resources has a corresponding
@@ -229,11 +207,13 @@ no unintended modifications are present and validate that each `Remove` action o
 `Remove` and `Add` pair are identical, as CloudFormation stack refactors prohibit configuration changes.
 
 For the `Retain-Remove-Import Migration` strategy, we will introduce an additional option `--import` in the
-`cdk diff` command like `cdk diff --json --import` which will create a change set on the existing stack with
-`import` change set type. An example is as follows:
+`cdk diff` command like `cdk diff --import` which will create a change set on the existing stack with
+`import` change set type. Note that auxiliary resources—such as IAM roles, policies, or custom resources may be added
+or removed as part of construct upgrade for this strategy, and will omitted during the validations. An example is as
+follows:
 
 ```json
-$ cdk diff --json --import
+$ cdk diff --import
 [
   {
     "type": "Resource",
@@ -264,7 +244,7 @@ $ cdk diff --json --import
 ]
 ```
 
-The `construct-upgrade` CLI command will implicitly call `cdk diff --json --import` which will create an `import`
+The `construct-upgrade` CLI command will implicitly call `cdk diff --import` which will create an `import`
 type change set as above and it will validate if the main resources' action is `Import` instead of `Add`.
 
 #### [In-Place Migration Only] CloudFormation stack refactoring Validation
@@ -303,7 +283,7 @@ in the deployed V1 template, while every target LogicalId maps to a resource in 
 
 Orphaned entries — such as unmapped logical IDs or resources missing from either template — will block the upgrade.
 Resource types must also align: for example, a resource in V1 template of type `AWS::EC2::VPC` can only map to
-a resource in V2 template of a compatible type (e.g., `AWS::EC2::VPCV2`).
+a resource in V2 template of a compatible type (e.g., `AWS::EC2::VPC`).
 
 This validation is specific to the context of construct upgrade framework and will be implemented as part of
 `cdk construct-upgrade --unstable=construct-upgrade` CLI command.
