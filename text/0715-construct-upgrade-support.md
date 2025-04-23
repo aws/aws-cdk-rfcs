@@ -55,21 +55,21 @@ execute deployments safely.
 
 Note that each migration guide follows a standardized structure that includes dependency changes, behavioral
 analysis, risk assessments, and rollback instructions. This ensures consistency, clarity, and safety across
-all migrations. See [Appendix A](#appendix-a-migration-guide) for a detailed breakdown of the proposed migration
-guide format.
+construct migration. See [Appendix A](#appendix-a-migration-guide) for a detailed breakdown of the proposed
+migration guide format.
 
 With the initial release of the CDK construct upgrade tool, developers would use the migration guide to
 update their CDK code, replacing legacy constructs (e.g., Table) with modern equivalents (e.g., TableV2).
 
 After updating the code to use the new construct, users would use the CDK CLI command `cdk construct-upgrade --unstable=construct-upgrade`
 to validates the existing CDK stack and environment, ensuring they are ready for migration. The tool flags any
-warnings or blockers, such as CloudFormation drift, and cross-compares the old and new CloudFormation templates.
-It analyzes the CloudFormation change set and validates any library-specific configurations. See
+blockers, such as CloudFormation drift, and cross-compares the old and new CloudFormation templates. Additionally,
+it analyzes the CloudFormation change set and validates any library-specific configurations. See
 [Construct Upgrade Validations](#construct-upgrade-validations) for a detailed breakdown of the validations.
 
-Users choose to run the `cdk construct-upgrade --unstable=construct-upgrade` CLI command with the `--dry-run` option to perform validation
-described to produce the result into stdout. If the `--dry-run` option is not specified, the CLI command will
-perform validation and proceed with CloudFormation deployment if the validations are successful.
+Users can choose to run the `cdk construct-upgrade --unstable=construct-upgrade` CLI command with the `--dry-run`
+option to perform validation described to produce the result into stdout. If the `--dry-run` option is not specified,
+the CLI command will perform validation and proceed with CloudFormation deployment if the validations are successful.
 
 Alternatively, users can use `cdk deploy --unstable=construct-upgrade` option to validate their construct upgrade
 changes before deployment.
@@ -86,12 +86,13 @@ cdk deploy --unstable=construct-upgrade --target aws-cdk-lib.aws-dynamodb.TableV
 ```
 
 In the initial release of the CDK construct upgrade tool, the CLI supports migration of constructs across modules,
-with generic validation logic applicable to all supported constructs. However, VPC-related constructs from
+with generic validation logic applicable to all supported constructs. However, VPC-related constructs upgrade from
 `aws-cdk-lib/aws-ec2` to `@aws-cdk/aws-ec2-alpha` and `Table` to `TableV2` in `aws-cdk-lib/aws-dynamodb` come
 with enhanced construct-specific validations and comprehensive migration guides provided by the CDK team to
 ensure safe deployment. Additionally, the tool is designed to be open and pluggable, allowing users to support other
 construct migrations by incorporating their own custom validations. This flexibility enables users to extend
-the tool to cover additional constructs that may not yet be officially supported with construct-specific validations.
+the tool to cover additional constructs that may not yet be officially supported with construct-specific validations,
+see [Custom Validations](#custom-validations).
 
 ### Construct Upgrade Strategies
 
@@ -147,23 +148,35 @@ is preserved while enabling the migration to the new construct with minimal risk
 ### Construct Upgrade Validations
 
 Validations will ensure that user’s existing CDK stack and environment area ready for migration, flagging
-blockers like CloudFormation drift. Additionally, validate that the migrated code is safe to deploy without
+blockers like CloudFormation drift. Additionally, it validates that the migrated code is safe to deploy without
 causing downtime or replacement through CloudFromation template comparison and change set analysis. Here is a
-complete list of validations that CDK performs:
+complete list of validations that CDK performs.
 
 #### Drift Detection
 
 One of the validation workflow is to trigger CloudFormation drift detection for the CDK stacks. This feature
 is generic and can be applied to all CDK users. It will be an added functionality in the `cdk diff` command
 through the option `cdk diff --detect-drift`. The command will return the drift detection results in a format
-similar to the current `cdk diff` output.
+similar to and along with the current `cdk diff` output.
 
 > Note that this command will not fail if drift is detected. This is intentional, as `cdk diff` is meant to
 > provide information about changes and is designed to be status-agnostic.
 
+Sample output of `cdk diff --detect-drift` command is as follows:
+
+```s
+Drifts
+[~] AWS::Lambda::Function MyFunction drifted
+[~] AWS::DynamoDB::Table MyTable drifted
+
+Resources
+[-] AWS::DynamoDB::Table MyTable orphan
+[+] AWS::DynamoDB::GlobalTable MyTable import
+```
+
 The new `cdk construct-upgrade` CLI command will implicitly call the `cdk diff --detect-drift` command as part of
 its validation process. To avoid being overly restrictive, the validation will primarily focus on the main resources
-change. The main resources can be determined based on the `--target` option. See [CLI Settings](#settings).This
+change. The main resources can be determined based on the `--target` option, see [CLI Settings](#settings).This
 ensures that any drift with main resources in the CloudFormation stacks is detected and reported, preventing
 issues that might arise during the construct upgrade workflow.
 
@@ -173,13 +186,13 @@ Another validation is to validate CloudFormation change set diff. The `cdk diff`
 CloudFormation change set creation, providing high-level details such as "add", "delete", "modify", "import",
 and etc. like the following:
 
-```md
+```s
 [-] AWS::DynamoDB::Table MyTable orphan
 [+] AWS::DynamoDB::GlobalTable MyTable
 ```
 
 To build on this, we are introducing a new `--json` flag to the `cdk diff` command like `cdk diff --json` which
-will return the full JSON changes in the change set diff.
+will return the full JSON changes in the change set diff for programmatic process.
 
 ```json
 [
@@ -203,10 +216,12 @@ will return the full JSON changes in the change set diff.
 The new `cdk construct-upgrade --unstable=construct-upgrade --target [target]` CLI command will implicitly
 invoke `cdk diff --json` to retrieve a detailed CloudFormation change set in JSON format. To avoid being
 overly restrictive, the validation will primarily focus on the main resources change. The main resources
-can be determined based on the `--target` option. See [CLI Settings](#settings).
+can be determined based on the `--target` option, see [CLI Settings](#settings).
 
-The details of this validation differs for each migration strategy but regardless of the migration strategy, this
-validation step is necessary.
+The details of change set validation differs for each migration strategy but regardless of the migration strategy:
+
+> Note that auxiliary resources—such as IAM roles, policies, or custom resources may be added or removed as part of
+> construct upgrade for this strategy, and will omitted during the validations.
 
 For `In-Place Migration` strategy, `construct-upgrade` CLI command will retrieve the JSON format change set, ensure
 no unintended modifications are present and validate that each `Remove` action on main resources has a corresponding
@@ -249,10 +264,8 @@ $ cdk diff --json --import
 ]
 ```
 
-The `construct-upgrade` CLI command will implicitly call `cdk diff --json --import` which will create an `IMPORT`
-change set as above and it will validate if the main resources' action is `Import` instead of `Add`. Note that
-auxiliary resources—such as IAM roles, policies, or custom resources may be added or removed as part of
-construct upgrade for this strategy, and will omitted during the validations.
+The `construct-upgrade` CLI command will implicitly call `cdk diff --json --import` which will create an `import`
+type change set as above and it will validate if the main resources' action is `Import` instead of `Add`.
 
 #### [In-Place Migration Only] CloudFormation stack refactoring Validation
 
@@ -301,6 +314,57 @@ This validation is specific to the context of construct upgrade framework and wi
 > inferred based on the construct tree and paths. This step is still needed to validate the inferred
 > refactor.json file by CDK.
 
+#### [In-Place Migration Only] Path Metadata Validation
+
+In In-Place migrations, we leverage the CloudFormation stack refactoring feature, which imposes a limitation:
+no changes to resource configurations are allowed, including updates to the Metadata section of any resource.
+
+A common issue arises when users migrate a construct across modules (i.e. `@aws-cdk.aws-ec2-alpha.VpcV2` vs
+`aws-cdk-lib.aws-ec2.Vpc`). Even if the underlying resources remain the same, construct path differences result
+in different `aws:cdk:path` metadata values in the output CloudFormation template.
+
+For In-Place migrations, because we're using CloudFormation stack refactoring feature, it does not allow any
+resource configuration changes, including `Metadata` in a resource definition. When users use V2 construct
+from a different module , the path metadata
+differs due to construct path differences.
+
+```yaml
+# VPC V1 - aws-cdk-lib.aws-ec2.Vpc
+vpcpublicSubnetSubnet1RouteTable155F8E2E:
+  Type: AWS::EC2::RouteTable
+  Properties:
+    ...
+  Metadata:
+    aws:cdk:path: CdkMigrationStack/vpc/publicSubnetSubnet1/RouteTable
+
+# VPC V2 - @aws-cdk/aws-ec2-alpha.VpcV2
+vpcpublicSubnetSubnet1RouteTable155F8E2E:
+  Type: AWS::EC2::RouteTable
+  Properties:
+    ...
+  Metadata:
+    aws:cdk:path: CdkMigrationStack/publicSubnet/RouteTable/RouteTable
+```
+
+This metadata change alone would cause the In-Place migration to fail, since CloudFormation treats it as
+a configuration change.
+
+To streamline this experience, the `cdk construct-upgrade` CLI will detect such cases. If path metadata
+is present in the output template and the chosen migration strategy is `In-Place migration`, the CLI will
+prompt the user:
+
+```sh
+Detected path metadata in the synthesized CloudFormation template, which is not compatible with CloudFormation
+stack refactoring. CDK will deploy your stack with path metadata disabled using: cdk deploy --no-path-metadata
+
+Would you like to proceed? (y/n)
+```
+
+If the user confirms by selecting "y", the tool will proceed to run `cdk deploy` with `--no-path-metadata` flag
+to update the stack without path metadata fields. This can be further automated with the `--require-approval`
+flag in the CLI command and if users choose `never` as the vaue, it will automatically set retain policy and
+deploy the change.
+
 #### [Retain-Remove-Import Migration Only] Retain Policy Validation
 
 For Retain-Remove-Import migrations, it's crucial to ensure that the `RemovalPolicy.RETAIN` deletion policy
@@ -308,14 +372,14 @@ is applied correctly to the migrated resources in the stack, especially for reso
 The process will block the migration if the `RETAIN` deletion policy is missing and ask users to deploy their
 V1 stack by setting `RETAIN` for deletion policy.
 
-In the future update, we aim to improve this process by making this a streamlined process in the framework.
+We aim to improve this process by making this a streamlined process in the framework.
 During `cdk construct-upgrade` CLI command, if we detect that the retain policy is not enabled, we can
 do the following:
 
 Prompt the user with a message like:
 
 ```sh
-Detected AWS::DynamoDB::Table with logical ID 'MyTable' does not have RETAIN set as the deletion policy.
+Detected AWS::DynamoDB::Table with logical ID 'MyTable' does not have 'RETAIN' set as the deletion policy.
 CDK will deploy your stack with the deletion policy set to RETAIN on 'MyTable'.
 
 Would you like to proceed (y/n)?
@@ -324,7 +388,9 @@ Would you like to proceed (y/n)?
 If the user confirms by selecting "y", the migration will proceed to retrieve the deployed CloudFormation
 stack template, modify the `MyTable` resource in the template by setting `DeletionPolicy: Retain` and deploy
 the stack template. Once the deployment is successful, it will proceed with the usual flow to continue
-with validations as well as execution and deployment.
+with validations as well as execution and deployment. This can be further automated with the `--require-approval`
+flag in the CLI command and if users choose `never` as the vaue, it will automatically set retain policy and
+deploy the change.
 
 #### Custom validations
 
@@ -333,23 +399,50 @@ configurations. For example, when migrating `Table` to `TableV2` for DynamoDB, t
 validations to ensure that custom resource deletions do not affect replica tables, that `TableName` and
 `SkipReplicaDeletion` properties are correctly set, and that `DeletionProtection` is enabled for safety.
 
-These CDK-provided validations are part of the `cdk construct-upgrade --unstable=construct-upgrade` CLI
-command and will be triggered based on the target migrated module.
+The `cdk diff` command will be extended to support a new `--custom-rule` option, which accepts a
+JavaScript file implementing a predefined `Rules` interface. These custom rule files allow both
+the CDK team and end-users to define and enforce additional rules during the diff process, enabling safer
+and more opinionated construct upgrade paths. When the `--custom-rule` option is specified, the CLI
+will `require()` the input file, instantiate the `Rules` object, and invoke the custom rules specified.
+An example is provided below for the custom rule set up and usage.
 
-To enhance flexibility, the framework will also allow users to implement their own custom validations.
-Users can specify a file or code to containing custom validation logic. This capability allows users
-to define validation rules for constructs that are not yet officially supported by the CDK, making
-the tool more adaptable and extensible.
+```js
+/*
+ * import { IRules, Rules } from '@aws-cdk/cli-custom-rules';
+ *
+ * class CustomConstructValidatioRules {
+ *   // Validation rules to be executed during `cdk diff` command
+ * }
+ *
+ * export default class FooCDKRules implements Rules {
+ *   public readonly version = '1';
+ *
+ *   public init(host: IRules) {
+ *     host.registerCustomRules(new CustomConstructValidatioRules());
+ *   }
+ * }
+ */
+export interface Rules {
+  /**
+   * The version of the Rules interface used. This will be used by
+   * the plug-in host to handle version changes.
+   */
+  version: '1';
 
-> The implementation detail of custom validation is not determined. Some potential solutions for custom
-> validations are as follows:
->
-> 1. we can introduce of the `cdk construct-ugprade --custom-validations <file>` can be either a custom
-> third party file to be supplied to CDK to enable the custom validation
-> 2. Introduce new feature in a similar way to the current Aspect feature like the following
-> `Validators.of(myConstruct).add(new SomeValidations(...));`. We can have predefined custom validation
-> logics to check the `DeletionPolicy` and `TableName` and etc. Users can build their own custom
-> validation classes and this can be generic feature applied to `cdk diff`, `cdk synth` commands.
+  /**
+   * When defined, this function is invoked right after the rules has been loaded,
+   * so that the plug-in is able to initialize itself and be picked by `cdk diff`
+   * command in the invocation.
+   */
+  init?: (host: IPluginHost) => void;
+}
+```
+
+If the `--target` flag for `cdk construct-upgrade` CLI command is for a fully-supported construct
+upgrade (e.g., `Table` to `TableV2` migration), the CLI will first load a core ruleset distributed
+by the CDK team. Additional user-defined rules can be layered on by passing extra files to `--custom-rule`,
+which will be merged into the validation process. This ensures users can opt into project-specific validations
+or even validations for not-yet-fully supported constructs while benefiting from official guidance.
 
 ### Visual Workflow
 
@@ -653,7 +746,8 @@ Options:
     The construct module to upgrade from. For example, `aws-cdk-lib.aws-dynamodb.Table`.
     If omitted, the CLI will assume your source module based on the `target` option.
 - --target (Required):
-    The construct module you want to upgrade to. For example, `aws-cdk-lib.aws-dynamodb.TableV2`.
+    The construct module you want to upgrade to.
+    For example, `aws-cdk-lib.aws-dynamodb.TableV2` or `@aws-cdk/aws-ec2.VpcV2`
     This is the destination construct for migration.
 - --dry-run (Optional)
     This flag is default to false. When the flag is set to true, the CLI acts as dry-run
@@ -1033,3 +1127,5 @@ Updating stack...
 
 ✅  Stack deployment complete
 ```
+
+### Appendix Future enhancement
