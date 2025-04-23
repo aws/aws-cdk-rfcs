@@ -204,7 +204,8 @@ based on the `--target` option as well.
 For `In-Place Migration` strategy, `construct-upgrade` CLI command will retrieve the JSON format change set, ensure
 no unintended modifications are present and validate that each `Remove` action on main resources has a corresponding
 `Add` of the same resource type. Additionally validate that the `beforeContext` and `afterContext` values for each
-`Remove` and `Add` pair are identical, as CloudFormation stack refactors prohibit configuration changes.
+`Remove` and `Add` pair are identical, as CloudFormation stack refactors prohibit configuration changes. See
+[Appendix C: Change Set Analysis Examples](#appendix-c-change-set-validation-examples).
 
 For the `Retain-Remove-Import Migration` strategy, we will introduce an additional option `--import` in the
 `cdk diff` command like `cdk diff --import` which will create a change set on the existing stack with
@@ -231,7 +232,7 @@ $ cdk diff --import
   {
     "type": "Resource",
     "resourceChange": {
-      "policyAction": "Delete",
+      "policyAction": "Retain",
       "action": "Remove",
       "logicalResourceId": "MyTable794EDED1",
       "physicalResourceId": "DemoStack-MyTable794EDED1-11W4MR8VZ0UPE",
@@ -1108,4 +1109,79 @@ Updating stack...
 ✅  Stack deployment complete
 ```
 
-### Appendix Future enhancement
+### Appendix C: Change Set Validation Examples
+
+Here is an example when the change set analysis would pass when there is a matching `Add` and `Remove` actions of the
+same resource type and the `afterContext` value match the `beforeContext` value.
+
+> Note that we omit the check for any content of value `{{changeSet:KNOWN_AFTER_APPLY}}` as this implies that
+> that the actual value is not known until change set executed.
+
+```json
+[
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "Action": "Add", // 'Add' action has a corresponding 'Remove' action for the same resource type
+      "ResourceType": "AWS::EC2::Subnet",
+      "AfterContext": "{\"Properties\":{\"AvailabilityZone\":\"us-west-2a\",\"CidrBlock\":\"10.0.0.0/24\",\"MapPublicIpOnLaunch\":\"false\",\"VpcId\":\"vpc-01c6af97046eda375\",\"Tags\":[{\"Value\":\"test-vpc-cyberark\",\"Key\":\"VpcName\"}]}}"
+    }
+  },
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "PolicyAction": "Delete",
+      "Action": "Remove",
+      "ResourceType": "AWS::EC2::Subnet",
+      "BeforeContext": "{\"Properties\":{\"AvailabilityZone\":\"us-west-2a\",\"CidrBlock\":\"10.0.0.0/24\",\"MapPublicIpOnLaunch\":\"false\",\"VpcId\":\"{{changeSet:KNOWN_AFTER_APPLY}}\",\"Tags\":[{\"Value\":\"test-vpc-cyberark\",\"Key\":\"VpcName\"}]}}"
+    }
+  }
+]
+```
+
+Here is an example when change set analysis would fail when there is no matching `Add` and `Remove` actions of the
+same resource type.
+
+```json
+[
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "Action": "Add",
+      "ResourceType": "AWS::EC2::Subnet", // No 'Remove' action for this resource type
+    }
+  },
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "PolicyAction": "Delete",
+      "Action": "Remove",
+      "ResourceType": "AWS::EC2::RouteTable", // No 'Add' action for this resource type
+    }
+  }
+]
+```
+
+Herei s another example when change set analysis would fail when the `afterContext` and `beforeContext` values differ:
+
+```json
+[
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "Action": "Add", // 'Add' action has a corresponding 'Remove' action for the same resource type
+      "ResourceType": "AWS::EC2::Subnet",
+      "AfterContext": "{\"Properties\":{\"MapPublicIpOnLaunch\":\"true\"}}" // // Value mismatch in 'Add' and 'Remove' actions
+    }
+  },
+  {
+    "Type": "Resource",
+    "ResourceChange": {
+      "PolicyAction": "Delete",
+      "Action": "Remove",
+      "ResourceType": "AWS::EC2::Subnet",
+      "AfterContext": "{\"Properties\":{\"MapPublicIpOnLaunch\":\"false\"}}"
+    }
+  }
+]
+```
