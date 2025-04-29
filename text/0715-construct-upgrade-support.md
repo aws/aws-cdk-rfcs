@@ -786,6 +786,8 @@ Options:
       - never – Approval is not required.
     Valid values: any-change, broadening, never
     Default value: broadening
+- --skip-validation (Optional)
+    Default to false. Use as users' own risk to by pass the validations step.
 
 - Other options that are common to CDK CLI like --quiet, --help, etc
 
