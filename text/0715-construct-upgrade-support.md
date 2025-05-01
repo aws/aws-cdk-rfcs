@@ -27,16 +27,11 @@ code changes that could trigger CloudFormation resource replacements (e.g., NAT 
 recreated, DynamoDB global tables being recreated). Recreation of resources leads to data loss for
 stateful resources, and can lead to loss of availability for others.
 
-To address this, the CDK introduces Migration Support — a combination of guided workflows and
-automated safeguards designed to ensure safe adoption of new constructs while preserving existing
-infrastructure. This framework enables developers to upgrade seamlessly with minimal risk to
-production environments.
+To address this, CDK team develops a construct upgrade framework designed to simplify adoption while
+minimizing risks. This approach combines guided documentation, automated validations, and deployment
+safeguards to ensure a controlled transition.
 
 ## Proposed Solution
-
-The CDK team develops a construct upgrade framework designed to simplify adoption while minimizing
-risks. This approach combines guided documentation, automated validations, and deployment safeguards
-to ensure a controlled transition.
 
 In a high-level overview, for each supported migration, the construct upgrade framework provides:
 
