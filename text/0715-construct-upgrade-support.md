@@ -593,6 +593,39 @@ output.
 We considered several alternative API designs for the construct upgrade validation commands. Here are the key
 alternatives we evaluated:
 
+### Construct-specific Upgrade Validation
+
+Instead of separate drift and change set validations, we could provide a single, construct-specific validation option:
+
+```sh
+#Validate Table to TableV2 upgrade
+cdk diff --validate-upgrade=dynamodb
+
+# Validate Vpc to VpcV2 upgrade
+cdk diff --validate-upgrade=vpc
+```
+
+This approach would implicitly:
+
+- Run drift detection for relevant resource types
+- Validate retention policies
+- Verify import configurations
+- Check construct-specific requirements for any future supports
+
+Pros:
+
+- Simple, intuitive API for construct upgrades
+- Encapsulates all necessary validations
+- Construct-aware defaults (knows which resources to check)
+- Reduces command complexity for users
+- Better developer experience for common upgrade paths
+
+Cons:
+
+- Less flexible for validations unrelated to construct upgrade
+- Code changes required to support future construct upgrades
+- Requires maintaining mapping of construct types to CFN type to validate the retain and import
+
 ### CDK Construct Path-based Validation
 
 Instead of specifying CloudFormation resource types, we could use CDK construct paths to identify resources.
