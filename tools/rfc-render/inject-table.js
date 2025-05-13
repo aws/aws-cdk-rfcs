@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const fs = require('fs').promises;
-const path = require('path');
-const { render } = require('./render-rfc-table');
-const { parseArgs } = require('util');
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { render } from './render-rfc-table.js';
+import { parseArgs } from 'util';
 
 async function main() {
   const { values: { status = undefined }, positionals: [readme = 'README.md'] } = parseArgs({
@@ -44,6 +45,7 @@ main().catch(e => {
   console.error();
   console.error(e);
   console.error();
-  console.error(`Usage:\n\t${path.relative(process.cwd(), process.argv[1])} README.md [--status <STATUS_1>] [--status <STATUS_2>] [...]`)
+  const __filename = fileURLToPath(import.meta.url);
+  console.error(`Usage:\n\t${path.relative(process.cwd(), __filename)} README.md [--status <STATUS_1>] [--status <STATUS_2>] [...]`)
   process.exitCode = 1;
 });
