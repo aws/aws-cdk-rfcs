@@ -1,13 +1,15 @@
-const { Octokit } = require('@octokit/rest');
-const { STATUS_LIST, UNKNOWN_STATUS } = require('./status');
-const fs = require('fs').promises;
-const path = require('path');
+import { Octokit } from "@octokit/rest";
+import { STATUS_LIST, UNKNOWN_STATUS } from './status.js';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-exports.issuesGroupedByStatus = issuesGroupedByStatus;
+export { issuesGroupedByStatus };
 
 const STATUS_LABELS = Object.keys(STATUS_LIST);
 
 async function issuesGroupedByStatus(filterStatus = undefined) {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const files = await fs.readdir(path.join(__dirname, '..', '..', 'text'));
 
   const octo = new Octokit({
@@ -21,6 +23,7 @@ async function issuesGroupedByStatus(filterStatus = undefined) {
   console.log(fullQuery);
   const request = octo.search.issuesAndPullRequests.endpoint.merge({
     q: fullQuery,
+    advanced_search: true,
   });
 
   const result = await octo.paginate(request);
