@@ -303,7 +303,6 @@ new mediapackage.OriginEndpoint(stack, 'OriginEndpoint', {
   manifests: [mediapackage.Manifest.dash({
     manifestName: 'index',
     periodTriggers: [mediapackage.DashPeriodTriggers.AVAILS],
-    drmSignalling: mediapackage.DrmSignalling.INDIVIDUAL,
     segmentTemplateFormat: mediapackage.SegmentTemplateFormat.NUMBER_WITH_TIMELINE,
     scteDashAdMarker: mediapackage.AdMarkerDash.BINARY,
     utcTimingMode: mediapackage.DashUtcTimingMode.HTTP_HEAD,
