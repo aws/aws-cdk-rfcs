@@ -283,8 +283,8 @@ new mediapackage.OriginEndpoint(stack, 'OriginEndpoint', {
   segment: {
     encryptionMethod: mediapackage.EncryptionMethod.CMAF_CBCS,
     spekeDrmSystems: [mediapackage.DrmSystems.FAIRPLAY],
-    spekeEncryptionContractPresetSpeke20Audio: mediapackage.PresetSpeke20Audio.SHARED,
-    spekeEncryptionContractPresetSpeke20Video: mediapackage.PresetSpeke20Video.SHARED,
+    spekeEncryptionContractPresetSpeke20Audio: mediapackage.PresetSpeke20Audio.PRESET_AUDIO_1,
+    spekeEncryptionContractPresetSpeke20Video: mediapackage.PresetSpeke20Video.PRESET_VIDEO_1,
     spekeResourceId: 'abcdefghij',
     spekeRole: new Role(stack, 'Role', {
       assumedBy: new ServicePrincipal('mediapackagev2.amazonaws.com'),
@@ -308,10 +308,10 @@ new mediapackage.OriginEndpoint(stack, 'OriginEndpoint', {
     scteDashAdMarker: mediapackage.AdMarkerDash.BINARY,
     utcTimingMode: mediapackage.DashUtcTimingMode.HTTP_HEAD,
     utcTimingSource: 'https://example.com',
-    manifestWindow: cdk.Duration.seconds(66),
-    minBufferTime: cdk.Duration.seconds(66),
-    minUpdatePeriod: cdk.Duration.seconds(10),
-    suggestedPresentationDelay: cdk.Duration.seconds(10),
+    manifestWindow: cdk.Duration.seconds(60),
+    minBufferTime: cdk.Duration.seconds(10),
+    minUpdatePeriod: cdk.Duration.seconds(2),
+    suggestedPresentationDelay: cdk.Duration.seconds(60),
   })],
 });
 ```
@@ -357,7 +357,7 @@ new mediapackage.OriginEndpoint(stack, 'origin', {
         mediapackage.ManifestFilter.range(mediapackage.ManifestFilterKeys.AUDIO_SAMPLE_RATE, 0, 50000),
         mediapackage.ManifestFilter.range(mediapackage.ManifestFilterKeys.VIDEO_FRAMERATE, 23.976, 30),
         mediapackage.ManifestFilter.single(mediapackage.ManifestFilterKeys.VIDEO_CODEC, 'h264'),
-        mediapackage.ManifestFilter.multiple(mediapackage.ManifestFilterKeys.VIDEO_CODEC, ['240p', '360p', '720p-1080p']),
+        mediapackage.ManifestFilter.multiple(mediapackage.ManifestFilterKeys.VIDEO_HEIGHT, ['240p', '360p', '720p-1080p']),
         mediapackage.ManifestFilter.custom('audio_language:fr,en-US,de'),
       ],
     },
