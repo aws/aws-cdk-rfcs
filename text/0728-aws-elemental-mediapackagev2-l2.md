@@ -356,7 +356,7 @@ new mediapackage.OriginEndpoint(stack, 'origin', {
         mediapackage.ManifestFilter.range(mediapackage.ManifestFilterKeys.AUDIO_SAMPLE_RATE, 0, 50000),
         mediapackage.ManifestFilter.range(mediapackage.ManifestFilterKeys.VIDEO_FRAMERATE, 23.976, 30),
         mediapackage.ManifestFilter.single(mediapackage.ManifestFilterKeys.VIDEO_CODEC, 'h264'),
-        mediapackage.ManifestFilter.multiple(mediapackage.ManifestFilterKeys.VIDEO_HEIGHT, ['240p', '360p', '720p-1080p']),
+        mediapackage.ManifestFilter.multiple(mediapackage.ManifestFilterKeys.VIDEO_HEIGHT, ['240', '360', '720-1080']),
         mediapackage.ManifestFilter.custom('audio_language:fr,en-US,de'),
       ],
     },
