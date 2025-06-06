@@ -23,7 +23,6 @@ future state of the libraries and to discover projects for contribution.
 \#|Title|Owner|Status
 ---|-----|-----|------
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0162-refactoring-support.md)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
-[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@shikha372](https://github.com/shikha372)|👷 implementing
 [605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||👷 implementing
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[RFC 670: AWS CloudWatch Application Signals L2 Constructs for SLO #673](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing

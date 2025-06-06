@@ -154,7 +154,7 @@
 [495](https://github.com/aws/aws-cdk-rfcs/issues/495)|[AWS IAM Identity Store L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/495)||👎 rejected
 [497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0497-glue-l2-construct.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|✅ done
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
-[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@shikha372](https://github.com/shikha372)|👷 implementing
+[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@shikha372](https://github.com/shikha372)|✅ done
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||👎 rejected
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|✅ done
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||👎 rejected
