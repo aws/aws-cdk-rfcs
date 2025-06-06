@@ -29,20 +29,20 @@ Here’s a snippet of data we will collect for a `deploy` **event** (not a full 
 
 ```json
 {
-  identifiers: {
-    sessionId: "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // Uuid generated on each CLI command invocation
-    eventId: "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9:1", // sessionId + an increment for each additional event in the session
-    installationId: "3F1FD23A-58A9-4C0D-8A82-098D6101B322", // Uuid stored on a local file on the developer"s machine
-    accountId: "d445c5a1b10d4f9c90a4b17769aa84d2e5d5c3da642c4acd392c71a46275e6f9", // optional hash of account ID
-    region: "us-east-1", // optional region being deployed to
+  "identifiers": {
+    "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // Uuid generated on each CLI command invocation
+    "eventId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9:1", // sessionId + an increment for each additional event in the session
+    "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322", // Uuid stored on a local file on the developer"s machine
+    "accountId": "d445c5a1b10d4f9c90a4b17769aa84d2e5d5c3da642c4acd392c71a46275e6f9", // optional hash of account ID
+    "region": "us-east-1", // optional region being deployed to
   },
-  event: {
-    state: "SUCCESS",
-    eventType: "deploy",
-    command: {
-      path: ["cdk", "deploy", "<REDACTED>"],
-      parameters: {},
-      config: {},
+  "event": {
+    "state": "SUCCESS",
+    "eventType": "deploy",
+    "command": {
+      "path": ["cdk", "deploy", "<REDACTED>"],
+      "parameters": {},
+      "config": {},
     },
   }
 }
@@ -52,29 +52,29 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
 
 ```json
 {
-  identifiers: {
-    sessionId: "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
-    eventId: "14B36D48-4DFF-47C3-B0E4-D966DD6DB038:1",
-    installationId: "3F1FD23A-58A9-4C0D-8A82-098D6101B322",
-    accountId: "DDCA70E4-C73A-4B93-B464-BBA7DCCB6B86",
-    region: "us-east-1",
+  "identifiers": {
+    "sessionId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
+    "eventId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038:1",
+    "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322",
+    "accountId": "DDCA70E4-C73A-4B93-B464-BBA7DCCB6B86",
+    "region": "us-east-1",
   },
-  event: {
-    state: "FAIL",
-    eventType: "deploy",
-    command: {
-      path: ["cdk", "deploy", "<REDACTED>"],
-      parameters: {},
-      config: {},
+  "event": {
+    "state": "FAIL",
+    "eventType": "deploy",
+    "command": {
+      "path": ["cdk", "deploy", "<REDACTED>"],
+      "parameters": {},
+      "config": {},
     },
   },
-  error: {
-    name: "ToolkitError",
-    message: "Error: Asset <REDACTED> upload failed: AccessDenied: Access Denied",
-    trace: "    at AssetPublishing.publishAsset (<PATH>/aws-cdk/lib/assets/asset-publishing.js:128:23)
+  "error": {
+    "name": "ToolkitError",
+    "message": "Error: Asset <REDACTED> upload failed: AccessDenied: Access Denied",
+    "trace": "    at AssetPublishing.publishAsset (<PATH>/aws-cdk/lib/assets/asset-publishing.js:128:23)
     at CloudFormationDeployment.publishAssets (<PATH>aws-cdk/lib/api/cloudformation-deployment.js:295:41)
     at CloudFormationStackArtifact.prepareForDeployment (<PATH>aws-cdk/lib/api/cdk-toolkit.js:517:12)"
-    logs: "Deploying stack <REDACTED>
+    "logs": "Deploying stack <REDACTED>
     IAM Statement Changes
     ┌───┬─────────────────────────┬────────┬─────────────────────────┬─────────────────────────┬───────────┐
     │   │ Resource                │ Effect │ Action                  │ Principal               │ Condition │
