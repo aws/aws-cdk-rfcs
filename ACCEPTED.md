@@ -11,9 +11,6 @@
 ---|-----|-----|------
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
 [228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
-[583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||📆 planning
-[585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||📆 planning
-[586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||📆 planning
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0162-refactoring-support.md)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
 [507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@shikha372](https://github.com/shikha372)|👷 implementing
 [605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||👷 implementing

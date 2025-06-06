@@ -104,4 +104,5 @@
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amazon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)|[@rix0rrr](https://github.com/rix0rrr)|🤷 stale
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||🤷 stale
 [581](https://github.com/aws/aws-cdk-rfcs/issues/581)|[ARN retrieval function consistency for CDK constructs](https://github.com/aws/aws-cdk-rfcs/issues/581)||🤷 stale
+[586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||🤷 stale
 <!--END_TABLE-->
