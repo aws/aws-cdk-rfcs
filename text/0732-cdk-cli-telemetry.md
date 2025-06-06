@@ -10,7 +10,7 @@ the CDK CLI will begin to collect anonymous telemetry on user commands.
 
 The purpose of this RFC is to iterate in public. We welcome community feedback on the opt-out mechanism,
 on whether you would decide to opt-out,
-or on additional telemetry values that we are missing that have proven helpful in other CLIs. 
+or on additional telemetry values that we are missing that have proven helpful in other CLIs.
 
 ## Data Collection
 
@@ -19,9 +19,10 @@ Before we start, two definitions that will help guide this RFC:
 * A **session** corresponds to a CLI command execution.
 * An **event** is a collection of metrics related to its **session**.
 
-A **session** has multiple **events**, such as the case with cdk watch. cdk watch is a long-running **session** that can invoke the `synth` and `deploy` **events** multiple times. 
+A **session** has multiple **events**, such as the case with `cdk watch`.
+`cdk watch` is a long-running **session** that can invoke the `synth` and `deploy` **events** multiple times.
 
-At the end of each **event**, we will send data to the telemetry service. 
+At the end of each **event**, we will send data to the telemetry service.
 
 ### Example
 
@@ -94,9 +95,12 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
 Collecting anonymous data will help the CDK team on two fronts: usage metrics and error debugging.
 Both of these aspects will help us better serve CDK customers in the future.
 We will ensure that we are not collecting [customer content](https://aws.amazon.com/compliance/data-privacy-faq/#topic-1)
-or personally-identifiable information. 
+or personally-identifiable information.
 
-You can easily opt-out of sending telemetry data. Customers can set `toolkit-telemetry: false` in their `cdk.json` configuration files. Setting `toolkit-telemetry: false` in the CDK App level `cdk.json` will disable telemetry in your CDK App. Setting `toolkit-telemetry: false` in the `~/.cdk.json` file will disable telemetry across all CDK Apps on the same machine.
+You can easily opt-out of sending telemetry data.
+Customers can set `toolkit-telemetry: false` in their `cdk.json` configuration files.
+Setting `toolkit-telemetry: false` in the CDK App level `cdk.json` will disable telemetry in your CDK App.
+Setting `toolkit-telemetry: false` in the `~/.cdk.json` file will disable telemetry across all CDK Apps on the same machine.
 
 We will also respect an environment variable, `TOOLKIT_TELEMETRY=false`. If set, this will achieve the same effect of disabling telemetry.
 
