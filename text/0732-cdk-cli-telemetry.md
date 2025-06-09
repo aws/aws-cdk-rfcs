@@ -110,12 +110,29 @@ Alternatively, you can run the CLI command (which disables telemetry for the CDK
 > cdk telemetry --disable
 ```
 
+There is an equivalent `--enable` command to re-enable telemetry if necessary.
+
 ## Metrics
 
 Below is an exhaustive list of metrics we will collect, with the reason for each.
 It’s important to note that all data we collect will be anonymous.
 We are only collecting enumerable values derived from customer input.
-For example, in command, we only collect `boolean` or `enum` values but not free text. Any free text will be recorded as a passed-in `boolean`.
+
+In command, we only collect `boolean` or `enum` values but not free text. Any free text will be recorded as a passed-in `boolean`.
+The below example shows what we record if `--bootstrap-kms-key-id` (typed as a `string`)
+is set:
+
+```bash
+> cdk bootstrap --bootstrap-kms-key-id='MyKMSKeyID'
+```
+
+results in 
+
+```json
+"parameters": {
+  "bootstrap-kms-key-id": true,
+}
+```
 
 | Metric                       | Description                                                                                                                  | Reason                                                                                                                                                                                                                                                                                                          |
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
