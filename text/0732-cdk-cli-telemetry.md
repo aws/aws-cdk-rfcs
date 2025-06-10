@@ -102,12 +102,12 @@ Customers can set `toolkit-telemetry: false` in their `cdk.json` configuration f
 Setting `toolkit-telemetry: false` in the CDK App level `cdk.json` will disable telemetry in your CDK App.
 Setting `toolkit-telemetry: false` in the `~/.cdk.json` file will disable telemetry across all CDK Apps on the same machine.
 
-We will also respect an environment variable, `CDK_TOOLKIT_TELEMETRY=false`. If set, this will achieve the same effect of disabling telemetry.
+We will also respect an environment variable, `CDK_DISABLE_TOOLKIT_TELEMETRY=true`. If set, this will achieve the same effect of disabling toolkit telemetry in that environment.
 
-Alternatively, you can run the CLI command (which disables telemetry for the CDK App):
+Alternatively, you can run the CLI command (which disables toolkit telemetry for the CDK App):
 
 ```bash
-> cdk telemetry --disable
+> cdk telemetry --disable toolkit
 ```
 
 There is an equivalent `--enable` command to re-enable telemetry if necessary.
