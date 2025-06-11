@@ -28,6 +28,8 @@ At the end of each **event**, we will send data to the telemetry service.
 
 Here’s a snippet of data we will collect for a `deploy` **event** (not a full example, just the important parts):
 
+For more information on what gets redacted, see [Redacting Customer Content](#redacting-customer-content).
+
 ```json
 {
   "identifiers": {
@@ -71,21 +73,21 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
   },
   "error": {
     "name": "ToolkitError",
-    "message": "Error: Asset <REDACTED> upload failed: AccessDenied: Access Denied",
-    "trace": "    at AssetPublishing.publishAsset (<PATH>/aws-cdk/lib/assets/asset-publishing.js:128:23)
-    at CloudFormationDeployment.publishAssets (<PATH>aws-cdk/lib/api/cloudformation-deployment.js:295:41)
-    at CloudFormationStackArtifact.prepareForDeployment (<PATH>aws-cdk/lib/api/cdk-toolkit.js:517:12)"
-    "logs": "Deploying stack <REDACTED>
+    "message": "Error: Asset <redacted-asset-name> upload failed: AccessDenied: Access Denied",
+    "trace": "    at AssetPublishing.publishAsset (/aws-cdk/lib/assets/asset-publishing.js:128:23)
+    at CloudFormationDeployment.publishAssets (/aws-cdk/lib/api/cloudformation-deployment.js:295:41)
+    at CloudFormationStackArtifact.prepareForDeployment (/aws-cdk/lib/api/cdk-toolkit.js:517:12)"
+    "logs": "Deploying stack <redacted-stack-name>
     IAM Statement Changes
     ┌───┬─────────────────────────┬────────┬─────────────────────────┬─────────────────────────┬───────────┐
     │   │ Resource                │ Effect │ Action                  │ Principal               │ Condition │
     ├───┼─────────────────────────┼────────┼─────────────────────────┼─────────────────────────┼───────────┤
-    │ + │ <REDACTED>              │ Allow  │ sts:AssumeRole          │ Service:lambda.amazonaw │           │
+    │ + │ <redacted-arn>              │ Allow  │ sts:AssumeRole          │ Service:lambda.amazonaw │           │
     │   │                         │        │                         │ s.com                   │           │
     └───┴─────────────────────────┴────────┴─────────────────────────┴─────────────────────────┴───────────┘
     (NOTE: There may be security-related changes not in this list. See https://github.com/aws/aws-cdk/issues/1299)
 
-    Bundling asset <PATH>...",
+    Bundling asset <redacted-asset-name>",
   }
 }
 ```
@@ -117,6 +119,8 @@ There is an equivalent `--enable` command to re-enable telemetry if necessary.
 Below is an exhaustive list of metrics we will collect, with the reason for each.
 It’s important to note that all data we collect will be anonymous.
 We are only collecting enumerable values derived from customer input.
+
+The only exception is error reporting. More information on that can be found in [Errors](#sanitizing-errors)
 
 In command, we only collect `boolean` or `enum` values but not free text. Any free text will be recorded as a passed-in `boolean`.
 The below example shows what we record if `--bootstrap-kms-key-id` (typed as a `string`)
@@ -155,3 +159,111 @@ results in
 | Error Messages (optional)    | The error message returned, if applicable. Customer content redacted                                                         | Capturing the error message will help us aggregate data on which errors are encountered at a greater rate, as well as help us debug what went wrong in individual use cases.                                                                                                                                    |
 | Error Stack Trace (optional) | The stack trace of the error message, if applicable. Customer content redacted                                               | The stack trace will be helpful for individual debugging purposes and is necessary for us to be able to reproduce issues that may arise.                                                                                                                                                                        |
 | Error Logs (optional)        | The logs of a failed CLI command, if applicable. Customer content redacted                                                   | Error logs will also help us debug and reproduce issues that we see in the CLI.                                                                                                                                                                                                                                 |
+
+## Redacting Customer Content
+
+### Redacting CLI Commands
+
+We will redact free text input supplied by the user in the CLI command input.
+We know the available types of CDK CLI parameters and options, so this will be trivial to implement.
+Input values that are boolean or enums are not customer content and not redacted. All other strings are redacted.
+
+Take the following command:
+
+```bash
+> cdk bootstrap --bootstrap-bucket-name=MyBucket
+```
+
+Since `MyBucket` is free text, it will be redacted in the telemetry data sent to the service. This input will be processed into the following command object:
+
+```json
+{
+  "command": {
+    "path": ["cdk", "bootstrap"],
+    "parameters": {"bootstrap-bucket-name": "true" },
+  }
+}
+```
+
+We record that `bootstrap-bucket-name` is set, but not what the value is.
+
+Another example:
+
+```bash
+> cdk deploy MyStack
+```
+
+`MyStack` is free text, and also redacted. This command input turns into the following telemetry command: 
+
+```json
+{
+  "command": {
+    "path": ["cdk", "deploy", "<redacted-stack-name>"],
+  }
+}
+```
+
+### Sanitizing Errors
+
+A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers.
+This means that instead of back-and-forth on GitHub issues asking for more information — logs, stack trace, etc.
+
+When something goes wrong in the CDK CLI, we will report the error to the telemetry service. 
+The error schema looks like this:
+
+```ts
+export type ErrorDetails = {
+  name: string;
+  message?: string; // anonymized error message
+  trace?: string; // anonymized stack trace
+  logs?: string; // anonymized stack logs
+}
+```
+
+The error name is an enum — currently either `ToolkitError`, `AuthorizationError`, `AssemblyError`, etc.
+
+The error message, trace, and logs could contain customer input.
+We have compiled the following list of possible customer inputs found in these strings and what we will do to redact those inputs:
+
+#### ARNs
+
+An ARN is a string that is prefixed by `arn:`. `arn:aws:s3:::my-bucket` will turn into <redacted-arn>.
+
+#### AccountIDs
+
+Anything that is a 12 digit number (that wasn’t already redacted within an ARN) will be redacted. `123456789012` will turn into `<redacted-account-id>`.
+
+#### File Paths
+
+Part of the file path (before node_modules) is customer content that we do not need to store.
+We will use a regex that includes the following to find and replace file path prefixes:
+
+```
+(file:/+)? -> matches optional file url prefix
+homedir()/process.cwd() -> users home directory or current working directory, replacing \ with /
+[\\w.\\-_@\\\\/]+ -> matches nested directories and file name
+```
+
+For example, a file path like `~/MyUser/my/path/to/node_modules/cdk-assets/lib/asset-manifest.js:20:19` will be truncated to `node_modules/cdk-assets/lib/asset-manifest.js:20:19`.
+
+#### Stack Names
+
+Stack Names are arbitrary customer content that we will redact.
+The CDK CLI will know the names of all the Stack Names when the Cloud Assembly is synthesized.
+That means that, for every command that undergoes synthesis, we will have all Stack IDs available.
+The CLI will collect these names and then find and redact them in the error message, stack trace, and logs. 
+
+The commands that undergo synthesis are `cdk list`, `cdk diff`, `cdk synth`, and `cdk deploy`.
+**For all other commands, since we do not know what could be the Stack Name, we will not collect error messages, traces, or logs.**
+
+For example, the stack name might show up in the following string: `'cdk.out/MyStackName.assets.json'`.
+Once we have synthesized, we will know that MyStackName is a potential stack name and redact.
+The string will become `cdk.out/<redacted-stack-id>.assets.json`. 
+
+#### Asset Display Names
+
+Asset Display Names are arbitrary customer content that we will redact.
+The CDK CLI will know the names of the Asset Display Names in the `.assets.json` file after the Cloud Assembly is synthesized.
+Similar to Stack Names, we will collect and redact these Asset Names and **will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
+
+A log message like `start: Building TelemetryFunction/Code` becomes `start: Building <redacted-asset-name>`.
