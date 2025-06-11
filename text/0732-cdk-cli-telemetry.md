@@ -104,7 +104,8 @@ Customers can set `toolkit-telemetry: false` in their `cdk.json` configuration f
 Setting `toolkit-telemetry: false` in the CDK App level `cdk.json` will disable telemetry in your CDK App.
 Setting `toolkit-telemetry: false` in the `~/.cdk.json` file will disable telemetry across all CDK Apps on the same machine.
 
-We will also respect an environment variable, `CDK_DISABLE_TOOLKIT_TELEMETRY=true`. If set, this will achieve the same effect of disabling toolkit telemetry in that environment.
+We will also respect an environment variable, `CDK_DISABLE_TOOLKIT_TELEMETRY=true`.
+If set, this will achieve the same effect of disabling toolkit telemetry in that environment.
 
 Alternatively, you can run the CLI command (which disables toolkit telemetry for the CDK App):
 
@@ -130,7 +131,7 @@ is set:
 > cdk bootstrap --bootstrap-kms-key-id='MyKMSKeyID'
 ```
 
-results in 
+results in:
 
 ```json
 "parameters": {
@@ -193,7 +194,7 @@ Another example:
 > cdk deploy MyStack
 ```
 
-`MyStack` is free text, and also redacted. This command input turns into the following telemetry command: 
+`MyStack` is free text, and also redacted. This command input turns into the following telemetry command:
 
 ```json
 {
@@ -208,7 +209,7 @@ Another example:
 A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers.
 This means that instead of back-and-forth on GitHub issues asking for more information — logs, stack trace, etc.
 
-When something goes wrong in the CDK CLI, we will report the error to the telemetry service. 
+When something goes wrong in the CDK CLI, we will report the error to the telemetry service.
 The error schema looks like this:
 
 ```ts
@@ -251,19 +252,20 @@ For example, a file path like `~/MyUser/my/path/to/node_modules/cdk-assets/lib/a
 Stack Names are arbitrary customer content that we will redact.
 The CDK CLI will know the names of all the Stack Names when the Cloud Assembly is synthesized.
 That means that, for every command that undergoes synthesis, we will have all Stack IDs available.
-The CLI will collect these names and then find and redact them in the error message, stack trace, and logs. 
+The CLI will collect these names and then find and redact them in the error message, stack trace, and logs.
 
 The commands that undergo synthesis are `cdk list`, `cdk diff`, `cdk synth`, and `cdk deploy`.
 **For all other commands, since we do not know what could be the Stack Name, we will not collect error messages, traces, or logs.**
 
 For example, the stack name might show up in the following string: `'cdk.out/MyStackName.assets.json'`.
 Once we have synthesized, we will know that MyStackName is a potential stack name and redact.
-The string will become `cdk.out/<redacted-stack-name>.assets.json`. 
+The string will become `cdk.out/<redacted-stack-name>.assets.json`.
 
 #### Asset Display Names
 
 Asset Display Names are arbitrary customer content that we will redact.
-The CDK CLI will know the names of the Asset Display Names in the `.assets.json` file after the Cloud Assembly is synthesized.
+The CDK CLI will know the names of the Asset Display Names in the `.assets.json`
+file after the Cloud Assembly is synthesized.
 Similar to Stack Names, we will collect and redact these Asset Names and **will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
 
 A log message like `start: Building TelemetryFunction/Code` becomes `start: Building <redacted-asset-name>`.
