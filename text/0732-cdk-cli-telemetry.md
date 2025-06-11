@@ -227,7 +227,7 @@ We have compiled the following list of possible customer inputs found in these s
 
 #### ARNs
 
-An ARN is a string that is prefixed by `arn:`. `arn:aws:s3:::my-bucket` will turn into <redacted-arn>.
+An ARN is a string that is prefixed by `arn:`. `arn:aws:s3:::my-bucket` will turn into `<redacted-arn>`.
 
 #### AccountIDs
 
@@ -258,7 +258,7 @@ The commands that undergo synthesis are `cdk list`, `cdk diff`, `cdk synth`, and
 
 For example, the stack name might show up in the following string: `'cdk.out/MyStackName.assets.json'`.
 Once we have synthesized, we will know that MyStackName is a potential stack name and redact.
-The string will become `cdk.out/<redacted-stack-id>.assets.json`. 
+The string will become `cdk.out/<redacted-stack-name>.assets.json`. 
 
 #### Asset Display Names
 
