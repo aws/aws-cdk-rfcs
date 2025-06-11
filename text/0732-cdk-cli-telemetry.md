@@ -266,6 +266,7 @@ The string will become `cdk.out/<redacted-stack-name>.assets.json`.
 Asset Display Names are arbitrary customer content that we will redact.
 The CDK CLI will know the names of the Asset Display Names in the `.assets.json`
 file after the Cloud Assembly is synthesized.
-Similar to Stack Names, we will collect and redact these Asset Names and **will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
+Similar to Stack Names, we will collect and redact these Asset Names and
+**will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
 
 A log message like `start: Building TelemetryFunction/Code` becomes `start: Building <redacted-asset-name>`.
