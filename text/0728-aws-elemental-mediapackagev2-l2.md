@@ -224,7 +224,7 @@ OriginEndpointProps{
    *
    * @default null
    */
-  readonly manifests?: Manifest[];
+  manifests?: Manifest[];
 
   /**
    * The container type associated with the origin endpoint configuration.
@@ -242,15 +242,24 @@ OriginEndpointProps{
    *
    * Inside the segment configuration you can define options such as encryption, SPEKE parameters and other
    * general segment configurations.
+   *
+   * @default undefined
    */
   segment?: ISegment;
+
+  /**
+   * Configuration adding encryption.
+   *
+   * @default undefined
+   */
+  encryption?: IEncryption;
 
   /**
    * The failover settings for the endpoint.
    * 
    * @default null
    */
-  readonly forceEndpointConfigurationConditions?: EndpointErrorConfiguration[];
+  forceEndpointConfigurationConditions?: EndpointErrorConfiguration[];
 }
 ```
 
@@ -280,8 +289,8 @@ new mediapackage.OriginEndpoint(stack, 'OriginEndpoint', {
       manifestName: 'index',
     }),
   ],
-  segment: {
-    encryptionMethod: mediapackage.EncryptionMethod.CMAF_CBCS,
+  encryption: {
+    method: mediapackage.EncryptionMethod.CMAF_CBCS,
     spekeDrmSystems: [mediapackage.DrmSystems.FAIRPLAY],
     spekeEncryptionContractPresetSpeke20Audio: mediapackage.PresetSpeke20Audio.PRESET_AUDIO_1,
     spekeEncryptionContractPresetSpeke20Video: mediapackage.PresetSpeke20Video.PRESET_VIDEO_1,
@@ -312,6 +321,28 @@ new mediapackage.OriginEndpoint(stack, 'OriginEndpoint', {
     minUpdatePeriod: cdk.Duration.seconds(2),
     suggestedPresentationDelay: cdk.Duration.seconds(60),
   })],
+});
+```
+
+Example TS Segment settings:
+
+```ts
+new mediapackage.OriginEndpoint(stack, 'origin', {
+  channel,
+  containerType: mediapackage.ContainerType.TS,
+  startoverWindow: Duration.seconds(100),
+  manifests: [
+    mediapackage.Manifest.hls({
+      manifestName: 'index',
+    }),
+  ],
+  segment: {
+    scteFilter: [mediapackage.ScteMessageType.BREAK, mediapackage.ScteMessageType.DISTRIBUTOR_ADVERTISEMENT],
+    tsIncludeDvbSubtitles: true,
+    tsUseAudioRenditionGroup: true,
+    segmentDuration: Duration.seconds(2),
+    segmentName: 'mysegment',
+  },
 });
 ```
 
