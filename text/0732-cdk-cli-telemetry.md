@@ -161,7 +161,6 @@ results in:
 | Error Stack Trace            | The stack trace of the error message, if an error occurs. Customer content redacted                                          | The stack trace will be helpful for individual debugging purposes and is necessary for us to be able to reproduce issues that may arise.                                                                                                                                                                 |
 | Error Logs                   | The logs of a failed CLI command, if an error occurs. Customer content redacted                                              | Error logs will also help us debug and reproduce issues that we see in the CLI.                                                                                                                                                                                                                          |
 
-
 ## Customer Content
 
 We will not collect any customer content as defined [here](https://aws.amazon.com/compliance/data-privacy-faq/#topic-1).
