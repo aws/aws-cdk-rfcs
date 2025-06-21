@@ -25,7 +25,6 @@
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
-[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
