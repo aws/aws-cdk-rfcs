@@ -115,7 +115,7 @@ Alternatively, you can run a new CDK CLI command:
 ```
 
 The `--global` option will record the action (`disable` or `enable`) to your global `~/.cdk.json` file, which affects all CDK Apps on your machine.
-The `--local` option will record the action to your local `cdk.json` file, which affects the current CDK App only. 
+The `--local` option will record the action to your local `cdk.json` file, which affects the current CDK App only.
 
 ## Metrics
 
@@ -213,13 +213,14 @@ This command input turns into the following telemetry command:
 
 ### Errors are sanitized
 
-A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers. It will help the team with:
+A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers.
+It will help the team with:
 
 - identifying and resolving issues prior to customer reports.
 - reducing the back-and-forth often needed to resolve an existing customer report.
 
 The second bullet point should improve the customer experience of reporting bugs that are
-affecting their work. 
+affecting their work.
 
 When something goes wrong in the CDK CLI, we will report the error to the telemetry service.
 The error schema looks like this:
