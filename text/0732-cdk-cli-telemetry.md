@@ -301,6 +301,21 @@ And will be logged in telemetry data as:
 12:32:30 PM | UPDATE_FAILED        | AWS::Lambda::Function      | $LOGICAL_ID_1
 ```
 
+#### UUIDs
+
+Sometimes, a log may include information from an SDK call like this:
+
+```
+(Service: Lambda, Status Code: 400, Request ID: c99252d8-xxxx-xxxx-xxxx-xxxxxxxxxxxx) (SDK Attempt Count: 1)" (RequestToken: ab70879f-xxxx-xxxx-xxxx-xxxxxxxxxxxx, HandlerErrorCode: InvalidRequest)
+```
+
+We'll replace UUIDs with `$UUID` by redacting strings that follow the UUID pattern:
+
+```
+(Service: Lambda, Status Code: 400, Request ID: $UUID) (SDK Attempt Count: 1)" (RequestToken: $UUID, HandlerErrorCode: InvalidRequest)
+```
+
+
 #### Arbitrary Log Messages
 
 We will only collect log messages that originate from the CDK CLI.
