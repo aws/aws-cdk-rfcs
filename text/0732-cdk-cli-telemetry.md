@@ -283,3 +283,20 @@ Similar to Stack Names, we will collect and redact these Asset Names in the erro
 **We will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
 
 A log message like `start: Building TelemetryFunction/Code` becomes `start: Building $ASSSET1`.
+
+#### Logical IDs
+
+Logical IDs can also show up in the error text we collect. They will also be redacted.
+**We will not collect error messages, traces, or logs when the cloud assembly is unavailable.**
+
+Logical IDs might show up in a log message like the following:
+
+```
+12:32:30 PM | UPDATE_FAILED        | AWS::Lambda::Function      | TelemetryFunctionABCDEFGH
+```
+
+And will be logged in telemetry data as:
+
+```
+12:32:30 PM | UPDATE_FAILED        | AWS::Lambda::Function      | $LOGICAL_ID_1
+```
