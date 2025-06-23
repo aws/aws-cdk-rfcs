@@ -300,3 +300,10 @@ And will be logged in telemetry data as:
 ```
 12:32:30 PM | UPDATE_FAILED        | AWS::Lambda::Function      | $LOGICAL_ID_1
 ```
+
+#### Arbitrary Log Messages
+
+We will only collect log messages that originate from the CDK CLI.
+These logs are piped through the `CliIoHost` before being printed to console, and do not contain
+arbitrary data -- we control the input and are aware of all customer-provided free text within.
+This free text is getting redacted by the rules provided above.
