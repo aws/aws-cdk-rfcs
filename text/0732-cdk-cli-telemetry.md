@@ -248,7 +248,8 @@ Anything that is a 12 digit number (that wasn’t already sanitized within an AR
 Sometimes, a log may include information from an SDK call like this:
 
 ```
-(Service: Lambda, Status Code: 400, Request ID: c99252d8-xxxx-xxxx-xxxx-xxxxxxxxxxxx) (SDK Attempt Count: 1)" (RequestToken: ab70879f-xxxx-xxxx-xxxx-xxxxxxxxxxxx, HandlerErrorCode: InvalidRequest)
+(Service: Lambda, Status Code: 400, Request ID: c99252d8-xxxx-xxxx-xxxx-xxxxxxxxxxxx) (SDK Attempt Count: 1)"
+(RequestToken: ab70879f-xxxx-xxxx-xxxx-xxxxxxxxxxxx, HandlerErrorCode: InvalidRequest)
 ```
 
 We'll replace UUIDs with `$UUID` by redacting strings that follow the UUID pattern:
