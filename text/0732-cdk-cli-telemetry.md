@@ -208,7 +208,7 @@ This command turns into the following telemetry command:
 }
 ```
 
-### Errors are sanitized
+### Errors & Logs are sanitized
 
 A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers.
 It will help the team with:
@@ -233,7 +233,7 @@ export type ErrorDetails = {
 
 The error name is an enum — currently either `ToolkitError`, `AuthorizationError`, `AssemblyError`, etc.
 
-Below we show how we sanitize possible strings.
+Below we show what exactly is being sanitized.
 
 #### ARNs
 
@@ -252,7 +252,7 @@ Sometimes, a log may include information from an SDK call like this:
 (RequestToken: ab70879f-xxxx-xxxx-xxxx-xxxxxxxxxxxx, HandlerErrorCode: InvalidRequest)
 ```
 
-We'll replace UUIDs with `$UUID` by redacting strings that follow the UUID pattern:
+We'll replace UUIDs with `$UUID`:
 
 ```
 (Service: Lambda, Status Code: 400, Request ID: $UUID) (SDK Attempt Count: 1)" (RequestToken: $UUID, HandlerErrorCode: InvalidRequest)
@@ -260,7 +260,7 @@ We'll replace UUIDs with `$UUID` by redacting strings that follow the UUID patte
 
 #### File Paths
 
-Part of the file path (before `aws-cdk/**`) is customer content that will not record.
+Part of the file path (before `aws-cdk/**`) is customer content that we will not record.
 
 For example, a file path like `~/MyUser/my/path/to/node_modules/aws-cdk/lib/cli/cdk-toolkit.js:20:19` will be truncated to `$HOME/aws-cdk/lib/cli/cdk-toolkit.js:20:19`.
 
