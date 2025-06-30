@@ -110,11 +110,10 @@ If set, this will achieve the same effect of disabling cli telemetry in that env
 Alternatively, you can run a new CDK CLI command:
 
 ```bash
-> cdk cli-telemetry --disable/--enable --global/--local
+> cdk cli-telemetry --disable/--enable
 ```
 
-The `--global` option will record the action (`disable` or `enable`) to your global `~/.cdk.json` file, which affects all CDK Apps on your machine.
-The `--local` option will record the action to your local `cdk.json` file, which affects the current CDK App only.
+This will record the action to your local `cdk.json` file, which affects the current CDK App only.
 
 ## Metrics
 
