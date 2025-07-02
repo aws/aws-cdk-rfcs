@@ -31,7 +31,7 @@ Here’s a snippet of data we will collect for a `deploy` **event** (not a full 
 
 For more information on what gets sanitized, see [Customer Content](#customer-content).
 
-```json
+```jsonc
 {
   "identifiers": {
     "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // UUID generated on each CLI command invocation
@@ -54,7 +54,7 @@ For more information on what gets sanitized, see [Customer Content](#customer-co
 
 Alternatively, if deployment fails, the deploy **event** looks like this:
 
-```json
+```jsonc
 {
   "identifiers": {
     "sessionId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
@@ -77,7 +77,7 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
     "message": "Error: Asset $ASSET1 upload failed: AccessDenied: Access Denied",
     "trace": "    at AssetPublishing.publishAsset (/aws-cdk/lib/assets/asset-publishing.js:128:23)
     at CloudFormationDeployment.publishAssets (/aws-cdk/lib/api/cloudformation-deployment.js:295:41)
-    at CloudFormationStackArtifact.prepareForDeployment (/aws-cdk/lib/api/cdk-toolkit.js:517:12)"
+    at CloudFormationStackArtifact.prepareForDeployment (/aws-cdk/lib/api/cdk-toolkit.js:517:12)",
     "logs": "Deploying stack $STACK1
     IAM Statement Changes
     ┌───┬─────────────────────────┬────────┬─────────────────────────┬─────────────────────────┬───────────┐
@@ -131,7 +131,7 @@ is set:
 
 results in:
 
-```json
+```jsonc
 "parameters": {
   "bootstrap-kms-key-id": true,
 }
@@ -179,7 +179,7 @@ Take the following command:
 
 Since `MyBucket` is free text, we do not collect this as part of telemetry data. This command will be processed into the following command object:
 
-```json
+```jsonc
 {
   "command": {
     "path": ["cdk", "bootstrap"],
@@ -199,7 +199,7 @@ Another example:
 `MyStack` is free text, and will not be included as part of telemetry data.
 This command turns into the following telemetry command:
 
-```json
+```jsonc
 {
   "command": {
     "path": ["cdk", "deploy", "$STACK1"],
