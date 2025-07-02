@@ -31,7 +31,7 @@ Here’s a snippet of data we will collect for a `deploy` **event** (not a full 
 
 For more information on what gets sanitized, see [Customer Content](#customer-content).
 
-```jsoncc
+```jsonc
 {
   "identifiers": {
     "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // UUID generated on each CLI command invocation
@@ -54,7 +54,7 @@ For more information on what gets sanitized, see [Customer Content](#customer-co
 
 Alternatively, if deployment fails, the deploy **event** looks like this:
 
-```jsoncc
+```jsonc
 {
   "identifiers": {
     "sessionId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
