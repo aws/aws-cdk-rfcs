@@ -54,7 +54,7 @@ For more information on what gets sanitized, see [Customer Content](#customer-co
 
 Alternatively, if deployment fails, the deploy **event** looks like this:
 
-```json
+```jsonc
 {
   "identifiers": {
     "sessionId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
