@@ -1,8 +1,8 @@
 # RFC: Feature Flag Advisor
 
-* Original Author(s): [@vivian12300](https://quip-amazon.com/GGQ9EAAQ3Jw)
+* Original Author(s): @vivian12300
 * Tracking Issue: [#750](https://github.com/aws/aws-cdk-rfcs/issues/750)
-* API Bar Raiser: [@rix0rrr](https://quip-amazon.com/YPP9EA8Gt6Q)
+* API Bar Raiser: @rix0rrr
 
 The CDK team uses [feature flags](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0055-feature-flags.md) to implement changes that could impact current infrastructure. By using these flags, you can add security updates, new behaviors, or bug patches. New feature flags are automatically disabled in existing projects to retain backwards compatibility. Therefore, if you want to keep your feature flag configuration up-to-date, you are required to manually track and update them as releases become available. Additionally, since flags are not automatically updated, you might be unaware that a certain bug in your application could have been fixed by flipping on a feature flag. To help manage this, the `cdk flags` CLI tool allows you to view all flags, their recommended values, and modify them.
 
