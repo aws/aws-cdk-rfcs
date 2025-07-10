@@ -4,14 +4,77 @@
 * Tracking Issue: [#750](https://github.com/aws/aws-cdk-rfcs/issues/750)
 * API Bar Raiser: [@rix0rrr](https://quip-amazon.com/YPP9EA8Gt6Q)
 
-CDK uses feature flags to implement changes that could impact current infrastructure. By using these flags, users can add security updates,
-new behaviors, or bug patches without altering your application's present state. However, because new feature flags are automatically
-disabled in existing projects to retain backward compatibility, users must manually track and update them as new releases become available.
-The cdk flags command allows you to view all flags, their recommended values, and modify the users' values.
+The CDK team uses [feature flags](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0055-feature-flags.md) to implement changes that could impact current infrastructure. By using these flags, you can add security updates, new behaviors, or bug patches. New feature flags are automatically disabled in existing projects to retain backwards compatibility. Therefore, if you want to keep your feature flag configuration up-to-date, you are required to manually track and update them as releases become available. Additionally, since flags are not automatically updated, you might be unaware that a certain bug in your application could have been fixed by flipping on a feature flag. To help manage this, the `cdk flags` CLI tool allows you to view all flags, their recommended values, and modify them.
 
 ## Working Backwards
 
-## Help
+Feature flags are an important tool for adding bug fixes to your application. When the CDK team releases feature flags, we set a recommended state for them to be configured in new applications. This ensures that the proper bug fixes are integrated. As a user, you can choose to manually enable the flag and set it to the recommended configuration, or leave it at its default state, which may not include the latest bug fixes. The default state is the initial state that a feature flag is set to when it’s introduced. In most cases, the default state is "false", meaning the flag is off and doesn’t affect your application.
+
+Even if you are aware of the feature flags within your application, configuring your feature flags requires you to manually edit your context in the `cdk.json` file for each flag you would like to modify. 
+
+```
+// To modify a feature flag's state, manually type in your desired state 
+"context": {
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": [
+      "aws",
+      "aws-cn"
+    ],
+    ...
+    }
+```
+
+Additionally, if you do not create your CDK project using `cdk init`, your feature flags may not have been configured at all, resulting in differing app behavior and missing out on potential bug fixes. An example of how a feature flag could impact you is the `@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021` flag. It changes the default behavior to use the updated version TLSv1.2_2021, which is a more secure and support TLS version for CloudFront. If you stuck with the previous version, you may have been exposed to security vulnerabilities and failed compliance tests. 
+
+To address these issues and make the process easier, the `cdk flags` CLI command helps you find, modify, and view your feature flag configurations.
+
+### README
+
+Feature flags can be used to introduce bug fixes, security updates, or new behaviors, all while ensuring backwards compatibility with your application. This guide explains how to manage feature flags in your CDK application using the `cdk flags` CLI tool.
+
+To increase visibility to `cdk flags`, you receive a notice whenever `cdk synth` is run on your application similar to the one below. This notice does not interrupt the `cdk synth` command but is visible until all of your feature flags have been configured.
+
+```
+> cdk synth
+Notice: You currently have **10** unconfigured feature flags that may require attention to keep your application up-to-date. Run `cdk flags` to learn more.
+```
+
+After seeing the notice above, you can run `cdk flags` to see a report of your feature flag configurations that differ from our recommended states. Unconfigured flags will be labelled with - <unset> to show that flag currently has no value. The flags are displayed to you in the following order:
+
+1. flags whose states do not match our recommended values
+2. flags that are not configured at all
+
+```
+> cdk flags 
+    Feature Flag                              Recommended                  User
+  * @aws-cdk/...                              true                         false
+  * @aws-cdk/...                              true                         false
+  * @aws-cdk/...                              true                         - <unset>
+```
+
+Alternatively, you can also run `cdk flags --all` to see a report of all feature flags in the following order:
+
+1. flags whose states match our recommended values
+2. flags whose states do not match our recommended values
+3. flags that are not configured at all
+
+```
+> cdk flags --all
+    Feature Flag                              Recommended                  User
+    @aws-cdk/...                              true                         true
+  * @aws-cdk/...                              true                         false
+  * @aws-cdk/...                              true                         false
+  * @aws-cdk/...                              true                         - <unset>
+```
+
+### Modifying your feature flag values
+
+To start, you can run `cdk flags -i` to view the interactive menu options or run `cdk flags --help` to see all options available to you.
+
+From here, you can choose to modify your feature flag configurations. After choosing an option or running a command, you see the potential impact on your application and decide if you want to accept or reject the changes. Should you choose to accept, your CDK application resynthesizes with the new feature flag configurations. This means changes are not made until you have confirmed them. 
+
+#### View all available options
 
 ```
 > cdk flags --help
@@ -19,169 +82,156 @@ cdk flags
 Finds and displays a report of the feature flag configuration and compares your current values with our recommended values.
  
 Options:
-    --set-recommended             set feature flags to their recommended states 
-      --all                          set all feature flags to their recommended states     
-      --unconfigured                 set unconfigured feature flags to their recommended states     
-    --set-default                 set feature flags to their default states
-      --all                          set all feature flags to their default states
-      --unconfigured                 set unconfigured feature flags to their default states
-    "#FLAGNAME#"                  modify a specific flag's state
-      --set-recommended              set specific feature flag to its recommended state
-      --set-default                  set specific feature flag to its default state
-      --set                          set specific feature flag to any state
-    
+    --set                          modify your feature flag configuration
+        --all                      --
+            --recommended           | modify all feature flags to the recommended or default state
+            --default              __
+        --unconfigured             --
+            --recommended           | modify unconfigured feature flags to the recommended or default state
+            --default              __
+        "#FLAGNAME#"               --
+            --recommended           | modify a specific feature flag to the recommended, default, or custom state
+            --default               | 
+            --value=string         --
+    --all                          view a report of all your feature flags
+    -i                             view an interactive menu of options
+    "#FLAGNAME#"                   view information about a specific flag
 Examples:
-    > cdk flags --set-recommended --all
-        Feature Flag                              Recommended Value            User Value
-      * @aws-cdk/...                              true                         false
-      * @aws-cdk/...                              true                         false
-      * @aws-cdk/...                              true                         - <unset>
-      Setting all feature flags to the recommended values...
-
-    > cdk flags --set-default --unconfigured
-        Feature Flag                              Recommended Value            User Value
-      * @aws-cdk/...                              true                         - <unset>
-      Setting your unconfigured flags to the default values...
-
-    > cdk flags "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" --set
-      What value would you like to change "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" to?
-      > true
-        false
+cdk flags --all
+cdk flags --all --recommended 
+cdk flags "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" --value="true"
 ```
 
-## README
-
-The new CLI command `cdk flags` shows you a report of your feature flag configurations that differ from our recommended states. It
-compares your current feature flag configurations and our recommended states. When you run `cdk flags`, a feature flags report is displayed
-to you in the following format: flags that do not match the recommended values and then flags that are not configured by the user at all.
-There will be a Menu with options for the user to configure their feature flags.
+#### Use the interactive menu
 
 ```
-> cdk flags 
-    Feature Flag                              Recommended Value            User Value
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         - <unset>
-  
-  How would you like to proceed?
-   >  Set all flags to recommended values 
+> cdk flags -i
+    MENU ---------------------------------------------
+    > Set all flags to recommended values 
       Set unconfigured flags to recommended values
-      Reset unconfigured flags to defaults (no impact)
-      Modify individual flag 
+      Reset unconfigured flags to their default configuration (no impact)
+      Modify a specific flag
+      Exit
 ```
 
-### Expected Use Cases
+If you want to remove the notice from running `cdk synth`, you can run any of the first 3 options. These options set your unconfigured feature flags to a value, thus removing the notice message. 
 
-#### View information about your feature flags
-
-To view a report of all flags, users can run `cdk flags --all`. This will display a report of every feature flag in the following
-order: feature flags with states that match our recommendations, feature flags with states that do not match our recommended values, and
-lastly, unconfigured feature flags.
+The first option,` set all flags to recommended values `, is equivalent to the command `cdk flags --set --recommended --all`. This option changes every single feature flag to our recommended value, overwriting existing configured values. To keep feature flag configuration up-to-date with the latest CDK feature flag configurations, use this command.
 
 ```
-> cdk flags --all
-    Feature Flag                              Recommended Value            User Value
-    @aws-cdk/...                              true                         true
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         - <unset>
-  
-  How would you like to proceed?
-   >  Set all flags to recommended values
-      Set all unconfigured flags to recommended values
-      Reset all unconfigured flags to defaults (no impact)
-      Modify individual flag
-```
-
-To view information about a specific flag, simply run `cdk flags "#FLAGNAME#"`.
-
-```
-> cdk flags "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021"
-    Feature Flag                                                        Recommended Value            User Value
-    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021"         true                         true
-```
-
-#### Modify your feature flag values
-
-To modify your feature flag configurations, you can use the options `--set-recommended` and `--set-default`. In addition to these
-options, the `"#FLAGNAME#"` option also contains a `--set` suboption for the user to choose the new value.
-
-#### I want to change all my flags to the recommended states
-
-To change all your feature flags to our recommended states, you can run `cdk flags --set-recommended --all`.
-
-```
-> cdk flags --set-recommended --all
+> cdk flags --set --recommended --all
     Feature Flag                              Recommended Value            User Value
   * @aws-cdk/...                              true                         false
   * @aws-cdk/...                              true                         false
   * @aws-cdk/...                              true                         - <unset>
-  Setting all feature flags to the recommended values...
-
-  Resynthesizing... 
-
   Here is the difference:
-  - S3 Bucket:
-  -    Properties:
-  -      `BucketEncryption``:`` ``None`
-  + S3 Bucket:
-  +    Properties:
-  +      BucketEncryption: 
-  +        `ServerSideEncryptionConfiguration``:`
-  +          ...
-  ```
+    Resources
+    [~] AWS::S3::Bucket MyBucket
+    └─ [~] Properties
+        └─ [~] Encryption
+            ├─ [-] None
+            └─ [+] ServerSideEncryptionConfiguration:
+                    - ...
+    
+    [~] AWS::CloudFront::Distribution MyDistribution
+    └─ [~] Properties
+        └─ [~] DefaultSecurityPolicy
+            ├─ [-] TLSv1.0
+            └─ [+] TLSv1.2_2021
+                    - ...
+    Number of stacks with differences: 2
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...
+```
 
-#### I want to change my unconfigured flags to the recommended states
-
-To change your unconfigured feature flags to our recommended states, you can run `cdk flags --set-recommended --unconfigured`.
+The second option, `set unconfigured flags to recommended values`, is equivalent to the command `cdk flags --set --recommended --unconfigured`. If you would prefer your existing configured flags untouched, this option only changes the unconfigured feature flags to our recommended values.
 
 ```
-> cdk flags --set-recommended --unconfigured
+> cdk flags --set --recommended --unconfigured
     Feature Flag                              Recommended Value            User Value
   * @aws-cdk/...                              true                         - <unset>
-  Setting all feature flags to the recommended values...
-
-  Resynthesizing... 
-  
+  * @aws-cdk/...                              true                         - <unset>
   Here is the difference:
-  - S3 Bucket:
-  -    Properties:
-  -      `BucketEncryption``:`` ``None`
-  + S3 Bucket:
-  +    Properties:
-  +      BucketEncryption: 
-  +        `ServerSideEncryptionConfiguration``:`
-  +          ...
-  
+    Resources
+    [~] AWS::S3::Bucket MyBucket
+    └─ [~] Properties
+        └─ [~] Encryption
+            ├─ [-] None
+            └─ [+] ServerSideEncryptionConfiguration:
+                    - ...
+ 
+    [~] AWS::CloudFront::Distribution MyDistribution
+    └─ [~] Properties
+        └─ [~] DefaultSecurityPolicy
+            ├─ [-] TLSv1.0
+            └─ [+] TLSv1.2_2021
+                    - ...
+    Number of stacks with differences: 2
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...
 ```
 
-#### I only want to change one feature flag to its recommended state
-
-To simply modify one feature flag to our recommended state, you can run `cdk flags --set-recommended --flagName="#FLAGNAME#"`.
+The third option,  `reset unconfigured flags to their default configuration`, is equivalent to the command `cdk flags --set --default --unconfigured`. If you want to ensure the unconfigured flags do not interfere with your application, this option changes the unconfigured feature flags to its default values. For example, if `@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021` is unconfigured, it leads to the notice appearing after running `cdk synth`. However, if you set the flag to its default state (false), it will be configured, turned off, and have no impact on your application whatsoever. 
 
 ```
-> cdk flags --set-recommended --flagName="#FLAGNAME#"
+> cdk flags --set --default --unconfigured
     Feature Flag                              Recommended Value            User Value
-  * @aws-cdk/...                              true                         false
-  Setting all feature flags to the recommended values...
-
-  Resynthesizing... 
-  
+  * @aws-cdk/...                              true                         - <unset>
+  * @aws-cdk/...                              true                         - <unset>
   Here is the difference:
-  - S3 Bucket:
-  -    Properties:
-  -      `BucketEncryption``:`` ``None`
-  + S3 Bucket:
-  +    Properties:
-  +      BucketEncryption: 
-  +        `ServerSideEncryptionConfiguration``:`
-  +          ...
   
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...
 ```
 
-#### I want to modify one feature flag to a different value
+The fourth option,  `modify a specific flag`, asks you which flag you want to modify. You are prompted to enter the name of the flag and choose an existing state after. Use this command if there is a specific bug fix you would like to incorporate into your application.
 
-To modify one feature flag, first we view its information.
+```
+  Which flag would you like to modify?
+> "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021"
+  What value would you like to change "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" to?
+    > **true**
+      false
+  Here is the difference:
+    Resources
+    [~] AWS::CloudFront::Distribution MyDistribution
+    └─ [~] Properties
+        └─ [~] DefaultSecurityPolicy
+            ├─ [-] TLSv1.0
+            └─ [+] TLSv1.2_2021
+                    - ...
+    Number of stacks with differences: 1
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...
+```
+
+To achieve the same result, you can also run `cdk flags --set "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" --value="true"`.
+
+```
+> cdk flags --set "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" --value="true"
+  Here is the difference:
+    Resources
+    [~] AWS::CloudFront::Distribution MyDistribution
+    └─ [~] Properties
+        └─ [~] DefaultSecurityPolicy
+            ├─ [-] TLSv1.0
+            └─ [+] TLSv1.2_2021
+                    - ...
+      Number of stacks with differences: 1
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...
+```
+
+### Inspect a specific feature flag
+
+#### View more information about a flag
+
+Besides running `cdk flags` and `cdk flags --all` to view your feature flag configuration, you can also utilize `cdk flags "#FLAGNAME#"` to inspect a specific feature flag and find out what a specific flag does. This can be helpful in cases where you want to understand a particular flag and its impact on your application.
 
 ```
 > cdk flags "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021"
@@ -190,154 +240,87 @@ To modify one feature flag, first we view its information.
     User Value: true
 ```
 
-Additionally, to modify the state, you can run `cdk flags --set --flagName="#FLAGNAME#"`. This will return a list of values for you to choose from.
+#### Modify a particular flag
+
+If you need to modify the value of this flag and want to make sure you’re setting it to a correct and supported state, run `cdk flags --set "#FLAGNAME#"` to see a list of options. From there, you can choose which option to set the flag to.
 
 ```
-> cdk flags "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" --set
-  What value would you like to change "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" to?
-  > true
+> cdk flags --set "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021"
+   What value would you like to change "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021" to?
+  > **** **true**
     false
-> true
-
-Resynthesizing... 
-
-Here is the difference:
-- S3 Bucket:
--    Properties:
--      `BucketEncryption``:`` ``None`
-+ S3 Bucket:
-+    Properties:
-+      BucketEncryption: 
-+        `ServerSideEncryptionConfiguration``:`
-+          ...
+  Here is the difference:
+    Resources
+    [~] AWS::CloudFront::Distribution MyDistribution
+    └─ [~] Properties
+        └─ [~] DefaultSecurityPolicy
+            ├─ [-] TLSv1.0
+            └─ [+] TLSv1.2_2021
+                    - ...
+    Number of stacks with differences: 2
+  Would you like to accept or reject these changes? (Accept/reject)
+> Accept
+  Resynthesizing...   
 ```
 
-#### I want to revert my changes
+If you already know the value you would like to change the state to, run  `cdk flags --set "#FLAGNAME#" --value="#state#"` as shown in the previous section.
 
-After performing any of the above operations, you will be shown the difference in CloudFormation templates and asked if you would like to
-keep the changes as shown below. If you choose to revert the changes, you are given options to revert all flags to its previous states
-or just a specific one. There will be a list of flags for you to choose from to revert.
+### Rejecting a change
 
-````
-Would you like to accept these changes? (Accept/revert)
-> revert
-Would you like to revert the entire feature flag configuration to its previous state or just revert the specific change(s)?
-[1] Revert all changes -> Restore all flags to their previous state
-[2] Revert only changes to one feature flag -> Undo a specific flag change
-[3] Exit without making any changes -> Keep your current configuration as is
+If you decide not to go through with a change, you will be asked whether you would like to reject all the feature flag changes or a specific one. Feature flags have the potential to alter the state of an application. We want to ensure you are able to configure as many feature flags as possible without there being a negative effect on your project. Therefore, we display the difference in CloudFormation templates after every change. The feature flags that modified your template will be marked with an asterisk (*) to aid you in deciding which changes to reject. 
+
+```
+  Would you like to accept or reject these changes? (Accept/reject)
+> reject
+  Would you like to reject all feature flag changes or reject specific change(s)?
+[1] Reject all changes -> Restore all flags to their previous state
+[2] Reject only changes to specific feature flags -> Undo specific flags
+[3] Exit -> Accept all changes
 > 2
-Which feature flag would you like to revert?
-[1] @aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021
-[2] @aws-cdk/aws-s3:BucketEncryption
-[3] Exit
-> 1
-Reverting the change for @aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021...
-Resynthesizing...
-The flag has been reverted to its previous state.
-````
+Which feature flag change would you like to reject? For multiple options, separate them with a comma. 
+[1] @aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021 *****
+[2] @aws-cdk/aws-s3:BucketEncryption *****
+[3] @aws-cdk/aws-iam:minimizePolicies 
+[4] Exit
+> 1, 2
+Rejecting the change for @aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021 and @aws-cdk/aws-s3:BucketEncryption...
+Resynthesizing for other changes...
+```
 
-## What are we trying to solve?
+## Why should I use this feature?
 
-Feature flags are an important tool for adding new bug fixes without affecting the current state of the application. However,
-feature flags often go unnoticed by the user. In order to change their configurations, users are required to manually update their
-`cdk.json` file, resulting in a time-consuming task. They can impact a user in many ways. For example, the
-@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021 flag changed the default behavior to use the updated version TLSv1.2_2021,
-which is a more secure and support TLS version for CloudFront. Users who stuck with the previous version may have been exposed to
-security vulnerabilities and failed compliance tests. To remain Backwards Compatible, newly released feature flags are automatically
-disabled for existing projects, meaning that those users are required to constantly keep an eye on CDK releases to manually update their feature flags.
+If you find yourself doing any of the following, you will benefit from the `cdk flags` command tool:
 
-This problem is more severe for users who create their CDK projects without using `cdk init` because their feature flags have not
-been configured at all. This results in different app behavior and missing out on potential bug fixes. By providing a straightforward
-`cdk flags` command to find, modify, and view their feature flag configuration, we reduce the burden on the user to maintain upkeep of
-their applications.
+* Constantly needing to update feature flags in your CDK projects
+* Manually editing `cdk.json` to modify your feature flag states
+* Wanting to keep track of available feature flags and their current state
+* Looking for a faster and more efficient way to toggle feature flags
 
 ## Why should we do this?
 
-Feature flags have the potential to improve the user experience by incorporating bug fixes and new default behavior, so it is beneficial
-to create a visible tool for users to increase autonomy within their CDK projects. This tool will also reduce burden on the user by
-allowing them to change their feature flag configurations through simple commands on their CLI. By creating a Feature Flag CLI tool,
-we show users with information on their feature flag configuration, inform them about available feature flags, and allow them to
-modify their initial feature flag states seamlessly, resulting in a better user experience.
+Feature flags have the potential to improve the your experience by incorporating bug fixes, so it is beneficial to create a visible tool for you to increase autonomy within their CDK projects. This tool also reduces the burden on you by allowing you to change your feature flag configurations through simple commands on your CLI. By creating a Feature Flag CLI tool, we show you information on your feature flag configuration, inform you about available feature flags, and allow you to modify their initial feature flag states seamlessly, resulting in a better experience.
 
 ## Why should we *not* do this?
 
-This tool aims to simplify the feature flag configuration file by asking users if they would like to make the changes from the CLI.
-However, this creates a risk of users applying our recommendations without fully understanding its impact on their application. For
-example, a user could unknowingly enable a recommended flag that impacts behavior a user is depending on. To ensure they are informed
-about these changes as much as possible, any change will result in a comparison of their CloudFormation template and their modified one.
+This tool aims to simplify the feature flag configuration file by asking users if they would like to make the changes from the CLI. However, this creates a risk of users applying our recommendations without fully understanding its impact on their application. For example, a user could unknowingly enable a recommended flag that impacts behavior a user is depending on. To ensure they are informed about these changes as much as possible, any potential change results  in a comparison of their CloudFormation template and their modified one.
 
-Adding a new CLI tool also increases the CDK CLI complexity, requiring more maintenance and support for this new feature.
+Adding a CLI tool also increases the CDK CLI complexity, requiring more maintenance and support for this feature.
 
 ## What alternative solutions did you consider?
 
-Another solution could be to prompt users to configure their feature flags when they create their CDK app using `cdk init`. This
-increases visibility to the feature flags and can be integrated smoothly within their project creation process. However, this does
-not help existing projects and could be considered an inconvenience and unnecessary by users.
+Another solution could be to prompt users to configure their feature flags when they create their CDK app using `cdk init`. This increases visibility to the feature flags and can be integrated smoothly within their project creation process. However, this does not help existing projects and could be considered an inconvenience and unnecessary by users.
 
 ## What is the technical solution (design) of this feature?
 
-To implement this feature, we would first generate a Feature Flag Report artifact to be stored in CloudAssembly. The report is a `Record`
-of individual `FeatureFlag` objects that contain the fields `userValue`, `recommendedValue`, and `summary.` When the `cdk flags` command
-is run, the CLI accesses this artifact stored in `manifest.json` and displays the report to the user. A backup of the previous version of
-`cdk.out`will be stored in memory for future comparison. When the user chooses to modify a specific feature flag to our recommended value,
-that value is changed in  `cdk.json` and the entire application resynthesizes. After resynthesizing, the CloudFormation template is
-compared to the one prior to the change and displayed to the user. If the user wishes, they can restore their previous version by
-rejecting the changes.
+To implement this feature, we would first generate a Feature Flag Report artifact to be stored in CloudAssembly. The report is a `Record` of individual `FeatureFlag` objects that contain the fields `userValue`, `recommendedValue`, and `summary.` When the `cdk flags` command is run, the CLI accesses this artifact stored in `manifest.json` and displays the report to the user. When the user request changes, a new CloudFormation template is generated and the differences are displayed. When the changes are confirmed, that value is changed in `cdk.json` and the entire application resynthesizes. If the user wants to reject a change, we run an algorithm to check which feature flag has impacted application by going through all the flags, changing their states, and recording if there was a change in the resulting CloudFormation template. Then, we mark those particular flags in the resulting display to notify the user. 
 
 ![Feature Flag Advisor Design](../images/featureflagadvisor.png)
+## Is this a breaking change?
 
-## Additional Considerations
+No. Users will be able to view the impact of the changes they are requesting and reject them if necessary.
 
-### Increasing visibility to `cdk flags`
+## Why not read from `recommended-feature-flags.json` from `aws-cdk-lib` directly?
 
-Although this feature will increase visibility to feature flags, we still need to bring visibility to the CLI tool itself. Otherwise,
-CDK users continue to remain unaware of feature flags and their potential benefits. To address this, we will display a notice whenever
-`cdk synth` is run. This notice will be discarded once users have configured all of their flags.
+The` recommended-feature-flags.json ` contains every feature flag and our recommended states for them. However, reading directly from `recommended-feature-flags.json` is not an option because it is not compatible with jsii projects. For non-Javascript projects, this file is not be included in the configuration when the jsii package is compiled in in other languages, meaning it wouldn’t work for CDK projects in languages like Python and Java.
 
-```
-> cdk synth
-Notice: You currently have **10** unconfigured feature flags that could potentially impact
-your CDK application. Run `cdk flags` to learn more. 
 
-> cdk flags 
-    Feature Flag                              Recommended                  User
-    @aws-cdk/...                              true                         true
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         false
-  * @aws-cdk/...                              true                         - <unset>
-  
-  MENU ----------------------------------------------------------------------
-   >  Set all flags to recommended values
-      Set all unconfigured flags to recommended values
-      Reset all unconfigured flags to defaults (no impact)
-      Modify individual flag
-```
-
-### Ensuring safe configuration changes
-
-Currently, we rely on the user to view the difference in their CloudFormation templates to determine if the change is safe or not
-for their application. To reduce burden on the user, we will introduce a bit masking algorithm to determine how many feature flag
-states can be altered without affecting the application deployment.
-
-## Public FAQ
-
-### What are we launching today?
-
-A new CDK CLI tool that will enable users to view and modify their feature flag configurations.
-
-### Why should I use this feature?
-
-Feature flags contain bug fixes and improved default configurations that could potentially help your application. This CLI tool
-will make enabling feature flags easier and more efficient.
-
-### Is this a breaking change?
-
-No. Users will be able to view the changes they are making and reject them if necessary.
-
-### Why not read from `recommended-feature-flags.json` from `aws-cdk-lib` directly?
-
-This would not work for jsii projects as the `recommended-feature-flags.json` file would not transfer over to projects in other
-CDK-compatible languages. Metadata files may not transfer over to projects in languages such as Python and Java and the
-feature flag information needs to be accessible at all times.
-
-#
