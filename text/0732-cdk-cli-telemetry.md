@@ -37,7 +37,6 @@ For more information on what gets sanitized, see [Customer Content](#customer-co
     "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // UUID generated on each CLI command invocation
     "eventId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9:1", // sessionId + an increment for each additional event in the session
     "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322", // UUID stored on a local file on the developer"s machine
-    "accountId": "d445c5a1b10d4f9c90a4b17769aa84d2e5d5c3da642c4acd392c71a46275e6f9", // hash of account ID (if STS call succeeds)
     "region": "us-east-1", // region being deployed to (if STS call succeeds)
   },
   "event": {
@@ -60,7 +59,6 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
     "sessionId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038",
     "eventId": "14B36D48-4DFF-47C3-B0E4-D966DD6DB038:1",
     "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322",
-    "accountId": "DDCA70E4-C73A-4B93-B464-BBA7DCCB6B86",
     "region": "us-east-1",
   },
   "event": {
@@ -74,21 +72,6 @@ Alternatively, if deployment fails, the deploy **event** looks like this:
   },
   "error": {
     "name": "ToolkitError",
-    "message": "Error: Asset $ASSET1 upload failed: AccessDenied: Access Denied",
-    "trace": "    at AssetPublishing.publishAsset (/aws-cdk/lib/assets/asset-publishing.js:128:23)
-    at CloudFormationDeployment.publishAssets (/aws-cdk/lib/api/cloudformation-deployment.js:295:41)
-    at CloudFormationStackArtifact.prepareForDeployment (/aws-cdk/lib/api/cdk-toolkit.js:517:12)",
-    "logs": "Deploying stack $STACK1
-    IAM Statement Changes
-    ┌───┬─────────────────────────┬────────┬─────────────────────────┬─────────────────────────┬───────────┐
-    │   │ Resource                │ Effect │ Action                  │ Principal               │ Condition │
-    ├───┼─────────────────────────┼────────┼─────────────────────────┼─────────────────────────┼───────────┤
-    │ + │ $ARN              │ Allow  │ sts:AssumeRole          │ Service:lambda.amazonaw │           │
-    │   │                         │        │                         │ s.com                   │           │
-    └───┴─────────────────────────┴────────┴─────────────────────────┴─────────────────────────┴───────────┘
-    (NOTE: There may be security-related changes not in this list. See https://github.com/aws/aws-cdk/issues/1299)
-
-    Bundling asset $ASSET1",
   }
 }
 ```
@@ -115,6 +98,27 @@ Alternatively, you can run a new CDK CLI command:
 
 This will record the action to your local `cdk.json` file, which affects the current CDK App only.
 
+We'll also add a global CLI option you can append to any CDK CLI command: `--disable-telemetry`.
+If passed in, we will not collect library metadata or CLI telemetry for that command.
+The old `--no-version-reporting` flag is no longer recommended, but will also disable both library
+metadata and CLI telemetry.
+
+Run `cdk cli-telemetry --status` to see if your current telemetry status based on context values
+and environment variables.
+
+## Sending Telemetry Data to a Local File
+
+Separate from opting out, we will provide a global CLI option for sending telemetry data to a
+local file: `--telemetry-file='path/to/local/file'`. You can use this option to audit the
+telemetry data we are collecting.
+
+> Because we mean to release this prior to launch, you will need to set `--unstable=telemetry`
+> in order to access this feature. The `--unstable` flag will be ignored after launch.
+
+```bash
+> cdk deploy --unstable=telemetry --telemetry-file='path/to/local/file'
+```
+
 ## Metrics
 
 Below is an exhaustive list of metrics we will collect, with the reason for each.
@@ -137,15 +141,10 @@ results in:
 }
 ```
 
-> `Hashed Account ID` and `Region` were previously marked as `optional`, which was confusing.
-> "optional" in this sense refers to "if available," which means we still plan to send
-> telemetry data even if we cannot ascertain the `Hashed Account ID` or `Region`. 
-
 | Metric                       | Description                                                                                                                  | Reason                                                                                                                                                                                                                                                                                                   |
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | CDK CLI Version              | CLI version (x.y.z)                                                                                                          | Collecting this will help us bisect our data by version, which can help us identify problematic versions.                                                                                                                                                                                                |
 | Installation ID              | UUID stored on local machines executing CLI commands                                                                         | This helps us estimate the distinct number of users who are either 1) affected by an error, or 2) use a specific CLI feature. Each unique machine will have their own Installation ID.                                                                                                                   |
-| Hashed Account ID | Account ID, hashed to be anonymous                                                                                           | This will help us get a sense of blast radius when regressions are identified.                                                                                                                                                                                                                           |
 | Region          | AWS Region                                                                                                                   | This will help us bisect our data for region-specific issues.                                                                                                                                                                                                                                            |
 | Timestamp                    | The time (generated by the client) the data is sent to our telemetry endpoint                                                | This will help us generate time series graphs.                                                                                                                                                                                                                                                           |
 | Event State                  | The "result" of the event. Possible values are 'SUCCESS', 'FAILURE', 'ABORTED'                                               | This will help us track error rates on each CLI command and alert us to potential regressions before they are reported by customers.                                                                                                                                                                     |
@@ -211,7 +210,7 @@ This command turns into the following telemetry command:
 }
 ```
 
-### Errors & Logs are sanitized
+## Error Messages, Stack Traces, & Logs
 
 A core goal of the CDK CLI Telemetry Service is to provide a more efficient debugging experience for both the CDK core team and customers.
 It will help the team with:
@@ -221,6 +220,17 @@ It will help the team with:
 
 The second bullet point should improve the customer experience of reporting bugs that are
 affecting their work.
+
+While error messages, stack traces, and logs are essential to the debugging experience,
+we recognize that it can also contain sensitive information. Therefore we will NOT collect
+this data by default. We will still sanitize these values for customer content and
+personally-identifiable information as described below.
+
+You must opt-in for this data to be automatically sent to the telemetry service.
+Otherwise you will be given a choice to send this "error report" to the telemetry service when an  error occurs in the CLI.
+
+To opt-in, set `cli-telemetry-with-errors: true` in the context of your `cdk.json` or run
+`cdk cli-telemetry --enable-errors`.
 
 When something goes wrong in the CDK CLI, we will report the error to the telemetry service.
 The error schema looks like this:
@@ -234,19 +244,42 @@ export type ErrorDetails = {
 }
 ```
 
+Here's an example of an error report that we might send to the telemetry service:
+
+```jsonc
+  "error": {
+    "name": "ToolkitError",
+    "message": "Error: Asset $ASSET1 upload failed: AccessDenied: Access Denied",
+    "trace": "    at AssetPublishing.publishAsset (/aws-cdk/lib/assets/asset-publishing.js:128:23)
+    at CloudFormationDeployment.publishAssets (/aws-cdk/lib/api/cloudformation-deployment.js:295:41)
+    at CloudFormationStackArtifact.prepareForDeployment (/aws-cdk/lib/api/cdk-toolkit.js:517:12)",
+    "logs": "Deploying stack $STACK1
+    IAM Statement Changes
+    ┌───┬─────────────────────────┬────────┬─────────────────────────┬─────────────────────────┬───────────┐
+    │   │ Resource                │ Effect │ Action                  │ Principal               │ Condition │
+    ├───┼─────────────────────────┼────────┼─────────────────────────┼─────────────────────────┼───────────┤
+    │ + │ $ARN              │ Allow  │ sts:AssumeRole          │ Service:lambda.amazonaw │           │
+    │   │                         │        │                         │ s.com                   │           │
+    └───┴─────────────────────────┴────────┴─────────────────────────┴─────────────────────────┴───────────┘
+    (NOTE: There may be security-related changes not in this list. See https://github.com/aws/aws-cdk/issues/1299)
+
+    Bundling asset $ASSET1",
+  }
+```
+
 The error name is an enum — currently either `ToolkitError`, `AuthorizationError`, `AssemblyError`, etc.
 
 Below we show what exactly is being sanitized.
 
-#### ARNs
+### ARNs
 
 An ARN is a string that is prefixed by `arn:`. `arn:aws:s3:::my-bucket` will turn into `$ARN`.
 
-#### AccountIDs
+### AccountIDs
 
 Anything that is a 12 digit number (that wasn’t already sanitized within an ARN) will be removed. `123456789012` will turn into `$ACCOUNT_ID`.
 
-#### UUIDs
+### UUIDs
 
 Sometimes, a log may include information from an SDK call like this:
 
@@ -261,26 +294,26 @@ We'll replace UUIDs with `$UUID`:
 (Service: Lambda, Status Code: 400, Request ID: $UUID) (SDK Attempt Count: 1)" (RequestToken: $UUID, HandlerErrorCode: InvalidRequest)
 ```
 
-#### File Paths
+### File Paths
 
 Part of the file path (before `aws-cdk/**`) is customer content that we will not record.
 
 For example, a file path like `~/MyUser/my/path/to/node_modules/aws-cdk/lib/cli/cdk-toolkit.js:20:19` will be truncated to `$HOME/aws-cdk/lib/cli/cdk-toolkit.js:20:19`.
 
-#### Stack Names
+### Stack Names
 
 Stack Names are not included in telemetry data. These names will be redacted in the error message, stack trace, and logs.
 For example, the stack name might show up in the following string: `'cdk.out/MyStackName.assets.json'`.
 The string will be recorded in telemetry data as `cdk.out/$STACK1.assets.json`.
 
-#### Asset Display Names
+### Asset Display Names
 
 Asset Display Names are redacted.
 Similar to Stack Names, Asset Names will be redacted in the error message, stack trace, and logs.
 
 A log message like `start: Building TelemetryFunction/Code` becomes `start: Building $ASSSET1`.
 
-#### Logical IDs
+### Logical IDs
 
 Logical IDs can also show up in the error text we collect. They will also be redacted.
 
@@ -296,7 +329,7 @@ And will be logged in telemetry data as:
 12:32:30 PM | UPDATE_FAILED        | AWS::Lambda::Function      | $LOGICAL_ID_1
 ```
 
-#### Arbitrary Log Messages
+### Arbitrary Log Messages
 
 We collect log messages that originate from the CDK CLI.
 These logs are piped through the `CliIoHost` before being printed to console, and do not contain
