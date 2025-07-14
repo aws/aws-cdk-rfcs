@@ -34,9 +34,9 @@ For more information on what gets sanitized, see [Customer Content](#customer-co
 ```jsonc
 {
   "identifiers": {
-    "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // UUID generated on each CLI command invocation
+    "sessionId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9", // random UUID generated on each CLI command invocation
     "eventId": "737EBA96-6A5F-4B1C-BE6D-FD395B10ECE9:1", // sessionId + an increment for each additional event in the session
-    "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322", // UUID stored on a local file on the developer"s machine
+    "installationId": "3F1FD23A-58A9-4C0D-8A82-098D6101B322", // random UUID stored on a local file on the developer"s machine
     "region": "us-east-1", // region being deployed to (if STS call succeeds)
   },
   "event": {
@@ -83,6 +83,11 @@ Both of these aspects will help us better serve CDK customers in the future.
 We do not collect [customer content](https://aws.amazon.com/compliance/data-privacy-faq/#topic-1) and we anonymize the telemetry we do collect.
 
 You can opt-out of sending telemetry data.
+Run `cdk cli-telemetry --status` to see if your current telemetry status based on context values
+and environment variables.
+
+### Context
+
 Customers can set `cli-telemetry: false` in their `cdk.json` configuration files.
 Setting `cli-telemetry: false` in the CDK App level `cdk.json` will disable telemetry in your CDK App.
 Setting `cli-telemetry: false` in the `~/.cdk.json` file will disable telemetry across all CDK Apps on the same machine.
@@ -96,15 +101,35 @@ Alternatively, you can run a new CDK CLI command:
 > cdk cli-telemetry --disable/--enable
 ```
 
-This will record the action to your local `cdk.json` file, which affects the current CDK App only.
+This will record the action to your local `cdk.context.json` file, which affects the current CDK App only.
 
-We'll also add a global CLI option you can append to any CDK CLI command: `--disable-telemetry`.
-If passed in, we will not collect library metadata or CLI telemetry for that command.
-The old `--no-version-reporting` flag is no longer recommended, but will also disable both library
-metadata and CLI telemetry.
+CDK respects the following hierarchy when there are conflicts in the context values of various sources. It is:
 
-Run `cdk cli-telemetry --status` to see if your current telemetry status based on context values
-and environment variables.
+- context values passed in during the CLI command via `--context`
+- context values in `cdk.json`
+- context values in `cdk.context.json`
+- context values in `~/.cdk.json`
+
+### Environment Variable
+
+We will also respect an environment variable, `CDK_DISABLE_CLI_TELEMETRY=true`.
+If set, this will achieve the same effect of disabling cli telemetry in that environment,
+regardless of context values set.
+
+### CLI Option
+
+There is an existing `--no-version-reporting` global CLI option to opt-out of library metadata collection.
+This flag will be repurposed to include CLI telemetry as well.
+That is, if you are currently opting out of library metadata with `--no-version-reporting` you
+will automatically be opted out of CLI telemetry regardless of context values set.
+
+Note that setting `analyticsReporting` at the stack level still takes precedence over the CLI flag:
+
+```ts
+new cdk.Stack(this, 'MyStack', {
+  analyticsReporting: true, // takes precedence over --no-version-reporting
+});
+```
 
 ## Sending Telemetry Data to a Local File
 
@@ -141,26 +166,28 @@ results in:
 }
 ```
 
-| Metric                       | Description                                                                                                                  | Reason                                                                                                                                                                                                                                                                                                   |
-|------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CDK CLI Version              | CLI version (x.y.z)                                                                                                          | Collecting this will help us bisect our data by version, which can help us identify problematic versions.                                                                                                                                                                                                |
-| Installation ID              | UUID stored on local machines executing CLI commands                                                                         | This helps us estimate the distinct number of users who are either 1) affected by an error, or 2) use a specific CLI feature. Each unique machine will have their own Installation ID.                                                                                                                   |
-| Region          | AWS Region                                                                                                                   | This will help us bisect our data for region-specific issues.                                                                                                                                                                                                                                            |
-| Timestamp                    | The time (generated by the client) the data is sent to our telemetry endpoint                                                | This will help us generate time series graphs.                                                                                                                                                                                                                                                           |
-| Event State                  | The "result" of the event. Possible values are 'SUCCESS', 'FAILURE', 'ABORTED'                                               | This will help us track error rates on each CLI command and alert us to potential regressions before they are reported by customers.                                                                                                                                                                     |
-| Event Type                   | An identifier for the type of event that produces the data                                                                   | Since we aim to send metrics on a per-event basis, and there could be multiple events in a command execution, this is an enum that identifies what kind of event transpired. Values could be 'synth', 'deploy', etc..                                                                                    |
-| Command Path                 | The command and properties entered into the CLI, with any free text redacted                                                 | For example, `cdk deploy myStack` would be turned into `['cdk', 'deploy', '$STACK1']` in the telemetry data. This information is critical to determine feature usage and will help us make data-driven decisions on what CLI features to prioritize.                                                        |
-| Command Parameters           | The optional parameters entered into the CLI, with any free text redacted                                                    | Some of our features include parameters, like `cdk deploy --watch`. This information is critical to determine fetaure usage and for us to make data-driven decisions. |
-| Configuration                | Additional parameters that may affect the CLI command (i.e. cdk.json / cdk.context.json values), with any free text redacted | This will help us facilitate debugging by providing a comprehensive view of all possible parameters that may affect the behavior of the CLI.                                                                                                                                                             |
-| Operating System             | The operating system that is being used                                                                                      | This will help us debug issues that only affect specific operating systems.                                                                                                                                                                                                                              |
-| CI/CD                        | Whether or not the CLI command is being invoked from a Ci/CD environment                                                     | Helps us prioritize CLI features that better facilitate CI/CD environments.                                                                                                                                                                                                                              |
-| Node Version                 | The node version used in the environment                                                                                     | This will help us debug any node-specific issues that arise.                                                                                                                                                                                                                                             |
-| Timers                       | The length of the event (and potentially, any smaller denominations that are interesting)                                    | We will monitor the duration of events like (but not limited to) synthesis, deploy, etc..                                                                                                                                                                                                                |
-| Counters                     | Various counter metrics derived from your CDK app and CLI execution                                                          | We will monitor how counting stats like (but not limited to) CFN resource count affect the duration of deploy.                                                                                                                                                                                           |
-| Dependencies                 | Relevant AWS dependencies and their versions                                                                                 | We plan to track AWS dependencies that might affect the CLI result, like `aws-cdk-lib`, `jsii`, `projen`, etc..                                                                                                                                                                                          |
-| Error Messages               | The error message returned, if an error occurs. Customer content redacted                                                    | Capturing the error message will help us aggregate data on which errors are encountered at a greater rate, as well as help us debug what went wrong in individual use cases.                                                                                                                             |
-| Error Stack Trace            | The stack trace of the error message, if an error occurs. Customer content redacted                                          | The stack trace will be helpful for individual debugging purposes and is necessary for us to be able to reproduce issues that may arise.                                                                                                                                                                 |
-| Error Logs                   | The logs of a failed CLI command, if an error occurs. Customer content redacted                                              | Error logs will also help us debug and reproduce issues that we see in the CLI.                                                                                                                                                                                                                          |
+| Metric             | Description                                                                                                                                                  | Reason                                                                                                                                                                                                                                               |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CDK CLI Version    | CLI version (x.y.z)                                                                                                                                          | Collecting this will help us bisect our data by version, which can help us identify problematic versions.                                                                                                                                            |
+| Installation ID    | Ranodm UUID stored on local machines executing CLI commands                                                                                                  | This helps us estimate the distinct number of users who are either 1) affected by an error, or 2) use a specific CLI feature. Each unique machine will have their own Installation ID that is generated randomly via UUID V4.                         |
+| Session ID         | Random UUID generated on each CLI command invocation                                                                                                         | This helps us identify all the events originating from the same command.                                                                                                                                                                             |
+| Event ID           | The Session ID plus a counter                                                                                                                                | This creates a unique identifer for each event in a session.                                                                                                                                                                                         |
+| Region             | AWS Region                                                                                                                                                   | This will help us bisect our data for region-specific issues.                                                                                                                                                                                        |
+| Timestamp          | The time (generated by the client) the data is sent to our telemetry endpoint                                                                                | This will help us generate time series graphs.                                                                                                                                                                                                       |
+| Event State        | The "result" of the event. Possible values are 'SUCCESS', 'FAILURE', 'ABORTED'                                                                               | This will help us track error rates on each CLI command and alert us to potential regressions before they are reported by customers.                                                                                                                 |
+| Event Type         | An identifier for the type of event that produces the data                                                                                                   | Since we aim to send metrics on a per-event basis, and there could be multiple events in a command execution, this is an enum that identifies what kind of event transpired. Values could be 'synth', 'deploy', etc..                                |
+| Command Path       | The command and properties entered into the CLI, with any free text redacted                                                                                 | For example, `cdk deploy myStack` would be turned into `['cdk', 'deploy', '$STACK1']` in the telemetry data. This information is critical to determine feature usage and will help us make data-driven decisions on what CLI features to prioritize. |
+| Command Parameters | The optional parameters entered into the CLI, with any free text redacted                                                                                    | Some of our features include parameters, like `cdk deploy --watch`. This information is critical to determine fetaure usage and for us to make data-driven decisions.                                                                                |
+| Configuration      | Additional parameters that may affect the CLI command (i.e. `cdk.context.json` or context values in `cdk.json` / `~/.cdk.json`), with any free text redacted | This will help us facilitate debugging by providing a comprehensive view of all possible parameters that may affect the behavior of the CLI.                                                                                                         |
+| Operating System   | The operating system that is being used                                                                                                                      | This will help us debug issues that only affect specific operating systems.                                                                                                                                                                          |
+| CI/CD              | Whether or not the CLI command is being invoked from a Ci/CD environment                                                                                     | Helps us prioritize CLI features that better facilitate CI/CD environments.                                                                                                                                                                          |
+| Node Version       | The node version used in the environment                                                                                                                     | This will help us debug any node-specific issues that arise.                                                                                                                                                                                         |
+| Timers             | The length of the event (and potentially, any smaller denominations that are interesting)                                                                    | We will monitor the duration of events like (but not limited to) synthesis, deploy, etc..                                                                                                                                                            |
+| Counters           | Various counter metrics derived from your CDK app and CLI execution                                                                                          | We will monitor how counting stats like (but not limited to) CFN resource count affect the duration of deploy.                                                                                                                                       |
+| Dependencies       | Relevant AWS dependencies and their versions                                                                                                                 | We plan to track AWS dependencies that might affect the CLI result, like `aws-cdk-lib`, `jsii`, `projen`, etc..                                                                                                                                      |
+| Error Messages     | The error message returned, if an error occurs. Customer content redacted                                                                                    | Capturing the error message will help us aggregate data on which errors are encountered at a greater rate, as well as help us debug what went wrong in individual use cases.                                                                         |
+| Error Stack Trace  | The stack trace of the error message, if an error occurs. Customer content redacted                                                                          | The stack trace will be helpful for individual debugging purposes and is necessary for us to be able to reproduce issues that may arise.                                                                                                             |
+| Error Logs         | The logs of a failed CLI command, if an error occurs. Customer content redacted                                                                              | Error logs will also help us debug and reproduce issues that we see in the CLI.                                                                                                                                                                      |
 
 ## Customer Content
 
@@ -227,10 +254,20 @@ this data by default. We will still sanitize these values for customer content a
 personally-identifiable information as described below.
 
 You must opt-in for this data to be automatically sent to the telemetry service.
-Otherwise you will be given a choice to send this "error report" to the telemetry service when an  error occurs in the CLI.
+Otherwise you will be given a choice to send an "error report" to the telemetry service when an  error occurs in the CLI.
 
-To opt-in, set `cli-telemetry-with-errors: true` in the context of your `cdk.json` or run
-`cdk cli-telemetry --enable-errors`.
+To opt-in, set the following in the context of your `cdk.json` file or `~/.cdk.json` file:
+
+```jsonc
+{
+  "cli-telemetry": {
+    "usage": true, // equivalent to "cli-telemetry": true
+    "errors": true, // opt-in to error reporting
+  }
+}
+```
+
+Or run, `cdk cli-telemetry --enable-errors` to record your preference into `cdk.context.json`.
 
 When something goes wrong in the CDK CLI, we will report the error to the telemetry service.
 The error schema looks like this:
