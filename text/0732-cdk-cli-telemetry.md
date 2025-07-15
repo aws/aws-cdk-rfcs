@@ -125,9 +125,9 @@ library metadata collection for that specific command execution.
 
 This flag will be repurposed to include CLI telemetry as well.
 That is, if you are currently opting out of library metadata with `--no-version-reporting` you
-will automatically be opted out of CLI telemetry regardless of context values set.
+will automatically be opted out of CLI telemetry regardless of context values set (for that specific command execution).
 If you are not currently using `--no-version-reporting` then you can use it to disable
-CLI telemetry for that specific command execution.
+CLI telemetry (for that specific command execution).
 
 ## Sending Telemetry Data to a Local File
 
