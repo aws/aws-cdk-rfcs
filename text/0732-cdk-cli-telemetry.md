@@ -118,18 +118,16 @@ regardless of context values set.
 
 ### CLI Option
 
-There is an existing `--no-version-reporting` global CLI option to opt-out of library metadata collection.
+There is an existing `--no-version-reporting` global CLI option to opt-out of
+library metadata collection for that specific command execution.
+
+> Note: setting `analyticsReporting` at the stack level still takes precedence over the CLI flag for library metadata only.
+
 This flag will be repurposed to include CLI telemetry as well.
 That is, if you are currently opting out of library metadata with `--no-version-reporting` you
 will automatically be opted out of CLI telemetry regardless of context values set.
-
-Note that setting `analyticsReporting` at the stack level still takes precedence over the CLI flag:
-
-```ts
-new cdk.Stack(this, 'MyStack', {
-  analyticsReporting: true, // takes precedence over --no-version-reporting
-});
-```
+If you are not currently using `--no-version-reporting` then you can use it to disable
+CLI telemetry for that specific command execution.
 
 ## Sending Telemetry Data to a Local File
 
