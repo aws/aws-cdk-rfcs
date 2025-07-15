@@ -83,7 +83,7 @@ Both of these aspects will help us better serve CDK customers in the future.
 We do not collect [customer content](https://aws.amazon.com/compliance/data-privacy-faq/#topic-1) and we anonymize the telemetry we do collect.
 
 You can opt-out of sending telemetry data.
-Run `cdk cli-telemetry --status` to see if your current telemetry status based on context values
+Run `cdk cli-telemetry --status` to see your current telemetry status based on context values
 and environment variables.
 
 ### Context
