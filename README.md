@@ -27,7 +27,7 @@ future state of the libraries and to discover projects for contribution.
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)|[@dineshSajwan](https://github.com/dineshSajwan)|👷 implementing
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
-[732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/issues/732)|[@kaizencc](https://github.com/kaizencc)|✍️ review
+[732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👍 approved
 <!--END_TABLE-->
 
 ## What is an RFC?
