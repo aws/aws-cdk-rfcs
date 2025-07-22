@@ -252,7 +252,7 @@ $ cdk init --from-path ./my-cdk-template
 
 #### Publishing to the CDK Template Registry
 
-The CDK CLI includes a public template registry that helps users discover publicly accessible templates. If you've created a high-quality template repository or package that would benefit the broader CDK community, you can request to have it included in the CLI registry.
+The CDK CLI includes a public template registry that helps users discover publicly accessible templates. If you've created a template repository or package that would benefit the broader CDK community, you can request to have it included in the CLI registry.
 
 ##### Requirements for Registry Templates
 
