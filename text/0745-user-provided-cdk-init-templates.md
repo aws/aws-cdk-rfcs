@@ -53,7 +53,6 @@ The CDK provides three built-in templates to help you get started quickly:
 ##### Using Built-In Templates
 
 ```
-# NOTE - The below commands can only be run in an empty directory 
 # Use a template for a CDK Application
 $ cdk init app --language=[csharp|fsharp|go|java|javascript|python|typescript]
 
