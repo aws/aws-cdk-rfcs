@@ -1,10 +1,10 @@
 # RFC: User-Provided `cdk init` Templates
 
-Original Author(s):: [Rohan Gupta](https://quip-amazon.com/VHX9EAkXThE)
+Original Author(s):: @rohang9000
 
 Tracking Issue: [#745](https://github.com/aws/aws-cdk-rfcs/issues/745)
 
-API Bar Raiser: [Eli Polonsky](https://quip-amazon.com/CTK9EAq8XeR)
+API Bar Raiser: @iliapolo
 
 Customers need a way to initialize CDK projects in the CLI with custom templates to meet specific technical/regulatory requirements and standardize project initialization.
 
@@ -39,12 +39,12 @@ The CDK provides three built-in templates to help you get started quickly:
     * Includes an empty stack
     * Available in: TypeScript, JavaScript, Python, Java, C#, F#, Go
 
-1. `lib` - CDK Construct Library Template
+2. `lib` - CDK Construct Library Template
 
     * For building and sharing custom CDK constructs
     * Available in: TypeScript
 
-1. `sample-app` - Example CDK Application
+3. `sample-app` - Example CDK Application
 
     * Creates a CDK application with example constructs
     * Demonstrates common AWS services and patterns
