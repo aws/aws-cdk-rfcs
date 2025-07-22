@@ -70,7 +70,7 @@ $ cdk init app --language=typescript
 # Create a construct library
 $ cdk init lib --language=typescript
 
-# Create a sample application to explore CDK features
+# Create a sample TypeScript application to explore CDK features
 $ cdk init sample-app --language=typescript
 ```
 
