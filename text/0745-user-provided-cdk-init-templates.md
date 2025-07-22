@@ -41,7 +41,6 @@ The CDK provides three built-in templates to help you get started quickly:
 
 1. `lib` - CDK Construct Library Template
 
-    * Creates a reusable construct library
     * For building and sharing custom CDK constructs
     * Available in: TypeScript
 
