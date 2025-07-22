@@ -107,7 +107,6 @@ my-custom-template/
 Create projects with templates pulled from Git repositories (GitHub, GitLab, Bitbucket, etc.):
 
 ```
-# NOTE - The below commands can only be run in an empty directory 
 # Syntax:
 # Use specific template from Git repository of many templates
 $ cdk init --from-git [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
