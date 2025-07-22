@@ -6,7 +6,7 @@ Tracking Issue: [#745](https://github.com/aws/aws-cdk-rfcs/issues/745)
 
 API Bar Raiser: [Eli Polonsky](https://quip-amazon.com/CTK9EAq8XeR)
 
-Customers need a seamless way to initialize CDK projects in the CLI with custom templates to meet specific technical/regulatory requirements and standardize project initialization.
+Customers need a way to initialize CDK projects in the CLI with custom templates to meet specific technical/regulatory requirements and standardize project initialization.
 
 
 ## Working Backwards
