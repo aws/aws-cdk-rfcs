@@ -1,4 +1,4 @@
-# RFC - AWS Elemental MediaPackage V2 CDK L2 Construct
+# RFC 728 - AWS Elemental MediaPackage V2 CDK L2 Construct
 
 ## L2 Constructs for AWS Elemental MediaPackage V2 ChannelGroup, Channel, OriginEndpoint, ChannelPolicy & OriginEndpointPolicy
 
@@ -6,7 +6,8 @@
 * **Tracking Issue:**
 * **API Bar Raiser:**
 
-## README
+## Working Backwards
+### README
 
 [AWS Elemental MediaPackage V2](https://aws.amazon.com/mediapackage/) delivers
 high-quality video without concern for capacity and makes it easier to implement
@@ -27,13 +28,11 @@ We could greatly simplify the developer experience in CDK by introducing MediaPa
 This will have a mixture of sensible defaults as well as methods to help build correct configurations
 of Channel Groups, Channels and Origin Endpoints.
 
-### References
-
 * [What is AWS Elemental MediaPackage?](https://aws.amazon.com/mediapackage/)
 * [MediaPackage V2 Documentation](https://docs.aws.amazon.com/mediapackage/latest/userguide/what-is.html)
 * [MediaPackage V2 L1 (CloudFormation) Constructs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_MediaPackageV2.html)
 
-## AWS Elemental MediaPackage V2 Channel Group
+#### AWS Elemental MediaPackage V2 Channel Group
 
 A channel group is the top-level resource that consists of channels and origin endpoints associated with it.
 All channels and origin endpoints belonging to this channel group use the same egress domain. This would be the
@@ -80,7 +79,7 @@ ChannelGroupProps{
 }
 ```
 
-## AWS Elemental MediaPackage V2 Channel
+#### AWS Elemental MediaPackage V2 Channel
 
 A channel is part of a channel group and represents the entry point for a content stream into MediaPackage.
 Upstream encoders such as AWS Elemental MediaLive send content to the channel. When MediaPackage receives a content stream,
@@ -163,7 +162,7 @@ channel.addToResourcePolicy(new PolicyStatement({
 }));
 ```
 
-## AWS Elemental MediaPackage V2 OriginEndpoint
+#### AWS Elemental MediaPackage V2 OriginEndpoint
 
 This construct has the most complexity in terms of configurability and customisation
 that can be achieved in the MediaPackage resources.
@@ -505,7 +504,7 @@ origin.addToResourcePolicy(new PolicyStatement({
 }));
 ```
 
-## MediaPackage V2 ChannelPolicy
+#### MediaPackage V2 ChannelPolicy
 
 This resource specifies the configuration parameters of a MediaPackage V2 channel policy.
 
@@ -529,7 +528,7 @@ policy.document.addStatements(new PolicyStatement({
 }));
 ```
 
-## MediaPackage V2 OriginEndpointPolicy
+#### MediaPackage V2 OriginEndpointPolicy
 
 Specifies the configuration parameters of a policy associated with a MediaPackage V2 origin endpoint.
 
@@ -569,18 +568,8 @@ RFC pull request):
 
 ## Public FAQ TODO
 
-> This section should include answers to questions readers will likely ask about
-> this release. Similar to the "working backwards", this section should be
-> written in a language as if the feature is now released.
->
-> The template includes a some common questions, feel free to add any questions
-> that might be relevant to this feature or omit questions that you feel are not
-> applicable.
 
 ### What are we launching today?
-
-> What exactly are we launching? Is this a new feature in an existing module? A
-> new module? A whole framework? A change in the CLI?
 
 We’re launching new AWS Elemental MediaPackageV2 L2 Constructs to provide
 best-practice defaults and developer friendly functions to create your
@@ -591,8 +580,6 @@ developer experience, as well as speeding up the development process generally.
 
 ### Why should I use this feature?
 
-> Describe use cases that are addressed by this feature.
-
 Developers should use this Construct to reduce the amount of boilerplate
 code, complexity each individual has to navigate, and make it easier to
 create MediaPackageV2 resources.
@@ -602,13 +589,6 @@ Meaning that we can help builders with compatibility, construction and integrati
 in these services.
 
 ## Internal FAQ
-
-> The goal of this section is to help decide if this RFC should be implemented.
-> It should include answers to questions that the team is likely ask. Contrary
-> to the rest of the RFC, answers should be written "from the present" and
-> likely discuss design approach, implementation plans, alternative considered
-> and other considerations that will help decide if this RFC should be
-> implemented.
 
 ### Why are we doing this?
 
@@ -626,20 +606,10 @@ Another example of an L2 that could utilize this resource would be [CloudFront O
 
 ### Why should we _not_ do this?
 
-> Is there a way to address this use case with the current product? What are the
-> downsides of implementing this feature?
-
 Users today are already using the L1 construct, and would likely need to do a workflow
 change and redeployment to alter this existing way of working.
 
 ### What is the technical solution (design) of this feature?
-
-> Briefly describe the high-level design approach for implementing this feature.
->
-> As appropriate, you can add an appendix with a more detailed design document.
->
-> This is a good place to reference a prototype or proof of concept, which is
-> highly recommended for most RFCs.
 
 The main thing required for these resources in particular are abstrating fields.
 This will make the services more accessible and speed up the development process as you don't need
@@ -647,44 +617,21 @@ to deep-dive the documentation to understand the resource.
 
 ### Is this a breaking change?
 
-> If the answer is no. Otherwise:
->
-> Describe what ways did you consider to deliver this without breaking users?
->
-> Make sure to include a `BREAKING CHANGE` clause under the CHANGELOG section with a description of the breaking
-> changes and the migration path.
-
 No - an L2 doesn't exist today.
 
 ### What alternative solutions did you consider?
-
-> Briefly describe alternative approaches that you considered. If there are
-> hairy details, include them in an appendix.
 
 N/A - we already have an opensource project to help builders build these services (as mentioned previously).
 However, we want this to be part of the aws-cdk project to help all users/developers using these services.
 
 ### What are the drawbacks of this solution?
 
-> Describe any problems/risks that can be introduced if we implement this RFC.
-
 N/A
 
 ### What is the high-level project plan?
 
-> Describe your plan on how to deliver this feature from prototyping to GA.
-> Especially think about how to "bake" it in the open and get constant feedback
-> from users before you stabilize the APIs.
->
-> If you have a project board with your implementation plan, this is a good
-> place to link to it.
-
 I have already built a draft L2 construct, working towards getting an alpha draft.
 
 ### Are there any open issues that need to be addressed later?
-
-> Describe any major open issues that this RFC did not take into account. Once
-> the RFC is approved, create GitHub issues for these issues and update this RFC
-> of the project board with these issue IDs.
 
 N/A
