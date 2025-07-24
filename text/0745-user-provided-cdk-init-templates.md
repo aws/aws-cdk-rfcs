@@ -249,42 +249,6 @@ $ cdk init --from-path ./my-cdk-template
 ```
 
 
-
-#### Publishing to the CDK Template Registry
-
-The CDK CLI includes a public template registry that helps users discover publicly accessible templates. If you've created a template repository or package that would benefit the broader CDK community, you can request to have it included in the CLI registry.
-
-##### Requirements for Registry Templates
-
-Templates submitted for inclusion in the registry must meet these requirements:
-
-1. **Structure**: Follow the standard custom template structure with language subdirectories
-2. **Dependencies**: Include appropriate dependency files for each supported language
-3. **Documentation**: Provide clear documentation within the template for CDK users to reference
-4. **Maintenance**: Have a dedicated team or individual responsible for maintenance
-
-##### Submission Process
-
-To submit your template for inclusion in the registry:
-
-1. Ensure your template is publicly available in a Git repository or as an NPM package
-2. Prepare the following information:
-    1. **Name:** A short, descriptive name for your template repository or package
-    2. **Description:** A brief description of what your repository or package provides
-    3. **Source Type:** Either 'git' (for Git repositories) or 'npm' (for NPM packages)
-    4. **Source URL:** The Git repository URL or NPM package name
-    5. **Supported Languages:** List of programming languages your template supports (typescript, python, java, etc.)
-    6. **Template Author**: Name of the team or organization that created and maintains the template
-3. Contact the CDK team with your submission
-
-The CDK team will review submissions and may request changes before adding templates to the registry.
-
-##### Benefits of Registry Inclusion
-
-Having your template in the registry provides increased visibility to CDK users through the `cdk init --list` command.
-
-
-
 Ticking the box below indicates that the public API of this RFC has been signed-off by the API bar raiser (the `status/api-approved` label was applied to the RFC pull request):
 
 ```
