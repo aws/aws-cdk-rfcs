@@ -87,8 +87,10 @@ For more advanced use cases, you can run `cdk init` with custom templates from G
 Let’s walk through an example of running `cdk init` in an empty directory called “example-project” with the custom “my-custom-template” TypeScript template below, which we can pull from a Git repository or NPM package:
 
 ```
+# NOTE: This is an example template implementation. A file of the language directory type and the appropriate language-specific dependency files are the only minimum template requirements.
+
 my-custom-template/
-└── typescript/
+└── typescript/                    # Language directory
     ├── package.json               # Required dependency file
     ├── cdk.template.json          # Required for app templates
     ├── bin/
@@ -159,15 +161,15 @@ This is how your project’s file structure (the “example-project” directory
 ```
 example-project/
 ├── package.json
-├── cdk.json                 # Renamed from cdk.template.json
+├── cdk.json                 # Generated from cdk.template.json
 ├── bin/
-│   └── app.ts               # Renamed from app.template.ts
+│   └── app.ts               # Generated from app.template.ts
 ├── lib/
-│   └── stack.ts             # Renamed from stack.template.ts
+│   └── stack.ts             # Generated from stack.template.ts
 ├── test/
-│   └── stack.test.ts        # Renamed from stack.test.template.ts
+│   └── stack.test.ts        # Generated from stack.test.template.ts
 ├── tsconfig.json
-├── .gitignore               # Renamed from .template.gitignore
+├── .gitignore               # Generated from .template.gitignore
 └── README.md
 ```
 
@@ -203,11 +205,10 @@ Available templates:
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 
 Public template registry:
-* Contact the AWS CDK Team to submit your template repository or package!
 ┌────────────────┬─────────────────────────────────────┬───────────────────────┬──────────────────────────────────────────┐
 │ Name           │ Description                         │ Author                │ Usage                                    │
 ├────────────────┼─────────────────────────────────────┼───────────────────────┼──────────────────────────────────────────┤
-│ aws-pipeline   │ AWS CodePipeline template for CDK   │ AWS CodePipeline Team │--github-url=aws-samples/aws-codepipeline-│
+│ aws-pipeline   │ AWS CodePipeline templates for CDK  │ AWS CodePipeline Team │--github-url=aws-samples/aws-codepipeline-│
 │                │ applications                        │                       │  codepipeline-cicd --language=typescript │
 └────────────────┴─────────────────────────────────────┴───────────────────────┴──────────────────────────────────────────┘
 ```
