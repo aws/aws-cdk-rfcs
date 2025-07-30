@@ -214,8 +214,6 @@ Public template registry:
 └────────────────┴─────────────────────────────────────┴───────────────────────┴──────────────────────────────────────────┘
 ```
 
-
-
 ### Authoring Custom CDK Templates
 
 The requirements for a custom template are that it contains a CDK supported language subdirectory, a file of the same type inside that subdirectory, and the appropriate language-specific dependency files. Reference Appendix A for example app template implementations in all CDK Languages.
@@ -230,11 +228,12 @@ my-custom-app-template/
     └── [dependency-file]        # REQUIRED: Language-specific dependency file
 ```
 
-###### Language-Specific Substitutions:
+##### Language-Specific Substitutions:
 
-    * [language-name]: csharp, fsharp, go, java, javascript, python, typescript
-    * [ext]: .ts, .js, .py, .java, .cs, .fs, .go
-    * [dependency-file]: package.json, requirements.txt, pom.xml, .csproj, go.mod
+* [language-name]: csharp, fsharp, go, java, javascript, python, typescript
+* [ext]: .cs, .fs, .go, .java, .js, .py, .ts
+* [dependency-file]: .csproj, .fsproj, go.mod, pom.xml, package.json, requirements.txt, package.json
+
 
 
 
@@ -500,7 +499,7 @@ my-custom-template/
     └── README.md                  # Documentation
 ```
 
-###### **Example Implementation of /package.json for TypeScript template**
+##### **Example Implementation of /package.json for TypeScript template**
 
 ```
 {
@@ -522,7 +521,7 @@ my-custom-template/
 }
 ```
 
-###### **Example Implementation of /cdk.template.json for  TypeScript template**
+##### **Example Implementation of /cdk.template.json for  TypeScript template**
 
 ```
 {
@@ -544,7 +543,7 @@ my-custom-template/
 }
 ```
 
-###### **Example Implementation of /bin/app.template.ts for TypeScript template**
+##### **Example Implementation of /bin/app.template.ts for TypeScript template**
 
 ```
 #!/usr/bin/env node
@@ -555,7 +554,7 @@ const app = new cdk.App();
 new MyAppStack(app, 'MyAppStack');
 ```
 
-###### **Example Implementation of /lib/stack.template.ts for TypeScript template**
+##### **Example Implementation of /lib/stack.template.ts for TypeScript template**
 
 ```
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
@@ -579,7 +578,7 @@ export class MyAppStack extends Stack {
 }
 ```
 
-###### **Example Implementation of /test/stack.test.ts for  TypeScript template**
+##### **Example Implementation of /test/stack.test.ts for  TypeScript template**
 
 ```
 import * as cdk from 'aws-cdk-lib';
@@ -599,7 +598,7 @@ test('SQS Queue and SNS Topic Created', () => {
 });
 ```
 
-###### **Example Implementation of /tsconfig.json for  TypeScript template**
+##### **Example Implementation of /tsconfig.json for  TypeScript template**
 
 ```
 {
@@ -635,7 +634,7 @@ test('SQS Queue and SNS Topic Created', () => {
 }
 ```
 
-###### **Example Implementation of /.template.gitignore for  TypeScript template**
+##### **Example Implementation of /.template.gitignore for  TypeScript template**
 
 ```
 *.js
@@ -648,7 +647,7 @@ node_modules
 cdk.out
 ```
 
-###### **Example Implementation of /README.md for  TypeScript template**
+##### **Example Implementation of /README.md for  TypeScript template**
 
 ```
 # MyApp CDK App
