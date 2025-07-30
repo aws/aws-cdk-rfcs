@@ -92,15 +92,15 @@ Let’s walk through an example of running `cdk init` in an empty directory call
 my-custom-template/
 └── typescript/                    # Language directory
     ├── package.json               # Required dependency file
-    ├── cdk.template.json          # Required for app templates
+    ├── cdk.json                   # Required for app templates
     ├── bin/
-    │   └── app.template.ts        # App entry file
+    │   └── app.ts                 # App entry file
     ├── lib/
-    │   └── stack.template.ts      # Stack class file
+    │   └── stack.ts               # Stack class file
     ├── test/
-    │   └── stack.test.template.ts # Test file
+    │   └── stack.test.ts          # Test file
     ├── tsconfig.json              # TypeScript configuration
-    ├── .template.gitignore        # Git ignore patterns
+    ├── .gitignore                 # Git ignore patterns
     └── README.md                  # Documentation
 ```
 
@@ -111,23 +111,24 @@ Create projects with templates pulled from Git repositories (GitHub, GitLab, Bit
 ```
 # Syntax:
 # Use specific template from Git repository of many templates
-$ cdk init --from-git [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 
-# If Git repository only contains one template, don't need to specify template name
-$ cdk init --from-git [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
+# If Git repository only contains one template and it is at the root directory of the repository, don't need to specify template path
+$ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 
 # If template contains only one language, don't need to specify language
-$ cdk init --from-git [URL] --template-path ./template-name
+$ cdk init --from-git-url [URL] --template-path ./template-name
 
 # Examples:
 # Using GitHub URL
-$ cdk init --from-git https://github.com/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-git-url https://github.com/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-github https://github.com/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
 
 # Using GitHub shorthand notation 
 $ cdk init --from-github username/my-cdk-templates --language=[csharp|fsharp|go|java|javascript|python|typescript]
 
 # Using BitBucket URL
-$ cdk init --from-git https://bitbucket.org/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-git-url https://bitbucket.org/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 ##### Using NPM Package Templates
@@ -161,15 +162,15 @@ This is how your project’s file structure (the “example-project” directory
 ```
 example-project/
 ├── package.json
-├── cdk.json                 # Generated from cdk.template.json
+├── cdk.json                 
 ├── bin/
-│   └── app.ts               # Generated from app.template.ts
+│   └── app.ts         
 ├── lib/
-│   └── stack.ts             # Generated from stack.template.ts
+│   └── stack.ts             
 ├── test/
-│   └── stack.test.ts        # Generated from stack.test.template.ts
+│   └── stack.test.ts        
 ├── tsconfig.json
-├── .gitignore               # Generated from .template.gitignore
+├── .gitignore               
 └── README.md
 ```
 
@@ -312,8 +313,7 @@ Extend `cdk init` with:
 1. Custom template source options (local/Git Repo/NPM) with all CDK supported languages
 2. Simple CLI syntax for users to run `cdk init` commands with custom templates
 3. Custom template validation to ensure a valid CDK project can be initialized
-4. Initialize project using custom template
-
+4. Static discovery mechanism for users to find public template repositories and packages from within the CLI
 
 
 ### Is this a breaking change?
