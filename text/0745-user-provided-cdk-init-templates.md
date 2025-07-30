@@ -87,12 +87,12 @@ For more advanced use cases, you can run `cdk init` with custom templates from G
 Let’s walk through an example of running `cdk init` in an empty directory called “example-project” with the custom “my-custom-template” TypeScript template below, which we can pull from a Git repository or NPM package:
 
 ```
-# NOTE: This is an example template implementation. A file of the language directory type and the appropriate language-specific dependency files are the only minimum template requirements.
+# NOTE: This is an example template implementation. At least one language subdirectory and a file of the same language type inside it are the only minimum template requirements.
 
 my-custom-template/
 └── typescript/                    # Language directory
-    ├── package.json               # Required dependency file
-    ├── cdk.json                   # Required for app templates
+    ├── package.json               # Dependency management file
+    ├── cdk.json                   # CDK config for app
     ├── bin/
     │   └── app.ts                 # App entry file
     ├── lib/
@@ -161,17 +161,17 @@ This is how your project’s file structure (the “example-project” directory
 
 ```
 example-project/
-├── package.json
-├── cdk.json                 
+├── package.json                   # Dependency management file
+├── cdk.json                       # CDK config for app
 ├── bin/
-│   └── app.ts         
+│   └── app.ts                     # App entry file
 ├── lib/
-│   └── stack.ts             
+│   └── stack.ts                   # Stack class file
 ├── test/
-│   └── stack.test.ts        
-├── tsconfig.json
-├── .gitignore               
-└── README.md
+│   └── stack.test.ts              # Test file
+├── tsconfig.json                  # TypeScript configuration
+├── .gitignore                     # Git ignore patterns
+└── README.md                      # Documentation
 ```
 
 
@@ -181,13 +181,21 @@ example-project/
 ```
 # Generate only (skip dependency installation and git initialization)
 $ cdk init app --language=typescript --generate-only
-$ cdk init --git-url https://github.com/user/my-template.git --generate-only
+$ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
 
-# Use a specific CDK library version
+# Use a specific CDK library version (built-in templates only)
 $ cdk init app --language=typescript --lib-version 2.100.0
 
-# Combine both options
+# Use a specific template version (Git branch/tag/commit or NPM package version)
+$ cdk init --from-git-url https://github.com/user/my-template.git --template-version v1.2.3
+$ cdk init --from-npm my-template-package --template-version 2.1.0
+
+# Combine options for built-in templates
 $ cdk init app --language=typescript --generate-only --lib-version 2.100.0
+
+# Combine options for custom templates
+$ cdk init --from-git-url https://github.com/user/my-template.git --template-version main --generate-only
+$ cdk init --from-npm my-template-package --template-version 1.5.0 --generate-only
 ```
 
 
@@ -206,34 +214,31 @@ Available templates:
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 
 Public template registry:
-┌────────────────┬─────────────────────────────────────┬───────────────────────┬──────────────────────────────────────────┐
-│ Name           │ Description                         │ Author                │ Usage                                    │
-├────────────────┼─────────────────────────────────────┼───────────────────────┼──────────────────────────────────────────┤
-│ aws-pipeline   │ AWS CodePipeline templates for CDK  │ AWS CodePipeline Team │--github-url=aws-samples/aws-codepipeline-│
-│                │ applications                        │                       │  codepipeline-cicd --language=typescript │
-└────────────────┴─────────────────────────────────────┴───────────────────────┴──────────────────────────────────────────┘
+┌────────────────┬─────────────────────────────────────┬───────────────────────┬────────────────────────────────────────────────────────────────────┐
+│ Name           │ Description                         │ Author                │ Usage                                                              │
+├────────────────┼─────────────────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
+│sample-git-repo │ Sample public GitHub repository with│ @rohang9000           │--from-github=rohang9000/sample-git-repo --template-path my-template│
+│                │ a custom template                   │                       │--language=[python|typescript]                                      │
+└────────────────┴─────────────────────────────────────┴───────────────────────┴────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Authoring Custom CDK Templates
 
-The requirements for a custom template are that it contains a CDK supported language subdirectory, a file of the same type inside that subdirectory, and the appropriate language-specific dependency files. Reference Appendix A for example app template implementations in all CDK Languages.
+The requirements for a custom template are that it contains a CDK supported language subdirectory and at least one file of the same type inside that subdirectory. Reference Appendix A for example app template implementations in all CDK Languages.
 
 
 #### Custom Template Schema
 
 ```
 my-custom-app-template/
-└── [language-name]/             # REQUIRED: Language subdirectory 
-    ├── [file-name].[ext]        # REQUIRED: At least one file matching the language type in language subdirectory
-    └── [dependency-file]        # REQUIRED: Language-specific dependency file
+└── [language-name]/             # REQUIRED: CDK language subdirectory 
+    └── [file-name].[ext]        # REQUIRED: At least one file matching the language type in language subdirectory
 ```
 
 ##### Language-Specific Substitutions:
 
 * [language-name]: csharp, fsharp, go, java, javascript, python, typescript
 * [ext]: .cs, .fs, .go, .java, .js, .py, .ts
-* [dependency-file]: .csproj, .fsproj, go.mod, pom.xml, package.json, requirements.txt, package.json
-
 
 
 
@@ -290,29 +295,57 @@ No, dynamic templates are not directly supported or processed by the CDK CLI. Ho
 
 ### Why are we doing this?
 
-CDK users are currently limited to initializing their project from 3 built-in templates. Custom template support within the CLI reduces project setup time by allowing CDK users to quickly create CDK projects with specific components/requirements by default.
-
+Currently, cdk init only supports built-in AWS templates, limiting developers to basic project structures. Teams need custom templates that include their organization's best practices, pre-configured resources, and standardized project layouts, but have no way to use them with the CDK CLI.
 
 ### Why should we *not* do this?
 
-* Increased CLI complexity because users have to learn syntax for pass in new argument types
+* Increased CLI complexity because users have to learn syntax for new arguments
 * CDK users/template authors can already utilize custom templates outside of the CDK ecosystem (Below options achieve same outcome)
     * Extended cdk init command to allow passing in custom templates from source:
-        * cdk init --git-url https://github.com/codepipeline/cdk-templates —template-path ./LambdaInvoke
+        * cdk init --from-git-url https://github.com/codepipeline/cdk-templates —template-path ./LambdaInvoke
     * Downloading template source and extracting files:
         * git clone https://github.com/codepipeline/cdk-templates
         * cp -r cdk-templates/LambdaInvoke/typescript .
 
-
-
 ### What is the technical solution (design) of this feature?
 
-Extend `cdk init` with:
+Extend cdk init to support custom templates from various source options while maintaining the same user experience and validation standards as built-in templates. The main aspects of this solution are:
 
-1. Custom template source options (local/Git Repo/NPM) with all CDK supported languages
-2. Simple CLI syntax for users to run `cdk init` commands with custom templates
-3. Custom template validation to ensure a valid CDK project can be initialized
-4. Static discovery mechanism for users to find public template repositories and packages from within the CLI
+#### Multi Template Source Support (local/Git repo/NPM package)
+
+Technical Implementation:
+* Add CLI flags `--from-local`, `--from-git-url`, `--from-github`, and `--from-npm` to specify custom template sources
+* Implement template loaders for each source type that download/copy templates and normalize them into a common format
+* Ensure target directory is empty to prevent overwriting existing files
+* Initialize new Git repository in project directory
+* Create initial Git commit with all template files
+
+#### Simple User Experience in CDK CLI
+
+Technical Implementation:
+* Maintain existing `cdk init [template] --language=[language]` syntax for built-in templates
+* Add source-specific flags that work with existing parameters: `--from-local`, `--from-git-url`, `--from-github`, `--from-npm`
+* Provide unified command structure: `cdk init --from-<source>=[location] --language=[language]`
+* Preserve existing CLI option `--generate-only` with custom templates
+
+#### Template Validation
+
+Technical Implementation:
+
+* Check that language argument specified is a valid CDK language (TypeScript, JavaScript, Python, Java, C#, F#, Go)
+* Validate template structure matches required schema in "Authoring Custom CDK Templates" document before installation
+   * At least 1 language subdirectory contained in template root
+   * At least 1 file of the same language type in that language subdirectory
+* Provide clear error messages when template source is invalid or unreachable
+* Provide clear error messages when invalid argument is used in `cdk init` command
+
+#### Template Discovery
+
+Technical Implementation:
+
+* Implement static registry of curated public template repositories and NPM packages
+* Extend `cdk init --list` to display both built-in and templates in registry
+* Show description, author, supported languages, and template usage instructions in formatted table
 
 
 ### Is this a breaking change?
@@ -431,7 +464,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 ### What are the drawbacks of this solution?
 
-1. Template validation burden is on template author, can't ensure template quality unless template is part of CLI template registry (cdk init —list).
+1. Template validation burden is on template author, can't ensure template quality unless template is part of vetted CLI template registry.
 
 
 
@@ -486,16 +519,16 @@ No, the new feature does not affect existing functionality for creating CDK proj
 ```
 my-custom-template/
 └── typescript/
-    ├── package.json               # Required dependency file
-    ├── cdk.template.json          # Required for app templates
+    ├── package.json               # Dependency management file
+    ├── cdk.json                   # TODO: CDK config for app
     ├── bin/
-    │   └── app.template.ts        # App entry file
+    │   └── app.ts                 # App entry file
     ├── lib/
-    │   └── stack.template.ts      # Stack class file
+    │   └── stack.ts               # Stack class file
     ├── test/
-    │   └── stack.test.template.ts # Test file
+    │   └── stack.test.ts          # Test file
     ├── tsconfig.json              # TypeScript configuration
-    ├── .template.gitignore        # Git ignore patterns
+    ├── .gitignore                 # Git ignore patterns
     └── README.md                  # Documentation
 ```
 
@@ -521,7 +554,7 @@ my-custom-template/
 }
 ```
 
-##### **Example Implementation of /cdk.template.json for  TypeScript template**
+##### **Example Implementation of /cdk.json for TypeScript template**
 
 ```
 {
@@ -543,7 +576,7 @@ my-custom-template/
 }
 ```
 
-##### **Example Implementation of /bin/app.template.ts for TypeScript template**
+##### **Example Implementation of /bin/app.ts for TypeScript template**
 
 ```
 #!/usr/bin/env node
@@ -554,7 +587,7 @@ const app = new cdk.App();
 new MyAppStack(app, 'MyAppStack');
 ```
 
-##### **Example Implementation of /lib/stack.template.ts for TypeScript template**
+##### **Example Implementation of /lib/stack.ts for TypeScript template**
 
 ```
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
@@ -578,7 +611,7 @@ export class MyAppStack extends Stack {
 }
 ```
 
-##### **Example Implementation of /test/stack.test.ts for  TypeScript template**
+##### **Example Implementation of /test/stack.test.ts for TypeScript template**
 
 ```
 import * as cdk from 'aws-cdk-lib';
@@ -598,7 +631,7 @@ test('SQS Queue and SNS Topic Created', () => {
 });
 ```
 
-##### **Example Implementation of /tsconfig.json for  TypeScript template**
+##### **Example Implementation of /tsconfig.json for TypeScript template**
 
 ```
 {
@@ -634,7 +667,7 @@ test('SQS Queue and SNS Topic Created', () => {
 }
 ```
 
-##### **Example Implementation of /.template.gitignore for  TypeScript template**
+##### **Example Implementation of /.gitignore for TypeScript template**
 
 ```
 *.js
@@ -647,7 +680,7 @@ node_modules
 cdk.out
 ```
 
-##### **Example Implementation of /README.md for  TypeScript template**
+##### **Example Implementation of /README.md for TypeScript template**
 
 ```
 # MyApp CDK App
@@ -669,36 +702,36 @@ npx cdk deploy
 ```
 my-custom-template/
 └── python/
-    ├── requirements.template.txt                  # Required dependency file
-    ├── cdk.template.json                          # Required for app templates
-    ├── app.template.py                            # App entry file
+    ├── requirements.txt                           # Dependency management file
+    ├── cdk.json                                   # TODO: CDK config for app
+    ├── app.py                                     # App entry file
     ├── my_cdk_project/                            # Package directory
-    │   ├── __init__.template.py                   # Package initialization
-    │   └── my_cdk_project_stack.template.py       # Stack class file
+    │   ├── __init__.py                            # Package initialization
+    │   └── my_cdk_project_stack.py                # Stack class file
     ├── tests/                                     # Test directory
-    │   ├── __init__.template.py                   # Test package initialization
-    │   └── test_my_cdk_project_stack.template.py  # Test file
-    ├── setup.template.py                          # Python package setup
-    ├── .template.gitignore                        # Git ignore patterns
-    └── README.template.md                         # Documentation
+    │   ├── __init__.py                            # Test package initialization
+    │   └── test_my_cdk_project_stack.py           # Test file
+    ├── setup.py                                   # Python package setup
+    ├── .gitignore                                 # Git ignore patterns
+    └── README.md                                  # Documentation
 ```
 
-##### **Example Implementation of  /requirements.template.txt for Python template**
+##### **Example Implementation of /requirements.txt for Python template**
 
 ```
 aws-cdk-lib==2.139.0
 constructs>=10.0.0,<11.0.0
 ```
 
-##### **Example Implementation of  /cdk.template.json  for Python template**
+##### **Example Implementation of /cdk.json for Python template**
 
 ```
 {
-  "app": "python app.template.py"
+  "app": "python app.py"
 }
 ```
 
-##### **Example Implementation of  /app.template.py  for  Python template**
+##### **Example Implementation of /app.py for Python template**
 
 ```
 #!/usr/bin/env python3
@@ -710,13 +743,13 @@ MyCdkProjectStack(app, "MyCdkProjectStack")
 app.synth()
 ```
 
-##### **Example Implementation of  /my_cdk_project/__init__.template.py  for  Python template**
+##### **Example Implementation of /my_cdk_project/__init__.py for Python template**
 
 ```
 # Empty init file to define this as a Python package
 ```
 
-##### **Example Implementation of  /my_cdk_project/my_cdk_project_stack.template.py  for  Python template**
+##### **Example Implementation of /my_cdk_project/my_cdk_project_stack.py for Python template**
 
 ```
 from aws_cdk import Stack
@@ -731,13 +764,13 @@ class MyCdkProjectStack(Stack):
         # s3.Bucket(self, "MyBucket", versioned=True)
 ```
 
-##### **Example Implementation of  /tests/__init__.template.py  for  Python template**
+##### **Example Implementation of /tests/__init__.py for Python template**
 
 ```
 # Empty init to mark this as a test package
 ```
 
-##### **Example Implementation of  /tests/test_my_cdk_project_stack.template.py  for  Python template**
+##### **Example Implementation of /tests/test_my_cdk_project_stack.py for Python template**
 
 ```
 import aws_cdk as cdk
@@ -751,7 +784,7 @@ def test_stack_synthesizes():
     assert template  # At minimum, the template exists
 ```
 
-##### **Example Implementation of  /setup.template.py  for  Python template**
+##### **Example Implementation of /setup.py for Python template**
 
 ```
 import setuptools
@@ -771,7 +804,7 @@ setuptools.setup(
 )
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  Python template**
+##### **Example Implementation of /.gitignore for Python template**
 
 ```
 *.pyc
@@ -784,7 +817,7 @@ cdk.out/
 .vscode/
 ```
 
-##### **Example Implementation of  /README.template.md  for  Python template**
+##### **Example Implementation of /README.md for Python template**
 
 ```
 # My CDK Project
@@ -801,7 +834,7 @@ This is a template for an AWS CDK Python project.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.template.txt
+pip install -r requirements.txt
 ```
 
 
@@ -811,20 +844,20 @@ pip install -r requirements.template.txt
 ```
 my-custom-app-template/
 └── java/
-    ├── build.gradle.template                   # Required Java dependency file (Gradle-based)
-    ├── cdk.template.json                       # CDK config for app
+    ├── build.gradle                            # Dependency management file
+    ├── cdk.json                                # CDK config for app
     ├── bin/
-    │   └── App.template.java                   # CDK app entry point
+    │   └── App.java                            # CDK app entry point
     ├── lib/
-    │   └── MyStack.template.java               # Stack definition
+    │   └── MyStack.java                        # Stack definition
     ├── test/
-    │   └── MyStackTest.template.java           # Stack unit test
-    ├── settings.gradle.template                # Gradle project name config
-    ├── .template.gitignore                     # Git ignore
-    └── README.template.md                      # Documentation
+    │   └── MyStackTest.java                    # Stack unit test
+    ├── settings.gradle                         # Gradle project name config
+    ├── .gitignore                              # Git ignore
+    └── README.md                               # Documentation
 ```
 
-##### **Example Implementation of  /build.gradle.template for Java template**
+##### **Example Implementation of /build.gradle for Java template**
 
 ```
 plugins {
@@ -847,7 +880,7 @@ test {
 }
 ```
 
-##### **Example Implementation of  /cdk.template.json  for Java template**
+##### **Example Implementation of /cdk.json for Java template**
 
 ```
 {
@@ -855,7 +888,7 @@ test {
 }
 ```
 
-##### **Example Implementation of  /bin/App.template.java for  Java template**
+##### **Example Implementation of /bin/App.java for Java template**
 
 ```
 package com.example;
@@ -874,7 +907,7 @@ public class App {
 }
 ```
 
-##### **Example Implementation of  /lib/MyStack.template.java  for  Java template**
+##### **Example Implementation of /lib/MyStack.java for Java template**
 
 ```
 package com.example;
@@ -902,7 +935,7 @@ public class MyStack extends Stack {
 }
 ```
 
-##### **Example Implementation of  /test/MyStackTest.template.java  for  Java template**
+##### **Example Implementation of /test/MyStackTest.java for Java template**
 
 ```
 package com.example;
@@ -927,13 +960,13 @@ public class MyStackTest {
 }
 ```
 
-##### **Example Implementation of  /settings.gradle.template  for  Java template**
+##### **Example Implementation of /settings.gradle for Java template**
 
 ```
 rootProject.name = 'cdk-java-app'
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  Java template**
+##### **Example Implementation of /.gitignore for Java template**
 
 ```
 .gradle/
@@ -946,7 +979,7 @@ build/
 cdk.out/
 ```
 
-##### **Example Implementation of  /README.template.md  for  Java template**
+##### **Example Implementation of /README.md for Java template**
 
 ```
 # CDK Java App Template
@@ -979,39 +1012,39 @@ cdk deploy
 ```
 my-custom-app-template/
 └── javascript/
-    ├── package.json                         # REQUIRED: Dependency file
-    ├── cdk.template.json                    # OPTIONAL: CDK configuration
+    ├── package.json                         # Dependency management file
+    ├── cdk.json                             # CDK config for app
     ├── bin/
-    │   └── app.template.js                  # OPTIONAL: CDK app entry point
+    │   └── app.js                           # CDK app entry point
     ├── lib/
-    │   └── my-stack.template.js             # OPTIONAL: CDK stack definition
+    │   └── my-stack.js                      # CDK stack definition
     ├── test/
-    │   └── my-stack.test.template.js        # OPTIONAL: Unit test
-    ├── jsconfig.json                        # OPTIONAL: JavaScript config file
-    ├── .template.gitignore                  # OPTIONAL: Git ignore file
-    └── README.template.md                   # OPTIONAL: Documentation
+    │   └── my-stack.test.js                 # Unit test
+    ├── jsconfig.json                        # JavaScript config file
+    ├── .gitignore                           # Git ignore file
+    └── README.md                            # Documentation
 ```
 
-##### **Example Implementation of  /package.json for JavaScript template**
+##### **Example Implementation of /package.json for JavaScript template**
 
 ```
 {
-  "app": "node bin/app.template.js"
+  "app": "node bin/app.js"
 }
 ```
 
-##### **Example Implementation of  /cdk.template.json  for JavaScript template**
+##### **Example Implementation of /cdk.json for JavaScript template**
 
 ```
 {
   "name": "cdk-js-app",
   "version": "0.1.0",
   "bin": {
-    "cdk-js-app": "bin/app.template.js"
+    "cdk-js-app": "bin/app.js"
   },
   "scripts": {
     "build": "echo 'No build step needed for plain JS'",
-    "watch": "nodemon bin/app.template.js",
+    "watch": "nodemon bin/app.js",
     "test": "jest"
   },
   "dependencies": {
@@ -1026,18 +1059,18 @@ my-custom-app-template/
 }
 ```
 
-##### **Example Implementation of  /bin/app.template.js for  JavaScript template**
+##### **Example Implementation of /bin/app.js for JavaScript template**
 
 ```
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { MyStack } from '../lib/my-stack.template.js';
+import { MyStack } from '../lib/my-stack.js';
 
 const app = new cdk.App();
 new MyStack(app, 'MyJsCdkStack');
 ```
 
-##### **Example Implementation of  /lib/my-stack.template.js for  JavaScript template**
+##### **Example Implementation of /lib/my-stack.js for JavaScript template**
 
 ```
 import { Stack, Duration } from 'aws-cdk-lib';
@@ -1060,11 +1093,11 @@ export class MyStack extends Stack {
 }
 ```
 
-##### **Example Implementation of  /test/my-stack.test.template.js  for  JavaScript template**
+##### **Example Implementation of /test/my-stack.test.js for JavaScript template**
 
 ```
 import { App, assertions } from 'aws-cdk-lib';
-import { MyStack } from '../lib/my-stack.template.js';
+import { MyStack } from '../lib/my-stack.js';
 
 test('SQS Queue and SNS Topic Created', () => {
   const app = new App();
@@ -1080,7 +1113,7 @@ test('SQS Queue and SNS Topic Created', () => {
 });
 ```
 
-##### **Example Implementation of  /jsconfig.json  for  JavaScript template**
+##### **Example Implementation of /jsconfig.json for JavaScript template**
 
 ```
 {
@@ -1095,7 +1128,7 @@ test('SQS Queue and SNS Topic Created', () => {
 }
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  JavaScript template**
+##### **Example Implementation of /.gitignore for JavaScript template**
 
 ```
 node_modules/
@@ -1106,7 +1139,7 @@ cdk.out/
 .vscode/
 ```
 
-##### **Example Implementation of  /README.template.md  for  JavaScript template**
+##### **Example Implementation of /README.md for JavaScript template**
 
 ```
 # CDK JavaScript App
@@ -1131,20 +1164,20 @@ npm install
 ```
 my-custom-app-template/
 └── csharp/
-    ├── MyCdkApp.template.csproj             # REQUIRED: Dependency file (project file)
-    ├── cdk.template.json                    # OPTIONAL: CDK configuration
-    ├── bin/                                 # OPTIONAL: App entry point directory
-    │   └── Program.template.cs              # OPTIONAL: CDK app entry point
-    ├── lib/                                 # OPTIONAL: Stack definitions
-    │   └── MyCdkAppStack.template.cs        # OPTIONAL: Stack class
-    ├── test/                                # OPTIONAL: Unit test project
-    │   ├── MyCdkApp.Tests.template.csproj   # OPTIONAL: Test project file
-    │   └── MyCdkAppTests.template.cs        # OPTIONAL: Test class
-    ├── .template.gitignore                  # OPTIONAL: Git ignore patterns
-    └── README.template.md                   # OPTIONAL: Documentation
+    ├── MyCdkApp.csproj                      # Dependency management file
+    ├── cdk.json                             # CDK config for app
+    ├── bin/                                 # App entry point directory
+    │   └── Program.cs                       # CDK app entry point
+    ├── lib/                                 # Stack definitions
+    │   └── MyCdkAppStack.cs                 # Stack class
+    ├── test/                                # Unit test project
+    │   ├── MyCdkApp.Tests.csproj            # Test project file
+    │   └── MyCdkAppTests.cs                 # Test class
+    ├── .gitignore                           # Git ignore patterns
+    └── README.md                            # Documentation
 ```
 
-##### **Example Implementation of  /MyCdkApp.template.csproj for C Sharp template**
+##### **Example Implementation of /MyCdkApp.csproj for C Sharp template**
 
 ```
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1165,15 +1198,15 @@ my-custom-app-template/
 </Project>
 ```
 
-##### **Example Implementation of  /cdk.template.json  for C Sharp template**
+##### **Example Implementation of /cdk.json for C Sharp template**
 
 ```
 {
-  "app": "dotnet run --project bin/Program.template.cs"
+  "app": "dotnet run --project bin/Program.cs"
 }
 ```
 
-##### **Example Implementation of  /bin/Program.template.cs for  C Sharp template**
+##### **Example Implementation of /bin/Program.cs for C Sharp template**
 
 ```
 using Amazon.CDK;
@@ -1184,7 +1217,7 @@ new MyCdkAppStack(app, "MyCdkAppStack");
 app.Synth();
 ```
 
-##### **Example Implementation of  /lib/MyCdkAppStack.template.cs for  C Sharp template**
+##### **Example Implementation of /lib/MyCdkAppStack.cs for C Sharp template**
 
 ```
 using Amazon.CDK;
@@ -1212,7 +1245,7 @@ namespace MyCdkApp
 }
 ```
 
-##### **Example Implementation of  /test/MyCdkApp.Tests.template.csproj  for  C Sharp template**
+##### **Example Implementation of /test/MyCdkApp.Tests.csproj for C Sharp template**
 
 ```
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1235,7 +1268,7 @@ namespace MyCdkApp
 </Project>
 ```
 
-##### **Example Implementation of  /test/MyCdkAppTests.template.cs  for  C Sharp template**
+##### **Example Implementation of /test/MyCdkAppTests.cs for C Sharp template**
 
 ```
 using Amazon.CDK;
@@ -1264,7 +1297,7 @@ namespace MyCdkApp.Tests
 }
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  C Sharp template**
+##### **Example Implementation of /.gitignore for C Sharp template**
 
 ```
 bin/
@@ -1275,7 +1308,7 @@ cdk.out/
 *.DotSettings.user
 ```
 
-##### **Example Implementation of  /README.template.md  for  C Sharp template**
+##### **Example Implementation of /README.md for C Sharp template**
 
 ```
 # CDK C# App Template
@@ -1300,20 +1333,20 @@ dotnet restore
 ```
 my-custom-app-template/
 └── fsharp/
-    ├── MyCdkApp.template.fsproj              # REQUIRED: F# project file
-    ├── cdk.template.json                     # OPTIONAL: CDK configuration
-    ├── bin/                                  # OPTIONAL: App entry point
-    │   └── Program.template.fs               # OPTIONAL: Entry point file
-    ├── lib/                                  # OPTIONAL: Stack definitions
-    │   └── MyCdkAppStack.template.fs         # OPTIONAL: Stack class file
-    ├── test/                                 # OPTIONAL: Unit tests
-    │   ├── MyCdkApp.Tests.template.fsproj    # OPTIONAL: Test project file
-    │   └── MyCdkAppTests.template.fs         # OPTIONAL: Test file
-    ├── .template.gitignore                   # OPTIONAL: Git ignore file
-    └── README.template.md                    # OPTIONAL: Documentation
+    ├── MyCdkApp.fsproj                       # Dependency management file
+    ├── cdk.json                              # CDK config for app
+    ├── bin/                                  # App entry point
+    │   └── Program.fs                        # Entry point file
+    ├── lib/                                  # Stack definitions
+    │   └── MyCdkAppStack.fs                  # Stack class file
+    ├── test/                                 # Unit tests
+    │   ├── MyCdkApp.Tests.fsproj             # Test project file
+    │   └── MyCdkAppTests.fs                  # Test file
+    ├── .gitignore                            # Git ignore file
+    └── README.md                             # Documentation
 ```
 
-##### **Example Implementation of  /MyCdkApp.template.fsproj for F Sharp template**
+##### **Example Implementation of /MyCdkApp.fsproj for F Sharp template**
 
 ```
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1334,15 +1367,15 @@ my-custom-app-template/
 </Project>
 ```
 
-##### **Example Implementation of  /cdk.template.json  for F Sharp template**
+##### **Example Implementation of /cdk.json for F Sharp template**
 
 ```
 {
-  "app": "dotnet run --project bin/Program.template.fs"
+  "app": "dotnet run --project bin/Program.fs"
 }
 ```
 
-##### **Example Implementation of  /bin/Program.template.fs for  F Sharp template**
+##### **Example Implementation of /bin/Program.fs for F Sharp template**
 
 ```
 open Amazon.CDK
@@ -1356,7 +1389,7 @@ let main argv =
     0
 ```
 
-##### **Example Implementation of  /lib/MyCdkAppStack.template.fs for  F Sharp template**
+##### **Example Implementation of /lib/MyCdkAppStack..fs for F Sharp template**
 
 ```
 namespace MyCdkApp
@@ -1376,7 +1409,7 @@ type MyCdkAppStack(scope: Construct, id: string, ?props: IStackProps) as this =
     do topic.AddSubscription(SqsSubscription(queue)) |> ignore
 ```
 
-##### **Example Implementation of  /test/MyCdkApp.Tests.template.fsproj for  F Sharp template**
+##### **Example Implementation of /test/MyCdkApp.Tests.fsproj for F Sharp template**
 
 ```
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1396,10 +1429,10 @@ type MyCdkAppStack(scope: Construct, id: string, ?props: IStackProps) as this =
 </Project>
 ```
 
-##### **Example Implementation of  /test/MyCdkAppTests.template.fs  for  F Sharp template**
+##### **Example Implementation of /test/MyCdkAppTests.fs for F Sharp template**
 
 ```
-test/MyCdkAppTests.template.fs
+test/MyCdkAppTests.fs
 fsharp
 Copy
 Edit
@@ -1423,7 +1456,7 @@ type MyCdkAppTests() =
         expected.Add("VisibilityTimeout", box 300)
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  F Sharp template**
+##### **Example Implementation of /.gitignore for F Sharp template**
 
 ```
 bin/
@@ -1433,7 +1466,7 @@ cdk.out/
 .vscode/
 ```
 
-##### **Example Implementation of  /README.template.md  for  F Sharp template**
+##### **Example Implementation of /README.md for F Sharp template**
 
 ```
 # CDK F# App Template
@@ -1458,19 +1491,19 @@ dotnet restore
 ```
 my-custom-app-template/
 └── go/
-    ├── go.mod.template                      # REQUIRED: Dependency file
-    ├── cdk.template.json                    # OPTIONAL: CDK configuration
-    ├── bin/                                 # OPTIONAL: App entry point
-    │   └── main.template.go                 # OPTIONAL: Entry file
-    ├── lib/                                 # OPTIONAL: Stack definitions
-    │   └── my_cdk_app_stack.template.go     # OPTIONAL: Stack class file
-    ├── test/                                # OPTIONAL: Unit tests
-    │   └── my_cdk_app_test.template.go      # OPTIONAL: Test file
-    ├── .template.gitignore                  # OPTIONAL: Git ignore patterns
-    └── README.template.md                   # OPTIONAL: Documentation
+    ├── go.mod                               # Dependency management file
+    ├── cdk.json                             # CDK configuration
+    ├── bin/                                 # App entry point
+    │   └── main.go                          # Entry file
+    ├── lib/                                 # Stack definitions
+    │   └── my_cdk_app_stack.go              # Stack class file
+    ├── test/                                # Unit tests
+    │   └── my_cdk_app_test.go               # Test file
+    ├── .gitignore                           # Git ignore patterns
+    └── README.md                            # Documentation
 ```
 
-##### **Example Implementation of  /go.mod.template for Go template**
+##### **Example Implementation of /go.mod for Go template**
 
 ```
 module mycdkapp
@@ -1482,15 +1515,15 @@ require (
 )
 ```
 
-##### **Example Implementation of  /cdk.template.json  for Go template**
+##### **Example Implementation of /cdk.json for Go template**
 
 ```
 {
-  "app": "go run ./bin/main.template.go"
+  "app": "go run ./bin/main.go"
 }
 ```
 
-##### **Example Implementation of  /bin/main.template.go for  Go template**
+##### **Example Implementation of /bin/main.go for Go template**
 
 ```
 package main
@@ -1509,7 +1542,7 @@ func main() {
 }
 ```
 
-##### **Example Implementation of  /lib/my_cdk_app_stack.template.go for  Go template**
+##### **Example Implementation of /lib/my_cdk_app_stack.go for Go template**
 
 ```
 package lib
@@ -1541,7 +1574,7 @@ func NewMyCdkAppStack(scope constructs.Construct, id string, props *awscdk.Stack
 }
 ```
 
-##### **Example Implementation of  /test/my_cdk_app_test.template.go for  Go template**
+##### **Example Implementation of /test/my_cdk_app_test.go for Go template**
 
 ```
 package test
@@ -1564,7 +1597,7 @@ func TestMyCdkAppStack(t *testing.T) {
 }
 ```
 
-##### **Example Implementation of  /.template.gitignore  for  Go template**
+##### **Example Implementation of /.gitignore for Go template**
 
 ```
 cdk.out/
@@ -1572,7 +1605,7 @@ cdk.out/
 vendor/
 ```
 
-##### **Example Implementation of  /README.template.md  for  Go template**
+##### **Example Implementation of /README.md for Go template**
 
 ```
 # CDK Go App Template
