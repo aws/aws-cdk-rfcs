@@ -217,7 +217,7 @@ ChannelProps{
   /**
    * Input Type
    */
-  inputType: InputType;
+  inputType?: InputType;
 
   /**
    * Description of the Channel
