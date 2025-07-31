@@ -93,7 +93,7 @@ Let’s walk through an example of running `cdk init` in an empty directory call
 
 my-custom-template/
 └── typescript/                    # Language directory
-    ├── package.json               # Dependency management file
+    ├── package.json
     ├── cdk.json                   # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
     │   └── app.ts                 # App entry file
@@ -101,9 +101,9 @@ my-custom-template/
     │   └── stack.ts               # Stack class file
     ├── test/
     │   └── stack.test.ts          # Test file
-    ├── tsconfig.json              # TypeScript configuration
-    ├── .gitignore                 # Git ignore patterns
-    └── README.md                  # Documentation
+    ├── tsconfig.json
+    ├── .gitignore
+    └── README.md
 ```
 
 ##### Using Git Repositories
