@@ -355,109 +355,109 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 ### What alternative solutions did you consider?
 
-1. Alternatives for supporting custom templates for `cdk init`
+* Alternatives for supporting custom templates for `cdk init`
     1. Current way to use custom templates to create a CDK project
-        1. Pros:
+       * Pros:
             1. Simple 2 CLI commands:
                 1. `git clone https://github.com/codepipeline/cdk-templates`
                 2. `cp -r cdk-templates/LambdaInvoke/typescript .`
             2. Is independent of `cdk init` logic, so users are never affected by CDK bugs 
-        2. Cons:
+       * Cons:
             1. Not as seamless of an experience for CDK users since it is done manually
     2. Allowing users to pass in custom templates to `cdk init` with validation of their template definition
-        1. Pros:
+       * Pros:
             1. Seamless experience for CDK users who want to use static custom templates
             2. No new infrastructure
-                1. Don’t have to build, maintain, and host a registry
+               * Don’t have to build, maintain, and host a registry
             3. User controlled
-                1. Companies/organizations can keep templates private in their own repos
+               * Companies/organizations can keep templates private in their own repos
             4. Increased availability and quicker template creation process
-                1. Customers don’t need to wait on an approval/publishing process from CDK team
-                2. Template authors can update and test immediately
+               * Customers don’t need to wait on an approval/publishing process from CDK team
+               * Template authors can update and test immediately
             5. Version control flexibility
-                1. Users can pin to to specific Git commits or NPM versions
+               * Users can pin to to specific Git commits or NPM versions
             6. Distributed approach
-                1. No central registry downtime that can affect all dependent customers
+               * No central registry downtime that can affect all dependent customers
             7. This approach has already been prototyped
-        2. Cons:
+       * Cons:
             1. Template discovery is harder
-                1. No central place to find community templates
+               * No central place to find community templates
             2. Quality variance
-                1. Harder to curate and offer good template validation through backend
+               * Harder to curate and offer good template validation through backend
             3. Worse documentation
-                1. Private/community repos and packages will be not be maintained by CDK team
+               * Private/community repos and packages will be not be maintained by CDK team
             4. Dependency on external services
-                1. Relies on GitHub/NPM availability unless template is on user’s local machine already
+               * Relies on GitHub/NPM availability unless template is on user’s local machine already
             5. CDK team can't help debug third-party templates as easily
             6. Similar templates scattered across different repos
             7. Dynamic custom templates are not supported in current feature proposal
 2. Alternatives for Template Configuration/Placeholders
     1. Current Placeholder Approach For Built-In Templates:
-        1. Easy format for template authors to use — authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
-        2. Pros:
+       * Easy format for template authors to use — authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
+       * Pros:
             1. Already works and is sufficient for built-in templates
-                1. Proven in production with minimal maintenance
+               * Proven in production with minimal maintenance
             2. Independent of template users
-                1. Uses the `cdk init` context (like project folder name), so no user input (like) required.
+               * Uses the `cdk init` context (like project folder name), so no user input (like) required.
             3. Easy format for template authors to use
-                1. Simple substitution syntax with no setup or tooling required.
+               * Simple substitution syntax with no setup or tooling required.
             4. No external dependencies
-                1. Entire process is handled within CDK so reduced risk of integration issues
-        3. Cons:
+               * Entire process is handled within CDK so reduced risk of integration issues
+       * Cons:
             1. Very limited template generation capabilities - limited to filename and file content replacement
-                1. Does not provide interactive prompts or advanced templating logic like Yeoman
+               * Does not provide interactive prompts or advanced templating logic like Yeoman
     2. `npm-init`
-        1. npm init is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named create-<name>, which users can invoke using `npm init <name>` to generate projects based on custom logic.
-        2. Pros:
+       * npm init is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named create-<name>, which users can invoke using `npm init <name>` to generate projects based on custom logic.
+       * Pros:
             1. Easy publishing to npm
-                1. Streamlines creating package.json, making it quicker to publish templates as npm packages.
+               * Streamlines creating package.json, making it quicker to publish templates as npm packages.
             2. Uses existing npm ecosystem familiar to CDK users 
-        3. Cons:
+       * Cons:
             1. Limited to scaffolding metadata
-                1. Only generates package.json, doesn’t solve the actual template generation or substitution
+               * Only generates package.json, doesn’t solve the actual template generation or substitution
             2. Requires manual integration with CDK templating logic
-                1. Adds a step but doesn't integrate directly with CDK’s project generation lifecycle.
+               * Introduces an extra manual step to bridge between the scaffolded output and CDK’s expected project structure and lifecycle, requiring users to manually configure files or run additional setup before using CDK commands.
     3. Yeoman Generator
-        1. Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures based on templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation. Template authors write JavaScript-based generators (named generator-<name>) that define prompts and dynamically control which files are generated and how they’re customized.
-        2. Pros:
+       * Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures based on templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation. Template authors write JavaScript-based generators (named generator-<name>) that define prompts and dynamically control which files are generated and how they’re customized.
+       * Pros:
             1. Highly customizable scaffolding logic
-                1. Enables conditional file inclusion, dynamic file naming, and complex transformations based on user input beyond static substitution like %name.PascalCased%.
+               * Enables conditional file inclusion, dynamic file naming, and complex transformations based on user input beyond static substitution like %name.PascalCased%.
             2. Interactive CLI experience for users
-                1. Users can be prompted during `cdk init` to select options, allowing a single generator to produce many variations of a template.
+               * Users can be prompted during `cdk init` to select options, allowing a single generator to produce many variations of a template.
             3. Facilitates reusable and adaptable enterprise templates
-                1. Organizations can standardize internal CDK setups with customizable templates that adjust based on use case
+               * Organizations can standardize internal CDK setups with customizable templates that adjust based on use case
             4. Supports post-processing automation
-                1. After scaffolding, Yeoman can automatically run `npm install`, initialize Git, and add license headers
-        3. Cons:
+               * After scaffolding, Yeoman can automatically run `npm install`, initialize Git, and add license headers
+       * Cons:
             1. Increased complexity and learning curve
-                1. CDK users would need to install and learn Yeoman
-                2. Template authors must write JS-based generators instead of simple file templates
+               * CDK users would need to install and learn Yeoman
+               * Template authors must write JS-based generators instead of simple file templates
             2. External dependency
-                1. Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX
-                2. Added maintenance risk from external changes
+               * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX
+               * Added maintenance risk from external changes
             3. Not natively integrated into CDK CLI
-                1. `cdk init` logic needs to be updated to recognize and delegate to Yeoman generators
-                2. Makes CDK’s bootstrapping process more complex
+               * `cdk init` logic needs to be updated to recognize and delegate to Yeoman generators
+               * Makes CDK’s bootstrapping process more complex
     4. Projen
-        1. Projen is a project scaffolding and management tool that defines and maintains project configuration using code instead of static files. Users create a project by running `npx projen new <project-type>`, which sets up a .projenrc.js (or .ts) file. From then on, running projen regenerates all config files based on this definition. Template authors create reusable Projen project types by writing JS/TS classes that encapsulate desired configurations and options.
-        2. Pros: 
+       * Projen is a project scaffolding and management tool that defines and maintains project configuration using code instead of static files. Users create a project by running `npx projen new <project-type>`, which sets up a .projenrc.js (or .ts) file. From then on, running projen regenerates all config files based on this definition. Template authors create reusable Projen project types by writing JS/TS classes that encapsulate desired configurations and options.
+       * Pros: 
             1. Controlled and maintained by AWS
-                1. Easier to add CDK specific behaviors
+               * Easier to add CDK specific behaviors
             2. Automates common setup tasks (like linting, testing, and publishing configs)
-                1. Template authors don’t have to maintain those manually across many templates.
-        3. Cons: 
+               * Template authors don’t have to maintain those manually across many templates.
+       * Cons: 
             1. Steep learning curve
-                1. Template authors must understand how Projen works, including its configuration language
+               * Template authors must understand how Projen works, including its configuration language
             2. Templates are code, not files
-                1. Instead of writing/copying static template files, template authors must write Projen config code that generates those files.
+               * Instead of writing/copying static template files, template authors must write Projen config code that generates those files.
             3. Generated files are not meant to be edited
-                1. Generated files are overwrited on every synth, so template users should only modify the config and not the output file
+               * Generated files are overwrited on every synth, so template users should only modify the config and not the output file
     5. Template authors develop and maintain their own placeholder and template configuration using advanced tools (Yeoman, Projen, Cookiecutter, etc.)
-        1. Pros:
+       * Pros:
             1. Simpler from a user point of view because valid CLI arguments are more concrete
             2. cdk init does not have to support template configuration
-                1. If template authors want to have variations on templates, they can do the branching generation-side, which allows them to use more advanced tools
-        2. Cons:
+               * If template authors want to have variations on templates, they can do the branching generation-side, which allows them to use more advanced tools
+       * Cons:
             1. No default placeholder or template configuration style for template authors
 
 
