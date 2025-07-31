@@ -133,6 +133,7 @@
 [446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||👎 rejected
 [448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||👎 rejected
 [450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||🤷 stale
+[456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0456-elasticache-l2.md)||👎 rejected
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||👎 rejected
 [460](https://github.com/aws/aws-cdk-rfcs/issues/460)|[Reduce aws-cdk-lib package size](https://github.com/aws/aws-cdk-rfcs/issues/460)||✅ done
@@ -196,4 +197,5 @@
 [732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👍 approved
 [745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/issues/745)||💡 proposed
 [750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/issues/750)||💡 proposed
+[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)||💡 proposed
 <!--END_TABLE-->
