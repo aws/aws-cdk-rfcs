@@ -534,7 +534,15 @@ The template validation burden is on template author, so we can't ensure templat
 
 ## Appendix
 
-### Example Template Implementations for Each CDK Language
+### Example App Template Implementations for Each CDK Language
+
+  * #### [TypeScript](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%TypeScript%App%Template)
+  * #### [Python](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%Python%App%Template)
+  * #### [Java](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%Java%App%Template)
+  * #### [JavaScript](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%JavaScript%App%Template)
+  * #### [C Sharp](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%C%Sharp%App%Template)
+  * #### [F Sharp](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%F%Sharp%App%Template)
+  * #### [Go](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%Go%App%Template)
 
 #### Example of CDK TypeScript App Template
 
@@ -1508,7 +1516,7 @@ dotnet restore
 
 
 
-#### Example of CDK **Go** App Template
+#### Example of CDK Go App Template
 
 ```
 my-custom-app-template/
