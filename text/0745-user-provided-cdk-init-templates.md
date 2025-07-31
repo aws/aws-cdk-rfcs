@@ -323,7 +323,6 @@ Extend cdk init to support custom templates from various source options while ma
 
 #### Simple User Experience in CDK CLI
 
-Technical Implementation:
 * Maintain existing `cdk init [template] --language=[language]` syntax for built-in templates
 * Add source-specific flags that work with existing parameters: `--from-local`, `--from-git-url`, `--from-github`, `--from-npm`
 * Provide unified command structure: `cdk init --from-<source>=[location] --language=[language]`
