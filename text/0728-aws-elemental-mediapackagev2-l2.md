@@ -216,6 +216,8 @@ ChannelProps{
 
   /**
    * Input Type
+   *
+   * @default HLS
    */
   inputType?: InputType;
 
