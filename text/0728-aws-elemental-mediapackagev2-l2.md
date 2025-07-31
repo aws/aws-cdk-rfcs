@@ -110,11 +110,8 @@ export interface IChannelGroup extends IResource {
   /**
    * Create a CloudWatch metric.
    *
-   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
-   * @param type the metric type.
+   * @param metricName name of the metric
    * @param props metric options.
-   *
-   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
    */
   metric(metricName: string, props?: MetricOptions): Metric;
 
@@ -307,11 +304,8 @@ export interface IChannel extends IResource {
   /**
    * Create a CloudWatch metric.
    *
-   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
-   * @param type the metric type.
+   * @param metricName name
    * @param props metric options.
-   *
-   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
    */
   metric(metricName: string, props?: MetricOptions): Metric;
 
@@ -759,11 +753,8 @@ export interface IOriginEndpoint extends IResource {
   /**
    * Create a CloudWatch metric.
    *
-   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
-   * @param type the metric type.
+   * @param metricName name
    * @param props metric options.
-   *
-   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
    */
   metric(metricName: string, props?: MetricOptions): Metric;
 
