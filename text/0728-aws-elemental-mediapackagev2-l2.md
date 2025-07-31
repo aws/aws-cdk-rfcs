@@ -6,7 +6,138 @@
 * **Tracking Issue:** [#728](https://github.com/aws/aws-cdk-rfcs/issues/728)
 * **API Bar Raiser:**
 
+This design outlines the how we build an L2 construct for AWS Elemental MediaPackageV2, delivering the following benefits:
+
+- Implement sensible defaults to make getting started with AWS Elemental MediaPackageV2 easier.
+- Simplify the declaration of ChannelGroup, Channel and OriginEndpoint by passing the object/construct as a mandatory props value -
+usually declared by passing the literal string of the Channel Group name to Channel, then in turn the Channel Group Name AND Channel Name to
+Origin Endpoints (also in Policies).
+- Make fetching Ingest Endpoints URLs easier without using `Fn.select()` in the implementing code
+- Abstract manifests in 1 property definition - using enum-like classes to define HLS, DASH and Low Latency HLS respectively
+- Provide faster validation within CDK i.e. making sure parameters are compatible with each other
+- Include helper functions such as:
+  - `.addChannel()` or `.addOriginEndpoint()` to make resource definitions easier
+  - Add metric functions to provide default/basic CloudWatch metrics as per CDK design
+  - `addToResourcePolicy()` to simplify how the ChannelPolicy and OriginEndpointPolicy gets initialised and added - similar behaviour to S3 buckets
+  - `grantIngress()` to create a policy to the identity passed in (i.e. a MediaLive role)
+- Use types instead of string literals to simplify definitons i.e. Duration + Date. Use Enums and Enum-like classes to abstract other types.
+
+The code sample below is a simple configuration comparison between the existing L1 construct and what a L2 _could_ look like:
+
+```ts
+  const distribution: Distribution;
+
+  const channelGroup = new CfnChannelGroup(stack, 'group', {
+    channelGroupName: 'example-channel-group',
+  });
+
+  const channel = new CfnChannel(stack, 'channel', {
+    channelName: 'example-channel',
+    channelGroupName: channelGroup.channelGroupName,
+    inputType: 'CMAF'
+  });
+
+  const endpoint = new CfnOriginEndpoint(stack, 'endpoint1', {
+    channelGroupName: channelGroup.channelGroupName,
+    channelName: channel.channelName,
+    originEndpointName: 'example-endpoint-hls-1',
+    containerType: 'TS',
+    hlsManifests: [{
+      manifestName: 'index',
+      filterConfiguration: {
+        end: '2025-03-15T17:25:00+00:00',
+        manifestFilter: 'audio_sample_rate:0-50000;video_framerate:23.976-30;video_codec:h264;video_height:240,360,720-1080;audio_language:fr,en-US,de',
+        start: '2025-03-15T17:20:00+00:00',
+        timeDelaySeconds: 10,
+      },
+    }],
+    startoverWindowSeconds: 10800,
+  });
+
+  const policy = new CfnOriginEndpointPolicy(stack, 'origin-endpoint-policy', {
+    channelGroupName: channelGroup.channelGroupName,
+    channelName: channel.channelName,
+    originEndpointName: endpoint.originEndpointName,
+    policy: new PolicyDocument({
+      statements: [
+        new PolicyStatement({
+          sid: 'AllowRequestsFromCloudFront',
+          effect: Effect.ALLOW,
+          actions: [
+            'mediapackagev2:GetObject',
+            'mediapackagev2:GetHeadObject',
+          ],
+          principals: [
+            new ServicePrincipal('cloudfront.amazonaws.com'),
+          ],
+          resources: [endpoint.attrArn],
+          conditions: {
+            StringEquals: {
+              'aws:SourceArn': [`arn:aws:cloudfront::1234567890:distribution/${distribution.distributionId}` ],
+            },
+          },
+        }),
+      ]
+    })
+  });
+```
+
+Same Configuration in an example L2:
+
+```ts
+  const distribution: Distribution;
+
+  const channelGroup = new mediapackagev2.ChannelGroup(stack, 'group');
+  const channel = channelGroup.addChannel('channel', {
+    channelName: 'example-channel',
+    inputType: mediapackagev2.InputType.CMAF,
+  });
+
+  const endpoint = channel.addOriginEndpoint('endpoint1', {
+    containerType: mediapackagev2.ContainerType.CMAF,
+    manifests: [
+      mediapackagev2.Manifest.hls({
+        manifestName: 'index',
+        filterConfiguration: {
+          end: new Date('2025-04-15T17:25:00Z'),
+          start: new Date('2025-04-15T17:20:00Z'),
+          timeDelay: Duration.seconds(10),
+          manifestFilter: [
+            mediapackagev2.ManifestFilter.range(mediapackagev2.ManifestFilterKeys.AUDIO_SAMPLE_RATE, 0, 50000),
+            mediapackagev2.ManifestFilter.range(mediapackagev2.ManifestFilterKeys.VIDEO_FRAMERATE, 23.976, 30),
+            mediapackagev2.ManifestFilter.single(mediapackagev2.ManifestFilterKeys.VIDEO_CODEC, 'h264'),
+            mediapackagev2.ManifestFilter.multiple(mediapackagev2.ManifestFilterKeys.VIDEO_HEIGHT, ['240', '360', '720-1080']),
+            mediapackagev2.ManifestFilter.custom('audio_language:fr,en-US,de'),
+          ],
+        },
+      }),
+    ],
+    startoverWindow: Duration.seconds(100),
+  });
+
+  endpoint.addToResourcePolicy(new PolicyStatement({
+    sid: 'AllowRequestsFromCloudFront',
+    effect: Effect.ALLOW,
+    actions: [
+      'mediapackagev2:GetObject',
+      'mediapackagev2:GetHeadObject',
+    ],
+    principals: [
+      new ServicePrincipal('cloudfront.amazonaws.com'),
+    ],
+    resources: [endpoint.originEndpointArn],
+    conditions: {
+      StringEquals: {
+        'aws:SourceArn': [`arn:aws:cloudfront::1234567890:distribution/${distribution.distributionId}`],
+      },
+    },
+  }));
+```
+
+The rest of this doc outlines the design for an L2 construct.
+
 ## Working Backwards
+
 ### README
 
 [AWS Elemental MediaPackage V2](https://aws.amazon.com/mediapackage/) delivers
@@ -163,7 +294,6 @@ export interface IChannelGroup extends IResource {
   addChannel(id: string, options: ChannelOptions): Channel;
 }
 ```
-
 
 #### AWS Elemental MediaPackage V2 Channel
 
@@ -797,7 +927,6 @@ export interface IOriginEndpoint extends IResource {
 }
 ```
 
-
 #### MediaPackage V2 ChannelPolicy
 
 This resource specifies the configuration parameters of a MediaPackage V2 channel policy.
@@ -861,7 +990,6 @@ RFC pull request):
 ```
 
 ## Public FAQ
-
 
 ### What are we launching today?
 
