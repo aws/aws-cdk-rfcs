@@ -315,7 +315,6 @@ Extend cdk init to support custom templates from various source options while ma
 
 #### Multi Template Source Support (local/Git repo/NPM package)
 
-Technical Implementation:
 * Add CLI flags `--from-local`, `--from-git-url`, `--from-github`, and `--from-npm` to specify custom template sources
 * Implement template loaders for each source type that download/copy templates and normalize them into a common format
 * Ensure target directory is empty to prevent overwriting existing files
