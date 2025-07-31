@@ -92,7 +92,7 @@ Let’s walk through an example of running `cdk init` in an empty directory call
 my-custom-template/
 └── typescript/                    # Language directory
     ├── package.json               # Dependency management file
-    ├── cdk.json                   # CDK config for app
+    ├── cdk.json                   # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
     │   └── app.ts                 # App entry file
     ├── lib/
@@ -162,7 +162,7 @@ This is how your project’s file structure (the “example-project” directory
 ```
 example-project/
 ├── package.json                   # Dependency management file
-├── cdk.json                       # CDK config for app
+├── cdk.json                       # CDK project configuration - specifies how to run the app and stores context/feature flags
 ├── bin/
 │   └── app.ts                     # App entry file
 ├── lib/
@@ -520,7 +520,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
 my-custom-template/
 └── typescript/
     ├── package.json               # Dependency management file
-    ├── cdk.json                   # TODO: CDK config for app
+    ├── cdk.json                   # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
     │   └── app.ts                 # App entry file
     ├── lib/
@@ -703,7 +703,7 @@ npx cdk deploy
 my-custom-template/
 └── python/
     ├── requirements.txt                           # Dependency management file
-    ├── cdk.json                                   # TODO: CDK config for app
+    ├── cdk.json                                   # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── app.py                                     # App entry file
     ├── my_cdk_project/                            # Package directory
     │   ├── __init__.py                            # Package initialization
@@ -845,7 +845,7 @@ pip install -r requirements.txt
 my-custom-app-template/
 └── java/
     ├── build.gradle                            # Dependency management file
-    ├── cdk.json                                # CDK config for app
+    ├── cdk.json                                # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
     │   └── App.java                            # CDK app entry point
     ├── lib/
@@ -1013,7 +1013,7 @@ cdk deploy
 my-custom-app-template/
 └── javascript/
     ├── package.json                         # Dependency management file
-    ├── cdk.json                             # CDK config for app
+    ├── cdk.json                             # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
     │   └── app.js                           # CDK app entry point
     ├── lib/
@@ -1165,7 +1165,7 @@ npm install
 my-custom-app-template/
 └── csharp/
     ├── MyCdkApp.csproj                      # Dependency management file
-    ├── cdk.json                             # CDK config for app
+    ├── cdk.json                             # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/                                 # App entry point directory
     │   └── Program.cs                       # CDK app entry point
     ├── lib/                                 # Stack definitions
@@ -1334,7 +1334,7 @@ dotnet restore
 my-custom-app-template/
 └── fsharp/
     ├── MyCdkApp.fsproj                       # Dependency management file
-    ├── cdk.json                              # CDK config for app
+    ├── cdk.json                              # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/                                  # App entry point
     │   └── Program.fs                        # Entry point file
     ├── lib/                                  # Stack definitions
@@ -1492,7 +1492,7 @@ dotnet restore
 my-custom-app-template/
 └── go/
     ├── go.mod                               # Dependency management file
-    ├── cdk.json                             # CDK configuration
+    ├── cdk.json                             # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/                                 # App entry point
     │   └── main.go                          # Entry file
     ├── lib/                                 # Stack definitions
