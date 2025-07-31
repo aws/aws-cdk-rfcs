@@ -462,7 +462,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 ### What are the drawbacks of this solution?
 
-1. Template validation burden is on template author, can't ensure template quality unless template is part of vetted CLI template registry.
+Template validation burden is on template author, can't ensure template quality unless template is part of vetted CLI template registry.
 
 
 
