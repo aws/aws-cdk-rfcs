@@ -341,7 +341,6 @@ Technical Implementation:
 
 #### Template Discovery
 
-Technical Implementation:
 
 * Implement static registry of curated public template repositories and NPM packages
 * Extend `cdk init --list` to display both built-in and templates in registry
