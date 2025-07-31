@@ -330,7 +330,6 @@ Extend cdk init to support custom templates from various source options while ma
 
 #### Template Validation
 
-Technical Implementation:
 
 * Check that language argument specified is a valid CDK language (TypeScript, JavaScript, Python, Java, C#, F#, Go)
 * Validate template structure matches required schema in "Authoring Custom CDK Templates" document before installation
