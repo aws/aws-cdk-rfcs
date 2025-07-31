@@ -534,7 +534,7 @@ The template validation burden is on template author, so we can't ensure templat
 
 ## Appendix
 
-### Example App Template Implementations for Each CDK Language
+### Example CDK App Templates for Supported Languages
 
   * #### [TypeScript](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%TypeScript%App%Template)
   * #### [Python](https://github.com/aws/aws-cdk-rfcs/blob/1a95c2c007c6c91a3408323dccc40d12cccb13cc/text/0745-user-provided-cdk-init-templates.md/#Example%of%CDK%Python%App%Template)
