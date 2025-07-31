@@ -26,7 +26,7 @@ feat(cli): user-provided cdk init templates
 
 #### `cdk init`
 
-Creates a new CDK project from built-in templates or custom templates. This command helps you get started with AWS CDK by initializing a new project with the necessary files and folders to organize your CDK code, including directories for your application definition, stacks, and constructs.
+Creates a new CDK project from built-in templates or custom templates. This command helps you get started with AWS CDK by initializing a new project with the necessary files and folders to organize your CDK code, including directories for your project definition and constructs, as well as your stacks for applications.
 
 
 #### Getting Started with Built-in Templates
