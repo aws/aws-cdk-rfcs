@@ -317,6 +317,8 @@ Extend cdk init to support custom templates from various source options while ma
 
 * Add CLI flags `--from-local`, `--from-git-url`, `--from-github`, and `--from-npm` to specify custom template sources
 * Implement template loaders for each source type that download/copy templates and normalize them into a common format
+* Support `--template-path` for specifying subdirectories within Git repositories or NPM packages
+* Support `--template-version` for Git branches/tags/commits or NPM package versions
 * Ensure target directory is empty to prevent overwriting existing files
 * Initialize new Git repository in project directory
 * Create initial Git commit with all template files
@@ -324,12 +326,11 @@ Extend cdk init to support custom templates from various source options while ma
 #### Simple User Experience in CDK CLI
 
 * Maintain existing `cdk init [template] --language=[language]` syntax for built-in templates
-* Add source-specific flags that work with existing parameters: `--from-local`, `--from-git-url`, `--from-github`, `--from-npm`
+* Add source-specific flags that work with existing parameters: `--from-path`, `--from-git-url`, `--from-github`, `--from-npm`
 * Provide unified command structure: `cdk init --from-<source>=[location] --language=[language]`
 * Preserve existing CLI option `--generate-only` with custom templates
 
 #### Template Validation
-
 
 * Check that language argument specified is a valid CDK language (TypeScript, JavaScript, Python, Java, C#, F#, Go)
 * Validate template structure matches required schema in "Authoring Custom CDK Templates" document before installation
@@ -340,10 +341,31 @@ Extend cdk init to support custom templates from various source options while ma
 
 #### Template Discovery
 
-
 * Implement static registry of curated public template repositories and NPM packages
 * Extend `cdk init --list` to display both built-in and templates in registry
 * Show description, author, supported languages, and template usage instructions in formatted table
+
+#### Static Registry Management Process
+
+When internal AWS teams want to add templates to the public registry, they must provide:
+```
+{
+  name: string;               // Short, descriptive name
+  description: string;        // Brief description of template functionality
+  sourceType: 'git' | 'npm';  // Source type
+  source: string;             // Git URL or NPM package name
+  templates?: string[];       // List of template names if multiple in one source
+  languages: string[];        // Supported CDK languages
+  author: string;             // Team or organization name
+}
+```
+
+Template Submission Process:
+1. Internal AWS team creates and tests templates using `cdk init --from-git-url <repo>`, `cdk init --from-npm <package>`, or `cdk init --from-path <path>`
+2. Internal AWS team writes README file for custom template with usage instructions and examples
+3. Team contacts CDK team with template source and required metadata
+4. CDK Team reviews custom templates in repository or package to ensure community benefit, conformity to custom template schema, clear README file, and that it is well tested
+5. If approved, CDK team adds entry to PUBLIC_TEMPLATE_REGISTRY in template-registry.ts. If not approved, CDK team will deliver feedback for revision to internal AWS team.
 
 
 ### Is this a breaking change?
