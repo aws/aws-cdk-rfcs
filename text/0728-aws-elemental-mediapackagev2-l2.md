@@ -3,7 +3,7 @@
 ## L2 Constructs for AWS Elemental MediaPackage V2 ChannelGroup, Channel, OriginEndpoint, ChannelPolicy & OriginEndpointPolicy
 
 * **Original Author(s):** @jamiepmullan
-* **Tracking Issue:**
+* **Tracking Issue:** [#728](https://github.com/aws/aws-cdk-rfcs/issues/728)
 * **API Bar Raiser:**
 
 ## Working Backwards
@@ -76,8 +76,97 @@ ChannelGroupProps{
     * Tagging for your Channel Group
     */
   tags?: { [key: string]: string };
+
+  /**
+   * Policy to apply when the Channel Group is removed from the stack
+   *
+   * @default RemovalPolicy.DESTROY
+   */
+  removalPolicy?: RemovalPolicy;
 }
 ```
+
+Interface example of what the Channel Group will implement:
+
+```ts
+/**
+ * Interface for MediaPackageV2 Channel Group
+ */
+export interface IChannelGroup extends IResource {
+  /**
+   * The name that describes the channel group. The name is the primary identifier for the channel group.
+   *
+   * @attribute
+   */
+  readonly channelGroupName: string;
+
+  /**
+   * The Amazon Resource Name (ARN) associated with the resource.
+   *
+   * @attribute
+   */
+  readonly channelGroupArn: string;
+
+  /**
+   * Create a CloudWatch metric.
+   *
+   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
+   * @param type the metric type.
+   * @param props metric options.
+   *
+   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
+   */
+  metric(metricName: string, props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricIngressBytes(options?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressBytes(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress response time
+   *
+   * @default - average over 60 seconds
+   */
+  metricIngressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Response time
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress Request Count
+   *
+   * @default - sum over 60 seconds
+   */
+  metricIngressRequestCount(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Request Count
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressRequestCount(props?: MetricOptions): Metric;
+
+  /**
+   * Add Channel for this Channel Group.
+   */
+  addChannel(id: string, options: ChannelOptions): Channel;
+}
+```
+
 
 #### AWS Elemental MediaPackage V2 Channel
 
@@ -119,7 +208,7 @@ Property Interface for Channel:
 ```ts
 ChannelProps{
   /**
-   * Channel Group Name
+   * Channel Name
    */
   channelName?: string;
 
@@ -134,7 +223,7 @@ ChannelProps{
   inputType: InputType;
 
   /**
-   * Description of the Channel Group
+   * Description of the Channel
    */
   description?: string;
 
@@ -142,6 +231,13 @@ ChannelProps{
    * Tagging
    */
   tags?: { [key: string]: string };
+
+  /**
+   * Policy to apply when the Channel is removed from the stack
+   *
+   * @default RemovalPolicy.DESTROY
+   */
+  removalPolicy?: RemovalPolicy;
 }
 ```
 
@@ -160,6 +256,107 @@ channel.addToResourcePolicy(new PolicyStatement({
   actions: ['mediapackagev2:PutObject'],
   resources: [channel.channelArn],
 }));
+```
+
+Provide helper methods on the channel resource interface:
+
+```ts
+/**
+ * Interface for MediaPackageV2 Channel
+ */
+export interface IChannel extends IResource {
+  /**
+   * The name that describes the channel group. The name is the primary identifier for the channel group.
+   *
+   * @attribute
+   */
+  readonly channelGroupName: string;
+
+  /**
+   * The name that describes the channel. The name is the primary identifier for the channel.
+   *
+   * @attribute
+   */
+  readonly channelName: string;
+
+  /**
+   * The Amazon Resource Name (ARN) associated with the resource.
+   *
+   * @attribute
+   */
+  readonly channelArn: string;
+
+  /**
+   * Grants IAM resource policy to the role used by AWS Elemental MediaLive to write to MediaPackageV2 Channel.
+   */
+  grantIngest(grantee: IGrantable): Grant;
+
+  /**
+   * Add Origin Endpoint for this Channel.
+   */
+  addOriginEndpoint(id: string, options: OriginEndpointOptions): OriginEndpoint;
+
+  /**
+   * Configure channel policy.
+   *
+   * You can only add 1 ChannelPolicy to a Channel.
+   * If you have already defined one, function will append the policy already created.
+   */
+  addToResourcePolicy(statement: PolicyStatement): AddToResourcePolicyResult;
+
+  /**
+   * Create a CloudWatch metric.
+   *
+   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
+   * @param type the metric type.
+   * @param props metric options.
+   *
+   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
+   */
+  metric(metricName: string, props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricIngressBytes(options?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressBytes(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress response time
+   *
+   * @default - average over 60 seconds
+   */
+  metricIngressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Response time
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress Request Count
+   *
+   * @default - sum over 60 seconds
+   */
+  metricIngressRequestCount(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Request Count
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressRequestCount(props?: MetricOptions): Metric;
+}
 ```
 
 #### AWS Elemental MediaPackage V2 OriginEndpoint
@@ -259,6 +456,13 @@ OriginEndpointProps{
    * @default null
    */
   forceEndpointConfigurationConditions?: EndpointErrorConfiguration[];
+
+  /**
+   * Policy to apply when the Origin Endpoint is removed from the stack
+   *
+   * @default RemovalPolicy.DESTROY
+   */
+  removalPolicy?: RemovalPolicy;
 }
 ```
 
@@ -504,6 +708,103 @@ origin.addToResourcePolicy(new PolicyStatement({
 }));
 ```
 
+Provide helper methods on the origin endpoint resource interface:
+
+```ts
+/**
+ * Origin Endpoint interface
+ */
+export interface IOriginEndpoint extends IResource {
+  /**
+   * The name of the channel group associated with the origin endpoint configuration.
+   *
+   * @attribute
+   */
+  readonly channelGroupName: string;
+
+  /**
+   * The channel name associated with the origin endpoint.
+   *
+   * @attribute
+   */
+  readonly channelName: string;
+
+  /**
+   * The name of the origin endpoint associated with the origin endpoint configuration.
+   *
+   * @attribute
+   */
+  readonly originEndpointName: string;
+
+  /**
+   * The Amazon Resource Name (ARN) of the origin endpoint.
+   *
+   * @attribute
+   */
+  readonly originEndpointArn: string;
+
+  /**
+   * Configure channel policy.
+   *
+   * You can only add 1 ChannelPolicy to a Channel.
+   * If you have already defined one it append the policy already created.
+   */
+  addToResourcePolicy(statement: PolicyStatement): AddToResourcePolicyResult;
+
+  /**
+   * Add to Manifests
+   */
+  addManifest(manifest: Manifest): void;
+
+  /**
+   * Create a CloudWatch metric.
+   *
+   * @param metricName name of the metric typically prefixed with `glue.driver.`, `glue.<executorId>.` or `glue.ALL.`.
+   * @param type the metric type.
+   * @param props metric options.
+   *
+   * @see https://docs.aws.amazon.com/glue/latest/dg/monitoring-awsglue-with-cloudwatch-metrics.html
+   */
+  metric(metricName: string, props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricIngressBytes(options?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Bytes
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressBytes(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Ingress response time
+   *
+   * @default - average over 60 seconds
+   */
+  metricIngressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Response time
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressResponseTime(props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Egress Request Count
+   *
+   * @default - sum over 60 seconds
+   */
+  metricEgressRequestCount(props?: MetricOptions): Metric;
+}
+```
+
+
 #### MediaPackage V2 ChannelPolicy
 
 This resource specifies the configuration parameters of a MediaPackage V2 channel policy.
@@ -566,7 +867,7 @@ RFC pull request):
 [ ] Signed-off by API Bar Raiser @xxxxx
 ```
 
-## Public FAQ TODO
+## Public FAQ
 
 
 ### What are we launching today?
