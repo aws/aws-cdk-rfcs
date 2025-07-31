@@ -87,7 +87,9 @@ For more advanced use cases, you can run `cdk init` with custom templates from G
 Let’s walk through an example of running `cdk init` in an empty directory called “example-project” with the custom “my-custom-template” TypeScript template below, which we can pull from a Git repository or NPM package:
 
 ```
-# NOTE: This is an example template implementation. At least one language subdirectory and a file of the same language type inside it are the only minimum template requirements.
+# NOTE: This is an example template implementation. The only requirements for a template are:
+- At least one language subdirectory
+- At least one file in that language inside of that subdirectory
 
 my-custom-template/
 └── typescript/                    # Language directory
