@@ -21,16 +21,16 @@
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
-[635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
-[715](https://github.com/aws/aws-cdk-rfcs/issues/715)|[CDK Construct Update Support](https://github.com/aws/aws-cdk-rfcs/issues/715)||💡 proposed
 [719](https://github.com/aws/aws-cdk-rfcs/issues/719)|[Native Container Image Tarball Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/719)||💡 proposed
 [728](https://github.com/aws/aws-cdk-rfcs/issues/728)|[L2 Constructs for AWS Elemental MediaPackageV2](https://github.com/aws/aws-cdk-rfcs/issues/728)||💡 proposed
 [745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/issues/745)||💡 proposed
 [750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/issues/750)||💡 proposed
+[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)||💡 proposed
+[764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
 <!--END_TABLE-->
