@@ -1,0 +1,34 @@
+name: PR Lint
+
+on:
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout of the source to be validated
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.event.pull_request.merge_commit_sha }}"
+          path: checkout_pr
+
+      # Checkout of tools from 'main'
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: checkout_main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # Run linter from 'main' on the working copy
+      - name: run linter
+        run: |
+          cd checkout_pr
+          ../checkout_main/lint.sh
