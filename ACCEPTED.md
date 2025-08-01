@@ -10,11 +10,10 @@
 \#|Title|Owner|Status
 ---|-----|-----|------
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
-[732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👍 approved
 [162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0162-refactoring-support.md)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
-[686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)|[@dineshSajwan](https://github.com/dineshSajwan)|👷 implementing
+[732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👷 implementing
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0001-cdk-update.md)||✅ done
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|✅ done
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||✅ done
@@ -74,6 +73,7 @@
 [605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||✅ done
 [617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0617-cloudfront-oac-l2.md)||✅ done
 [648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✅ done
+[686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)|[@dineshSajwan](https://github.com/dineshSajwan)|✅ done
 [693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||✅ done
 [710](https://github.com/aws/aws-cdk-rfcs/issues/710)|[Node.js Version Support Policy for AWS CDK](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0710-node-deprecation-strategy.md)||✅ done
 <!--END_TABLE-->
