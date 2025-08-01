@@ -542,11 +542,8 @@ OriginEndpointProps{
 
   /**
    * Manifests configuration for HLS, Low Latency HLS and DASH.
-   * If not defined, use `addManifest()` to add a minimum of 1 Manifest.
-   *
-   * @default null
    */
-  manifests?: Manifest[];
+  manifests: Manifest[];
 
   /**
    * The container type associated with the origin endpoint configuration.
