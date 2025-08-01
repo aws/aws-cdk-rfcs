@@ -6,13 +6,14 @@ Tracking Issue: [#745](https://github.com/aws/aws-cdk-rfcs/issues/745)
 
 API Bar Raiser: @iliapolo
 
+***
+
 Customers need a way to initialize CDK projects in the CLI with custom templates to meet specific technical/regulatory requirements and standardize project initialization.
 
 
 ## Working Backwards
 
 This section of the RFC addresses both users who will use custom templates to initialize a CDK project through the `cdk init` command and authors of custom templates.
-
 
 ### CHANGELOG
 
@@ -22,77 +23,52 @@ feat(cli): user-provided cdk init templates
 
 
 
-### Updated README for Users of CDK CLI
+### Updated `cdk init` README Section for CDK CLI Users
 
 #### `cdk init`
+The `cdk init` command creates a new CDK project from built-in templates or custom templates. This command helps you get started with AWS CDK by initializing a new project with the necessary files and folders to organize your CDK code, including directories for your project definition and constructs, as well as your stacks for applications.
 
-Creates a new CDK project from built-in templates or custom templates. This command helps you get started with AWS CDK by initializing a new project with the necessary files and folders to organize your CDK code, including directories for your project definition and constructs, as well as your stacks for applications.
 
-
-#### Getting Started with Built-in Templates
-
-The CDK provides three built-in templates to help you get started quickly:
-
-* `app` - CDK Application Template
-
-    * Creates a basic deployable CDK application structure
-    * Includes an empty stack
-    * Available in: TypeScript, JavaScript, Python, Java, C#, F#, Go
-
-* `lib` - CDK Construct Library Template
-
-    * For building and sharing custom CDK constructs
-    * Available in: TypeScript
-
-* `sample-app` - Example CDK Application
-
-    * Creates a CDK application with example constructs
-    * Demonstrates common AWS services and patterns
-    * Available in: TypeScript, JavaScript, Python, Java, C#, F#, Go
-
-##### Using Built-In Templates
-
+#### **Your First CDK Project**
+Let's begin by creating your first CDK project. Create your new project directory and navigate to it by running:
 ```
-# Syntax
-# Use a template for a CDK Application
+$ mkdir my-first-project
+$ cd my-first-project
+```
+
+Next, let's initialize the project in the CDK language of your choice. The CDK provides 3 built-in templates to help you get started quickly:
+
+
+##### For a basic application, run:
+```
 $ cdk init app --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# Use a template for a CDK Construct Library
-$ cdk init lib --language=typescript
-
-# Use a template for an example CDK Application with some constructs
-$ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# Examples:
-# Create a new TypeScript application
-$ cdk init app --language=typescript
-
-# Create a construct library
-$ cdk init lib --language=typescript
-
-# Create a sample TypeScript application to explore CDK features
-$ cdk init sample-app --language=typescript
 ```
+This creates a basic deployable CDK application with an empty stack, available in TypeScript, JavaScript, Python, Java, C#, F#, and Go.
 
+##### For building reusable constructs, run:
+```
+$ cdk init lib --language=typescript
+```
+This creates a CDK Construct Library Template for building and sharing custom CDK constructs (available in TypeScript only).
 
+##### For exploring CDK with examples, run:
+```
+$ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+This creates a CDK application with example constructs that demonstrates common AWS services and patterns, available in TypeScript, JavaScript, Python, Java, C#, F#, and Go.
 
-#### Working with Custom Templates
-
+#### **Working with Custom Templates**
 For more advanced use cases, you can run `cdk init` with custom templates from Git repositories or NPM packages to:
-
 * Standardize project structure across your organization
-* Include company-specific configurations and best practices
+* Include company-specific configurations
 * Pre-configure common services and patterns
 
-Let’s walk through an example of running `cdk init` in an empty directory called “example-project” with the custom “my-custom-template” TypeScript template below, which we can pull from a Git repository or NPM package:
+Let's walk through an example of creating a CDK project using a custom TypeScript template from GitHub.
 
+Here's what a custom template in a GitHub repository called "my-cdk-templates" could look like:
 ```
-# NOTE: This is an example template implementation. The only requirements for a template are:
-- At least one language subdirectory
-- At least one file in that language inside of that subdirectory
-
-my-custom-template/
-└── typescript/                    # Language directory
+my-custom-template/                # Template directory
+└── typescript/                    # Language subdirectory
     ├── package.json
     ├── cdk.json                   # CDK project configuration - specifies how to run the app and stores context/feature flags
     ├── bin/
@@ -106,108 +82,116 @@ my-custom-template/
     └── README.md
 ```
 
-##### Using Git Repositories
-
-Create projects with templates pulled from Git repositories (GitHub, GitLab, Bitbucket, etc.):
-
+Start by creating your new project directory and navigating to it:
 ```
-# Command pulls template from main branch and most recent commit by default. See Advanced Options section for other template versioning options.
-
-# Syntax:
-# Use specific template from Git repository of many templates
-$ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# If Git repository only contains one template and it is at the root directory of the repository, don't need to specify template path
-$ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# If template contains only one language, don't need to specify language
-$ cdk init --from-git-url [URL] --template-path ./template-name
-
-# Examples:
-# Using GitHub URL
-$ cdk init --from-git-url https://github.com/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
-$ cdk init --from-github https://github.com/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# Using GitHub shorthand notation 
-$ cdk init --from-github username/my-cdk-templates --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# Using BitBucket URL
-$ cdk init --from-git-url https://bitbucket.org/username/my-cdk-templates.git --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ mkdir custom-template-project
+$ cd custom-template-project
 ```
 
-##### Using NPM Package Templates
-
-Create projects with templates pulled from NPM packages (on [npmjs.com](http://npmjs.com/) or any registry that hits NPM endpoint):
-
+Then, to initialize your project from this template, run:
 ```
-# Command pulls template from latest package version by default. See Advanced Options section for other template versioning options.
-
-# Syntax:
-# Use specific template from NPM package with many templates
-$ cdk init --from-npm [package-name] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# If NPM package only contains one template, don't need to specify template name
-$ cdk init --from-npm [package-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
-
-# If template contains only one language, don't need to specify language
-$ cdk init --from-npm [package-name] --template-path ./template-name
-
-# Examples:
-# Using specific template from NPM package
-$ cdk init --from-npm my-cdk-templates --template-path ./template-name --language=typescript
-
-# Using NPM package with single template
-$ cdk init --from-npm my-cdk-template --language=typescript
+$ cdk init --from-github username/my-cdk-templates --template-path my-custom-template --language=typescript
 ```
 
-##### Project File Structure After Running `cdk init` 
+Here's what happened when we ran `cdk init`:
+1. Template files were copied to your project directory
+2. A Git repository was initialized with an initial commit
+3. Dependencies were installed if needed (npm install for JS/TS, mvn package for Java, virtual env for Python)
 
-This is how your project’s file structure (the “example-project” directory) will look like after running `cdk init` with our example TypeScript template from above.
-
+Your new project's directory now looks like:
 ```
-example-project/
-├── package.json
-├── cdk.json                       # CDK project configuration - specifies how to run the app and stores context/feature flags
+custom-template-project/           # Project directory name
+├── package.json                   # Copied folders and files from template 
+├── cdk.json                       
 ├── bin/
-│   └── app.ts                     # App entry file
+│   └── app.ts                     
 ├── lib/
-│   └── stack.ts                   # Stack class file
+│   └── stack.ts                   
 ├── test/
-│   └── stack.test.ts              # Test file
+│   └── stack.test.ts              
 ├── tsconfig.json
 ├── .gitignore
 └── README.md
 ```
 
+Now you're ready to continue coding in your project!
 
 
-#### Advanced Options
+##### From Git Repositories
+Alternatively, you can pull custom templates from any Git Repository (GitLab, Bitbucket, etc.) with one of the options below.
 
+To select a specific template from Git repository of many templates:
 ```
-# Generate only (skip dependency installation and git initialization)
+$ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
+If Git repository only contains one template and it is at the root directory of the repository, you don't need to specify template path:
+```
+$ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
+If the template contains only one language directory, you don't need to specify language:
+```
+$ cdk init --from-git-url [URL] --template-path ./template-name
+```
+
+To select a template from a specific Git branch/tag/commit, add the `--template-version` flag to your command:
+```
+# Use a specific Git branch
+$ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version develop --language=typescript
+
+# Use a specific Git tag
+$ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version v2.1.0 --language=typescript
+
+# Use a specific Git commit
+$ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version a1b2c3d4 --language=typescript
+```
+
+##### From NPM Packages
+Or, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with one of the options below.
+
+To select a specific template from an NPM package with many templates:
+```
+$ cdk init --from-npm [package-name] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
+If NPM package only contains one template and it is at the root directory of the package, you don't need to specify template name:
+```
+$ cdk init --from-npm [package-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
+If the template contains only one language directory, you don't need to specify language:
+```
+$ cdk init --from-npm [package-name] --template-path ./template-name
+```
+
+To select a template from a specific NPM package version, add the `--template-version` flag to your command:
+```
+$ cdk init --from-npm @aws-samples/cdk-web-template --template-version 1.5.2 --language=typescript
+```
+
+#### **More Advanced Options**
+
+To skip dependency installation and git initialization, add the `--generate-only` flag to your command:
+```
 $ cdk init app --language=typescript --generate-only
 $ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
+```
 
-# Use a specific CDK library version (built-in templates only)
+To use a specific CDK library version (built-in templates only), add the `--lib-version` flag to your command:
+```
 $ cdk init app --language=typescript --lib-version 2.100.0
+```
 
-# Use a specific template version (Git branch/tag/commit or NPM package version)
-$ cdk init --from-git-url https://github.com/user/my-template.git --template-version v1.2.3
-$ cdk init --from-npm my-template-package --template-version 2.1.0
-
-# Combine options for built-in templates
-$ cdk init app --language=typescript --generate-only --lib-version 2.100.0
-
-# Combine options for custom templates
-$ cdk init --from-git-url https://github.com/user/my-template.git --template-version main --generate-only
-$ cdk init --from-npm my-template-package --template-version 1.5.0 --generate-only
+To use a custom stack name for your project (built-in templates only), add the `--stack-name` flag to your command:
+```
+$ cdk init app --language=typescript --stack-name MyCustomStack
 ```
 
 
+#### **CDK Template Registry**
 
-#### Using the CDK Template Registry
-
-The CDK CLI includes a vetted registry of public templates that provide pre-configured infrastructure patterns for specific use cases. To see all available templates including those in the public registry, run `cdk init --list`:
+The CDK CLI includes a vetted registry of public AWS templates that provide pre-configured infrastructure patterns for specific use cases. To see all available templates to initialize a CDK project with, including those in the public registry, run `cdk init --list`:
 
 ```
 Available templates:
@@ -227,10 +211,11 @@ Public template registry:
 └────────────────┴─────────────────────────────────────┴───────────────────────┴────────────────────────────────────────────────────────────────────┘
 ```
 
+
+
 ### Authoring Custom CDK Templates
 
 The requirements for a custom template are that it contains a CDK supported language subdirectory and at least one file of the same type inside that subdirectory. Reference the appendix for example app template implementations in all CDK Languages.
-
 
 #### Custom Template Schema
 
@@ -244,7 +229,6 @@ my-custom-app-template/
 
 * [language-name]: csharp, fsharp, go, java, javascript, python, typescript
 * [ext]: .cs, .fs, .go, .java, .js, .py, .ts
-
 
 
 #### Testing Your Custom Templates Locally
@@ -266,7 +250,7 @@ Ticking the box below indicates that the public API of this RFC has been signed-
 [ ] Signed-off by API Bar Raiser @xxxxx
 ```
 
-
+***
 
 ## Public FAQ
 
@@ -381,9 +365,9 @@ No, the new feature does not affect existing functionality for creating CDK proj
 * Alternatives for supporting custom templates for `cdk init`
     *  Current way to use custom templates to create a CDK project
        * Pros:
-         * Simple 2 CLI commands:
-                1. `git clone https://github.com/codepipeline/cdk-templates`
-                2. `cp -r cdk-templates/LambdaInvoke/typescript .` 
+         * 2 simple CLI commands:
+           1. `git clone https://github.com/codepipeline/cdk-templates`
+           2. `cp -r cdk-templates/LambdaInvoke/typescript .` 
        * Cons:
          * Multi-step process that requires Git commands and file-copying
     *  Allowing users to pass in custom templates to `cdk init` with validation of their template definition
@@ -527,7 +511,7 @@ The template validation burden is on template author, so we can't ensure templat
 ### Are there any future enhancements of this feature?
 
 * Publish sample templates on GitHub or NPM for template authors to reference when creating
-* Dyanmic template discovery mechanism to browse all available public template beyond static discovery in CLI
+* Dynamic template discovery mechanism to browse all available public template beyond static discovery in CLI
 * Integrate CDK CLI telemetry to track which sources for custom templates are used and how often
 
 
