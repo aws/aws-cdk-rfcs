@@ -147,6 +147,17 @@ $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --tem
 $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version a1b2c3d4 --language=typescript
 ```
 
+NOTE: If the CLI detects a name conflict between a branch and tag specified by `--template-version`, the CLI will prompt the user with an interactive like the below example to handle it:
+```
+$ cdk init --from-git-url repo.git --template-version v1.0.0
+
+⚠️  Ambiguous reference "v1.0.0" found:
+  [1] Branch v1.0.0 (latest commit: a1b2c3d)
+  [2] Tag v1.0.0 (commit: e4f5g6h)
+
+Which would you like to use? [1/2]: 2
+```
+
 ##### From NPM Packages
 Or, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with one of the options below.
 
