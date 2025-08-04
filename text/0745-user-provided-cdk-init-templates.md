@@ -31,7 +31,7 @@ The `cdk init` command creates a new CDK project from built-in templates or cust
 
 #### **Your First CDK Project**
 Let's begin by creating your first CDK project. Create your new project directory and navigate to it by running:
-```
+```bash
 $ mkdir my-first-project
 $ cd my-first-project
 ```
@@ -58,47 +58,57 @@ $ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typesc
 This creates a CDK application with example constructs that demonstrates common AWS services and patterns, available in TypeScript, JavaScript, Python, Java, C#, F#, and Go.
 
 #### **Working with Custom Templates**
-For more advanced use cases, you can run `cdk init` with custom templates from Git repositories or NPM packages to:
+For more advanced use cases, you can run `cdk init` with custom templates from sources like Git repositories or NPM packages to:
 * Standardize project structure across your organization
 * Include company-specific configurations
 * Pre-configure common services and patterns
 
-Let's walk through an example of creating a CDK project using a custom TypeScript template from GitHub.
+##### Understanding Template Sources
+A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory with language-specific subdirectories inside.
 
-Here's what a custom template in a GitHub repository called "my-cdk-templates" could look like:
+Let's walk through an example using a GitHub repository that contains multiple templates. Here's what a custom template in a GitHub repository called "my-cdk-templates" could look like:
 ```
-my-custom-template/                # Template directory
-└── typescript/                    # Language subdirectory
-    ├── package.json
-    ├── cdk.json                   # CDK project configuration - specifies how to run the app and stores context/feature flags
-    ├── bin/
-    │   └── app.ts                 # App entry file
-    ├── lib/
-    │   └── stack.ts               # Stack class file
-    ├── test/
-    │   └── stack.test.ts          # Test file
-    ├── tsconfig.json
-    ├── .gitignore
-    └── README.md
+my-cdk-templates/                  # Repository root
+├── web-app-template/              # First template
+│   ├── typescript/
+│   └── python/
+├── api-template/                  # Second template  
+│   ├── typescript/
+│   └── java/
+└── my-custom-template/            # Third template (the one we'll use)
+    └── typescript/                # Language subdirectory
+        ├── package.json
+        ├── cdk.json               # CDK project configuration - specifies how to run the app and stores context/feature flags
+        ├── bin/
+        │   └── app.ts             # App entry file
+        ├── lib/
+        │   └── stack.ts           # Stack class file
+        ├── test/
+        │   └── stack.test.ts      # Test file
+        ├── tsconfig.json
+        ├── .gitignore
+        └── README.md
 ```
+
+Since this repository contains multiple templates, we need to specify which one we want using `--template-path`.
 
 Start by creating your new project directory and navigating to it:
-```
+```bash
 $ mkdir custom-template-project
 $ cd custom-template-project
 ```
 
 Then, to initialize your project from this template, run:
-```
+```bash
 $ cdk init --from-github username/my-cdk-templates --template-path my-custom-template --language=typescript
 ```
 
-Here's what happened when we ran `cdk init`:
+Here's what happened when we ran cdk init:
 1. Template files were copied to your project directory
 2. A Git repository was initialized with an initial commit
 3. Dependencies were installed if needed (npm install for JS/TS, mvn package for Java, virtual env for Python)
 
-Your new project's directory now looks like:
+Your new project's root now looks like:
 ```
 custom-template-project/           # Project directory name
 ├── package.json                   # Copied folders and files from template 
@@ -113,9 +123,7 @@ custom-template-project/           # Project directory name
 ├── .gitignore
 └── README.md
 ```
-
 Now you're ready to continue coding in your project!
-
 
 ##### From Git Repositories
 Alternatively, you can pull custom templates from any Git Repository (GitLab, Bitbucket, etc.) with one of the options below.
@@ -125,12 +133,12 @@ To select a specific template from Git repository of many templates:
 $ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If Git repository only contains one template and it is at the root directory of the repository, you don't need to specify template path:
+If Git repository only contains one template and has language directories directly at the repository root, you don't need to specify `--template-path`:
 ```
 $ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the template contains only one language directory, you don't need to specify language:
+If the template contains only one language directory, you don't need to specify `--language`:
 ```
 $ cdk init --from-git-url [URL] --template-path ./template-name
 ```
@@ -147,17 +155,6 @@ $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --tem
 $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version a1b2c3d4 --language=typescript
 ```
 
-NOTE: If the CLI detects a name conflict between a branch and tag specified by `--template-version`, the CLI will prompt the user with an interactive like the below example to handle it:
-```
-$ cdk init --from-git-url repo.git --template-version v1.0.0
-
-⚠️  Ambiguous reference "v1.0.0" found:
-  [1] Branch v1.0.0 (latest commit: a1b2c3d)
-  [2] Tag v1.0.0 (commit: e4f5g6h)
-
-Which would you like to use? [1/2]: 2
-```
-
 ##### From NPM Packages
 Or, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with one of the options below.
 
@@ -166,12 +163,12 @@ To select a specific template from an NPM package with many templates:
 $ cdk init --from-npm [package-name] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If NPM package only contains one template and it is at the root directory of the package, you don't need to specify template name:
+If NPM package only contains one template and has language directories directly at the package root, you don't need to specify `--template-path`:
 ```
 $ cdk init --from-npm [package-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the template contains only one language directory, you don't need to specify language:
+If the template contains only one language directory, you don't need to specify `--language`:
 ```
 $ cdk init --from-npm [package-name] --template-path ./template-name
 ```
@@ -184,7 +181,7 @@ $ cdk init --from-npm @aws-samples/cdk-web-template --template-version 1.5.2 --l
 #### **More Advanced Options**
 
 To skip dependency installation and git initialization, add the `--generate-only` flag to your command:
-```
+```bash
 $ cdk init app --language=typescript --generate-only
 $ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
 ```
@@ -244,7 +241,7 @@ my-custom-app-template/
 
 #### Testing Your Custom Templates Locally
 
-After authoring your custom templates, it can be helpful to test that `cdk init` runs successfully before publishing them to a Git repository or NPM package. Projects can be initialized from the authored template stored locally on your filesystem:
+After authoring your custom templates, you should test them locally to validate that the generated project structure and content match your expectations before publishing to a Git repository or NPM package. Projects can be initialized from the authored template stored locally on your filesystem:
 
 ```
 # Use a local template directory path
@@ -253,6 +250,12 @@ $ cdk init --from-path ./my-cdk-template --language=[csharp|fsharp|go|java|javas
 # If template contains only one language, don't need to specify language
 $ cdk init --from-path ./my-cdk-template
 ```
+
+This allows you to verify that:
+* All expected files are copied correctly
+* Directory structure matches your intended layout
+* Template-specific configurations are properly applied
+* The generated project can be built and deployed as expected
 
 
 Ticking the box below indicates that the public API of this RFC has been signed-off by the API bar raiser (the `status/api-approved` label was applied to the RFC pull request):
@@ -363,7 +366,7 @@ Template Submission Process:
 2. Internal AWS team writes README file for custom template with usage instructions and examples
 3. Team contacts CDK team with template source and required metadata
 4. CDK Team reviews custom templates in repository or package to ensure community benefit, conformity to custom template schema, clear README file, and that it is well tested
-5. If approved, CDK team adds entry to PUBLIC_TEMPLATE_REGISTRY in template-registry.ts. If not approved, CDK team will deliver feedback for revision to internal AWS team.
+5. If approved, CDK team adds entry to PUBLIC_TEMPLATE_REGISTRY in template-registry.ts. If not approved, CDK team will deliver feedback for revision to internal AWS team
 
 
 ### Is this a breaking change?
@@ -377,8 +380,10 @@ No, the new feature does not affect existing functionality for creating CDK proj
     *  Current way to use custom templates to create a CDK project
        * Pros:
          * 2 simple CLI commands:
-           1. `git clone https://github.com/codepipeline/cdk-templates`
-           2. `cp -r cdk-templates/LambdaInvoke/typescript .` 
+             ```bash
+             git clone https://github.com/codepipeline/cdk-templates
+             cp -r cdk-templates/LambdaInvoke/typescript .
+             ```
        * Cons:
          * Multi-step process that requires Git commands and file-copying
     *  Allowing users to pass in custom templates to `cdk init` with validation of their template definition
@@ -410,14 +415,14 @@ No, the new feature does not affect existing functionality for creating CDK proj
          * Dynamic custom templates are not supported in current feature proposal
 * Alternatives for Template Configuration/Placeholders
     * Current Placeholder Approach For Built-In Templates:
-       * Easy format for template authors to use — authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
+       * The current placeholder appraoch for built-in templates is an format for template authors to use. Authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
        * Pros:
          * Already works and is sufficient for built-in templates
            * Proven in production with minimal maintenance
          * Independent of template users
-           * Uses the `cdk init` context (like project folder name), so no user input (like) required.
+           * Uses the `cdk init` context (like project folder name), so no user input (like) required
          * Easy format for template authors to use
-           * Simple substitution syntax with no setup or tooling required.
+           * Simple substitution syntax with no setup or tooling required
          * No external dependencies
            * Entire process is handled within CDK so reduced risk of integration issues
        * Cons:
@@ -427,21 +432,21 @@ No, the new feature does not affect existing functionality for creating CDK proj
        * npm init is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named create-<name>, which users can invoke using `npm init <name>` to generate projects based on custom logic.
        * Pros:
          * Easy publishing to npm
-           * Streamlines creating package.json, making it quicker to publish templates as npm packages.
+           * Streamlines creating package.json, making it quicker to publish templates as npm packages
          * Uses existing npm ecosystem familiar to CDK users 
        * Cons:            
          * No multi-language support
          * Limited to scaffolding metadata
            * Only generates package.json, doesn’t solve the actual template generation or substitution
          * Requires manual integration with CDK templating logic
-           * Introduces an extra manual step to bridge between the scaffolded output and CDK’s expected project structure and lifecycle, requiring users to manually configure files or run additional setup before using CDK commands.
+           * Introduces an extra manual step to bridge between the scaffolded output and CDK’s expected project structure and lifecycle, requiring users to manually configure files or run additional setup before using CDK commands
     * Yeoman Generator
        * Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures based on templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation. Template authors write JavaScript-based generators (named generator-<name>) that define prompts and dynamically control which files are generated and how they’re customized.
        * Pros:      
          * Highly customizable scaffolding logic
-           * Enables conditional file inclusion, dynamic file naming, and complex transformations based on user input beyond static substitution like %name.PascalCased%.
+           * Enables conditional file inclusion, dynamic file naming, and complex transformations based on user input beyond static substitution like %name.PascalCased%
          * Interactive CLI experience for users
-           * Users can be prompted during `cdk init` to select options, allowing a single generator to produce many variations of a template.
+           * Users can be prompted during `cdk init` to select options, allowing a single generator to produce many variations of a template
          * Facilitates reusable and adaptable enterprise templates
            * Organizations can standardize internal CDK setups with customizable templates that adjust based on use case
          * Supports post-processing automation
@@ -463,14 +468,14 @@ No, the new feature does not affect existing functionality for creating CDK proj
            * Easier to add CDK specific behaviors
             
          * Automates common setup tasks (like linting, testing, and publishing configs)
-           * Template authors don’t have to maintain those manually across many templates.
+           * Template authors don’t have to maintain those manually across many templates
        * Cons: 
             
          * Steep learning curve
            * Template authors must understand how Projen works, including its configuration language
             
          * Templates are code, not files
-           * Instead of writing/copying static template files, template authors must write Projen config code that generates those files.
+           * Instead of writing/copying static template files, template authors must write Projen config code that generates those files
             
          * Generated files are not meant to be edited
            * Generated files are overwrited on every synth, so template users should only modify the config and not the output file
