@@ -26,28 +26,28 @@ feat(cli): user-provided cdk init templates
 #### `cdk init`
 The `cdk init` command creates a new CDK project from built-in or custom templates. It sets up the necessary files and directories to organize your CDK code, including project definitions, constructs, and stacks for applications.
 
-#### **Your First CDK Project**
+#### **Walking Through Your First CDK Project**
 Let's begin by making and navigating to a new project directory:
 ```bash
 $ mkdir my-first-project
 $ cd my-first-project
 ```
 
-Next, let's initialize the project in the CDK language of your choice. The CDK provides three built-in templates to help you get started quickly:
+Next, let's initialize the project in the CDK language of your choice. CDK provides three built-in templates to help you get started quickly:
 
-##### For a basic application, run:
+##### For a basic application:
 ```
 $ cdk init app --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 This creates a basic deployable CDK application with an empty stack.
 
-##### For building reusable constructs, run:
+##### For building reusable constructs:
 ```
 $ cdk init lib --language=typescript
 ```
 This creates a construct library template for building reusable constructs.
 
-##### For exploring CDK with examples, run:
+##### For exploring CDK with examples:
 ```
 $ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -82,7 +82,6 @@ my-cdk-templates/                  # Repository root
 │   └── java/
 └── 
 ```
-Since this repository contains multiple templates, you must specify the one you want using `--template-path`.
 
 Start by creating your new project directory and navigating to it:
 ```bash
@@ -90,7 +89,7 @@ $ mkdir custom-template-project
 $ cd custom-template-project
 ```
 
-Then, to initialize your project from this template, run:
+Since the repository contains multiple templates, use `--template-path` to specify one and initialize your project:
 ```bash
 $ cdk init --from-github username/my-cdk-templates --template-path my-custom-template --language=typescript
 ```
@@ -125,12 +124,12 @@ Select a specific template from a multi-template Git repository:
 $ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the Git repository contains only one template and has language directories at the repository root, you don't need to specify `--template-path`:
+**TIP** - If the Git repository contains only one template and has language directories at the repository root, you don't need to specify `--template-path`:
 ```
 $ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the template contains only one language directory, you don't need to specify `--language`:
+**TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 ```
 $ cdk init --from-git-url [URL] --template-path ./template-name
 ```
@@ -155,12 +154,12 @@ Select a specific template from an NPM package with multiple templates:
 $ cdk init --from-npm [package-name] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the NPM package contains only one template and has language directories at the package root, you don't need to specify `--template-path`:
+**TIP** - If the NPM package contains only one template and has language directories at the package root, you don't need to specify `--template-path`:
 ```
 $ cdk init --from-npm [package-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the template contains only one language directory, you don't need to specify `--language`:
+**TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 ```
 $ cdk init --from-npm [package-name] --template-path ./template-name
 ```
@@ -292,14 +291,14 @@ my-custom-app-template/
 
 #### Testing Your Custom Templates
 
-After creating your custom templates, test them locally to ensure the project structure and content meet your expectations before publishing them to a Git repository or NPM package. A project can be initialized directly from a template stored on your local filesystem:
+After creating your custom templates, test them locally to ensure the project structure and content meet your expectations before publishing them to a Git repository or NPM package. A project can be initialized directly from a template stored on your local filesystem.
 
-Pass in the directory path for your template and run:
+To do this, pass in the directory path for your template and run:
 ```
 $ cdk init --from-path ./my-cdk-template --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
-If the template contains only one language directory, you don't need to specify `--language`:
+**TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 ```
 $ cdk init --from-path ./my-cdk-template
 ```
