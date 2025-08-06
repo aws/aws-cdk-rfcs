@@ -328,11 +328,20 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 
 ### Why should I use this feature?
 
-* CDK Developer
-    * Quickly create projects with specific components, configurations, and requirements by default in the CDK CLI, reducing setup time
-    * Discover ready-to-use templates from AWS service teams through the Public Template Registry:
-* CDK Template Author
-    * Write templates for specific use cases and publish them to Git repositories or NPM packages
+**For CDK Developers:**
+* **Enterprise standardization**: Initialize projects with your organization's security policies, naming conventions, and architectural patterns pre-configured
+* **Service-specific templates**: Use AWS service team templates optimized for specific use cases (e.g., CI/CD pipelines)
+* **Version consistency**: Pin to specific template versions to ensure consistent project setup across your team
+
+**For Template Authors:**
+* **Easy distribution**: Publish templates to Git Repositories or NPM Packages without waiting for CDK team approval
+* **Community reach**: Share best practices with the broader CDK community
+* **Rapid iteration**: Test and update templates locally before publishing
+
+**Real-world use cases:**
+* An enterprise creates templates with pre-configured compliance and security settings for its developers
+* AWS service teams provide optimized templates for their services
+* Open source projects offer CDK templates for popular application architectures
 
 
 ### Are custom templates required to be “synth-able”?
@@ -352,35 +361,35 @@ No, dynamic templates are not directly processed by the CDK CLI. Template author
 Currently, `cdk init` only supports built-in AWS templates, limiting developers to basic project structures. Teams need expanded CLI support for custom templates that include their organization's best practices, pre-configured resources, and standardized project layouts.
 
 This feature offers several benefits:
-* Improved CDK CLI experience for users
+* **Improved CDK CLI experience for users**
    * Enables custom project initialization from any source (Git, NPM, local) using a familiar command
    * Provides version control flexibility — users can start from specific Git commits or NPM versions
    * Simplifies discovery of AWS service team templates via the Public Template Registry
-* Minimal additional maintenance for the CDK team
+* **Minimal additional maintenance for the CDK team**
    * The CLI only needs to maintain the Public Template Registry, not the templates themselves
-* Increased flexibility for enterprise users
+* **Increased flexibility for enterprise users**
    * Organizations can host private or public templates and use them with the `cdk init` command as long as users have access
-* Easier template distribution for template authors
+* **Easier template distribution for template authors**
    * No need to wait for approval from the CDK team — authors can publish directly to Git or NPM
-* Faster template creation process for authors
+* **Faster template creation process for authors**
    * Templates can be updated and tested locally using the CDK CLI
 
 
 ### Why should we *not* do this?
 
-* Increased CLI complexity and learning curve for users
+* **Increased CLI complexity and learning curve for users**
    * Introducing new flags (--from-path, --from-github, --from-git-url, --from-npm, --template-path, and --template-version) adds complexity to the `cdk init` command
    * Users must learn the syntax and how to use these new options, which could be overwhelming for beginners
-* Existing alternatives already enable similar workflows
+* **Existing alternatives already enable similar workflows**
    * Users can manually consume templates outside of the `cdk init` command by downloading template source and extracting files:
      ```
      git clone https://github.com/username/my-custom-templates
      cp -r my-custom-templates/my-custom-template/typescript .
      ```
-* Quality and support for custom templates may be inconsistent
+* **Quality and support for custom templates may be inconsistent**
    * Since templates are authored and maintained outside of the CDK team, they may lack proper documentation, testing, or maintenance
    * The CLI can validate only basic file structure, not functional correctness of a CDK project
-* Reliance on external systems and network access
+* **Reliance on external systems and network access**
    * Users pulling templates from Git or NPM are dependent on the availability of third-party dependencies and appropriate credentials
    * Offline development and testing is only possible if templates have been downloaded locally in advance
  
@@ -388,6 +397,13 @@ This feature offers several benefits:
 ### What is the technical solution (design) of this feature?
 
 Extend the `cdk init` command to support custom templates from various source options while maintaining the same user experience and validation standards as built-in templates. The main aspects of this solution are:
+
+**Implementation Files:**
+* `packages/aws-cdk/lib/commands/init.ts` - Main init command logic
+* `packages/aws-cdk/test/commands/init.test.ts` - Testing for main init command logic
+* `packages/aws-cdk/lib/template-registry.ts` - Public template registry
+
+**Key Components:**
 
 #### Support for Various Template Source Options (local/Git repo/NPM package)
 
