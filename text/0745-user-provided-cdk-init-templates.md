@@ -215,7 +215,7 @@ Public Template Registry:
 
 ### Authoring Custom CDK Templates
 
-A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference example app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo).
+A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo) under the `Examples` folder.
 
 #### Custom Template Schema
 
