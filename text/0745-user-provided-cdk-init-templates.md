@@ -172,7 +172,7 @@ $ cdk init --from-npm @aws-samples/cdk-web-template --template-version 1.5.2 --l
 
 #### **More Advanced Project Initialization Options**
 
-Skip dependency installation and git initialization by adding the `--generate-only` flag:
+Skip dependency installation and git initialization by including `--generate-only`:
 ```bash
 $ cdk init app --language=typescript --generate-only
 $ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
@@ -183,7 +183,7 @@ Use a specific CDK library version (built-in templates only) by specifying the `
 $ cdk init app --language=typescript --lib-version 2.100.0
 ```
 
-Set a custom stack name for your project (for built-in templates only) by using the `--stack-name` flag:
+Set a custom stack name for your project (for built-in templates only) using `--stack-name`:
 ```
 $ cdk init app --language=typescript --stack-name MyCustomStack
 ```
