@@ -194,7 +194,7 @@ $ cdk init app --language=typescript --stack-name MyCustomStack
 The CDK CLI includes a vetted registry of public AWS templates that provide pre-configured infrastructure patterns for specific use cases. To see all available templates to initialize a CDK project with, including those in the public registry, run `cdk init --list`:
 
 ```
-Available templates:
+Built-in templates:
 * app: CDK Application Template
    └─ cdk init app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 * lib: CDK Construct Library Template
@@ -203,12 +203,71 @@ Available templates:
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 
 Public Template Registry:
-┌────────────────┬─────────────────────────────────────┬───────────────────────┬────────────────────────────────────────┐
-│ Name           │ Description                         │ Author                │ Usage                                  │
-├────────────────┼─────────────────────────────────────┼───────────────────────┼────────────────────────────────────────┤
-│sample-git-repo │ Example GitHub repository containing│ @rohang9000           │--from-github rohang9000/sample-git-repo│
-│                │ custom template examples.           │                       │                                        │
-└────────────────┴─────────────────────────────────────┴───────────────────────┴────────────────────────────────────────┘
+* Sort registry view by source type:
+   └─ cdk init --list bySourceType
+* Query for template sources from an organization:
+   └─ cdk init --list [organization]
+* Query for templates from a specific source:
+   └─ cdk init --list [organization] [sourceName]
+* Query for languages a specific template supports:
+   └─ cdk init --list [organization] [sourceName] --template-path [templatePath]
+* Initialize a project from a template:
+   └─ cdk init --from-<sourceType> [sourceLocation] --template-path [templateLocation] --language=[supportedLanguage]
+
+┌─────────────────────┬─────────────────┬───────────────┬──────────────────────────────────────┐
+│ Organization        │ Source Name     │ Source Type   │ Description                          │
+├─────────────────────┼─────────────────┼──────────────────────────────────────────────────────┤
+│ rohang9000          │ sample-git-repo │ GitHub        │ Example GitHub repository containing │
+│                     │                 │               │                                      │
+└─────────────────────┴─────────────────┴──────────────────────────────────────────────────────┘
+```
+
+Registry View When Sorted by Source Type:
+```
+$ cdk init --list bySourceType
+
+┌─────────────────────┬───────────────┬─────────────────┬────────────────────────────┐
+│ Organization        │ Source Type   │ Source Name     │ Description                │
+├─────────────────────┼───────────────┼─────────────────┼────────────────────────────┤
+│ rohang9000          │ GitHub        │ sample-git-repo │ Example GitHub repository  │
+│                     │               │                 │ with templates.            │
+└─────────────────────┴───────────────┴─────────────────┴────────────────────────────┘
+```
+
+Console Outut for Template Sources from an Organization:
+```
+$ cdk init --list rohang9000
+
+Template Sources in `rohang9000`:
+   * sample-gi-repo
+```
+
+Console Output for Templates from a Specific Source:
+```
+$ cdk init --list rohang9000 sample-git-repo
+
+Templates in `sample-git-repo`: 
+┌───────────────────────────┬────────────────────────────────────┐
+│ Name                      │ Path                               │
+├───────────────────────────┼────────────────────────────────────┤
+│ Examples                  │ Examples                           │
+└───────────────────────────┴────────────────────────────────────┘
+│ cdk-hello-world-template  │ Tutorials/cdk-hello-world=template │
+└───────────────────────────┴────────────────────────────────────┘
+```
+
+Console Output for Languages a Specific Template Support:
+```
+$ cdk init --list rohang9000 sample-git-repo --template-path Examples
+
+Supported Languages for `Examples` template:
+   * csharp
+   * fsharp
+   * go
+   * java
+   * javascript
+   * python
+   * typescript 
 ```
 
 
@@ -396,7 +455,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
       cp -r cdk-templates/LambdaInvoke/typescript .
       ```
    * Pros:
-      * Two simple CLI commands:
+      * Two simple CLI commands
    * Cons:
       * Does not give full project initialization experience of a new Git repository being initialized with an initial commit and dependencies being installed as needed
       * Outside of CDK CLI experience
@@ -488,8 +547,8 @@ No, the new feature does not affect existing functionality for creating CDK proj
     * Remote tarball URLs: `cdk init --from-npm https://example.com/my-template.tgz --language=typescript`
 
 * Phase 4: Documentation, testing, and marketing
-  * Publish official documentation ("Authoring Custom CDK Templates" section) to [docs.aws.amazon.com/cdk](docs.aws.amazon.com/cdk) for template authors to reference
-  * Publish official documentation ("Updated README for Users of CDK CLI" section) to [github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
+  * Publish official documentation ("Authoring Custom CDK Templates" section) to [https://docs.aws.amazon.com](https://docs.aws.amazon.com) for template authors to reference
+  * Publish official documentation ("Updated README for Users of CDK CLI" section) to [https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
   * Author blog post and other marketing materials
     * Include benefits and example use cases of passing in custom templates through Local/Git/NPM
     * Include benefits and example use cases of selecting branch/commit/package version of a custom template
