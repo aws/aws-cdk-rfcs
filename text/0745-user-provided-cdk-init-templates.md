@@ -58,6 +58,7 @@ Congratulations, you have now created your first CDK project!
 #### **Working with Custom Templates**
 To initialize a project with pre-configured services, file structures, and best practices, you can run the `cdk init` command using custom templates from sources such as Git repositories or NPM packages. A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
 
+##### Getting Custom Templates From GitHub
 Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates. Here's what the repository structure might look like:
 ```
 my-cdk-templates/                  # Repository root
@@ -116,7 +117,7 @@ custom-template-project/           # Project directory name
 ```
 Now you're ready to continue coding in your project!
 
-##### Getting Custom Templates From Git Repositories
+##### Getting Custom Templates From Other Git Repositories
 Alternatively, you can pull custom templates from any Git Repository (GitLab, Bitbucket, etc.) with one of the options below.
 
 Select a specific template from a multi-template Git repository:
@@ -238,6 +239,7 @@ Console Outut for Template Sources from an Organization:
 $ cdk init --list rohang9000
 
 Template Sources in `rohang9000`:
+
    * sample-gi-repo
 ```
 
@@ -260,6 +262,7 @@ Console Output for Languages a Specific Template Support:
 $ cdk init --list rohang9000 sample-git-repo --template-path Examples
 
 Supported Languages for `Examples` template:
+
    * csharp
    * fsharp
    * go
@@ -273,7 +276,7 @@ Supported Languages for `Examples` template:
 
 ### Authoring Custom CDK Templates
 
-A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo) under the `Examples` folder.
+A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference custom app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo) under the `Examples` folder.
 
 #### Custom Template Schema
 
