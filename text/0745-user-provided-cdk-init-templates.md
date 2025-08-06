@@ -455,11 +455,13 @@ No, the new feature does not affect existing functionality for creating CDK proj
          * CookieCutter is not currently integrated with CDK CLI so users have to run it seperately, not allowing CDK CLI to be a "one stop shop" type of experience
    * Template authors develop and maintain their own placeholder and template configuration using advanced tools (Yeoman, Projen, Cookiecutter, etc.)
       * Pros:
-         * Simpler from a user point of view because valid CLI arguments are more concrete
-         * `cdk init` does not have to support dynamic template configuration
-            * Template authors who want to have template variations can use template generation tools (ie. Projen, Yeoman, Cookiecutter, etc.) to develop static templates which can be published and used by a CDK user
+         * Simpler experience for users because valid CLI arguments are more concrete
+         * Gives template authors the freedom to use whichever tool (ie. Projen, Yeoman, Cookiecutter, etc.) they want for template generation or placeholder substitution, and can then publish that generated static template to be accessed by users
+         * CDK team does not have facilitate dynamic template generation for authors through the `cdk init` command
+            * This eliminates the security risk of `cdk init` running an arbitrary template generation script (provided in a custom template) since there's no way to effectively validate the script for malicious code
+            * With the current proposal, `cdk init` just copies files, creates a new Git repository to track local changes, and installs project dependencies
       * Cons:
-         * No default placeholder or template configuration style for template authors that want it
+         * No default placeholder or template configuration for authors who want it but are not experienced with advanced tools
 
 
 
