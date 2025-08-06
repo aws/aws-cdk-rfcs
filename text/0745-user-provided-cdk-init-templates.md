@@ -440,6 +440,19 @@ No, the new feature does not affect existing functionality for creating CDK proj
       * Cons: 
          * Steep learning curve since template authors must understand how Projen works, including its configuration language 
          * Generated files are overwritten on every synth and not meant to be edited, so template users need to know to only modify the config and not the generated file
+   * CookieCutter
+      * Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }}) to define variable parts of files and filenames. Users run cookiecutter <template-source> and are prompted to provide values for placeholders. It then generates a project by rendering files with those values.
+      * Pros:
+         * Works with any language or framework, making it well-suited for CDK's multi-language ecosystem
+         * Template authors use expressions for variable substitution, conditional logic, and looping in both file content and filenames
+         * Interactive automatically prompts users for input, enabling flexible template customization without extra scripting
+         * Industry tested by many open source projects
+         * Once the project is generated, no link to Cookiecutter remains (all files are static and editable)
+      * Cons: 
+         * Users must install Cookiecutter via pip, which may not be intuitive for CDK developers
+         * Template authors who want this dynamic capability must learn the Cookiecutter structure and Jinja2 templating model, which is more complex than existing placeholder substitution mechanism
+         * Unlike Yeoman or Projen, it doesn’t offer built-in lifecycle hooks to run commands like npm install or git init after generation
+         * CookieCutter is not currently integrated with CDK CLI so users have to run it seperately, not allowing CDK CLI to be a "one stop shop" type of experience
    * Template authors develop and maintain their own placeholder and template configuration using advanced tools (Yeoman, Projen, Cookiecutter, etc.)
       * Pros:
          * Simpler from a user point of view because valid CLI arguments are more concrete
