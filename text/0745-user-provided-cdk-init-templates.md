@@ -56,9 +56,11 @@ This creates a CDK app pre-populated with examples demonstrating common AWS serv
 Congratulations, you have now created your first CDK project!
 
 #### **Working with Custom Templates**
-To initialize a project with pre-configured services, file structures, and best practices, you can run the `cdk init` command using custom templates from sources such as Git repositories or NPM packages. A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
+
+To initialize a project with pre-configured services, file structures, and best practices, you can run the `cdk init` command using custom templates from sources Git repositories or NPM packages. A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
+
 Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates. Here's what the repository structure might look like:
 ```
 my-cdk-templates/                  # Repository root
@@ -95,7 +97,7 @@ Since the repository contains multiple templates, use `--template-path` to speci
 $ cdk init --from-github username/my-cdk-templates --template-path my-custom-template --language=typescript
 ```
 
-Here's what happened when the `cdk init` command was run:
+Here's what happened when `cdk init` was run:
 1. The template files were copied to your project directory
 2. A Git repository was initialized with an initial commit
 3. Dependencies were installed as needed (npm install for JS/TS, mvn package for Java, virtual env for Python)
@@ -328,17 +330,17 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 
 ### Why should I use this feature?
 
-**For CDK Developers:**
-* **Enterprise standardization**: Initialize projects with your organization's security policies, naming conventions, and architectural patterns pre-configured
-* **Service-specific templates**: Use AWS service team templates optimized for specific use cases (e.g., CI/CD pipelines)
-* **Version consistency**: Pin to specific template versions to ensure consistent project setup across your team
+#### For CDK Developers:
+* **Enterprise standardization:** Initialize projects with your organization's security policies, naming conventions, and architectural patterns pre-configured
+* **Service-specific templates:** Use AWS service team templates optimized for specific use cases (e.g., CI/CD pipelines)
+* **Version consistency:** Pin to specific template versions to ensure consistent project setup across your team
 
-**For Template Authors:**
-* **Easy distribution**: Publish templates to Git Repositories or NPM Packages without waiting for CDK team approval
-* **Community reach**: Share best practices with the broader CDK community
-* **Rapid iteration**: Test and update templates locally before publishing
+#### For Template Authors:
+* **Easy distribution:** Publish templates to Git Repositories or NPM Packages without waiting for CDK team approval
+* **Community reach:** Share best practices with the broader CDK community
+* **Rapid iteration:** Test and update templates locally before publishing
 
-**Real-world use cases:**
+#### Real-world use cases:
 * An enterprise creates templates with pre-configured compliance and security settings for its developers
 * AWS service teams provide optimized templates for their services
 * Open source projects offer CDK templates for popular application architectures
@@ -346,7 +348,7 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 
 ### Are custom templates required to be “synth-able”?
 
-No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, the `cdk init` command does not validate that a CDK stack is defined in a custom template and does not enforce a successful `cdk synth` in order to initialize a new CDK project.
+No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and does not enforce a successful `cdk synth` in order to initialize a new CDK project.
 
 
 ### Can I publish dynamic custom templates to a Git repository or NPM package to be used by `cdk init`?
@@ -381,7 +383,7 @@ This feature offers several benefits:
    * Introducing new flags (--from-path, --from-github, --from-git-url, --from-npm, --template-path, and --template-version) adds complexity to the `cdk init` command
    * Users must learn the syntax and how to use these new options, which could be overwhelming for beginners
 * **Existing alternatives already enable similar workflows**
-   * Users can manually consume templates outside of the `cdk init` command by downloading template source and extracting files:
+   * Users can manually consume templates by downloading template source and extracting files:
      ```
      git clone https://github.com/username/my-custom-templates
      cp -r my-custom-templates/my-custom-template/typescript .
@@ -396,12 +398,7 @@ This feature offers several benefits:
 
 ### What is the technical solution (design) of this feature?
 
-Extend the `cdk init` command to support custom templates from various source options while maintaining the same user experience and validation standards as built-in templates. The main aspects of this solution are:
-
-**Implementation Files:**
-* `packages/aws-cdk/lib/commands/init.ts` - Main init command logic
-* `packages/aws-cdk/test/commands/init.test.ts` - Testing for main init command logic
-* `packages/aws-cdk/lib/template-registry.ts` - Public template registry
+Extend the `cdk init` command to support custom templates from various source options while maintaining the same user experience and validation standards as built-in templates.
 
 **Key Components:**
 
@@ -434,7 +431,9 @@ Extend the `cdk init` command to support custom templates from various source op
 #### Public Template Discovery
 
 * Implement statically updated registry of curated public template repositories and NPM packages
-* Extend `cdk init --list` to display public registry templates in a formatted table with repository/package name, description, author, and template usage instructions
+* Extend `cdk init --list` to display public registry templates in a formatted table with publishing organization, repository/package name, source type, and repository/package description
+* Implement ability to sort registry view by source type
+* Implement ability to query registry for template sources an organization maintains, templates a source contains, and languages a template is supported in.
 
 #### Static Management Process for Public Template Registry
 
@@ -472,11 +471,11 @@ No, the new feature does not affect existing functionality for creating CDK proj
       git clone https://github.com/codepipeline/cdk-templates
       cp -r cdk-templates/LambdaInvoke/typescript .
       ```
-   * Pros:
-      * Two simple CLI commands
-   * Cons:
-      * Does not give full project initialization experience of a new Git repository being initialized with an initial commit and dependencies being installed as needed
-      * Outside of CDK CLI experience
+      * Pros:
+         * Two simple CLI commands
+      * Cons:
+         * Does not give full project initialization experience of a new Git repository being initialized with an initial commit and dependencies being installed as needed
+         * Outside of CDK CLI experience
 * Alternatives for Dynamic Template Configuration/Placeholder Substitution
    * Current Placeholder Approach For Built-In Templates:
       * The current placeholder appraoch for built-in templates is an format for template authors to use. Authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
@@ -546,30 +545,28 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 * Phase 1: Core functionality
 
-  * Support for custom templates through local files, Git repositories, and NPM packages
-  * Support for custom templates in all CDK languages (TypeScript, C#, F#, Go, Java, JavaScript, and Python)
-  * Support for public and private Git repositories and NPM packages
-  * Support for users to specify what branch/commit of repo or package version they want to pull templates from and if not specified then will use main branch/most recent commit or latest package version by default
-  * Basic custom template validation which checks that template follows schema defined in "Authoring Custom Templates" section of RFC
+   * Support for custom templates through local files, Git repositories, and NPM packages
+   * Support for custom templates in all CDK languages (TypeScript, C#, F#, Go, Java, JavaScript, and Python)
+   * Support for public and private Git repositories and NPM packages
+   * Support for users to specify what branch/commit of repo or package version they want to pull templates from and if not specified then will use main branch/most recent commit or latest package version by default
+   * Basic custom template validation which checks that template follows schema defined in "Authoring Custom Templates" RFC section
+   * Develop unit and integration tests for each subfeature of core functionality
 
-* Phase 2: Testing and Static Discovery for Custom Templates
+* Phase 2: Static discovery for custom templates through the Public Template Registry
+   
+   * Extend `cdk init --list` to display AWS service team templates in a formatted table (with publishing organization, repository/package name, source type, and repository/package description fields)
+      * Templates are maintained by internal AWS teams after being vetted by CDK team
+      * Registry is maintained by CDK team
+   * Work with internal AWS teams to create and add more templates to the CDK CLI registry
+   * Implement ability to sort registry view by source type
+   * Implement ability to query registry for template sources an organization maintains, templates a source contains, and languages a template is supported in.
 
-  * Develop unit and integration tests
-  * Extend `cdk init --list` to display public Git repositories and NPM packages for custom templates, created by internal AWS teams and vetted by CDK team.
-  * Work with internal AWS teams to create and add more templates to the CDK CLI registry
-
-* Phase 3: Support for additional NPM package formats
-
-  * Extend `--from-npm` to support tarball formats:
-    * Local gzipped tarballs: `cdk init --from-npm ./my-template.tgz --language=typescript`
-    * Remote tarball URLs: `cdk init --from-npm https://example.com/my-template.tgz --language=typescript`
-
-* Phase 4: Documentation, testing, and marketing
-  * Publish official documentation ("Authoring Custom CDK Templates" section) to [https://docs.aws.amazon.com](https://docs.aws.amazon.com) for template authors to reference
-  * Publish official documentation ("Updated README for Users of CDK CLI" section) to [https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
-  * Author blog post and other marketing materials
-    * Include benefits and example use cases of passing in custom templates through Local/Git/NPM
-    * Include benefits and example use cases of selecting branch/commit/package version of a custom template
+* Phase 3: Documentation, testing, and marketing
+   * Publish official documentation ("Authoring Custom CDK Templates" section) to [https://docs.aws.amazon.com](https://docs.aws.amazon.com) for template authors to reference
+   * Publish official documentation ("Updated README for Users of CDK CLI" section) to [https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
+   * Author blog post and other marketing materials
+      * Include benefits and example use cases of passing in custom templates through Local/Git/NPM
+      * Include benefits and example use cases of selecting branch/commit/package version of a custom template
 
 
 
