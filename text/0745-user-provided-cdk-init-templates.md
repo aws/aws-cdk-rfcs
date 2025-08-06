@@ -120,7 +120,7 @@ Now you're ready to continue coding in your project!
 ##### Getting Custom Templates From Git Repositories
 Alternatively, you can pull custom templates from any Git Repository (GitLab, Bitbucket, etc.) with one of the options below.
 
-To select a specific template from a multi-template Git repository:
+Select a specific template from a multi-template Git repository:
 ```
 $ cdk init --from-git-url [URL] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -135,7 +135,7 @@ If the template contains only one language directory, you don't need to specify 
 $ cdk init --from-git-url [URL] --template-path ./template-name
 ```
 
-To select a template from a specific Git branch/tag/commit, specify the `--template-version`:
+Select a template from a specific Git branch/tag/commit by specifying the `--template-version`:
 ```
 # Use a specific Git branch
 $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --template-version develop --language=typescript
@@ -150,7 +150,7 @@ $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --tem
 ##### Getting Custom Templates From NPM Packages
 Or, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with one of the options below.
 
-To select a specific template from an NPM package with multiple templates:
+Select a specific template from an NPM package with multiple templates:
 ```
 $ cdk init --from-npm [package-name] --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -165,25 +165,25 @@ If the template contains only one language directory, you don't need to specify 
 $ cdk init --from-npm [package-name] --template-path ./template-name
 ```
 
-To select a template from a specific NPM package version, specify the `--template-version`:
+Select a template from a specific NPM package version by specifying the `--template-version`:
 ```
 $ cdk init --from-npm @aws-samples/cdk-web-template --template-version 1.5.2 --language=typescript
 ```
 
 #### **More Advanced Project Initialization Options**
 
-To skip dependency installation and git initialization, add the `--generate-only` flag to your command:
+Skip dependency installation and git initialization by adding the `--generate-only` flag:
 ```bash
 $ cdk init app --language=typescript --generate-only
 $ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
 ```
 
-To use a specific CDK library version (built-in templates only), specify the `--lib-version`:
+Use a specific CDK library version (built-in templates only) by specifying the `--lib-version`:
 ```
 $ cdk init app --language=typescript --lib-version 2.100.0
 ```
 
-To set a custom stack name for your project (for built-in templates only), use the `--stack-name` flag:
+Set a custom stack name for your project (for built-in templates only) by using the `--stack-name` flag:
 ```
 $ cdk init app --language=typescript --stack-name MyCustomStack
 ```
