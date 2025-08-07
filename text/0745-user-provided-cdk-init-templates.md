@@ -207,22 +207,22 @@ Built-in templates:
 Public Template Registry:
 * Sort registry view by source type:
    └─ cdk init --list bySourceType
-* Query for template sources from an organization:
-   └─ cdk init --list [organization]
+* Query for template sources from an organization/user:
+   └─ cdk init --list [organization/user]
 * Query for templates from a specific source:
-   └─ cdk init --list [organization] [sourceName]
+   └─ cdk init --list [organization/user] [sourceName]
 * Query for languages a specific template supports:
-   └─ cdk init --list [organization] [sourceName] --template-path [templatePath]
+   └─ cdk init --list [organization/user] [sourceName] --template-path [templatePath]
 * Initialize a project from a template:
    └─ cdk init --from-<sourceType> [sourceLocation] --template-path [templateLocation] --language=[supportedLanguage]
 
 ┌─────────────────────┬────────────────────────┬───────────────┬───────────────────────────┐
-│ Organization        │ Source Name            │ Source Type   │ Description               │
+│ Organization/User   │ Source Name            │ Source Type   │ Description               │
 ├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
 │ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
 │                     │                        │               │ with templates.           │
 ├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rupta               │ cli-init-npm-test      │ NPM           │ Example NPM Package       │
+│ rupta               │ sample-npm-package     │ NPM           │ Example NPM Package       │
 │                     │                        │               │ with a template           │
 ├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
 │ rohang9000          │ single-template-repo   │ GitHub        │ Example GitHub repository │
@@ -234,27 +234,27 @@ Registry View When Sorted by Source Type:
 ```
 $ cdk init --list bySourceType
 
-┌─────────────────────┬────────────────────────┬───────────────┬───────────────────────────┐
-│ Organization        │ Source Name            │ Source Type   │ Description               │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
-│                     │                        │               │ with templates.           │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rohang900           │ single-template-repo   │ GitHub        │ Example GitHub Package    │
-│                     │                        │               │ with a template           │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rupta               │ cli-init-npm-test      │ NPM           │ Example NPM repository    │
-│                     │                        │               │ with a template           │
-└─────────────────────┴────────────────────────┴───────────────┴───────────────────────────┘
+┌─────────────────────┬─────────────┬──────────────────────┬───────────────────────────┐
+│ Organization/User   │ Source Type │ Source Name          │ Description               │
+├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
+│ rohang9000          │ GitHub      │ sample-git-repo      │ Example GitHub repository │
+│                     │             │                      │ with templates            │
+├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
+│ rohang900           │ GitHub      │ single-template-repo │ Example GitHub Package    │
+│                     │             │                      │ with a template           │
+├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
+│ rupta               │ NPM         │ sample-npm-repo      │ Example NPM repository    │
+│                     │             │                      │ with a template           │
+└─────────────────────┴─────────────┴──────────────────────┴───────────────────────────┘
 ```
 
-Console Output for Template Sources from an Organization:
+Console Output for Template Sources from an Organization/User:
 ```
 $ cdk init --list rohang9000
 
 Template Sources in `rohang9000`:
 
-   * sample-gi-repo
+   * sample-git-repo
 ```
 
 Console Output for Templates from a Specific Source:
@@ -267,7 +267,7 @@ Templates in `sample-git-repo`:
 ├───────────────────────────┼────────────────────────────────────┤
 │ Examples                  │ Examples                           │
 └───────────────────────────┴────────────────────────────────────┘
-│ cdk-hello-world-template  │ Tutorials/cdk-hello-world=template │
+│ cdk-hello-world-template  │ Tutorials/cdk-hello-world-template │
 └───────────────────────────┴────────────────────────────────────┘
 ```
 
@@ -443,22 +443,21 @@ Extend the `cdk init` command to support custom templates from various source op
 #### Public Template Discovery
 
 * Implement statically updated registry of curated public template repositories and NPM packages
-* Extend `cdk init --list` to display public registry templates in a formatted table with publishing organization, repository/package name, source type, and repository/package description
+* Extend `cdk init --list` to display public registry templates in a formatted table with publishing organization/user, repository/package name, source type, and repository/package description
 * Implement ability to sort registry view by source type
-* Implement ability to query registry for template sources an organization maintains, templates a source contains, and languages a template is supported in.
+* Implement ability to query registry for template sources an organization/user maintains, templates a source contains, and languages a template is supported in
 
 #### Static Management Process for Public Template Registry
 
-When internal AWS teams want to add templates to the public registry, they must provide:
+When internal AWS teams want to add a template source to the public registry, they must provide the following metadata:
 ```
 {
-  name: string;               // Short, descriptive name
-  description: string;        // Brief description of template functionality
-  sourceType: 'git' | 'npm';  // Source type
-  source: string;             // Git URL or NPM package name
-  templates?: string[];       // List of template names if multiple in one source
-  languages: string[];        // Supported CDK languages
-  author: string;             // Team or organization name
+  sourceName: string;                  // Name of Git repository or NPM package
+  description: string;                 // Brief description of template repository or package functionality
+  sourceType: 'git' | 'npm';           // Source type (Github, Git, NPM)
+  source: string;                      // Github shorthand, Git URL, or NPM package name
+  templates: Record<string, string[]>; // Template path -> Supported CDK languages for template
+  author: string;                      // Organization, team, or user's name as it appears in Git repository or NPM package
 }
 ```
 
@@ -566,12 +565,12 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 * Phase 2: Static discovery for custom templates through the Public Template Registry
    
-   * Extend `cdk init --list` to display AWS service team templates in a formatted table (with publishing organization, repository/package name, source type, and repository/package description fields)
+   * Extend `cdk init --list` to display AWS service team templates in a formatted table (with publishing organization/author, repository/package name, source type, and repository/package description fields)
       * Templates are maintained by internal AWS teams after being vetted by CDK team
       * Registry is maintained by CDK team
    * Work with internal AWS teams to create and add more templates to the CDK CLI registry
    * Implement ability to sort registry view by source type
-   * Implement ability to query registry for template sources an organization maintains, templates a source contains, and languages a template is supported in.
+   * Implement ability to query registry for template sources an organization/author maintains, templates a source contains, and languages a template is supported in.
 
 * Phase 3: Documentation, testing, and marketing
    * Publish official documentation ("Authoring Custom CDK Templates" section) to [https://docs.aws.amazon.com](https://docs.aws.amazon.com) for template authors to reference
@@ -586,7 +585,3 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 * Dynamic template discovery mechanism to browse all available public template beyond AWS service team templates that appear in statically maintained CLI Public Template Registry
 * Integrate CDK CLI telemetry to track which sources for custom templates are used and how often
-
-
-
-## Appendix
