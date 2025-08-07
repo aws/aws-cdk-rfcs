@@ -234,12 +234,18 @@ Registry View When Sorted by Source Type:
 ```
 $ cdk init --list bySourceType
 
-┌─────────────────────┬───────────────┬─────────────────┬────────────────────────────┐
-│ Organization        │ Source Type   │ Source Name     │ Description                │
-├─────────────────────┼───────────────┼─────────────────┼────────────────────────────┤
-│ rohang9000          │ GitHub        │ sample-git-repo │ Example GitHub repository  │
-│                     │               │                 │ with templates.            │
-└─────────────────────┴───────────────┴─────────────────┴────────────────────────────┘
+┌─────────────────────┬────────────────────────┬───────────────┬───────────────────────────┐
+│ Organization        │ Source Name            │ Source Type   │ Description               │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
+│                     │                        │               │ with templates.           │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rohang900           │ single-template-repo   │ GitHub        │ Example GitHub Package    │
+│                     │                        │               │ with a template           │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rupta               │ cli-init-npm-test      │ NPM           │ Example NPM repository    │
+│                     │                        │               │ with a template           │
+└─────────────────────┴────────────────────────┴───────────────┴───────────────────────────┘
 ```
 
 Console Outut for Template Sources from an Organization:
