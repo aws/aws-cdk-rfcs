@@ -248,7 +248,7 @@ $ cdk init --list bySourceType
 └─────────────────────┴────────────────────────┴───────────────┴───────────────────────────┘
 ```
 
-Console Outut for Template Sources from an Organization:
+Console Output for Template Sources from an Organization:
 ```
 $ cdk init --list rohang9000
 
