@@ -26,7 +26,7 @@ feat(cli): user-provided cdk init templates
 #### `cdk init`
 The `cdk init` command creates a new CDK project from built-in or custom templates. It sets up the necessary files and directories to organize your CDK code, including project definitions, constructs, and stacks for applications.
 
-#### **Walking Through Your First CDK Project**
+#### **Initializing Your First CDK Project**
 Let's begin by making and navigating to a new project directory:
 ```bash
 $ mkdir my-first-project
@@ -53,11 +53,11 @@ $ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typesc
 ```
 This creates a CDK app pre-populated with examples demonstrating common AWS services and best practices.
 
-Congratulations, you have now created your first CDK project!
+Congratulations, you have now initialized your first starter CDK project!
 
 #### **Working with Custom Templates**
 
-To initialize a project with pre-configured services, file structures, and best practices, you can run the `cdk init` command using custom templates from sources Git repositories or NPM packages. A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
+To initialize a project with pre-configured services, file structures, or best practices, you can run `cdk init` using custom templates from Git repositories or NPM packages. A single Git repository or NPM package can contain multiple CDK templates for different use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
 
@@ -117,10 +117,10 @@ custom-template-project/           # Project directory name
 ├── .gitignore
 └── README.md
 ```
-Now you're ready to continue coding in your project!
+Now you're ready to continue coding in your project from a more specific state!
 
 ##### Getting Custom Templates From Other Git Repositories
-Alternatively, you can pull custom templates from any Git Repository (GitLab, Bitbucket, etc.) with one of the options below.
+You can pull custom templates from any other Git Repository (GitLab, Bitbucket, etc.) type with the options below.
 
 Select a specific template from a multi-template Git repository:
 ```
@@ -150,7 +150,7 @@ $ cdk init --from-git-url https://github.com/aws-samples/cdk-templates.git --tem
 ```
 
 ##### Getting Custom Templates From NPM Packages
-Or, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with one of the options below.
+Alternatively, pull a custom template from any NPM package (on npmjs.com or any registry that hits NPM endpoint) with the options below.
 
 Select a specific template from an NPM package with multiple templates:
 ```
@@ -174,7 +174,7 @@ $ cdk init --from-npm @aws-samples/cdk-web-template --template-version 1.5.2 --l
 
 #### **More Advanced Project Initialization Options**
 
-Skip dependency installation and git initialization by including `--generate-only`:
+Skip git initialization and dependency installation by including `--generate-only`:
 ```bash
 $ cdk init app --language=typescript --generate-only
 $ cdk init --from-git-url https://github.com/user/my-template.git --generate-only
@@ -216,12 +216,18 @@ Public Template Registry:
 * Initialize a project from a template:
    └─ cdk init --from-<sourceType> [sourceLocation] --template-path [templateLocation] --language=[supportedLanguage]
 
-┌─────────────────────┬─────────────────┬───────────────┬──────────────────────────────────────┐
-│ Organization        │ Source Name     │ Source Type   │ Description                          │
-├─────────────────────┼─────────────────┼──────────────────────────────────────────────────────┤
-│ rohang9000          │ sample-git-repo │ GitHub        │ Example GitHub repository containing │
-│                     │                 │               │                                      │
-└─────────────────────┴─────────────────┴──────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────┬───────────────┬───────────────────────────┐
+│ Organization        │ Source Name            │ Source Type   │ Description               │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
+│                     │                        │               │ with templates.           │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rupta               │ cli-init-npm-test      │ NPM           │ Example NPM Package       │
+│                     │                        │               │ with a template           │
+├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
+│ rohang9000          │ single-template-repo   │ GitHub        │ Example GitHub repository │
+│                     │                        │               │ with a template           │
+└─────────────────────┴────────────────────────┴───────────────┴───────────────────────────┘
 ```
 
 Registry View When Sorted by Source Type:
