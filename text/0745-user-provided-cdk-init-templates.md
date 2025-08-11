@@ -205,7 +205,7 @@ Built-in templates:
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 
 Public Template Registry:
-* Sort registry view by source type:
+* Sort each organization/user by source type (default view is sorted by source name):
    └─ cdk init --list bySourceType
 * Query for template sources from an organization/user:
    └─ cdk init --list [organization/user]
@@ -214,38 +214,44 @@ Public Template Registry:
 * Query for languages a specific template supports:
    └─ cdk init --list [organization/user] [sourceName] --template-path [templatePath]
 * Initialize a project from a template:
-   └─ cdk init --from-<sourceType> [sourceLocation] --template-path [templateLocation] --language=[supportedLanguage]
+   └─ cdk init --from-<sourceType> [sourceLocation] --template-path [PATH] --language=[supportedLanguage]
 
-┌─────────────────────┬────────────────────────┬───────────────┬───────────────────────────┐
-│ Organization/User   │ Source Name            │ Source Type   │ Description               │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
-│                     │                        │               │ with templates            │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rupta               │ sample-npm-package     │ NPM           │ Example NPM Package       │
-│                     │                        │               │ with a template           │
-├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
-│ rohang9000          │ single-template-repo   │ GitHub        │ Example GitHub repository │
-│                     │                        │               │ with a template           │
-└─────────────────────┴────────────────────────┴───────────────┴───────────────────────────┘
+┌─────────────────────┬──────────────────────────┬─────────────┬───────────────────────────┐
+│ Organization/User   │ Source Name              │ Source Type │ Description               │
+├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
+│ rohang9000          │ cdk-init-template-repo   │ GitHub      │ GitHub repository with a  │
+│                     │                          │             │ CDK init template         │
+├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
+│ rohang9000          │ project-template         │ NPM         │ Example NPM repository    │
+│                     │                          │             │ with a project template   │
+├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
+│ rohang9000          │ sample-git-repo          │ GitHub      │ Example GitHub repository │
+│                     │                          │             │ with templates            │
+├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
+│ rupta               │ custom-cdk-init-template │ NPM         │ Example NPM Package       │
+│                     │                          │             │ with a template           │
+└─────────────────────┴──────────────────────────┴─────────────┴───────────────────────────┘
 ```
 
 Registry View When Sorted by Source Type:
 ```
 $ cdk init --list bySourceType
 
-┌─────────────────────┬─────────────┬──────────────────────┬───────────────────────────┐
-│ Organization/User   │ Source Type │ Source Name          │ Description               │
-├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
-│ rohang9000          │ GitHub      │ sample-git-repo      │ Example GitHub repository │
-│                     │             │                      │ with templates            │
-├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
-│ rohang900           │ GitHub      │ single-template-repo │ Example GitHub Package    │
-│                     │             │                      │ with a template           │
-├─────────────────────┼─────────────┼──────────────────────┼───────────────────────────┤
-│ rupta               │ NPM         │ sample-npm-repo      │ Example NPM repository    │
-│                     │             │                      │ with a template           │
-└─────────────────────┴─────────────┴──────────────────────┴───────────────────────────┘
+┌─────────────────────┬─────────────┬──────────────────────────┬───────────────────────────┐
+│ Organization/User   │ Source Type │ Source Name              │ Description               │
+├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
+│ rohang9000          │ GitHub      │ cdk-init-template-repo   │ GitHub repository with a  │
+│                     │             │                          │ CDK init template         │
+├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
+│ rohang9000          │ GitHub      │ sample-git-repo          │ Example GitHub repository │
+│                     │             │                          │ with templates            │
+├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
+│ rohang9000          │ NPM         │ project-template         │ Example NPM repository    │
+│                     │             │                          │ with a project template   │
+├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
+│ rupta               │ NPM         │ custom-cdk-init-template │ Example NPM repository    │
+│                     │             │                          │ with a template           │
+└─────────────────────┴─────────────┴──────────────────────────┴───────────────────────────┘
 ```
 
 Console Output for Template Sources from an Organization/User:
@@ -254,14 +260,19 @@ $ cdk init --list rohang9000
 
 Template Sources in `rohang9000`:
 
-   * sample-git-repo
+   * cdk-init-template-repo (GitHub)
+   * project-template (NPM)
+   * sample-git-repo (GitHub)
 ```
 
 Console Output for Templates from a Specific Source:
 ```
 $ cdk init --list rohang9000 sample-git-repo
 
-Templates in `sample-git-repo`: 
+Source location is: https://github.com/rohang9000/sample-git-repo.git OR rohang9000/sample-git-repo
+
+Templates in `sample-git-repo`:
+
 ┌───────────────────────────┬────────────────────────────────────┐
 │ Name                      │ Path                               │
 ├───────────────────────────┼────────────────────────────────────┤
@@ -273,12 +284,11 @@ Templates in `sample-git-repo`:
 
 Console Output for Languages a Specific Template Support:
 ```
-$ cdk init --list rohang9000 sample-git-repo --template-path Examples
+$ cdk init --list rohang9000 sample-git-repo --template-path Tutorials/cdk-hello-world-template
 
-Supported Languages for `Examples` template:
+Supported Languages for `cdk-hello-world-template`:
 
    * csharp
-   * fsharp
    * go
    * java
    * javascript
@@ -574,7 +584,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 * Phase 3: Documentation, testing, and marketing
    * Publish official documentation ("Authoring Custom CDK Templates" section) to [https://docs.aws.amazon.com](https://docs.aws.amazon.com) for template authors to reference
-   * Publish official documentation ("Updated README for Users of CDK CLI" section) to [https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
+   * Publish official documentation ("Updated `cdk init` README" section) to [https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk](https://github.com/aws/aws-cdk-cli/tree/main/packages/aws-cdk) for CDK users to reference
    * Author blog post and other marketing materials
       * Include benefits and example use cases of passing in custom templates through Local/Git/NPM
       * Include benefits and example use cases of selecting branch/commit/package version of a custom template
