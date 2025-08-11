@@ -220,7 +220,7 @@ Public Template Registry:
 │ Organization/User   │ Source Name            │ Source Type   │ Description               │
 ├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
 │ rohang9000          │ sample-git-repo        │ GitHub        │ Example GitHub repository │
-│                     │                        │               │ with templates.           │
+│                     │                        │               │ with templates            │
 ├─────────────────────┼────────────────────────┼───────────────┼───────────────────────────┤
 │ rupta               │ sample-npm-package     │ NPM           │ Example NPM Package       │
 │                     │                        │               │ with a template           │
