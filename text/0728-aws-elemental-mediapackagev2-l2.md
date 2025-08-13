@@ -4,7 +4,7 @@
 
 * **Original Author(s):** @jamiepmullan
 * **Tracking Issue:** [#728](https://github.com/aws/aws-cdk-rfcs/issues/728)
-* **API Bar Raiser:**
+* **API Bar Raiser:** @kumsmrit
 
 This design outlines the how we build an L2 construct for AWS Elemental MediaPackageV2, delivering the following benefits:
 
