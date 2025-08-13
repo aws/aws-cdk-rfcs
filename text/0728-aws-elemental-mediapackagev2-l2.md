@@ -1016,10 +1016,9 @@ Today we help builders with reference architectures using the opensource project
 This open source project has received much positive feedback.
 
 By building out an L2 CDK construct for AWS Elemental MediaPackageV2 (and others services in the future) will mean we can simplify these architectures.
-This would put us in a position (in the future) of being able to provide opinionated higher-level patterns (L3+) after full L2 coverage.
-To build a pattern, the other 2 RFCs that may come in the future would be AWS Elemental MediaConnect and AWS Elemental MediaLive.
-By abstracting and simplifying these resources will aide this effort and
-continue improving our developer experience in AWS CDK.
+
+The existing process requires extensive configuration and lacks standardization, leading to potential errors and a time-consuming setup process.
+By abstracting and simplifying these resources (L2) we will continue improving our developer experience in AWS CDK.
 
 Another example of an L2 that could utilize this resource would be [CloudFront Origins](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront_origins-readme.html).
 
