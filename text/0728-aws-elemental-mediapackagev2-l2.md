@@ -295,6 +295,27 @@ export interface IChannelGroup extends IResource {
 }
 ```
 
+Provide fromMethod capability - allowing imports of the resource:
+```
+/**
+  * Creates a Channel Group construct that represents an external (imported) Channel Group.
+  */
+public static fromChannelGroupAttributes(scope: Construct, id: string, attrs: ChannelGroupAttributes): IChannelGroup {
+  class Import extends ChannelGroupBase implements IChannelGroup {
+    public readonly channelGroupName = attrs.channelGroupName;
+    public readonly channelGroupArn = Stack.of(this).formatArn({
+      partition: 'aws',
+      service: 'mediapackagev2',
+      resource: 'channelGroup',
+      arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+      resourceName: attrs.channelGroupName,
+    });
+  }
+
+  return new Import(scope, id);
+}
+```
+
 #### AWS Elemental MediaPackage V2 Channel
 
 A channel is part of a channel group and represents the entry point for a content stream into MediaPackage.
@@ -482,6 +503,30 @@ export interface IChannel extends IResource {
    * @default - sum over 60 seconds
    */
   metricEgressRequestCount(props?: MetricOptions): Metric;
+}
+```
+
+Provide fromMethod capability - allowing imports of the resource:
+```
+/**
+  * Creates a Channel construct that represents an external (imported) Channel.
+  */
+public static fromChannelAttributes(scope: Construct, id: string, attrs: ChannelAttributes): IChannel {
+  class Import extends ChannelBase implements IChannel {
+    public policy?: ChannelPolicy = undefined;
+    public readonly channelGroupName = attrs.channelGroupName;
+    public readonly channelName = attrs.channelName;
+    protected autoCreatePolicy = false;
+    public readonly channelArn = Stack.of(this).formatArn({
+      partition: 'aws',
+      service: 'mediapackagev2',
+      resource: `channelGroup/${attrs.channelGroupName}/channel`,
+      arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+      resourceName: this.channelName,
+    });
+  }
+
+  return new Import(scope, id);
 }
 ```
 
@@ -921,6 +966,31 @@ export interface IOriginEndpoint extends IResource {
    * @default - sum over 60 seconds
    */
   metricEgressRequestCount(props?: MetricOptions): Metric;
+}
+```
+
+Provide fromMethod capability - allowing imports of the resource:
+```
+/**
+  * Creates a OriginEndpoint construct that represents an external (imported) OriginEndpoint.
+  */
+public static fromOriginEndpointAttributes(scope: Construct, id: string, attrs: OriginEndpointAttributes): IOriginEndpoint {
+  class Import extends OriginEndpointBase implements IOriginEndpoint {
+    public readonly policy = undefined;
+    public readonly channelGroupName = attrs.channelGroupName;
+    public readonly channelName = attrs.channelName;
+    public readonly originEndpointName = attrs.originEndpointName;
+    protected autoCreatePolicy = false;
+    public readonly originEndpointArn = Stack.of(this).formatArn({
+      partition: 'aws',
+      service: 'mediapackagev2',
+      resource: `channelGroup/${attrs.channelGroupName}/channel/${this.channelName}/originEndpoint`,
+      arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+      resourceName: this.originEndpointName,
+    });
+  }
+
+  return new Import(scope, id);
 }
 ```
 
