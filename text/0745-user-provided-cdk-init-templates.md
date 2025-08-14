@@ -208,6 +208,10 @@ Public Template Registry:
 ┌──────────────┬──────────────────────────┬───────────────────┬────────┬───────────────────┬─────────────────────────────────────────────────────────────────┐
 │ Author       | Repository/Package       │ Template Path     │ Type   │ Description       | Initialization Command                                          │
 ├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
+│ rohang9000   | sample-git-repo          │ NestedTemplate/   | GitHub | Same below sample | cdk init --from-github rohang9000/sample-git-repo               |
+|              |                          | Samples           |        | templates nested  | --template-path NestedTemplate/Samples                          |
+|              |                          |                   |        | in subdirectory   | --language=[java|javascript|python|typescript]                  |
+├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
 │ rohang9000   | sample-git-repo          │ Samples           | GitHub | Sample template   | cdk init --from-github rohang9000/sample-git-repo               |
 |              |                          |                   |        | for new authors   | --template-path Samples                                         |
 |              |                          |                   |        | to reference      | --language=[csharp|fsharp|go|java|javascript|python|typescript] |
@@ -226,7 +230,7 @@ Public Template Registry:
 
 ### Authoring Custom CDK Templates
 
-A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference custom app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo/tree/main/Examples).
+A valid custom template must contain a subdirectory for a supported CDK language and at least one file inside it matching that language. You can reference custom app template implementations in all CDK Languages [here](https://github.com/rohang9000/sample-git-repo/tree/main/Samples).
 
 #### Custom Template Schema
 
@@ -408,7 +412,9 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 #### Dynamic Template Substitution
 The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality.
-**Current Placeholder Approach For Built-In Templates:**
+
+**Current Placeholder Approach For Built-In Templates**
+
 The current placeholder approach for built-in templates is a format for authors to use dynamic information inside templates. Authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
    * Pros:
      * Proven in production for built-in templates with minimal maintenance
@@ -418,7 +424,9 @@ The current placeholder approach for built-in templates is a format for authors 
      * Very limited template generation capabilities - limited to initialization directory and library version
      * Does not provide interactive prompts or advanced templating logic like Yeoman, Projen, or Cookiecutter
      * Exposing this engine could lead the CDK team to develop a full blown custom templating language, which is not their forte and what they should spend their time on
-**`npm-init`**
+
+**The `npm-init` Command**
+
 `npm init` is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named `create-<name>`, which users can invoke using `npm init <name>` to generate projects based on custom logic.
    * Pros:
      * Streamlines creating `package.json`, making it quicker to publish templates as NPM packages
@@ -426,15 +434,22 @@ The current placeholder approach for built-in templates is a format for authors 
    * Cons:            
      * No multi-language support (important since CDK is supported in 7 languages)
      * Only generates package.json, doesn’t solve the actual template generation or substitution
+
 **Yeoman Generator**
-Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures based on templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation. Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and dynamically control which files are generated and how they’re customized.
+
+Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures from templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation (see Appendix A for a sample dialog). Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and dynamically control which files are generated and how they’re customized (See Appendix B for a minimal example generator).
+
+Template authors typically publish generators as public NPM packages (e.g., `generator-mytemplate`) so they can be installed via `npm install -g generator-mytemplate` or invoked directly with `yo mytemplate`. The `cdk init` command could detect or be configured to invoke a Yeoman generator by name, passing along parameters to skip prompts or prefill defaults. A single generator can implement branching logic to scaffold different languages within the same codebase, using conditional file sets (`templates/python/**`, `templates/java/**`, etc.) and running the corresponding post-install commands for each language.
+
    * Pros:      
      * Enables advanced scaffolding logic (conditional file inclusion, dynamic file naming, and complex transformations) based on user input from interactive prompts to produce many variations of a template
      * Supports post-processing automation — after scaffolding, Yeoman generators can be written to automatically run language-appropriate dependency installation commands (e.g., `npm install` for JavaScript/TypeScript, `pip install` for Python, `mvn package` for Java, `dotnet restore` for C# and F#), initialize Git, and add license headers
    * Cons:
-     * Template authors must write JS-based generators instead of simple file templates
+     * Template authors must write JS-based generators (see a minimal example in Appendix B) instead of simple static file templates.
      * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
+
 **Projen**
+
 Projen is a project scaffolding and management tool that defines and maintains project configuration using code instead of static files. Users create a project by running `npx projen new <project-type>`, which sets up a .projenrc.js (or .ts) file. From then on, running projen regenerates all config files based on this definition. Template authors create reusable Projen project types by writing JS/TS classes that encapsulate desired configurations and options.
    * Pros: 
      * Controlled and maintained by AWS so it is easier to add requested features.
@@ -442,7 +457,9 @@ Projen is a project scaffolding and management tool that defines and maintains p
    * Cons: 
      * Steep learning curve, since template authors must understand Projen’s configuration model.
      * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, but this also removes its automation benefits
+
 **CookieCutter**
+
 Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }}) to define variable parts of files and filenames. Users run cookiecutter <template-source> and are prompted to provide values for placeholders. It then generates a project by rendering files with those values.
    * Pros:
      * Works with any language or framework, making it well-suited for CDK's multi-language ecosystem
@@ -486,3 +503,56 @@ Cookiecutter is a CLI utility for creating projects from templates. It uses a fo
 ### Are there any future enhancements of this feature?
 
 * Dynamic template discovery mechanism to browse all available public template beyond AWS service team templates that appear in statically maintained CLI Public Template Registry
+
+
+
+## Appendix
+
+### Appendix A - Example Yeoman Dialog
+```bash
+$ yo mytemplate
+? Project name: my-service
+? Language: Python
+? Include CI/CD pipeline? Yes
+? License: MIT
+   create  README.md
+   create  package.json
+   create  src/handler.py
+   create  tests/test_handler.py
+   create  .gitignore
+   run     pip install
+   run     git init
+   run     git add .
+   run     git commit -m "Initial commit from template"
+```
+
+### Appendix B – Minimal Example of a Generator
+```bash
+// generators/app/index.js
+const Generator = require('yeoman-generator');
+
+module.exports = class extends Generator {
+  async prompting() {
+    this.answers = await this.prompt([
+      { type: 'input', name: 'name', message: 'Project name', default: 'my-app' },
+      { type: 'list', name: 'language', message: 'Language', choices: ['Python', 'JavaScript'] }
+    ]);
+  }
+
+  writing() {
+    this.fs.copyTpl(
+      this.templatePath(`${this.answers.language.toLowerCase()}/**`),
+      this.destinationPath(),
+      { name: this.answers.name }
+    );
+  }
+
+  install() {
+    if (this.answers.language === 'Python') {
+      this.spawnCommand('pip', ['install', '-r', 'requirements.txt']);
+    } else {
+      this.npmInstall();
+    }
+  }
+};
+```
