@@ -202,95 +202,24 @@ Built-in templates:
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 
 Public Template Registry:
-* Sort each organization/user by source type (default view is sorted by source name):
-   └─ cdk init --list bySourceType
-* Query for template sources from an organization/user:
-   └─ cdk init --list [organization/user]
-* Query for templates from a specific source:
-   └─ cdk init --list [organization/user] [sourceName]
-* Query for languages a specific template supports:
-   └─ cdk init --list [organization/user] [sourceName] --template-path [templatePath]
 * Initialize a project from a template:
    └─ cdk init --from-<sourceType> [sourceLocation] --template-path [PATH] --language=[supportedLanguage]
 
-┌─────────────────────┬──────────────────────────┬─────────────┬───────────────────────────┐
-│ Author              │ Source Name              │ Source Type │ Description               │
-├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
-│ rohang9000          │ cdk-init-template-repo   │ GitHub      │ GitHub repository with a  │
-│                     │                          │             │ CDK init template         │
-├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
-│ rohang9000          │ project-template         │ NPM         │ Example NPM repository    │
-│                     │                          │             │ with a project template   │
-├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
-│ rohang9000          │ sample-git-repo          │ GitHub      │ Example GitHub repository │
-│                     │                          │             │ with templates            │
-├─────────────────────┼──────────────────────────┼─────────────┼───────────────────────────┤
-│ rupta               │ custom-cdk-init-template │ NPM         │ Example NPM Package       │
-│                     │                          │             │ with a template           │
-└─────────────────────┴──────────────────────────┴─────────────┴───────────────────────────┘
-```
-
-Registry View When Sorted by Source Type:
-```
-$ cdk init --list bySourceType
-
-┌─────────────────────┬─────────────┬──────────────────────────┬───────────────────────────┐
-│ Organization/User   │ Source Type │ Source Name              │ Description               │
-├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
-│ rohang9000          │ GitHub      │ cdk-init-template-repo   │ GitHub repository with a  │
-│                     │             │                          │ CDK init template         │
-├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
-│ rohang9000          │ GitHub      │ sample-git-repo          │ Example GitHub repository │
-│                     │             │                          │ with templates            │
-├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
-│ rohang9000          │ NPM         │ project-template         │ Example NPM repository    │
-│                     │             │                          │ with a project template   │
-├─────────────────────┼─────────────┼──────────────────────────┼───────────────────────────┤
-│ rupta               │ NPM         │ custom-cdk-init-template │ Example NPM repository    │
-│                     │             │                          │ with a template           │
-└─────────────────────┴─────────────┴──────────────────────────┴───────────────────────────┘
-```
-
-Console Output for Template Sources from an Organization/User:
-```
-$ cdk init --list rohang9000
-
-Template Sources in `rohang9000`:
-
-   * cdk-init-template-repo (GitHub)
-   * project-template (NPM)
-   * sample-git-repo (GitHub)
-```
-
-Console Output for Templates from a Specific Source:
-```
-$ cdk init --list rohang9000 sample-git-repo
-
-Source location is: https://github.com/rohang9000/sample-git-repo.git OR rohang9000/sample-git-repo
-
-Templates in `sample-git-repo`:
-
-┌───────────────────────────┬────────────────────────────────────┐
-│ Name                      │ Path                               │
-├───────────────────────────┼────────────────────────────────────┤
-│ Examples                  │ Examples                           │
-└───────────────────────────┴────────────────────────────────────┘
-│ cdk-hello-world-template  │ Tutorials/cdk-hello-world-template │
-└───────────────────────────┴────────────────────────────────────┘
-```
-
-Console Output for Languages a Specific Template Support:
-```
-$ cdk init --list rohang9000 sample-git-repo --template-path Tutorials/cdk-hello-world-template
-
-Supported Languages for `cdk-hello-world-template`:
-
-   * csharp
-   * go
-   * java
-   * javascript
-   * python
-   * typescript 
+┌──────────────┬──────────────────────────┬───────────────────┬────────┬───────────────────┬─────────────────────────────────────────────────────────────────┐
+│ Author       | Repository/Package       │ Template Path     │ Type   │ Description       | Initialization Command                                          │
+├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
+│ rohang9000   | sample-git-repo          │ Samples           | GitHub | Sample template   | cdk init --from-github rohang9000/sample-git-repo               |
+|              |                          |                   |        | for new authors   | --template-path Samples                                         |
+|              |                          |                   |        | to reference      | --language=[csharp|fsharp|go|java|javascript|python|typescript] |
+├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
+│ rohang9000   | sample-git-repo          │ Tutorials/cdk-    | GitHub | Completed CDK     | cdk init --from-github rohang9000/sample-git-repo               |
+|              |                          | hello-world-      |        | Hello World App   | --template-path Tutorials/cdk-hello-world-template              |
+|              |                          | template          |        | Application       | --language=[csharp|go|java|javascript|python|typescript]        |
+├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
+│ rupta        | custom-cdk-init-template │ my-template       │ NPM    │ Custom CDK init   | cdk init --from-npm custom-cdk-init-template                    |
+│              |                          │                   │        │ template          | --template-path my-template                                     │
+│              |                          │                   │        │                   | --language=[python][typescript]                                 │
+└──────────────┴──────────────────────────┴───────────────────┴────────┴───────────────────┴─────────────────────────────────────────────────────────────────┘
 ```
 
 
@@ -327,6 +256,11 @@ $ cdk init --from-path ./my-cdk-template --language=[csharp|fsharp|go|java|javas
 $ cdk init --from-path ./my-cdk-template
 ```
 
+If you've created a multi-template repository setup locally, you can also fully test it by specifying templates to initialize from using `--template-path`:
+```
+$ cdk init --from-path ./cdk-templates --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
 This allows you to verify that all expected files and drectories are copied correctly.
 
 
@@ -350,12 +284,9 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 #### For CDK Developers:
 * **Enterprise standardization:** Initialize projects with your organization's security policies, naming conventions, and architectural patterns pre-configured
 * **Service-specific templates:** Use AWS service team templates optimized for specific use cases (e.g., CI/CD pipelines)
-* **Version consistency:** Pin to specific template versions to ensure consistent project setup across your team
 
 #### For Template Authors:
-* **Easy distribution:** Publish templates to Git Repositories or NPM Packages without waiting for CDK team approval
-* **Community reach:** Share best practices with the broader CDK community
-* **Rapid iteration:** Test and update templates locally before publishing
+* **Community reach:** Share best practices with the broader CDK community through Git Repositories or NPM Packages
 
 #### Real-world use cases:
 * An enterprise creates templates with pre-configured compliance and security settings for its developers
@@ -380,11 +311,9 @@ No, dynamic templates are not directly processed by the CDK CLI. Template author
 Currently, `cdk init` only supports built-in CDK templates, limiting developers to basic project structures. Teams need expanded CLI support for custom templates that include their organization's best practices, pre-configured resources, and standardized project layouts.
 
 This feature offers several benefits:
-* **Improved CDK CLI experience for users**
+* **Improved CDK CLI initialization experience for users**
    * Enables custom project initialization from any source (Git, NPM, local) using a familiar command
-   * Provides version control flexibility — users can start from specific Git commits or NPM versions
-   * Simplifies discovery of AWS service team templates via the Public Template Registry
-* **Increase template variety with low additional maintenance for the CDK team**
+* **Improved discovery for AWS service team templates with low additional maintenance for the CDK team**
    * The CLI only needs to maintain the Public Template Registry, not the templates themselves
 * **Increased flexibility for enterprise users**
    * Organizations can host private or public templates and use them with the `cdk init` command as long as users have access
@@ -394,13 +323,29 @@ This feature offers several benefits:
 
 ### Why should we *not* do this?
 
-* **Existing alternatives already enable similar workflows**
-   * Users can manually consume templates by downloading template source and extracting files:
-     ```
-     git clone https://github.com/username/my-custom-templates
-     cp -r my-custom-templates/my-custom-template/typescript .
-     ```
-* **Quality and support for custom templates may be inconsistent**
+#### Existing alternatives already enable similar workflows
+
+Customers can already achieve a large portion of the functionality proposed here manually by using Linux commands to first clone the custom template repository and copy the relevant template files into their CDK project directory
+```bash
+git clone https://github.com/codepipeline/cdk-templates
+cp -r cdk-templates/LambdaInvoke/typescript .
+```
+Once the template files are in place, the process would then continue with initializing a new Git repository to track changes locally, adding all files to staging, making an initial commit, and installing the necessary dependencies so the project is ready for customization and deployment:
+```bash
+git init
+git add .
+git commit -m "Initial commit from CDK template"
+npm install
+```
+   * Pros:
+     * Zero cost to the CDK team while preserving low user burden.
+   * Cons:
+     * User manually runs six commands instead of one `cdk init` command to achieve same result
+     * Outside of CDK CLI experience
+     * No telemetry on custom template usage
+     * Users need to manually discover AWS vetted templates
+
+#### Quality and support for custom templates may be inconsistent
    * Since templates are authored and maintained outside of the CDK team, they may lack proper documentation, testing, or maintenance
    * The CLI can validate only basic file structure, not functional correctness of a CDK project
  
@@ -430,9 +375,7 @@ Extend the `cdk init` command to support custom templates from various source op
 #### Public Template Discovery
 
 * Implement statically updated registry of curated public template repositories and NPM packages
-* Extend `cdk init --list` to display public registry templates in a formatted table with publishing organization/user, repository/package name, source type, and repository/package description
-* Implement ability to sort registry view by source type
-* Implement ability to query registry for template sources an organization/user maintains, templates a source contains, and languages a template is supported in
+* Extend `cdk init --list` to display public registry templates in a formatted table with author, repository/package name, template path, type, brief template description, and command usage information.
 
 #### Static Management Process for Public Template Registry
 
@@ -463,77 +406,52 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 ### What alternative solutions did you consider?
 
-#### Do Nothing
-   *  Clone Custom Template Repository and Copy Template Files to CDK Project Directory
-      ```bash
-      git clone https://github.com/codepipeline/cdk-templates
-      cp -r cdk-templates/LambdaInvoke/typescript .
-      ```
-      * Pros:
-         * Zero cost to the CDK team while preserving low user burden.
-      * Cons:
-         * Does not give full project initialization experience of a new Git repository being initialized with an initial commit and dependencies being installed as needed
-         * Outside of CDK CLI experience
-         * No telemetry on custom template usage
-         * Users need to manually discover AWS vetted templates
 #### Dynamic Template Substitution
 The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality.
 **Current Placeholder Approach For Built-In Templates:**
 The current placeholder approach for built-in templates is a format for authors to use dynamic information inside templates. Authors write files using placeholders like %name.PascalCased%, which are replaced automatically during `cdk init` based on project context.
-      * Pros:
-         * Proven in production for built-in templates with minimal maintenance
-         * Provides users with simple substitution functionality that requires no setup or tooling
-         * Entire substitution logic handled within CDK and is not reliant on any external dependencies for this process
-      * Cons:
-         * Very limited template generation capabilities - limited to filename and file content replacement
-         * Does not provide interactive prompts or advanced templating logic like Yeoman, Projen, or Cookiecutter
+   * Pros:
+     * Proven in production for built-in templates with minimal maintenance
+     * Requires no setup or tooling for users
+     * Entire substitution logic handled within CDK and is not reliant on any external dependencies for this process
+   * Cons:
+     * Very limited template generation capabilities - limited to initialization directory and library version
+     * Does not provide interactive prompts or advanced templating logic like Yeoman, Projen, or Cookiecutter
+     * Exposing this engine could lead the CDK team to develop a full blown custom templating language, which is not their forte and what they should spend their time on
 **`npm-init`**
 `npm init` is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named `create-<name>`, which users can invoke using `npm init <name>` to generate projects based on custom logic.
-      * Pros:
-         * Streamlines creating `package.json`, making it quicker to publish templates as NPM packages
-         * Most CDK users are familiar with running NPM commands and its ecosystem 
-      * Cons:            
-         * No multi-language support (important since CDK is supported in 7 languages)
-         * Only generates package.json, doesn’t solve the actual template generation or substitution
+   * Pros:
+     * Streamlines creating `package.json`, making it quicker to publish templates as NPM packages
+     * Most CDK users are familiar with running NPM commands and its ecosystem 
+   * Cons:            
+     * No multi-language support (important since CDK is supported in 7 languages)
+     * Only generates package.json, doesn’t solve the actual template generation or substitution
 **Yeoman Generator**
 Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures based on templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation. Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and dynamically control which files are generated and how they’re customized.
-      * Pros:      
-         * Enables advanced scaffolding logic (conditional file inclusion, dynamic file naming, and complex transformations) based on user input from interactive prompts to produce many variations of a template
-         * Supports post-processing automation
-            * After scaffolding, Yeoman can automatically run `npm install`, initialize Git, and add license headers
-      * Cons:
-         * CDK users would need to install and learn Yeoman
-         * Template authors must write JS-based generators instead of simple file templates
-         * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
-         * `cdk init` logic needs to be updated to recognize and delegate to Yeoman generators
+   * Pros:      
+     * Enables advanced scaffolding logic (conditional file inclusion, dynamic file naming, and complex transformations) based on user input from interactive prompts to produce many variations of a template
+     * Supports post-processing automation — after scaffolding, Yeoman generators can be written to automatically run language-appropriate dependency installation commands (e.g., `npm install` for JavaScript/TypeScript, `pip install` for Python, `mvn package` for Java, `dotnet restore` for C# and F#), initialize Git, and add license headers
+   * Cons:
+     * Template authors must write JS-based generators instead of simple file templates
+     * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
 **Projen**
 Projen is a project scaffolding and management tool that defines and maintains project configuration using code instead of static files. Users create a project by running `npx projen new <project-type>`, which sets up a .projenrc.js (or .ts) file. From then on, running projen regenerates all config files based on this definition. Template authors create reusable Projen project types by writing JS/TS classes that encapsulate desired configurations and options.
-      * Pros: 
-         * Controlled and maintained by AWS so it is easier to add requested features.
-         * Automates common setup tasks (like linting, testing, and publishing configs) for template authors
-      * Cons: 
-         * Steep learning curve since template authors must understand how Projen works, including its configuration language 
-         * Generated files are overwritten on every synth and not meant to be edited, so template users need to know to only modify the config and not the generated file
+   * Pros: 
+     * Controlled and maintained by AWS so it is easier to add requested features.
+     * Automates common setup tasks (such as linting, testing, dependency management, and publishing configurations) by generating them from a single Projen configuration file
+   * Cons: 
+     * Steep learning curve, since template authors must understand Projen’s configuration model.
+     * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, but this also removes its automation benefits
 **CookieCutter**
 Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }}) to define variable parts of files and filenames. Users run cookiecutter <template-source> and are prompted to provide values for placeholders. It then generates a project by rendering files with those values.
-      * Pros:
-         * Works with any language or framework, making it well-suited for CDK's multi-language ecosystem
-         * Template authors use expressions for variable substitution, conditional logic, and looping in both file content and filenames
-         * Interactive automatically prompts users for input, enabling flexible template customization without extra scripting
-         * Industry tested by many open source projects
-         * Once the project is generated, no link to Cookiecutter remains (all files are static and editable)
-      * Cons: 
-         * Users must install Cookiecutter via pip, which may not be intuitive for CDK developers
-         * Unlike Yeoman or Projen, it doesn’t offer built-in lifecycle hooks to run commands like npm install or git init after generation
-   * Template authors develop and maintain their own placeholder and template configuration using advanced tools (Yeoman, Projen, Cookiecutter, etc.)
-      * Pros:
-         * Simpler experience for users because valid CLI arguments are more concrete
-         * Gives template authors the freedom to use whichever tool (ie. Projen, Yeoman, Cookiecutter, etc.) they want for template generation or placeholder substitution, and can then publish that generated static template to be accessed by users
-         * CDK team does not have facilitate dynamic template generation for authors through the `cdk init` command
-            * This eliminates the security risk of `cdk init` running an arbitrary template generation script (provided in a custom template) since there's no way to effectively validate the script for malicious code
-            * With the current proposal, `cdk init` just copies files, creates a new Git repository to track local changes, and installs project dependencies
-      * Cons:
-         * No default placeholder or template configuration for authors who want it but are not experienced with advanced tools
+   * Pros:
+     * Works with any language or framework, making it well-suited for CDK's multi-language ecosystem
+     * Template authors use expressions for variable substitution, conditional logic, and looping in both file content and filenames
+     * Interactive automatically prompts users for input, enabling flexible template customization without extra scripting
+     * Industry tested by many open source projects
+     * Once the project is generated, no link to Cookiecutter remains (all files are static and editable)
+   * Cons: 
+     * Unlike Yeoman or Projen, it doesn’t offer built-in lifecycle hooks to run commands like npm install or git init after generation
 
 
 
@@ -550,11 +468,10 @@ Cookiecutter is a CLI utility for creating projects from templates. It uses a fo
 
 * Phase 2: Static discovery for custom templates through the Public Template Registry
    
-   * Extend `cdk init --list` to display AWS service team templates in a formatted table (with publishing organization/author, repository/package name, source type, and repository/package description fields)
+   * Extend `cdk init --list` to display AWS service team templates in a formatted table (with author, repository/package name, template path, type, template description, and command usage fields)
       * Templates are maintained by internal AWS teams after being vetted by CDK team
       * Registry is maintained by CDK team
    * Work with internal AWS teams to create and add more templates to the CDK CLI registry
-   * Implement ability to sort registry view by source type
    * Implement ability to query registry for template sources an organization/author maintains, templates a source contains, and languages a template is supported in.
 
 * Phase 3: Documentation, testing, and marketing
