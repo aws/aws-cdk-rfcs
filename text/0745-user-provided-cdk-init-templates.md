@@ -475,8 +475,12 @@ A minimal example of a custom project type is shown in Appendix C.
      * Steep learning curve for template authors, who must understand Projen’s configuration model to create or modify templates.
      * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, preserving the generated files while removing Projen’s automation benefits.
 
-Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model and file regeneration behavior diverge from the direct-edit workflows many CDK users expect. Choosing the proposed solution avoids making Projen a required skill for all template authors and keeps it optional for users. For teams that want to use it, Projen can still be integrated into a CDK template by having the template run Projen during initialization or by including an ejected Projen-generated project. This enables optional adoption without locking CDK’s default workflow into Projen’s model.
+Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK users expect. The proposed solution keeps Projen optional:
+   * Templates can provide a post-initialization script (by the template author) that automatically runs `npx projen` after `cdk init`.
+   * Alternatively, a template can include an ejected Projen project for manual adoption without running Projen.
 
+This approach lets teams adopt Projen without locking CDK’s default workflow into its model.
+     
 **CookieCutter**
 
 Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }}) to define variable parts of files and filenames. Users run cookiecutter <template-source> and are prompted to provide values for placeholders. It then generates a project by rendering files with those values.
