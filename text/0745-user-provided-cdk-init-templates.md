@@ -314,7 +314,8 @@ This feature offers several benefits:
 * **Improved CDK CLI initialization experience for users**
    * Enables custom project initialization from any source (Git, NPM, local) using a familiar command
 * **Improved discovery for AWS service team templates with low additional maintenance for the CDK team**
-   * The CLI only needs to maintain the Public Template Registry, not the templates themselves
+   * Today: Developers must search GitHub, NPM, or internal docs to find example CDK project structures, without any guarantee of template quality or compatibility. AWS service team templates, if they exist, are typically hidden in separate repos, blog posts, or sample code folders and are not surfaced in the CLI.
+   * With this proposal: The CLI can surface a curated Public Template Registry with a list of known, validated templates. Users can browse available templates directly from the terminal, then initialize them immediately with a single command. This improves visibility of AWS-authored templates without the CDK team having to maintain their content, only the registry metadata.
 * **Increased flexibility for enterprise users**
    * Organizations can host private or public templates and use them with the `cdk init` command as long as users have access
 * **Easier template distribution for template authors**
