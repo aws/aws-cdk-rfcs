@@ -386,21 +386,28 @@ Extend the `cdk init` command to support custom templates from various source op
 When internal AWS teams want to add a template source to the public registry, they must provide the following metadata:
 ```
 {
-  sourceName: string;                  // Name of Git repository or NPM package
-  description: string;                 // Brief description of template repository or package functionality
-  sourceType: 'git' | 'npm';           // Source type (Github, Git, NPM)
-  source: string;                      // Github shorthand, Git URL, or NPM package name
-  templates: Record<string, string[]>; // Template path -> Supported CDK languages for template
-  author: string;                      // Organization, team, or user's name as it appears in Git repository or NPM package
+   author: string;                               // Organization, team, or user's name as it appears in Git repository or NPM package
+   source: string;                               // GitHub shorthand, Git URL, or NPM package name
+   sourceDescription: string;                    // Brief description of template repository or package functionality
+   sourceType: 'github' | 'git' | 'npm';         // Source type (GitHub, Git, NPM)
+   templates: Record<string, CustomTemplate>;    // Template path -> CustomTemplate details
+}   
+```
+Where template is a struct like the below example that can easily be extended:
+```
+interface CustomTemplate {
+  path: string;             // Relative path of the template in the repository/package
+  description: string;      // Short description of the template
+  languages: string[];      // Supported CDK languages
 }
 ```
 
 Template Submission Process:
 1. Internal AWS team creates and tests templates using `cdk init --from-git-url <repo>`, `cdk init --from-npm <package>`, or `cdk init --from-path <path>`
-2. Internal AWS team writes README file for custom template with usage instructions and examples
+2. Internal AWS team writes a README file for custom template with usage instructions and examples
 3. Team contacts CDK team with template source and required metadata
 4. CDK Team reviews custom templates in repository or package to ensure community benefit, conformity to custom template schema, clear README file, and that it is well tested
-5. If approved, CDK team adds entry to PUBLIC_TEMPLATE_REGISTRY in template-registry.ts. If not approved, CDK team will deliver feedback for revision to internal AWS team
+5. If approved, CDK team adds entry to PUBLIC_TEMPLATE_REGISTRY in template-registry.ts. If not approved, the CDK team provides feedback for revision to internal AWS team
 
 
 ### Is this a breaking change?
@@ -425,6 +432,8 @@ The current placeholder approach for built-in templates is a format for authors 
      * Does not provide interactive prompts or advanced templating logic like Yeoman, Projen, or Cookiecutter
      * Exposing this engine could lead the CDK team to develop a full blown custom templating language, which is not their forte and what they should spend their time on
 
+This approach is proven and low-maintenance, but it can’t express richer scaffolding (conditional files, prompts, multi-language branches) without expanding CDK’s placeholder engine into a full templating system. The proposed solution keeps the CLI simple while enabling that flexibility via static templates from any source, letting authors use any dynamic tool they prefer without locking CDK into a bespoke templating language.
+
 **The `npm-init` Command**
 
 `npm init` is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json. For template authors, it allows publishing an npm package named `create-<name>`, which users can invoke using `npm init <name>` to generate projects based on custom logic.
@@ -434,6 +443,8 @@ The current placeholder approach for built-in templates is a format for authors 
    * Cons:            
      * No multi-language support (important since CDK is supported in 7 languages)
      * Only generates package.json, doesn’t solve the actual template generation or substitution
+
+`npm init` is Node-centric and primarily scaffolds `package.json`, so it doesn’t meet CDK’s multi-language requirements or broader project-structure needs. The proposed solution is language-agnostic and source-agnostic (Git/NPM/local), delivering a consistent `cdk init` UX across all supported languages while still letting authors choose their own tooling.
 
 **Yeoman Generator**
 
@@ -448,15 +459,26 @@ Template authors typically publish generators as public NPM packages (e.g., `gen
      * Template authors must write JS-based generators (see a minimal example in Appendix B) instead of simple static file templates.
      * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
 
+While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution retains those benefits for authors who choose Yeoman while allowing others to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
+
 **Projen**
 
-Projen is a project scaffolding and management tool that defines and maintains project configuration using code instead of static files. Users create a project by running `npx projen new <project-type>`, which sets up a .projenrc.js (or .ts) file. From then on, running projen regenerates all config files based on this definition. Template authors create reusable Projen project types by writing JS/TS classes that encapsulate desired configurations and options.
+Projen is a project configuration tool that defines all project settings, dependencies, and configuration files in a single TypeScript (or JavaScript) definition file (.projenrc.ts). Instead of manually editing generated files, users modify the Projen configuration, and Projen re-synthesizes the project structure.
+
+Project types in Projen are implemented as subclasses of Project (or a language-specific base project) and can be published as NPM packages so others can install them and initialize new projects. The cdk init command could integrate with Projen by invoking npx projen new <project-type>, optionally passing parameters to skip prompts or apply CDK defaults.
+
+Projen supports multi-language projects through specialized project types for Java, Python, C#, Go, and others, each with tailored file structures, dependency management, and post-processing automation. Authors can also define hybrid project types that generate multiple language components in a single repo.
+
+A minimal example of a custom project type is shown in Appendix C.
+
    * Pros: 
      * Controlled and maintained by AWS so it is easier to add requested features.
      * Automates common setup tasks (such as linting, testing, dependency management, and publishing configurations) by generating them from a single Projen configuration file
    * Cons: 
      * Steep learning curve, since template authors must understand Projen’s configuration model.
      * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, but this also removes its automation benefits
+
+Projen’s automation and multi-language support are compelling, but its .projenrc-driven model and file regeneration behavior diverge from the direct-edit workflows many CDK users expect. Choosing the proposed solution avoids requiring template authors and users to adopt Projen’s learning curve, while still allowing Projen to be embedded in custom templates when desired.
 
 **CookieCutter**
 
@@ -470,7 +492,7 @@ Cookiecutter is a CLI utility for creating projects from templates. It uses a fo
    * Cons: 
      * Unlike Yeoman or Projen, it doesn’t offer built-in lifecycle hooks to run commands like npm install or git init after generation
 
-
+Cookiecutter offers powerful, cross-language templating, but adopting it as the core path would introduce an external runtime and uneven lifecycle hooks, fragmenting the CLI experience. The proposed solution keeps ownership and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static templates and publish them for use with the same flow.
 
 ### What is the high-level project plan?
 
@@ -526,7 +548,7 @@ $ yo mytemplate
    run     git commit -m "Initial commit from template"
 ```
 
-### Appendix B – Minimal Example of a Generator
+### Appendix B – Minimal Example of a Yeoman Generator
 ```bash
 // generators/app/index.js
 const Generator = require('yeoman-generator');
@@ -555,4 +577,47 @@ module.exports = class extends Generator {
     }
   }
 };
+```
+
+### Appendix C — Example Projen Project Type
+
+1. Minimal project type definition (authored & published by a template author)
+```bash
+// src/MyCdkProject.ts
+import { awscdk } from 'projen';
+
+export interface MyCdkProjectOptions extends awscdk.AwsCdkTypeScriptAppOptions {
+  // Add any custom options here
+}
+
+export class MyCdkProject extends awscdk.AwsCdkTypeScriptApp {
+  constructor(options: MyCdkProjectOptions) {
+    super({
+      cdkVersion: '2.120.0',
+      defaultReleaseBranch: 'main',
+      name: 'my-cdk-app',
+      ...options,
+    });
+
+    // Example: add a default dependency
+    this.addDeps('lodash');
+
+    // Example: add a custom script
+    this.addTask('deploy', {
+      exec: 'cdk deploy',
+    });
+  }
+}
+```
+2. How an author publishes it
+```bash
+npm init -y
+npm install projen
+# After writing src/MyCdkProject.ts and building
+npx tsc
+npm publish
+```
+3. How a user would consume it through `cdk init` command
+```bash
+cdk init my-projen-package.MyCdkProject
 ```
