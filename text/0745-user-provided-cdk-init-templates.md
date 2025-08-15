@@ -182,11 +182,6 @@ Use a specific CDK library version (built-in templates only) by specifying the `
 $ cdk init app --language=typescript --lib-version 2.100.0
 ```
 
-Set a custom stack name for your project (for built-in templates only) using `--stack-name`:
-```
-$ cdk init app --language=typescript --stack-name MyCustomStack
-```
-
 
 #### **CLI Public Template Registry**
 
