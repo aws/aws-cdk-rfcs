@@ -456,7 +456,7 @@ Template authors typically publish generators as public NPM packages (e.g., `gen
      * Template authors must write JS-based generators (see a minimal example in Appendix B) instead of simple static file templates.
      * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
 
-While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution retains those benefits for authors who choose Yeoman while allowing others to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
+While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution retains those benefits for authors who choose Yeoman while allowing other authors to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
 
 **Projen**
 
@@ -475,7 +475,7 @@ A minimal example of a custom project type is shown in Appendix C.
      * Steep learning curve for template authors, who must understand Projen’s configuration model to create or modify templates.
      * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, preserving the generated files while removing Projen’s automation benefits.
 
-Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK users expect. The proposed solution retains those benefits for authors who choose Projen while allowing others to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
+Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK users expect. The proposed solution retains those benefits for authors who choose Projen while allowing other authors to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
      
 **CookieCutter**
 
