@@ -387,15 +387,15 @@ When internal AWS teams want to add a template source to the public registry, th
    source: string;                               // GitHub shorthand, Git URL, or NPM package name
    sourceDescription: string;                    // Brief description of template repository or package functionality
    sourceType: 'github' | 'git' | 'npm';         // Source type (GitHub, Git, NPM)
-   templates: Record<string, CustomTemplate>;    // Template path -> CustomTemplate details
+   templates: CustomTemplate[];                  // List of templates provided by this source
 }   
 ```
 Where template is a struct like the below example that can easily be extended:
 ```
 interface CustomTemplate {
-  path: string;             // Relative path of the template in the repository/package
-  description: string;      // Short description of the template
-  languages: string[];      // Supported CDK languages
+  path: string;                                  // Relative path of the template in the repository/package
+  description: string;                           // Short description of the template
+  languages: string[];                           // Supported CDK languages
 }
 ```
 
