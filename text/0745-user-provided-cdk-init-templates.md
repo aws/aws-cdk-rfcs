@@ -137,7 +137,7 @@ $ cdk init --from-git-url [URL] --language=[csharp|fsharp|go|java|javascript|pyt
 $ cdk init --from-git-url [URL] --template-path ./template-name
 ```
 
-Select a template from a specific Git branch/tag/commit by specifying the `--template-ref`:
+Select a template from a specific Git branch/tag/commit by specifying the `--ref`:
 ```
 $ cdk init --from-git-url [URL] --template-ref [tag/commit/branch] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
