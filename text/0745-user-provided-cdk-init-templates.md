@@ -358,7 +358,7 @@ Extend the `cdk init` command to support custom templates from various source op
 
 #### Support for Various Template Source Options (local/Git repo/NPM package)
 
-* Use CLI flags `--from-local`, `--from-git-url`, `--from-github`, or `--from-npm` to specify custom template sources
+* Use CLI flags `--from-path`, `--from-git-url`, `--from-github`, or `--from-npm` to specify custom template sources
 * Implement template loaders for each source type that download/copy templates and normalize them into a common format
 * Support `--template-path` for specifying nested subdirectories within Git repositories or NPM packages
 * Support `--template-ref` for Git branches/tags/commits and `--template-version` for NPM package versions
