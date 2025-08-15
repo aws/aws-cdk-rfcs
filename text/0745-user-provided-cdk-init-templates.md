@@ -164,7 +164,7 @@ $ cdk init --from-npm [package-name] --template-path ./template-name
 
 Select a template from a specific NPM package version by specifying the `--template-version`:
 ```
-$ cdk init --from-npm [package-name] --template-version [version] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-npm [package-name] --version [version] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 **Note**: Both public and private NPM registries are supported. Private NPM registries are supported through your existing NPM configuration (.npmrc file, environment variables, or npm config settings) without requiring additional setup.
