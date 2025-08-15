@@ -287,6 +287,7 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 
 #### For CDK Developers:
 * **Enterprise standardization:** Initialize projects with your organization's security policies, naming conventions, and architectural patterns pre-configured
+* **Reduced project setup time:** Start coding immediately with a automatically installed project dependencies and an initialized Git repository to track local changes
 * **Service-specific templates:** Use AWS service team templates optimized for specific use cases (e.g., CI/CD pipelines)
 
 #### For Template Authors:
