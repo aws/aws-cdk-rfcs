@@ -346,7 +346,7 @@ npm install
      * Users need to manually discover AWS vetted templates
 
 #### Quality and support for custom templates may be inconsistent
-   * Since templates are authored and maintained outside of the CDK team, they may lack proper documentation, testing, or maintenance
+   * Since templates are authored and maintained outside of the CDK team, quality can vary depending on the author.
    * The CLI can validate only basic file structure, not functional correctness of a CDK project
  
 
