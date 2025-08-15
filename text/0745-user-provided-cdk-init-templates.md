@@ -475,11 +475,7 @@ A minimal example of a custom project type is shown in Appendix C.
      * Steep learning curve for template authors, who must understand Projen’s configuration model to create or modify templates.
      * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, preserving the generated files while removing Projen’s automation benefits.
 
-Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK users expect. The proposed solution keeps Projen optional:
-   * Templates can provide a post-initialization script (by the template author) that automatically runs `npx projen` after `cdk init`.
-   * Alternatively, a template can include an ejected Projen project for manual adoption without running Projen.
-
-This approach lets teams adopt Projen without locking CDK’s default workflow into its model.
+Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK users expect. The proposed solution retains those benefits for authors who choose Projen while allowing others to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
      
 **CookieCutter**
 
