@@ -139,7 +139,7 @@ $ cdk init --from-git-url [URL] --template-path ./template-name
 
 Select a template from a specific Git branch/tag/commit by specifying the `--ref`:
 ```
-$ cdk init --from-git-url [URL] --template-ref [tag/commit/branch] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
+$ cdk init --from-git-url [URL] --ref [tag/commit/branch] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 **Note**: Both public and private Git repositories are supported. Private repositories work through your existing Git authentication (SSH keys, personal access tokens, or credential helpers) without requiring additional setup.
