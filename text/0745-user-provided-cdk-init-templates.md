@@ -162,7 +162,7 @@ $ cdk init --from-npm [package-name] --language=[csharp|fsharp|go|java|javascrip
 $ cdk init --from-npm [package-name] --template-path ./template-name
 ```
 
-Select a template from a specific NPM package version by specifying the `--template-version`:
+Select a template from a specific NPM package version by specifying the `--version`:
 ```
 $ cdk init --from-npm [package-name] --version [version] --template-path [./template-name] --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
