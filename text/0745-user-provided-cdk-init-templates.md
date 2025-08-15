@@ -487,9 +487,11 @@ Cookiecutter is a CLI utility for creating projects from templates. It uses a fo
      * Industry tested by many open source projects
      * Once the project is generated, no link to Cookiecutter remains (all files are static and editable)
    * Cons: 
-     * Unlike Yeoman or Projen, it doesn’t offer built-in lifecycle hooks to run commands like npm install or git init after generation
+     * It is a python package so users must install Cookiecutter via pip, which may not be intuitive for CDK developers
 
-Cookiecutter offers powerful, cross-language templating, but adopting it as the core path would introduce an external runtime and uneven lifecycle hooks, fragmenting the CLI experience. The proposed solution keeps ownership and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static templates and publish them for use with the same flow.
+While Cookiecutter offers powerful templating features and language independence, its requirement to be installed as a Python package is a significant drawback that, for some, could be a deal-breaker. The proposed solution avoids introducing this dependency and keeps ownership and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static templates and publish them for use with the same flow.
+
+
 
 ### What is the high-level project plan?
 
