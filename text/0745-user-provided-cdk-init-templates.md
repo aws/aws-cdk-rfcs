@@ -472,10 +472,10 @@ A minimal example of a custom project type is shown in Appendix C.
      * Controlled and maintained by AWS so it is easier to add requested features.
      * Automates common setup tasks (such as linting, testing, dependency management, and publishing configurations) by generating them from a single Projen configuration file
    * Cons: 
-     * Steep learning curve, since template authors must understand Projen’s configuration model.
-     * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, but this also removes its automation benefits
+     * Steep learning curve for template authors, who must understand Projen’s configuration model to create or modify templates.
+     * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject` option exists to remove the Projen dependency after initialization, preserving the generated files while removing Projen’s automation benefits.
 
-Projen’s automation and multi-language support are compelling, but its .projenrc-driven model and file regeneration behavior diverge from the direct-edit workflows many CDK users expect. Choosing the proposed solution avoids requiring template authors and users to adopt Projen’s learning curve, while still allowing Projen to be embedded in custom templates when desired.
+Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model and file regeneration behavior diverge from the direct-edit workflows many CDK users expect. Choosing the proposed solution avoids making Projen a required skill for all template authors and keeps it optional for users. For teams that want to use it, Projen can still be integrated into a CDK template by having the template run Projen during initialization or by including an ejected Projen-generated project. This enables optional adoption without locking CDK’s default workflow into Projen’s model.
 
 **CookieCutter**
 
