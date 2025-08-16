@@ -415,7 +415,7 @@ No, the new feature does not affect existing functionality for creating CDK proj
 ### What alternative solutions did you consider?
 
 #### Dynamic Template Substitution
-The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality.
+The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality. However, after doing customer research, the CDK team decided on the RFC's proposed solution of the `cdk init` command only handling static templates. If in the future, a customer need is identified for the `cdk init` command to handle dynamic templating directly, this can be addressed as a potential enhancement.
 
 **Current Placeholder Approach For Built-In Templates**
 
