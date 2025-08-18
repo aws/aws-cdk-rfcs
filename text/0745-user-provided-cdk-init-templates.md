@@ -296,6 +296,7 @@ my-custom-app-template/
 └── [language-name]/             # REQUIRED: CDK language subdirectory 
     └── [file-name].[ext]        # REQUIRED: At least one file matching
                                  # the language type in language subdirectory
+
 ```
 
 ##### Language-Specific Substitutions:
