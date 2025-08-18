@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # RFC: User-Provided `cdk init` Templates
 
 Original Author(s):: @rohang9000
@@ -260,6 +259,7 @@ Public Template Registry:
    └─ cdk init --from-<sourceType> [sourceLocation] \
       --template-path [PATH] --language=[supportedLanguage]
 
+<!-- markdownlint-disable -->
 ┌──────────────┬──────────────────────────┬───────────────────┬────────┬───────────────────┬─────────────────────────────────────────────────────────────────┐
 │ Author       | Repository/Package       │ Template Path     │ Type   │ Description       | Initialization Command                                          │
 ├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
@@ -280,8 +280,7 @@ Public Template Registry:
 │              |                          │                   │        │                   | --language=[python][typescript]                                 │
 └──────────────┴──────────────────────────┴───────────────────┴────────┴───────────────────┴─────────────────────────────────────────────────────────────────┘
 ```
-
-
+<!-- markdownlint-enable -->
 
 ### Authoring Custom CDK Templates
 
@@ -738,4 +737,3 @@ npm publish
 ```bash
 cdk init my-projen-package.MyCdkProject
 ```
-<!-- markdownlint-enable -->
