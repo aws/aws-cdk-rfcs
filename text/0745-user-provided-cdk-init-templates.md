@@ -79,7 +79,8 @@ directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
 
-Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates.
+Let’s walk through an example of initializing a project using a GitHub 
+repository named `my-cdk-templates`, which contains multiple custom templates.
 Here's what the repository structure might look like:
 
 ```text
@@ -238,6 +239,8 @@ pre-configured infrastructure patterns for specific use cases. To see all
 available templates to initialize a CDK project with, including those in the
 public registry, run `cdk init --list`:
 
+<!-- markdownlint-disable MD013 -->
+
 ```text
 Built-in templates:
 * app: CDK Application Template
@@ -274,6 +277,8 @@ Public Template Registry:
 │              |                          │                   │        │                   | --language=[python][typescript]                                 │
 └──────────────┴──────────────────────────┴───────────────────┴────────┴───────────────────┴─────────────────────────────────────────────────────────────────┘
 ```
+
+<!-- markdownlint-enable MD013 -->
 
 ### Authoring Custom CDK Templates
 
