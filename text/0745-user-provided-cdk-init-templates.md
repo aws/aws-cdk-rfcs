@@ -392,6 +392,7 @@ not enforce a successful `cdk synth` in order to initialize a new CDK project.
 ### Can I publish dynamic custom templates to a Git repository or NPM package to
 be used by `cdk init`?
 
+
 No, dynamic templates are not directly processed by the CDK CLI. Template
 authors who want to have template variations can use template generation tools
 (ie. Projen, Yeoman, Cookiecutter, etc.) to develop static templates which can
