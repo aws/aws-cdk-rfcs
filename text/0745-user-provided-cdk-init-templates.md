@@ -18,7 +18,7 @@ role of template authors.
 
 ### CHANGELOG
 
-```
+```text
 feat(cli): user-provided cdk init templates
 ```
 
@@ -43,7 +43,7 @@ provides three built-in templates to help you get started quickly:
 
 ##### For a basic application
 
-```
+```bash
 $ cdk init app --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
@@ -51,7 +51,7 @@ This creates a basic deployable CDK application with an empty stack.
 
 ##### For building reusable constructs
 
-```
+```bash
 $ cdk init lib --language=typescript
 ```
 
@@ -59,7 +59,7 @@ This creates a construct library template for building reusable constructs.
 
 ##### For exploring CDK with examples
 
-```
+```bash
 $ cdk init sample-app --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
@@ -80,7 +80,7 @@ directory, with language-specific subdirectories inside.
 
 Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates. Here's what the repository structure might look like:
 
-```
+```text
 my-cdk-templates/                  # Repository root
 ├── my-custom-template/            # First template (the one we'll use)
 │   └── typescript/                # Language subdirectory
@@ -98,10 +98,9 @@ my-cdk-templates/                  # Repository root
 ├── web-app-template/              # Second template
 │   ├── typescript/
 │   └── python/
-├── api-template/                  # Third template  
-│   ├── typescript/
-│   └── java/
-└── 
+└── api-template/                  # Third template
+    ├── typescript/
+    └── java/
 ```
 
 Start by creating your new project directory and navigating to it:
@@ -126,16 +125,16 @@ Here's what happened when `cdk init` was run:
 
 Your new project's root now looks like:
 
-```
+```text
 custom-template-project/           # Project directory name
-├── package.json                   # Copied folders and files from template 
-├── cdk.json                       
+├── package.json                   # Copied folders and files from template
+├── cdk.json
 ├── bin/
-│   └── app.ts                     
+│   └── app.ts
 ├── lib/
-│   └── stack.ts                   
+│   └── stack.ts
 ├── test/
-│   └── stack.test.ts              
+│   └── stack.test.ts
 ├── tsconfig.json
 ├── .gitignore
 └── README.md
@@ -148,7 +147,7 @@ Bitbucket, etc.) type with the options below.
 
 Select a specific template from a multi-template Git repository:
 
-```
+```bash
 $ cdk init --from-git-url [URL] --template-path ./template-name \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -156,20 +155,20 @@ $ cdk init --from-git-url [URL] --template-path ./template-name \
 **TIP** - If the Git repository contains only one template and has language
 directories at the repository root, you don't need to specify `--template-path`:
 
-```
+```bash
 $ cdk init --from-git-url [URL] \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 **TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 
-```
+```bash
 $ cdk init --from-git-url [URL] --template-path ./template-name
 ```
 
 Select a template from a specific Git branch/tag/commit by specifying the `--ref`:
 
-```
+```bash
 $ cdk init --from-git-url [URL] --ref [tag/commit/branch] \
   --template-path [./template-name] \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
@@ -185,7 +184,7 @@ any registry that hits NPM endpoint) with the options below.
 
 Select a specific template from an NPM package with multiple templates:
 
-```
+```bash
 $ cdk init --from-npm [package-name] --template-path ./template-name \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -193,14 +192,14 @@ $ cdk init --from-npm [package-name] --template-path ./template-name \
 **TIP** - If the NPM package contains only one template and has language
 directories at the package root, you don't need to specify `--template-path`:
 
-```
+```bash
 $ cdk init --from-npm [package-name] \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 **TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 
-```
+```bash
 $ cdk init --from-npm [package-name] --template-path ./template-name
 ```
 
@@ -231,7 +230,7 @@ $ cdk init --from-git-url https://github.com/user/my-template.git \
 Use a specific CDK library version (built-in templates only) by specifying the
 `--lib-version`:
 
-```
+```bash
 $ cdk init app --language=typescript --lib-version 2.100.0
 ```
 
@@ -243,7 +242,7 @@ pre-configured infrastructure patterns for specific use cases. To see all
 available templates to initialize a CDK project with, including those in the
 public registry, run `cdk init --list`:
 
-```
+```text
 Built-in templates:
 * app: CDK Application Template
    └─ cdk init app \
@@ -289,12 +288,11 @@ reference custom app template implementations in all CDK Languages
 
 #### Custom Template Schema
 
-```
+```text
 my-custom-app-template/
-└── [language-name]/             # REQUIRED: CDK language subdirectory 
+└── [language-name]/             # REQUIRED: CDK language subdirectory
     └── [file-name].[ext]        # REQUIRED: At least one file matching
                                  # the language type in language subdirectory
-
 ```
 
 ##### Language-Specific Substitutions:
@@ -312,20 +310,20 @@ template stored on your local filesystem.
 
 To do this, pass in the directory path for your template and run:
 
-```
+```bash
 $ cdk init --from-path ./my-cdk-template \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
 
 **TIP** - If the template contains only one language directory, you don't need to specify `--language`:
 
-```
+```bash
 $ cdk init --from-path ./my-cdk-template
 ```
 
 If you've created a multi-template repository setup locally, you can also fully test it by specifying templates to initialize from using `--template-path`:
 
-```
+```bash
 $ cdk init --from-path ./cdk-templates --template-path ./template-name \
   --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
@@ -338,7 +336,7 @@ Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied
 to the RFC pull request):
 
-```
+```text
 [ ] Signed-off by API Bar Raiser @xxxxx
 ```
 
@@ -474,7 +472,7 @@ Extend the `cdk init` command to support custom templates from various source op
 #### Static Management Process for Public Template Registry
 
 When internal AWS teams want to add a template source to the public registry, they must provide the following metadata:
-```
+```typescript
 {
    author: string;                               // Organization, team, or user's name as it appears in Git repository or NPM package
    source: string;                               // GitHub shorthand, Git URL, or NPM package name
@@ -484,7 +482,7 @@ When internal AWS teams want to add a template source to the public registry, th
 }   
 ```
 Where template is a struct like the below example that can easily be extended:
-```
+```typescript
 interface CustomTemplate {
   path: string;                                  // Relative path of the template in the repository/package
   description: string;                           // Short description of the template
