@@ -79,7 +79,7 @@ directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
 
-Let’s walk through an example of initializing a project using a GitHub 
+Let’s walk through an example of initializing a project using a GitHub
 repository named `my-cdk-templates`, which contains multiple custom templates.
 Here's what the repository structure might look like:
 
