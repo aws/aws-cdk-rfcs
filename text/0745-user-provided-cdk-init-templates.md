@@ -508,7 +508,8 @@ No, the new feature does not affect existing functionality for creating CDK proj
 ### What alternative solutions did you consider?
 
 #### Dynamic Template Substitution
-The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality. However, after doing customer research, the CDK team decided on the RFC's proposed solution of the `cdk init` command only handling static templates. If in the future, a customer need is identified for the `cdk init` command to handle dynamic templating directly, this can be addressed as a potential enhancement.
+The selected approach does not provide a way for template authors to use dynamic information that is known only at initialization time. The following approaches were considered as a way to provide this functionality. However, after doing customer research, the CDK team decided on the RFC's proposed solution of the `cdk init` command only handling static templates. If in the
+future, a customer need is identified for the `cdk init` command to handle dynamic templating directly, this can be addressed as a potential enhancement.
 
 ##### Current Placeholder Approach For Built-In Templates
 
@@ -522,7 +523,8 @@ The current placeholder approach for built-in templates is a format for authors 
      * Does not provide interactive prompts or advanced templating logic like Yeoman, Projen, or Cookiecutter
      * Exposing this engine could lead the CDK team to develop a full blown custom templating language, which is not their forte and what they should spend their time on
 
-This approach is proven and low-maintenance, but it can’t express richer scaffolding (conditional files, prompts, multi-language branches) without expanding CDK’s placeholder engine into a full templating system. The proposed solution keeps the CLI simple while enabling that flexibility via static templates from any source, letting authors use any dynamic tool they prefer without locking CDK into a bespoke templating language.
+This approach is proven and low-maintenance, but it can’t express richer scaffolding (conditional files, prompts, multi-language branches) without expanding CDK’s placeholder engine into a full templating system. The proposed solution keeps the CLI simple while enabling that flexibility via static templates from any source, letting authors use any dynamic tool they prefer
+without locking CDK into a bespoke templating language.
 
 ##### The `npm-init` Command
 
@@ -538,9 +540,11 @@ This approach is proven and low-maintenance, but it can’t express richer scaff
 
 ##### Yeoman Generator
 
-Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures from templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation (see Appendix A for a sample dialog). Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and dynamically control which files are generated and how they’re customized (See Appendix B for a minimal example generator).
+Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures from templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation (see Appendix A for a sample dialog). Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and
+dynamically control which files are generated and how they’re customized (See Appendix B for a minimal example generator).
 
-Template authors typically publish generators as public NPM packages (e.g., `generator-mytemplate`) so they can be installed via `npm install -g generator-mytemplate` or invoked directly with `yo mytemplate`. The `cdk init` command could detect or be configured to invoke a Yeoman generator by name, passing along parameters to skip prompts or prefill defaults. A single generator can implement branching logic to scaffold different languages within the same codebase, using conditional file sets (`templates/python/**`, `templates/java/**`, etc.) and running the corresponding post-install commands for each language.
+Template authors typically publish generators as public NPM packages (e.g., `generator-mytemplate`) so they can be installed via `npm install -g generator-mytemplate` or invoked directly with `yo mytemplate`. The `cdk init` command could detect or be configured to invoke a Yeoman generator by name, passing along parameters to skip prompts or prefill defaults. A single
+generator can implement branching logic to scaffold different languages within the same codebase, using conditional file sets (`templates/python/**`, `templates/java/**`, etc.) and running the corresponding post-install commands for each language.
 
    * Pros:      
      * Enables advanced scaffolding logic (conditional file inclusion, dynamic file naming, and complex transformations) based on user input from interactive prompts to produce many variations of a template
@@ -549,7 +553,8 @@ Template authors typically publish generators as public NPM packages (e.g., `gen
      * Template authors must write JS-based generators (see a minimal example in Appendix B) instead of simple static file templates.
      * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features to template authors is limited
 
-While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution retains those benefits for authors who choose Yeoman while allowing other authors to use any dynamic or manual approach, keeping CDK independent of a single tooling dependency.
+While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution retains those benefits for authors who choose Yeoman while allowing other authors to use any dynamic or
+manual approach, keeping CDK independent of a single tooling dependency.
 
 ##### Projen
 
@@ -582,7 +587,8 @@ Cookiecutter is a CLI utility for creating projects from templates. It uses a fo
    * Cons: 
      * It is a python package so users must install Cookiecutter via pip, which may not be intuitive for CDK developers
 
-While Cookiecutter offers powerful templating features and language independence, its requirement to be installed as a Python package is a significant drawback that, for some, could be a deal-breaker. The proposed solution avoids introducing this dependency and keeps ownership and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static templates and publish them for use with the same flow.
+While Cookiecutter offers powerful templating features and language independence, its requirement to be installed as a Python package is a significant drawback that, for some, could be a deal-breaker. The proposed solution avoids introducing this dependency and keeps ownership and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static
+templates and publish them for use with the same flow.
 
 ### What is the high-level project plan?
 
