@@ -79,7 +79,7 @@ directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
 
-Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates. 
+Let’s walk through an example of initializing a project using a GitHub repository named `my-cdk-templates`, which contains multiple custom templates.
 Here's what the repository structure might look like:
 
 ```text
@@ -314,7 +314,7 @@ cdk init --from-path ./my-cdk-template --language=[csharp|fsharp|go|java|javascr
 cdk init --from-path ./my-cdk-template
 ```
 
-If you've created a multi-template repository setup locally, you can also fully test it by 
+If you've created a multi-template repository setup locally, you can also fully test it by
 specifying templates to initialize from using `--template-path`:
 
 ```bash
@@ -370,8 +370,8 @@ maintained by AWS service teams.
 
 ### Are custom templates required to be “synth-able”?
 
-No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which 
-create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are 
+No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which
+create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are
 still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and
 does not enforce a successful `cdk synth` in order to initialize a new CDK project.
 
@@ -410,7 +410,7 @@ This feature offers several benefits:
 
 #### Existing alternatives already enable similar workflows
 
-Customers can already achieve a large portion of the functionality proposed here manually by using Linux commands to 
+Customers can already achieve a large portion of the functionality proposed here manually by using Linux commands to
 first clone the custom template repository and copy the relevant template files into their CDK project directory
 
 ```bash
@@ -418,8 +418,8 @@ git clone https://github.com/codepipeline/cdk-templates
 cp -r cdk-templates/LambdaInvoke/typescript .
 ```
 
-Once the template files are in place, the process would then continue with initializing a new Git repository 
-to track changes locally, adding all files to staging, making an initial commit, and installing the necessary 
+Once the template files are in place, the process would then continue with initializing a new Git repository
+to track changes locally, adding all files to staging, making an initial commit, and installing the necessary
 dependencies so the project is ready for customization and deployment:
 
 ```bash
@@ -444,7 +444,7 @@ npm install
 
 ### What is the technical solution (design) of this feature?
 
-Extend the `cdk init` command to support custom templates from various source options while 
+Extend the `cdk init` command to support custom templates from various source options while
 maintaining the same user experience and validation standards as built-in templates.
 
 **Key Components:**
@@ -514,16 +514,16 @@ No, the new feature does not affect existing functionality for creating CDK proj
 
 #### Dynamic Template Substitution
 
-The selected approach does not provide a way for template authors to use dynamic information that is known only at 
-initialization time. The following approaches were considered as a way to provide this functionality. However, after 
-doing customer research, the CDK team decided on the RFC's proposed solution of the `cdk init` command only handling 
-static templates. If in the future, a customer need is identified for the `cdk init` command to handle dynamic templating 
+The selected approach does not provide a way for template authors to use dynamic information that is known only at
+initialization time. The following approaches were considered as a way to provide this functionality. However, after
+doing customer research, the CDK team decided on the RFC's proposed solution of the `cdk init` command only handling
+static templates. If in the future, a customer need is identified for the `cdk init` command to handle dynamic templating
 directly, this can be addressed as a potential enhancement.
 
 ##### Current Placeholder Approach For Built-In Templates
 
-The current placeholder approach for built-in templates is a format for authors to use dynamic information 
-inside templates. Authors write files using placeholders like %name.PascalCased%, which are replaced 
+The current placeholder approach for built-in templates is a format for authors to use dynamic information
+inside templates. Authors write files using placeholders like %name.PascalCased%, which are replaced
 automatically during `cdk init` based on project context.
 
 * Pros:
@@ -536,15 +536,15 @@ automatically during `cdk init` based on project context.
   * Exposing this engine could lead the CDK team to develop a full blown custom templating language, which is not
     their forte and what they should spend their time on
 
-This approach is proven and low-maintenance, but it can’t express richer scaffolding (conditional files, prompts, 
-multi-language branches) without expanding CDK’s placeholder engine into a full templating system. The proposed solution 
-keeps the CLI simple while enabling that flexibility via static templates from any source, letting authors use any dynamic 
+This approach is proven and low-maintenance, but it can’t express richer scaffolding (conditional files, prompts,
+multi-language branches) without expanding CDK’s placeholder engine into a full templating system. The proposed solution
+keeps the CLI simple while enabling that flexibility via static templates from any source, letting authors use any dynamic
 tool they prefer without locking CDK into a bespoke templating language.
 
 ##### The `npm-init` Command
 
 `npm init` is a command used to scaffold new Node.js projects. For users, it walks through prompts to create a package.json.
-For template authors, it allows publishing an npm package named `create-<name>`, which users can invoke using 
+For template authors, it allows publishing an npm package named `create-<name>`, which users can invoke using
 `npm init <name>` to generate projects based on custom logic.
 
 * Pros:
@@ -554,21 +554,21 @@ For template authors, it allows publishing an npm package named `create-<name>`,
   * No multi-language support (important since CDK is supported in 7 languages)
   * Only generates package.json, doesn’t solve the actual template generation or substitution
 
-`npm init` is Node-centric and primarily scaffolds `package.json`, so it doesn’t meet CDK’s multi-language requirements or 
-broader project-structure needs. The proposed solution is language-agnostic and source-agnostic (Git/NPM/local), delivering 
+`npm init` is Node-centric and primarily scaffolds `package.json`, so it doesn’t meet CDK’s multi-language requirements or
+broader project-structure needs. The proposed solution is language-agnostic and source-agnostic (Git/NPM/local), delivering
 a consistent `cdk init` UX across all supported languages while still letting authors choose their own tooling.
 
 ##### Yeoman Generator
 
-Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures 
-from templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation (see Appendix A 
+Yeoman Generator is a scaffolding tool used to automate the setup of new projects by generating files and directory structures
+from templates. Users run `yo <generator-name>` and answer interactive prompts that guide project generation (see Appendix A
 for a sample dialog). Template authors write JavaScript-based generators (named `generator-<name>`) that define prompts and
 dynamically control which files are generated and how they’re customized (See Appendix B for a minimal example generator).
 
-Template authors typically publish generators as public NPM packages (e.g., `generator-mytemplate`) so they can be installed 
-via `npm install -g generator-mytemplate` or invoked directly with `yo mytemplate`. The `cdk init` command could detect or be 
+Template authors typically publish generators as public NPM packages (e.g., `generator-mytemplate`) so they can be installed
+via `npm install -g generator-mytemplate` or invoked directly with `yo mytemplate`. The `cdk init` command could detect or be
 configured to invoke a Yeoman generator by name, passing along parameters to skip prompts or prefill defaults. A single
-generator can implement branching logic to scaffold different languages within the same codebase, using conditional file sets 
+generator can implement branching logic to scaffold different languages within the same codebase, using conditional file sets
 (`templates/python/**`, `templates/java/**`, etc.) and running the corresponding post-install commands for each language.
 
 * Pros:
@@ -582,23 +582,23 @@ generator can implement branching logic to scaffold different languages within t
   * Relies on the Yeoman runtime and ecosystem so CDK loses control over some UX and its ability to provide new features
     to template authors is limited
 
-While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine 
-would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution 
-retains those benefits for authors who choose Yeoman while allowing other authors to use any dynamic or manual approach, keeping CDK 
+While Yeoman offers strong scaffolding logic and built-in post-processing automation, adopting it as the default CDK template engine
+would couple our experience to an external runtime and ecosystem, reducing flexibility for future CLI features. The proposed solution
+retains those benefits for authors who choose Yeoman while allowing other authors to use any dynamic or manual approach, keeping CDK
 independent of a single tooling dependency.
 
 ##### Projen
 
-Projen is a project configuration tool that defines all project settings, dependencies, and configuration files in a single TypeScript 
-(or JavaScript) definition file (.projenrc.ts). Instead of manually editing generated files, users modify the Projen configuration, 
+Projen is a project configuration tool that defines all project settings, dependencies, and configuration files in a single TypeScript
+(or JavaScript) definition file (.projenrc.ts). Instead of manually editing generated files, users modify the Projen configuration,
 and Projen re-synthesizes the project structure.
 
-Project types in Projen are implemented as subclasses of Project (or a language-specific base project) and can be published as NPM 
-packages so others can install them and initialize new projects. The `cdk init` command could integrate with Projen by invoking 
+Project types in Projen are implemented as subclasses of Project (or a language-specific base project) and can be published as NPM
+packages so others can install them and initialize new projects. The `cdk init` command could integrate with Projen by invoking
 `npx projen new <project-type>`, optionally passing parameters to skip prompts or apply CDK defaults.
 
-Projen supports multi-language projects through specialized project types for Java, Python, C#, Go, and others, each with tailored 
-file structures, dependency management, and post-processing automation. Authors can also define hybrid project types that generate 
+Projen supports multi-language projects through specialized project types for Java, Python, C#, Go, and others, each with tailored
+file structures, dependency management, and post-processing automation. Authors can also define hybrid project types that generate
 multiple language components in a single repo.
 
 A minimal example of a custom project type is shown in Appendix C.
@@ -612,14 +612,14 @@ A minimal example of a custom project type is shown in Appendix C.
   * By default, Projen regenerates files on every `pj synth`, so direct edits are lost; changes must be made in the config. A `--eject`
     option exists to remove the Projen dependency after initialization, preserving the generated files while removing Projen’s automation benefits.
 
-Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK 
-users expect. The proposed solution retains those benefits for authors who choose Projen while allowing other authors to use any dynamic or 
+Projen’s automation and multi-language support are compelling, but its `.projenrc`-driven model diverges from the direct-edit workflows many CDK
+users expect. The proposed solution retains those benefits for authors who choose Projen while allowing other authors to use any dynamic or
 manual approach, keeping CDK independent of a single tooling dependency.
 
 ##### CookieCutter
 
-Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }}) 
-to define variable parts of files and filenames. Users run `cookiecutter <template-source>` and are prompted to provide values for placeholders. 
+Cookiecutter is a CLI utility for creating projects from templates. It uses a folder structure with Jinja2 templating syntax ({{ placeholder }})
+to define variable parts of files and filenames. Users run `cookiecutter <template-source>` and are prompted to provide values for placeholders.
 It then generates a project by rendering files with those values.
 
 * Pros:
@@ -631,8 +631,8 @@ It then generates a project by rendering files with those values.
 * Cons:
   * It is a python package so users must install Cookiecutter via pip, which may not be intuitive for CDK developers
 
-While Cookiecutter offers powerful templating features and language independence, its requirement to be installed as a Python package is a 
-significant drawback that, for some, could be a deal-breaker. The proposed solution avoids introducing this dependency and keeps ownership 
+While Cookiecutter offers powerful templating features and language independence, its requirement to be installed as a Python package is a
+significant drawback that, for some, could be a deal-breaker. The proposed solution avoids introducing this dependency and keeps ownership
 and UX within `cdk init`, while still allowing authors who prefer Cookiecutter to generate static
 templates and publish them for use with the same flow.
 
