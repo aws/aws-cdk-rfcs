@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # RFC: User-Provided `cdk init` Templates
 
 Original Author(s):: @rohang9000
@@ -737,3 +738,4 @@ npm publish
 ```bash
 cdk init my-projen-package.MyCdkProject
 ```
+<!-- markdownlint-enable -->
