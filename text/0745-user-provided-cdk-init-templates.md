@@ -278,8 +278,7 @@ Public Template Registry:
 
 A valid custom template must contain a subdirectory for a supported CDK
 language and at least one file inside it matching that language. You can
-reference custom app template implementations in all CDK Languages
-[here](https://github.com/rohang9000/sample-git-repo/tree/main/Samples).
+reference [custom app template implementations in all CDK Languages](https://github.com/rohang9000/sample-git-repo/tree/main/Samples) here.
 
 #### Custom Template Schema
 
@@ -369,8 +368,7 @@ maintained by AWS service teams.
 
 ### Are custom templates required to be “synth-able”?
 
-No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and does 
-not enforce a successful `cdk synth` in order to initialize a new CDK project.
+No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and does not enforce a successful `cdk synth` in order to initialize a new CDK project.
 
 ### Can I publish dynamic custom templates to a Git repository or NPM package to be used by `cdk init`?
 
@@ -669,46 +667,46 @@ module.exports = class extends Generator {
 
 1. Minimal project type definition (authored & published by a template author)
 
-```bash
-// src/MyCdkProject.ts
-import { awscdk } from 'projen';
-
-export interface MyCdkProjectOptions extends awscdk.AwsCdkTypeScriptAppOptions {
-  // Add any custom options here
-}
-
-export class MyCdkProject extends awscdk.AwsCdkTypeScriptApp {
-  constructor(options: MyCdkProjectOptions) {
-    super({
-      cdkVersion: '2.120.0',
-      defaultReleaseBranch: 'main',
-      name: 'my-cdk-app',
-      ...options,
-    });
-
-    // Example: add a default dependency
-    this.addDeps('lodash');
-
-    // Example: add a custom script
-    this.addTask('deploy', {
-      exec: 'cdk deploy',
-    });
-  }
-}
-```
+    ```bash
+    // src/MyCdkProject.ts
+    import { awscdk } from 'projen';
+    
+    export interface MyCdkProjectOptions extends awscdk.AwsCdkTypeScriptAppOptions {
+      // Add any custom options here
+    }
+    
+    export class MyCdkProject extends awscdk.AwsCdkTypeScriptApp {
+      constructor(options: MyCdkProjectOptions) {
+        super({
+          cdkVersion: '2.120.0',
+          defaultReleaseBranch: 'main',
+          name: 'my-cdk-app',
+          ...options,
+        });
+    
+        // Example: add a default dependency
+        this.addDeps('lodash');
+    
+        // Example: add a custom script
+        this.addTask('deploy', {
+          exec: 'cdk deploy',
+        });
+      }
+    }
+    ```
 
 2. How an author publishes it
 
-```bash
-npm init -y
-npm install projen
-# After writing src/MyCdkProject.ts and building
-npx tsc
-npm publish
-```
+    ```bash
+    npm init -y
+    npm install projen
+    # After writing src/MyCdkProject.ts and building
+    npx tsc
+    npm publish
+    ```
 
 3. How a user would consume it through `cdk init` command
 
-```bash
-cdk init my-projen-package.MyCdkProject
-```
+    ```bash
+    cdk init my-projen-package.MyCdkProject
+    ```
