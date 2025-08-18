@@ -296,7 +296,9 @@ A new feature in the AWS CDK CLI that enables users to use custom templates from
 
 ### Are custom templates required to be “synth-able”?
 
-No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and does not enforce a successful `cdk synth` in order to initialize a new CDK project.
+
+No, custom templates are not required to be “synth-able”. Templates generally fall under two categories: libraries, which create reusable constructs, and apps, which create deployable infrastructure. Library templates do not synthesize, but are still valid custom template types. As such, `cdk init` does not validate that a CDK stack is defined in a custom template and does 
+not enforce a successful `cdk synth` in order to initialize a new CDK project.
 
 
 ### Can I publish dynamic custom templates to a Git repository or NPM package to be used by `cdk init`?
