@@ -71,11 +71,10 @@ Congratulations, you have now initialized your first starter CDK project!
 
 #### **Working with Custom Templates**
 
-To initialize a project with pre-configured services, file structures, or best
-practices, you can run `cdk init` using custom templates from Git repositories
-or NPM packages. A single Git repository or NPM package can contain multiple CDK
-templates for different use cases. Each template is organized in its own
-directory, with language-specific subdirectories inside.
+To initialize a project with pre-configured services, file structures, or best practices,
+you can run `cdk init` using custom templates from Git repositories, NPM packages, or local directories.
+A single Git repository, NPM package, or local directory can contain multiple CDK templates for different
+use cases. Each template is organized in its own directory, with language-specific subdirectories inside.
 
 ##### Getting Custom Templates From GitHub
 
@@ -214,6 +213,27 @@ cdk init --from-npm [package-name] --version [version] --template-path ./templat
 registries are supported through your existing NPM configuration (.npmrc file,
 environment variables, or npm config settings) without requiring additional
 setup.
+
+##### Getting Custom Templates From Local Directories
+
+For development or monorepo setups, use `--from-path` to initialize from a local template directory:
+
+```bash
+cdk init --from-path ./my-cdk-template --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
+
+**TIP** - If the template contains only one language directory, you don't need to specify `--language`:
+
+```bash
+cdk init --from-path ./my-cdk-template
+```
+
+If you've created a multi-template repository setup locally, you can also fully test it by
+specifying templates to initialize from using `--template-path`:
+
+```bash
+cdk init --from-path ./cdk-templates --template-path ./template-name --language=[csharp|fsharp|go|java|javascript|python|typescript]
+```
 
 #### **More Advanced Project Initialization Options**
 
