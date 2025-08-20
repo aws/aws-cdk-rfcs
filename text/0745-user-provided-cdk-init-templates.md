@@ -259,46 +259,21 @@ pre-configured infrastructure patterns for specific use cases. To see all
 available templates to initialize a CDK project with, including those in the
 public registry, run `cdk init --list`:
 
-<!-- markdownlint-disable MD013 -->
-
 ```text
-Built-in templates:
+Available Templates:
 * app: CDK Application Template
-   └─ cdk init app \
-      --language=[typescript|javascript|python|java|csharp|fsharp|go]
+   └─ cdk init app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 * lib: CDK Construct Library Template
    └─ cdk init lib --language=typescript
 * sample-app: Example CDK Application with constructs
-   └─ cdk init sample-app \
-      --language=[typescript|javascript|python|java|csharp|fsharp|go]
-
-Public Template Registry:
-* Initialize a project from a template:
-   └─ cdk init --from-<sourceType> [sourceLocation] \
-      --template-path [PATH] --language=[supportedLanguage]
-
-┌──────────────┬──────────────────────────┬───────────────────┬────────┬───────────────────┬─────────────────────────────────────────────────────────────────┐
-│ Author       | Repository/Package       │ Template Path     │ Type   │ Description       | Initialization Command                                          │
-├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
-│ rohang9000   | sample-git-repo          │ NestedTemplate/   | GitHub | Same below sample | cdk init --from-github rohang9000/sample-git-repo               |
-|              |                          | Samples           |        | templates nested  | --template-path NestedTemplate/Samples                          |
-|              |                          |                   |        | in subdirectory   | --language=[java|javascript|python|typescript]                  |
-├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
-│ rohang9000   | sample-git-repo          │ Samples           | GitHub | Sample template   | cdk init --from-github rohang9000/sample-git-repo               |
-|              |                          |                   |        | for new authors   | --template-path Samples                                         |
-|              |                          |                   |        | to reference      | --language=[csharp|fsharp|go|java|javascript|python|typescript] |
-├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
-│ rohang9000   | sample-git-repo          │ Tutorials/cdk-    | GitHub | Completed CDK     | cdk init --from-github rohang9000/sample-git-repo               |
-|              |                          | hello-world-      |        | Hello World App   | --template-path Tutorials/cdk-hello-world-template              |
-|              |                          | template          |        | Application       | --language=[csharp|go|java|javascript|python|typescript]        |
-├──────────────┼──────────────────────────┼───────────────────┼────────┼───────────────────┼─────────────────────────────────────────────────────────────────┤
-│ rupta        | custom-cdk-init-template │ my-template       │ NPM    │ Custom CDK init   | cdk init --from-npm custom-cdk-init-template                    |
-│              |                          │                   │        │ template          | --template-path my-template                                     │
-│              |                          │                   │        │                   | --language=[python][typescript]                                 │
-└──────────────┴──────────────────────────┴───────────────────┴────────┴───────────────────┴─────────────────────────────────────────────────────────────────┘
+   └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
+* cdk-hello-world-template: Completed CDK Hello World application from CDK Tutorial
+   └─ cdk init --from-github rohang9000/sample-git-repo --template-path Tutorials/cdk-hello-world-template --language=[csharp|go|java|javascript|python|typescript]
+* my-template: Custom CDK init template
+   └─ cdk init --from-npm custom-cdk-init-template --template-path my-template --language=[python|typescript]
+* Sample: Sample template for new authors to reference
+   └─ cdk init --from-github rohang9000/sample-git-repo --template-path Samples --language=[csharp|fsharp|go|java|javascript|python|typescript]
 ```
-
-<!-- markdownlint-enable MD013 -->
 
 ### Authoring Custom CDK Templates
 
@@ -502,11 +477,11 @@ When internal AWS teams want to add a template source to the public registry, th
 
 ```typescript
 {
-   author: string;                               // Organization, team, or user's name as it appears in Git repository or NPM package
-   source: string;                               // GitHub shorthand, Git URL, or NPM package name
-   sourceDescription: string;                    // Brief description of template repository or package functionality
-   sourceType: 'github' | 'git' | 'npm';         // Source type (GitHub, Git, NPM)
-   templates: CustomTemplate[];                  // List of templates provided by this source
+    author: string;                              // Organization, team, or user's name as it appears in Git repository or NPM package
+    source: string;                              // GitHub shorthand, Git URL, or NPM package name
+    sourceDescription: string;                   // Brief description of template repository or package functionality
+    sourceType: 'github' | 'git' | 'npm';        // Source type (GitHub, Git, NPM)
+    templates: CustomTemplate[];                 // List of templates provided by this source
 }   
 ```
 
@@ -514,9 +489,10 @@ Where template is a struct like the below example that can easily be extended:
 
 ```typescript
 interface CustomTemplate {
-  path: string;                                  // Relative path of the template in the repository/package
-  description: string;                           // Short description of the template
-  languages: string[];                           // Supported CDK languages
+    displayName: string;                         // Name that will be displayed in Public Template Registry
+    path: string;                                // Relative path of the template in the repository/package
+    description: string;                         // Short description of the template
+    languages: string[];                         // Supported CDK languages
 }
 ```
 
