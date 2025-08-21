@@ -268,7 +268,7 @@ Available Templates:
 * sample-app: Example CDK Application with constructs
    └─ cdk init sample-app --language=[typescript|javascript|python|java|csharp|fsharp|go]
 * cdk-hello-world-template: Completed CDK Hello World application from CDK Tutorial
-   └─ cdk init --from-github rohang9000/sample-git-repo --template-path Tutorials/cdk-hello-world-template --language=[csharp|go|java|javascript|python|typescript]
+   └─ cdk init --from-github rohang9000/sample-git-repo --template-path Tutorials/cdk-hello-world-template --language=[csharp|go|java|python|typescript]
 * my-template: Custom CDK init template
    └─ cdk init --from-npm custom-cdk-init-template --template-path my-template --language=[python|typescript]
 * Sample: Sample template for new authors to reference
