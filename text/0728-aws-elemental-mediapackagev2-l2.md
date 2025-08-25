@@ -296,6 +296,7 @@ export interface IChannelGroup extends IResource {
 ```
 
 Provide fromMethod capability - allowing imports of the resource:
+
 ```
 /**
   * Creates a Channel Group construct that represents an external (imported) Channel Group.
@@ -507,6 +508,7 @@ export interface IChannel extends IResource {
 ```
 
 Provide fromMethod capability - allowing imports of the resource:
+
 ```
 /**
   * Creates a Channel construct that represents an external (imported) Channel.
@@ -970,6 +972,7 @@ export interface IOriginEndpoint extends IResource {
 ```
 
 Provide fromMethod capability - allowing imports of the resource:
+
 ```
 /**
   * Creates a OriginEndpoint construct that represents an external (imported) OriginEndpoint.
