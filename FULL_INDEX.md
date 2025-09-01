@@ -197,7 +197,7 @@
 [732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👷 implementing
 [745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/issues/745)||❓unknown
 [750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||💡 proposed
-[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
+[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[Serverless ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
 [764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
 [785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/issues/785)||💡 proposed
 <!--END_TABLE-->
