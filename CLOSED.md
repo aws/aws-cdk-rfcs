@@ -30,6 +30,7 @@
 [434](https://github.com/aws/aws-cdk-rfcs/issues/434)|[AWS Ground Station L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/434)||👎 rejected
 [446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||👎 rejected
 [448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||👎 rejected
+[456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0456-elasticache-l2.md)||👎 rejected
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||👎 rejected
 [465](https://github.com/aws/aws-cdk-rfcs/issues/465)|[AWS Organizations L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/465)||👎 rejected
@@ -47,6 +48,7 @@
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||👎 rejected
 [579](https://github.com/aws/aws-cdk-rfcs/issues/579)|[Docker-less dependency resolution (CDK \ SAM)](https://github.com/aws/aws-cdk-rfcs/issues/579)||👎 rejected
 [587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||👎 rejected
+[715](https://github.com/aws/aws-cdk-rfcs/issues/715)|[CDK Construct Update Support](https://github.com/aws/aws-cdk-rfcs/issues/715)||👎 rejected
 [9](https://github.com/aws/aws-cdk-rfcs/issues/9)|[Master developer guide sources in main repo](https://github.com/aws/aws-cdk-rfcs/issues/9)||🤷 stale
 [10](https://github.com/aws/aws-cdk-rfcs/issues/10)|[New workshop modules](https://github.com/aws/aws-cdk-rfcs/issues/10)||🤷 stale
 [13](https://github.com/aws/aws-cdk-rfcs/issues/13)|[Improvements to Reference docs](https://github.com/aws/aws-cdk-rfcs/issues/13)||🤷 stale
@@ -104,4 +106,6 @@
 [467](https://github.com/aws/aws-cdk-rfcs/issues/467)|[Add L2 constructs for Amazon FSx Windows](https://github.com/aws/aws-cdk-rfcs/issues/467)|[@rix0rrr](https://github.com/rix0rrr)|🤷 stale
 [471](https://github.com/aws/aws-cdk-rfcs/issues/471)|[Amazon Managed Grafana L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/471)||🤷 stale
 [581](https://github.com/aws/aws-cdk-rfcs/issues/581)|[ARN retrieval function consistency for CDK constructs](https://github.com/aws/aws-cdk-rfcs/issues/581)||🤷 stale
+[586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||🤷 stale
+[635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||🤷 stale
 <!--END_TABLE-->

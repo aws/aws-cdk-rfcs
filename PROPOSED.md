@@ -13,19 +13,24 @@
 [437](https://github.com/aws/aws-cdk-rfcs/issues/437)|[CDK post-deployment experience](https://github.com/aws/aws-cdk-rfcs/issues/437)||💡 proposed
 [469](https://github.com/aws/aws-cdk-rfcs/issues/469)|[AWS Lambda for .NET Support](https://github.com/aws/aws-cdk-rfcs/issues/469)||💡 proposed
 [489](https://github.com/aws/aws-cdk-rfcs/issues/489)|[Add API to register and execute code before or after CDK App lifecycle events](https://github.com/aws/aws-cdk-rfcs/issues/489)||💡 proposed
+[583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||💡 proposed
+[585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||💡 proposed
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
+[611](https://github.com/aws/aws-cdk-rfcs/issues/611)|[Complete Construct Model](https://github.com/aws/aws-cdk-rfcs/issues/611)||💡 proposed
 [613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
-[635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
-[670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||💡 proposed
-[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals SLO L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
-[686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/issues/686)||💡 proposed
-[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
+[707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
+[719](https://github.com/aws/aws-cdk-rfcs/issues/719)|[Native Container Image Tarball Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/719)||💡 proposed
+[728](https://github.com/aws/aws-cdk-rfcs/issues/728)|[L2 Constructs for AWS Elemental MediaPackageV2](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0728-aws-elemental-mediapackagev2-l2.md)||💡 proposed
+[750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||💡 proposed
+[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[Serverless ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
+[764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
+[785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/issues/785)||💡 proposed
 <!--END_TABLE-->
