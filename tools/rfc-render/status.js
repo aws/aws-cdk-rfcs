@@ -1,9 +1,9 @@
-exports.UNKNOWN_STATUS = 'status/unknown';
+export const UNKNOWN_STATUS = 'status/unknown';
 
 // Order does not matters here
 // The cli input is an ordered list of status
-exports.STATUS_LIST = {
-  [exports.UNKNOWN_STATUS]: '❓unknown',
+export const STATUS_LIST = {
+  [UNKNOWN_STATUS]: '❓unknown',
   'status/implementing': '👷 implementing',
   'status/planning': '📆 planning',
   'status/approved': '👍 approved',

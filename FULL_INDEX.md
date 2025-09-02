@@ -72,7 +72,7 @@
 [158](https://github.com/aws/aws-cdk-rfcs/issues/158)|[Implement Custom Resources in the AWS Construct Library as CFN Registry Resource Types](https://github.com/aws/aws-cdk-rfcs/pull/170)||🤷 stale
 [159](https://github.com/aws/aws-cdk-rfcs/issues/159)|[Cross-App Resource Sharing](https://github.com/aws/aws-cdk-rfcs/issues/159)||👎 rejected
 [161](https://github.com/aws/aws-cdk-rfcs/issues/161)|[Cross-Region/Account References](https://github.com/aws/aws-cdk-rfcs/issues/161)||🤷 stale
-[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/issues/162)|[@otaviomacedo](https://github.com/otaviomacedo)|📆 planning
+[162](https://github.com/aws/aws-cdk-rfcs/issues/162)|[CDK Refactoring Tools](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0162-refactoring-support.md)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
 [164](https://github.com/aws/aws-cdk-rfcs/issues/164)|[Construct Library Segments](https://github.com/aws/aws-cdk-rfcs/pull/169)|[@nija-at](https://github.com/nija-at)|👎 rejected
 [171](https://github.com/aws/aws-cdk-rfcs/issues/171)|[CloudFront Module Redesign](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0171-cloudfront-redesign.md)||✅ done
 [175](https://github.com/aws/aws-cdk-rfcs/issues/175)|[AppSync Mapping Template Object Model](https://github.com/aws/aws-cdk-rfcs/pull/177)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
@@ -84,7 +84,7 @@
 [217](https://github.com/aws/aws-cdk-rfcs/issues/217)|[Alternative Infrastructure Providers](https://github.com/aws/aws-cdk-rfcs/issues/217)|[@ccfife](https://github.com/ccfife)|👎 rejected
 [219](https://github.com/aws/aws-cdk-rfcs/issues/219)|[ECS Patterns Service Builder](https://github.com/aws/aws-cdk-rfcs/issues/219)||👎 rejected
 [223](https://github.com/aws/aws-cdk-rfcs/issues/223)|[Improvements to Lambda Development Experience](https://github.com/aws/aws-cdk-rfcs/issues/223)||🤷 stale
-[228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||📆 planning
+[228](https://github.com/aws/aws-cdk-rfcs/issues/228)|[CDK CLI Triggers](https://github.com/aws/aws-cdk-rfcs/issues/228)||✅ done
 [229](https://github.com/aws/aws-cdk-rfcs/issues/229)|[Construct library pattern for metrics](https://github.com/aws/aws-cdk-rfcs/issues/229)||🤷 stale
 [230](https://github.com/aws/aws-cdk-rfcs/issues/230)|[Construct library pattern for grants](https://github.com/aws/aws-cdk-rfcs/issues/230)||🤷 stale
 [231](https://github.com/aws/aws-cdk-rfcs/issues/231)|[Construct library pattern for resources that use a VPC](https://github.com/aws/aws-cdk-rfcs/issues/231)||🤷 stale
@@ -101,7 +101,7 @@
 [277](https://github.com/aws/aws-cdk-rfcs/issues/277)|[cdk logs](https://github.com/aws/aws-cdk-rfcs/issues/277)||🤷 stale
 [282](https://github.com/aws/aws-cdk-rfcs/issues/282)|[CDK Pipelines security posture change approvals](https://github.com/aws/aws-cdk-rfcs/issues/282)||✅ done
 [294](https://github.com/aws/aws-cdk-rfcs/issues/294)|[Policy Definition and Enforcement](https://github.com/aws/aws-cdk-rfcs/issues/294)||✅ done
-[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0300-programmatic-toolkit.md)|[@mrgrain](https://github.com/mrgrain)|👷 implementing
+[300](https://github.com/aws/aws-cdk-rfcs/issues/300)|[Programmatic access of AWS CDK CLI](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0300-programmatic-toolkit.md)|[@mrgrain](https://github.com/mrgrain)|✅ done
 [305](https://github.com/aws/aws-cdk-rfcs/issues/305)|[support code signing of assets](https://github.com/aws/aws-cdk-rfcs/issues/305)||🤷 stale
 [309](https://github.com/aws/aws-cdk-rfcs/issues/309)|[Parameter Store for cross stack references](https://github.com/aws/aws-cdk-rfcs/issues/309)||🤷 stale
 [317](https://github.com/aws/aws-cdk-rfcs/issues/317)|[CDK third-party dependencies management](https://github.com/aws/aws-cdk-rfcs/issues/317)||🤷 stale
@@ -133,6 +133,7 @@
 [446](https://github.com/aws/aws-cdk-rfcs/issues/446)|[Network Firewall L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/446)||👎 rejected
 [448](https://github.com/aws/aws-cdk-rfcs/issues/448)|[AWS Compute Optimizer Constructs](https://github.com/aws/aws-cdk-rfcs/issues/448)||👎 rejected
 [450](https://github.com/aws/aws-cdk-rfcs/issues/450)|[AWS CDK public roadmap](https://github.com/aws/aws-cdk-rfcs/issues/450)||🤷 stale
+[456](https://github.com/aws/aws-cdk-rfcs/issues/456)|[L2 ElastiCache support](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0456-elasticache-l2.md)||👎 rejected
 [457](https://github.com/aws/aws-cdk-rfcs/issues/457)|[Create fluent-assertions library to improve consumer test readability](https://github.com/aws/aws-cdk-rfcs/issues/457)|[@MrArnoldPalmer](https://github.com/MrArnoldPalmer)|👎 rejected
 [458](https://github.com/aws/aws-cdk-rfcs/issues/458)|[Service Catalog ProductStack Asset Support](https://github.com/aws/aws-cdk-rfcs/issues/458)||👎 rejected
 [460](https://github.com/aws/aws-cdk-rfcs/issues/460)|[Reduce aws-cdk-lib package size](https://github.com/aws/aws-cdk-rfcs/issues/460)||✅ done
@@ -149,12 +150,12 @@
 [485](https://github.com/aws/aws-cdk-rfcs/issues/485)|[AWS Batch L2](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0485-aws-batch.md)||✅ done
 [487](https://github.com/aws/aws-cdk-rfcs/issues/487)|[New L2 Construct for Step Functions Map State in Distributed Mode](https://github.com/aws/aws-cdk-rfcs/issues/487)||👎 rejected
 [489](https://github.com/aws/aws-cdk-rfcs/issues/489)|[Add API to register and execute code before or after CDK App lifecycle events](https://github.com/aws/aws-cdk-rfcs/issues/489)||💡 proposed
-[491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||📆 planning
+[491](https://github.com/aws/aws-cdk-rfcs/issues/491)|[CloudFront Origin Access Control L2](https://github.com/aws/aws-cdk-rfcs/issues/491)||✅ done
 [492](https://github.com/aws/aws-cdk-rfcs/issues/492)|[Amazon OpenSearch Serverless L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/492)||👎 rejected
 [495](https://github.com/aws/aws-cdk-rfcs/issues/495)|[AWS IAM Identity Store L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/495)||👎 rejected
 [497](https://github.com/aws/aws-cdk-rfcs/issues/497)|[AWS Glue L2 CDK Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0497-glue-l2-construct.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|✅ done
 [502](https://github.com/aws/aws-cdk-rfcs/issues/502)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0502_aws-vpclattice.md)|[@TheRealAmazonKendra](https://github.com/TheRealAmazonKendra)|👍 approved
-[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@otaviomacedo](https://github.com/otaviomacedo)|👷 implementing
+[507](https://github.com/aws/aws-cdk-rfcs/issues/507)|[Full control over VPC and subnet configuration](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0507-subnets)|[@shikha372](https://github.com/shikha372)|✅ done
 [509](https://github.com/aws/aws-cdk-rfcs/issues/509)|[Add Step Functions SageMaker CreateProcessingJob task construct](https://github.com/aws/aws-cdk-rfcs/issues/509)||👎 rejected
 [510](https://github.com/aws/aws-cdk-rfcs/issues/510)|[DyanmoDB Global Table L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0510-dynamodb-global-table.md)|[@vinayak-kukreja](https://github.com/vinayak-kukreja)|✅ done
 [512](https://github.com/aws/aws-cdk-rfcs/issues/512)|[Thumbprint L2 Construct for use with IAM OIDC Provider](https://github.com/aws/aws-cdk-rfcs/issues/512)||👎 rejected
@@ -165,30 +166,38 @@
 [528](https://github.com/aws/aws-cdk-rfcs/issues/528)|[Verified Permissions L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/528)||👎 rejected
 [579](https://github.com/aws/aws-cdk-rfcs/issues/579)|[Docker-less dependency resolution (CDK \ SAM)](https://github.com/aws/aws-cdk-rfcs/issues/579)||👎 rejected
 [581](https://github.com/aws/aws-cdk-rfcs/issues/581)|[ARN retrieval function consistency for CDK constructs](https://github.com/aws/aws-cdk-rfcs/issues/581)||🤷 stale
-[583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||📆 planning
-[585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||📆 planning
-[586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||📆 planning
+[583](https://github.com/aws/aws-cdk-rfcs/issues/583)|[Deployment Debugging](https://github.com/aws/aws-cdk-rfcs/issues/583)||💡 proposed
+[585](https://github.com/aws/aws-cdk-rfcs/issues/585)|[Local Application Testing](https://github.com/aws/aws-cdk-rfcs/issues/585)||💡 proposed
+[586](https://github.com/aws/aws-cdk-rfcs/issues/586)|[Understand Deployment Progress](https://github.com/aws/aws-cdk-rfcs/issues/586)||🤷 stale
 [587](https://github.com/aws/aws-cdk-rfcs/issues/587)|[Amazon Lambda Rust library](https://github.com/aws/aws-cdk-rfcs/issues/587)||👎 rejected
-[605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||👷 implementing
+[605](https://github.com/aws/aws-cdk-rfcs/issues/605)|[Rewrite EKS L2 construct (EKSv2)](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0605-eks-rewrite.md)||✅ done
 [609](https://github.com/aws/aws-cdk-rfcs/issues/609)|[PythonFunction additional build options](https://github.com/aws/aws-cdk-rfcs/issues/609)||💡 proposed
-[611](https://github.com/aws/aws-cdk-rfcs/issues/611)|[Complete Construct Model](https://github.com/aws/aws-cdk-rfcs/issues/611)||❓unknown
+[611](https://github.com/aws/aws-cdk-rfcs/issues/611)|[Complete Construct Model](https://github.com/aws/aws-cdk-rfcs/issues/611)||💡 proposed
 [613](https://github.com/aws/aws-cdk-rfcs/issues/613)|[Add L2 construct for aws_controltower.CfnEnabledControl](https://github.com/aws/aws-cdk-rfcs/issues/613)||💡 proposed
 [617](https://github.com/aws/aws-cdk-rfcs/issues/617)|[Amazon CloudFront Origin Access Control L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0617-cloudfront-oac-l2.md)||✅ done
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
-[635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||💡 proposed
+[635](https://github.com/aws/aws-cdk-rfcs/issues/635)|[L2 Constructs for AWS MediaConvert](https://github.com/aws/aws-cdk-rfcs/issues/635)||🤷 stale
 [648](https://github.com/aws/aws-cdk-rfcs/issues/648)|[Priority-Ordered Aspect Invocation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0648-aspects-priority-ordering.md)|[@sumupitchayan](https://github.com/sumupitchayan)|✅ done
 [655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
-[670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||💡 proposed
-[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals SLO L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/673)||💡 proposed
+[670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
+[673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
-[686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/issues/686)||⏰ final comments
-[689](https://github.com/aws/aws-cdk-rfcs/issues/689)|[Proposed AWS CDK Council Charter](https://github.com/aws/aws-cdk-rfcs/issues/689)||❓unknown
-[691](https://github.com/aws/aws-cdk-rfcs/issues/691)|[AWS Bedrock Integration Working Group](https://github.com/aws/aws-cdk-rfcs/issues/691)||❓unknown
-[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/issues/693)||💡 proposed
+[686](https://github.com/aws/aws-cdk-rfcs/issues/686)|[L2 Constructs for Bedrock](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0686-bedrock-l2-construct.md)|[@dineshSajwan](https://github.com/dineshSajwan)|✅ done
+[693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||✅ done
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
 [703](https://github.com/aws/aws-cdk-rfcs/issues/703)|[apigateway: private domain name L2 construct](https://github.com/aws/aws-cdk-rfcs/issues/703)||💡 proposed
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
+[710](https://github.com/aws/aws-cdk-rfcs/issues/710)|[Node.js Version Support Policy for AWS CDK](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0710-node-deprecation-strategy.md)||✅ done
+[715](https://github.com/aws/aws-cdk-rfcs/issues/715)|[CDK Construct Update Support](https://github.com/aws/aws-cdk-rfcs/issues/715)||👎 rejected
+[719](https://github.com/aws/aws-cdk-rfcs/issues/719)|[Native Container Image Tarball Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/719)||💡 proposed
+[728](https://github.com/aws/aws-cdk-rfcs/issues/728)|[L2 Constructs for AWS Elemental MediaPackageV2](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0728-aws-elemental-mediapackagev2-l2.md)||💡 proposed
+[732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|👷 implementing
+[745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/issues/745)||❓unknown
+[750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||💡 proposed
+[762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[Serverless ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
+[764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
+[785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/issues/785)||💡 proposed
 <!--END_TABLE-->

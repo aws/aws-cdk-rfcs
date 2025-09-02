@@ -1,6 +1,7 @@
-
 # See https://doc.mergify.io
-
+merge_queue:
+  # Ensure Mergify doesn't use speculative PRs to evaluate mergeability
+  max_parallel_checks: 1
 queue_rules:
   - name: default
     conditions:
@@ -35,13 +36,3 @@ pull_request_rules:
       - -approved-reviews-by~=author
       - "#changes-requested-reviews-by=0"
       - "#commented-reviews-by=0"
-  - name: remove stale reviews
-    actions:
-      dismiss_reviews:
-        approved: true
-    conditions:
-      - author!=aws-cdk-automation
-      - label!=auto-approve
-      - base=main
-      - -merged
-      - -closed

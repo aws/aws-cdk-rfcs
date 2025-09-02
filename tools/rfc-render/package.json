@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "render:all": "npm run render:readme && npm run render:full && npm run render:proposed && npm run render:accepted && npm run render:closed",
     "render:readme": "node inject-table.js ../../README.md -s unknown -s implementing -s planning -s approved -s final-comment-period -s api-approved -s review",
@@ -16,6 +17,6 @@
   "private": true,
   "license": "Apache-2.0",
   "dependencies": {
-    "@octokit/rest": "^20.0.2"
+    "@octokit/rest": "^21.1.1"
   }
 }

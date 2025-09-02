@@ -1,8 +1,8 @@
-const { issuesGroupedByStatus } = require('./fetch-issues');
-const { STATUS_LIST } = require('./status');
+import { issuesGroupedByStatus } from './fetch-issues.js';
+import { STATUS_LIST } from './status.js';
 
 const labels = Object.keys(STATUS_LIST);
-exports.render = render;
+export { render };
 
 async function render(renderStatus = undefined, groupByStatus = true) {
   const issuesByStatus = await issuesGroupedByStatus(renderStatus);
