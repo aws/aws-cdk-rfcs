@@ -11,7 +11,6 @@ also easily define permissions and integrations using a simple API.
 The amount of effort needed to create these resources is significantly reduced compared to using the AWS console or
 CloudFormation directly, with best practices built-in.
 
-
 ## Working Backwards
 
 **CHANGELOG**: `feat(imagebuilder): add support for EC2 Image Builder L2 Constructs`
@@ -128,7 +127,6 @@ imagePipeline.onWaitForAction('WaitForActionEvent', {
 });
 ```
 
-
 ## Image
 
 An image is the output resource created by Image Builder, consisting of an AMI or container image plus metadata such as
@@ -196,7 +194,6 @@ const image = new imagebuilder.Image(stack, 'Image', {
   enhancedImageMetadataEnabled: true,
 });
 ```
-
 
 ## Image Recipe
 
@@ -293,7 +290,6 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
 });
 ```
 
-
 ## Container Recipe
 
 A container recipe is similar to an image recipe but specifically for container images. It defines the base container
@@ -372,7 +368,6 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
 });
 ```
 
-
 ## Component
 
 A component defines the sequence of steps required to customize an instance during image creation (build component) or
@@ -450,7 +445,6 @@ const component = new imagebuilder.Component(stack, 'Component', {
 });
 ```
 
-
 ## Infrastructure Configuration
 
 Infrastructure configuration defines the compute resources and environment settings used during the image building
@@ -526,7 +520,6 @@ const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration
   },
 });
 ```
-
 
 ## Distribution Configuration
 
@@ -637,7 +630,6 @@ const distributionConfiguration = new imagebuilder.DistributionConfiguration(sta
 });
 ```
 
-
 ## Workflow
 
 Workflows define the sequence of steps that Image Builder performs during image creation. There are three workflow
@@ -687,7 +679,6 @@ const workflow = new imagebuilder.Workflow(stack, 'Workflow', {
   }),
 });
 ```
-
 
 ## Lifecycle Policy
 
@@ -773,11 +764,11 @@ module.
 
 EC2 Image Builder L2 constructs dramatically simplify the creation and management of custom AMIs and container images:
 
-1. **Reduced Complexity** - Create complete image building pipelines with just a few lines of code instead of managing 
-   multiple CloudFormation resources
-2. **Secure Defaults** - Built-in security best practices. This includes least-privileged IAM policies, IMDSv2 by 
+1. **Reduced Complexity** - Create complete image building pipelines with just a few lines of code instead of managing
+   multiple CloudFormation resources.
+2. **Secure Defaults** - Built-in security best practices. This includes least-privileged IAM policies, IMDSv2 by
    default for EC2 instances, and S3 logging enabled by default for Image Builder using secure bucket settings. See
-   [Secure and Best Practice Defaults](#secure-and-best-practice-defaults)
+   [Secure and Best Practice Defaults](#secure-and-best-practice-defaults).
 3. **Integrated Experience** - Seamless integration with other CDK constructs like VPC, IAM, SNS, and EventBridge.
 
 ## Internal FAQ
@@ -788,7 +779,7 @@ EC2 Image Builder is a critical service for organizations that need to create an
 images at scale. Currently, using Image Builder with CDK requires managing multiple L1 constructs with complex
 interdependencies:
 
-1. **High Complexity** - A basic pipeline requires 4-6 separate CloudFormation resources (Pipeline, Recipe, 
+1. **High Complexity** - A basic pipeline requires 4-6 separate CloudFormation resources (Pipeline, Recipe,
    Infrastructure Configuration, Distribution Configuration, IAM roles, etc.)
 2. **Security Challenges** - Easy to misconfigure IAM permissions, encryption, or networking
 3. **Poor Developer Experience** - Verbose configuration with lots of boilerplate
@@ -805,19 +796,19 @@ EC2 Image Builder resources can already be provisioned via CDK today, using its 
 
 #### Interface Diagram
 
-![](../images/0789/imagebuilder-interfaces.png)
+![Interface Diagram](../images/0789/imagebuilder-interfaces.png)
 
 #### Construct Diagram
 
-![](../images/0789/imagebuilder-constructs.png)
+![Construct Diagram](../images/0789/imagebuilder-constructs.png)
 
 #### Class Diagram
 
-![](../images/0789/imagebuilder-classes.png)
+![Class Diagram](../images/0789/imagebuilder-classes.png)
 
 #### Props Interfaces
 
-**Image Pipeline**
+##### Image Pipeline
 
 ```ts
 interface ImagePipelineProps {
@@ -928,7 +919,7 @@ interface ImagePipelineProps {
 }
 ```
 
-**Image**
+##### Image
 
 ```ts
 interface ImageProps {
@@ -1019,7 +1010,7 @@ interface ImageProps {
 }
 ```
 
-**Image Recipe**
+##### Image Recipe
 
 ```ts
 interface ImageRecipeProps {
@@ -1078,7 +1069,7 @@ interface ImageRecipeProps {
 }
 ```
 
-**Container Recipe**
+##### Container Recipe
 
 ```ts
 interface ContainerRecipeProps {
@@ -1173,7 +1164,7 @@ interface ContainerRecipeProps {
 }
 ```
 
-**Component**
+##### Component
 
 ```ts
 interface ComponentProps {
@@ -1232,7 +1223,7 @@ interface ComponentProps {
 }
 ```
 
-**Infrastructure Configuration**
+##### Infrastructure Configuration
 
 ```ts
 interface InfrastructureConfigurationProps {
@@ -1338,7 +1329,7 @@ interface InfrastructureConfigurationProps {
 }
 ```
 
-**Distribution Configuration**
+##### Distribution Configuration
 
 ```ts
 interface DistributionConfigurationProps {
@@ -1363,7 +1354,7 @@ interface DistributionConfigurationProps {
 }
 ```
 
-**Workflow**
+##### Workflow
 
 ```ts
 interface WorkflowProps {
@@ -1414,7 +1405,7 @@ interface WorkflowProps {
 }
 ```
 
-**Lifecycle Policy**
+##### Lifecycle Policy
 
 ```ts
 interface LifecyclePolicyProps {
@@ -1496,7 +1487,7 @@ N/A
 ### Secure and Best Practice Defaults
 
 * **EC2 instance profile role**. Instance profiles are used in image builds as a way to attach an IAM role to the EC2
-  instances used to build/test the image, needed to perform operations on the instance. Instance profiles are an 
+  instances used to build/test the image, needed to perform operations on the instance. Instance profiles are an
   optional parameter in a pipeline’s infrastructure settings, and by default will be generated with a set of minimal
   permissions. This role would have the "AmazonSSMManagedInstanceCore" and "EC2InstanceProfileForImageBuilder" managed
   policies attached. For container images, the "EC2InstanceProfileForImageBuilderECRContainerBuilds" managed policy will
