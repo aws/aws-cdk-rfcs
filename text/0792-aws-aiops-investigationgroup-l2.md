@@ -7,7 +7,7 @@ The service uses generative AI to create investigation notebooks that analyze op
 The AIOps L2 construct simplifies the creation of multiple resources required for AIOPs construct.
 It exposes functions for creating features with minimum code.
 It will help create required IAM Role, KMS Key, Resource Policy underneath, with customer only passing the content if needed.
-AIOps L1 construct only have one AIOps resources "InvestigationGroup" created, and all associated resources to grant permission and have supported configuration.
+AIOps L1 construct only have one AIOps resources "InvestigationGroup" created, which requires customer to create all associated resources and setup permission.
 
 ### A quick comparison between L1 and L2 AIOps constructs
 
@@ -34,60 +34,151 @@ AIOps L1 construct only have one AIOps resources "InvestigationGroup" created, a
 ----
 
 An Investigation Group serves as a container for organizing customer investigations, with an associated IAM role that defines AIOps backend service permissions.
-Investigation belongs to one investigation group, which customers can use to track progress of an incident.
-Investigation event refers to each telemetry that customer add to investigation.
-Both investigation and investigation event are called as investigation group related resources.
-The backend services assume this group role to perform AI analysis on customer data and generate hypotheses, functioning as a supportive operator for customers.
+Creating an investigation group is a one-time setup task for each Region in your account. It is a necessary task to be able to perform investigations.
+
+Settings in the investigation group help you centrally manage the common properties of your investigations, such as the following:
+
+* Who can access the investigations
+
+* Whether investigation data is encrypted with a customer managed AWS Key Management Service key.
+
+* How long investigations and their data are retained by default.
+
+Currently, you can have one investigation group in each Region in your account.
+Each investigation in a Region is a part of the investigation group in that Region
+
+To create an investigation group and set up CloudWatch investigations,
+you must be signed in to an IAM principal that has either the AIOpsConsoleAdminPolicy or the AdministratorAccess IAM policy attached,
+or to an account that has similar permissions.
 
 #### Create Investigation Group
-
-To create investigation group, it takes those parameters
-
-#### Required Parameters
-
-* **name** prop: A unique investigation group name  
-
-#### Optional Parameters
-
-* **role** prop: ARN of an existing role for the Investigation Group.
-If not specified, AIOps will create a default role with name `AIOpsAssistantRole`,
-and attach managed policy `AIOpsAssistantPolicy` to it, and add trust relationship from AIOps SPN.
-
-* **encryptionKey** prop: This is kms key to encrypt customer data during analysis. If not specified, AIOps will use AWS-managed key to encrypt.
-
-* **retentionInDays** prop: Retention period for all resources created under investigation group container. Min: 7 days, Max: 90 days (Default)
-
-* **chatbotNotificationChannels** prop: Array of Chatbot notification channels arns.
-AIOps would send investigation group related resources updates to those channels.
-
-* **isCloudTrailEventHistoryEnabled** prop: Flag to enable CloudTrail event history.  
-
-* **crossAccountConfigurations** prop: List of source account role ARNs for cross-account configurations.
-AIOps offer cross-account analysis, that AIOps choose one account as monitor account and others as source accounts.
-Monitor account would be able to create AIOps resources (Investigation Group and related resources),
-while source accounts grant monitor account permission to fetch data from them via source account role.
-Thus AIOps will do analysis on monitor account on all data fetched from monitor account and source accounts.
-Max of 25 cross account configuration are supported.
 
 Example
 
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    name: 'MyGroup',
-   role?: IRole
+   role?: IRole,
+   encryptionKey?: Ikey,
    chatbotNotificationChannels?: [
-      SNSTopicArn
+      snsTopic
    ],
-   encryptionKey?: Ikey
+   crossAccountConfigurations?: [
+      sourceAccountRole
+   ],
    isCloudTrailEventHistoryEnabled?: boolean,
    retentionInDays?: Duration,
-   removalPolicy?: RemovalPolicy.DESTROY
+   removalPolicy?: RemovalPolicy.DESTROY,
+   tagKeyBoundaries?: string[]
 });
 ```
+
+## Technical designs for this feature
+
+**Properties:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Optional</th>
+      <th>Documentation</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+        <td><code>Name</code></td>
+          <td><code>string</code></td>
+                  <td>No</td>
+                    <td>Provides a name for the investigation group.</td>
+            </tr>
+    <tr>
+    <tr>
+        <td><code>role</code></td>
+          <td><code>IRole</code></td>
+                  <td>Yes</td>
+                            <td>Specify the ARN of the IAM role that CloudWatch investigations will use when it gathers investigation data.
+                            The permissions in this role determine which of your resources that CloudWatch investigations will have access to during investigations.</td>
+            </tr>
+        <td><code>RetentionInDays</code></td>
+          <td><code>integer</code></td>
+                  <td>Yes</td>
+                            <td>Retention period for all resources created under investigation group container. Min: 7 days, Max: 90 days (Default)</td>
+            </tr>
+    <tr>
+        <td><code>encryptionKey</code></td>
+          <td><code>IKey</code></td>
+                  <td>Yes</td>
+                            <td>This is kms key to encrypt customer data during analysis. If not specified, AIOps will use AWS-managed key to encrypt.</td>
+            </tr>
+    <tr>
+        <td><code>chatbotNotificationChannels</code></td>
+          <td><code>string[]</code></td>
+                  <td>Yes</td>
+                            <td>Array of Chatbot notification channels arns.
+AIOps would send investigation group related resources updates to those channels.</td>
+            </tr>
+    <tr>
+        <td><code>tagKeyBoundaries</code></td>
+          <td><code>string[]</code></td>
+                  <td>Yes</td>
+                            <td>Enter the existing custom tag keys for custom applications in your system.
+Resource tags help CloudWatch investigations narrow the search space when it is unable to discover definite relationships between resources.
+For example, to discover that an Amazon ECS service depends on an Amazon RDS database,
+CloudWatch investigations can discover this relationship using data sources such as X-Ray and CloudWatch Application Signals.
+However, if you haven't deployed these features, CloudWatch investigations will attempt to identify possible relationships.
+Tag boundaries can be used to narrow the resources that will be discovered by CloudWatch investigations in these cases.
+You don't need to enter tags created by myApplications or AWS CloudFormation, because CloudWatch investigations can automatically detect those tags.</td>
+            </tr>
+    <tr>
+    <tr>
+        <td><code>IsCloudTrailEventHistoryEnabled</code></td>
+          <td><code>boolean</code></td>
+                  <td>Yes</td>
+                            <td>Flag to enable cloud trail history</td>
+            </tr>
+    <tr>
+        <td><code>crossAccountConfigurations</code></td>
+          <td><code>string[]</code></td>
+                  <td>Yes</td>
+                            <td>List of sourceRoleArn values that have been configured for cross-account access.</td>
+            </tr>
+  </tbody>
+</table>
+
+**Functions:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Static</th>
+      <th>Parameters</th>
+      <th>Return Type</th>
+      <th>Documentation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td><code>Constructor</code></td>
+          <td>No</td>
+                            <td><pre><code>scope: aws-cdk-lib.core.Construct
+id: string
+props: InvestigationGroupProps</code></pre></td>
+                  <td><code>void</code></td>
+                  <td><pre>The InvestigationGroup L2 construct that represents AWS::AIOps::InvestigationGroup CFN resource.
+            </tr>
+  </tbody>
+</table>
 
 #### Methods
 
 ##### To add a cross account configuration
+
+This will add a new source account role arn to the investigation group.
+It didn't validate if the source account role exist or not during investigation group creation.
+The source account role and monitor account role permissions needs to be setup separately. See [Cross-account investigations](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-cross-account.html)
 
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
@@ -95,7 +186,7 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 });
 
 group.addCrossAccountConfiguration({
-  sourceRoleArn: Arn
+  sourceAccountRole: Arn
 });
 ```
 
@@ -107,7 +198,7 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 });
 
 group.addChatbotNotification({
-  snsTopicArn: Arn
+  snsTopic: Arn
 });
 ```
 
@@ -119,8 +210,8 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 });
 
 const policy = new PolicyStatement({
-          actions: ['aiops:CreateInvestigation', 'aiops:CreateInvestigationEvent'],
-          principals: [new ServicePrincipal('aiops.alarms.cloudwatch.amazonaws.com')],
+          actions: ['aiops:*'],
+          principals: [new ServicePrincipal('<servicePrincipal>')],
           resources: ['*'],
           conditions: {
             StringEquals: {
@@ -129,4 +220,20 @@ const policy = new PolicyStatement({
           },
         });
 group.addToResourcePolicy(policy);
+```
+
+##### To grant create permission on identity
+
+Once the investigation group is created,
+customer needs the create permission to be able to add investigations and related resources under investigation group.
+This will grant create permissions of this investigation group resource to an IAM principal.
+
+`grantCreate(identity, objectsKeyPattern?, allowedActionPatterns?)`
+
+```typescript
+const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
+   name: 'MyGroup'
+});
+
+group.grantWrite(new ServicePrincipal("<servicePrincipal>"));
 ```
