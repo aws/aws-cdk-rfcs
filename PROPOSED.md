@@ -33,4 +33,6 @@
 [762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[Serverless ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/762)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
 [764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
 [785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/issues/785)||💡 proposed
+[789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/789)||💡 proposed
+[792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/issues/792)||💡 proposed
 <!--END_TABLE-->
