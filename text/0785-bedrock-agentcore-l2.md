@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @krokoko , @aws-rafams , @dineshSajwan
 * **Tracking Issue**: #785
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @alvazjor,
 
 The Amazon Bedrock AgentCore L2 construct simplifies the deployment and management of AI agents at scale by wrapping the AgentCore L1 constructs.
 It provides a high-level, object-oriented approach to creating and managing Amazon Bedrock AgentCore resources.
@@ -50,486 +50,61 @@ For more details please refer here [Amazon Bedrock AgentCore Documentation](http
 
 ## AgentCore Runtime
 
-Amazon Bedrock AgentCore Runtime is a secure, serverless runtime purpose-built for deploying and scaling dynamic AI agents and tools.
-It supports any open-source framework, giving developers complete flexibility in their choice of agent frameworks.
+The AgentCore Runtime construct enables you to deploy containerized agents on Amazon Bedrock AgentCore.
+This L2 construct simplifies runtime creation just pass your ECR repository name
+and the construct handles all the configuration with sensible defaults.
+Add endpoints with a single `addEndpoint()` call, and benefit from built-in validation that catches configuration errors at compile time rather than deployment.
 
-The Runtime L2 construct dramatically simplifies agent deployment for developers.
-With just a few lines of code, you can deploy production-ready agents without managing complex infrastructure.
-Simply pass your ECR repository or container image, and the construct automatically handles IAM roles, permissions, and configurations.
-What traditionally required hundreds of lines of CloudFormation now takes just a simple construct instantiation.
+### Creating a Runtime
 
-Endpoints provide addressable access points to specific versions of your AgentCore Runtime.
-The L2 construct makes endpoint management effortless with a single `addEndpoint()` call.
-Built-in validation catches configuration errors at compile time rather than deployment, saving developers hours of debugging.
-Each agent runtime in Amazon Bedrock AgentCore is automatically versioned, enabling seamless rollbacks and A/B testing.
+#### Option 1: Use an existing image in ECR
 
-### Creating a Runtime with ECR Repository
+Reference an image available within ECR.
 
 ```typescript
-import * as ecr from 'aws-cdk-lib/aws-ecr';
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
+import * as path from "path";
+import {
+  Runtime,
+  NetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/runtime/runtime";
 
-// Reference an existing ECR repository
-const agentEcr = ecr.Repository.fromRepositoryName(this, 'AgentRepo', 'my-agent-repo');
-
-// Create runtime using the ECR image
-const runtime = new bedrock.Runtime(this, 'MyAgentRuntime', {
-  agentRuntimeName: 'myAgent',
-  agentRuntimeArtifact: {
-    containerConfiguration: {
-      repository: agentEcr,
-      tag: 'latest',
-    },
-  },
+repository = new ecr.Repository(stack, "TestRepository", {
+  repositoryName: "test-agent-runtime",
 });
 
-// Grant ECR pull permissions
-agentEcr.grantPull(runtime.role!);
+const agentRuntimeArtifact = AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0");
+
+// Create runtime using the built image
+const runtime = new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+});
 
 // Add an endpoint for invocation
-const endpoint = runtime.addEndpoint('my_endpoint');
+const endpoint = runtime.addEndpoint("my_endpoint");
 ```
 
-### Creating a Runtime with Direct Image URI
+#### Option 2: Use a local asset
+
+Reference a local directory containing a Dockerfile.
+Images are built from a local Docker context directory (with a Dockerfile), uploaded to Amazon Elastic Container Registry (ECR) by the CDK toolkit, and can be naturally referenced in your CDK app.
 
 ```typescript
-const runtime = new bedrock.Runtime(this, 'MyAgentRuntime', {
-  agentRuntimeName: 'myAgent',
-  agentRuntimeArtifact: {
-    containerConfiguration: {
-      imageUri: '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-agent:v1.0.0',
-    },
-  },
-});
-```
+import * as path from "path";
 
-## Identity
-
-The Identity L2 constructs dramatically simplify credential management for developers working with Amazon Bedrock AgentCore.
-Instead of manually configuring token vaults and managing secrets, developers can create secure identity providers with just a few lines of code.
-The constructs automatically handle AWS Secrets Manager integration, token vault creation, and IAM permissions.
-What would typically require complex CloudFormation templates is now a simple object instantiation with intuitive properties.
-
-### API Key Identity
-
-```typescript
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a new API key identity
-const apiKeyIdentity = new bedrock.ApiKeyIdentity(this, 'MyApiKeyIdentity', {
-  name: 'my-api-key-provider',
-  apiKey: 'your-api-key-here',
-});
-
-// Import an existing API key identity
-const importedIdentity = bedrock.ApiKeyIdentity.fromApiKeyIdentityAttributes(
-  this,
-  'ImportedApiKeyIdentity',
-  {
-    name: 'existing-api-key-provider',
-    credentialProviderArn: 'arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/my-vault/apikeycredentialprovider/existing-provider',
-    apiKeySecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:api-key',
-  }
+const agentRuntimeArtifact = AgentRuntimeArtifact.fromAsset(
+  path.join(__dirname, "path to agent dockerfile directory")
 );
-```
 
-### OAuth Identity
-
-```typescript
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a Google OAuth2 identity
-const googleOAuthIdentity = new bedrock.OAuthIdentity(this, 'MyGoogleOAuthIdentity', {
-  name: 'my-google-oauth-provider',
-  oauthProvider: new bedrock.GoogleOauth2Config({
-    clientId: 'your-google-client-id',
-    clientSecret: 'your-google-client-secret',
-  }),
-});
-
-// Create a custom OAuth2 identity
-const customOAuthIdentity = new bedrock.OAuthIdentity(this, 'MyCustomOAuthIdentity', {
-  name: 'my-custom-oauth-provider',
-  oauthProvider: new bedrock.CustomOauth2Config({
-    clientId: 'your-custom-client-id',
-    clientSecret: 'your-custom-client-secret',
-    oauthDiscovery: {
-      authorizationServerMetadata: {
-        authorizationEndpoint: 'https://your-auth-server.com/oauth/authorize',
-        issuer: 'https://your-auth-server.com',
-        tokenEndpoint: 'https://your-auth-server.com/oauth/token',
-        responseTypes: ['code', 'token'],
-      },
-    },
-  }),
+const runtime = new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
 });
 ```
 
-### Supported OAuth Providers
+### Invoking the Runtime
 
-- **GoogleOauth2Config**: Google OAuth2 provider
-- **GithubOauth2Config**: GitHub OAuth2 provider  
-- **SlackOauth2Config**: Slack OAuth2 provider
-- **SalesforceOauth2Config**: Salesforce OAuth2 provider
-- **MicrosoftOauth2Config**: Microsoft OAuth2 provider
-- **CustomOauth2Config**: Custom OAuth2 provider with configurable discovery
-
-## Memory
-
-The Memory L2 construct transforms the complex task of implementing agent memory into a simple, declarative configuration.
-Developers can enable sophisticated memory capabilities with just a few lines of code, without managing underlying storage or retrieval systems.
-The construct automatically handles memory persistence, indexing, and retrieval strategies through an intuitive object-oriented interface.
-Built-in strategies like summarization, semantic memory, and user preferences are available as simple enum selections.
-What traditionally required custom memory implementations and complex state management now takes just a single construct instantiation.
-
-### Basic Memory Creation
-
-```typescript
-import * as cdk from 'aws-cdk-lib';
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a basic memory with default settings
-const memory = new bedrock.Memory(this, 'MyMemory', {
-  name: 'my_memory',
-  description: 'A memory for storing user interactions',
-  expirationDays: cdk.Duration.days(90),
-});
-```
-
-### Memory with Built-in Strategies
-
-```typescript
-// Create memory with built-in strategies
-const memory = new bedrock.Memory(this, 'MyMemory', {
-  name: 'my_memory',
-  description: 'Memory with built-in strategies',
-  expirationDays: cdk.Duration.days(90),
-  memoryStrategies: [
-    bedrock.MemoryStrategy.builtinSummarization,
-    bedrock.MemoryStrategy.builtinSemantic,
-    bedrock.MemoryStrategy.builtinUserPreference,
-  ],
-});
-```
-
-### Memory Strategy Types
-
-#### Built-in Strategies
-
-1. **Summarization Strategy** (`MemoryStrategy.BUILTIN_SUMMARIZATION`)
-   - Extracts concise summaries to preserve critical context and key insights
-   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}/sessions/{sessionId}`
-
-2. **Semantic Memory Strategy** (`MemoryStrategy.BUILTIN_SEMANTIC`)
-   - Extracts general factual knowledge, concepts and meanings from raw conversations
-   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
-
-3. **User Preference Strategy** (`MemoryStrategy.BUILTIN_USER_PREFERENCE`)
-   - Extracts user behavior patterns from raw conversations
-   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
-
-#### Custom Memory Strategies
-
-```typescript
-// Create a custom semantic memory strategy
-const customSemanticStrategy = bedrock.MemoryStrategy.fromCustomSemanticOverride({
-  name: 'custom-semantic-strategy',
-  description: 'Custom semantic memory strategy',
-  type: bedrock.MemoryStrategyType.SEMANTIC,
-  namespaces: ['/custom/strategies/{memoryStrategyId}/actors/{actorId}'],
-  customConsolidation: {
-    model: bedrock.FoundationModel.fromFoundationModelId(
-      this, 'ConsolidationModel', 'anthropic.claude-3-sonnet-20240229-v1:0'
-    ),
-    customPrompt: 'Custom consolidation prompt for semantic memory',
-  },
-  customExtraction: {
-    model: bedrock.FoundationModel.fromFoundationModelId(
-      this, 'ExtractionModel', 'anthropic.claude-3-sonnet-20240229-v1:0'
-    ),
-    customPrompt: 'Custom extraction prompt for semantic memory',
-  },
-});
-
-const memory = new bedrock.Memory(this, 'MyMemory', {
-  name: 'my-custom-memory',
-  description: 'Memory with custom strategy',
-  expirationDays: cdk.Duration.days(90),
-  memoryStrategies: [customSemanticStrategy],
-});
-```
-
-## Browser Tool
-
-The Browser L2 construct makes web automation accessible to developers with minimal configuration overhead.
-Instead of managing browser infrastructure, network configurations, and recording setups manually, developers can deploy a cloud-based browser.
-Simple property settings replace complex infrastructure management.
-The construct automatically handles browser provisioning, network isolation, and optional recording to S3.
-IAM permissions are simplified through helper methods like `grantRead()` and `grantUse()`, eliminating complex policy writing.
-What would require extensive browser infrastructure setup is now just a few lines of declarative code.
-
-### Basic Browser Creation
-
-```typescript
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a basic browser with public network access
-const browser = new bedrock.Browser(this, 'MyBrowser', {
-  name: 'my_browser',
-  description: 'A browser for web automation',
-  networkConfiguration: {
-    networkMode: bedrock.BrowserNetworkMode.PUBLIC,
-  },
-});
-```
-
-### Browser with Recording Configuration
-
-```typescript
-import * as s3 from 'aws-cdk-lib/aws-s3';
-
-// Create an S3 bucket for recordings
-const recordingBucket = new s3.Bucket(this, 'RecordingBucket', {
-  bucketName: 'my-browser-recordings',
-  removalPolicy: cdk.RemovalPolicy.DESTROY,
-});
-
-// Create browser with recording enabled
-const browser = new bedrock.Browser(this, 'MyBrowser', {
-  name: 'my_browser',
-  description: 'Browser with recording enabled',
-  networkConfiguration: {
-    networkMode: bedrock.BrowserNetworkMode.PUBLIC,
-  },
-  recordingConfig: {
-    enabled: true,
-    s3Location: {
-      bucketName: recordingBucket.bucketName,
-      objectKey: 'browser-recordings/',
-    },
-  },
-});
-```
-
-### Browser IAM Permissions
-
-```typescript
-import * as iam from 'aws-cdk-lib/aws-iam';
-
-const browser = new bedrock.Browser(this, 'MyBrowser', {
-  name: 'my_browser',
-  description: 'Browser for web automation',
-  networkConfiguration: {
-    networkMode: bedrock.BrowserNetworkMode.PUBLIC,
-  },
-});
-
-// Create a role that needs access to the browser
-const userRole = new iam.Role(this, 'UserRole', {
-  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-});
-
-// Grant read permissions (Get and List actions)
-browser.grantRead(userRole);
-
-// Grant use permissions (Start, Update, Stop actions)
-browser.grantUse(userRole);
-```
-
-## Code Interpreter Tool
-
-The Code Interpreter L2 construct simplifies secure code execution for AI agents through an elegant object-oriented interface.
-Developers can deploy isolated Python execution environments with just a constructor call and network mode selection.
-The construct automatically manages sandbox isolation, resource limits, and security boundaries without manual configuration.
-Network modes are easily toggled between public and sandbox through simple enum values rather than complex networking setup.
-What traditionally required careful security configuration and environment isolation now takes just a single construct with clear properties.
-
-### Basic Code Interpreter Creation
-
-```typescript
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a basic code interpreter with public network access
-const codeInterpreter = new bedrock.CodeInterpreter(this, 'MyCodeInterpreter', {
-  name: 'my_code_interpreter',
-  description: 'A code interpreter for Python execution',
-  networkConfiguration: {
-    networkMode: bedrock.CodeInterpreterNetworkMode.PUBLIC,
-  },
-});
-```
-
-### Code Interpreter with Sandbox Network Mode
-
-```typescript
-// Create code interpreter with sandbox network mode (isolated)
-const codeInterpreter = new bedrock.CodeInterpreter(this, 'MyCodeInterpreter', {
-  name: 'my_sandbox_interpreter',
-  description: 'Code interpreter with isolated network access',
-  networkConfiguration: {
-    networkMode: bedrock.CodeInterpreterNetworkMode.SANDBOX,
-  },
-});
-```
-
-### Network Modes
-
-1. **Public Network Mode** (`CodeInterpreterNetworkMode.PUBLIC`)
-   - Allows internet access for package installation and external API calls
-   - Suitable for development and testing environments
-   - Enables downloading Python packages from PyPI
-
-2. **Sandbox Network Mode** (`CodeInterpreterNetworkMode.SANDBOX`)
-   - Isolated network environment with no internet access
-   - Suitable for production environments with strict security requirements
-   - Only allows access to pre-installed packages and local resources
-
-## Gateway
-
-The Gateway L2 construct revolutionizes how developers expose tools and APIs to their AI agents.
-With just a few lines of code, developers can transform existing APIs, Lambda functions, and services into agent-compatible tools.
-The construct automatically handles protocol configurations, authentication, and tool discovery through an intuitive object model.
-Complex MCP protocol setup, JWT authorization, and KMS encryption are reduced to simple property configurations.
-What would typically require extensive API gateway configuration and tool adaptation is now a straightforward construct instantiation.
-
-### Basic Gateway Creation
-
-```typescript
-import { bedrock } from 'aws-cdk-lib/aws-bedrock-agentcore';
-
-// Create a basic gateway with default MCP protocol and Cognito authorizer
-const gateway = new bedrock.Gateway(this, 'MyGateway', {
-  name: 'my-gateway',
-});
-```
-
-### Gateway with Custom Configuration
-
-```typescript
-import * as kms from 'aws-cdk-lib/aws-kms';
-
-// Create a KMS key for encryption
-const encryptionKey = new kms.Key(this, 'GatewayEncryptionKey', {
-  enableKeyRotation: true,
-  description: 'KMS key for gateway encryption',
-});
-
-// Create gateway with custom configuration
-const gateway = new bedrock.Gateway(this, 'MyGateway', {
-  name: 'my-encrypted-gateway',
-  description: 'Gateway with KMS encryption',
-  protocolConfiguration: new bedrock.McpProtocolConfiguration({
-    instructions: 'Use this gateway to connect to external MCP tools',
-    searchType: bedrock.McpSearchType.SEMANTIC,
-    supportedVersions: ['2024-12-01'],
-  }),
-  authorizerConfiguration: new bedrock.CustomJwtAuthorizerConfiguration({
-    discoveryUrl: 'https://auth.example.com/.well-known/openid-configuration',
-    allowedAudience: ['my-app'],
-    allowedClients: ['my-client-id'],
-  }),
-  kmsKey: encryptionKey,
-  exceptionLevel: bedrock.GatewayExceptionLevel.DEBUG,
-});
-```
-
-## Gateway Target
-
-Gateway Targets define endpoints that a gateway can connect to, with support for different target types and credential providers.
-
-### OpenAPI Schema Target
-
-```typescript
-const target = new bedrock.GatewayTarget(this, 'MyTarget', {
-  name: 'my-api-target',
-  description: 'Target for external API integration',
-  gatewayIdentifier: gateway.gatewayId,
-  targetConfiguration: new bedrock.OpenApiSchemaMcpTargetConfiguration({
-    schema: 'https://api.example.com/openapi.json',
-    version: '3.0.0',
-    additionalConfig: {
-      'baseUrl': 'https://api.example.com',
-    },
-  }),
-  credentialProviderConfiguration: new bedrock.ApiKeyCredentialProviderConfiguration({
-    providerArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:api-key',
-    credentialLocation: 'HEADER',
-    credentialParameterName: 'X-API-Key',
-  }),
-});
-```
-
-### Lambda Target with Tool Schema
-
-```typescript
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-
-// Create a Lambda function
-const lambdaFunction = new lambda.Function(this, 'MyFunction', {
-  runtime: lambda.Runtime.NODEJS_22_X,
-  handler: 'index.handler',
-  code: lambda.Code.fromInline(`
-    exports.handler = async (event) => {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Hello from Lambda!' })
-      };
-    };
-  `),
-});
-
-// Create a gateway target with Lambda
-const target = new bedrock.GatewayTarget(this, 'MyLambdaTarget', {
-  name: 'my-lambda-target',
-  description: 'Target for Lambda function integration',
-  gatewayIdentifier: gateway.gatewayId,
-  targetConfiguration: new bedrock.LambdaMcpTargetConfiguration({
-    lambda: lambdaFunction,
-    toolSchema: new bedrock.InlinePayloadToolSchemaConfiguration({
-      payload: [
-        {
-          name: 'hello_world',
-          description: 'A simple hello world tool',
-          inputSchema: {
-            type: bedrock.SchemaDefinitionType.OBJECT,
-            description: 'Input schema for hello world tool',
-            properties: {
-              name: {
-                type: bedrock.SchemaDefinitionType.STRING,
-                description: 'The name to greet'
-              }
-            },
-            required: ['name']
-          },
-        }
-      ]
-    }),
-  }),
-  credentialProviderConfiguration: new bedrock.GatewayIamRoleCredentialProviderConfiguration({
-    role: executionRole,
-  }),
-});
-```
-
-### Target Configuration Types
-
-1. **OpenAPI Schema Target** (`OpenApiSchemaMcpTargetConfiguration`)
-   - Connects to REST APIs using OpenAPI specifications
-   - Supports OAUTH and API_KEY credential providers
-
-2. **Smithy Model Target** (`SmithyModelMcpTargetConfiguration`)
-   - Connects to services using Smithy model definitions
-   - Supports OAUTH and API_KEY credential providers
-
-3. **Lambda Target** (`LambdaMcpTargetConfiguration`)
-   - Connects to AWS Lambda functions
-   - Supports GATEWAY_IAM_ROLE credential provider only
-
-## Invoking AgentCore Runtime
-
-Once you've deployed your agent using the Runtime construct, you can invoke it using the AWS SDK:
-
-### Python Example
+#### Python
 
 ```python
 import boto3
@@ -548,24 +123,1468 @@ for event in response.get("response", []):
     print(event.decode('utf-8'))
 ```
 
-### JavaScript Example
+#### JavaScript
 
 ```javascript
-import { BedrockAgentCoreClient, InvokeAgentRuntimeCommand } from '@aws-sdk/client-bedrock-agentcore';
+import {
+  BedrockAgentCoreClient,
+  InvokeAgentRuntimeCommand,
+} from "@aws-sdk/client-bedrock-agentcore";
 
-const client = new BedrockAgentCoreClient({ region: 'us-east-1' });
+const client = new BedrockAgentCoreClient({ region: "us-east-1" });
 
-const response = await client.send(new InvokeAgentRuntimeCommand({
+const response = await client.send(
+  new InvokeAgentRuntimeCommand({
     agentRuntimeArn: "arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/myAgent-abc123",
     qualifier: "my_endpoint",
-    payload: JSON.stringify({ prompt: "Your question" })
-}));
+    payload: JSON.stringify({ prompt: "Your question" }),
+  })
+);
 
 // Process response
 for await (const event of response.response) {
-    console.log(new TextDecoder().decode(event));
+  console.log(new TextDecoder().decode(event));
 }
 ```
+
+## Identity
+
+The Identity constructs provide a high-level interface for creating and managing credential providers in Amazon Bedrock AgentCore.
+These constructs handle the creation, configuration, and lifecycle management of different types of identity providers.
+
+### API Key Credential Provider
+
+The `ApiKeyIdentity` construct enables you to create API key credential providers for Amazon Bedrock AgentCore. This construct automatically handles the secure storage of API keys in AWS Secrets Manager and provides a clean interface for managing API key-based authentication.
+
+#### Creating an API Key Identity
+
+```typescript
+import { ApiKeyIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/api-key-identity";
+
+// Create a new API key identity
+const apiKeyIdentity = new ApiKeyIdentity(this, "MyApiKeyIdentity", {
+  name: "my-api-key-provider",
+  apiKey: "your-api-key-here",
+});
+```
+
+#### Importing an Existing API Key Identity
+
+```typescript
+import { ApiKeyIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/api-key-identity";
+
+// Import an existing API key identity
+const importedIdentity = ApiKeyIdentity.fromApiKeyIdentityAttributes(
+  this,
+  "ImportedApiKeyIdentity",
+  {
+    name: "existing-api-key-provider",
+    credentialProviderArn:
+      "arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/my-vault/apikeycredentialprovider/existing-provider",
+    apiKeySecretArn:
+      "arn:aws:secretsmanager:us-east-1:123456789012:secret:bedrock-agentcore-api-key-secret",
+  }
+);
+```
+
+#### Using with Gateway Credential Provider Configuration
+
+```typescript
+import { ApiKeyIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/api-key-identity";
+import { ApiKeyCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+
+// Create API key identity
+const apiKeyIdentity = new ApiKeyIdentity(this, "MyApiKeyIdentity", {
+  name: "my-api-key-provider",
+  apiKey: "your-api-key-here",
+});
+
+// Use with gateway credential provider configuration
+const credentialProviderConfig = new ApiKeyCredentialProviderConfiguration({
+  provider: apiKeyIdentity,
+});
+```
+
+#### Using OAuth Identity with Gateway Credential Provider Configuration
+
+```typescript
+import { OAuthIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-identity";
+import { GoogleOauth2Config } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-provider";
+import { OAuthCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+
+// Create OAuth identity
+const oauthIdentity = new OAuthIdentity(this, "MyOAuthIdentity", {
+  name: "my-oauth-provider",
+  oauthProvider: new GoogleOauth2Config({
+    clientId: "your-google-client-id",
+    clientSecret: "your-google-client-secret",
+  }),
+});
+
+// Use with gateway credential provider configuration
+const oauthCredentialProviderConfig = new OAuthCredentialProviderConfiguration({
+  provider: oauthIdentity,
+});
+```
+
+#### Properties
+
+| Property                | Type                   | Description                                  |
+| ----------------------- | ---------------------- | -------------------------------------------- |
+| `name`                  | `string`               | The name of the API key credential provider  |
+| `apiKey`                | `string`               | The API key value to be stored securely      |
+| `credentialProviderArn` | `string`               | The ARN of the created credential provider   |
+| `apiKeySecretArn`       | `string`               | The ARN of the secret containing the API key |
+| `identityType`          | `IdentityType.API_KEY` | The type of identity (always API_KEY)        |
+
+### OAuth 2 Credential Provider
+
+The `OAuthIdentity` construct enables you to create OAuth2 credential providers for Amazon Bedrock AgentCore. This construct supports multiple OAuth2 providers including Google, GitHub, Slack, Salesforce, Microsoft, and custom OAuth2 providers.
+
+#### Creating a Standard OAuth Identity
+
+```typescript
+import { OAuthIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-identity";
+import { GoogleOauth2Config } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-provider";
+
+// Create a Google OAuth2 identity
+const googleOAuthIdentity = new OAuthIdentity(this, "MyGoogleOAuthIdentity", {
+  name: "my-google-oauth-provider",
+  oauthProvider: new GoogleOauth2Config({
+    clientId: "your-google-client-id",
+    clientSecret: "your-google-client-secret",
+  }),
+});
+
+// Create a GitHub OAuth2 identity
+import { GithubOauth2Config } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-provider";
+
+const githubOAuthIdentity = new OAuthIdentity(this, "MyGithubOAuthIdentity", {
+  name: "my-github-oauth-provider",
+  oauthProvider: new GithubOauth2Config({
+    clientId: "your-github-client-id",
+    clientSecret: "your-github-client-secret",
+  }),
+});
+```
+
+#### Creating a Custom OAuth Identity
+
+```typescript
+import { OAuthIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-identity";
+import { CustomOauth2Config } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-provider";
+
+// Create a custom OAuth2 identity with authorization server metadata
+const customOAuthIdentity = new OAuthIdentity(this, "MyCustomOAuthIdentity", {
+  name: "my-custom-oauth-provider",
+  oauthProvider: new CustomOauth2Config({
+    clientId: "your-custom-client-id",
+    clientSecret: "your-custom-client-secret",
+    oauthDiscovery: {
+      authorizationServerMetadata: {
+        authorizationEndpoint: "https://your-auth-server.com/oauth/authorize",
+        issuer: "https://your-auth-server.com",
+        tokenEndpoint: "https://your-auth-server.com/oauth/token",
+        responseTypes: ["code", "token"],
+      },
+    },
+  }),
+});
+
+// Create a custom OAuth2 identity with discovery URL
+const customOAuthWithDiscoveryUrl = new OAuthIdentity(this, "MyCustomOAuthWithDiscovery", {
+  name: "my-custom-oauth-discovery-provider",
+  oauthProvider: new CustomOauth2Config({
+    clientId: "your-custom-client-id",
+    clientSecret: "your-custom-client-secret",
+    oauthDiscovery: {
+      discoveryUrl: "https://your-auth-server.com/.well-known/openid-configuration",
+    },
+  }),
+});
+```
+
+#### Importing an Existing OAuth Identity
+
+```typescript
+import { OAuthIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-identity";
+
+// Import an existing OAuth identity
+const importedOAuthIdentity = OAuthIdentity.fromOAuthIdentityAttributes(
+  this,
+  "ImportedOAuthIdentity",
+  {
+    name: "existing-oauth-provider",
+    credentialProviderArn:
+      "arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/my-vault/oauth2credentialprovider/existing-provider",
+    clientSecretArn:
+      "arn:aws:secretsmanager:us-east-1:123456789012:secret:bedrock-agentcore-oauth-secret",
+  }
+);
+```
+
+#### Available OAuth Provider Types
+
+The construct supports the following OAuth2 provider types:
+
+- **GoogleOauth2Config**: Google OAuth2 provider
+- **GithubOauth2Config**: GitHub OAuth2 provider
+- **SlackOauth2Config**: Slack OAuth2 provider
+- **SalesforceOauth2Config**: Salesforce OAuth2 provider
+- **MicrosoftOauth2Config**: Microsoft OAuth2 provider
+- **CustomOauth2Config**: Custom OAuth2 provider with configurable discovery
+
+#### Properties
+
+| Property                | Type                  | Description                                                                      |
+| ----------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `name`                  | `string`              | The name of the OAuth2 credential provider                                       |
+| `oauthProvider`         | `OAuthProviderConfig` | The OAuth2 provider configuration (GoogleOauth2Config, GithubOauth2Config, etc.) |
+| `credentialProviderArn` | `string`              | The ARN of the created credential provider                                       |
+| `clientSecretArn`       | `string`              | The ARN of the secret containing the client secret                               |
+| `identityType`          | `IdentityType.OAUTH`  | The type of identity (always OAUTH)                                              |
+
+#### Custom OAuth2 Configuration
+
+For custom OAuth2 providers, you can specify either:
+
+**Authorization Server Metadata:**
+
+```typescript
+oauthDiscovery: {
+  authorizationServerMetadata: {
+    authorizationEndpoint: 'https://your-auth-server.com/oauth/authorize',
+    issuer: 'https://your-auth-server.com',
+    tokenEndpoint: 'https://your-auth-server.com/oauth/token',
+    responseTypes: ['code', 'token'], // Optional
+  },
+}
+```
+
+**Discovery URL:**
+
+```typescript
+oauthDiscovery: {
+  discoveryUrl: 'https://your-auth-server.com/.well-known/openid-configuration',
+}
+```
+
+## Memory
+
+Memory is a critical component of intelligence. While Large Language Models (LLMs) have impressive capabilities, they lack persistent memory across conversations. Amazon Bedrock AgentCore Memory addresses this limitation by providing a managed service that enables AI agents to maintain context over time, remember important facts, and deliver consistent, personalized experiences.
+
+AgentCore Memory operates on two levels:
+
+- **Short-Term Memory**: Immediate conversation context and session-based information that provides continuity within a single interaction or closely related sessions.
+- **Long-Term Memory**: Persistent information extracted and stored across multiple conversations, including facts, preferences, and summaries that enable personalized experiences over time.
+
+When you interact with the memory via the `CreateEvent` API, you store interactions in Short-Term Memory (STM) instantly. These interactions can include everything from user messages, assistant responses, to tool actions.
+
+To write to long-term memory, you need to configure extraction strategies which define how and where to store information from conversations for future use. These strategies are asynchronously processed from raw events after every few turns based on the strategy that was selected. You can't create long term memory records directly, as they are extracted asynchronously by AgentCore Memory.
+
+#### Basic Memory Creation
+
+Below you can find how to configure a simple short-term memory (STM) with no long-term memory extraction strategies. Note how you set `expirationDays`, which defines the time the events will be stored in the short-term memory before they expire.
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import { Memory } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create a basic memory with default settings, no LTM strategies
+const memory = new Memory(this, "MyMemory", {
+  name: "my_memory",
+  description: "A memory for storing user interactions for a period of 90 days",
+  expirationDays: cdk.Duration.days(90),
+});
+```
+
+Basic Memory with Custom KMS Encryption
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as kms from "aws-cdk-lib/aws-kms";
+import { Memory } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create a custom KMS key for encryption
+const encryptionKey = new kms.Key(this, "MemoryEncryptionKey", {
+  enableKeyRotation: true,
+  description: "KMS key for memory encryption",
+});
+
+// Create memory with custom encryption
+const memory = new Memory(this, "MyMemory", {
+  name: "my_encrypted_memory",
+  description: "Memory with custom KMS encryption",
+  expirationDays: cdk.Duration.days(90),
+  kmsKey: encryptionKey,
+});
+```
+
+### LTM Memory Extraction Stategies
+
+If you need long-term memory for context recall across sessions, you can setup memory extraction strategies to extract the relevant memory from the raw events.
+
+Amazon Bedrock AgentCore Memory has different memory strategies for extracting and organizing information:
+
+- **Summarization**: to summarize interactions to preserve critical context and key insights.
+- **Semantic Memory**: to extract general factual knowledge, concepts and meanings from raw conversations using vector embeddings. This enables similarity-based retrieval of relevant facts and context.
+- **User Preferences**: to extract user behavior patterns from raw conversations.
+
+You can use built-in extraction strategies for quick setup, or create custom extraction strategies with specific models and prompt templates.
+
+### Memory with Built-in Strategies
+
+The library provides three built-in LTM strategies:
+
+1. **Summarization Strategy** (`MemoryStrategy.BUILT_IN_SUMMARIZATION`)
+
+   - Extracts concise summaries to preserve critical context and key insights
+   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}/sessions/{sessionId}`
+
+2. **Semantic Memory Strategy** (`MemoryStrategy.BUILT_IN_SEMANTIC`)
+
+   - Extracts general factual knowledge, concepts and meanings from raw conversations
+   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
+
+3. **User Preference Strategy** (`MemoryStrategy.BUILT_IN_USER_PREFERENCE`)
+   - Extracts user behavior patterns from raw conversations
+   - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import {
+  Memory,
+  MemoryStrategy,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create memory with built-in strategies
+const memory = new Memory(this, "MyMemory", {
+  name: "my_memory",
+  description: "Memory with built-in strategies",
+  expirationDays: cdk.Duration.days(90),
+  memoryStrategies: [
+    MemoryStrategy.BUILT_IN_SUMMARIZATION,
+    MemoryStrategy.BUILT_IN_SEMANTIC,
+    MemoryStrategy.BUILT_IN_USER_PREFERENCE,
+  ],
+});
+```
+
+### Memory with Built-in Strategies - Custom Namespace
+
+You can customise the namespace, i.e. where the memories are stored by using the following methods:
+
+1. **Summarization Strategy** (`MemoryStrategy.fromBuiltInUserPreference(props)`)
+1. **Semantic Memory Strategy** (`MemoryStrategy.fromBuiltInSemantic(props)`)
+1. **User Preference Strategy** (`MemoryStrategy.fromBuiltInSummarization(props)`)
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import {
+  Memory,
+  MemoryStrategy,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create memory with built-in strategies
+const memory = new Memory(this, "MyMemory", {
+  name: "my_memory",
+  description: "Memory with built-in strategies",
+  expirationDays: cdk.Duration.days(90),
+  memoryStrategies: [
+    MemoryStrategy.fromBuiltInUserPreference({
+        name: "CustomerPreferences"
+        namespaces: ["support/customer/{actorId}/preferences"]
+    }),
+    MemoryStrategy.fromBuiltInSemantic({
+        name: "CustomerSupportSemantic"
+        namespaces: ["support/customer/{actorId}/semantic"]
+    }),
+  ],
+});
+```
+
+### Custom Strategies
+
+You can also create custom memory strategies using your specified models and prompts. According to the strategy that you will be customizing, you will have to specify extraction and/or consolidation FMs and prompt templates to append to the system prompt of the memory strategy. You can do so by using:
+
+1. **Summarization Strategy** (`MemoryStrategy.fromCustomSummaryOverride(props)`)
+1. **Semantic Memory Strategy** (`MemoryStrategy.fromCustomSemanticOverride(props)`)
+1. **User Preference Strategy** (`MemoryStrategy.fromCustomUserPreferenceOverride(props)`)
+
+Since a custom strategy requires you to invoke certain FMs, you need a role with appropriate permissions. For that, you can:
+
+- Let the L2 construct create a minimum permission role for you when use L2 Bedrock Foundation Models.
+- Use a custom role with the overly permissive `AmazonBedrockAgentCoreMemoryBedrockModelInferenceExecutionRolePolicy` managed policy.
+- Use a custom role with your own custom policies.
+
+#### Memory with Custom Execution Role
+
+Keep in mind that memories that **do not** use custom strategies do not require a service role. So even if you provide it, it will be ignored as it will never be used.
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import { Memory } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create a custom execution role
+const executionRole = new iam.Role(this, "MemoryExecutionRole", {
+  assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName(
+      "AmazonBedrockAgentCoreMemoryBedrockModelInferenceExecutionRolePolicy"
+    ),
+  ],
+});
+
+// Create memory with custom execution role
+const memory = new Memory(this, "MyMemory", {
+  name: "my_memory",
+  description: "Memory with custom execution role",
+  expirationDays: cdk.Duration.days(90),
+  executionRole: executionRole,
+});
+```
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as bedrock from "@aws-cdk/aws-bedrock-alpha";
+import {
+  Memory,
+  MemoryStrategy,
+  MemoryStrategyType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/memory/memory";
+
+// Create a custom semantic memory strategy
+const customSemanticStrategy = MemoryStrategy.fromCustomSemanticOverride({
+  name: "custom-semantic-strategy",
+  description: "Custom semantic memory strategy",
+  namespaces: ["/custom/strategies/{memoryStrategyId}/actors/{actorId}"],
+  customConsolidation: {
+    model: "model_arn",
+    customPrompt: "Custom consolidation prompt for semantic memory",
+  },
+  customExtraction: {
+    model: "model_arn",
+    customPrompt: "Custom extraction prompt for semantic memory",
+  },
+});
+
+// Create memory with custom strategy
+const memory = new Memory(this, "MyMemory", {
+  name: "my-custom-memory",
+  description: "Memory with custom strategy",
+  expirationDays: cdk.Duration.days(90),
+  memoryStrategies: [customSemanticStrategy],
+});
+```
+
+### Memory Strategy Methods
+
+You can add new memory strategies to the memory construct using the `addMemoryStrategy()` method, for instance:
+
+```typescript
+// Create memory without initial strategies
+memory = new Memory(stack, "test-memory", {
+  name: "test_memory_add_strategy",
+  description: "A test memory for testing addMemoryStrategy method",
+  expirationDays: Duration.days(90),
+});
+
+// Add strategies after instantiation
+memory.addMemoryStrategy(MemoryStrategy.BUILT_IN_SUMMARIZATION);
+memory.addMemoryStrategy(MemoryStrategy.BUILT_IN_SEMANTIC);
+```
+
+## Browser Tool
+
+### Basic Browser Creation
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import {
+  Browser,
+  BrowserNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/browser";
+
+// Create a basic browser with public network access
+const browser = new Browser(this, "MyBrowser", {
+  name: "my_browser",
+  description: "A browser for web automation",
+  networkConfiguration: {
+    networkMode: BrowserNetworkMode.PUBLIC,
+  },
+});
+```
+
+### Browser with Recording Configuration
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import {
+  Browser,
+  BrowserNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/browser";
+
+// Create an S3 bucket for recordings
+const recordingBucket = new s3.Bucket(this, "RecordingBucket", {
+  bucketName: "my-browser-recordings",
+  removalPolicy: cdk.RemovalPolicy.DESTROY, // For demo purposes
+});
+
+// Create browser with recording enabled
+const browser = new Browser(this, "MyBrowser", {
+  name: "my_browser",
+  description: "Browser with recording enabled",
+  networkConfiguration: {
+    networkMode: BrowserNetworkMode.PUBLIC,
+  },
+  recordingConfig: {
+    enabled: true,
+    s3Location: {
+      bucketName: recordingBucket.bucketName,
+      objectKey: "browser-recordings/",
+    },
+  },
+});
+```
+
+### Browser with Custom Execution Role
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import {
+  Browser,
+  BrowserNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/browser";
+
+// Create a custom execution role
+const executionRole = new iam.Role(this, "BrowserExecutionRole", {
+  assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonBedrockAgentCoreBrowserExecutionRolePolicy"),
+  ],
+});
+
+// Create browser with custom execution role
+const browser = new Browser(this, "MyBrowser", {
+  name: "my_browser",
+  description: "Browser with custom execution role",
+  networkConfiguration: {
+    networkMode: BrowserNetworkMode.PUBLIC,
+  },
+  executionRole: executionRole,
+});
+```
+
+### Browser with S3 Recording and Permissions
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import {
+  Browser,
+  BrowserNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/browser";
+
+// Create an S3 bucket for recordings
+const recordingBucket = new s3.Bucket(this, "RecordingBucket", {
+  bucketName: "my-browser-recordings",
+  removalPolicy: cdk.RemovalPolicy.DESTROY, // For demo purposes
+});
+
+// Create browser with recording enabled
+const browser = new Browser(this, "MyBrowser", {
+  name: "my_browser",
+  description: "Browser with recording enabled",
+  networkConfiguration: {
+    networkMode: BrowserNetworkMode.PUBLIC,
+  },
+  recordingConfig: {
+    enabled: true,
+    s3Location: {
+      bucketName: recordingBucket.bucketName,
+      objectKey: "browser-recordings/",
+    },
+  },
+});
+
+// The browser construct automatically grants S3 permissions to the execution role
+// when recording is enabled, so no additional IAM configuration is needed
+```
+
+### Browser IAM Permissions
+
+The Browser construct provides convenient methods for granting IAM permissions:
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import {
+  Browser,
+  BrowserNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/browser";
+
+// Create a browser
+const browser = new Browser(this, "MyBrowser", {
+  name: "my_browser",
+  description: "Browser for web automation",
+  networkConfiguration: {
+    networkMode: BrowserNetworkMode.PUBLIC,
+  },
+});
+
+// Create a role that needs access to the browser
+const userRole = new iam.Role(this, "UserRole", {
+  assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+});
+
+// Grant read permissions (Get and List actions)
+browser.grantRead(userRole);
+
+// Grant use permissions (Start, Update, Stop actions)
+browser.grantUse(userRole);
+
+// Grant specific custom permissions
+browser.grant(userRole, "bedrock-agentcore:GetBrowserSession");
+```
+
+## Gateway
+
+The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateways, which serve as integration points between agents and external services.
+
+### Basic Gateway Creation
+
+If not provided, the protocol configuration defaults to MCP and the inbound auth configuration uses Cognito (it is automatically created on your behalf).
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+
+// Create a basic gateway with default MCP protocol and Cognito authorizer
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+});
+```
+
+### Protocol configuration
+
+Currently MCP is the only protocol available. To configure it, provide a McpProtocolConfiguration object to protocolConfiguration:
+
+- Instructions: provides the instructions for using the Model Context Protocol gateway. These instructions provide guidance on how to interact with the gateway.
+- Semantic search: enables intelligent tool discovery so that we are not limited by typical list tools limits (typically 100 or so). Our semantic search capability delivers contextually relevant tool subsets, significantly improving tool selection accuracy through focused, relevant results, inference performance with reduced token processing and overall orchestration efficiency and response times.
+- Supported versions: The supported versions of the Model Context Protocol. This field specifies which versions of the protocol the gateway can use.
+
+```typescript
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+});
+```
+
+### Inbound authorization
+
+Inbound authorization works with OAuth authorization, where the client application must authenticate with the OAuth authorizer before using the Gateway. Your client would receive an access token which is used at runtime.
+
+Before creating your Gateway, you need to set up inbound authorization to validate callers attempting to access targets through your Amazon Bedrock AgentCore Gateway. By default, if not provided, the construct will create and configure Cognito as the default identity provider (inbound Auth setup).
+
+You can configure a custom authorization provider by configuring the authorizerConfiguration property. You need to specify an OAuth discovery server and client IDs/audiences when you create the gateway. You can specify the following:
+
+- Discovery Url — String that must match the pattern ^.+/\.well-known/openid-configuration$ for OpenID Connect discovery URLs
+- At least one of the below options depending on the chosen identity provider.
+- Allowed audiences — List of allowed audiences for JWT tokens
+- Allowed clients — List of allowed client identifiers
+
+```typescript
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+```
+
+### Gateway with KMS Encryption
+
+You can provide a KMS key, and configure the authorizer as well as the protocol configuration.
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as kms from "aws-cdk-lib/aws-kms";
+import {
+  Gateway,
+  GatewayExceptionLevel,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a KMS key for encryption
+const encryptionKey = new kms.Key(this, "GatewayEncryptionKey", {
+  enableKeyRotation: true,
+  description: "KMS key for gateway encryption",
+});
+
+// Create gateway with KMS encryption
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-encrypted-gateway",
+  description: "Gateway with KMS encryption",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+  kmsKey: encryptionKey,
+  exceptionLevel: GatewayExceptionLevel.DEBUG,
+});
+```
+
+### Gateway with Custom Execution Role
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a custom execution role
+const executionRole = new iam.Role(this, "GatewayExecutionRole", {
+  assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonBedrockAgentCoreGatewayExecutionRolePolicy"),
+  ],
+});
+
+// Create gateway with custom execution role
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  description: "Gateway with custom execution role",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+  role: executionRole,
+});
+```
+
+### Gateway IAM Permissions
+
+The Gateway construct provides convenient methods for granting IAM permissions:
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a gateway
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  description: "Gateway for external service integration",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create a role that needs access to the gateway
+const userRole = new iam.Role(this, "UserRole", {
+  assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+});
+
+// Grant read permissions (Get and List actions)
+gateway.grantRead(userRole);
+
+// Grant manage permissions (Create, Update, Delete actions)
+gateway.grantManage(userRole);
+
+// Grant specific custom permissions
+gateway.grant(userRole, "bedrock-agentcore:GetGateway");
+```
+
+## Gateway Target
+
+After Creating gateways, you can add targets which define the tools that your gateway will host. Gateway supports multiple target types including Lambda functions and API specifications (either OpenAPI schemas or Smithy models). Gateway allows you to attach multiple targets to a Gateway and you can change the targets / tools attached to a gateway at any point. Each target can have its own credential provider attached enabling you to securely access targets whether they need IAM, API Key, or OAuth credentials. Note: the authorization grant flow (three-legged OAuth) is not supported as a target credential type.
+
+With this, Gateway becomes a single MCP URL enabling access to all of the relevant tools for an agent across myriad APIs. Let’s dive deeper into how to define each of the target types.
+
+### Targets types
+
+You can create the following targets types:
+
+- Lambda: targets allow you to connect your gateway to AWS Lambda functions that implement your tools. This is useful when you want to execute custom code in response to tool invocations.
+- OpenAPI (formerly known as Swagger): widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0 specifications for defining API targets.
+- Smithy: language for defining services and SDKs that works well with Gateway. Smithy models provide a more structured approach to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services. AgentCore Gateway supports built-in AWS service models only. Smithy models are restricted to AWS services and custom Smithy models for non-AWS services are not supported.
+
+> Note: For Smithy model targets that access AWS services, your Gateway's execution role needs permissions to access those services. For example, for a DynamoDB target, your execution role needs permissions to perform DynamoDB operations. This is not managed by the construct due to the large number of options.
+
+### Outbound auth
+
+Outbound authorization lets Amazon Bedrock AgentCore gateways securely access gateway targets on behalf of users authenticated and authorized during Inbound Auth.
+
+Similar to AWS resources or Lambda functions, you authenticate by using IAM credentials. With other resources, you can use OAuth 2LO or API keys. OAuth 2LO is a type of OAuth 2.0 where a client application accesses resources on it's behalf, instead of on behalf of the user. For more information, see OAuth 2LO.
+
+First, you register your client application with third-party providers and then create an outbound authorization with the client ID and secret. Then configure a gateway target with the outbound authorization that you created.
+
+To create an outbound auth, refer to the [Identity](#identity-1) section to create either an API Key identity or OAuth identity.
+
+### Api schema
+
+If you select a target of type OpenAPI or Smithy, there are three ways to provide an API schema for your target:
+
+- From a local asset file (requires binding to scope):
+
+```typescript
+import * as path from "path";
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+
+// When using ApiSchema.fromLocalAsset, you must bind the schema to a scope
+const schema = ApiSchema.fromLocalAsset(path.join(__dirname, "mySchema.yml"));
+schema.bind(this);
+```
+
+- From an inline schema:
+
+```typescript
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+
+const inlineSchema = ApiSchema.fromInline(`
+openapi: 3.0.3
+info:
+  title: Library API
+  version: 1.0.0
+paths:
+  /search:
+    get:
+      summary: Search for books
+      operationId: searchBooks
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+`);
+```
+
+- From an existing S3 file:
+
+```typescript
+import * as s3 from "aws-cdk-lib/aws-s3";
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+const s3Schema = ApiSchema.fromS3File(bucket, "schemas/action-group.yaml");
+```
+
+### Basic Gateway Target Creation
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { OpenApiSchemaMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+import { ApiKeyCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+import { ApiKeyIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/api-key-identity";
+import * as s3 from "aws-cdk-lib/aws-s3";
+
+// Create a gateway first
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create an API Key identity
+const apiKeyIdentity = new ApiKeyIdentity(this, "MyApiKeyIdentity", {
+  name: "my-api-key-provider",
+  apiKey: "your-api-key-here",
+});
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+const s3Schema = ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
+
+// Create a gateway target with OpenAPI Schema
+const target = new GatewayTarget(this, "MyTarget", {
+  name: "my-api-target",
+  description: "Target for external API integration",
+  gateway: gateway,
+  targetConfiguration: new OpenApiSchemaMcpTargetConfiguration(s3Schema),
+  credentialProviderConfigurations: [
+    new ApiKeyCredentialProviderConfiguration({
+      provider: apiKeyIdentity,
+      credentialLocation: "HEADER",
+      credentialParameterName: "X-API-Key",
+    }),
+  ],
+});
+```
+
+### Lambda Target with Tool Schema
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { LambdaMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import {
+  ToolSchema,
+  SchemaDefinitionType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/tool-schema";
+import { GatewayIamRoleCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a gateway first
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create a Lambda function
+const lambdaFunction = new lambda.Function(this, "MyFunction", {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  handler: "index.handler",
+  code: lambda.Code.fromInline(`
+        exports.handler = async (event) => {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: 'Hello from Lambda!' })
+            };
+        };
+    `),
+});
+
+// Create a gateway target with Lambda and tool schema
+const target = new GatewayTarget(this, "MyLambdaTarget", {
+  name: "my-lambda-target",
+  description: "Target for Lambda function integration",
+  gateway: gateway,
+  targetConfiguration: new LambdaMcpTargetConfiguration({
+    lambda: lambdaFunction,
+    toolSchema: ToolSchema.fromInline([
+      {
+        name: "hello_world",
+        description: "A simple hello world tool",
+        inputSchema: {
+          type: SchemaDefinitionType.OBJECT,
+          description: "Input schema for hello world tool",
+          properties: {
+            name: {
+              type: SchemaDefinitionType.STRING,
+              description: "The name to greet",
+            },
+          },
+          required: ["name"],
+        },
+        outputSchema: {
+          type: SchemaDefinitionType.OBJECT,
+          description: "Output schema for hello world tool",
+          properties: {
+            message: {
+              type: SchemaDefinitionType.STRING,
+              description: "The greeting message",
+            },
+          },
+        },
+      },
+    ]),
+  }),
+  credentialProviderConfigurations: [
+    new GatewayIamRoleCredentialProviderConfiguration({
+      role: new iam.Role(this, "GatewayTargetRole", {
+        assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "AmazonBedrockAgentCoreGatewayTargetExecutionRolePolicy"
+          ),
+        ],
+      }),
+    }),
+  ],
+});
+```
+
+### Smithy Model Target with OAuth
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { SmithyModelMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+import { OAuthCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+import { OAuthIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-identity";
+import { GoogleOauth2Config } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/oauth-provider";
+import * as s3 from "aws-cdk-lib/aws-s3";
+
+// Create a gateway first
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create an OAuth identity
+const oauthIdentity = new OAuthIdentity(this, "MyOAuthIdentity", {
+  name: "my-oauth-provider",
+  oauthProvider: new GoogleOauth2Config({
+    clientId: "your-google-client-id",
+    clientSecret: "your-google-client-secret",
+  }),
+});
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+// A Smithy model in JSON AST format
+const s3Schema = ApiSchema.fromS3File(bucket, "schemas/myschema.json");
+
+// Create a gateway target with Smithy Model and OAuth
+const target = new GatewayTarget(this, "MySmithyTarget", {
+  name: "my-smithy-target",
+  description: "Target for Smithy model integration",
+  gateway: gateway,
+  targetConfiguration: new SmithyModelMcpTargetConfiguration(s3Schema),
+  credentialProviderConfigurations: [
+    new OAuthCredentialProviderConfiguration({
+      provider: oauthIdentity,
+      scopes: ["read", "write"],
+      customParameters: {
+        audience: "https://api.example.com",
+        response_type: "code",
+      },
+    }),
+  ],
+});
+```
+
+### Complex Lambda Target with S3 Tool Schema
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { LambdaMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import { ToolSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/tool-schema";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import { GatewayIamRoleCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a gateway first
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create a Lambda function
+const lambdaFunction = new lambda.Function(this, "MyComplexFunction", {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  handler: "index.handler",
+  code: lambda.Code.fromInline(`
+        exports.handler = async (event) => {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ result: 'Complex operation completed' })
+            };
+        };
+    `),
+});
+
+// Create a gateway target with Lambda and S3 tool schema
+const target = new GatewayTarget(this, "MyComplexLambdaTarget", {
+  name: "my-complex-lambda-target",
+  description: "Target for complex Lambda function integration",
+  gateway: gateway,
+  targetConfiguration: new LambdaMcpTargetConfiguration({
+    lambda: lambdaFunction,
+    toolSchema: ToolSchema.fromS3File(
+      s3.Bucket.fromBucketName(this, "SchemasBucket", "my-schemas-bucket"),
+      "tools/complex-tool-schema.json",
+      "123456789012"
+    ),
+  }),
+  credentialProviderConfigurations: [
+    new GatewayIamRoleCredentialProviderConfiguration({
+      role: new iam.Role(this, "ComplexGatewayTargetRole", {
+        assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "AmazonBedrockAgentCoreGatewayTargetExecutionRolePolicy"
+          ),
+        ],
+      }),
+    }),
+  ],
+});
+```
+
+### Lambda Target with Local Asset Tool Schema
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as path from "path";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { LambdaMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import { ToolSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/tool-schema";
+import { GatewayIamRoleCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+
+// Create a gateway first
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+  }),
+});
+
+// Create a Lambda function
+const lambdaFunction = new lambda.Function(this, "MyLambdaFunction", {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  handler: "index.handler",
+  code: lambda.Code.fromInline(`
+    exports.handler = async (event) => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Hello from Lambda!" })
+      };
+    };
+  `),
+});
+
+// Create a target with local asset tool schema
+const target = new GatewayTarget(this, "MyLocalAssetLambdaTarget", {
+  name: "my-local-asset-lambda-target",
+  description: "Target for Lambda function with local asset tool schema",
+  gateway: gateway,
+  targetConfiguration: new LambdaMcpTargetConfiguration({
+    lambda: lambdaFunction,
+    toolSchema: ToolSchema.fromLocalAsset(
+      path.join(__dirname, "schemas", "my-tool-schema.json")
+    ),
+  }),
+  credentialProviderConfigurations: [
+    new GatewayIamRoleCredentialProviderConfiguration({
+      role: new iam.Role(this, "LocalAssetGatewayTargetRole", {
+        assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "AmazonBedrockAgentCoreGatewayTargetExecutionRolePolicy"
+          ),
+        ],
+      }),
+    }),
+  ],
+});
+```
+
+### Gateway Target IAM Permissions
+
+The Gateway Target construct provides convenient methods for granting IAM permissions:
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import { GatewayTarget } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target";
+import { OpenApiSchemaMcpTargetConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/target-configuration";
+import { ApiSchema } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/api-schema";
+import { ApiKeyCredentialProviderConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/credential-provider";
+import { Gateway } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/gateway";
+import {
+  McpProtocolConfiguration,
+  McpSearchType,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/protocol";
+import { CustomJwtAuthorizerConfiguration } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/gateway/authorizer";
+import { ApiKeyIdentity } from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/identity/api-key-identity";
+import * as s3 from "aws-cdk-lib/aws-s3";
+
+// Create a gateway and target
+const gateway = new Gateway(this, "MyGateway", {
+  name: "my-gateway",
+  protocolConfiguration: new McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: McpSearchType.SEMANTIC,
+    supportedVersions: ["2024-12-01"],
+  }),
+  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
+
+// Create an API Key identity
+const apiKeyIdentity = new ApiKeyIdentity(this, "MyApiKeyIdentity", {
+  name: "my-api-key-provider",
+  apiKey: "your-api-key-here",
+});
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+const s3Schema = ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
+
+const target = new GatewayTarget(this, "MyTarget", {
+  name: "my-target",
+  gateway: gateway,
+  targetConfiguration: new OpenApiSchemaMcpTargetConfiguration(s3Schema),
+  credentialProviderConfigurations: [
+    new ApiKeyCredentialProviderConfiguration({
+      provider: apiKeyIdentity,
+      credentialLocation: "HEADER",
+      credentialParameterName: "X-API-Key",
+    }),
+  ],
+});
+
+// Create a role that needs access to the gateway target
+const userRole = new iam.Role(this, "UserRole", {
+  assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+});
+
+// Grant read permissions (Get and List actions)
+target.grantRead(userRole);
+
+// Grant manage permissions (Create, Update, Delete actions)
+target.grantManage(userRole);
+
+// Grant specific custom permissions
+target.grant(userRole, "bedrock-agentcore:GetGatewayTarget");
+```
+
+### Target Configuration Types
+
+The Gateway Target construct supports three MCP target configuration types:
+
+1. **OpenAPI Schema Target** (`OpenApiSchemaMcpTargetConfiguration`)
+
+   - Connects to REST APIs using OpenAPI specifications
+   - Supports OAUTH and API_KEY credential providers
+   - Ideal for integrating with external REST services
+
+2. **Smithy Model Target** (`SmithyModelMcpTargetConfiguration`)
+
+   - Connects to services using Smithy model definitions
+   - Supports OAUTH and API_KEY credential providers
+   - Ideal for AWS service integrations
+
+3. **Lambda Target** (`LambdaMcpTargetConfiguration`)
+   - Connects to AWS Lambda functions
+   - Supports GATEWAY_IAM_ROLE credential provider only
+   - Ideal for custom serverless function integration
+
+## Code Interpreter
+
+### Basic Code Interpreter Creation
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import {
+  CodeInterpreter,
+  CodeInterpreterNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/code-interpreter";
+
+// Create a basic code interpreter with public network access
+const codeInterpreter = new CodeInterpreter(this, "MyCodeInterpreter", {
+  name: "my_code_interpreter",
+  description: "A code interpreter for Python execution",
+  networkConfiguration: {
+    networkMode: CodeInterpreterNetworkMode.PUBLIC,
+  },
+});
+```
+
+### Code Interpreter with Sandbox Network Mode
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import {
+  CodeInterpreter,
+  CodeInterpreterNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/code-interpreter";
+
+// Create code interpreter with sandbox network mode (isolated)
+const codeInterpreter = new CodeInterpreter(this, "MyCodeInterpreter", {
+  name: "my_sandbox_interpreter",
+  description: "Code interpreter with isolated network access",
+  networkConfiguration: {
+    networkMode: CodeInterpreterNetworkMode.SANDBOX,
+  },
+});
+```
+
+### Code Interpreter with Custom Execution Role
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import {
+  CodeInterpreter,
+  CodeInterpreterNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/code-interpreter";
+
+// Create a custom execution role
+const executionRole = new iam.Role(this, "CodeInterpreterExecutionRole", {
+  assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
+});
+
+// Create code interpreter with custom execution role
+const codeInterpreter = new CodeInterpreter(this, "MyCodeInterpreter", {
+  name: "my_code_interpreter",
+  description: "Code interpreter with custom execution role",
+  networkConfiguration: {
+    networkMode: CodeInterpreterNetworkMode.PUBLIC,
+  },
+  executionRole: executionRole,
+});
+```
+
+### Code Interpreter IAM Permissions
+
+The Code Interpreter construct provides convenient methods for granting IAM permissions:
+
+```typescript
+import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
+import {
+  CodeInterpreter,
+  CodeInterpreterNetworkMode,
+} from "@krokoko/agentcore-cdk-constructs/lib/cdk-lib/bedrock-agentcore/tools/code-interpreter";
+
+// Create a code interpreter
+const codeInterpreter = new CodeInterpreter(this, "MyCodeInterpreter", {
+  name: "my_code_interpreter",
+  description: "Code interpreter for Python execution",
+  networkConfiguration: {
+    networkMode: CodeInterpreterNetworkMode.PUBLIC,
+  },
+});
+
+// Create a role that needs access to the code interpreter
+const userRole = new iam.Role(this, "UserRole", {
+  assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+});
+
+// Grant read permissions (Get and List actions)
+codeInterpreter.grantRead(userRole);
+
+// Grant use permissions (Start, Invoke, Stop actions)
+codeInterpreter.grantUse(userRole);
+
+// Grant specific custom permissions
+codeInterpreter.grant(userRole, "bedrock-agentcore:GetCodeInterpreterSession");
+```
+
+### Code Interpreter Network Modes
+
+The Code Interpreter construct supports two network modes:
+
+1. **Public Network Mode** (`CodeInterpreterNetworkMode.PUBLIC`)
+
+   - Allows internet access for package installation and external API calls
+   - Suitable for development and testing environments
+   - Enables downloading Python packages from PyPI
+
+2. **Sandbox Network Mode** (`CodeInterpreterNetworkMode.SANDBOX`)
+   - Isolated network environment with no internet access
+   - Suitable for production environments with strict security requirements
+   - Only allows access to pre-installed packages and local resources
 
 ---
 
