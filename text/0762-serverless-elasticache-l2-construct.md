@@ -27,12 +27,12 @@
 Required fields example:
 
 ```ts
-new ServerlessCache(this, 'DefaultCache', {
-    vpc: vpc, 
+new ServerlessCache(this, 'ServerlessCache', {
+  vpc: vpc,
 });
 ```
 
-Optional override example (a cache using all possible properties):
+Optional override example (a cache using all possible construct props):
 
 ```ts
 const vpc = new ec2.Vpc(this, 'Vpc', {
@@ -52,33 +52,35 @@ const securityGroup = new ec2.SecurityGroup(this, 'SecurityGroup', {
     vpc,
 });
 
-new ServerlessCache(this, 'FullCache', {
-    engine: CacheEngine.REDIS_DEFAULT,
-    serverlessCacheName: 'full-test-cache',
-    description: 'Test cache with all properties',
-    cacheUsageLimits: {
-        dataStorageMinimumSize: Size.gibibytes(1),
-        dataStorageMaximumSize: Size.gibibytes(10),
-        ecpuPerSecondMinimum: 1000,
-        ecpuPerSecondMaximum: 5000
-    },
-    backup: {
-      // either create a new cache
-      dailySnapshotTime: SnapshotSchedule.at(3, 0),
-      snapshotRetentionLimit: 7,
-      finalSnapshotName: 'full-cache-final-snapshot',
-      // or restore data from other cache
-      snapshotArnsToRestore: [
-        'arn:aws:elasticache:us-east-1:123456789012:snapshot:my-snapshot-1'
-      ] 
-    },
-    vpc: vpc,
-    vpcSubnets: {
-      subnetType: SubnetType.PRIVATE_WITH_EGRESS
-    },
-    securityGroups: [ securityGroup ],
-    userGroup: userGroup,
-    kmsKey: cacheKey,
+const key = new kms.Key(this, 'Key', {});
+
+new ServerlessCache(this, 'ServerlessCache', {
+  engine: CacheEngine.REDIS_DEFAULT,
+  serverlessCacheName: 'serverless-cache-test',
+  description: 'Test cache with all properties',
+  cacheUsageLimits: {
+    dataStorageMinimumSize: Size.gibibytes(1),
+    dataStorageMaximumSize: Size.gibibytes(10),
+    requestRateLimitMinimum: 1000,
+    requestRateLimitMaximum: 5000
+  },
+  backup: {
+    // either create a new cache
+    backupTime: events.Schedule.cron({ minute: '0', hour: '4' }),
+    backupRetentionLimit: 7,
+    backupNameBeforeDeletion: 'serverless-cache-before-deletion',
+    // or restore data from other cache
+    backupArnsToRestore: [
+      'arn:aws:elasticache:us-east-1:123456789012:snapshot:my-snapshot-1'
+    ]
+  },
+  kmsKey: key,
+  vpc: vpc,
+  vpcSubnets: {
+    subnetType: SubnetType.PRIVATE_WITH_EGRESS
+  },
+  securityGroups: [ securityGroup ],
+  userGroup: userGroup,
 });
 ```
 
@@ -107,69 +109,68 @@ linkedCache.grantConnect(lambdaFunction);
 #### Serverless Cache Construct Props
 
 ```ts
+/**
+ * Properties for defining a ServerlessCache
+ */
 export interface ServerlessCacheProps {
-  /** 
-   * The cache engine combined with the version. 
+  /**
+   * The cache engine combined with the version
    * Enum options: VALKEY_DEFAULT, VALKEY_7, VALKEY_8, REDIS_DEFAULT, MEMCACHED_DEFAULT
    * The default options bring the latest versions available.
-   * 
-   * @default when not provided, the default engine would be Valkey, latest version available
-   */  
+   *
+   * @default when not provided, the default engine would be Valkey, latest version available (VALKEY_DEFAULT)
+   */
   readonly engine?: CacheEngine;
-  /** 
-   * Name for the serverless cache. 
+  /**
+   * Name for the serverless cache
+   *
    * @default automatically generated name by Resource
-   */ 
+   */
   readonly serverlessCacheName?: string;
   /**
-   * A description of the purpose of the Serverless Cache.
-   * @default none
+   * A description for the cache
+   *
+   * @default - No description
    */
   readonly description?: string;
   /**
-   * Usage limits for the cache.
+   * Usage limits for the cache
    *
-   * Allows setting minimum and maximum values for data storage (1-5000 GB)
-   * and ECPU per second (1000-15000000).
-   *
-   * @default no usage limits are set
-   */       
+   * @default - No usage limits
+   */
   readonly cacheUsageLimits?: CacheUsageLimitsProperty;
   /**
-   * Backup and snapshot configuration.
+   * Backup configuration
    *
-   * Includes daily snapshot time, retention limit (1-35 days),
-   * final snapshot name, and snapshot ARNs to restore from.
-   * 
-   * @default no automatic backup configuration is set
-   */   
+   * @default - No backups configured
+   */
   readonly backup?: BackupSettings;
   /**
-   * KMS encryption key for the cache.
+   * KMS key for encryption
    *
-   * @default AWS owned KMS key
+   * @default - Service managed encryption (AWS owned KMS key)
    */
   readonly kmsKey?: kms.IKey;
   /**
-   * The VPC in which to create the serverless cache.
+   * The VPC to place the cache in
    */
   readonly vpc: ec2.IVpc;
   /**
-   * Where to place the cache within the VPC.
+   * Which subnets to place the cache in
    *
-   * @default currently all subnets
+   * @default - Private subnets with egress
    */
   readonly vpcSubnets?: ec2.SubnetSelection;
   /**
-   * Security Group to assign to this cache.
+   * Security groups for the cache
    *
-   * @default create new security group
+   * @default - A new security group is created
    */
   readonly securityGroups?: ec2.ISecurityGroup[];
   /**
-   * The user group associated with the serverless cache.
+   * User group for access control
    *
-   * @default none
+   * @default - No user group
    */
   readonly userGroup?: IUserGroup;
 }
@@ -178,128 +179,290 @@ export interface ServerlessCacheProps {
 #### Serverless Cache Properties & Methods
 
 ```ts
+/**
+ * Represents a Serverless ElastiCache cache
+ */
 export interface IServerlessCache extends IResource, ec2.IConnectable {
   /**
-   * Attributes
+   * The cache engine used by this cache
    */
-  readonly engine: CacheEngine;
-  readonly serverlessCacheName: string;
-  readonly snapshotArnsToRestore?: string[];
-  readonly kmsKey?: kms.IKey;
-  readonly vpc: ec2.IVpc;
-  readonly subnets?: ec2.ISubnet[];
-  readonly securityGroups?: ec2.ISecurityGroup[];
-  readonly userGroupId?: string;
-
-
-  readonly serverlessCacheArn: string;
-  
+  readonly engine?: CacheEngine;
   /**
-   * Grant methods
+   * The name of the serverless cache
+   *
+   * @attribute
+   */
+  readonly serverlessCacheName: string;
+  /**
+   * The ARNs of backups restored in the cache
+   */
+  readonly backupArnsToRestore?: string[];
+  /**
+   * The KMS key used for encryption
+   */
+  readonly kmsKey?: kms.IKey;
+  /**
+   * The VPC this cache is deployed in
+   */
+  readonly vpc?: ec2.IVpc;
+  /**
+   * The subnets this cache is deployed in
+   */
+  readonly subnets?: ec2.ISubnet[];
+  /**
+   * The security groups associated with this cache
+   */
+  readonly securityGroups?: ec2.ISecurityGroup[];
+  /**
+   * The user group associated with this cache
+   */
+  readonly userGroup?: IUserGroup;
+  /**
+   * The ARN of the serverless cache
+   *
+   * @attribute
+   */
+  readonly serverlessCacheArn: string;
+
+  /**
+   * Grant connect permissions to the cache
    */
   grantConnect(grantee: iam.IGrantable): iam.Grant;
+  /**
+   * Grant the given identity custom permissions
+   */
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
 
   /**
-   * Metrics methods
+   * Return the given named metric for this cache
    */
   metric(metricName: string, props?: cloudwatch.MetricOptions): cloudwatch.Metric;
-  metricCacheHits(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
-  metricCacheMisses(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for cache hit count
+   */
+  metricCacheHitCount(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for cache miss count
+   */
+  metricCacheMissCount(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for cache hit rate
+   */
   metricCacheHitRate(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for data stored in the cache
+   */
+  metricDataStored(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for ECPUs consumed
+   */
+  metricECPUsConsumed(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for network bytes in
+   */
   metricNetworkBytesIn(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for network bytes out
+   */
   metricNetworkBytesOut(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for active connections
+   */
   metricActiveConnections(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
-  metricSuccessfulWriteRequestLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
-  metricSuccessfulReadRequestLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for write request latency
+   */
+  metricWriteRequestLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  /**
+   * Metric for read request latency
+   */
+  metricReadRequestLatency(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
 }
 ```
 
 #### User
 
-Required fields example:
+The user authentication system has three types (IAM, Password, and No-Password),
+with each type implemented as a separate construct extending the UserBase class.
+
+Required fields examples:
 
 ```ts
-new User(this, 'User1', {
-    userId: 'test-user-1'
+new IamUser(this, 'IamUser', {
+  userId: 'test-iam-user',
+  userName: 'test-iam-user',
+  accessControl: AccessControl.fromAccessString('on ~* +@read')
+});
+
+new PasswordUser(this, 'PasswordUser', {
+  userId: 'test-password-user',
+  accessControl: AccessControl.fromAccessString('on ~* +@read'),
+  passwords: SecretValue.secretsManager('password1234567891011')
+});
+
+new NoPasswordUser(this, 'NoPasswordUser', {
+  userId: 'test-no-password-user',
+  accessControl: AccessControl.fromAccessString('on ~* +@read')
 });
 ```
 
-Optional override example (a user with all possible properties):
+Optional override examples (a user with all possible construct props):
 
 ```ts
-new User(this, 'User2', {
-    engine: UserEngine.REDIS,
-    userId: 'test-user-2',
-    userName: 'testuser2',
-    accessControl: AccessControl.accessString('on ~* +@read -@write'),
-    authentication: Authentication.password(SecretValue.secretsManager('password1234567891011')) 
+new IamUser(this, 'IamUser', {
+  engine: UserEngine.VALKEY,
+  userId: 'test-iam-user',
+  userName: 'test-iam-user',
+  accessControl: AccessControl.fromAccessString('on ~* +@read')
 });
+
+new PasswordUser(this, 'PasswordUser', {
+  engine: UserEngine.REDIS,
+  userId: 'test-password-user',
+  userName: 'test-password-user-name',
+  accessControl: AccessControl.fromAccessString('on ~app:* +@read +@write'),
+  passwords: SecretValue.secretsManager('password1234567891011')
+});
+
+new NoPasswordUser(this, 'NoPasswordUser', {
+  engine: UserEngine.REDIS,
+  userId: 'test-no-password-user',
+  userName: 'test-no-password-user-name',
+  accessControl: AccessControl.fromAccessString('on ~* +@all')
+});
+```
+
+An `IamUser` needs separate permissions to connect to the cache.
+
+```ts
+declare const user: IamUser;
+declare const serverlessCache: ServerlessCache;
+declare const role: iam.Role;
+
+/**
+ * Grant "elasticache:Connect" action permissions to role.
+ */
+user.grantConnect(role);
+serverlessCache.grantConnect(role);
 ```
 
 #### User Construct Props
 
 ```ts
-export interface UserProps {
+/**
+ * Properties for defining an ElastiCache base user.
+ */
+export interface UserBaseProps {
   /**
-   * The user engine.
-   * Enum options: VALKEY, REDIS
-   * 
-   * @default when not provided, the default engine would be Valkey
+   * The engine type for the user.
+   * Enum options: UserEngine.VALKEY, UserEngine.REDIS.
+   *
+   * @default UserEngine.VALKEY.
    */
   readonly engine?: UserEngine;
   /**
-   * The user's unique identifier.
+   * The ID of the user.
    */
   readonly userId: string;
   /**
-   * The user's name.
-   *
-   * @default when not provided, it uses the userId as the userName
+   * Access control configuration for the user.
    */
-  readonly userName?: string;
-  /**
-   * Authentication configuration for the user.
-   *
-   * Supports password-based, IAM, or no-password authentication types.
-   *
-   * @default IAM authentication
-   */
-  readonly authentication?: Authentication;
-  /**
-   * Access control configuration defining user permissions.
-   *
-   * For now, only one predefined method is supported: AccessControl.fromAclString() for custom ACL syntax.
-   * If a better approach is not discovered, the following methods could be implemented in the future:
-   * AccessControl.readOnly(), AccessControl.fullAccess(), AccessControl.safeAccess().
-   *
-   * @default user has no permissions (off -@all)
-   * (I didn't do anything for this. Cloud Formation does this if this field remains undefined when creating the CfnUser.
-   * Should I do something else??)
-   */
-  readonly accessControl?: AccessControl;
+  readonly accessControl: AccessControl;
 }
 ```
 
-#### User Properties & Methods
+```ts
+/**
+ * Properties for defining an ElastiCache user with IAM authentication.
+ */
+export interface IamUserProps extends UserBaseProps {
+  /**
+   * The name of the user.
+   */
+  readonly userName: string;
+}
+```
 
 ```ts
-export interface IUser extends IResource {
-  readonly userId: string;
-  // I don't put here userName and authentication because I won't know how to set them in the import methods 
-  // (They can't be known from the arn and I would need to make assumptions -> wrong approach)
+/**
+ * Properties for defining an ElastiCache user with password authentication.
+ */
+export interface PasswordUserProps extends UserBaseProps {
+  /**
+   * The name of the user.
+   *
+   * @default - Same as userId.
+   */
+  readonly userName?: string;
+  /**
+   * The passwords for the user.
+   * Password authentication requires using 1-2 passwords.
+   */
+  readonly passwords: SecretValue[];
+}
+```
 
+```ts
+/**
+ * Properties for defining an ElastiCache user with no password authentication.
+ */
+export interface NoPasswordUserProps extends UserBaseProps {
+  /**
+   * The name of the user.
+   *
+   * @default - Same as userId.
+   */
+  readonly userName?: string;
+}
+```
+
+#### User Properties
+
+```ts
+/**
+ * Represents an ElastiCache base user.
+ */
+export interface IUserBase extends IResource {
+  /**
+   * The user's ID.
+   *
+   * @attribute
+   */
+  readonly userId: string;
+  /**
+   * The engine for the user.
+   */
+  readonly engine?: UserEngine;
+  /**
+   * The user's name.
+   *
+   * @attribute
+   */
+  readonly userName?: string;
+  /**
+   * The user's ARN.
+   *
+   * @attribute
+   */
   readonly userArn: string;
 }
 ```
 
 #### UserGroup
 
-Creation example:
+Required fields example (Valkey user groups can be created with 0 users;
+Redis user groups need to contain a user with the user name "default"):
+
+```ts
+new UserGroup(this, 'UserGroup', {});
+```
+
+Creation example using all possible construct props:
 
 ```ts
 const userGroup = new UserGroup(this, 'UserGroup', {
-    userGroupId: 'user-group',
+    userGroupName: 'user-group',
+    engine: UserEngine.VALKEY,
     users: [user1, user2]
 });
 
@@ -314,43 +477,64 @@ new ServerlessCache(this, 'UserGroupCache', {
 #### UserGroup Construct Props
 
 ```ts
+/**
+ * Properties for defining an ElastiCache UserGroup
+ */
 export interface UserGroupProps {
-  /** 
-   * The user group engine. 
-   * Enum options: VALKEY, REDIS
-   * 
-   * @default when not provided, the default engine would be Valkey
-   */ 
+  /**
+   * Enforces a particular physical user group name.
+   * @default <generated>
+   */
+  readonly userGroupName?: string;
+  /**
+   * The engine type for the user group
+   * Enum options: UserEngine.VALKEY, UserEngine.REDIS
+   *
+   * @default UserEngine.VALKEY
+   */
   readonly engine?: UserEngine;
   /**
-   * The user group's unique identifier.
-   */  
-  readonly userGroupId: string;
-  /**
-   * The list of users that belong to the user group.
+   * List of users inside the user group
    *
-   * @default no users are included in the group
+   * @default - no users
    */
-  readonly users?: IUser[];
+  readonly users?: IUserBase[];
 }
 ```
 
 #### UserGroup Properties & Methods
 
 ```ts
+/**
+ * Represents an ElastiCache UserGroup
+ */
 export interface IUserGroup extends IResource {
-  readonly engine: UserEngine;
-  readonly userGroupId: string;
-  readonly users?: IUser[];
-
-  readonly userGroupArn: string;
-
   /**
-   * Add a user to this user group.
+   * The name of the user group
    *
-   * @param user The user to add to the group
-   */ 
-  addUser(user: IUser): void;
+   * @attribute
+   */
+  readonly userGroupName: string;
+  /**
+   * The engine type for the user group
+   */
+  readonly engine?: UserEngine;
+  /**
+   * List of users in the user group
+   */
+  readonly users?: IUserBase[];
+  /**
+   * The ARN of the user group
+   *
+   * @attribute
+   */
+  readonly userGroupArn: string;
+  /**
+   * Add a user to this user group
+   *
+   * @param user The user to add
+   */
+  addUser(user: IUserBase): void;
 }
 ```
 
@@ -358,259 +542,74 @@ export interface IUserGroup extends IResource {
 
 #### CacheUsageLimitsProperty
 
-This class defines the usage limits for a `ServerlessCache` instance.
-It allows setting limits for both data storage and ECPU (ElastiCache Processing Units) consumption.
+This class defines the usage limits for a ServerlessCache instance.
+It allows setting limits for both data storage and request rate (ElastiCache Processing Units) consumption.
 
 ```ts
 /**
- * Usage limits configuration for ServerlessCache.
- * */ 
- export interface CacheUsageLimitsProperty {
-  /**
-   * Minimum value for data storage (1 GB).
-   */      
-  readonly dataStorageMinimumSize?: Size,
-  /**
-   * Maximum value for data storage (5000 GB).
-   */  
-  readonly dataStorageMaximumSize?: Size,
-  /**
-   * Minimum value for ECPU per second (1000).
-   */    
-  readonly ecpuPerSecondMinimum?: number,
-  /**
-   * Maximum value for ECPU per second (15000000).
-   */  
-  readonly ecpuPerSecondMaximum?: number
-}
-```
-
-#### SnapshotSchedule
-
-This class splits a time string into hours and minutes, providing a more user-friendly way to specify snapshot schedules
-instead of handling raw time string formats.
-
-```ts
-/**
- * Schedule for daily snapshots.
- *
- * @example dailySnapshotTime: SnapshotSchedule.at(15, 45) // 3:45 PM
+ * Usage limits configuration for ServerlessCache
  */
-export class SnapshotSchedule {
+export interface CacheUsageLimitsProperty {
   /**
-   * Create a schedule at a specific hour and minute.
+   * Minimum data storage size (1 GB)
    *
-   * @param hour Hour of the day (0-23)
-   * @param minute Minute of the hour (0-59)
-   * @returns A new SnapshotSchedule instance
-   *
-   * @throws Error if hour is not between 0-23 or minute is not between 0-59
-   */       
-  public static at(hour: number, minute: number): SnapshotSchedule {
-    return new SnapshotSchedule(hour, minute);
-  }
-
-  private constructor(
-      /** 
-       * Hour of the day (0-23) 
-       */ 
-      public readonly hour: number,
-      /** 
-       * Minute of the hour (0-59) 
-       */  
-      public readonly minute: number
-  ) {
-    if (hour < 0 || hour > 23) {
-      throw new Error('Hour must be between 0 and 23');
-    }
-    if (minute < 0 || minute > 59) {
-      throw new Error('Minute must be between 0 and 59');
-    }
-  }
-
+   * @default - No minimum limit
+   */
+  readonly dataStorageMinimumSize?: Size;
   /**
-   * Format as HH:MM string for CloudFormation.
+   * Maximum data storage size (5000 GB)
    *
-   * @returns Time string in HH:MM format (e.g., "03:30", "15:45")
-   */   
-  public toTimeString(): string {
-    return `${this.hour.toString().padStart(2, '0')}:${this.minute.toString().padStart(2, '0')}`;
-  }
+   * @default - No maximum limit
+   */
+  readonly dataStorageMaximumSize?: Size;
+  /**
+   * Minimum request rate limit (1000 ECPUs per second)
+   *
+   * @default - No minimum limit
+   */
+  readonly requestRateLimitMinimum?: number;
+  /**
+   * Maximum request rate limit (15000000 ECPUs per second)
+   *
+   * @default - No maximum limit
+   */
+  readonly requestRateLimitMaximum?: number;
 }
 ```
 
 #### BackupSettings
 
-This class defines the configuration for backup and snapshot management in the `ServerlessCache` construct.
+This class defines the configuration for backup management in the ServerlessCache construct.
 
 ```ts
 /**
- * Backup and snapshot configuration for ServerlessCache.
- */ 
+ * Backup configuration for ServerlessCache
+ */
 export interface BackupSettings {
   /**
-   * Daily snapshot time (hour and minutes).
-   */    
-  readonly dailySnapshotTime?: SnapshotSchedule,
-  /**
-   * Number of days to retain snapshots (1-35).
-   */    
-  readonly snapshotRetentionLimit?: number,
-  /**
-   * Name for the final snapshot when cache is deleted.
-   */            
-  readonly finalSnapshotName?: string,
-   /**
-    * ARNs of snapshots to restore from.
-    */  
-  readonly snapshotArnsToRestore?: string[]
-}
-```
-
-#### Authentication
-
-This class defines the authentication configuration for a `User`, supporting
-`password-based`, `IAM`, or `no-password` authentication types.
-Provides type-safe authentication methods that prevent configuration errors.
-Each authentication type enforces its own requirements (password authentication requires 1-2 passwords, while IAM and no-password types cannot accept passwords).
-
-```ts
-/**
- * Authentication configuration for ElastiCache users.
- * @example Authentication.password('password1234567891011')
- * @example Authentication.iam()
- * @example Authentication.noPassword()
- */  
-export abstract class Authentication {
-  /**
-   * Create password-based authentication.
+   * Automated daily backup UTC time
    *
-   * @param passwords One or two passwords for the user (1-2 passwords allowed)
-   * @returns Password authentication instance
-   *
-   * @throws Error if no passwords or more than 2 passwords are provided
-   */ 
-  public static password(...passwords: SecretValue[]): Authentication {
-    if (passwords.length === 0 || passwords.length > 2) {
-      throw new Error('Password authentication requires 1-2 passwords');
-    }
-    return new PasswordAuthentication(passwords);
-  }
-  
-  /**
-   * Create no-password authentication.
-   *
-   * @returns No-password authentication instance
-   */    
-  public static noPassword(): Authentication {
-    return new NoPasswordAuthentication();
-  }
-
-  /**
-   * Create IAM-based authentication.
-   *
-   * @returns IAM authentication instance
-   */      
-  public static iam(): Authentication {
-    return new IamAuthentication();
-  }
-  
-  /**
-   * Convert authentication configuration to CloudFormation format.
-   *
-   * @internal This method is used internally by the CDK construct.
+   * @default - No automated backups
    */
-  public abstract convertToCloudFormation(): any;
-}
-```
-
-#### PasswordAuthentication
-
-This class stores user credentials and converts them to the appropriate
-`CloudFormation` format for `ElastiCache` user configuration.
-
-```ts
-/**
- * Password-based authentication implementation that stores user credentials.
- */
-class PasswordAuthentication extends Authentication {
+  readonly backupTime?: events.Schedule;
   /**
-   * Creates password authentication with the provided credentials.
+   * Number of days to retain backups (1-35)
    *
-   * @param passwords Array of 1-2 passwords for the user
-   */  
-  constructor(public readonly passwords: SecretValue[]) {
-    super();
-  }
-
+   * @default - Backups are not retained
+   */
+  readonly backupRetentionLimit?: number;
   /**
-   * Converts password authentication to CloudFormation format.
+   * Name for the final backup taken before deletion
    *
-   * @returns CloudFormation authentication configuration object
-   */    
-  public convertToCloudFormation() {
-    return {
-      authenticationMode: {
-        Type: 'password',
-        Passwords: this.passwords.map(p => p.unsafeUnwrap())
-      },
-      noPasswordRequired: false,
-      passwords: undefined  
-    };
-  }
-}
-```
-
-#### NoPasswordAuthentication
-
-This class configures `ElastiCache` users to access the cache without requiring any password credentials.
-
-```ts
-/**
- * No-password authentication implementation that allows access without credentials.
- */  
-class NoPasswordAuthentication extends Authentication {
+   * @default - No final backup
+   */
+  readonly backupNameBeforeDeletion?: string;
   /**
-   * Converts no-password authentication to CloudFormation format.
+   * ARNs of backups from which to restore data into the new cache
    *
-   * @returns CloudFormation authentication configuration object
-   */     
-  public convertToCloudFormation() {
-    return {
-      authenticationMode: {
-        Type: 'no-password-required'
-      },
-      noPasswordRequired: true,
-      passwords: undefined
-    };
-  }
-}
-```
-
-#### IamAuthentication
-
-This class implements `AWS Identity and Access Management` for secure, role-based access
-to ElastiCache resources without storing passwords.
-
-```ts
-/**
- * IAM-based authentication implementation that uses AWS Identity and Access Management.
- */ 
-class IamAuthentication extends Authentication {
-  /**
-   * Converts IAM authentication to CloudFormation format.
-   *
-   * @returns CloudFormation authentication configuration object
-   */  
-  public convertToCloudFormation() {
-    return {
-      authenticationMode: {
-        Type: 'iam'
-      },
-      noPasswordRequired: false,
-      passwords: undefined
-    };
-  }
+   * @default - Create a new cache with no existing data
+   */
+  readonly backupArnsToRestore?: string[];
 }
 ```
 
@@ -622,22 +621,19 @@ for Redis/Valkey commands and key patterns using `ACL syntax`.
 ```ts
 /**
  * Access control configuration for ElastiCache users.
- *
- * @example AccessControl.accessString('on ~app:* +@read +@write -@dangerous')
- */       
+ */
 export abstract class AccessControl {
   /**
-   * Create access control from custom ACL string.
+   * Create access control from an access string.
    *
-   * @param accessString Redis/Valkey ACL syntax string
-   * @returns Access control configuration
-   */  
-  public static accessString(accessString: string): AccessControl {
+   * @param accessString The access string defining user permissions.
+   */
+  public static fromAccessString(accessString: string): AccessControl {
     return new AccessControlString(accessString);
   }
 
   /**
-   * @internal Used by CDK construct to generate CloudFormation properties
+   * The access string that defines user's permissions.
    */
   public abstract readonly accessString: string;
 }
@@ -649,16 +645,14 @@ This class provides access control implementation that stores `ACL string` confi
 
 ```ts
 /**
- * Access control implementation that stores ACL string configuration.
- */ 
+ * Access control implementation using a raw access string.
+ */
 class AccessControlString extends AccessControl {
+  /**
+   * The access string that defines user's permissions.
+   */
   public readonly accessString: string;
 
-  /**
-   * Creates access control with the provided ACL string.
-   *
-   * @param accessString Redis/Valkey ACL syntax string
-   */   
   constructor(accessString: string) {
     super();
     this.accessString = accessString;
@@ -669,7 +663,7 @@ class AccessControlString extends AccessControl {
 ### Enums Details
 
 The enums in this construct are intended to provide a way to reduce deployment time errors.
-Many of the L1 constructs will accept string however there are only certain valid options.
+Many of the L1 constructs will accept strings however there are only certain valid options.
 
 #### CacheEngine
 
@@ -678,10 +672,10 @@ This enum defines the supported cache engines together with the available versio
 ```ts
 /**
  * Supported cache engines together with available versions.
- */  
+ */
 export enum CacheEngine {
   /**
-   * Valkey engine, latest verison available
+   * Valkey engine, latest version available
    */
   VALKEY_DEFAULT = 'valkey',
   /**
@@ -693,30 +687,30 @@ export enum CacheEngine {
    */
   VALKEY_8 = 'valkey_8',
   /**
-   * Redis engine, latest verison available
-   */ 
+   * Redis engine, latest version available
+   */
   REDIS_DEFAULT = 'redis',
   /**
-   * Memcached engine, latest verison available
+   * Memcached engine, latest version available
    */
   MEMCACHED_DEFAULT = 'memcached',
 }
 ```
 
-#### UnitType
+#### DataStorageUnit
 
 This enum defines the unit of measurement for data storage in the `ServerlessCache` construct. Currently, it only includes gigabytes,
 but it's structured as an enum to allow for potential future expansions.
 
 ```ts
 /**
- * Unit types for usage limits.
- */   
-export enum UnitType {
+ * Unit types for data storage usage limits
+ */
+export enum DataStorageUnit {
   /**
    * Gigabytes
-   */ 
-  GIGABYTES = 'GB'
+   */
+  GIGABYTES = 'GB',
 }
 ```
 
@@ -727,16 +721,17 @@ This enum defines the supported engines needed for `User` and `UserGroup` config
 
 ```ts
 /**
- * Supported ElastiCache engines for users and user groups.
- */    
+ * Engine type for ElastiCache users and user groups
+ */
 export enum UserEngine {
   /**
    * Valkey engine
-   */   
+   */
   VALKEY = 'valkey',
+
   /**
    * Redis engine
-   */ 
+   */
   REDIS = 'redis',
 }
 ```
