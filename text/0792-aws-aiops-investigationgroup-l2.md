@@ -127,16 +127,16 @@ Key design principles:
 **Construct Properties:**
 InvestigationGroupProps
 
-| Name | Type | Optional | Documentation |
-|------|------|----------|---------------|
-| `name` | `string` | No | Provides a name for the investigation group. |
-| `role` | `IRole` | Yes | Specify the ARN of the IAM role that CloudWatch investigations will use when it gathers investigation data. The permissions in this role determine which of your resources CloudWatch investigations will have access to during investigations. If not specified, CloudWatch investigations will create a role with the name `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` containing default permissions. |
-| `retentionInDays` | `integer` | Yes | Retention period for all resources created under the investigation group container. Min: 7 days, Max: 90 days. If not specified, it will be 90 days by default. |
-| `encryptionKey` | `IKey` | Yes | This is a customer-managed KMS key to encrypt customer data during analysis. If not specified, AIOps will use an AWS-managed key to encrypt. |
-| `chatbotNotificationChannels` | `Arn[]` | Yes | Array of Chatbot notification channel ARNs. AIOps will send investigation group-related resource updates to those channels. |
+| Name | Type       | Optional | Documentation |
+|------|------------|----------|---------------|
+| `name` | `string`   | No | Provides a name for the investigation group. |
+| `role` | `IRole`    | Yes | Specify the ARN of the IAM role that CloudWatch investigations will use when it gathers investigation data. The permissions in this role determine which of your resources CloudWatch investigations will have access to during investigations. If not specified, CloudWatch investigations will create a role with the name `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` containing default permissions. |
+| `retentionInDays` | `number`   | Yes | Retention period for all resources created under the investigation group container. Min: 7 days, Max: 90 days. If not specified, it will be 90 days by default. |
+| `encryptionKey` | `IKey`     | Yes | This is a customer-managed KMS key to encrypt customer data during analysis. If not specified, AIOps will use an AWS-managed key to encrypt. |
+| `chatbotNotificationChannels` | `Arn[]`    | Yes | Array of Chatbot notification channel ARNs. AIOps will send investigation group-related resource updates to those channels. |
 | `tagKeyBoundaries` | `string[]` | Yes | Enter the existing custom tag keys for custom applications in your system. Resource tags help CloudWatch investigations narrow the search space when it is unable to discover definite relationships between resources. For example, to discover that an Amazon ECS service depends on an Amazon RDS database, CloudWatch investigations can discover this relationship using data sources such as X-Ray and CloudWatch Application Signals. However, if you haven't deployed these features, CloudWatch investigations will attempt to identify possible relationships. Tag boundaries can be used to narrow the resources that will be discovered by CloudWatch investigations in these cases. [More info](https://docs.aws.amazon.com/cloudwatchinvestigations/latest/APIReference/API_CreateInvestigationGroup.html). |
-| `isCloudTrailEventHistoryEnabled` | `boolean` | Yes | Flag to enable CloudTrail event history. If not specified, its default is false. |
-| `crossAccountConfigurations` | `Arn[]` | Yes | List of source account role ARN values that have been configured for cross-account access. |
+| `isCloudTrailEventHistoryEnabled` | `boolean`  | Yes | Flag to enable CloudTrail event history. If not specified, its default is false. |
+| `crossAccountConfigurations` | `Arn[]`    | Yes | List of source account role ARN values that have been configured for cross-account access. |
 
 **Methods:**
 
