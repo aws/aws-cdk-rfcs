@@ -71,6 +71,21 @@ through a "staging" endpoint. This separation allows you to test changes thoroug
 to production by simply updating the endpoint to point to the newer version.
 The "DEFAULT" endpoint automatically points to the latest version of your agent runtime.
 
+### AgentCore Runtime Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `agentRuntimeName` | `string` | Yes | The name of the agent runtime |
+| `agentRuntimeArtifact` | `AgentRuntimeArtifact` | Yes | The artifact configuration for the agent runtime |
+| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the agent runtime |
+| `networkConfiguration` | `NetworkConfiguration` | No | Network configuration for the agent runtime |
+| `description` | `string` | No | Optional description for the agent runtime |
+| `protocolConfiguration` | `ProtocolType` | No | Protocol configuration for the agent runtime |
+| `authorizerConfiguration` | `AuthorizerConfigurationRuntime` | No | Authorizer configuration for the agent runtime |
+| `concurrencyConfiguration` | `ConcurrencyConfiguration` | No | Concurrency configuration for the agent runtime |
+| `environmentVariables` | `{ [key: string]: string }` | No | Environment variables for the agent runtime |
+| `clientToken` | `string` | No | A unique identifier to ensure idempotency of the request |
+
 ### Creating a Runtime
 
 #### Option 1: Use an existing image in ECR
@@ -369,6 +384,17 @@ information from conversations for future use.
 These strategies are asynchronously processed from raw events after every few turns based on the strategy that was selected.
 You can't create long term memory records directly, as they are extracted asynchronously by AgentCore Memory.
 
+### Memory Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | `string` | No | The name of the memory |
+| `expirationDays` | `Duration` | No | Short-term memory expiration in days (between 7 and 365) |
+| `description` | `string` | No | Optional description for the memory |
+| `kmsKey` | `IKey` | No | Custom KMS key to use for encryption |
+| `memoryStrategies` | `MemoryStrategyBase[]` | No | Built-in extraction strategies to use for this memory |
+| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the memory to access AWS services |
+
 ### Basic Memory Creation
 
 Below you can find how to configure a simple short-term memory (STM) with no long-term memory extraction strategies. Note how you set `expirationDays`,
@@ -591,6 +617,16 @@ memory.addMemoryStrategy(MemoryStrategy.BUILT_IN_SEMANTIC);
 
 ## Browser Tool
 
+### Browser Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | `string` | Yes | The name of the browser |
+| `description` | `string` | No | Optional description for the browser |
+| `networkConfiguration` | `BrowserNetworkConfiguration` | Yes | Network configuration for browser |
+| `recordingConfig` | `RecordingConfig` | No | Recording configuration for browser |
+| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the browser to access AWS services |
+
 ### Basic Browser Creation
 
 ```typescript
@@ -747,6 +783,18 @@ browser.grant(userRole, "bedrock-agentcore:GetBrowserSession");
 ## Gateway
 
 The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateways, which serve as integration points between agents and external services.
+
+### Gateway Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | `string` | Yes | The name of the gateway |
+| `description` | `string` | No | Optional description for the gateway |
+| `protocolConfiguration` | `IGatewayProtocolConfiguration` | No | The protocol configuration for the gateway |
+| `authorizerConfiguration` | `IGatewayAuthorizerConfiguration` | No | The authorizer configuration for the gateway |
+| `exceptionLevel` | `GatewayExceptionLevel` | No | The verbosity of exception messages |
+| `kmsKey` | `kms.IKey` | No | The AWS KMS key used to encrypt data associated with the gateway |
+| `role` | `iam.IRole` | No | The IAM role that provides permissions for the gateway to access AWS services |
 
 ### Basic Gateway Creation
 
@@ -1487,6 +1535,15 @@ The Gateway Target construct supports three MCP target configuration types:
    - Ideal for custom serverless function integration
 
 ## Code Interpreter
+
+### Code Interpreter Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | `string` | Yes | The name of the code interpreter |
+| `description` | `string` | No | Optional description for the code interpreter |
+| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the code interpreter to access AWS services |
+| `networkConfiguration` | `CodeInterpreterNetworkConfiguration` | Yes | Network configuration for code interpreter |
 
 ### Basic Code Interpreter Creation
 
