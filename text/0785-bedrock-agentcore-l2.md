@@ -69,7 +69,7 @@ You can create endpoints using the `addEndpoint()` helper method to reference sp
 or production environments. For example, you might keep a "production" endpoint on a stable version while testing newer versions
 through a "staging" endpoint. This separation allows you to test changes thoroughly before promoting them
 to production by simply updating the endpoint to point to the newer version.
-The "DEFAULT" endpoint automatically points to the latest version of your agent runtime
+The "DEFAULT" endpoint automatically points to the latest version of your agent runtime.
 
 ### Creating a Runtime
 
