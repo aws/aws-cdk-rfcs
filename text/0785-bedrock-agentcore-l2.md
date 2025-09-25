@@ -75,16 +75,25 @@ The "DEFAULT" endpoint automatically points to the latest version of your agent 
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `agentRuntimeName` | `string` | Yes | The name of the agent runtime |
-| `agentRuntimeArtifact` | `AgentRuntimeArtifact` | Yes | The artifact configuration for the agent runtime |
-| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the agent runtime |
-| `networkConfiguration` | `NetworkConfiguration` | No | Network configuration for the agent runtime |
+| `agentRuntimeName` | `string` | Yes | The name of the agent runtime. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
+| `agentRuntimeArtifact` | `AgentRuntimeArtifact` | Yes | The artifact configuration for the agent runtime containing the container configuration with ECR URI |
+| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the agent runtime. If not provided, a role will be created automatically |
+| `networkConfiguration` | `NetworkConfiguration` | No | Network configuration for the agent runtime. Defaults to `{ networkMode: NetworkMode.PUBLIC }` |
 | `description` | `string` | No | Optional description for the agent runtime |
-| `protocolConfiguration` | `ProtocolType` | No | Protocol configuration for the agent runtime |
-| `authorizerConfiguration` | `AuthorizerConfigurationRuntime` | No | Authorizer configuration for the agent runtime |
-| `concurrencyConfiguration` | `ConcurrencyConfiguration` | No | Concurrency configuration for the agent runtime |
-| `environmentVariables` | `{ [key: string]: string }` | No | Environment variables for the agent runtime |
-| `clientToken` | `string` | No | A unique identifier to ensure idempotency of the request |
+| `protocolConfiguration` | `ProtocolType` | No | Protocol configuration for the agent runtime. Defaults to `ProtocolType.HTTP` |
+| `authorizerConfiguration` | `AuthorizerConfigurationRuntime` | No | Authorizer configuration for the agent runtime. Supports IAM, Cognito, JWT, and OAuth authentication modes |
+| `environmentVariables` | `{ [key: string]: string }` | No | Environment variables for the agent runtime. Maximum 50 environment variables |
+| `tags` | `{ [key: string]: string }` | No | Tags for the agent runtime. A list of key:value pairs of tags to apply to this Runtime resource |
+
+### Runtime Endpoint Properties
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `endpointName` | `string` | Yes | The name of the runtime endpoint. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
+| `agentRuntimeId` | `string` | Yes | The Agent Runtime ID for this endpoint |
+| `agentRuntimeVersion` | `string` | Yes | The Agent Runtime version for this endpoint. Must be between 1 and 5 characters long.|
+| `description` | `string` | No | Optional description for the runtime endpoint |
+| `tags` | `{ [key: string]: string }` | No | Tags for the runtime endpoint |
 
 ### Creating a Runtime
 
@@ -113,6 +122,30 @@ const runtime = new Runtime(this, "MyAgentRuntime", {
 // Add an endpoint for invocation - this creates a stable reference point
 // for invoking the runtime, which can be updated to different versions
 const endpoint = runtime.addEndpoint("my_endpoint");
+```
+
+#### Managing Endpoints and Versions
+
+When you update your runtime configuration, new versions are automatically created. Here's how to manage multiple endpoints pointing to different versions:
+
+```typescript
+// Initial deployment - Creates Version 1
+const runtime = new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
+});
+
+// Production endpoint - explicitly pinned to a specific version
+const prodEndpoint = runtime.addEndpoint("production", {
+  version: "1",  // prod version 
+  description: "Stable production endpoint"
+});
+
+// Staging endpoint - for testing new versions before production
+const stagingEndpoint = runtime.addEndpoint("staging", {
+  version: "2",  // new version in staging env
+  description: "Staging environment for testing"
+});
 ```
 
 #### Option 2: Use a local asset
