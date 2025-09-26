@@ -65,11 +65,11 @@ allowing you to maintain different versions for different environments or gradua
 ### Runtime Endpoints
 
 Endpoints provide a stable way to invoke specific versions of your agent runtime, enabling controlled deployments across different environments.
-You can create endpoints using the `addEndpoint()` helper method to reference specific versions for staging
+When you create an agent runtime, Amazon Bedrock AgentCore automatically creates a "DEFAULT" endpoint which always points to thelatest version
+of runtime. You can create explicit endpoints using the `addEndpoint()` helper method to reference specific versions for staging
 or production environments. For example, you might keep a "production" endpoint on a stable version while testing newer versions
 through a "staging" endpoint. This separation allows you to test changes thoroughly before promoting them
 to production by simply updating the endpoint to point to the newer version.
-The "DEFAULT" endpoint automatically points to the latest version of your agent runtime.
 
 ### AgentCore Runtime Properties
 
@@ -119,33 +119,50 @@ const runtime = new Runtime(this, "MyAgentRuntime", {
   agentRuntimeArtifact: agentRuntimeArtifact,
 });
 
-// Add an endpoint for invocation - this creates a stable reference point
-// for invoking the runtime, which can be updated to different versions
-const endpoint = runtime.addEndpoint("my_endpoint");
+/
 ```
 
 #### Managing Endpoints and Versions
 
-When you update your runtime configuration, new versions are automatically created. Here's how to manage multiple endpoints pointing to different versions:
+Amazon Bedrock AgentCore automatically manages runtime versioning. Here's how versions are created and how to manage endpoints:
 
 ```typescript
-// Initial deployment - Creates Version 1
+repository = new ecr.Repository(stack, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+
+//Initial Deployment - Automatically creates Version 1
 const runtime = new Runtime(this, "MyAgentRuntime", {
   agentRuntimeName: "myAgent",
   agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
 });
+// At this point: A DEFAULT endpoint is created which points to version 1
 
-// Production endpoint - explicitly pinned to a specific version
+// You can create a new endpoint (production) which points to version1
 const prodEndpoint = runtime.addEndpoint("production", {
-  version: "1",  // prod version 
-  description: "Stable production endpoint"
+  version: "1",
+  description: "Stable production endpoint - pinned to v1"
 });
 
-// Staging endpoint - for testing new versions before production
+// When you update the runtime configuration e.g. new container image, protocol change, network settings a new version (Version 2) is automatically created
+runtime.agentRuntimeArtifact = AgentRuntimeArtifact.fromEcrRepository(repository, "v2.0.0");
+
+// After this update: Version 2 is created automatically
+// DEFAULT endpoint automatically updates to Version 2
+// Production endpoint remains on Version 1 (explicitly pinned)
+
+// Now that Version 2 exists, create a staging endpoint for testing
 const stagingEndpoint = runtime.addEndpoint("staging", {
-  version: "2",  // new version in staging env
-  description: "Staging environment for testing"
+  version: "2",
+  description: "Staging environment for testing new version"
 });
+
+// Staging endpoint: Points to Version 2 (testing)
+
+
+// After testing, update production endpoint to Version 2
+prodEndpoint.updateVersion("2");
+
 ```
 
 #### Option 2: Use a local asset
@@ -650,7 +667,8 @@ memory.addMemoryStrategy(MemoryStrategy.BUILT_IN_SEMANTIC);
 
 ## Browser Tool
 
-The Amazon Bedrock AgentCore Browser provides a secure, cloud-based browser that enables AI agents to interact with websites. It includes security features such as session isolation, built-in observability through live viewing, CloudTrail logging, and session replay capabilities.
+The Amazon Bedrock AgentCore Browser provides a secure, cloud-based browser that enables AI agents to interact with websites.
+It includes security features such as session isolation, built-in observability through live viewing, CloudTrail logging, and session replay capabilities.
 
 Additional information about the browser tool can be found in the [official documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/browser-tool.html)
 
