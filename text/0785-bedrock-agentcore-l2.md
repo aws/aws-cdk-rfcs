@@ -493,8 +493,8 @@ the relevant memory from the raw events.
 Amazon Bedrock AgentCore Memory has different memory strategies for extracting and organizing information:
 
 - **Summarization**: to summarize interactions to preserve critical context and key insights.
-- **Semantic Memory**: to extract general factual knowledge, concepts and meanings from raw conversations using vector embeddings.
- This enables similarity-based retrieval of relevant facts and context.
+- **Semantic Memory**: to extract general factual knowledge, concepts and meanings from raw conversations
+  using vector embeddings. This enables similarity-based retrieval of relevant facts and context.
 - **User Preferences**: to extract user behavior patterns from raw conversations.
 
 You can use built-in extraction strategies for quick setup, or create custom extraction strategies with specific models and prompt templates.
