@@ -650,6 +650,10 @@ memory.addMemoryStrategy(MemoryStrategy.BUILT_IN_SEMANTIC);
 
 ## Browser Tool
 
+The Amazon Bedrock AgentCore Browser provides a secure, cloud-based browser that enables AI agents to interact with websites. It includes security features such as session isolation, built-in observability through live viewing, CloudTrail logging, and session replay capabilities.
+
+Additional information about the browser tool can be found in the [official documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/browser-tool.html)
+
 ### Browser Properties
 
 | Name | Type | Required | Description |
@@ -1568,6 +1572,14 @@ The Gateway Target construct supports three MCP target configuration types:
    - Ideal for custom serverless function integration
 
 ## Code Interpreter
+
+The Amazon Bedrock AgentCore Code Interpreter enables AI agents to write and execute
+code securely in sandbox environments, enhancing their accuracy and expanding their ability
+to solve complex end-to-end tasks. This is critical in Agentic AI applications where the
+agents may execute arbitrary code that can lead to data compromise or security risks.
+The AgentCore Code Interpreter tool provides secure code execution, which helps you avoid running into these issues.
+
+For more information about code interpreter, please refer to the [official documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/code-interpreter-tool.html)
 
 ### Code Interpreter Properties
 
