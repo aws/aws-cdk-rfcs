@@ -55,7 +55,7 @@ const securityGroup = new ec2.SecurityGroup(this, 'SecurityGroup', {
 const key = new kms.Key(this, 'Key', {});
 
 new ServerlessCache(this, 'ServerlessCache', {
-  engine: CacheEngine.REDIS_DEFAULT,
+  engine: CacheEngine.REDIS_LATEST,
   serverlessCacheName: 'serverless-cache-test',
   description: 'Test cache with all properties',
   cacheUsageLimits: {
@@ -256,7 +256,7 @@ export interface IServerlessCache extends IResource, ec2.IConnectable {
   /**
    * Metric for ECPUs consumed
    */
-  metricECPUsConsumed(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
+  metricProcessingUnitsConsumed(props?: cloudwatch.MetricOptions): cloudwatch.Metric;
   /**
    * Metric for network bytes in
    */
@@ -283,14 +283,13 @@ export interface IServerlessCache extends IResource, ec2.IConnectable {
 #### User
 
 The user authentication system has three types (IAM, Password, and No-Password),
-with each type implemented as a separate construct extending the UserBase class.
+with each type implemented as a separate construct extending the `UserBase` class.
 
 Required fields examples:
 
 ```ts
 new IamUser(this, 'IamUser', {
   userId: 'test-iam-user',
-  userName: 'test-iam-user',
   accessControl: AccessControl.fromAccessString('on ~* +@read')
 });
 
@@ -378,8 +377,10 @@ export interface UserBaseProps {
 export interface IamUserProps extends UserBaseProps {
   /**
    * The name of the user.
+   *
+   * @default - Same as userId.
    */
-  readonly userName: string;
+  readonly userName?: string;
 }
 ```
 
@@ -422,7 +423,7 @@ export interface NoPasswordUserProps extends UserBaseProps {
 /**
  * Represents an ElastiCache base user.
  */
-export interface IUserBase extends IResource {
+export interface IUser extends IResource {
   /**
    * The user's ID.
    *
@@ -498,7 +499,7 @@ export interface UserGroupProps {
    *
    * @default - no users
    */
-  readonly users?: IUserBase[];
+  readonly users?: IUser[];
 }
 ```
 
@@ -522,7 +523,7 @@ export interface IUserGroup extends IResource {
   /**
    * List of users in the user group
    */
-  readonly users?: IUserBase[];
+  readonly users?: IUser[];
   /**
    * The ARN of the user group
    *
@@ -534,7 +535,7 @@ export interface IUserGroup extends IResource {
    *
    * @param user The user to add
    */
-  addUser(user: IUserBase): void;
+  addUser(user: IUser): void;
 }
 ```
 
@@ -675,25 +676,29 @@ This enum defines the supported cache engines together with the available versio
  */
 export enum CacheEngine {
   /**
-   * Valkey engine, latest version available
+   * Valkey engine, latest major version available, minor version is selected automatically
    */
-  VALKEY_DEFAULT = 'valkey',
+  VALKEY_LATEST = 'valkey',
   /**
-   * Valkey engine, version 7
+   * Valkey engine, major version 7, minor version is selected automatically
    */
   VALKEY_7 = 'valkey_7',
   /**
-   * Valkey engine, version 8
+   * Valkey engine, major version 8, minor version is selected automatically
    */
   VALKEY_8 = 'valkey_8',
   /**
-   * Redis engine, latest version available
+   * Redis engine, latest major version available, minor version is selected automatically
    */
-  REDIS_DEFAULT = 'redis',
+  REDIS_LATEST = 'redis',
   /**
-   * Memcached engine, latest version available
+   * Redis engine, major version 7, minor version is selected automatically
    */
-  MEMCACHED_DEFAULT = 'memcached',
+  REDIS_7 = 'redis_7',
+  /**
+   * Memcached engine, latest major version available, minor version is selected automatically
+   */
+  MEMCACHED_LATEST = 'memcached',
 }
 ```
 
