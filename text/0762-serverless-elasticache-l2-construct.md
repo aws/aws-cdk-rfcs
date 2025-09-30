@@ -748,7 +748,7 @@ signed-off by the API bar raiser (the `status/api-approved` label was applied to
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @otaviomacedo
+[ x ] Signed-off by API Bar Raiser @otaviomacedo
 ```
 
 ## Public FAQ
