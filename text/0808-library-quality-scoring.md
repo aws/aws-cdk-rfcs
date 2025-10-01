@@ -278,6 +278,8 @@ terminology also aligned with npms.io’s scoring system.
 | Popularity  | Forks                              | —                                                                   | Repo API       | NO       | Community engagement             | 2          |
 | Popularity  | Subscribers/watchers               | —                                                                   | Repo API       | NO       | Indicates user interest          | 1          |
 
+[Construct Library Scoring Examples](https://quip-amazon.com/TEuVAae3uZKz/Construct-Libraries-Example-Scores)
+
 ### Signals from npms.io (Reference)
 
 npms.io defines three categories similar to ours; Maintenance, Quality, and Popularity.
