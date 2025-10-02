@@ -2,7 +2,7 @@
 
 * **Original Author(s):** @amandaleeatwork
 * **Tracking Issue**: [#{0792}](https://github.com/aws/aws-cdk-rfcs/issues/792)
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @{aemada-aws}
 
 AIOps is an AWS service that helps customers troubleshoot operational issues by automating information gathering, analyzing observability data,
 and providing tailored recommendations.
@@ -36,6 +36,11 @@ Each investigation in a Region is a part of the investigation group in that Regi
 To create an investigation group and set up CloudWatch investigations (aka AIOps),
 you must be signed in to an IAM principal that has either the AIOpsConsoleAdminPolicy or the AdministratorAccess IAM policy attached,
 or to an account that has similar permissions.
+Create investigation group would trigger a new role creation with managed policy `AIOpsAssistantPolicy`, and trust relationship for AIOps service principal.
+
+* If customer specified customized kms key for encryption, AIOps will updates KMS key resource policy to grant necessary encryption/decryption permissions
+* If customer specified cross-account configuration, AIOps will update investigation group role to include assumeRole permission
+for specified source account roles.
 
 #### Create Investigation Group
 
@@ -57,6 +62,110 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    removalPolicy?: RemovalPolicy.DESTROY,
    tagKeyBoundaries?: string[]
 });
+```
+
+L1 construct example
+
+```
+public createInvestigationGroup(id: string): void {
+   const partition = 'aws', region = 'us-east-1', accountId = '1234567890';
+    const aiOpsAssistantRole = this.createAIOpsAssistantRole(partition, region, accountId);
+    const encryptionKey = this.createEncryptionKeyForInvestigationGroup(partition, region, accountId);
+
+    new CfnInvestigationGroup(this, 'InvestigationGroup', {
+      name: `${id}-InvestigationGroup-${account}-${region}`,
+      roleArn: aiOpsAssistantRole.roleArn,
+      encryptionConfig: {
+        encryptionConfigurationType: 'CUSTOMER_MANAGED_KMS_KEY',
+        kmsKeyId: encryptionKey.keyArn,
+      },
+    });
+  }
+
+  private createAIOpsAssistantRole(partition:string, region:string, account:string): Role {
+    return new Role(this, 'AIOpsAssistantRole', {
+      assumedBy: new ServicePrincipal('<AIOps-ServicePrincipal>', {
+        conditions: {
+          // Prevent a confused deputy situation
+          StringEquals: {
+            'aws:SourceAccount': account,
+          },
+          ArnLike: {
+            'aws:SourceArn': `arn:${partition}:aiops:${region}:${account}:*`,
+          },
+        },
+      }),
+      // You can customize the policy to be used by AI Operations, this is the minimum permission.
+      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('AIOpsAssistantPolicy')],
+    });
+  }
+
+  private createEncryptionKeyForInvestigationGroup(partition:string, region:string, account:string): Key {
+    const investigationGroupArnLike = `arn:${partition}:aiops:${region}:${account}:investigation-group/*`;
+
+    return new Key(this, 'CloudWatchInvestigationGroupEncryptionKey', {
+      enableKeyRotation: true,
+      description: 'The key used to encrypt investigations in CloudWatch investigations.',
+      policy: new PolicyDocument({
+        statements: [
+          // Account administrator permission
+          new PolicyStatement({
+            actions: ['kms:*'],
+            principals: [new AccountRootPrincipal()],
+            resources: ['*'],
+          }),
+          // CloudWatch investigation permissions
+          new PolicyStatement({
+            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
+            actions: ['kms:DescribeKey'],
+            resources: ['*'],
+            conditions: {
+              StringEquals: {
+                'aws:SourceAccount': account,
+              },
+              StringLike: {
+                'aws:SourceArn': investigationGroupArnLike,
+              },
+            },
+          }),
+          new PolicyStatement({
+            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
+            actions: ['kms:Decrypt', 'kms:GenerateDataKey'],
+            resources: ['*'],
+            conditions: {
+              StringEquals: {
+                'aws:SourceAccount': account,
+              },
+              StringLike: {
+                'aws:SourceArn': investigationGroupArnLike,
+              },
+              ArnLike: {
+                'kms:EncryptionContext:aws:aiops:investigation-group-arn': investigationGroupArnLike,
+              },
+            },
+          }),
+          // Allow alarm triggered investigation for encryption
+          new PolicyStatement({
+            principals: [new ServicePrincipal('<CloudWatchAlarm-ServicePrincipal>')],
+            actions: ['kms:DescribeKey', 'kms:Decrypt', 'kms:GenerateDataKey'],
+            resources: ['*'],
+            conditions: {
+              ArnLike: {
+                'kms:EncryptionContext:aws:aiops:investigation-group-arn': investigationGroupArnLike,
+              },
+              StringEquals: {
+                'aws:SourceAccount': account,
+                'kms:ViaService': `<AIOps-ServicePrincipal>`,
+              },
+              StringLike: {
+                'aws:SourceArn': `arn:${partition}:cloudwatch:${region}:${account}:alarm:*`,
+              },
+            },
+          }),
+        ],
+      }),
+    });
+  }
 ```
 
 ----
@@ -92,8 +201,8 @@ Compared to L1 AIOps constructs, introducing an L2 construct would have the foll
       - addToResourcePolicy: Add a new policy statement to the resource policy
    - Validation and user-friendly error handling
       - Retention days validation (7 - 90 days)
-      - Cross-account configuration list size limit (max 25), and role ARN format validation
-      - Chat configuration ARN format
+      - Cross-account configuration list size limit (max 25), and each configuration with role ARN format validation
+      - Chat configuration ARN format, which includes the snsTopic to send resource update notification to.
    - Reducing the learning curve for new users, and reducing development time and potential errors
    - Enforcing AWS best practices automatically
 
@@ -101,13 +210,32 @@ Compared to L1 AIOps constructs, introducing an L2 construct would have the foll
 
 ### Why are we doing this?
 
-> Customers have been asking questions about setting up AIOps L1 constructs via CloudFormation,
-and multiple customers from Amazon have adopted an internal L2 package to create AIOps resources.
-Releasing an L2 construct in aws-cdk-lib could help customers adopt AIOps efficiently.
+>The development of AIOps L2 constructs addresses significant customer needs and adoption patterns. Currently, customers rely on L1 constructs through
+CloudFormation, requiring detailed understanding of resource configurations. Additionally, multiple Amazon internal teams have successfully adopted an
+internal L2 package for AIOps resource management, demonstrating the value and demand for higher-level abstractions.
+
+By releasing L2 constructs in aws-cdk-lib, we can:
+
+1. Enhance Customer Experience
+   * Simplify resource creation and management
+   * Reduce boilerplate code and configuration complexity
+   * Provide intuitive, type-safe interfaces
+   * Enable faster adoption of AIOps capabilities
+
+2. Enforce Security Best Practices
+   * Automatically configure proper IAM roles and permissions
+   * Implement secure cross-account access patterns by default
+   * Prevent common security misconfigurations
+   * Apply principle of least privilege automatically
+   * Handle security-sensitive configurations with validated defaults
+
+The L2 constructs will encapsulate these best practices within their implementation, significantly reducing the risk of misconfiguration while ensuring
+consistent and secure deployment patterns across customer applications. This approach allows customers to focus on their business logic rather
+than underlying infrastructure details.
 
 ### Why should we _not_ do this?
 
-> None
+> L1 CDK for investigationGroup already exist.
 
 ### What is the technical solution (design) of this feature?
 
@@ -116,8 +244,12 @@ Releasing an L2 construct in aws-cdk-lib could help customers adopt AIOps effici
 Key design principles:
 
 - **Simplicity**: Expose few properties for customers; the L2 construct will handle the underlying business logic.
-- **Sensible Defaults**: Production-ready configurations out of the box
-- **Extensibility**: Support for custom configurations and functionality for expanding configurations
+e.g investigation group role creation, encryption key resource policy creation.
+- **Sensible Defaults**: Production-ready configurations out of the box. e.g RetentionDays default as 90 days, encryption key default is AWS managed key.
+- **Extensibility**: The construct offers flexible configuration options through both initial setup and post-creation modifications.
+For example, investigation group properties like chatbotNotificationChannel and crossAccountConfigurations can be defined either during initialization
+via investigationGroupProps, or added later using helper methods. This dual approach allows customers to configure resources based on their deployment
+patterns and evolving needs.
 - **Type Safety**: Strong typing for better developer experience
 
 **Initializer:**
@@ -130,22 +262,23 @@ InvestigationGroupProps
 | Name | Type       | Optional | Documentation |
 |------|------------|----------|---------------|
 | `name` | `string`   | No | Provides a name for the investigation group. |
-| `role` | `IRole`    | Yes | Specify the ARN of the IAM role that CloudWatch investigations will use when it gathers investigation data. The permissions in this role determine which of your resources CloudWatch investigations will have access to during investigations. If not specified, CloudWatch investigations will create a role with the name `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` containing default permissions. |
-| `retentionInDays` | `number`   | Yes | Retention period for all resources created under the investigation group container. Min: 7 days, Max: 90 days. If not specified, it will be 90 days by default. |
-| `encryptionKey` | `IKey`     | Yes | This is a customer-managed KMS key to encrypt customer data during analysis. If not specified, AIOps will use an AWS-managed key to encrypt. |
-| `chatbotNotificationChannels` | `Arn[]`    | Yes | Array of Chatbot notification channel ARNs. AIOps will send investigation group-related resource updates to those channels. |
+| `role` | `IRole`    | Yes | Specify the IAM role that CloudWatch investigations will use when it gathers investigation data. The permissions in this role determine which of your resources CloudWatch investigations will have access to during investigations. If not specified, CloudWatch investigations will create a role with the name `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` containing default permissions. |
+| `retentionInDays` | `number`   | Yes | Retention period for all resources created under the investigation group container. Min: 7 days, Max: 90 days. Investigation group related resources includes investigation, investigationEvents resources. If not specified, it will be 90 days by default. |
+| `encryptionKey` | `IKey`     | Yes | This customer-managed KMS key ensures encryption of sensitive data during the analysis process, including both the metadata required to retrieve telemetry results and the actual telemetry result data itself. If not specified, AIOps will use an AWS-managed key to encrypt. |
+| `chatbotNotificationChannels` | `ITopic[]`    | Yes | Array of Chatbot notification channel ARNs. AIOps will send investigation group-related resource updates to those channels. |
 | `tagKeyBoundaries` | `string[]` | Yes | Enter the existing custom tag keys for custom applications in your system. Resource tags help CloudWatch investigations narrow the search space when it is unable to discover definite relationships between resources. For example, to discover that an Amazon ECS service depends on an Amazon RDS database, CloudWatch investigations can discover this relationship using data sources such as X-Ray and CloudWatch Application Signals. However, if you haven't deployed these features, CloudWatch investigations will attempt to identify possible relationships. Tag boundaries can be used to narrow the resources that will be discovered by CloudWatch investigations in these cases. [More info](https://docs.aws.amazon.com/cloudwatchinvestigations/latest/APIReference/API_CreateInvestigationGroup.html). |
 | `isCloudTrailEventHistoryEnabled` | `boolean`  | Yes | Flag to enable CloudTrail event history. If not specified, its default is false. |
-| `crossAccountConfigurations` | `Arn[]`    | Yes | List of source account role ARN values that have been configured for cross-account access. |
+| `crossAccountConfigurations` | `IRole[]`    | Yes | List of source account role ARN values that have been configured for cross-account access. |
 
 **Methods:**
 
 | Name | Parameters | Description |
 |------|------------|---------------|
 | `addCrossAccountConfiguration` | `sourceAccountRole: Arn` | Adds a new cross-account configuration to allow access from another AWS account. Maximum of 25 configurations allowed. |
-| `addChatbotNotification` | `snsTopic: Arn` | Adds a new chatbot notification channel to receive investigation group updates. |
+| `addChatbotNotification` | `snsTopic: ITopic` | Adds a new chatbot notification channel to receive investigation group updates. |
 | `addToResourcePolicy` | `statement: PolicyStatement` | Adds a policy statement to the investigation group's resource policy. |
 | `grantCreate` | `grantee: IGrantable` | Grants create permissions on investigation groups container to the specified IAM principal. |
+| `grantEksAccess` | `cluster: ICluster` | Creates a mapping from investigation group IAM role to the managed EKS policy. |
 
 ### Methods
 
@@ -173,7 +306,7 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 });
 
 group.addChatbotNotification({
-  snsTopic: Arn
+  snsTopic: ITopic
 });
 ```
 
@@ -213,6 +346,20 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 group.grantCreate(new ServicePrincipal("<servicePrincipal>"));
 ```
 
+#### To grant EKS cluster access
+
+Creates an AccessEntry that associates the investigation group's IAM role with the managed EKS Policy, establishing the necessary permissions mapping.
+
+`grantEksAccess(cluster: ICluster): AccessEntry`
+
+```typescript
+const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
+   name: 'MyGroup'
+});
+
+const accessEntry = group.grantEksAccess(new Cluster());
+```
+
 ### Is this a breaking change?
 
 > No, it's the first time releasing an L2 construct.
@@ -221,6 +368,20 @@ group.grantCreate(new ServicePrincipal("<servicePrincipal>"));
 
 > Provide customers with detailed usage of L1 constructs.
 However, this approach requires extensive code to provision resources and lacks the abstraction benefits of L2 constructs.
+
+```
+    const aiOpsAssistantRole = this.createAIOpsAssistantRole();
+    const encryptionKey = this.createEncryptionKeyForInvestigationGroup();
+
+    new CfnInvestigationGroup(this, 'InvestigationGroup', {
+      name: `${id}-InvestigationGroup-${account}-${region}`,
+      roleArn: aiOpsAssistantRole.roleArn,
+      encryptionConfig: {
+        encryptionConfigurationType: 'CUSTOMER_MANAGED_KMS_KEY',
+        kmsKeyId: encryptionKey.keyArn,
+      },
+    });
+```
 
 ### What are the drawbacks of this solution?
 
