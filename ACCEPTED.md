@@ -76,4 +76,5 @@
 [693](https://github.com/aws/aws-cdk-rfcs/issues/693)|[Set Default Values to Construct Properties using PropertyInjector](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0693-property-injection.md)||✅ done
 [710](https://github.com/aws/aws-cdk-rfcs/issues/710)|[Node.js Version Support Policy for AWS CDK](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0710-node-deprecation-strategy.md)||✅ done
 [745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0745-user-provided-cdk-init-templates.md)||✅ done
+[750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||✅ done
 <!--END_TABLE-->
