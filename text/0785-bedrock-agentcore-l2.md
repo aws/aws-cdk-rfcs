@@ -118,8 +118,25 @@ const runtime = new Runtime(this, "MyAgentRuntime", {
   agentRuntimeName: "myAgent",
   agentRuntimeArtifact: agentRuntimeArtifact,
 });
+```
 
-/
+#### Option 2: Use a local asset
+
+Reference a local directory containing a Dockerfile.
+Images are built from a local Docker context directory (with a Dockerfile), uploaded to Amazon Elastic Container Registry (ECR)
+by the CDK toolkit,and can be naturally referenced in your CDK app .
+
+```typescript
+import * as path from "path";
+
+const agentRuntimeArtifact = AgentRuntimeArtifact.fromAsset(
+  path.join(__dirname, "path to agent dockerfile directory")
+);
+
+const runtime = new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+});
 ```
 
 #### Managing Endpoints and Versions
@@ -162,27 +179,87 @@ const stagingEndpoint = runtime.addEndpoint("staging", {
 
 // After testing, update production endpoint to Version 2
 prodEndpoint.updateVersion("2");
-
 ```
 
-#### Option 2: Use a local asset
+### Creating Standalone Runtime Endpoints
 
-Reference a local directory containing a Dockerfile.
-Images are built from a local Docker context directory (with a Dockerfile), uploaded to Amazon Elastic Container Registry (ECR)
-by the CDK toolkit,and can be naturally referenced in your CDK app .
+RuntimeEndpoint can also be created as a standalone resource.
+
+#### Example: Creating an endpoint for an existing runtime
 
 ```typescript
-import * as path from "path";
+// Reference an existing runtime by its ID
+const existingRuntimeId = "abc123-runtime-id"; // The ID of an existing runtime
 
-const agentRuntimeArtifact = AgentRuntimeArtifact.fromAsset(
-  path.join(__dirname, "path to agent dockerfile directory")
-);
-
-const runtime = new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
-  agentRuntimeArtifact: agentRuntimeArtifact,
+// Create a standalone endpoint
+const endpoint = new agentcore.RuntimeEndpoint(this, "MyEndpoint", {
+  endpointName: "production",
+  agentRuntimeId: existingRuntimeId,
+  agentRuntimeVersion: "1", // Specify which version to use
+  description: "Production endpoint for existing runtime"
 });
 ```
+
+#### Updating endpoint versions
+
+Standalone endpoints can update their runtime version using the `updateRuntimeVersion()` method:
+
+```typescript
+const endpoint = new agentcore.RuntimeEndpoint(this, "MyEndpoint", {
+  endpointName: "production",
+  agentRuntimeId: runtimeId,
+  agentRuntimeVersion: "1",
+});
+
+// Later, update to a new version
+endpoint.updateRuntimeVersion("2");
+```
+
+### Runtime Authentication Configuration
+
+The AgentCore Runtime supports multiple authentication modes to secure access to your agent endpoints. By default,
+IAM authentication is used, but you can configure Cognito, JWT, or OAuth authentication based on your security requirements.
+
+#### IAM Authentication (Default)
+
+IAM authentication is the default mode and requires no additional configuration. When creating a runtime,
+IAM authentication is automatically enabled, requiring callers to sign their requests with valid AWS credentials.
+
+#### Cognito Authentication
+
+To configure AWS Cognito User Pool authentication for your runtime, use the `runtime.configureCognitoAuth()` method after runtime creation.
+This method requires:
+
+- **User Pool ID** (required): The Cognito User Pool identifier (e.g., "us-west-2_ABC123")
+- **Client ID** (required): The Cognito App Client ID
+- **Region** (optional): The AWS region where the User Pool is located (defaults to the stack region)
+
+#### JWT Authentication
+
+To configure custom JWT authentication with your own OpenID Connect (OIDC) provider, use the `runtime.configureJWTAuth()` method after runtime creation.
+ This method requires:
+
+- **Discovery URL**: The OIDC discovery URL (must end with /.well-known/openid-configuration)
+- **Allowed Client IDs**: An array of client IDs that are allowed to access the runtime
+- **Allowed Audiences** (optional): An array of allowed audiences for token validation
+
+#### OAuth Authentication
+
+OAuth 2.0 authentication can be configured during runtime creation by setting the `runtime.configureOAuth()` property with:
+
+- **provider**: OAuth provider name
+- **Discovery URL**: The OAuth provider's discovery URL (must end with /.well-known/openid-configuration)
+- **Client ID**: The OAuth client identifier
+- **scopes**: Optional, array of OAuth scopes
+
+**Note**: When using custom authentication modes (Cognito, JWT, OAuth), ensure that your client applications
+are properly configured to obtain and include valid tokens in their requests to the runtime endpoints.
+
+#### Using a Custom IAM Role
+
+Instead of using the auto-created execution role, you can provide your own IAM role with specific permissions:
+The auto-created role includes all necessary baseline permissions for ECR access, CloudWatch logging, and X-Ray
+tracing. When providing a custom role, ensure these permissions are included.
 
 ## Identity
 
