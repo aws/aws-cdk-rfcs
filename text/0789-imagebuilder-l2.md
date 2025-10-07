@@ -2,14 +2,76 @@
 
 * **Original Author(s):**: @tarunb12
 * **Tracking Issue**: [#789](https://github.com/aws/aws-cdk-rfcs/issues/789)
-* **API Bar Raiser**: @TBD
+* **API Bar Raiser**: @kumsmrit
 
 The `aws-imagebuilder` construct library allows you to create EC2 Image Builder resources, such as pipelines, images,
 components, workflows, and lifecycle policies, with just a few lines of code. As with most construct libraries, you can
 also easily define permissions and integrations using a simple API.
 
 The amount of effort needed to create these resources is significantly reduced compared to using the AWS console or
-CloudFormation directly, with best practices built-in.
+CloudFormation directly, with best practices built-in. Below is a minimal example showing how L2 constructs simplify the
+creation of EC2 Image Builder image pipelines using secure defaults, compared to the L1 equivalent code:
+
+```ts
+// Using L1 constructs
+const instanceProfileRole = new iam.Role(stack, 'EC2InstanceProfileForImageBuilderRole', {
+  assumedBy: iam.ServicePrincipal.fromStaticServicePrincipleName('ec2.amazonaws.com'),
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+    iam.ManagedPolicy.fromAwsManagedPolicyName('EC2InstanceProfileForImageBuilder'),
+  ],
+});
+
+const instanceProfile = new iam.InstanceProfile(stack, 'EC2InstanceProfileForImageBuilder', {
+  role: instanceProfileRole,
+});
+
+const bucket = new s3.Bucket(stack, 'ImageBuilderLoggingBucket', {
+  bucketName: `ec2imagebuilder-logs-${stack.region}-${stack.account}`,
+  enforceSSL: true,
+});
+
+const l1InfrastructureConfiguration = new imagebuilder.CfnInfrastructureConfiguration(stack, 'L1InfrastructureConfiguration', {
+  name: 'l1-infrastructure-configuration',
+  instanceProfileName: instanceProfile.instanceProfileName,
+  instanceMetadataOptions: { httpTokens: 'required' },
+  logging: {
+    s3Bucket: bucket.bucketName,
+    s3KeyPrefix: 'imagebuilder-logging',
+  },
+});
+
+const l1ImageRecipe = new imagebuilder.CfnImageRecipe(stack, 'L1ImageRecipe', {
+  name: 'l1-image-recipe',
+  version: '1.0.0',
+  parentImage: `arn:${stack.partition}:imagebuilder:${stack.region}:aws:image/amazon-linux-2023-x86/x.x.x`,
+  components: [
+    {
+      componentArn: `arn:${stack.partition}:imagebuilder:${stack.region}:aws:component/update-linux/x.x.x`,
+    },
+  ],
+});
+
+const l1ImagePipeline = new imagebuilder.CfnImagePipeline(stack, 'L1ImagePipeline', {
+  name: 'l1-image-pipeline',
+  imageRecipeArn: l1ImageRecipe.attrArn,
+  infrastructureConfigurationArn: l1InfrastructureConfiguration.attrArn,
+});
+
+// Equivalent, using L2 constructs
+const l2ImagePipeline = new imagebuilder.ImagePipeline(stack, 'L2ImagePipeline', {
+  recipe: new imagebuilder.ImageRecipe(stack, 'L2ImageRecipe', {
+    baseImage: imagebuilder.AwsManagedImage.amazonLinux2023(stack, 'AL2023'),
+    components: [
+      {
+        component: imagebuilder.AwsManagedComponent.updateOS(stack, 'UpdateOS', {
+          platform: imagebuilder.Platform.Linux,
+        }),
+      },
+    ],
+  }),
+});
+```
 
 ## Working Backwards
 
@@ -143,8 +205,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 
 const image = new imagebuilder.Image(stack, 'Image', {
-  name: 'test-image',
-  description: 'An Image',
   // Optional - use a custom execution role
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
@@ -346,7 +406,7 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
   ],
   workingDirectory: '/var/tmp',
   // The image + block devices to use for the EC2 instance used for building the container image
-  instanceImage: imagebuilder.ContainerInstanceImage.fromSsmParameter(
+  instanceImage: imagebuilder.ContainerInstanceImage.fromSsmParameterName(
     stack,
     'ContainerInstanceImage',
     '/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended',
@@ -794,18 +854,6 @@ EC2 Image Builder resources can already be provisioned via CDK today, using its 
 
 ### What is the technical solution (design) of this feature?
 
-#### Interface Diagram
-
-![Interface Diagram](../images/0789/imagebuilder-interfaces.png)
-
-#### Construct Diagram
-
-![Construct Diagram](../images/0789/imagebuilder-constructs.png)
-
-#### Class Diagram
-
-![Class Diagram](../images/0789/imagebuilder-classes.png)
-
 #### Props Interfaces
 
 ##### Image Pipeline
@@ -815,7 +863,7 @@ interface ImagePipelineProps {
   /**
    * The recipe that defines the base image, components, and customizations used to build the image.
    */
-  readonly recipe: imagebuilder.IRecipeBase;
+  readonly recipe: IRecipeBase;
 
   /**
    * The name of the image pipeline.
@@ -836,7 +884,7 @@ interface ImagePipelineProps {
    *
    * @default - None - a manual image pipeline will be created.
    */
-  readonly schedule?: imagebuilder.Schedule;
+  readonly schedule?: Schedule;
 
   /**
    * The infrastructure configuration used for building the image.
@@ -853,18 +901,18 @@ interface ImagePipelineProps {
    * pipeline name. This bucket will enforce SSL for all requests, block public access, have lifecycle policies for log
    * file prefixes, and use an S3-managed key for encryption. An IAM inline policy will be attached to the instance
    * profile role allowing s3:PutObject on this bucket. IMDSv2 will be required by default on the instances used to
-   * build and test the image.
+   * build and test the image. The retention policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
    *
    * @default - An infrastructure configuration will be created with the default settings.
    */
-  readonly infrastructureConfiguration?: imagebuilder.IInfrastructureConfiguration;
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
   /**
    * The distribution configuration used for distributing the image.
    *
    * @default - None
    */
-  readonly distributionConfiguration?: imagebuilder.IDistributionConfiguration;
+  readonly distributionConfiguration?: IDistributionConfiguration;
 
   /**
    * The list of workflow configurations used to build the image.
@@ -894,6 +942,20 @@ interface ImagePipelineProps {
    * @default - true
    */
   readonly grantDefaultPermissionsToExecutionRole?: boolean;
+
+  /**
+   * The log group to use for the image pipeline.
+   *
+   * @default - A log group will be created with a 90-day retention policy.
+   */
+  readonly imagePipelineLogGroup?: logs.ILogGroup;
+
+  /**
+   * The log group to use for images created from the image pipeline.
+   *
+   * @default - A log group will be created with a 90-day retention policy.
+   */
+  readonly imageLogGroup?: logs.ILogGroup;
 
   /**
    * Settings for vulnerability scanning.
@@ -926,7 +988,7 @@ interface ImageProps {
   /**
    * The recipe that defines the base image, components, and customizations used to build the image.
    */
-  readonly recipe: imagebuilder.IRecipeBase;
+  readonly recipe: IRecipeBase;
 
   /**
    * The infrastructure configuration used for building the image.
@@ -940,22 +1002,23 @@ interface ImageProps {
    *
    * S3 logging will be enabled by default. A bucket will be created in the current region with the name formatted as:
    * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys will be prefixed with the image
-   * name. This bucket will enforce SSL for all requests, block public access, have have lifecycle policies for log file
+   * name. This bucket will enforce SSL for all requests, block public access, have lifecycle policies for log file
    * prefixes, and use an S3-managed key for encryption. An IAM inline policy will be attached to the instance profile
-   * role allowing s3:PutObject on this bucket.
+   * role allowing s3:PutObject on this bucket. The retention policy of the bucket will be set to
+   * RETAIN_ON_UPDATE_OR_DELETE.
    *
    * IMDSv2 will be required by default on the instances used to build and test the image.
    *
    * @default - An infrastructure configuration will be created with the default settings.
    */
-  readonly infrastructureConfiguration?: imagebuilder.IInfrastructureConfiguration;
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
   /**
    * The distribution configuration used for distributing the image.
    *
    * @default - None
    */
-  readonly distributionConfiguration?: imagebuilder.IDistributionConfiguration;
+  readonly distributionConfiguration?: IDistributionConfiguration;
 
   /**
    * The list of workflow configurations used to build the image.
@@ -985,6 +1048,13 @@ interface ImageProps {
    * @default - true
    */
   readonly grantDefaultPermissionsToExecutionRole?: boolean;
+
+  /**
+   * The log group to use for the image.
+   *
+   * @default - A log group will be created with a 90-day retention policy.
+   */
+  readonly logGroup?: logs.ILogGroup;
 
   /**
    * Settings for vulnerability scanning.
@@ -1017,7 +1087,7 @@ interface ImageRecipeProps {
   /**
    * The base image for customizations specified in the container recipe.
    */
-  readonly baseImage: imagebuilder.BaseImage;
+  readonly baseImage: BaseImage;
 
   /**
    * The name of the image recipe.
@@ -1031,7 +1101,7 @@ interface ImageRecipeProps {
    *
    * @default - 1.0.0
    */
-  readonly version?: imagebuilder.Version;
+  readonly version?: Version;
 
   /**
    * The description of the image recipe.
@@ -1044,6 +1114,13 @@ interface ImageRecipeProps {
    * @default - the AWS-managed hello world component is included if no components are provided
    */
   readonly components?: ComponentConfiguration[];
+
+  /**
+   * The additional tags to assign to the output AMI generated by the build.
+   *
+   * @default - None
+   */
+  readonly amiTags?: { [key: string]: string };
 
   /**
    * The block devices to attach to the instance used for building the image.
@@ -1076,12 +1153,12 @@ interface ContainerRecipeProps {
   /**
    * The base image for customizations specified in the container recipe.
    */
-  readonly baseImage: imagebuilder.BaseImage;
+  readonly baseImage: BaseImage;
 
   /**
    * The container repository where the output container image is stored.
    */
-  readonly targetRepository: imagebuilder.Repository;
+  readonly targetRepository: Repository;
 
   /**
    * The name of the container recipe.
@@ -1095,7 +1172,7 @@ interface ContainerRecipeProps {
    *
    * @default - 1.0.0
    */
-  readonly version?: imagebuilder.Version;
+  readonly version?: Version;
 
   /**
    * The description of the container recipe.
@@ -1110,7 +1187,7 @@ interface ContainerRecipeProps {
    * @default - A standard Dockerfile template will be generated to pull the base image,
    * perform environment setup, and run all components in the recipe.
    */
-  readonly dockerfile?: imagebuilder.DockerfileData;
+  readonly dockerfile?: DockerfileData;
 
   /**
    * The list of component configurations to apply in the image build.
@@ -1160,7 +1237,7 @@ interface ContainerRecipeProps {
    *
    * @default - Image Builder will use the appropriate ECS-optimized AMI
    */
-  readonly instanceImage?: imagebuilder.ContainerInstanceImage;
+  readonly instanceImage?: ContainerInstanceImage;
 }
 ```
 
@@ -1172,12 +1249,12 @@ interface ComponentProps {
    * The component document content that defines the build, validation, or test steps to be executed during the image
    * building process.
    */
-  readonly data: imagebuilder.ComponentData;
+  readonly data: ComponentData;
 
   /**
    * The operating system platform of the component.
    */
-  readonly platform: imagebuilder.Platform;
+  readonly platform: Platform;
 
   /**
    * The name of the component.
@@ -1191,7 +1268,7 @@ interface ComponentProps {
    *
    * @default - 1.0.0
    */
-  readonly version?: imagebuilder.Version;
+  readonly version?: Version;
 
   /**
    * The description of the component.
@@ -1307,7 +1384,8 @@ interface InfrastructureConfigurationProps {
    * By default, S3 logging will be enabled. A bucket will be created in the current region with the name formatted as:
    * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`. This bucket will enforce SSL for all requests, block
    * public access, have lifecycle policies for log file prefixes, and use an S3-managed key for encryption. An IAM
-   * inline policy will be attached to the instance profile role allowing s3:PutObject on this bucket.
+   * inline policy will be attached to the instance profile role allowing s3:PutObject on this bucket. The retention
+   * policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
    *
    * @default - S3 logging enabled
    */
@@ -1361,12 +1439,12 @@ interface WorkflowProps {
   /**
    * The workflow document content that defines the image creation process.
    */
-  readonly data: imagebuilder.WorkflowData;
+  readonly data: WorkflowData;
 
   /**
    * The phase in the image build process for which the workflow resource is responsible.
    */
-  readonly type: imagebuilder.WorkflowType;
+  readonly type: WorkflowType;
 
   /**
    * The name of the workflow.
@@ -1380,7 +1458,7 @@ interface WorkflowProps {
    *
    * @default - 1.0.0
    */
-  readonly version?: imagebuilder.Version;
+  readonly version?: Version;
 
   /**
    * The description of the workflow.
@@ -1412,7 +1490,7 @@ interface LifecyclePolicyProps {
   /**
    * The type of Image Builder resource that the lifecycle policy applies to.
    */
-  readonly resourceType: imagebuilder.LifecyclePolicyResourceType;
+  readonly resourceType: LifecyclePolicyResourceType;
 
   /**
    * Configuration details for the lifecycle policy rules.
@@ -1443,7 +1521,7 @@ interface LifecyclePolicyProps {
    *
    * @default - true
    */
-  readonly status?: imagebuilder.LifecyclePolicyStatus;
+  readonly status?: LifecyclePolicyStatus;
 
   /**
    * The execution role used to perform lifecycle actions.
@@ -1454,6 +1532,1225 @@ interface LifecyclePolicyProps {
    * @default - An execution role will be generated
    */
   readonly executionRole?: iam.IRole;
+}
+```
+
+#### Interfaces
+
+##### Diagram
+![Interface Diagram](../images/0789/imagebuilder-interfaces.png)
+
+##### Type definitions
+
+```ts
+import * as cdk from 'aws-cdk-lib';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as iam from 'aws-cdk-lib/aws-iam';
+
+interface IComponent extends cdk.IResource {
+  /**
+   * The ARN of the component
+   *
+   * @attribute
+   */
+  readonly componentArn: string;
+
+  /**
+   * The name of the component
+   *
+   * @attribute
+   */
+  readonly componentName: string;
+
+  /**
+   * The version of the component
+   */
+  readonly componentVersion: BuildVersion;
+
+  /**
+   * Grant custom actions to the given grantee for the component
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the component
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+
+interface IContainerRecipe extends IRecipeBase {
+  /**
+   * The ARN of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeArn: string;
+
+  /**
+   * The name of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeName: string;
+
+  /**
+   * The version of the container recipe
+   */
+  readonly containerRecipeVersion: Version;
+}
+
+interface IDistributionConfiguration extends cdk.IResource {
+  /**
+   * The ARN of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationArn: string;
+
+  /**
+   * The name of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationName: string;
+
+  /**
+   * Grant custom actions to the given grantee for the distribution configuration
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the distribution configuration
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+
+interface IImage extends cdk.IResource {
+  /**
+   * The ARN of the image
+   *
+   * @attribute
+   */
+  readonly imageArn: string;
+
+  /**
+   * The name of the image
+   *
+   * @attribute
+   */
+  readonly imageName: string;
+
+  /**
+   * The version of the image
+   */
+  readonly imageVersion: BuildVersion;
+
+
+  /**
+   * Grant custom actions to the given grantee for the image pipeline
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the image pipeline
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image state change events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildStateChange(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image completion events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildCompleted(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image failure events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildFailed(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder wait for action events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onWaitForAction(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Converts the image to a BaseImage, to use as the parent image in a recipe
+   */
+  toBaseImage(): BaseImage;
+}
+
+interface IImageRecipe extends IRecipeBase {
+  /**
+   * The ARN of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeArn: string;
+
+  /**
+   * The name of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeName: string;
+
+  /**
+   * The version of the image recipe
+   */
+  readonly imageRecipeVersion: Version;
+}
+
+interface IImagePipeline extends cdk.IResource {
+  /**
+   * The ARN of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineArn: string;
+
+  /**
+   * The name of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineName: string;
+
+  /**
+   * Grant custom actions to the given grantee for the image pipeline
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the image pipeline
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+
+  /**
+   * Grant permissions to the given grantee to start an execution of the image pipeline
+   *
+   * @param grantee - The principal
+   */
+  grantStartExecution(grantee: iam.IGrantable): iam.Grant;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image state change events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildStateChange(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image completion events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildCompleted(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image failure events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onImageBuildFailed(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder wait for action events
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   */
+  onWaitForAction(id: string, options?: events.OnEventOptions): events.Rule;
+}
+
+interface IInfrastructureConfiguration extends cdk.IResource {
+  /**
+   * The ARN of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationArn: string;
+
+  /**
+   * The name of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationName: string;
+
+  /**
+   * Grant custom actions to the given grantee for the infrastructure configuration
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the infrastructure configuration
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+
+interface ILifecyclePolicy extends cdk.IResource {
+  /**
+   * The ARN of the lifecycle policy
+   *
+   * @attribute
+   */
+  readonly lifecyclePolicyArn: string;
+
+  /**
+   * The name of the lifecycle policy
+   *
+   * @attribute
+   */
+  readonly lifecyclePolicyName: string;
+
+  /**
+   * Grant custom actions to the given grantee for the lifecycle policy
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the lifecycle policy
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+
+interface IRecipeBase {
+  /**
+   * Applies the recipe to the given lifecycle policy as a selected resource
+   *
+   * @param policy - The lifecycle policy to apply the recipe to
+   */
+  applyToLifecyclePolicy(policy: LifecyclePolicy): void;
+
+  /**
+   * Grant custom actions to the given grantee for the recipe
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the recipe
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+
+interface IWorkflow extends cdk.IResource {
+  /**
+   * The ARN of the workflow
+   *
+   * @attribute
+   */
+  readonly workflowArn: string;
+
+  /**
+   * The name of the workflow
+   *
+   * @attribute
+   */
+  readonly workflowName: string;
+
+  /**
+   * The type of the workflow
+   */
+  readonly workflowType: WorkflowType;
+
+  /**
+   * The version of the workflow
+   */
+  readonly workflowVersion: BuildVersion;
+
+  /**
+   * Grant custom actions to the given grantee for the workflow
+   *
+   * @param grantee - The principal
+   * @param actions - The list of actions
+   */
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+
+  /**
+   * Grant read permissions to the given grantee for the workflow
+   *
+   * @param grantee - The principal
+   */
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+}
+```
+
+#### Constructs
+
+##### Diagram
+
+![Construct Diagram](../images/0789/imagebuilder-constructs.png)
+
+##### Type definitions
+
+```ts
+class Component extends ComponentBase {
+  static fromArn(scope: Construct, id: string, arn: string): IComponent;
+  static fromName(scope: Construct, id: string, name: string): IComponent;
+  static fromComponentAttributes(scope: Construct, id: string, attrs: ComponentAttributes): IComponent;
+  static isComponent(x: any): x is Component;
+
+  /**
+   * The ARN of the component
+   *
+   * @attribute
+   */
+  readonly componentArn: string;
+
+  /**
+   * The name of the component
+   *
+   * @attribute
+   */
+  readonly componentName: string;
+
+  /**
+   * The version of the component
+   */
+  readonly componentVersion: BuildVersion;
+
+  /**
+   * Whether the component is encrypted
+   *
+   * @attribute
+   */
+  readonly encrypted: boolean;
+
+  /**
+   * The type of the component
+   *
+   * @attribute
+   */
+  readonly type: ComponentType;
+
+  constructor(scope: Construct, id: string, props: ComponentProps);
+}
+
+class ContainerRecipe extends ContainerRecipeBase {
+  static fromArn(scope: Construct, id: string, arn: string): IContainerRecipe;
+  static fromName(scope: Construct, id: string, name: string): IContainerRecipe;
+  static fromContainerRecipeAttributes(
+    scope: Construct,
+    id: string,
+    attrs: ContainerRecipeAttributes,
+  ): IContainerRecipe;
+  static isContainerRecipe(x: any): x is ContainerRecipe;
+
+  /**
+   * The ARN of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeArn: string;
+
+  /**
+   * The name of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeName: string;
+
+  /**
+   * The version of the container recipe
+   */
+  readonly containerRecipeVersion: Version;
+
+  constructor(scope: Construct, id: string, props: ContainerRecipeProps);
+}
+
+class DistributionConfiguration extends DistributionConfigurationBase {
+  static fromArn(scope: Construct, id: string, arn: string): IDistributionConfiguration;
+  static fromName(scope: Construct, id: string, name: string): IDistributionConfiguration;
+
+  /**
+   * The ARN of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationArn: string;
+
+  /**
+   * The name of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationName: string;
+
+  constructor(scope: Construct, id: string, props: DistributionConfigurationProps);
+}
+
+class Image extends ImageBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImage;
+  static fromName(scope: Construct, id: string, name: string): IImage;
+  static fromImageAttributes(scope: Construct, id: string, attrs: ImageAttributes): IImage;
+  static isImage(x: any): x is Image;
+
+  /**
+   * The ARN of the image
+   *
+   * @attribute
+   */
+  readonly imageArn: string;
+
+  /**
+   * The name of the image
+   *
+   * @attribute
+   */
+  readonly imageName: string;
+
+  /**
+   * The version of the image
+   */
+  readonly imageVersion: BuildVersion;
+
+  /**
+   * The AMI ID of the EC2 AMI, or URI for the container
+   *
+   * @attribute
+   */
+  readonly imageId: string;
+
+  /**
+   * The execution role used for the image build
+   */
+  readonly executionRole?: iam.IRole;
+
+  /**
+   * The log group where image build logs are logged to
+   */
+  readonly logGroup?: logs.ILogGroup;
+
+  /**
+   * The infrastructure configuration used for the image build
+   */
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
+
+  constructor(scope: Construct, id: string, props: ImageProps);
+
+  /**
+   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
+   *
+   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   */
+  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+}
+
+class ImagePipeline extends ImagePipelineBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImagePipeline;
+  static fromName(scope: Construct, id: string, name: string): IImagePipeline;
+  static isImagePipeline(x: any): x is ImagePipeline;
+
+  /**
+   * The ARN of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineArn: string;
+
+  /**
+   * The name of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineName: string;
+
+  /**
+   * The execution role used for the image build
+   */
+  readonly executionRole?: iam.IRole;
+
+  /**
+   * The log group where image build logs are logged to
+   */
+  readonly imageLogGroup?: logs.ILogGroup;
+
+  /**
+   * The log group where image pipeline logs are logged to
+   */
+  readonly imagePipelineLogGroup?: logs.ILogGroup;
+
+  /**
+   * The infrastructure configuration used for the image build
+   */
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
+
+  constructor(scope: Construct, id: string, props: ImagePipelineProps);
+
+  /**
+   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
+   *
+   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   */
+  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+}
+
+class ImageRecipe extends ImageRecipeBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImageRecipe;
+  static fromName(scope: Construct, id: string, name: string): IImageRecipe;
+  static fromImageRecipeAttributes(scope: Construct, id: string, attrs: ImageRecipeAttributes): IImageRecipe;
+  static isImageRecipe(x: any): x is ImageRecipe;
+
+  /**
+   * The ARN of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeArn: string;
+
+  /**
+   * The name of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeName: string;
+
+  /**
+   * The version of the image recipe
+   */
+  readonly imageRecipeVersion: Version;
+
+  constructor(scope: Construct, id: string, props: ImageRecipeProps);
+}
+
+class InfrastructureConfiguration extends InfrastructureConfigurationBase {
+  static fromArn(scope: Construct, id: string, arn: string): IInfrastructureConfiguration;
+  static fromName(scope: Construct, id: string, name: string): IInfrastructureConfiguration;
+  static isInfrastructureConfiguration(x: any): x is InfrastructureConfiguration;
+
+  /**
+   * The ARN of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationArn: string;
+
+  /**
+   * The name of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationName: string;
+
+  /**
+   * The bucket used to upload image build logs
+   */
+  readonly logBucket?: s3.IBucket;
+
+  /**
+   * The EC2 instance profile to use for the build
+   */
+  readonly instanceProfile?: iam.IInstanceProfile;
+
+  constructor(scope: Construct, id: string, props: InfrastructureConfigurationProps);
+}
+
+class LifecyclePolicy extends LifecyclePolicyBase {
+  static fromArn(scope: Construct, id: string, arn: string): ILifecyclePolicy;
+  static fromName(scope: Construct, id: string, name: string): ILifecyclePolicy;
+  static isLifecyclePolicy(x: any): x is LifecyclePolicy;
+
+  /**
+   * The ARN of the lifecycle policy
+   *
+   * @attribute
+   */
+  readonly lifecyclePolicyArn: string;
+
+  /**
+   * The name of the lifecycle policy
+   */
+  readonly lifecyclePolicyName: string;
+
+  /**
+   * The execution role used for lifecycle policy executions
+   */
+  readonly executionRole?: string;
+
+  constructor(scope: Construct, id: string, props: LifecyclePolicyProps);
+
+  addRecipeSelection(recipe: IRecipeBase): void;
+}
+
+class Workflow extends WorkflowBase {
+  static fromArn(scope: Construct, id: string, arn: string): IWorkflow;
+  static fromName(scope: Construct, id: string, name: string): IWorkflow;
+  static fromWorkflowAttributes(scope: Construct, id: string, attrs: WorkflowAttributes): IWorkflow;
+  static isWorkflow(x: any): x is Workflow;
+
+  /**
+   * The ARN of the workflow
+   *
+   * @attribute
+   */
+  readonly workflowArn: string;
+
+  /**
+   * The name of the workflow
+   */
+  readonly workflowName: string;
+
+  /**
+   * The type of the workflow
+   */
+  readonly workflowType: WorkflowType;
+
+  /**
+   * The version of the workflow
+   */
+  readonly workflowVersion: BuildVersion;
+
+  constructor(scope: Construct, id: string, props: WorkflowProps);
+}
+```
+
+#### Classes
+
+##### Diagram
+
+![Class Diagram](../images/0789/imagebuilder-classes.png)
+
+##### Type definitions
+
+```ts
+class Component extends ComponentBase {
+  static fromArn(scope: Construct, id: string, arn: string): IComponent;
+  static fromName(scope: Construct, id: string, name: string): IComponent;
+  static fromComponentAttributes(scope: Construct, id: string, attrs: ComponentAttributes): IComponent;
+  static isComponent(x: any): x is Component;
+
+  /**
+   * The ARN of the component
+   *
+   * @attribute
+   */
+  readonly componentArn: string;
+
+  /**
+   * The name of the component
+   *
+   * @attribute
+   */
+  readonly componentName: string;
+
+  /**
+   * The version of the component
+   */
+  readonly componentVersion: BuildVersion;
+
+  /**
+   * Whether the component is encrypted
+   *
+   * @attribute
+   */
+  readonly encrypted: boolean;
+
+  /**
+   * The type of the component
+   *
+   * @attribute
+   */
+  readonly type: ComponentType;
+
+  constructor(scope: Construct, id: string, props: ComponentProps);
+}
+
+class ContainerRecipe extends ContainerRecipeBase {
+  static fromArn(scope: Construct, id: string, arn: string): IContainerRecipe;
+  static fromName(scope: Construct, id: string, name: string): IContainerRecipe;
+  static fromContainerRecipeAttributes(
+    scope: Construct,
+    id: string,
+    attrs: ContainerRecipeAttributes,
+  ): IContainerRecipe;
+  static isContainerRecipe(x: any): x is ContainerRecipe;
+
+  /**
+   * The ARN of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeArn: string;
+
+  /**
+   * The name of the container recipe
+   *
+   * @attribute
+   */
+  readonly containerRecipeName: string;
+
+  /**
+   * The version of the container recipe
+   */
+  readonly containerRecipeVersion: Version;
+
+  constructor(scope: Construct, id: string, props: ContainerRecipeProps);
+}
+
+class DistributionConfiguration extends DistributionConfigurationBase {
+  static fromArn(scope: Construct, id: string, arn: string): IDistributionConfiguration;
+  static fromName(scope: Construct, id: string, name: string): IDistributionConfiguration;
+
+  /**
+   * The ARN of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationArn: string;
+
+  /**
+   * The name of the distribution configuration
+   *
+   * @attribute
+   */
+  readonly distributionConfigurationName: string;
+
+  constructor(scope: Construct, id: string, props: DistributionConfigurationProps);
+}
+
+class Image extends ImageBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImage;
+  static fromName(scope: Construct, id: string, name: string): IImage;
+  static fromImageAttributes(scope: Construct, id: string, attrs: ImageAttributes): IImage;
+  static isImage(x: any): x is Image;
+
+  /**
+   * The ARN of the image
+   *
+   * @attribute
+   */
+  readonly imageArn: string;
+
+  /**
+   * The name of the image
+   *
+   * @attribute
+   */
+  readonly imageName: string;
+
+  /**
+   * The version of the image
+   */
+  readonly imageVersion: BuildVersion;
+
+  /**
+   * The AMI ID of the EC2 AMI, or URI for the container
+   *
+   * @attribute
+   */
+  readonly imageId: string;
+
+  /**
+   * The execution role used for the image build
+   */
+  readonly executionRole?: iam.IRole;
+
+  /**
+   * The log group where image build logs are logged to
+   */
+  readonly logGroup?: logs.ILogGroup;
+
+  /**
+   * The infrastructure configuration used for the image build
+   */
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
+
+  constructor(scope: Construct, id: string, props: ImageProps);
+
+  /**
+   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
+   *
+   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   */
+  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+}
+
+class ImagePipeline extends ImagePipelineBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImagePipeline;
+  static fromName(scope: Construct, id: string, name: string): IImagePipeline;
+  static isImagePipeline(x: any): x is ImagePipeline;
+
+  /**
+   * The ARN of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineArn: string;
+
+  /**
+   * The name of the image pipeline
+   *
+   * @attribute
+   */
+  readonly imagePipelineName: string;
+
+  /**
+   * The execution role used for the image build
+   */
+  readonly executionRole?: iam.IRole;
+
+  /**
+   * The log group where image build logs are logged to
+   */
+  readonly imageLogGroup?: logs.ILogGroup;
+
+  /**
+   * The log group where image pipeline logs are logged to
+   */
+  readonly imagePipelineLogGroup?: logs.ILogGroup;
+
+  /**
+   * The infrastructure configuration used for the image build
+   */
+  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
+
+  constructor(scope: Construct, id: string, props: ImagePipelineProps);
+
+  /**
+   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
+   *
+   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   */
+  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+}
+
+class ImageRecipe extends ImageRecipeBase {
+  static fromArn(scope: Construct, id: string, arn: string): IImageRecipe;
+  static fromName(scope: Construct, id: string, name: string): IImageRecipe;
+  static fromImageRecipeAttributes(scope: Construct, id: string, attrs: ImageRecipeAttributes): IImageRecipe;
+  static isImageRecipe(x: any): x is ImageRecipe;
+
+  /**
+   * The ARN of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeArn: string;
+
+  /**
+   * The name of the image recipe
+   *
+   * @attribute
+   */
+  readonly imageRecipeName: string;
+
+  /**
+   * The version of the image recipe
+   */
+  readonly imageRecipeVersion: Version;
+
+  constructor(scope: Construct, id: string, props: ImageRecipeProps);
+}
+
+class InfrastructureConfiguration extends InfrastructureConfigurationBase {
+  static fromArn(scope: Construct, id: string, arn: string): IInfrastructureConfiguration;
+  static fromName(scope: Construct, id: string, name: string): IInfrastructureConfiguration;
+  static isInfrastructureConfiguration(x: any): x is InfrastructureConfiguration;
+
+  /**
+   * The ARN of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationArn: string;
+
+  /**
+   * The name of the infrastructure configuration
+   *
+   * @attribute
+   */
+  readonly infrastructureConfigurationName: string;
+
+  /**
+   * The bucket used to upload image build logs
+   */
+  readonly logBucket?: s3.IBucket;
+
+  constructor(scope: Construct, id: string, props: InfrastructureConfigurationProps);
+}
+
+class LifecyclePolicy extends LifecyclePolicyBase {
+  static fromArn(scope: Construct, id: string, arn: string): ILifecyclePolicy;
+  static fromName(scope: Construct, id: string, name: string): ILifecyclePolicy;
+  static isLifecyclePolicy(x: any): x is LifecyclePolicy;
+
+  /**
+   * The ARN of the lifecycle policy
+   *
+   * @attribute
+   */
+  readonly lifecyclePolicyArn: string;
+
+  /**
+   * The name of the lifecycle policy
+   */
+  readonly lifecyclePolicyName: string;
+
+  /**
+   * The execution role used for lifecycle policy executions
+   */
+  readonly executionRole?: string;
+
+  constructor(scope: Construct, id: string, props: LifecyclePolicyProps);
+
+  addRecipeSelection(recipe: IRecipeBase): void;
+}
+
+class Workflow extends WorkflowBase {
+  static fromArn(scope: Construct, id: string, arn: string): IWorkflow;
+  static fromName(scope: Construct, id: string, name: string): IWorkflow;
+  static fromWorkflowAttributes(scope: Construct, id: string, attrs: WorkflowAttributes): IWorkflow;
+  static isWorkflow(x: any): x is Workflow;
+
+  /**
+   * The ARN of the workflow
+   *
+   * @attribute
+   */
+  readonly workflowArn: string;
+
+  /**
+   * The name of the workflow
+   */
+  readonly workflowName: string;
+
+  /**
+   * The type of the workflow
+   */
+  readonly workflowType: WorkflowType;
+
+  /**
+   * The version of the workflow
+   */
+  readonly workflowVersion: BuildVersion;
+
+  constructor(scope: Construct, id: string, props: WorkflowProps);
+}
+
+abstract class AwsManagedComponent {
+  static awsCliV2(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static helloWorld(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static python3(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static reboot(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static stigBuild(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static updateOS(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+
+  static fromName(scope: Construct, id: string, name: string): IComponent;
+}
+
+abstract class AwsManagedImage {
+  static amazonLinux2(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+  static amazonLinux2023(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+  static redHatEnterpriseLinux10(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+  static suseLinuxEnterpriseServer15(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+  static windows2022(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+  static windows2025(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
+
+  static fromName(scope: Construct, id: string, name: string): IImage;
+}
+
+abstract class AwsManagedWorkflow {
+  static buildContainer(scope: Construct, id: string): IWorkflow;
+  static buildImage(scope: Construct, id: string): IWorkflow;
+  static distributeContainer(scope: Construct, id: string): IWorkflow;
+  static testContainer(scope: Construct, id: string): IWorkflow;
+  static testImage(scope: Construct, id: string): IWorkflow;
+
+  static fromName(scope: Construct, id: string, name: string): IWorkflow;
+}
+
+abstract class AwsMarketplaceComponent {
+  static fromAwsMarketplaceComponentAttributes(
+    scope: Construct,
+    id: string,
+    attrs: AwsMarketplaceComponentAttributes,
+  ): IComponent;
+}
+
+abstract class BaseImage {
+  static fromAmiId(scope: Construct, id: string, amiId: string): BaseImage;
+  static fromMachineImage(scope: Construct, id: string, machineImage: ec2.IMachineImage): BaseImage;
+  static fromArn(scope: Construct, id: string, arn: string): BaseImage;
+  static fromAwsManaged(scope: Construct, id: string, imageName: string): BaseImage;
+  static fromDockerHub(scope: Construct, id: string, image: string): BaseImage;
+  static fromEcr(scope: Construct, id: string, repository: ecr.IRepository, tag?: string): BaseImage;
+  static fromEcrPublic(scope: Construct, id: string, repositoryUri: string, tag?: string): BaseImage;
+  static fromImage(scope: Construct, id: string, image: IImage): BaseImage;
+  static fromMarketplaceProductId(scope: Construct, id: string, productId: string): BaseImage;
+  static fromSsmParameter(scope: Construct, id: string, parameter: ssm.IStringParameter): BaseImage;
+  static fromSsmParameterName(scope: Construct, id: string, parameterName: string): BaseImage;
+}
+
+abstract class BuildVersion extends Version {
+  static readonly LATEST: BuildVersion;
+
+  /**
+   * The build version string
+   */
+  readonly buildVersion?: string;
+
+  static fromString(buildVersionString: string): BuildVersion;
+  static fromBuildVersionAttributes(attrs: BuildVersionAttributes): BuildVersion;
+  /**
+   * The latest major version for the given version string
+   */
+  get latestMajorVersion(): Version;
+
+  /**
+   * The latest minor version for the given version string
+   */
+  get latestMinorVersion(): Version;
+
+  /**
+   * The latest patch version for the given version string
+   */
+  get latestPatchVersion(): Version;
+}
+
+abstract class ComponentData {
+  static fromAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
+  static fromS3(bucket: s3.IBucket, key: string): ComponentData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
+  static fromJsonObject(data: object): ComponentData;
+  static fromString(data: string): ComponentData;
+}
+
+abstract class DockerfileData {
+  static fromAsset(path: string): DockerfileData;
+  static fromS3(bucket: s3.IBucket, key: string): DockerfileData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
+  static fromString(data: string): DockerfileData;
+}
+
+abstract class ComponentParameterValue {
+  static fromString(value: string): ComponentParameterValue;
+}
+
+abstract class ContainerInstanceImage {
+  static fromAmiId(scope: Construct, id: string, amiId: string): ContainerInstanceImage;
+  static fromMachineImage(scope: Construct, id: string, machineImage: ec2.IMachineImage): ContainerInstanceImage;
+  static fromSsmParameter(scope: Construct, id: string, parameter: ssm.IStringParameter): ContainerInstanceImage;
+  static fromSsmParameterName(scope: Construct, id: string, parameterName: string): ContainerInstanceImage;
+}
+
+abstract class Repository {
+  static fromEcr(repository: ecr.IRepository): Repository;
+}
+
+abstract class Schedule {
+  /**
+   * The schedule expression string
+   */
+  readonly expressionString: string;
+
+  static rate(options: RateOptions): Schedule;
+  static cron(options: CronOptions): Schedule;
+  static expression(expression: string, scheduleOptions?: ScheduleCommonOptions): Schedule;
+}
+
+class Version {
+  static readonly LATEST: Version;
+
+  /**
+   * The version string
+   */
+  readonly version: string;
+
+  /**
+   * The major version number
+   */
+  readonly majorVersion: string;
+
+  /**
+   * The minor version number
+   */
+  readonly minorVersion: string;
+
+  /**
+   * The patch version number
+   */
+  readonly patchVersion: string;
+
+  static fromString(versionString: string): Version;
+  static fromVersionAttributes(attrs: VersionAttributes): Version;
+
+  /**
+   * The latest major version for the given version string
+   */
+  get latestMajorVersion(): Version;
+
+  /**
+   * The latest minor version for the given version string
+   */
+  get latestMinorVersion(): Version;
+}
+
+abstract class WorkflowData {
+  static fromAsset(path: string): WorkflowData;
+  static fromS3(bucket: s3.IBucket, key: string): WorkflowData;
+  static fromS3UploadedAsset(path: string, bucket: s3.IBucket, key: string): WorkflowData;
+  static fromJsonObject(data: object): WorkflowData;
+  static fromString(data: string): WorkflowData;
+}
+
+abstract class WorkflowParameterValue {
+  static fromBoolean(value: boolean): WorkflowParameterValue;
+  static fromInteger(value: number): WorkflowParameterValue;
+  static fromString(value: string): WorkflowParameterValue;
+  static fromStringList(values: string[]): WorkflowParameterValue;
 }
 ```
 
@@ -1508,13 +2805,17 @@ N/A
 * **IMDSv2 token required by default for Image Builder instances**. By default, tokens will be required when making
   requests to IMDSv2 for any instances launched in Image Builder.
 
-* **CloudWatch logging with retention**. Image Builder logs image build details and component execution details into a
-  CloudWatch log group. For images and image pipelines, a CloudWatch log group will be created by default with a 90-day
-  retention policy.
+* **Automatic pipeline disabling**. Image pipelines will be configured to automatically disable after 5 consecutive
+  image build failures.
+
+* **CloudWatch logging with retention**. Image Builder logs image pipeline details, image build details and component
+  execution details into a CloudWatch log group. For images and image pipelines, a CloudWatch log group will be created
+  by default with a 90-day retention policy.
 
 * **S3 logging for image builds**. By default, S3 logging will be enabled. A bucket will be created in the current
   region with the name formatted as: `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys
   will be prefixed with the image pipeline or image name. This bucket will enforce SSL for all requests, block public
   access, have lifecycle policies for log file prefixes (Infrequent Access storage class after 30 days, Glacier after 90
   days, expire after 1 year), and use an S3-managed key for encryption. A policy will be attached to the instance
-  profile role allowing `s3:PutObject` on this bucket.
+  profile role allowing `s3:PutObject` on this bucket. The retention policy of the bucket will be set to
+  `RETAIN_ON_UPDATE_OR_DELETE`.
