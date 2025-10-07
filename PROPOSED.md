@@ -35,4 +35,5 @@
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/789)||💡 proposed
 [792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/issues/792)||💡 proposed
 [808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/issues/808)||💡 proposed
+[814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||💡 proposed
 <!--END_TABLE-->
