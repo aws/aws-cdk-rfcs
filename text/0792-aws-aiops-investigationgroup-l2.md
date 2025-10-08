@@ -53,7 +53,7 @@ Each investigation in a Region is a part of the investigation group in that Regi
 To create an investigation group and set up CloudWatch investigations (aka AIOps),
 you must be signed in to an IAM principal that has either the AIOpsConsoleAdminPolicy or the AdministratorAccess IAM policy attached,
 or to an account that has similar permissions.
-Create investigation group would trigger a new role creation with managed policy `AIOpsAssistantPolicy`, and trust relationship for AIOps service principal.
+The InvestigationGroup L2 automatically creates a role with the `AIOpsAssistantPolicy` managed policy and a trust relationship for the AIOps service principal.
 
 * If customer specified customized kms key for encryption, AIOps will updates KMS key resource policy to grant necessary encryption/decryption permissions
 * If customer specified cross-account configuration, AIOps will update investigation group role to include assumeRole permission
