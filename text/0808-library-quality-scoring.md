@@ -23,27 +23,25 @@ It calculates a single score (0–100) based on three equally weighted aspects:
 * **Quality**: Does the project have good docs, tests, linting, and hygiene?
 * **Popularity**: How widely is the library adopted in the community?
 
-Each package is scored per version, since different versions may have different scores. The signals within each pillar are
-recalculated for the different major versions, capturing changes that may occur between versions.
+Each package is scored on their latest version. Scores are unlikely to change drasically between versions.
 
 #### CLI Usage
 
 ```> cdk-construct-analyzer --help
 
-Usage: cdk-construct-analyzer [package[@version]] [options]
+Usage: cdk-construct-analyzer [package] [options]
 
 Arguments:
-  package[@major_version]     Name of the construct package to score
-                              If no version is provided, defaults to latest
+  package   Name of the construct package to score (Scored on the latest version)
 
 Options:
- --verbose Show detailed breakdown of signals
---help    Show this help message
+ --verbose  Show detailed breakdown of signals
+ --help     Show this help message
 ```
 
 You can run it locally on any construct repository:
 
-```> cdk-construct-analyzer cdklabs/cdk-ecs-codedeploy@1
+```> cdk-construct-analyzer cdklabs/cdk-ecs-codedeploy
 
 LIBRARY: @cdklabs/cdk-ecs-codedeploy
 VERSION: 1
@@ -60,7 +58,7 @@ SUBSCORES
 
 Add `--verbose` for a detailed breakdown:
 
-```> cdk-construct-analyzer cdklabs/cdk-ecs-codedeploy@1 --verbose
+```> cdk-construct-analyzer cdklabs/cdk-ecs-codedeploy --verbose
 
 LIBRARY: @cdklabs/cdk-ecs-codedeploy
 VERSION: 1
@@ -96,10 +94,9 @@ SUBSCORES
 — Multi-language Support ........................ ★★★☆☆    1
 
 === Popularity ===                                SCORE  WEIGHT
-— Contributors .................................. ★★★★★    3
 — Weekly Downloads .............................. ★★★★★    3
-— Version Downloads ............................. ★★★★★    3
 — Repo stars .................................... ★★★★★    2
+— Contributors .................................. ★★★★★    1
 ```
 
 #### Scoring Pillars and Signals
@@ -236,6 +233,16 @@ add a single roll-up score for Construct Hub to show at a high level.
 
 No.
 
+### How can Gen AI help in this project?
+
+Generative AI can support this project in helpful but limited ways. It could assist with parsing and interpreting unstructured
+content like README files, changelogs, and test files to assess quality related signals. When certain metadata is missing or incomplete,
+AI can help infer details, for example, detecting whether usage examples are present in documentation or summarizing code structure.
+Additionally, Gen AI could be used to generate summaries or suggestions for construct library authors on how to improve their
+library’s score. However, Gen AI is not suitable for core scoring logic. Because its outputs are nondeterministic and not auditable,
+it cannot be relied on for calculating scores or evaluating libraries in a reproducible and explainable way. Overall, Gen AI can be a
+valuable tool for enhancing developer experience, but it should remain a supporting component rather than a decision making tool.
+
 ## Appendix
 
 ### Signals
@@ -247,11 +254,11 @@ terminology also aligned with npms.io’s scoring system.
 | Pillar      | Signal                             | Calculation / Thresholds                                            | Source         | Required | Justification                    | Importance |
 |-------------|------------------------------------|---------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
 | Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0 | Repo API       | YES      | Reflects responsiveness          | 3          |
-| Maintenance | Commit Frequency                   | ≥10/month = 100, 5–9 = 75, 1–4 = 50, <1 = 25, 0 in 12mo = 0         | Repo API       | YES      | Shows steady activity            | 3          |
-| Maintenance | Release Frequency                  | ≥3/yr = 100, 2 = 75, 1 = 50, 1/yr = 25, 2+yr = 0                    | Registry API   | YES      | Activity check, responsiveness   | 3          |
-| Maintenance | Open issues / total issues         | <10% = 100, 10–25% = 75, 25–50% = 50, 50–75% = 25, 75%+ = 0         | Repo API       | YES      | Measures backlog health          | 2          |
+| Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 in 12mo = 0                 | Repo API       | YES      | Shows steady activity            | 3          |
+| Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0    | Registry API   | YES      | Activity check, responsiveness   | 3          |
+| Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0 | Repo API       | YES      | Measures backlog health          | 2          |
 | Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0            | Repo API       | YES      | Signals maintainer attention     | 2          |
-| Maintenance | Number of Contributors             | ≥20 = 100, 10–19 = 75, 5–9 = 50, 1–4 = 25, 0 = 0                    | Repo API       | YES      | Broad community involvement      | 2          |
+| Maintenance | Number of Contributors             | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                   | Repo API       | YES      | Broad community involvement      | 2          |
 | Maintenance | Most recent commit                 | <7d = 100, 7–30d = 75, 1–3mo = 50, 3–6mo = 25, >6mo = 0             | Repo API       | YES      | Indicates recency                | 2          |
 | Maintenance | Active Maintainers in last 90 days | —                                                                   | Repo API       | NO       | Prevents “bus factor”            | 3          |
 | Maintenance | Number of Significant Contributors | —                                                                   | Repo API       | NO       | Measure of team size?            | 2          |
@@ -270,56 +277,28 @@ terminology also aligned with npms.io’s scoring system.
 | Quality     | Dependency freshness / vuln checks | —                                                                   | npm            | NO       | Security                         | 3          |
 | Quality     | Download Balance Across Languages  | —                                                                   | All registries | NO       | Confirms real multi-lang support | 1          |
 | Quality     | Code complexity                    | —                                                                   | —              | NO       | Hard to automate                 | 1          |
-| Popularity  | Contributors                       | ≥20 = 100, 10–19 = 75, 5–9 = 50, 1–4 = 25, 0 = 0                    | Repo API       | YES      | Health of contributions          | 3          |
-| Popularity  | Weekly Downloads                   | 1M+ = 100, 100K–1M = 75, 10K–99K = 50, 1K–9K = 25, <1K = 0          | npm            | YES      | General usage metric             | 3          |
-| Popularity  | Version Downloads                  | 100K+ = 100, 10K–99K = 75, 1K–9K = 50, 100–999 = 25, <100 = 0       | npm            | YES      | Usage of a specific version      | 3          |
-| Popularity  | Repo stars                         | ≥5K = 100, 1K–5K = 75, 100–999 = 50, 10–99 = 25, <10 = 0            | Repo API       | YES      | Popularity proxy                 | 2          |
+| Popularity  | Weekly Downloads                   | 2.5k+ = 100, 251–2.5K = 75 41-250 = 50, 6-40 = 25, <5 = 0           | npm            | YES      | General usage metric             | 3          |
+| Popularity  | Repo stars                         | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                 | Repo API       | YES      | Popularity proxy                 | 2          |
+| Popularity  | Contributors                       | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                   | Repo API       | YES      | Health of contributions          | 1          |
+| Popularity  | Version Downloads                  | 10K+ = 100, 1K–9K = 75, 100–999 = 50, 10-99 = 25, <10 = 0           | npm            | NO       | Usage of a specific version      | 3          |
 | Popularity  | Dependents                         | —                                                                   | libraries.io   | NO       | Shows reuse                      | 3          |
 | Popularity  | Forks                              | —                                                                   | Repo API       | NO       | Community engagement             | 2          |
 | Popularity  | Subscribers/watchers               | —                                                                   | Repo API       | NO       | Indicates user interest          | 1          |
 
 ### Construct Library Scoring Examples
 
-#### **Repository**: `@cdklabs/cdk-docker-image-deployment@0`
-Maintenance: 26/100
+#### **Repository**: `@cdklabs/cdk-docker-image-deployment`
+Maintenance: 54/100
 Quality:     80/100
-Popularity:  11/100
-Overall:     39/100
+Popularity:  75/100
+Overall:     70/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
-| Maintenance | Time to first response             | 1          |
-| Maintenance | Commit Frequency                   | 1          |
+| Maintenance | Time to first response             | 2          |
+| Maintenance | Commit Frequency                   | 3          |
 | Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 1          |
-| Maintenance | Median PR time-to-merge            | 3          |
-| Maintenance | Number of Contributors             | 1          |
-| Maintenance | Most recent commit                 | 2          |
-| Quality     | README, API ref, examples          | 5          |
-| Quality     | Tests checklist (unit/snapshot)    | 5          |
-| Quality     | Passing CI builds                  | 5          |
-| Quality     | Author Quality metrics             | 5          |
-| Quality     | Changelog Present                  | 1          |
-| Quality     | License, .gitignore/.npmignore     | 5          |
-| Quality     | Stable versioning                  | 3          |
-| Quality     | Multi-language Support             | 5          |
-| Popularity  | Contributors                       | 1          |
-| Popularity  | Weekly Downloads                   | 2          |
-| Popularity  | Version Downloads                  | 1          |
-| Popularity  | Repo stars                         | 2          |
-
-#### **Repository**: `@cdklabs/cdk-stacksets@0`
-Maintenance: 28/100
-Quality:     80/100
-Popularity:  23/100
-Overall:     44/100
-
-| Pillar      | Signal                             | Stars      |
-|-------------|------------------------------------|------------|
-| Maintenance | Time to first response             | 3          |
-| Maintenance | Commit Frequency                   | 1          |
-| Maintenance | Release Frequency                  | 2          |
-| Maintenance | Open issues / total issues         | 2          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 3          |
 | Maintenance | Number of Contributors             | 1          |
 | Maintenance | Most recent commit                 | 3          |
@@ -331,25 +310,51 @@ Overall:     44/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 3          |
 | Quality     | Multi-language Support             | 5          |
+| Popularity  | Weekly Downloads                   | 5          |
+| Popularity  | Repo stars                         | 4          |
 | Popularity  | Contributors                       | 1          |
-| Popularity  | Weekly Downloads                   | 2          |
-| Popularity  | Version Downloads                  | 2          |
-| Popularity  | Repo stars                         | 3          |
 
-#### **Repository**: `@cdklabs/cdk-ecr-deployment@4`
-Maintenance: 54/100
-Quality:     78/100
-Popularity:  43/100
-Overall:     58/100
+#### **Repository**: `@cdklabs/cdk-stacksets`
+Maintenance: 31/100
+Quality:     80/100
+Popularity:  75/100
+Overall:     62/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
 | Maintenance | Time to first response             | 3          |
-| Maintenance | Commit Frequency                   | 2          |
-| Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 4          |
+| Maintenance | Commit Frequency                   | 1          |
+| Maintenance | Release Frequency                  | 2          |
+| Maintenance | Open issues / total issues         | 3          |
+| Maintenance | Median PR time-to-merge            | 3          |
+| Maintenance | Number of Contributors             | 1          |
+| Maintenance | Most recent commit                 | 3          |
+| Quality     | README, API ref, examples          | 5          |
+| Quality     | Tests checklist (unit/snapshot)    | 5          |
+| Quality     | Passing CI builds                  | 5          |
+| Quality     | Author Quality metrics             | 5          |
+| Quality     | Changelog Present                  | 1          |
+| Quality     | License, .gitignore/.npmignore     | 5          |
+| Quality     | Stable versioning                  | 3          |
+| Quality     | Multi-language Support             | 5          |
+| Popularity  | Weekly Downloads                   | 5          |
+| Popularity  | Repo stars                         | 4          |
+| Popularity  | Contributors                       | 1          |
+
+#### **Repository**: `@cdklabs/cdk-ecr-deployment`
+Maintenance: 60/100
+Quality:     78/100
+Popularity:  83/100
+Overall:     74/100
+
+| Pillar      | Signal                             | Stars      |
+|-------------|------------------------------------|------------|
+| Maintenance | Time to first response             | 3          |
+| Maintenance | Commit Frequency                   | 3          |
+| Maintenance | Release Frequency                  | 4          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 2          |
-| Maintenance | Number of Contributors             | 2          |
+| Maintenance | Number of Contributors             | 3          |
 | Maintenance | Most recent commit                 | 4          |
 | Quality     | README, API ref, examples          | 5          |
 | Quality     | Tests checklist (unit/snapshot)    | 3          |
@@ -359,23 +364,22 @@ Overall:     58/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 5          |
 | Quality     | Multi-language Support             | 5          |
-| Popularity  | Contributors                       | 2          |
-| Popularity  | Weekly Downloads                   | 3          |
-| Popularity  | Version Downloads                  | 3          |
-| Popularity  | Repo stars                         | 3          |
+| Popularity  | Weekly Downloads                   | 5          |
+| Popularity  | Repo stars                         | 4          |
+| Popularity  | Contributors                       | 3          |
 
-#### **Repository**: ` @pahud/cdk-remote-stack@2`
-Maintenance: 21/100
+#### **Repository**: ` @pahud/cdk-remote-stack`
+Maintenance: 24/100
 Quality:     85/100
-Popularity:  25/100
-Overall:     44/100
+Popularity:  63/100
+Overall:     57/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
 | Maintenance | Time to first response             | 3          |
 | Maintenance | Commit Frequency                   | 1          |
 | Maintenance | Release Frequency                  | 1          |
-| Maintenance | Open issues / total issues         | 4          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 2          |
 | Maintenance | Number of Contributors             | 1          |
 | Maintenance | Most recent commit                 | 1          |
@@ -387,16 +391,15 @@ Overall:     44/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 5          |
 | Quality     | Multi-language Support             | 5          |
+| Popularity  | Weekly Downloads                   | 4          |
+| Popularity  | Repo stars                         | 4          |
 | Popularity  | Contributors                       | 1          |
-| Popularity  | Weekly Downloads                   | 2          |
-| Popularity  | Version Downloads                  | 3          |
-| Popularity  | Repo stars                         | 2          |
 
-#### **Repository**: `@pahud/cdk-ssm-parameter-store@0`
+#### **Repository**: `@pahud/cdk-ssm-parameter-store`
 Maintenance: 12/100
 Quality:     70/100
-Popularity:  0/100
-Overall:     27/100
+Popularity:  33/100
+Overall:     38/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
@@ -415,51 +418,22 @@ Overall:     27/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 3          |
 | Quality     | Multi-language Support             | 3          |
+| Popularity  | Weekly Downloads                   | 3          |
+| Popularity  | Repo stars                         | 2          |
 | Popularity  | Contributors                       | 1          |
-| Popularity  | Weekly Downloads                   | 1          |
-| Popularity  | Version Downloads                  | 1          |
-| Popularity  | Repo stars                         | 1          |
 
-#### **Repository**: `@DataDog/datadog-cdk-constructs-v2@3`
-Maintenance: 81/100
+#### **Repository**: `@DataDog/datadog-cdk-constructs-v2`
+Maintenance: 84/100
 Quality:     99/100
-Popularity:  52/100
-Overall:     77/100
+Popularity:  71/100
+Overall:     84/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
 | Maintenance | Time to first response             | 4          |
 | Maintenance | Commit Frequency                   | 5          |
-| Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 4          |
-| Maintenance | Median PR time-to-merge            | 5          |
-| Maintenance | Number of Contributors             | 2          |
-| Maintenance | Most recent commit                 | 4          |
-| Quality     | README, API ref, examples          | 5          |
-| Quality     | Tests checklist (unit/snapshot)    | 5          |
-| Quality     | Passing CI builds                  | 5          |
-| Quality     | Author Quality metrics             | 5          |
-| Quality     | Changelog Present                  | 5          |
-| Quality     | License, .gitignore/.npmignore     | 5          |
-| Quality     | Stable versioning                  | 5          |
-| Quality     | Multi-language Support             | 4          |
-| Popularity  | Contributors                       | 2          |
-| Popularity  | Weekly Downloads                   | 4          |
-| Popularity  | Version Downloads                  | 4          |
-| Popularity  | Repo stars                         | 2          |
-
-#### **Repository**: `@aws/aws-cdk@2`
-Maintenance: 90/100
-Quality:    100/100
-Popularity:  93/100
-Overall:     94/100
-
-| Pillar      | Signal                             | Stars      |
-|-------------|------------------------------------|------------|
-| Maintenance | Time to first response             | 5          |
-| Maintenance | Commit Frequency                   | 4          |
-| Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 4          |
+| Maintenance | Release Frequency                  | 3          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 5          |
 | Maintenance | Number of Contributors             | 4          |
 | Maintenance | Most recent commit                 | 5          |
@@ -470,24 +444,50 @@ Overall:     94/100
 | Quality     | Changelog Present                  | 5          |
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 5          |
-| Quality     | Multi-language Support             | 5          |
-| Popularity  | Contributors                       | 4          |
+| Quality     | Multi-language Support             | 4          |
 | Popularity  | Weekly Downloads                   | 5          |
-| Popularity  | Version Downloads                  | 5          |
-| Popularity  | Repo stars                         | 5          |
+| Popularity  | Repo stars                         | 2          |
+| Popularity  | Contributors                       | 4          |
 
-#### **Repository**: `@udondan/iam-floyd@0`
-Maintenance: 79/100
+#### **Repository**: `@aws/aws-cdk`
+Maintenance:100/100
+Quality:    100/100
+Popularity: 100/100
+Overall:    100/100
+
+| Pillar      | Signal                             | Stars      |
+|-------------|------------------------------------|------------|
+| Maintenance | Time to first response             | 5          |
+| Maintenance | Commit Frequency                   | 5          |
+| Maintenance | Release Frequency                  | 5          |
+| Maintenance | Open issues / total issues         | 5          |
+| Maintenance | Median PR time-to-merge            | 5          |
+| Maintenance | Number of Contributors             | 5          |
+| Maintenance | Most recent commit                 | 5          |
+| Quality     | README, API ref, examples          | 5          |
+| Quality     | Tests checklist (unit/snapshot)    | 5          |
+| Quality     | Passing CI builds                  | 5          |
+| Quality     | Author Quality metrics             | 5          |
+| Quality     | Changelog Present                  | 5          |
+| Quality     | License, .gitignore/.npmignore     | 5          |
+| Quality     | Stable versioning                  | 5          |
+| Quality     | Multi-language Support             | 5          |
+| Popularity  | Weekly Downloads                   | 5          |
+| Popularity  | Repo stars                         | 5          |
+| Popularity  | Contributors                       | 5          |
+
+#### **Repository**: `@udondan/iam-floyd`
+Maintenance: 87/100
 Quality:     74/100
-Popularity:  43/100
-Overall:     65/100
+Popularity:  67/100
+Overall:     76/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
 | Maintenance | Time to first response             | 4          |
-| Maintenance | Commit Frequency                   | 4          |
+| Maintenance | Commit Frequency                   | 5          |
 | Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 4          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 5          |
 | Maintenance | Number of Contributors             | 2          |
 | Maintenance | Most recent commit                 | 5          |
@@ -499,26 +499,25 @@ Overall:     65/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 3          |
 | Quality     | Multi-language Support             | 3          |
+| Popularity  | Weekly Downloads                   | 4          |
+| Popularity  | Repo stars                         | 4          |
 | Popularity  | Contributors                       | 2          |
-| Popularity  | Weekly Downloads                   | 3          |
-| Popularity  | Version Downloads                  | 3          |
-| Popularity  | Repo stars                         | 3          |
 
-#### **Repository**: `@hashicorp/terraform-cdk@0`
-Maintenance: 57/100
+#### **Repository**: `@hashicorp/terraform-cdk`
+Maintenance: 53/100
 Quality:     88/100
-Popularity:  66/100
-Overall:     70/100
+Popularity:  83/100
+Overall:     75/100
 
 | Pillar      | Signal                             | Stars      |
 |-------------|------------------------------------|------------|
 | Maintenance | Time to first response             | 4          |
 | Maintenance | Commit Frequency                   | 1          |
-| Maintenance | Release Frequency                  | 5          |
-| Maintenance | Open issues / total issues         | 4          |
+| Maintenance | Release Frequency                  | 4          |
+| Maintenance | Open issues / total issues         | 5          |
 | Maintenance | Median PR time-to-merge            | 5          |
 | Maintenance | Number of Contributors             | 1          |
-| Maintenance | Most recent commit                 | 3          |
+| Maintenance | Most recent commit                 | 2          |
 | Quality     | README, API ref, examples          | 3          |
 | Quality     | Tests checklist (unit/snapshot)    | 5          |
 | Quality     | Passing CI builds                  | 5          |
@@ -527,10 +526,36 @@ Overall:     70/100
 | Quality     | License, .gitignore/.npmignore     | 5          |
 | Quality     | Stable versioning                  | 3          |
 | Quality     | Multi-language Support             | 5          |
-| Popularity  | Contributors                       | 1          |
-| Popularity  | Weekly Downloads                   | 4          |
-| Popularity  | Version Downloads                  | 5          |
+| Popularity  | Weekly Downloads                   | 5          |
 | Popularity  | Repo stars                         | 5          |
+| Popularity  | Contributors                       | 1          |
+
+#### **Repository**: `@mrgrain/cdk-esbuild`
+Maintenance: 79/100
+Quality:    100/100
+Popularity:  88/100
+Overall:     89/100
+
+| Pillar      | Signal                             | Stars      |
+|-------------|------------------------------------|------------|
+| Maintenance | Time to first response             | 4          |
+| Maintenance | Commit Frequency                   | 4          |
+| Maintenance | Release Frequency                  | 3          |
+| Maintenance | Open issues / total issues         | 5          |
+| Maintenance | Median PR time-to-merge            | 5          |
+| Maintenance | Number of Contributors             | 4          |
+| Maintenance | Most recent commit                 | 5          |
+| Quality     | README, API ref, examples          | 5          |
+| Quality     | Tests checklist (unit/snapshot)    | 5          |
+| Quality     | Passing CI builds                  | 5          |
+| Quality     | Author Quality metrics             | 3          |
+| Quality     | Changelog Present                  | 5          |
+| Quality     | License, .gitignore/.npmignore     | 5          |
+| Quality     | Stable versioning                  | 3          |
+| Quality     | Multi-language Support             | 5          |
+| Popularity  | Weekly Downloads                   | 5          |
+| Popularity  | Repo stars                         | 4          |
+| Popularity  | Contributors                       | 4          |
 
 ### Signals from npms.io (Reference)
 
