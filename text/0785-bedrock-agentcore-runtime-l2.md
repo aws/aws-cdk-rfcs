@@ -22,7 +22,7 @@ A quick comparison between L1 and L2 Runtime constructs:
 
 3. Helper methods for better developer experience:
    - `runtime.addEndpoint()` for easy endpoint configuration
-   - `runtime.configureCognitoAuth()`, `runtime.configureJWTAuth()`, `runtime.configureOAuth()` for authentication
+   - `runtime.usingCognitoAuth()`, `runtime.usingJWTAuth()`, `runtime.usingOAuth()` for authentication
    - `grantRead()`, `grantUse()`, `grantManage()` for IAM permissions
 
 4. Validation and error handling:
@@ -208,7 +208,7 @@ IAM authentication is automatically enabled, requiring callers to sign their req
 
 #### Cognito Authentication
 
-To configure AWS Cognito User Pool authentication for your runtime, use the `runtime.configureCognitoAuth()` method after runtime creation.
+To configure AWS Cognito User Pool authentication for your runtime, use the `runtime.usingCognitoAuth()` method after runtime creation.
 This method requires:
 
 - **User Pool ID** (required): The Cognito User Pool identifier (e.g., "us-west-2_ABC123")
@@ -217,7 +217,7 @@ This method requires:
 
 #### JWT Authentication
 
-To configure custom JWT authentication with your own OpenID Connect (OIDC) provider, use the `runtime.configureJWTAuth()` method after runtime creation.
+To configure custom JWT authentication with your own OpenID Connect (OIDC) provider, use the `runtime.usingJWTAuth()` method after runtime creation.
  This method requires:
 
 - **Discovery URL**: The OIDC discovery URL (must end with /.well-known/openid-configuration)
@@ -226,7 +226,7 @@ To configure custom JWT authentication with your own OpenID Connect (OIDC) provi
 
 #### OAuth Authentication
 
-OAuth 2.0 authentication can be configured during runtime creation by setting the `runtime.configureOAuth()` property with:
+OAuth 2.0 authentication can be configured during runtime creation by setting the `runtime.usingOAuth()` property with:
 
 - **provider**: OAuth provider name
 - **Discovery URL**: The OAuth provider's discovery URL (must end with /.well-known/openid-configuration)
