@@ -9,10 +9,30 @@ by automating information gathering, analyzing observability data,
 and providing tailored recommendations.
 The service uses generative AI to create investigation notebooks that analyze operational issues and provide actionable recommendations.
 
-The AIOps L2 construct simplifies the creation of multiple resources required for AIOps constructs.
-It exposes functions for creating constructs with minimal code.
-It will help create the required IAM Role, KMS Key, and Resource Policy underneath, with customers only passing minimal content if needed.
-The AIOps L1 construct has one AIOps resource "InvestigationGroup" created, which requires customers to create all associated resources and set up permissions.
+Compared to L1 AIOps constructs, introducing an L2 construct would have the following benefits:
+
+1. **Security Defaults**:
+   - Automatic encryption configuration for KMS keys, L2 construct will help setup the key policy statement if customer specified their own key.
+   - If customer didn't specify the role for investigation group, L2 construct will create IAM role with `AIOpsAssistantPolicy` managed policy
+   , and establishes a trust relationship with the AIOps service principal
+   - If customer specified customized kms key for encryption,
+the L2 construct will updates KMS key resource policy to grant necessary encryption/decryption permissions
+   - If customer specified cross-account configuration, the L2 construct will update investigation group role to 
+   include assumeRole permission for specified source account roles.
+2. **Operational Excellence**:
+   - Quick and easy creation of constructs
+      - L2 construct only require minimal input from customer.
+
+   - Helper methods for better user experience
+      - addCrossAccountConfiguration: Add additional cross-account configuration
+      - addChatbotNotification: Add a new chatbot notification ARN to send investigation group resource updates to
+      - addToResourcePolicy: Add a new policy statement to the resource policy
+   - Validation and user-friendly error handling
+      - Retention days validation (7 - 90 days)
+      - Cross-account configuration list size limit (max 25), and each configuration with role ARN format validation
+      - Chat configuration ARN format, which includes the snsTopic to send resource update notification to.
+   - Reducing the learning curve for new users, and reducing development time and potential errors
+
 L1 construct Example is in Appendix.
 
 ## Working Backwards
@@ -33,7 +53,7 @@ It uses generative AI to scan your system's telemetry and quickly surface teleme
 These suggestions include metrics, logs, deployment events, and root-cause hypotheses with visual representations when multiple resources are involved.
 
 This construct library facilitates the deployment of Investigation Groups.
-It leverages underlying CloudFormation L1 resources to provision these AIOps features, e.g helping setup IAM role, resource policy for 
+It leverages underlying CloudFormation L1 resources to provision these AIOps features, e.g helping setup IAM role, resource policy for
 helping you implement best practices for operational intelligence and incident management.
 
 ### Investigation Group
@@ -51,14 +71,6 @@ Settings in the investigation group help you centrally manage the common propert
 
 Currently, you can have one investigation group in each Region in your account.
 Each investigation in a Region is a part of the investigation group in that Region
-
-* If customer didn't specify customized role when create an investigation group,
-the L2 construct automatically generates a new role. This role is configured with the
-managed policy `AIOpsAssistantPolicy` and establishes a trust relationship with the AIOps service principal."
-* If customer specified customized kms key for encryption,
-the L2 construct will updates KMS key resource policy to grant necessary encryption/decryption permissions
-* If customer specified cross-account configuration, the L2 construct will update investigation group role to include assumeRole permission
-for specified source account roles.
 
 #### Create Investigation Group
 
