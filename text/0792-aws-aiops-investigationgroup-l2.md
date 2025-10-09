@@ -84,60 +84,12 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 
 //With all parameters
 const role = new Role(this, 'AIOpsAssistantRole', {
-      assumedBy: new ServicePrincipal('<AIOps-ServicePrincipal>', {
-        conditions: {
-          StringEquals: {
-            'aws:SourceAccount': account,
-          },
-          ArnLike: {
-            'aws:SourceArn': `arn:${partition}:aiops:${region}:${account}:*`,
-          },
-        },
-      }),
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('AIOpsAssistantPolicy')],
+      assumedBy: new ServicePrincipal('aiops.amazonaws.com')
 });
-const myKey = new Key(this, 'CloudWatchInvestigationGroupEncryptionKey', {
+const myKey = new Key(this, 'AIOpsGroupEncryptionKey', {
       enableKeyRotation: true,
-      description: 'The key used to encrypt investigations in CloudWatch investigations.',
-      policy: new PolicyDocument({
-        statements: [
-          // Account administrator permission
-          new PolicyStatement({
-            actions: ['kms:*'],
-            principals: [new AccountRootPrincipal()],
-            resources: ['*'],
-          }),
-          // CloudWatch investigation permissions
-          new PolicyStatement({
-            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
-            actions: ['kms:DescribeKey'],
-            resources: ['*'],
-            conditions: {
-              StringEquals: {
-                'aws:SourceAccount': account,
-              },
-              StringLike: {
-                'aws:SourceArn': investigationGroupArnLike,
-              },
-            },
-          }),
-          new PolicyStatement({
-            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
-            actions: ['kms:Decrypt', 'kms:GenerateDataKey'],
-            resources: ['*'],
-            conditions: {
-              StringEquals: {
-                'aws:SourceAccount': account,
-              },
-              StringLike: {
-                'aws:SourceArn': investigationGroupArnLike,
-              },
-              ArnLike: {
-                'kms:EncryptionContext:aws:aiops:investigation-group-arn': investigationGroupArnLike,
-              },
-            },
-          })
-        ]})});
+      description: 'The key used to encrypt resources in AIOps.'
+});
 
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    name: "myInvestigationGroup",
