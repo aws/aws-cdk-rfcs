@@ -138,12 +138,12 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
     name: 'test-image-recipe',
     version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
   }),
-  infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromName(
+  infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
     'InfrastructureConfiguration',
     'test-infrastructure-configuration',
   ),
-  distributionConfiguration: imagebuilder.DistributionConfiguration.fromName(
+  distributionConfiguration: imagebuilder.DistributionConfiguration.fromDistributionConfigurationName(
     stack,
     'DistributionConfiguration',
     'test-distribution-configuration',
@@ -156,11 +156,11 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
         name: 'custom-test-workflow',
         type: imagebuilder.WorkflowType.TEST,
-        version: imagebuilder.Version.LATEST,
+        version: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
-      workflow: imagebuilder.AwsManagedWorkflow.fromName(
+      workflow: imagebuilder.AwsManagedWorkflow.fromWorkflowName(
         stack,
         'TestWorkflowAcrossInstanceTypes',
         'test-image-with-instance-type',
@@ -211,12 +211,12 @@ const image = new imagebuilder.Image(stack, 'Image', {
     name: 'test-image-recipe',
     version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
   }),
-  infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromName(
+  infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
     'InfrastructureConfiguration',
     'test-infrastructure-configuration',
   ),
-  distributionConfiguration: imagebuilder.DistributionConfiguration.fromName(
+  distributionConfiguration: imagebuilder.DistributionConfiguration.fromDistributionConfigurationName(
     stack,
     'DistributionConfiguration',
     'test-distribution-configuration',
@@ -229,11 +229,11 @@ const image = new imagebuilder.Image(stack, 'Image', {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
         name: 'custom-test-workflow',
         type: imagebuilder.WorkflowType.TEST,
-        version: imagebuilder.Version.LATEST,
+        version: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
-      workflow: imagebuilder.AwsManagedWorkflow.fromName(
+      workflow: imagebuilder.AwsManagedWorkflow.fromWorkflowName(
         stack,
         'TestWorkflowAcrossInstanceTypes',
         'test-image-with-instance-type',
@@ -286,7 +286,7 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
   // Use an AL2023 base image
   baseImage: imagebuilder.BaseImage.fromSsmParameterName(
     stack,
-    'AL2023Minimal',
+    'MachineImage',
     '/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64',
   ),
   // Use an AWS-managed component, shared component, self-owned component with parameters, and marketplace component
@@ -297,7 +297,7 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
       }),
     },
     {
-      component: imagebuilder.Component.fromArn(
+      component: imagebuilder.Component.fromComponentArn(
         stack,
         'ComplianceTestComponent',
         `arn:${stack.partition}:imagebuilder:${stack.region}:123456789012:component/compliance-test/2025.x.x.x`,
@@ -317,7 +317,7 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
         name: 'custom-component',
-        version: imagebuilder.Version.LATEST,
+        version: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER_KEY: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -347,6 +347,10 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
       }),
     },
   ],
+  // Optional - specify tags to apply to the output AMI
+  amiTags: {
+    Environment: 'production',
+  },
 });
 ```
 
@@ -374,8 +378,7 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
     ecr.Repository.fromRepositoryName(stack, 'SourceRepository', 'source-repository'),
     'latest',
   ),
-  // Optional - the Dockerfile used to build the container image
-  dockerfile: imagebuilder.DockerfileData.fromString(`
+  dockerfile: imagebuilder.DockerfileData.fromInline(`
     FROM {{{ imagebuilder:parentImage }}}
     CMD ["echo", "Hello, world!"]
     {{{ imagebuilder:environments }}}
@@ -386,9 +389,9 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
   ),
   // Use an AWS-managed component, shared component, and a self-owned component with parameters
   components: [
-    { component: imagebuilder.AwsManagedComponent.fromName(stack, 'update-linux-component', 'update-linux') },
+    { component: imagebuilder.AwsManagedComponent.fromComponentName(stack, 'update-linux-component', 'update-linux') },
     {
-      component: imagebuilder.Component.fromArn(
+      component: imagebuilder.Component.fromComponentArn(
         stack,
         'ComplianceTestComponent',
         `arn:${stack.partition}:imagebuilder:${stack.region}:123456789012:component/compliance-test/2025.x.x.x`,
@@ -397,7 +400,7 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
         name: 'custom-component',
-        version: imagebuilder.Version.LATEST,
+        version: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -1538,6 +1541,7 @@ interface LifecyclePolicyProps {
 #### Interfaces
 
 ##### Diagram
+
 ![Interface Diagram](../images/0789/imagebuilder-interfaces.png)
 
 ##### Type definitions
@@ -1938,22 +1942,18 @@ interface IWorkflow extends cdk.IResource {
 
 ```ts
 class Component extends ComponentBase {
-  static fromArn(scope: Construct, id: string, arn: string): IComponent;
-  static fromName(scope: Construct, id: string, name: string): IComponent;
+  static fromComponentArn(scope: Construct, id: string, arn: string): IComponent;
+  static fromComponentName(scope: Construct, id: string, name: string): IComponent;
   static fromComponentAttributes(scope: Construct, id: string, attrs: ComponentAttributes): IComponent;
   static isComponent(x: any): x is Component;
 
   /**
    * The ARN of the component
-   *
-   * @attribute
    */
   readonly componentArn: string;
 
   /**
    * The name of the component
-   *
-   * @attribute
    */
   readonly componentName: string;
 
@@ -1964,15 +1964,11 @@ class Component extends ComponentBase {
 
   /**
    * Whether the component is encrypted
-   *
-   * @attribute
    */
   readonly encrypted: boolean;
 
   /**
    * The type of the component
-   *
-   * @attribute
    */
   readonly type: ComponentType;
 
@@ -1980,8 +1976,8 @@ class Component extends ComponentBase {
 }
 
 class ContainerRecipe extends ContainerRecipeBase {
-  static fromArn(scope: Construct, id: string, arn: string): IContainerRecipe;
-  static fromName(scope: Construct, id: string, name: string): IContainerRecipe;
+  static fromContainerRecipeArn(scope: Construct, id: string, arn: string): IContainerRecipe;
+  static fromContainerRecipeName(scope: Construct, id: string, name: string): IContainerRecipe;
   static fromContainerRecipeAttributes(
     scope: Construct,
     id: string,
@@ -1991,15 +1987,11 @@ class ContainerRecipe extends ContainerRecipeBase {
 
   /**
    * The ARN of the container recipe
-   *
-   * @attribute
    */
   readonly containerRecipeArn: string;
 
   /**
    * The name of the container recipe
-   *
-   * @attribute
    */
   readonly containerRecipeName: string;
 
@@ -2012,20 +2004,16 @@ class ContainerRecipe extends ContainerRecipeBase {
 }
 
 class DistributionConfiguration extends DistributionConfigurationBase {
-  static fromArn(scope: Construct, id: string, arn: string): IDistributionConfiguration;
-  static fromName(scope: Construct, id: string, name: string): IDistributionConfiguration;
+  static fromDistributionConfigurationArn(scope: Construct, id: string, arn: string): IDistributionConfiguration;
+  static fromDistributionConfigurationName(scope: Construct, id: string, name: string): IDistributionConfiguration;
 
   /**
    * The ARN of the distribution configuration
-   *
-   * @attribute
    */
   readonly distributionConfigurationArn: string;
 
   /**
    * The name of the distribution configuration
-   *
-   * @attribute
    */
   readonly distributionConfigurationName: string;
 
@@ -2033,22 +2021,18 @@ class DistributionConfiguration extends DistributionConfigurationBase {
 }
 
 class Image extends ImageBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImage;
-  static fromName(scope: Construct, id: string, name: string): IImage;
+  static fromImageArn(scope: Construct, id: string, arn: string): IImage;
+  static fromImageName(scope: Construct, id: string, name: string): IImage;
   static fromImageAttributes(scope: Construct, id: string, attrs: ImageAttributes): IImage;
   static isImage(x: any): x is Image;
 
   /**
    * The ARN of the image
-   *
-   * @attribute
    */
   readonly imageArn: string;
 
   /**
    * The name of the image
-   *
-   * @attribute
    */
   readonly imageName: string;
 
@@ -2059,8 +2043,6 @@ class Image extends ImageBase {
 
   /**
    * The AMI ID of the EC2 AMI, or URI for the container
-   *
-   * @attribute
    */
   readonly imageId: string;
 
@@ -2090,21 +2072,17 @@ class Image extends ImageBase {
 }
 
 class ImagePipeline extends ImagePipelineBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImagePipeline;
-  static fromName(scope: Construct, id: string, name: string): IImagePipeline;
+  static fromImagePipelineArn(scope: Construct, id: string, arn: string): IImagePipeline;
+  static fromImagePipelineName(scope: Construct, id: string, name: string): IImagePipeline;
   static isImagePipeline(x: any): x is ImagePipeline;
 
   /**
    * The ARN of the image pipeline
-   *
-   * @attribute
    */
   readonly imagePipelineArn: string;
 
   /**
    * The name of the image pipeline
-   *
-   * @attribute
    */
   readonly imagePipelineName: string;
 
@@ -2139,22 +2117,18 @@ class ImagePipeline extends ImagePipelineBase {
 }
 
 class ImageRecipe extends ImageRecipeBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImageRecipe;
-  static fromName(scope: Construct, id: string, name: string): IImageRecipe;
+  static fromImageRecipeArn(scope: Construct, id: string, arn: string): IImageRecipe;
+  static fromImageRecipeName(scope: Construct, id: string, name: string): IImageRecipe;
   static fromImageRecipeAttributes(scope: Construct, id: string, attrs: ImageRecipeAttributes): IImageRecipe;
   static isImageRecipe(x: any): x is ImageRecipe;
 
   /**
    * The ARN of the image recipe
-   *
-   * @attribute
    */
   readonly imageRecipeArn: string;
 
   /**
    * The name of the image recipe
-   *
-   * @attribute
    */
   readonly imageRecipeName: string;
 
@@ -2167,21 +2141,17 @@ class ImageRecipe extends ImageRecipeBase {
 }
 
 class InfrastructureConfiguration extends InfrastructureConfigurationBase {
-  static fromArn(scope: Construct, id: string, arn: string): IInfrastructureConfiguration;
-  static fromName(scope: Construct, id: string, name: string): IInfrastructureConfiguration;
+  static fromInfrastructureConfigurationArn(scope: Construct, id: string, arn: string): IInfrastructureConfiguration;
+  static fromInfrastructureConfigurationName(scope: Construct, id: string, name: string): IInfrastructureConfiguration;
   static isInfrastructureConfiguration(x: any): x is InfrastructureConfiguration;
 
   /**
    * The ARN of the infrastructure configuration
-   *
-   * @attribute
    */
   readonly infrastructureConfigurationArn: string;
 
   /**
    * The name of the infrastructure configuration
-   *
-   * @attribute
    */
   readonly infrastructureConfigurationName: string;
 
@@ -2199,14 +2169,12 @@ class InfrastructureConfiguration extends InfrastructureConfigurationBase {
 }
 
 class LifecyclePolicy extends LifecyclePolicyBase {
-  static fromArn(scope: Construct, id: string, arn: string): ILifecyclePolicy;
-  static fromName(scope: Construct, id: string, name: string): ILifecyclePolicy;
+  static fromLifecyclePolicyArn(scope: Construct, id: string, arn: string): ILifecyclePolicy;
+  static fromLifecyclePolicyName(scope: Construct, id: string, name: string): ILifecyclePolicy;
   static isLifecyclePolicy(x: any): x is LifecyclePolicy;
 
   /**
    * The ARN of the lifecycle policy
-   *
-   * @attribute
    */
   readonly lifecyclePolicyArn: string;
 
@@ -2226,15 +2194,13 @@ class LifecyclePolicy extends LifecyclePolicyBase {
 }
 
 class Workflow extends WorkflowBase {
-  static fromArn(scope: Construct, id: string, arn: string): IWorkflow;
-  static fromName(scope: Construct, id: string, name: string): IWorkflow;
+  static fromWorkflowArn(scope: Construct, id: string, arn: string): IWorkflow;
+  static fromWorkflowName(scope: Construct, id: string, name: string): IWorkflow;
   static fromWorkflowAttributes(scope: Construct, id: string, attrs: WorkflowAttributes): IWorkflow;
   static isWorkflow(x: any): x is Workflow;
 
   /**
    * The ARN of the workflow
-   *
-   * @attribute
    */
   readonly workflowArn: string;
 
@@ -2266,320 +2232,6 @@ class Workflow extends WorkflowBase {
 ##### Type definitions
 
 ```ts
-class Component extends ComponentBase {
-  static fromArn(scope: Construct, id: string, arn: string): IComponent;
-  static fromName(scope: Construct, id: string, name: string): IComponent;
-  static fromComponentAttributes(scope: Construct, id: string, attrs: ComponentAttributes): IComponent;
-  static isComponent(x: any): x is Component;
-
-  /**
-   * The ARN of the component
-   *
-   * @attribute
-   */
-  readonly componentArn: string;
-
-  /**
-   * The name of the component
-   *
-   * @attribute
-   */
-  readonly componentName: string;
-
-  /**
-   * The version of the component
-   */
-  readonly componentVersion: BuildVersion;
-
-  /**
-   * Whether the component is encrypted
-   *
-   * @attribute
-   */
-  readonly encrypted: boolean;
-
-  /**
-   * The type of the component
-   *
-   * @attribute
-   */
-  readonly type: ComponentType;
-
-  constructor(scope: Construct, id: string, props: ComponentProps);
-}
-
-class ContainerRecipe extends ContainerRecipeBase {
-  static fromArn(scope: Construct, id: string, arn: string): IContainerRecipe;
-  static fromName(scope: Construct, id: string, name: string): IContainerRecipe;
-  static fromContainerRecipeAttributes(
-    scope: Construct,
-    id: string,
-    attrs: ContainerRecipeAttributes,
-  ): IContainerRecipe;
-  static isContainerRecipe(x: any): x is ContainerRecipe;
-
-  /**
-   * The ARN of the container recipe
-   *
-   * @attribute
-   */
-  readonly containerRecipeArn: string;
-
-  /**
-   * The name of the container recipe
-   *
-   * @attribute
-   */
-  readonly containerRecipeName: string;
-
-  /**
-   * The version of the container recipe
-   */
-  readonly containerRecipeVersion: Version;
-
-  constructor(scope: Construct, id: string, props: ContainerRecipeProps);
-}
-
-class DistributionConfiguration extends DistributionConfigurationBase {
-  static fromArn(scope: Construct, id: string, arn: string): IDistributionConfiguration;
-  static fromName(scope: Construct, id: string, name: string): IDistributionConfiguration;
-
-  /**
-   * The ARN of the distribution configuration
-   *
-   * @attribute
-   */
-  readonly distributionConfigurationArn: string;
-
-  /**
-   * The name of the distribution configuration
-   *
-   * @attribute
-   */
-  readonly distributionConfigurationName: string;
-
-  constructor(scope: Construct, id: string, props: DistributionConfigurationProps);
-}
-
-class Image extends ImageBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImage;
-  static fromName(scope: Construct, id: string, name: string): IImage;
-  static fromImageAttributes(scope: Construct, id: string, attrs: ImageAttributes): IImage;
-  static isImage(x: any): x is Image;
-
-  /**
-   * The ARN of the image
-   *
-   * @attribute
-   */
-  readonly imageArn: string;
-
-  /**
-   * The name of the image
-   *
-   * @attribute
-   */
-  readonly imageName: string;
-
-  /**
-   * The version of the image
-   */
-  readonly imageVersion: BuildVersion;
-
-  /**
-   * The AMI ID of the EC2 AMI, or URI for the container
-   *
-   * @attribute
-   */
-  readonly imageId: string;
-
-  /**
-   * The execution role used for the image build
-   */
-  readonly executionRole?: iam.IRole;
-
-  /**
-   * The log group where image build logs are logged to
-   */
-  readonly logGroup?: logs.ILogGroup;
-
-  /**
-   * The infrastructure configuration used for the image build
-   */
-  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
-
-  constructor(scope: Construct, id: string, props: ImageProps);
-
-  /**
-   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
-   *
-   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
-   */
-  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
-}
-
-class ImagePipeline extends ImagePipelineBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImagePipeline;
-  static fromName(scope: Construct, id: string, name: string): IImagePipeline;
-  static isImagePipeline(x: any): x is ImagePipeline;
-
-  /**
-   * The ARN of the image pipeline
-   *
-   * @attribute
-   */
-  readonly imagePipelineArn: string;
-
-  /**
-   * The name of the image pipeline
-   *
-   * @attribute
-   */
-  readonly imagePipelineName: string;
-
-  /**
-   * The execution role used for the image build
-   */
-  readonly executionRole?: iam.IRole;
-
-  /**
-   * The log group where image build logs are logged to
-   */
-  readonly imageLogGroup?: logs.ILogGroup;
-
-  /**
-   * The log group where image pipeline logs are logged to
-   */
-  readonly imagePipelineLogGroup?: logs.ILogGroup;
-
-  /**
-   * The infrastructure configuration used for the image build
-   */
-  readonly infrastructureConfiguration?: IInfrastructureConfiguration;
-
-  constructor(scope: Construct, id: string, props: ImagePipelineProps);
-
-  /**
-   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
-   *
-   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
-   */
-  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
-}
-
-class ImageRecipe extends ImageRecipeBase {
-  static fromArn(scope: Construct, id: string, arn: string): IImageRecipe;
-  static fromName(scope: Construct, id: string, name: string): IImageRecipe;
-  static fromImageRecipeAttributes(scope: Construct, id: string, attrs: ImageRecipeAttributes): IImageRecipe;
-  static isImageRecipe(x: any): x is ImageRecipe;
-
-  /**
-   * The ARN of the image recipe
-   *
-   * @attribute
-   */
-  readonly imageRecipeArn: string;
-
-  /**
-   * The name of the image recipe
-   *
-   * @attribute
-   */
-  readonly imageRecipeName: string;
-
-  /**
-   * The version of the image recipe
-   */
-  readonly imageRecipeVersion: Version;
-
-  constructor(scope: Construct, id: string, props: ImageRecipeProps);
-}
-
-class InfrastructureConfiguration extends InfrastructureConfigurationBase {
-  static fromArn(scope: Construct, id: string, arn: string): IInfrastructureConfiguration;
-  static fromName(scope: Construct, id: string, name: string): IInfrastructureConfiguration;
-  static isInfrastructureConfiguration(x: any): x is InfrastructureConfiguration;
-
-  /**
-   * The ARN of the infrastructure configuration
-   *
-   * @attribute
-   */
-  readonly infrastructureConfigurationArn: string;
-
-  /**
-   * The name of the infrastructure configuration
-   *
-   * @attribute
-   */
-  readonly infrastructureConfigurationName: string;
-
-  /**
-   * The bucket used to upload image build logs
-   */
-  readonly logBucket?: s3.IBucket;
-
-  constructor(scope: Construct, id: string, props: InfrastructureConfigurationProps);
-}
-
-class LifecyclePolicy extends LifecyclePolicyBase {
-  static fromArn(scope: Construct, id: string, arn: string): ILifecyclePolicy;
-  static fromName(scope: Construct, id: string, name: string): ILifecyclePolicy;
-  static isLifecyclePolicy(x: any): x is LifecyclePolicy;
-
-  /**
-   * The ARN of the lifecycle policy
-   *
-   * @attribute
-   */
-  readonly lifecyclePolicyArn: string;
-
-  /**
-   * The name of the lifecycle policy
-   */
-  readonly lifecyclePolicyName: string;
-
-  /**
-   * The execution role used for lifecycle policy executions
-   */
-  readonly executionRole?: string;
-
-  constructor(scope: Construct, id: string, props: LifecyclePolicyProps);
-
-  addRecipeSelection(recipe: IRecipeBase): void;
-}
-
-class Workflow extends WorkflowBase {
-  static fromArn(scope: Construct, id: string, arn: string): IWorkflow;
-  static fromName(scope: Construct, id: string, name: string): IWorkflow;
-  static fromWorkflowAttributes(scope: Construct, id: string, attrs: WorkflowAttributes): IWorkflow;
-  static isWorkflow(x: any): x is Workflow;
-
-  /**
-   * The ARN of the workflow
-   *
-   * @attribute
-   */
-  readonly workflowArn: string;
-
-  /**
-   * The name of the workflow
-   */
-  readonly workflowName: string;
-
-  /**
-   * The type of the workflow
-   */
-  readonly workflowType: WorkflowType;
-
-  /**
-   * The version of the workflow
-   */
-  readonly workflowVersion: BuildVersion;
-
-  constructor(scope: Construct, id: string, props: WorkflowProps);
-}
-
 abstract class AwsManagedComponent {
   static awsCliV2(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
   static helloWorld(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
@@ -2588,7 +2240,7 @@ abstract class AwsManagedComponent {
   static stigBuild(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
   static updateOS(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
 
-  static fromName(scope: Construct, id: string, name: string): IComponent;
+  static fromComponentName(scope: Construct, id: string, name: string): IComponent;
 }
 
 abstract class AwsManagedImage {
@@ -2599,7 +2251,7 @@ abstract class AwsManagedImage {
   static windows2022(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
   static windows2025(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
 
-  static fromName(scope: Construct, id: string, name: string): IImage;
+  static fromImageName(scope: Construct, id: string, name: string): IImage;
 }
 
 abstract class AwsManagedWorkflow {
@@ -2609,7 +2261,7 @@ abstract class AwsManagedWorkflow {
   static testContainer(scope: Construct, id: string): IWorkflow;
   static testImage(scope: Construct, id: string): IWorkflow;
 
-  static fromName(scope: Construct, id: string, name: string): IWorkflow;
+  static fromWorkflowName(scope: Construct, id: string, name: string): IWorkflow;
 }
 
 abstract class AwsMarketplaceComponent {
@@ -2623,7 +2275,6 @@ abstract class AwsMarketplaceComponent {
 abstract class BaseImage {
   static fromAmiId(scope: Construct, id: string, amiId: string): BaseImage;
   static fromMachineImage(scope: Construct, id: string, machineImage: ec2.IMachineImage): BaseImage;
-  static fromArn(scope: Construct, id: string, arn: string): BaseImage;
   static fromAwsManaged(scope: Construct, id: string, imageName: string): BaseImage;
   static fromDockerHub(scope: Construct, id: string, image: string): BaseImage;
   static fromEcr(scope: Construct, id: string, repository: ecr.IRepository, tag?: string): BaseImage;
@@ -2662,17 +2313,17 @@ abstract class BuildVersion extends Version {
 
 abstract class ComponentData {
   static fromAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
-  static fromS3(bucket: s3.IBucket, key: string): ComponentData;
-  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
+  static fromS3(bucket: s3.IBucket, key: string): S3ComponentData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): S3ComponentData;
   static fromJsonObject(data: object): ComponentData;
-  static fromString(data: string): ComponentData;
+  static fromInline(data: string): ComponentData;
 }
 
 abstract class DockerfileData {
   static fromAsset(path: string): DockerfileData;
-  static fromS3(bucket: s3.IBucket, key: string): DockerfileData;
-  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): ComponentData;
-  static fromString(data: string): DockerfileData;
+  static fromS3(bucket: s3.IBucket, key: string): S3DockerfileData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): S3DockerfileData;
+  static fromInline(data: string): DockerfileData;
 }
 
 abstract class ComponentParameterValue {
@@ -2688,6 +2339,27 @@ abstract class ContainerInstanceImage {
 
 abstract class Repository {
   static fromEcr(repository: ecr.IRepository): Repository;
+}
+
+abstract class S3ComponentData extends ComponentData {
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+  grantPut(grantee: iam.IGrantable): iam.Grant;
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+  grantReadWrite(grantee: iam.IGrantable): iam.Grant;
+}
+
+abstract class S3DockerfileData extends DockerfileData {
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+  grantPut(grantee: iam.IGrantable): iam.Grant;
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+  grantReadWrite(grantee: iam.IGrantable): iam.Grant;
+}
+
+abstract class S3WorkflowData extends WorkflowData {
+  grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
+  grantPut(grantee: iam.IGrantable): iam.Grant;
+  grantRead(grantee: iam.IGrantable): iam.Grant;
+  grantReadWrite(grantee: iam.IGrantable): iam.Grant;
 }
 
 abstract class Schedule {
@@ -2740,10 +2412,10 @@ class Version {
 
 abstract class WorkflowData {
   static fromAsset(path: string): WorkflowData;
-  static fromS3(bucket: s3.IBucket, key: string): WorkflowData;
-  static fromS3UploadedAsset(path: string, bucket: s3.IBucket, key: string): WorkflowData;
+  static fromS3(bucket: s3.IBucket, key: string): S3WorkflowData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): S3WorkflowData;
   static fromJsonObject(data: object): WorkflowData;
-  static fromString(data: string): WorkflowData;
+  static fromInline(data: string): WorkflowData;
 }
 
 abstract class WorkflowParameterValue {
