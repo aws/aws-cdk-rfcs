@@ -52,9 +52,9 @@ assistant that can help you respond to incidents in your system.
 It uses generative AI to scan your system's telemetry and quickly surface telemetry data and suggestions that might be related to your issue.
 These suggestions include metrics, logs, deployment events, and root-cause hypotheses with visual representations when multiple resources are involved.
 
-This construct library facilitates the deployment of Investigation Groups.
-It leverages underlying CloudFormation L1 resources to provision these AIOps features, e.g helping setup IAM role, resource policy for
-helping you implement best practices for operational intelligence and incident management.
+This construct library simplifies Investigation Group creation by leveraging CloudFormation L1 resources.
+It automates essential AIOps configurations including IAM roles and resource policies,
+while implementing security best practices. This abstraction reduces complexity and ensures secure deployment patterns.
 
 ### Investigation Group
 
@@ -221,8 +221,6 @@ L2 construct will grant create permissions on this investigation group resource 
 
 `grantCreate(grantee: IGrantable): iam.Grant`
 
-Grant investigationGroup related resources create permissions to the given identity.
-
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    name: 'MyGroup'
@@ -233,8 +231,8 @@ group.grantCreate(new ServicePrincipal("<servicePrincipal>"));
 
 #### To grant EKS cluster access
 
-L2 construct will creates an AccessEntry that associates the investigation group's IAM role with
-the managed EKS Policy, establishing the necessary permissions mapping.
+Creates an EKS AccessEntry granting the investigation group IAM role the managed AccessPolicy AmazonAIOpsAssistantPolicy.
+Only clusters with  an authentication mode of `API_AND_CONFIG_MAP` or `API` are supported.
 
 `grantEksAccess(cluster: ICluster): AccessEntry: iam.Grant`
 
