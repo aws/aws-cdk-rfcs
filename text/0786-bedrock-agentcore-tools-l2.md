@@ -66,11 +66,10 @@ The Browser construct supports the following network modes:
    - Select whether to run the browser in a virtual private cloud (VPC).
    - By configuring VPC connectivity, you enable secure access to private resources such as databases, internal APIs, and services within your VPC.
 
-While the VPC itself is mandatory, these are optional:
-
-- Subnets - if not provided, CDK will select appropriate subnets from the VPC
-- Security Groups - if not provided, CDK will create a default security group
-- Specific subnet selection criteria - you can let CDK choose automatically
+    While the VPC itself is mandatory, these are optional:
+    - Subnets - if not provided, CDK will select appropriate subnets from the VPC
+    - Security Groups - if not provided, CDK will create a default security group
+    - Specific subnet selection criteria - you can let CDK choose automatically
 
 For more information on VPC connectivity for Amazon Bedrock AgentCore Browser, please refer to the [official documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/agentcore-vpc.html).
 
@@ -122,22 +121,22 @@ const browser = new agentcore.BrowserCustom(this, 'BrowserVpcWithRecording', {
 });
 ```
 
-Browser exposes a [connections](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Connections.html) property. This property returns a
-connections object, which simplifies the process of defining and managing ingress and egress rules for security groups in your AWS CDK applications.
-Instead of directly manipulating security group rules, you interact with the Connections object of a construct, which then translates your connectivity
-requirements into the appropriate security group rules. For instance:
+Browser exposes a [connections](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Connections.html) property. This property returns a connections
+object, which simplifies the process of defining and managing ingress and egress rules for security groups in your AWS CDK applications. Instead of directly
+manipulating security group rules, you interact with the Connections object of a construct, which then translates your connectivity requirements into the
+appropriate security group rules. For instance:
 
 ```typescript fixture=default
-const vpc = new ec2.Vpc(stack, 'testVPC');
+const vpc = new ec2.Vpc(this, 'testVPC');
 
-const browser = new BrowserCustom(stack, 'test-browser', {
+const browser = new agentcore.BrowserCustom(this, 'test-browser', {
   browserCustomName: 'test_browser',
-  networkConfiguration: BrowserNetworkConfiguration.usingVpc(stack, {
+  networkConfiguration: agentcore.BrowserNetworkConfiguration.usingVpc(this, {
     vpc: vpc,
   }),
 });
 
-browser.connections.addSecurityGroup(new ec2.SecurityGroup(stack, 'AdditionalGroup', { vpc }));
+browser.connections.addSecurityGroup(new ec2.SecurityGroup(this, 'AdditionalGroup', { vpc }));
 ```
 
 So security groups can be added after the browser construct creation. You can use methods like allowFrom() and allowTo() to grant ingress access to/egress
@@ -253,7 +252,7 @@ For more information about code interpreter, please refer to the [official docum
 
 ### Code Interpreter Network Modes
 
-The Code Interpreter construct supports two network modes:
+The Code Interpreter construct supports the following network modes:
 
 1. **Public Network Mode** (`CodeInterpreterNetworkMode.usingPublicNetwork()`) - Default
 
@@ -270,11 +269,10 @@ The Code Interpreter construct supports two network modes:
    - Select whether to run the browser in a virtual private cloud (VPC).
    - By configuring VPC connectivity, you enable secure access to private resources such as databases, internal APIs, and services within your VPC.
 
-While the VPC itself is mandatory, these are optional:
-
-- Subnets - if not provided, CDK will select appropriate subnets from the VPC
-- Security Groups - if not provided, CDK will create a default security group
-- Specific subnet selection criteria - you can let CDK choose automatically
+    While the VPC itself is mandatory, these are optional:
+    - Subnets - if not provided, CDK will select appropriate subnets from the VPC
+    - Security Groups - if not provided, CDK will create a default security group
+    - Specific subnet selection criteria - you can let CDK choose automatically
 
 For more information on VPC connectivity for Amazon Bedrock AgentCore Browser, please refer to the [official documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/agentcore-vpc.html).
 
@@ -316,7 +314,7 @@ Instead of directly manipulating security group rules, you interact with the Con
 requirements into the appropriate security group rules. For instance:
 
 ```typescript fixture=default
-const vpc = new ec2.Vpc(stack, 'testVPC');
+const vpc = new ec2.Vpc(this, 'testVPC');
 
 const codeInterpreter = new agentcore.CodeInterpreterCustom(this, "MyCodeInterpreter", {
   codeInterpreterCustomName: "my_sandbox_interpreter",
@@ -326,7 +324,7 @@ const codeInterpreter = new agentcore.CodeInterpreterCustom(this, "MyCodeInterpr
   }),
 });
 
-codeInterpreter.connections.addSecurityGroup(new ec2.SecurityGroup(stack, 'AdditionalGroup', { vpc }));
+codeInterpreter.connections.addSecurityGroup(new ec2.SecurityGroup(this, 'AdditionalGroup', { vpc }));
 ```
 
 So security groups can be added after the browser construct creation. You can use methods like allowFrom() and allowTo() to grant ingress access to/egress
