@@ -79,24 +79,80 @@ L2 construct Example
 ```typescript
 //With minimum required parameters
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
-   name: string,
+   name: "myInvestigationGroup",
 }
 
 //With all parameters
+const role = new Role(this, 'AIOpsAssistantRole', {
+      assumedBy: new ServicePrincipal('<AIOps-ServicePrincipal>', {
+        conditions: {
+          StringEquals: {
+            'aws:SourceAccount': account,
+          },
+          ArnLike: {
+            'aws:SourceArn': `arn:${partition}:aiops:${region}:${account}:*`,
+          },
+        },
+      }),
+      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('AIOpsAssistantPolicy')],
+});
+const myKey = new Key(this, 'CloudWatchInvestigationGroupEncryptionKey', {
+      enableKeyRotation: true,
+      description: 'The key used to encrypt investigations in CloudWatch investigations.',
+      policy: new PolicyDocument({
+        statements: [
+          // Account administrator permission
+          new PolicyStatement({
+            actions: ['kms:*'],
+            principals: [new AccountRootPrincipal()],
+            resources: ['*'],
+          }),
+          // CloudWatch investigation permissions
+          new PolicyStatement({
+            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
+            actions: ['kms:DescribeKey'],
+            resources: ['*'],
+            conditions: {
+              StringEquals: {
+                'aws:SourceAccount': account,
+              },
+              StringLike: {
+                'aws:SourceArn': investigationGroupArnLike,
+              },
+            },
+          }),
+          new PolicyStatement({
+            principals: [new ServicePrincipal('<AIOps-ServicePrincipal>')],
+            actions: ['kms:Decrypt', 'kms:GenerateDataKey'],
+            resources: ['*'],
+            conditions: {
+              StringEquals: {
+                'aws:SourceAccount': account,
+              },
+              StringLike: {
+                'aws:SourceArn': investigationGroupArnLike,
+              },
+              ArnLike: {
+                'kms:EncryptionContext:aws:aiops:investigation-group-arn': investigationGroupArnLike,
+              },
+            },
+          })
+        ]})});
+
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
-   name: string,
-   role?: IRole,
-   encryptionKey?: IKey,
+   name: "myInvestigationGroup",
+   role: role,
+   encryptionKey: myKey,
    chatbotNotificationChannels?: [
       'arn:aws:sns:us-east-1:123456789012:MyTopic'
    ],
    crossAccountConfigurations?: [
-      sourceAccountRole
+      'arn:aws:iam::123456789012:role/MyRole'
    ],
-   isCloudTrailEventHistoryEnabled?: boolean,
-   retentionInDays?: Duration,
+   isCloudTrailEventHistoryEnabled: true,
+   retentionInDays: Duration.daysOf(7),
    removalPolicy?: RemovalPolicy.DESTROY,
-   tagKeyBoundaries?: string[]
+   tagKeyBoundaries: ["EKS-Application"]
 });
 ```
 
@@ -104,8 +160,9 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 
 #### To add a cross account configuration
 
-This will add a new source account role ARN to the investigation group.
-It does not validate whether the source account role exists or not during investigation group creation.
+L2 construct will add a new source account role ARN to the investigation group in this method. This enables cross-account functionality, allowing
+the current account to access telemetry data from a source account by assuming the source account role specified here.
+L2 construct does not validate whether the source account role exists or not during investigation group creation.
 The source account role and monitor account role permissions need to be set up separately. See [Cross-account investigations](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-cross-account.html)
 
 ```typescript
@@ -136,7 +193,7 @@ group.addChatbotNotification({
 
 #### To add a resource policy
 
-Creates an IAM resource policy and assigns it to the specified investigation group.
+L2 construct will creates an IAM resource policy and assigns it to the specified investigation group.
 
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
@@ -160,7 +217,7 @@ group.addToResourcePolicy(policy);
 
 Once the investigation group is created,
 customers need the create permission to be able to add investigations and related resources under the investigation group.
-This will grant create permissions on this investigation group resource to an IAM principal.
+L2 construct will grant create permissions on this investigation group resource to an IAM principal in this method.
 
 `grantCreate(grantee: IGrantable): iam.Grant`
 
@@ -176,7 +233,8 @@ group.grantCreate(new ServicePrincipal("<servicePrincipal>"));
 
 #### To grant EKS cluster access
 
-Creates an AccessEntry that associates the investigation group's IAM role with the managed EKS Policy, establishing the necessary permissions mapping.
+L2 construct will creates an AccessEntry that associates the investigation group's IAM role with
+the managed EKS Policy, establishing the necessary permissions mapping.
 
 `grantEksAccess(cluster: ICluster): AccessEntry: iam.Grant`
 
