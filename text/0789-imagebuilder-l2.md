@@ -981,6 +981,13 @@ interface ImagePipelineProps {
    * @default - image testing is enabled
    */
   readonly testsConfiguration?: ImageTestsConfiguration;
+
+  /**
+   * The tags to apply to the image pipeline
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1080,6 +1087,13 @@ interface ImageProps {
    * @default - image testing is enabled
    */
   readonly testsConfiguration?: ImageTestsConfiguration;
+
+  /**
+   * The tags to apply to the image
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1146,6 +1160,13 @@ interface ImageRecipeProps {
    * @default - None
    */
   readonly additionalInstanceConfiguration?: AdditionalInstanceConfiguration;
+
+  /**
+   * The tags to apply to the image recipe
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1218,7 +1239,7 @@ interface ContainerRecipeProps {
    * @default - Image Builder will determine the OS version of the base image, if sourced from a
    * third-party container registry. Otherwise, the OS version of the base image is required.
    */
-  readonly osVersion?: string;
+  readonly osVersion?: OSVersion;
 
   /**
    * The operating system platform of the base image.
@@ -1241,6 +1262,13 @@ interface ContainerRecipeProps {
    * @default - Image Builder will use the appropriate ECS-optimized AMI
    */
   readonly instanceImage?: ContainerInstanceImage;
+
+  /**
+   * The tags to apply to the container recipe
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1281,7 +1309,8 @@ interface ComponentProps {
   readonly description?: string;
 
   /**
-   * The change description of the component.
+   * The change description of the component. Describes what change has been made in this version of the component, or
+   * what makes this version different from other versions.
    *
    * @default - None
    */
@@ -1299,7 +1328,14 @@ interface ComponentProps {
    *
    * @default - None
    */
-  readonly supportedOsVersions?: string[];
+  readonly supportedOsVersions?: OSVersion[];
+
+  /**
+   * The tags to apply to the component
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1407,6 +1443,13 @@ interface InfrastructureConfigurationProps {
    * @default - None
    */
   readonly resourceTags?: { [key: string]: string };
+
+  /**
+   * The tags to apply to the infrastructure configuration
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1432,6 +1475,13 @@ interface DistributionConfigurationProps {
    * @default - None
    */
   readonly description?: string;
+
+  /**
+   * The tags to apply to the distribution configuration
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1471,7 +1521,8 @@ interface WorkflowProps {
   readonly description?: string;
 
   /**
-   * The change description of the workflow.
+   * The change description of the workflow. Describes what change has been made in this version of the workflow, or
+   * what makes this version different from other versions.
    *
    * @default - None
    */
@@ -1483,6 +1534,13 @@ interface WorkflowProps {
    * @default - An Image Builder owned key will be used to encrypt the workflow.
    */
   readonly kmsKey?: kms.IKey;
+
+  /**
+   * The tags to apply to the workflow
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -1535,6 +1593,13 @@ interface LifecyclePolicyProps {
    * @default - An execution role will be generated
    */
   readonly executionRole?: iam.IRole;
+
+  /**
+   * The tags to apply to the lifecycle policy
+   *
+   * @default - None
+   */
+  readonly tags?: { [key: string]: string };
 }
 ```
 
@@ -2232,7 +2297,7 @@ class Workflow extends WorkflowBase {
 ##### Type definitions
 
 ```ts
-abstract class AwsManagedComponent {
+class AwsManagedComponent {
   static awsCliV2(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
   static helloWorld(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
   static python3(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
@@ -2240,10 +2305,11 @@ abstract class AwsManagedComponent {
   static stigBuild(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
   static updateOS(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
 
-  static fromComponentName(scope: Construct, id: string, name: string): IComponent;
+  static fromAwsManagedComponentName(scope: Construct, id: string, name: string): IComponent;
+  static fromAwsManagedComponentAttributes(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
 }
 
-abstract class AwsManagedImage {
+class AwsManagedImage {
   static amazonLinux2(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
   static amazonLinux2023(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
   static redHatEnterpriseLinux10(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
@@ -2251,20 +2317,21 @@ abstract class AwsManagedImage {
   static windows2022(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
   static windows2025(scope: Construct, id: string, attrs?: AwsManagedImageAttributes): IImage;
 
-  static fromImageName(scope: Construct, id: string, name: string): IImage;
+  static fromAwsManagedImageName(scope: Construct, id: string, name: string): IImage;
+  static fromAwsManagedImageAttributes(scope: Construct, id: string, attrs: AwsManagedImageAttributes): IImage;
 }
 
-abstract class AwsManagedWorkflow {
+class AwsManagedWorkflow {
   static buildContainer(scope: Construct, id: string): IWorkflow;
   static buildImage(scope: Construct, id: string): IWorkflow;
   static distributeContainer(scope: Construct, id: string): IWorkflow;
   static testContainer(scope: Construct, id: string): IWorkflow;
   static testImage(scope: Construct, id: string): IWorkflow;
 
-  static fromWorkflowName(scope: Construct, id: string, name: string): IWorkflow;
+  static fromAwsManagedWorkflowName(scope: Construct, id: string, name: string): IWorkflow;
 }
 
-abstract class AwsMarketplaceComponent {
+class AwsMarketplaceComponent {
   static fromAwsMarketplaceComponentAttributes(
     scope: Construct,
     id: string,
@@ -2285,7 +2352,7 @@ abstract class BaseImage {
   static fromSsmParameterName(scope: Construct, id: string, parameterName: string): BaseImage;
 }
 
-abstract class BuildVersion extends Version {
+class BuildVersion extends Version {
   static readonly LATEST: BuildVersion;
 
   /**
@@ -2293,8 +2360,10 @@ abstract class BuildVersion extends Version {
    */
   readonly buildVersion?: string;
 
+  protected constructor(attrs: BuildVersionAttributes);
+
   static fromString(buildVersionString: string): BuildVersion;
-  static fromBuildVersionAttributes(attrs: BuildVersionAttributes): BuildVersion;
+
   /**
    * The latest major version for the given version string
    */
@@ -2319,13 +2388,6 @@ abstract class ComponentData {
   static fromInline(data: string): ComponentData;
 }
 
-abstract class DockerfileData {
-  static fromAsset(path: string): DockerfileData;
-  static fromS3(bucket: s3.IBucket, key: string): S3DockerfileData;
-  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): S3DockerfileData;
-  static fromInline(data: string): DockerfileData;
-}
-
 abstract class ComponentParameterValue {
   static fromString(value: string): ComponentParameterValue;
 }
@@ -2335,6 +2397,34 @@ abstract class ContainerInstanceImage {
   static fromMachineImage(scope: Construct, id: string, machineImage: ec2.IMachineImage): ContainerInstanceImage;
   static fromSsmParameter(scope: Construct, id: string, parameter: ssm.IStringParameter): ContainerInstanceImage;
   static fromSsmParameterName(scope: Construct, id: string, parameterName: string): ContainerInstanceImage;
+}
+
+abstract class DockerfileData {
+  static fromAsset(path: string): DockerfileData;
+  static fromS3(bucket: s3.IBucket, key: string): S3DockerfileData;
+  static fromS3UploadedAsset(path: string, bucket?: s3.IBucket, key?: string): S3DockerfileData;
+  static fromInline(data: string): DockerfileData;
+}
+
+class OSVersion {
+  public static AMAZON_LINUX = new OSVersion('Amazon Linux');
+  public static AMAZON_LINUX_2023 = new OSVersion('Amazon Linux 2023');
+  public static MAC_OS = new OSVersion('macOS');
+  public static MAC_OS_15 = new OSVersion('macOS 15');
+  public static RHEL = new OSVersion('Red Hat Enterprise Linux');
+  public static RHEL_10 = new OSVersion('Red Hat Enterprise Linux 10');
+  public static SLES = new OSVersion('SLES');
+  public static SLES_15 = new OSVersion('SLES 15');
+  public static UBUNTU = new OSVersion('Ubuntu');
+  public static UBUNTU_24_04 = new OSVersion('Ubuntu 24');
+  public static WINDOWS = new OSVersion('Microsoft Windows Server');
+  public static WINDOWS_2025 = new OSVersion('Microsoft Windows Server 2025');
+
+  constructor(public readonly osVersion: string) {  }
+
+  public static custom(osVersion: string) {
+    return new OSVersion(osVersion);
+  }
 }
 
 abstract class Repository {
@@ -2396,8 +2486,10 @@ class Version {
    */
   readonly patchVersion: string;
 
+  protected constructor(attrs: VersionAttributes);
+
   static fromString(versionString: string): Version;
-  static fromVersionAttributes(attrs: VersionAttributes): Version;
+
 
   /**
    * The latest major version for the given version string
