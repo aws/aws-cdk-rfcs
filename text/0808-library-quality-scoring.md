@@ -213,6 +213,7 @@ is designed to be a general-purpose, standalone scoring engine that can be adopt
 dashboards, or third-party registries.
 
 The scoring process works as follows:
+
 * Take inputs: Users provide an npm package name.
 * Normalize: The tool will look up the package metadata from sources like npm and GitHub.
 * Collect signals:
@@ -257,7 +258,7 @@ valuable tool for enhancing developer experience, but it should remain a support
 ### Signals
 
 The term “signals” is used instead of “metrics” because each data point is a hint, not a guarantee. For example, a project
-may have a README but it could be poorly written. These signals come together to them paint a clearer picture. 
+may have a README but it could be poorly written. These signals come together to them paint a clearer picture.  
 
 | Pillar      | Signal                             | Calculation / Thresholds                                            | Source         | Required | Justification                    | Importance |
 |-------------|------------------------------------|---------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
@@ -297,6 +298,7 @@ may have a README but it could be poorly written. These signals come together to
 ### Construct Library Scoring Examples
 
 #### **Repository**: `@cdklabs/cdk-docker-image-deployment`
+
 Maintenance: 61/100
 Quality:     79/100
 Popularity:  75/100
@@ -325,6 +327,7 @@ Overall:     72/100
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `@cdklabs/cdk-stacksets`
+
 Maintenance: 41/100
 Quality:     79/100
 Popularity:  75/100
@@ -353,6 +356,7 @@ Overall:     65/100
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `@cdklabs/cdk-ecr-deployment`
+
 Maintenance: 66/100
 Quality:     76/100
 Popularity:  83/100
@@ -380,7 +384,8 @@ Overall:     75/100
 | Popularity  | Repo stars                         | 4          | 2        |
 | Popularity  | Contributors                       | 3          | 1        |
 
-#### **Repository**: ` @pahud/cdk-remote-stack`
+#### **Repository**: `@pahud/cdk-remote-stack`
+
 Maintenance: 20/100
 Quality:     84/100
 Popularity:  63/100
@@ -409,6 +414,7 @@ Overall:     56/100
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `@pahud/cdk-ssm-parameter-store`
+
 Maintenance: 10/100
 Quality:     68/100
 Popularity:  33/100
@@ -437,6 +443,7 @@ Overall:     37/100
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `@DataDog/datadog-cdk-constructs-v2`
+
 Maintenance: 86/100
 Quality:     99/100
 Popularity:  71/100
@@ -465,6 +472,7 @@ Overall:     85/100
 | Popularity  | Contributors                       | 4          | 1        |
 
 #### **Repository**: `@aws/aws-cdk`
+
 Maintenance:100/100
 Quality:    100/100
 Popularity: 100/100
@@ -493,6 +501,7 @@ Overall:    100/100
 | Popularity  | Contributors                       | 5          | 1        |
 
 #### **Repository**: `@udondan/iam-floyd`
+
 Maintenance: 74/100
 Quality:     72/100
 Popularity:  67/100
@@ -521,6 +530,7 @@ Overall:     71/100
 | Popularity  | Contributors                       | 2          | 1        |
 
 #### **Repository**: `@hashicorp/terraform-cdk`
+
 Maintenance: 53/100
 Quality:     87/100
 Popularity:  83/100
@@ -549,6 +559,7 @@ Overall:     74/100
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `@mrgrain/cdk-esbuild`
+
 Maintenance: 83/100
 Quality:    100/100
 Popularity:  88/100
@@ -608,6 +619,7 @@ npms.io defines three categories similar to ours; Maintenance, Quality, and Popu
 * Downloads acceleration
 
 For more information about npms.io:
+
 * GitHub: https://github.com/npms-io/npms-analyzer
 * Website: https://npms.io/about
 
