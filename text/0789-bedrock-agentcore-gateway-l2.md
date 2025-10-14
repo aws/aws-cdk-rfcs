@@ -4,7 +4,8 @@
 * **Tracking Issue**: #789
 * **API Bar Raiser**: @alvazjor,
 
-The Amazon Bedrock AgentCore Gateway L2 constructs simplify the creation and management of integration points between AI agents and external services by wrapping the AgentCore Gateway L1 constructs.
+The Amazon Bedrock AgentCore Gateway L2 constructs simplify the creation and management of integration points between AI agents
+and external services by wrapping the AgentCore Gateway L1 constructs.
 It provides high-level, object-oriented approaches to creating and managing Gateways and Gateway Targets.
 These components enable AI agents to securely access external tools and APIs.
 
@@ -35,10 +36,11 @@ A quick comparison between L1 and L2 Gateway constructs:
 
 **README**:
 [Amazon Bedrock AgentCore Gateway](https://aws.amazon.com/bedrock/agentcore/) provides secure integration points between AI agents and external services.
-With Amazon Bedrock AgentCore Gateway, developers can connect agents to multiple tools and APIs through a single MCP URL while maintaining enterprise-grade security.
+With Amazon Bedrock AgentCore Gateway, developers can connect agents to multiple tools and APIs through a single MCP URL
+while maintaining enterprise-grade security.
 
 This construct library facilitates the deployment of AgentCore Gateway and Gateway Targets.
-It leverages underlying CloudFormation L1 resources and custom resources to provision these AgentCore Gateway features.
+It leverages underlying CloudFormation L1 resources to provision these AgentCore Gateway features.
 
 For more details please refer here [Amazon Bedrock AgentCore Gateway Documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html).
 
@@ -76,7 +78,8 @@ const gateway = new Gateway(this, "MyGateway", {
 
 Currently MCP is the only protocol available. To configure it, provide a McpProtocolConfiguration object to protocolConfiguration:
 
-- **Instructions**: provides the instructions for using the Model Context Protocol gateway. These instructions provide guidance on how to interact with the gateway.
+- **Instructions**: provides the instructions for using the Model Context Protocol gateway. These instructions provide guidance
+on how to interact with the gateway.
 - **Semantic search**: enables intelligent tool discovery so that we are not limited by typical list tools limits (typically 100 or so).
 Our semantic search capability delivers contextually relevant tool subsets, significantly improving tool selection accuracy through focused, relevant results,
 inference performance with reduced token processing and overall orchestration efficiency and response times.
@@ -254,7 +257,8 @@ You can create the following target types:
 
 - **Lambda**: targets allow you to connect your gateway to AWS Lambda functions that implement your tools.
  This is useful when you want to execute custom code in response to tool invocations.
-- **OpenAPI** (formerly known as Swagger): widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0 specifications for defining API targets.
+- **OpenAPI** (formerly known as Swagger): widely used standard for describing RESTful APIs. Gateway supports
+OpenAPI 3.0 specifications for defining API targets.
 - **Smithy**: language for defining services and SDKs that works well with Gateway. Smithy models provide a more structured approach
 to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
 AgentCore Gateway supports built-in AWS service models only. Smithy models are restricted to AWS services and custom
@@ -282,7 +286,7 @@ To create an outbound auth, refer to the Identity RFC to create either an API Ke
 
 If you select a target of type OpenAPI or Smithy, there are three ways to provide an API schema for your target:
 
-#### From a local asset file (requires binding to scope):
+#### From a local asset file (requires binding to scope)
 
 ```typescript
 import * as path from "path";
@@ -293,7 +297,7 @@ const schema = ApiSchema.fromLocalAsset(path.join(__dirname, "mySchema.yml"));
 schema.bind(this);
 ```
 
-#### From an inline schema:
+#### From an inline schema
 
 ```typescript
 import { ApiSchema } from "aws-cdk/bedrock-agentcore-alpha/gateway/api-schema";
@@ -317,7 +321,7 @@ paths:
 `);
 ```
 
-#### From an existing S3 file:
+#### From an existing S3 file
 
 ```typescript
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -605,7 +609,6 @@ The L2 constructs address these challenges by providing:
 Potential concerns to consider:
 
 1. **Service Maturity**: AgentCore is in preview and subject to changes
-2. **Custom Resource Dependency**: Currently relies on custom resources
 3. **Smithy Limitations**: Only supports AWS service models
 
 However, these concerns are mitigated by:
@@ -620,7 +623,6 @@ The L2 construct library is built using:
 
 1. **TypeScript with Projen**: Modern tooling for construct development
 2. **JSII**: Multi-language support (TypeScript, Python, Java, .NET)
-3. **Custom Resources**: Temporary solution using Lambda functions
 4. **Modular Architecture**: Gateway and GatewayTarget as separate constructs
 
 Key design principles:
@@ -677,15 +679,7 @@ It does not affect existing constructs.
 
 ### What alternative solutions did you consider?
 
-1. Direct API integrations - lacks unified access and tool discovery
-2. Custom proxy solutions - requires significant development and maintenance
-3. Multiple endpoints - increases complexity for agent configuration
-
 ### What are the drawbacks of this solution?
-
-1. Relies on Lambda-based custom resources until CloudFormation support is available
-2. AgentCore is in preview and APIs may change
-3. Smithy models limited to AWS services
 
 ### What is the high-level project plan?
 
@@ -709,7 +703,3 @@ It does not affect existing constructs.
 - Add support for additional target types
 
 ### Are there any open issues that need to be addressed later?
-
-1. Waiting for the release of L1 construct for Bedrock AgentCore Gateway
-2. Replace all custom resources with L1 constructs
-3. Consider adding support for custom Smithy models for non-AWS services
