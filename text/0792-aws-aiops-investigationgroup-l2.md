@@ -17,8 +17,8 @@ Compared to L1 AIOps constructs, introducing an L2 construct would have the foll
    , and establishes a trust relationship with the AIOps service principal
    - If customer specified customized kms key for encryption,
 the L2 construct will updates KMS key resource policy to grant necessary encryption/decryption permissions
-   - If customer specified cross-account configuration, the L2 construct will update investigation group role to 
-   include assumeRole permission for specified source account roles.
+   - If customer specified cross-account configuration, the L2 construct will update investigation group
+  role to include assumeRole permission for specified source account roles.
 2. **Operational Excellence**:
    - Quick and easy creation of constructs
       - L2 construct only require minimal input from customer.
@@ -95,15 +95,15 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    name: "myInvestigationGroup",
    role: role,
    encryptionKey: myKey,
-   chatbotNotificationChannels?: [
+   chatbotNotificationChannels: [
       'arn:aws:sns:us-east-1:123456789012:MyTopic'
    ],
-   crossAccountConfigurations?: [
+   crossAccountConfigurations: [
       'arn:aws:iam::123456789012:role/MyRole'
    ],
    isCloudTrailEventHistoryEnabled: true,
    retentionInDays: Duration.daysOf(7),
-   removalPolicy?: RemovalPolicy.DESTROY,
+   removalPolicy: RemovalPolicy.DESTROY,
    tagKeyBoundaries: ["EKS-Application"]
 });
 ```
@@ -116,6 +116,8 @@ L2 construct will add a new source account role ARN to the investigation group i
 the current account to access telemetry data from a source account by assuming the source account role specified here.
 L2 construct does not validate whether the source account role exists or not during investigation group creation.
 The source account role and monitor account role permissions need to be set up separately. See [Cross-account investigations](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-cross-account.html)
+
+`addCrossAccountConfiguration(sourceAccountRole: IRole)`
 
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
@@ -133,6 +135,8 @@ If you have already integrated AIOps in chat applications with a third-party cha
 you can add specific Amazon SNS topic to send updates to about investigations.
 This Amazon SNS topic will relay those updates to the chat client.
 
+`addChatbotNotification(snsTopic: ITopic)`
+
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
    name: 'MyGroup'
@@ -146,6 +150,8 @@ group.addChatbotNotification({
 #### To add a resource policy
 
 L2 construct will creates an IAM resource policy and assigns it to the specified investigation group.
+
+`addToResourcePolicy(statement: PolicyStatement)`
 
 ```typescript
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
@@ -196,6 +202,21 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
 const accessEntry = group.grantEksAccess(new Cluster());
 ```
 
+#### To get the active investigations metric
+
+This metric reports the count of active investigations within a given investigation group.
+Investigation instances can be created under an investigation group, and this metric provides visibility into the current number of ongoing investigations.
+
+`metricActiveInvestigation(options?: cloudwatch.MetricOptions): cloudwatch.Metric;`
+
+```typescript
+const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
+   name: 'MyGroup'
+});
+
+const activeMetric = group.metricActiveInvestigation();
+```
+
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -221,28 +242,13 @@ adhering to AWS best practices.
 
 ### Why are we doing this?
 
->The development of AIOps L2 constructs addresses significant customer needs and adoption patterns. Currently, customers rely on L1 constructs through
+The development of AIOps L2 constructs addresses significant customer needs and adoption patterns. Currently, customers rely on L1 constructs through
 CloudFormation, requiring detailed understanding of resource configurations. Additionally, multiple Amazon internal teams have successfully adopted an
 internal L2 package for AIOps resource management, demonstrating the value and demand for higher-level abstractions.
 
-By releasing L2 constructs in aws-cdk-lib, we can:
-
-1. Enhance Customer Experience
-   * Simplify resource creation and management
-   * Reduce boilerplate code and configuration complexity
-   * Provide intuitive, type-safe interfaces
-   * Enable faster adoption of AIOps capabilities
-
-2. Enforce Security Best Practices
-   * Automatically configure proper IAM roles and permissions
-   * Implement secure cross-account access patterns by default
-   * Prevent common security misconfigurations
-   * Apply principle of least privilege automatically
-   * Handle security-sensitive configurations with validated defaults
-
-The L2 constructs will encapsulate these best practices within their implementation, significantly reducing the risk of misconfiguration while ensuring
-consistent and secure deployment patterns across customer applications. This approach allows customers to focus on their business logic rather
-than underlying infrastructure details.
+The L2 constructs will encapsulate AWS best practices within implementation, significantly reducing the risk of misconfiguration while ensuring
+consistent and secure deployment patterns across customer applications.
+This L2 construct approach allows customers to focus on their business logic rather than underlying infrastructure details.
 
 ### Why should we _not_ do this?
 
@@ -251,17 +257,6 @@ than underlying infrastructure details.
 ### What is the technical solution (design) of this feature?
 
 > We will add an investigation group construct and provide methods to help set up the permissions/roles effectively underneath.
-
-Key design principles:
-
-- **Simplicity**: Expose few properties for customers; the L2 construct will handle the underlying business logic.
-e.g investigation group role creation, encryption key resource policy creation.
-- **Sensible Defaults**: Production-ready configurations out of the box. e.g RetentionDays default as 90 days, encryption key default is AWS managed key.
-- **Extensibility**: The construct offers flexible configuration options through both initial setup and post-creation modifications.
-For example, investigation group properties like chatbotNotificationChannel and crossAccountConfigurations can be defined either during initialization
-via investigationGroupProps, or added later using helper methods. This dual approach allows customers to configure resources based on their deployment
-patterns and evolving needs.
-- **Type Safety**: Strong typing for better developer experience
 
 **Initializer:**
 
@@ -299,20 +294,6 @@ InvestigationGroupProps
 
 > Provide customers with detailed usage of L1 constructs.
 However, this approach requires extensive code to provision resources and lacks the abstraction benefits of L2 constructs.
-
-```
-    const aiOpsAssistantRole = this.createAIOpsAssistantRole();
-    const encryptionKey = this.createEncryptionKeyForInvestigationGroup();
-
-    new CfnInvestigationGroup(this, 'InvestigationGroup', {
-      name: `${id}-InvestigationGroup-${account}-${region}`,
-      roleArn: aiOpsAssistantRole.roleArn,
-      encryptionConfig: {
-        encryptionConfigurationType: 'CUSTOMER_MANAGED_KMS_KEY',
-        kmsKeyId: encryptionKey.keyArn,
-      },
-    });
-```
 
 ### What are the drawbacks of this solution?
 
