@@ -137,44 +137,68 @@ const runtime = new Runtime(this, "MyAgentRuntime", {
 
 #### Managing Endpoints and Versions
 
-Amazon Bedrock AgentCore automatically manages runtime versioning. Here's how versions are created and how to manage endpoints:
+Amazon Bedrock AgentCore automatically manages runtime versioning to provide safe deployments and rollback capabilities. You can follow
+the steps below to understand how to use versioning with runtime for controlled deployments across different environments.
+
+##### Step 1: Initial Deployment
+
+When you first create an agent runtime, AgentCore automatically creates Version 1 of your runtime. At this point, a DEFAULT endpoint is
+automatically created that points to Version 1. This DEFAULT endpoint serves as the main access point for your runtime.
+
+##### Step 2: Creating Custom Endpoints
+
+After the initial deployment, you can create additional endpoints for different environments. For example, you might create a "production"
+endpoint that explicitly points to Version 1. This allows you to maintain stable access points for specific environments while keeping the
+flexibility to test newer versions elsewhere.
+
+##### Step 3: Runtime Update Deployment
+
+When you update the runtime configuration (such as updating the container image, modifying network settings, or changing protocol
+configurations), AgentCore automatically creates a new version (Version 2). Upon this update:
+
+- Version 2 is created automatically with the new configuration
+- The DEFAULT endpoint automatically updates to point to Version 2
+- Any explicitly pinned endpoints (like the production endpoint) remain on their specified versions
+
+##### Step 4: Testing with Staging Endpoints
+
+Once Version 2 exists, you can create a staging endpoint that points to the new version. This staging endpoint allows you to test the
+new version in a controlled environment before promoting it to production. This separation ensures that production traffic continues
+to use the stable version while you validate the new version.
+
+##### Step 5: Promoting to Production
+
+After thoroughly testing the new version through the staging endpoint, you can update the production endpoint to point to Version 2.
+This controlled promotion process ensures that you can validate changes before they affect production traffic.
 
 ```typescript
 repository = new ecr.Repository(stack, "TestRepository", {
   repositoryName: "test-agent-runtime",
 });
 
-//Initial Deployment - Automatically creates Version 1
 const runtime = new Runtime(this, "MyAgentRuntime", {
   agentRuntimeName: "myAgent",
   agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
 });
-// At this point: A DEFAULT endpoint is created which points to version 1
 
-// You can create a new endpoint (production) which points to version1
 const prodEndpoint = runtime.addEndpoint("production", {
   version: "1",
   description: "Stable production endpoint - pinned to v1"
 });
 
-// When you update the runtime configuration e.g. new container image, protocol change, network settings a new version (Version 2) is automatically created
 runtime.agentRuntimeArtifact = AgentRuntimeArtifact.fromEcrRepository(repository, "v2.0.0");
 
-// After this update: Version 2 is created automatically
-// DEFAULT endpoint automatically updates to Version 2
-// Production endpoint remains on Version 1 (explicitly pinned)
-
-// Now that Version 2 exists, create a staging endpoint for testing
 const stagingEndpoint = runtime.addEndpoint("staging", {
   version: "2",
   description: "Staging environment for testing new version"
 });
 
-// Staging endpoint: Points to Version 2 (testing)
+// Updating existing endpoint to use a new version
+const prodEndpoint = runtime.addEndpoint("production", {
+  version: "2",  // New version added here
+  description: "Stable production endpoint"
+});
 
-
-// After testing, update production endpoint to Version 2
-prodEndpoint.updateVersion("2");
 ```
 
 ### Creating Standalone Runtime Endpoints
@@ -184,7 +208,6 @@ RuntimeEndpoint can also be created as a standalone resource.
 #### Example: Creating an endpoint for an existing runtime
 
 ```typescript
-// Reference an existing runtime by its ID
 const existingRuntimeId = "abc123-runtime-id"; // The ID of an existing runtime
 
 // Create a standalone endpoint
@@ -206,35 +229,113 @@ IAM authentication is used, but you can configure Cognito, JWT, or OAuth authent
 IAM authentication is the default mode and requires no additional configuration. When creating a runtime,
 IAM authentication is automatically enabled, requiring callers to sign their requests with valid AWS credentials.
 
+```typescript
+import * as agentcore from 'aws-cdk/bedrock-agentcore-alpha/runtime';
+
+const repository = new ecr.Repository(this, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0");
+
+const runtime = new agentcore.Runtime(this, "MyAgentRuntime", {
+  runtimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+  // authorizerConfiguration is optional - defaults to IAM
+});
+
+// Or explicitly set IAM authentication
+const runtimeWithExplicitIAM = new agentcore.Runtime(this, "MyAgentRuntimeExplicit", {
+  runtimeName: "myAgentExplicit",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+  authorizerConfiguration: agentcore.RuntimeAuthorizerConfiguration.usingIAM(),
+});
+```
+
 #### Cognito Authentication
 
-To configure AWS Cognito User Pool authentication for your runtime, use the `runtime.usingCognitoAuth()` method after runtime creation.
+To configure AWS Cognito User Pool authentication for your runtime, use the `RuntimeAuthorizerConfiguration.usingCognito()` method during runtime creation.
 This method requires:
 
 - **User Pool ID** (required): The Cognito User Pool identifier (e.g., "us-west-2_ABC123")
 - **Client ID** (required): The Cognito App Client ID
 - **Region** (optional): The AWS region where the User Pool is located (defaults to the stack region)
+- **Allowed Audiences** (optional): An array of allowed audiences for token validation
+
+```typescript
+import * as agentcore from 'aws-cdk/bedrock-agentcore-alpha/runtime';
+
+const repository = new ecr.Repository(this, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0");
+
+const runtime = new agentcore.Runtime(this, "MyAgentRuntime", {
+  runtimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+  authorizerConfiguration: agentcore.RuntimeAuthorizerConfiguration.usingCognito(
+    "us-west-2_ABC123",  // User Pool ID
+    "client-id-123",      // Client ID
+    "us-west-2",          // Optional: AWS region (defaults to stack region)
+    ["audience1", "audience2"]  // Optional: allowed audiences
+  ),
+});
+```
 
 #### JWT Authentication
 
-To configure custom JWT authentication with your own OpenID Connect (OIDC) provider, use the `runtime.usingJWTAuth()` method after runtime creation.
- This method requires:
+To configure custom JWT authentication with your own OpenID Connect (OIDC) provider, use the `RuntimeAuthorizerConfiguration.usingJWT()` method
+during runtime creation.
+This method requires:
 
 - **Discovery URL**: The OIDC discovery URL (must end with /.well-known/openid-configuration)
 - **Allowed Client IDs**: An array of client IDs that are allowed to access the runtime
 - **Allowed Audiences** (optional): An array of allowed audiences for token validation
 
+```typescript
+import * as agentcore from 'aws-cdk/bedrock-agentcore-alpha/runtime';
+
+const repository = new ecr.Repository(this, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0");
+
+const runtime = new agentcore.Runtime(this, "MyAgentRuntime", {
+  runtimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+  authorizerConfiguration: agentcore.RuntimeAuthorizerConfiguration.usingJWT(
+    "https://your-oidc-provider.com/.well-known/openid-configuration",  // Discovery URL
+    ["client-id-1", "client-id-2"],  // Allowed client IDs
+    ["audience1", "audience2"]  // Optional: allowed audiences
+  ),
+});
+```
+
 #### OAuth Authentication
 
-OAuth 2.0 authentication can be configured during runtime creation by setting the `runtime.usingOAuth()` property with:
+OAuth 2.0 authentication can be configured during runtime creation using the `RuntimeAuthorizerConfiguration.usingOAuth()` method with:
 
-- **provider**: OAuth provider name
 - **Discovery URL**: The OAuth provider's discovery URL (must end with /.well-known/openid-configuration)
 - **Client ID**: The OAuth client identifier
-- **scopes**: Optional, array of OAuth scopes
+- **Allowed Audiences** (optional): An array of allowed audiences for token validation
 
-**Note**: When using custom authentication modes (Cognito, JWT, OAuth), ensure that your client applications
-are properly configured to obtain and include valid tokens in their requests to the runtime endpoints.
+```typescript
+import * as agentcore from 'aws-cdk/bedrock-agentcore-alpha/runtime';
+
+const repository = new ecr.Repository(this, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0");
+
+const runtime = new agentcore.Runtime(this, "MyAgentRuntime", {
+  runtimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifact,
+  authorizerConfiguration: agentcore.RuntimeAuthorizerConfiguration.usingOAuth(
+    "https://oauth-provider.com/.well-known/openid-configuration",  // Discovery URL
+    "oauth-client-id",  // OAuth client ID
+    ["audience1", "audience2"]  // Optional: allowed audiences
+  ),
+});
+```
 
 #### Using a Custom IAM Role
 
