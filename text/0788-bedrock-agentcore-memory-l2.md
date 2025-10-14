@@ -4,7 +4,8 @@
 * **Tracking Issue**: #788
 * **API Bar Raiser**: @alvazjor,
 
-The Amazon Bedrock AgentCore Memory L2 construct simplifies the creation and management of AI agent memory systems by wrapping the AgentCore Memory L1 constructs.
+The Amazon Bedrock AgentCore Memory L2 construct simplifies the creation and management of AI agent memory systems by wrapping
+the AgentCore Memory L1 constructs.
 It provides a high-level, object-oriented approach to creating and managing short-term and long-term memory for AI agents.
 This enables agents to maintain context over time and deliver personalized experiences.
 
@@ -34,11 +35,12 @@ A quick comparison between L1 and L2 Memory constructs:
 ```feat(bedrock-agentcore): Amazon Bedrock AgentCore Memory L2 construct```
 
 **README**:
-[Amazon Bedrock AgentCore Memory](https://aws.amazon.com/bedrock/agentcore/) provides managed memory capabilities for AI agents to maintain context across conversations.
+[Amazon Bedrock AgentCore Memory](https://aws.amazon.com/bedrock/agentcore/) provides managed memory capabilities for AI
+agents to maintain context across conversations.
 With Amazon Bedrock AgentCore Memory, developers can enable agents to remember important facts and deliver consistent, personalized experiences.
 
 This construct library facilitates the deployment of AgentCore Memory with short-term and long-term memory strategies.
-It leverages underlying CloudFormation L1 resources and custom resources to provision these AgentCore Memory features.
+It leverages underlying CloudFormation L1 resources to provision these AgentCore Memory features.
 
 For more details please refer here [Amazon Bedrock AgentCore Memory Documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html).
 
@@ -362,25 +364,12 @@ The L2 construct addresses these challenges by providing:
 
 ### Why should we _not_ do this?
 
-Potential concerns to consider:
-
-1. **Service Maturity**: AgentCore is in preview and subject to changes
-2. **Custom Resource Dependency**: Currently relies on custom resources
-3. **Storage Costs**: Memory storage incurs ongoing costs
-
-However, these concerns are mitigated by:
-
-- Clear migration path when CloudFormation support becomes available
-- Cost-effective storage with configurable expiration
-- Significant value from context preservation
-
 ### What is the technical solution (design) of this feature?
 
 The L2 construct library is built using:
 
 1. **TypeScript with Projen**: Modern tooling for construct development
 2. **JSII**: Multi-language support (TypeScript, Python, Java, .NET)
-3. **Custom Resources**: Temporary solution using Lambda functions
 4. **Modular Architecture**: Memory and MemoryStrategy as separate constructs
 
 Key design principles:
@@ -419,15 +408,7 @@ It does not affect existing constructs.
 
 ### What alternative solutions did you consider?
 
-1. Using DynamoDB for memory storage - lacks extraction strategies
-2. Custom vector databases - requires significant infrastructure
-3. Session-only memory - loses context between conversations
-
 ### What are the drawbacks of this solution?
-
-1. Relies on Lambda-based custom resources until CloudFormation support is available
-2. AgentCore is in preview and APIs may change
-3. Storage costs for long-term memory
 
 ### What is the high-level project plan?
 
@@ -452,7 +433,3 @@ It does not affect existing constructs.
 - Add support for additional extraction strategies
 
 ### Are there any open issues that need to be addressed later?
-
-1. Waiting for the release of L1 construct for Bedrock AgentCore Memory
-2. Replace all custom resources with L1 constructs
-3. Consider adding more built-in extraction strategies based on user feedback
