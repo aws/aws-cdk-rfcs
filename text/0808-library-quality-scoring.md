@@ -260,40 +260,40 @@ valuable tool for enhancing developer experience, but it should remain a support
 The term “signals” is used instead of “metrics” because each data point is a hint, not a guarantee. For example, a project
 may have a README but it could be poorly written. These signals come together to them paint a clearer picture.  
 
-| Pillar      | Signal                             | Calculation / Thresholds                                            | Source         | Required | Justification                    | Importance |
-|-------------|------------------------------------|---------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
-| Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0 | Repo API       | YES      | Reflects responsiveness          | 3          |
-| Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 in 12mo = 0                 | Repo API       | YES      | Shows steady activity            | 3          |
-| Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0    | Registry API   | YES      | Activity check, responsiveness   | 3          |
-| Maintenance | Lockfile Update Recency            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0| Repo API       | YES      | Shows active dependency upkeep   | 3          |
-| Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0 | Repo API       | YES      | Measures backlog health          | 2          |
-| Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0            | Repo API       | YES      | Signals maintainer attention     | 2          |
-| Maintenance | Number of Contributors             | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                   | Repo API       | YES      | Broad community involvement      | 2          |
-| Maintenance | Most recent commit                 | <7d = 100, 7–30d = 75, 1–3mo = 50, 3–6mo = 25, >6mo = 0             | Repo API       | YES      | Indicates recency                | 2          |
-| Maintenance | Active Maintainers in last 90 days | —                                                                   | Repo API       | NO       | Prevents “bus factor”            | 3          |
-| Maintenance | Number of Significant Contributors | —                                                                   | Repo API       | NO       | Measure of team size             | 2          |
-| Maintenance | Branch activity                    | —                                                                   | Repo API       | NO       | Hard to normalize                | 1          |
-| Maintenance | SemVer                             | —                                                                   | Registry API   | NO       | Maturity ≠ activity              | 1          |
-| Quality     | README, API ref, examples          | Full = 100, README only = 50, none = 0                              | Tarball        | YES      | Entry point for users            | 3          |
-| Quality     | Tests checklist (unit/snapshot)    | Unit+Snapshot = 100, one = 50, neither = 0                          | npm            | YES      | Ensures correctness              | 3          |
-| Quality     | Passing CI builds                  | Passing = 100, Failing = 0                                          | Repo API       | YES      | Code quality enforcement         | 3          |
-| Quality     | Author Track Record                | 20+ pkgs = 100, 11–20 = 75, 5–10 = 50, 2–4 = 25, 1 = 0              | Repo API / npm | YES      | Track record of strong authors   | 3          |
-| Quality     | Changelog Present                  | Present = 100, Missing = 0                                          | Tarball        | YES      | Transparency for changes         | 3          |
-| Quality     | Stable versioning                  | ≥1.x.x & active = 100, <1.0 & active = 50, deprecated = 0           | Registry API   | YES      | Avoids abandoned projects        | 2          |
-| Quality     | License, .gitignore/.npmignore     | Both = 100, one = 50, none = 0                                      | Tarball        | YES      | Legal clarity + hygiene          | 1          |
-| Quality     | Multi-language Support             | 4+ = 100, 3 = 75, 2 = 50, 1 = 25, fake/missing = 0                  | Tarball        | YES      | Signals extra effort             | 1          |
-| Quality     | Dependency freshness / vuln checks | —                                                                   | npm            | NO       | Security                         | 3          |
-| Quality     | Download Balance Across Languages  | —                                                                   | All registries | NO       | Confirms real multi-lang support | 1          |
-| Quality     | Code complexity                    | —                                                                   | —              | NO       | Hard to automate                 | 1          |
-| Quality     | Lint configuration                 | Present = 100, Absent = 0                                           | Tarball        | NO       | Style/consistency                | 1          |
-| Quality     | Badges                             | ≥3 meaningful = 100, 1–2 = 50, none = 0                             | Tarball        | NO       | Signals professionalism          | 1          |
-| Popularity  | Weekly Downloads                   | 2.5k+ = 100, 251–2.5K = 75 41-250 = 50, 6-40 = 25, <5 = 0           | npm            | YES      | General usage metric             | 3          |
-| Popularity  | Repo stars                         | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                 | Repo API       | YES      | Popularity proxy                 | 2          |
-| Popularity  | Contributors                       | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                   | Repo API       | YES      | Health of contributions          | 1          |
-| Popularity  | Version Downloads                  | 10K+ = 100, 1K–9K = 75, 100–999 = 50, 10-99 = 25, <10 = 0           | npm            | NO       | Usage of a specific version      | 3          |
-| Popularity  | Dependents                         | —                                                                   | libraries.io   | NO       | Shows reuse                      | 3          |
-| Popularity  | Forks                              | —                                                                   | Repo API       | NO       | Community engagement             | 2          |
-| Popularity  | Subscribers/watchers               | —                                                                   | Repo API       | NO       | Indicates user interest          | 1          |
+| Pillar      | Signal                             | Calculation / Thresholds                                              | Source         | Required | Justification                    | Importance |
+|-------------|------------------------------------|-----------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
+| Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0   | Repo API       | YES      | Reflects responsiveness          | 3          |
+| Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 in 12mo = 0                   | Repo API       | YES      | Shows steady activity            | 3          |
+| Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0      | Registry API   | YES      | Activity check, responsiveness   | 3          |
+| Maintenance | Lockfile Update Recency            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0 | Repo API       | YES      | Shows active dependency upkeep   | 3          |
+| Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0   | Repo API       | YES      | Measures backlog health          | 2          |
+| Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0              | Repo API       | YES      | Signals maintainer attention     | 2          |
+| Maintenance | Number of Contributors             | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                     | Repo API       | YES      | Broad community involvement      | 2          |
+| Maintenance | Most recent commit                 | <7d = 100, 7–30d = 75, 1–3mo = 50, 3–6mo = 25, >6mo = 0               | Repo API       | YES      | Indicates recency                | 2          |
+| Maintenance | Active Maintainers in last 90 days | —                                                                     | Repo API       | NO       | Prevents “bus factor”            | 3          |
+| Maintenance | Number of Significant Contributors | —                                                                     | Repo API       | NO       | Measure of team size             | 2          |
+| Maintenance | Branch activity                    | —                                                                     | Repo API       | NO       | Hard to normalize                | 1          |
+| Maintenance | SemVer                             | —                                                                     | Registry API   | NO       | Maturity ≠ activity              | 1          |
+| Quality     | README, API ref, examples          | Full = 100, README only = 50, none = 0                                | Tarball        | YES      | Entry point for users            | 3          |
+| Quality     | Tests checklist (unit/snapshot)    | Unit+Snapshot = 100, one = 50, neither = 0                            | npm            | YES      | Ensures correctness              | 3          |
+| Quality     | Passing CI builds                  | Passing = 100, Failing = 0                                            | Repo API       | YES      | Code quality enforcement         | 3          |
+| Quality     | Author Track Record                | 20+ pkgs = 100, 11–20 = 75, 5–10 = 50, 2–4 = 25, 1 = 0                | Repo API / npm | YES      | Track record of strong authors   | 3          |
+| Quality     | Changelog Present                  | Present = 100, Missing = 0                                            | Tarball        | YES      | Transparency for changes         | 3          |
+| Quality     | Stable versioning                  | ≥1.x.x & active = 100, <1.0 & active = 50, deprecated = 0             | Registry API   | YES      | Avoids abandoned projects        | 2          |
+| Quality     | License, .gitignore/.npmignore     | Both = 100, one = 50, none = 0                                        | Tarball        | YES      | Legal clarity + hygiene          | 1          |
+| Quality     | Multi-language Support             | 4+ = 100, 3 = 75, 2 = 50, 1 = 25, fake/missing = 0                    | Tarball        | YES      | Signals extra effort             | 1          |
+| Quality     | Dependency freshness / vuln checks | —                                                                     | npm            | NO       | Security                         | 3          |
+| Quality     | Download Balance Across Languages  | —                                                                     | All registries | NO       | Confirms real multi-lang support | 1          |
+| Quality     | Code complexity                    | —                                                                     | —              | NO       | Hard to automate                 | 1          |
+| Quality     | Lint configuration                 | Present = 100, Absent = 0                                             | Tarball        | NO       | Style/consistency                | 1          |
+| Quality     | Badges                             | ≥3 meaningful = 100, 1–2 = 50, none = 0                               | Tarball        | NO       | Signals professionalism          | 1          |
+| Popularity  | Weekly Downloads                   | 2.5k+ = 100, 251–2.5K = 75 41-250 = 50, 6-40 = 25, <5 = 0             | npm            | YES      | General usage metric             | 3          |
+| Popularity  | Repo stars                         | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                   | Repo API       | YES      | Popularity proxy                 | 2          |
+| Popularity  | Contributors                       | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                     | Repo API       | YES      | Health of contributions          | 1          |
+| Popularity  | Version Downloads                  | 10K+ = 100, 1K–9K = 75, 100–999 = 50, 10-99 = 25, <10 = 0             | npm            | NO       | Usage of a specific version      | 3          |
+| Popularity  | Dependents                         | —                                                                     | libraries.io   | NO       | Shows reuse                      | 3          |
+| Popularity  | Forks                              | —                                                                     | Repo API       | NO       | Community engagement             | 2          |
+| Popularity  | Subscribers/watchers               | —                                                                     | Repo API       | NO       | Indicates user interest          | 1          |
 
 ### Construct Library Scoring Examples
 
