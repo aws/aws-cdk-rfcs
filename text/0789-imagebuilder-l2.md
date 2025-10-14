@@ -136,7 +136,7 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
   }),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
     name: 'test-image-recipe',
-    version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
+    version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -160,7 +160,7 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
       }),
     },
     {
-      workflow: imagebuilder.AwsManagedWorkflow.fromWorkflowName(
+      workflow: imagebuilder.AwsManagedWorkflow.fromAwsManagedWorkflowName(
         stack,
         'TestWorkflowAcrossInstanceTypes',
         'test-image-with-instance-type',
@@ -209,7 +209,7 @@ const image = new imagebuilder.Image(stack, 'Image', {
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
     name: 'test-image-recipe',
-    version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
+    version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -233,7 +233,7 @@ const image = new imagebuilder.Image(stack, 'Image', {
       }),
     },
     {
-      workflow: imagebuilder.AwsManagedWorkflow.fromWorkflowName(
+      workflow: imagebuilder.AwsManagedWorkflow.fromAwsManagedWorkflowName(
         stack,
         'TestWorkflowAcrossInstanceTypes',
         'test-image-with-instance-type',
@@ -389,7 +389,13 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
   ),
   // Use an AWS-managed component, shared component, and a self-owned component with parameters
   components: [
-    { component: imagebuilder.AwsManagedComponent.fromComponentName(stack, 'update-linux-component', 'update-linux') },
+    {
+      component: imagebuilder.AwsManagedComponent.fromAwsManagedComponentName(
+        stack,
+        'update-linux-component',
+        'update-linux',
+      ),
+    },
     {
       component: imagebuilder.Component.fromComponentArn(
         stack,
@@ -709,7 +715,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 const workflow = new imagebuilder.Workflow(stack, 'Workflow', {
   name: 'custom-build-workflow',
   type: imagebuilder.WorkflowType.BUILD,
-  version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
+  version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   description: 'A test workflow',
   changeDescription: 'Initial version',
   kmsKey: kms.Key.fromLookup(stack, 'WorkflowKey', { aliasName: 'alias/workflow-encryption-key' }),
@@ -767,26 +773,24 @@ const lifecyclePolicy = new imagebuilder.LifecyclePolicy(stack, 'LifecyclePolicy
     {
       action: {
         type: imagebuilder.LifecyclePolicyActionType.DELETE,
-        includeResources: {
-          amis: true,
-          snapshots: true,
-        },
+        includeAmis: true,
+        includeSnapshots: true,
       },
       filter: {
         type: imagebuilder.LifecyclePolicyFilterType.AGE,
-        value: 1,
-        unit: imagebuilder.LifecyclePolicyTimeUnit.WEEKS,
+        age: cdk.Duration.days(7),
+        retainAtLeast: 5,
       },
-      exclusionRules: {
-        amis: {
-          isPublic: true,
-          lastLaunched: cdk.Duration.days(14),
-          regions: ['ap-southeast-2'],
-          sharedAccounts: ['0987654321098'],
-          tags: {
-            AMIInUse: 'true',
-          },
+      amiExclusionRules: {
+        isPublic: true,
+        lastLaunched: cdk.Duration.days(14),
+        regions: ['ap-southeast-2'],
+        sharedAccounts: ['0987654321098'],
+        tags: {
+          AMIInUse: 'true',
         },
+      },
+      imageExclusionRules: {
         tags: {
           ImageInUse: 'true',
         },
@@ -794,14 +798,6 @@ const lifecyclePolicy = new imagebuilder.LifecyclePolicy(stack, 'LifecyclePolicy
     },
   ],
 });
-
-// Add recipe to the lifecycle policy
-lifecyclePolicy.addRecipeSelection(
-  imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
-    name: 'test-image-recipe',
-    version: imagebuilder.Version.fromVersionAttributes({ major: '1', minor: '0', patch: '0' }),
-  }),
-);
 ```
 
 ---
@@ -894,10 +890,8 @@ interface ImagePipelineProps {
    *
    * A default infrastructure configuration will be used if one is not provided.
    *
-   * The default configuration will create an instance profile and role with minimal permissions, attached to the EC2
-   * instance. This role will have the "AmazonSSMManagedInstanceCore" and "EC2InstanceProfileForImageBuilder" managed
-   * policies attached. For container images, the "EC2InstanceProfileForImageBuilderECRContainerBuilds" managed policy
-   * will also be attached. The role will be assumable by "ec2.amazonaws.com"
+   * The default configuration will create an instance profile and role with minimal permissions needed to build the
+   * image, attached to the EC2 instance.
    *
    * S3 logging will be enabled by default. A bucket will be created in the current region with the name formatted as:
    * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys will be prefixed with the image
@@ -1005,10 +999,8 @@ interface ImageProps {
    *
    * A default infrastructure configuration will be used if one is not provided.
    *
-   * The default configuration will create an instance profile and role with minimal permissions, attached to the EC2
-   * instance. This role will have the "AmazonSSMManagedInstanceCore" and "EC2InstanceProfileForImageBuilder" managed
-   * policies attached. For container images, the "EC2InstanceProfileForImageBuilderECRContainerBuilds" managed policy
-   * will also be attached. The role will be assumable by "ec2.amazonaws.com"
+   * The default configuration will create an instance profile and role with minimal permissions needed to build the
+   * image, attached to the EC2 instance.
    *
    * S3 logging will be enabled by default. A bucket will be created in the current region with the name formatted as:
    * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys will be prefixed with the image
@@ -1367,10 +1359,8 @@ interface InfrastructureConfigurationProps {
   /**
    * The instance profile to associate with the instance used to customize the AMI.
    *
-   * By default, an instance profile and role will be created with minimal permissions, attached to the EC2 instance.
-   * This role will have the "AmazonSSMManagedInstanceCore" and "EC2InstanceProfileForImageBuilder" managed policies
-   * attached. For container images, the "EC2InstanceProfileForImageBuilderECRContainerBuilds" managed policy will also
-   * be attached. The role will be assumable by "ec2.amazonaws.com"
+   * By default, an instance profile and role will be created with minimal permissions needed to build the image,
+   * attached to the EC2 instance.
    *
    * @default - an instance profile will be generated
    */
@@ -1391,7 +1381,8 @@ interface InfrastructureConfigurationProps {
   readonly securityGroups?: ec2.ISecurityGroup[];
 
   /**
-   * The key pair used to connect to the build and test EC2 instances.
+   * The key pair used to connect to the build and test EC2 instances. The key pair can be used to log into the build
+   * or test instances for troubleshooting any failures.
    */
   readonly keyPair?: ec2.IKeyPair;
 
@@ -1578,17 +1569,17 @@ interface LifecyclePolicyProps {
   readonly description?: string;
 
   /**
-   * Whether the lifecycle policy is enabled.
+   * The status of the lifecycle policy.
    *
-   * @default - true
+   * @default - ENABLED
    */
   readonly status?: LifecyclePolicyStatus;
 
   /**
-   * The execution role used to perform lifecycle actions.
+   * The execution role that grants Image Builder access to run lifecycle actions.
    *
-   * By default, an execution role will be generated with the minimal permissions needed to execute the lifecycle
-   * policy. This role will have the "service-role/EC2ImageBuilderLifecycleExecutionPolicy" managed policy attached.
+   * By default, an execution role will be created with the minimal permissions needed to execute the lifecycle policy
+   * actions.
    *
    * @default - An execution role will be generated
    */
@@ -1933,13 +1924,6 @@ interface ILifecyclePolicy extends cdk.IResource {
 
 interface IRecipeBase {
   /**
-   * Applies the recipe to the given lifecycle policy as a selected resource
-   *
-   * @param policy - The lifecycle policy to apply the recipe to
-   */
-  applyToLifecyclePolicy(policy: LifecyclePolicy): void;
-
-  /**
    * Grant custom actions to the given grantee for the recipe
    *
    * @param grantee - The principal
@@ -2126,14 +2110,12 @@ class Image extends ImageBase {
    */
   readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
-  constructor(scope: Construct, id: string, props: ImageProps);
-
   /**
-   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
-   *
-   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   * The recipe used for the image build
    */
-  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+  readonly recipe?: IRecipeBase;
+
+  constructor(scope: Construct, id: string, props: ImageProps);
 }
 
 class ImagePipeline extends ImagePipelineBase {
@@ -2171,14 +2153,12 @@ class ImagePipeline extends ImagePipelineBase {
    */
   readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
-  constructor(scope: Construct, id: string, props: ImagePipelineProps);
-
   /**
-   * Applies the recipe for the image pipeline to the given lifecycle policy as a selected resource
-   *
-   * @param policy - The lifecycle policy to apply the image pipeline's recipe to
+   * The recipe used for the image build
    */
-  applyRecipeToLifecyclePolicy(policy: LifecyclePolicy): void;
+  readonly recipe?: IRecipeBase;
+
+  constructor(scope: Construct, id: string, props: ImagePipelineProps);
 }
 
 class ImageRecipe extends ImageRecipeBase {
@@ -2251,11 +2231,9 @@ class LifecyclePolicy extends LifecyclePolicyBase {
   /**
    * The execution role used for lifecycle policy executions
    */
-  readonly executionRole?: string;
+  readonly executionRole?: iam.IRole;
 
   constructor(scope: Construct, id: string, props: LifecyclePolicyProps);
-
-  addRecipeSelection(recipe: IRecipeBase): void;
 }
 
 class Workflow extends WorkflowBase {
