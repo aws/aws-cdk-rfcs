@@ -71,7 +71,7 @@ to production by simply updating the endpoint to point to the newer version.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `agentRuntimeName` | `string` | Yes | The name of the agent runtime. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
+| `runtimeName` | `string` | Yes | The name of the agent runtime. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
 | `agentRuntimeArtifact` | `AgentRuntimeArtifact` | Yes | The artifact configuration for the agent runtime containing the container configuration with ECR URI |
 | `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the agent runtime. If not provided, a role will be created automatically |
 | `networkConfiguration` | `NetworkConfiguration` | No | Network configuration for the agent runtime. Defaults to `{ networkMode: NetworkMode.PUBLIC }` |
@@ -111,7 +111,7 @@ const agentRuntimeArtifact = AgentRuntimeArtifact.fromEcrRepository(repository, 
 
 // Create runtime using the built image
 const runtime = new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
+  runtimeName: "myAgent",
   agentRuntimeArtifact: agentRuntimeArtifact,
 });
 ```
@@ -130,7 +130,7 @@ const agentRuntimeArtifact = AgentRuntimeArtifact.fromAsset(
 );
 
 const runtime = new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
+  runtimeName: "myAgent",
   agentRuntimeArtifact: agentRuntimeArtifact,
 });
 ```
@@ -151,7 +151,7 @@ repository = new ecr.Repository(stack, "TestRepository", {
 });
 
 const runtime = new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
+  runtimeName: "myAgent",
   agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
 });
 ```
@@ -182,7 +182,7 @@ configurations), AgentCore automatically creates a new version (Version 2). Upon
 const agentRuntimeArtifactNew = AgentRuntimeArtifact.fromEcrRepository(repository, "v2.0.0");
 
 new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
+  runtimeName: "myAgent",
   agentRuntimeArtifact: agentRuntimeArtifactNew,
 });
 ```
