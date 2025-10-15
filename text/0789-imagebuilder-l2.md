@@ -122,7 +122,7 @@ const minimalPipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
 
 // Complex pipeline setup
 const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
-  name: 'test-image-pipeline',
+  imagePipelineName: 'test-image-pipeline',
   description: 'An Image Pipeline',
   // Optional - use a custom execution role
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
@@ -135,8 +135,8 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
     timezone: cdk.TimeZone.AMERICA_LOS_ANGELES,
   }),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
-    name: 'test-image-recipe',
-    version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+    imageRecipeName: 'test-image-recipe',
+    imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -154,9 +154,9 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
     { workflow: imagebuilder.AwsManagedWorkflow.testImage(stack, 'TestImageWorkflow') },
     {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
-        name: 'custom-test-workflow',
-        type: imagebuilder.WorkflowType.TEST,
-        version: imagebuilder.BuildVersion.LATEST,
+        workflowName: 'custom-test-workflow',
+        workflowType: imagebuilder.WorkflowType.TEST,
+        workflowVersion: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
@@ -176,8 +176,8 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
     },
   ],
   // Enable CVE scanning, testing, and OS/package collection for the pipeline
-  scanningConfiguration: { enabled: true },
-  testsConfiguration: { testsEnabled: true },
+  imageScanningEnabled: true,
+  imageTestsEnabled: true,
   enhancedImageMetadataEnabled: true,
 });
 
@@ -208,8 +208,8 @@ const image = new imagebuilder.Image(stack, 'Image', {
   // Optional - use a custom execution role
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
-    name: 'test-image-recipe',
-    version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+    imageRecipeName: 'test-image-recipe',
+    imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -227,9 +227,9 @@ const image = new imagebuilder.Image(stack, 'Image', {
     { workflow: imagebuilder.AwsManagedWorkflow.testImage(stack, 'TestImageWorkflow') },
     {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
-        name: 'custom-test-workflow',
-        type: imagebuilder.WorkflowType.TEST,
-        version: imagebuilder.BuildVersion.LATEST,
+        workflowName: 'custom-test-workflow',
+        workflowType: imagebuilder.WorkflowType.TEST,
+        workflowVersion: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
@@ -249,8 +249,8 @@ const image = new imagebuilder.Image(stack, 'Image', {
     },
   ],
   // Enable CVE scanning, testing, and OS/package collection for the pipeline
-  scanningConfiguration: { enabled: true },
-  testsConfiguration: { testsEnabled: true },
+  imageScanningEnabled: true,
+  imageTestsEnabled: true,
   enhancedImageMetadataEnabled: true,
 });
 ```
@@ -280,8 +280,8 @@ userData.addExecuteFileCommand({ filePath: 's3-executable.sh' });
 userData.addCommands('User Data complete!');
 
 const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
-  name: 'test-image-recipe',
-  version: imagebuilder.Version.fromString('1.0.0'),
+  imageRecipeName: 'test-image-recipe',
+  imageRecipeVersion: imagebuilder.Version.fromString('1.0.0'),
   description: 'An Image Recipe',
   // Use an AL2023 base image
   baseImage: imagebuilder.BaseImage.fromSsmParameterName(
@@ -316,8 +316,8 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
     },
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
-        name: 'custom-component',
-        version: imagebuilder.BuildVersion.LATEST,
+        componentName: 'custom-component',
+        componentVersion: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER_KEY: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -326,12 +326,8 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
   ],
   workingDirectory: '/var/tmp',
   // Optional - retain the SSM agent after the build, and apply custom userdata
-  additionalInstanceConfiguration: {
-    systemsManagerAgent: {
-      uninstallAfterBuild: false,
-    },
-    userDataOverride: userData,
-  },
+  uninstallSsmAgentAfterBuild: false,
+  userDataOverride: userData,
   // Optional - attach additional block device to the build instance
   blockDevices: [
     {
@@ -369,8 +365,8 @@ import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 import * as kms from 'aws-cdk-lib/aws-kms';
 
 const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe', {
-  name: 'test-container-recipe',
-  version: imagebuilder.Version.fromString('1.0.0'),
+  containerRecipeName: 'test-container-recipe',
+  containerRecipeVersion: imagebuilder.Version.fromString('1.0.0'),
   description: 'A Container Recipe',
   baseImage: imagebuilder.BaseImage.fromEcr(
     stack,
@@ -405,8 +401,8 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
     },
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
-        name: 'custom-component',
-        version: imagebuilder.BuildVersion.LATEST,
+        componentName: 'custom-component',
+        componentVersion: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -454,8 +450,8 @@ import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 import * as kms from 'aws-cdk-lib/aws-kms';
 
 const component = new imagebuilder.Component(stack, 'Component', {
-  name: 'build-and-test-component',
-  version: imagebuilder.Version.fromString('1.0.0'),
+  componentName: 'build-and-test-component',
+  componentVersion: imagebuilder.Version.fromString('1.0.0'),
   description: 'A build and test component',
   changeDescription: 'Initial version',
   // Encrypt component data with a KMS key
@@ -538,19 +534,13 @@ const dedicatedHost = new ec2.CfnHost(stack, 'DedicatedHost', {
 });
 
 const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration(stack, 'InfrastructureConfiguration', {
-  name: 'test-infrastructure-configuration',
+  infrastructureConfigurationName: 'test-infrastructure-configuration',
   description: 'An Infrastructure Configuration',
   // Optional - instance types to use for build/test
   instanceTypes: [
     ec2.InstanceType.of(ec2.InstanceClass.STANDARD7_INTEL, ec2.InstanceSize.LARGE),
     ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.LARGE),
   ],
-  // Optional - host placement settings
-  placement: {
-    availabilityZone: stack.availabilityZones[0],
-    hostId: dedicatedHost.attrHostId,
-    tenancy: imagebuilder.Tenancy.HOST,
-  },
   // Optional - create an instance profile with necessary permissions
   instanceProfile: new iam.InstanceProfile(stack, 'InstanceProfile', {
     instanceProfileName: 'test-instance-profile',
@@ -568,10 +558,8 @@ const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration
   keyPair: ec2.KeyPair.fromKeyPairName(stack, 'KeyPair', 'imagebuilder-instance-key-pair'),
   terminateInstanceOnFailure: true,
   // Optional - IMDSv2 settings
-  instanceMetadataOptions: {
-    httpTokens: imagebuilder.HttpTokens.REQUIRED,
-    httpPutResponseHopLimit: 1,
-  },
+  httpTokens: imagebuilder.HttpTokens.REQUIRED,
+  httpPutResponseHopLimit: 1,
   // Optional - publish image completion messages to an SNS topic
   notificationTopic: sns.Topic.fromTopicArn(
     stack,
@@ -579,11 +567,12 @@ const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration
     `arn:${stack.partition}:imagebuilder:${stack.region}:${stack.account}:topic:image-builder-topic`,
   ),
   // Optional - log settings. Logging is enabled by default
-  logging: {
-    s3LoggingEnabled: true,
-    s3Bucket: s3.Bucket.fromBucketName(stack, 'LogBucket', `imagebuilder-logging-${stack.account}`),
-    s3KeyPrefix: 'imagebuilder-logs',
-  },
+  s3LoggingBucket: s3.Bucket.fromBucketName(stack, 'LogBucket', `imagebuilder-logging-${stack.account}`),
+  s3LoggingKeyPrefix: 'imagebuilder-logs',
+  // Optional - host placement settings
+  ec2InstanceAvailabilityZone: stack.availabilityZones[0],
+  ec2InstanceHostId: dedicatedHost.attrHostId,
+  ec2InstanceTenancy: imagebuilder.Tenancy.HOST,
   resourceTags: {
     Environment: 'production',
   },
@@ -607,31 +596,29 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 
 const distributionConfiguration = new imagebuilder.DistributionConfiguration(stack, 'DistributionConfiguration', {
-  name: 'test-distribution-configuration',
+  distributionConfigurationName: 'test-distribution-configuration',
   description: 'A Distribution Configuration',
   distributions: [
     {
       region: 'us-west-2',
-      amiConfiguration: {
-        name: 'imagebuilder-{{ imagebuilder:buildDate }}',
-        description: 'Build AMI',
-        kmsKey: kms.Key.fromLookup(stack, 'ComponentKey', { aliasName: 'alias/distribution-encryption-key' }),
-        // Copy the AMI to different accounts
-        targetAccountIds: ['123456789012', '098765432109'],
-        // Add launch permissions on the AMI
-        launchPermission: {
-          organizationArns: [`arn:${stack.partition}:organizations::${stack.account}:organization/o-1234567abc`],
-          organizationalUnitArns: [
-            `arn:${stack.partition}:organizations::${stack.account}:ou/o-1234567abc/ou-a123-b4567890`,
-          ],
-          userGroups: ['all'],
-          userIds: ['234567890123'],
-        },
-        // Attach tags to the AMI
-        amiTags: {
-          Environment: 'production',
-          Version: '{{ imagebuilder:buildVersion }}',
-        },
+      amiName: 'imagebuilder-{{ imagebuilder:buildDate }}',
+      amiDescription: 'Build AMI',
+      amiKmsKey: kms.Key.fromLookup(stack, 'ComponentKey', { aliasName: 'alias/distribution-encryption-key' }),
+      // Copy the AMI to different accounts
+      amiTargetAccountIds: ['123456789012', '098765432109'],
+      // Add launch permissions on the AMI
+      amiLaunchPermission: {
+        organizationArns: [`arn:${stack.partition}:organizations::${stack.account}:organization/o-1234567abc`],
+        organizationalUnitArns: [
+          `arn:${stack.partition}:organizations::${stack.account}:ou/o-1234567abc/ou-a123-b4567890`,
+        ],
+        userGroups: ['all'],
+        userIds: ['234567890123'],
+      },
+      // Attach tags to the AMI
+      amiTags: {
+        Environment: 'production',
+        Version: '{{ imagebuilder:buildVersion }}',
       },
       // Optional - publish the distributed AMI ID to an SSM parameter
       ssmParameters: [
@@ -679,12 +666,10 @@ const distributionConfiguration = new imagebuilder.DistributionConfiguration(sta
         'arn:aws:license-manager:us-west-2:123456789012:license-configuration:lic-abcdefghijklmnopqrstuvwxyz',
       ],
       // Optional - Export AMI to S3 as a VMDK file
-      s3ExportConfiguration: {
-        diskImageFormat: imagebuilder.DiskImageFormat.VMDK,
-        role: iam.Role.fromRoleName(stack, 'VMExportRole', 'vmimport'),
-        s3Bucket: s3.Bucket.fromBucketName(stack, 'VMExportBucket', `vm-export-${stack.account}`),
-        s3Prefix: 'vm-images',
-      },
+      s3ExportDiskImageFormat: imagebuilder.DiskImageFormat.VMDK,
+      s3ExportRole: iam.Role.fromRoleName(stack, 'VMExportRole', 'vmimport'),
+      s3ExportBucket: s3.Bucket.fromBucketName(stack, 'VMExportBucket', `vm-export-${stack.account}`),
+      s3ExportKeyPrefix: 'vm-images',
     },
     {
       // Distribute AMI to ap-southeast-2 and publish the AMI ID to an SSM parameter
@@ -713,9 +698,9 @@ import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 import * as kms from 'aws-cdk-lib/aws-kms';
 
 const workflow = new imagebuilder.Workflow(stack, 'Workflow', {
-  name: 'custom-build-workflow',
-  type: imagebuilder.WorkflowType.BUILD,
-  version: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+  workflowName: 'custom-build-workflow',
+  workflowType: imagebuilder.WorkflowType.BUILD,
+  workflowVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
   description: 'A test workflow',
   changeDescription: 'Initial version',
   kmsKey: kms.Key.fromLookup(stack, 'WorkflowKey', { aliasName: 'alias/workflow-encryption-key' }),
@@ -763,7 +748,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 
 const lifecyclePolicy = new imagebuilder.LifecyclePolicy(stack, 'LifecyclePolicy', {
-  name: 'test-lifecycle-policy',
+  lifecyclePolicyName: 'test-lifecycle-policy',
   description: 'Lifecycle policy for AMIs with some cleanup rules',
   resourceType: imagebuilder.LifecyclePolicyResourceType.AMI_IMAGE,
   status: imagebuilder.LifecyclePolicyStatus.ENABLED,
@@ -797,6 +782,14 @@ const lifecyclePolicy = new imagebuilder.LifecyclePolicy(stack, 'LifecyclePolicy
       },
     },
   ],
+  resourceSelection: {
+    recipes: [
+      imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
+        imageRecipeName: 'test-image-recipe',
+        imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+      }),
+    ],
+  },
 });
 ```
 
@@ -869,7 +862,7 @@ interface ImagePipelineProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly imagePipelineName?: string;
 
   /**
    * The description of the image pipeline.
@@ -955,11 +948,28 @@ interface ImagePipelineProps {
   readonly imageLogGroup?: logs.ILogGroup;
 
   /**
-   * Settings for vulnerability scanning.
+   * Indicates whether Image Builder keeps a snapshot of the vulnerability scans that Amazon Inspector runs against the
+   * build instance when you create a new image.
+   *
+   * @default - false
+   */
+  readonly imageScanningEnabled?: boolean;
+
+  /**
+   * The container repository that Amazon Inspector scans to identify findings for your container images. If a
+   * repository is not provided, Image Builder creates a repository named `image-builder-image-scanning-repository`
+   * for vulnerability scanning.
+   *
+   * @default - If scanning is enabled, a repository will be created by Image Builder if one is not provided
+   */
+  readonly imageScanningEcrRepository?: ecr.IRepository;
+
+  /**
+   * The tags for Image Builder to apply to the output container image that Amazon Inspector scans.
    *
    * @default - None
    */
-  readonly scanningConfiguration?: ImageScanningConfiguration;
+  readonly imageScanningEcrTags?: string[];
 
   /**
    * If enabled, collects additional information about the image being created, including the operating system (OS)
@@ -970,11 +980,11 @@ interface ImagePipelineProps {
   readonly enhancedImageMetadataEnabled?: boolean;
 
   /**
-   * The testing configuration of the pipeline.
+   * Whether to run tests after building an image.
    *
-   * @default - image testing is enabled
+   * @default - true
    */
-  readonly testsConfiguration?: ImageTestsConfiguration;
+  readonly imageTestsEnabled?: boolean;
 
   /**
    * The tags to apply to the image pipeline
@@ -1059,11 +1069,28 @@ interface ImageProps {
   readonly logGroup?: logs.ILogGroup;
 
   /**
-   * Settings for vulnerability scanning.
+   * Indicates whether Image Builder keeps a snapshot of the vulnerability scans that Amazon Inspector runs against the
+   * build instance when you create a new image.
+   *
+   * @default - false
+   */
+  readonly imageScanningEnabled?: boolean;
+
+  /**
+   * The container repository that Amazon Inspector scans to identify findings for your container images. If a
+   * repository is not provided, Image Builder creates a repository named `image-builder-image-scanning-repository`
+   * for vulnerability scanning.
+   *
+   * @default - If scanning is enabled, repository will be created by Image Builder if one is not provided
+   */
+  readonly imageScanningEcrRepository?: ecr.IRepository;
+
+  /**
+   * The tags for Image Builder to apply to the output container image that Amazon Inspector scans.
    *
    * @default - None
    */
-  readonly scanningConfiguration?: ImageScanningConfiguration;
+  readonly imageScanningEcrTags?: string[];
 
   /**
    * If enabled, collects additional information about the image being created, including the operating system (OS)
@@ -1074,11 +1101,11 @@ interface ImageProps {
   readonly enhancedImageMetadataEnabled?: boolean;
 
   /**
-   * The testing configuration of the image.
+   * Whether to run tests after building an image.
    *
-   * @default - image testing is enabled
+   * @default - true
    */
-  readonly testsConfiguration?: ImageTestsConfiguration;
+  readonly imageTestsEnabled?: boolean;
 
   /**
    * The tags to apply to the image
@@ -1103,14 +1130,14 @@ interface ImageRecipeProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly imageRecipeName?: string;
 
   /**
    * The version of the container recipe.
    *
    * @default - 1.0.0
    */
-  readonly version?: Version;
+  readonly imageRecipeVersion?: Version;
 
   /**
    * The description of the image recipe.
@@ -1147,11 +1174,19 @@ interface ImageRecipeProps {
   readonly workingDirectory?: string;
 
   /**
-   * The additional settings and launch scripts to use for Image Builder instances.
+   * Whether to uninstall the Systems Manager agent from your final build image, prior to creating the new AMI.
+   *
+   * @default - Image Builder will remove the Systems Manager agent only if it was installed by Image Builder.
+   */
+  readonly uninstallSsmAgentAfterBuild?: boolean;
+
+  /**
+   * The user data commands to pass to Image Builder build and test EC2 instances. If you override the user data, you
+   * must ensure to add commands to install Systems Manager, if it is not pre-installed on your base image.
    *
    * @default - None
    */
-  readonly additionalInstanceConfiguration?: AdditionalInstanceConfiguration;
+  readonly userDataOverride?: ec2.UserData;
 
   /**
    * The tags to apply to the image recipe
@@ -1181,14 +1216,14 @@ interface ContainerRecipeProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly containerRecipeName?: string;
 
   /**
    * The version of the container recipe.
    *
    * @default - 1.0.0
    */
-  readonly version?: Version;
+  readonly containerRecipeVersion?: Version;
 
   /**
    * The description of the container recipe.
@@ -1284,14 +1319,14 @@ interface ComponentProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly componentName?: string;
 
   /**
    * The version of the component.
    *
    * @default - 1.0.0
    */
-  readonly version?: Version;
+  readonly componentVersion?: Version;
 
   /**
    * The description of the component.
@@ -1340,7 +1375,7 @@ interface InfrastructureConfigurationProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly infrastructureConfigurationName?: string;
 
   /**
    * The description of the infrastructure configuration.
@@ -1394,12 +1429,18 @@ interface InfrastructureConfigurationProps {
   readonly terminateInstanceOnFailure?: boolean;
 
   /**
-   * The instance metadata options that you can set for the HTTP requests that pipeline builds use to launch
-   * build and test instances.
+   * The maximum number of hops that an instance metadata request can traverse to reach its destination. By default,
+   * this is set to 1 for AMI builds, and 2 for container builds which require an extra hop.
    *
-   * @default - instance metadata will be configured to require a token to access metadata using IMDSv2.
+   * @default - 1 for AMI builds, 2 for container builds
    */
-  readonly instanceMetadataOptions?: InstanceMetadataOptions;
+  readonly httpPutResponseHopLimit?: number;
+
+  /**
+   * Indicates whether a signed token header is required for instance metadata retrieval requests. By default, this is
+   * set to `required` to require IMDSv2 on build and test EC2 instances.
+   */
+  readonly httpTokens?: HttpTokens;
 
   /**
    * The SNS topic on which notifications are sent when an image build completes.
@@ -1409,24 +1450,53 @@ interface InfrastructureConfigurationProps {
   readonly notificationTopic?: sns.ITopic;
 
   /**
-   * The log setting for the build.
+   * Whether to enable S3 logging for the build.
    *
-   * By default, S3 logging will be enabled. A bucket will be created in the current region with the name formatted as:
-   * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`. This bucket will enforce SSL for all requests, block
-   * public access, have lifecycle policies for log file prefixes, and use an S3-managed key for encryption. An IAM
-   * inline policy will be attached to the instance profile role allowing s3:PutObject on this bucket. The retention
-   * policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
-   *
-   * @default - S3 logging enabled
+   * @default - true
    */
-  readonly logging?: InfrastructureConfigurationLogging;
+  readonly s3LoggingEnabled?: boolean;
 
   /**
-   * The instance placement settings that define where the instances that are launched from your image will run.
+   *
+   * If S3 logging is enabled for the build, by default a bucket will be created in the current region with the name
+   * formatted as: `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`. This bucket will enforce SSL for all
+   * requests, block public access, have lifecycle policies for log file prefixes, and use an S3-managed key for
+   * encryption. An IAM inline policy will be attached to the instance profile role allowing s3:PutObject on this
+   * bucket. The retention policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
+   *
+   * @default - An S3 bucket will be generated
+   */
+  readonly s3LoggingBucket?: s3.IBucket;
+
+  /**
+   * The S3 key prefix to use for the build logs.
+   *
+   * @default - `imagebuilder-logs` if S3 logging is enabled for the build
+   */
+  readonly s3LoggingKeyPrefix?: string;
+
+  /**
+   * The availability zone to place Image Builder build and test EC2 instances.
+   *
+   * @default - EC2 will select a random zone
+   */
+  readonly ec2InstanceAvailabilityZone?: string;
+
+  /**
+   * The ID of the Dedicated Host on which build and test instances run. This only applies if the instance tenancy is
+   * `host`.
    *
    * @default - None
    */
-  readonly placement?: InfrastructureConfigurationPlacement;
+  readonly ec2InstanceHostId?: string;
+
+  /**
+   * The tenancy of the instance. Dedicated tenancy runs instances on single-tenant hardware, while host tenancy runs
+   * instances on a dedicated host. Shared tenancy is used by default.
+   *
+   * @default - Tenancy.DEFAULT
+   */
+  readonly ec2InstanceTenancy?: Tenancy;
 
   /**
    * The additional tags to assign to the Amazon EC2 instance that Image Builder launches during the build process.
@@ -1458,7 +1528,7 @@ interface DistributionConfigurationProps {
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly distributionConfigurationName?: string;
 
   /**
    * The description of the distribution configuration.
@@ -1488,21 +1558,21 @@ interface WorkflowProps {
   /**
    * The phase in the image build process for which the workflow resource is responsible.
    */
-  readonly type: WorkflowType;
+  readonly workflowType: WorkflowType;
 
   /**
    * The name of the workflow.
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly workflowName?: string;
 
   /**
    * The version of the workflow.
    *
    * @default - 1.0.0
    */
-  readonly version?: Version;
+  readonly workflowVersion?: Version;
 
   /**
    * The description of the workflow.
@@ -1552,14 +1622,14 @@ interface LifecyclePolicyProps {
   /**
    * Selection criteria for the resources that the lifecycle policy applies to.
    */
-  readonly resourceSelection?: LifecyclePolicyResourceSelection;
+  readonly resourceSelection: LifecyclePolicyResourceSelection;
 
   /**
    * The name of the lifecycle policy.
    *
    * @default - A name is generated
    */
-  readonly name?: string;
+  readonly lifecyclePolicyName?: string;
 
   /**
    * The description of the lifecycle policy.
@@ -1714,7 +1784,6 @@ interface IImage extends cdk.IResource {
    * The version of the image
    */
   readonly imageVersion: BuildVersion;
-
 
   /**
    * Grant custom actions to the given grantee for the image pipeline
@@ -2284,7 +2353,11 @@ class AwsManagedComponent {
   static updateOS(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
 
   static fromAwsManagedComponentName(scope: Construct, id: string, name: string): IComponent;
-  static fromAwsManagedComponentAttributes(scope: Construct, id: string, attrs: AwsManagedComponentAttributes): IComponent;
+  static fromAwsManagedComponentAttributes(
+    scope: Construct,
+    id: string,
+    attrs: AwsManagedComponentAttributes,
+  ): IComponent;
 }
 
 class AwsManagedImage {
@@ -2467,7 +2540,6 @@ class Version {
   protected constructor(attrs: VersionAttributes);
 
   static fromString(versionString: string): Version;
-
 
   /**
    * The latest major version for the given version string
