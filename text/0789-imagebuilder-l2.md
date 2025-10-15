@@ -874,7 +874,7 @@ interface ImagePipelineProps {
   /**
    * The schedule of the image pipeline.
    *
-   * @default - None - a manual image pipeline will be created.
+   * @default - None - a manual image pipeline will be created
    */
   readonly schedule?: Schedule;
 
@@ -893,7 +893,7 @@ interface ImagePipelineProps {
    * profile role allowing s3:PutObject on this bucket. IMDSv2 will be required by default on the instances used to
    * build and test the image. The retention policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
    *
-   * @default - An infrastructure configuration will be created with the default settings.
+   * @default - An infrastructure configuration will be created with the default settings
    */
   readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
@@ -908,7 +908,7 @@ interface ImagePipelineProps {
    * The list of workflow configurations used to build the image.
    *
    * @default - Image Builder will use a default set of workflows for the build to build, test, and distribute the
-   * image.
+   * image
    */
   readonly workflows?: WorkflowConfiguration[];
 
@@ -920,7 +920,7 @@ interface ImagePipelineProps {
    * generated with the minimal permissions needed to execute the workflows. An execution role will also be generated if
    * enabling EC2 Fast Launch, without a launch template
    *
-   * @default - Image Builder will use the SLR if possible. Otherwise, an execution role will be generated.
+   * @default - Image Builder will use the SLR if possible. Otherwise, an execution role will be generated
    */
   readonly executionRole?: iam.IRole;
 
@@ -936,14 +936,14 @@ interface ImagePipelineProps {
   /**
    * The log group to use for the image pipeline.
    *
-   * @default - A log group will be created with a 90-day retention policy.
+   * @default - A log group will be created with a 90-day retention policy
    */
   readonly imagePipelineLogGroup?: logs.ILogGroup;
 
   /**
    * The log group to use for images created from the image pipeline.
    *
-   * @default - A log group will be created with a 90-day retention policy.
+   * @default - A log group will be created with a 90-day retention policy
    */
   readonly imageLogGroup?: logs.ILogGroup;
 
@@ -1021,7 +1021,7 @@ interface ImageProps {
    *
    * IMDSv2 will be required by default on the instances used to build and test the image.
    *
-   * @default - An infrastructure configuration will be created with the default settings.
+   * @default - An infrastructure configuration will be created with the default settings
    */
   readonly infrastructureConfiguration?: IInfrastructureConfiguration;
 
@@ -1036,7 +1036,7 @@ interface ImageProps {
    * The list of workflow configurations used to build the image.
    *
    * @default - Image Builder will use a default set of workflows for the build to build, test, and distribute the
-   * image.
+   * image
    */
   readonly workflows?: WorkflowConfiguration[];
 
@@ -1048,7 +1048,7 @@ interface ImageProps {
    * generated with the minimal permissions needed to execute the workflows. An execution role will also be generated if
    * enabling EC2 Fast Launch, without a launch template
    *
-   * @default - Image Builder will use the SLR if possible. Otherwise, an execution role will be generated.
+   * @default - Image Builder will use the SLR if possible. Otherwise, an execution role will be generated
    */
   readonly executionRole?: iam.IRole;
 
@@ -1064,7 +1064,7 @@ interface ImageProps {
   /**
    * The log group to use for the image.
    *
-   * @default - A log group will be created with a 90-day retention policy.
+   * @default - A log group will be created with a 90-day retention policy
    */
   readonly logGroup?: logs.ILogGroup;
 
@@ -1081,7 +1081,7 @@ interface ImageProps {
    * repository is not provided, Image Builder creates a repository named `image-builder-image-scanning-repository`
    * for vulnerability scanning.
    *
-   * @default - If scanning is enabled, repository will be created by Image Builder if one is not provided
+   * @default - If scanning is enabled, a repository will be created by Image Builder if one is not provided
    */
   readonly imageScanningEcrRepository?: ecr.IRepository;
 
@@ -1168,8 +1168,8 @@ interface ImageRecipeProps {
   /**
    * The working directory for use during build and test workflows.
    *
-   * @default - The Image Builder default working directory is used. For Linux builds, this would
-   * be /tmp. For Windows builds, this would be C:/.
+   * @default - The Image Builder default working directory is used. For Linux and macOS builds, this would be /tmp. For
+   * Windows builds, this would be C:/
    */
   readonly workingDirectory?: string;
 
@@ -1184,7 +1184,8 @@ interface ImageRecipeProps {
    * The user data commands to pass to Image Builder build and test EC2 instances. If you override the user data, you
    * must ensure to add commands to install Systems Manager, if it is not pre-installed on your base image.
    *
-   * @default - None
+   * @default - For Linux and macOS, Image Builder will use a default user data script to install the Systems Manager
+   * agent. None for Windows.
    */
   readonly userDataOverride?: ec2.UserData;
 
@@ -1235,8 +1236,8 @@ interface ContainerRecipeProps {
   /**
    * The Dockerfile template used to build the container image.
    *
-   * @default - A standard Dockerfile template will be generated to pull the base image,
-   * perform environment setup, and run all components in the recipe.
+   * @default - A standard Dockerfile template will be generated to pull the base image, perform environment setup, and
+   * run all components in the recipe
    */
   readonly dockerfile?: DockerfileData;
 
@@ -1255,31 +1256,31 @@ interface ContainerRecipeProps {
   /**
    * The working directory for use during build and test workflows.
    *
-   * @default - The Image Builder default working directory is used. For Linux builds, this would
-   * be /tmp. For Windows builds, this would be C:/.
+   * @default - The Image Builder default working directory is used. For Linux and macOS builds, this would be /tmp. For
+   * Windows builds, this would be C:/
    */
   readonly workingDirectory?: string;
 
   /**
    * The operating system (OS) version of the base image.
    *
-   * @default - Image Builder will determine the OS version of the base image, if sourced from a
-   * third-party container registry. Otherwise, the OS version of the base image is required.
+   * @default - Image Builder will determine the OS version of the base image, if sourced from a third-party container
+   * registry. Otherwise, the OS version of the base image is required.
    */
   readonly osVersion?: OSVersion;
 
   /**
    * The operating system platform of the base image.
    *
-   * @default - Image Builder will determine the platform of the base image, if sourced from a
-   * third-party container registry. Otherwise, the platform of the base image is required.
+   * @default - Image Builder will determine the platform of the base image, if sourced from a third-party container
+   * registry. Otherwise, the platform of the base image is required.
    */
   readonly platform?: string;
 
   /**
    * The block devices to attach to the instance used for building, testing, and distributing the container image.
    *
-   * @default - None
+   * @default - The block devices of the instance image will be used
    */
   readonly instanceBlockDevices?: BlockDevice[];
 
@@ -1397,27 +1398,29 @@ interface InfrastructureConfigurationProps {
    * By default, an instance profile and role will be created with minimal permissions needed to build the image,
    * attached to the EC2 instance.
    *
-   * @default - an instance profile will be generated
+   * @default - An instance profile will be generated
    */
   readonly instanceProfile?: iam.IInstanceProfile;
 
   /**
    * The subnet in which to place the instance used to customize the AMI.
    *
-   * @default - None
+   * @default - The default subnet from your default VPC will be used
    */
   readonly subnet?: ec2.ISubnet;
 
   /**
    * The security groups to associate with the instance used to customize the AMI.
    *
-   * @default - None
+   * @default - The default security group for the VPC will be used
    */
   readonly securityGroups?: ec2.ISecurityGroup[];
 
   /**
    * The key pair used to connect to the build and test EC2 instances. The key pair can be used to log into the build
    * or test instances for troubleshooting any failures.
+   *
+   * @default - None
    */
   readonly keyPair?: ec2.IKeyPair;
 
@@ -1439,13 +1442,15 @@ interface InfrastructureConfigurationProps {
   /**
    * Indicates whether a signed token header is required for instance metadata retrieval requests. By default, this is
    * set to `required` to require IMDSv2 on build and test EC2 instances.
+   *
+   * @default - HttpTokens.REQUIRED
    */
   readonly httpTokens?: HttpTokens;
 
   /**
    * The SNS topic on which notifications are sent when an image build completes.
    *
-   * @default - None
+   * @default - No notifications are sent
    */
   readonly notificationTopic?: sns.ITopic;
 
@@ -1641,7 +1646,7 @@ interface LifecyclePolicyProps {
   /**
    * The status of the lifecycle policy.
    *
-   * @default - ENABLED
+   * @default - LifecyclePolicyStatus.ENABLED
    */
   readonly status?: LifecyclePolicyStatus;
 
