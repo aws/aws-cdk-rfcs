@@ -145,11 +145,29 @@ the steps below to understand how to use versioning with runtime for controlled 
 When you first create an agent runtime, AgentCore automatically creates Version 1 of your runtime. At this point, a DEFAULT endpoint is
 automatically created that points to Version 1. This DEFAULT endpoint serves as the main access point for your runtime.
 
+```typescript
+repository = new ecr.Repository(stack, "TestRepository", {
+  repositoryName: "test-agent-runtime",
+});
+
+const runtime = new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
+});
+```
+
 ##### Step 2: Creating Custom Endpoints
 
 After the initial deployment, you can create additional endpoints for different environments. For example, you might create a "production"
 endpoint that explicitly points to Version 1. This allows you to maintain stable access points for specific environments while keeping the
 flexibility to test newer versions elsewhere.
+
+```typescript
+const prodEndpoint = runtime.addEndpoint("production", {
+  version: "1",
+  description: "Stable production endpoint - pinned to v1"
+});
+```
 
 ##### Step 3: Runtime Update Deployment
 
@@ -160,11 +178,27 @@ configurations), AgentCore automatically creates a new version (Version 2). Upon
 - The DEFAULT endpoint automatically updates to point to Version 2
 - Any explicitly pinned endpoints (like the production endpoint) remain on their specified versions
 
+```typescript
+const agentRuntimeArtifactNew = AgentRuntimeArtifact.fromEcrRepository(repository, "v2.0.0");
+
+new Runtime(this, "MyAgentRuntime", {
+  agentRuntimeName: "myAgent",
+  agentRuntimeArtifact: agentRuntimeArtifactNew,
+});
+```
+
 ##### Step 4: Testing with Staging Endpoints
 
 Once Version 2 exists, you can create a staging endpoint that points to the new version. This staging endpoint allows you to test the
 new version in a controlled environment before promoting it to production. This separation ensures that production traffic continues
 to use the stable version while you validate the new version.
+
+```typescript
+const stagingEndpoint = runtime.addEndpoint("staging", {
+  version: "2",
+  description: "Staging environment for testing new version"
+});
+```
 
 ##### Step 5: Promoting to Production
 
@@ -172,33 +206,10 @@ After thoroughly testing the new version through the staging endpoint, you can u
 This controlled promotion process ensures that you can validate changes before they affect production traffic.
 
 ```typescript
-repository = new ecr.Repository(stack, "TestRepository", {
-  repositoryName: "test-agent-runtime",
-});
-
-const runtime = new Runtime(this, "MyAgentRuntime", {
-  agentRuntimeName: "myAgent",
-  agentRuntimeArtifact: AgentRuntimeArtifact.fromEcrRepository(repository, "v1.0.0"),
-});
-
-const prodEndpoint = runtime.addEndpoint("production", {
-  version: "1",
-  description: "Stable production endpoint - pinned to v1"
-});
-
-runtime.agentRuntimeArtifact = AgentRuntimeArtifact.fromEcrRepository(repository, "v2.0.0");
-
-const stagingEndpoint = runtime.addEndpoint("staging", {
-  version: "2",
-  description: "Staging environment for testing new version"
-});
-
-// Updating existing endpoint to use a new version
 const prodEndpoint = runtime.addEndpoint("production", {
   version: "2",  // New version added here
   description: "Stable production endpoint"
 });
-
 ```
 
 ### Creating Standalone Runtime Endpoints
