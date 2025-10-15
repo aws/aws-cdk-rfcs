@@ -161,9 +161,6 @@ export interface InvestigationGroupProps {
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `investigationGroupArn` | `string` | - | - | **@attribute** The ARN of the investigation group |
-| `investigationGroupName` | `string` | - | - | **@attribute** The name of the investigation group |
-| `investigationGroupId` | `string` | - | - | **@attribute** The unique identifier of the investigation group |
 | `name` | `string` | ✓ | - | Investigation group name |
 | `role` | `IRole` | ✗ | Auto-created | IAM role for AIOps service |
 | `encryptionKey` | `IKey` | ✗ | AWS-managed | KMS key for encryption |
