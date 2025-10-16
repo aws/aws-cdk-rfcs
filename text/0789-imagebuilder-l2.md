@@ -819,7 +819,7 @@ EC2 Image Builder L2 constructs dramatically simplify the creation and managemen
 1. **Reduced Complexity** - Create complete image building pipelines with just a few lines of code instead of managing
    multiple CloudFormation resources.
 2. **Secure Defaults** - Built-in security best practices. This includes least-privileged IAM policies, IMDSv2 by
-   default for EC2 instances, and S3 logging enabled by default for Image Builder using secure bucket settings. See
+   default for EC2 instances, and CloudWatch log groups with retention. See
    [Secure and Best Practice Defaults](#secure-and-best-practice-defaults).
 3. **Integrated Experience** - Seamless integration with other CDK constructs like VPC, IAM, SNS, and EventBridge.
 
@@ -885,13 +885,6 @@ interface ImagePipelineProps {
    *
    * The default configuration will create an instance profile and role with minimal permissions needed to build the
    * image, attached to the EC2 instance.
-   *
-   * S3 logging will be enabled by default. A bucket will be created in the current region with the name formatted as:
-   * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys will be prefixed with the image
-   * pipeline name. This bucket will enforce SSL for all requests, block public access, have lifecycle policies for log
-   * file prefixes, and use an S3-managed key for encryption. An IAM inline policy will be attached to the instance
-   * profile role allowing s3:PutObject on this bucket. IMDSv2 will be required by default on the instances used to
-   * build and test the image. The retention policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
    *
    * @default - An infrastructure configuration will be created with the default settings
    */
@@ -1011,13 +1004,6 @@ interface ImageProps {
    *
    * The default configuration will create an instance profile and role with minimal permissions needed to build the
    * image, attached to the EC2 instance.
-   *
-   * S3 logging will be enabled by default. A bucket will be created in the current region with the name formatted as:
-   * `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys will be prefixed with the image
-   * name. This bucket will enforce SSL for all requests, block public access, have lifecycle policies for log file
-   * prefixes, and use an S3-managed key for encryption. An IAM inline policy will be attached to the instance profile
-   * role allowing s3:PutObject on this bucket. The retention policy of the bucket will be set to
-   * RETAIN_ON_UPDATE_OR_DELETE.
    *
    * IMDSv2 will be required by default on the instances used to build and test the image.
    *
@@ -1398,6 +1384,9 @@ interface InfrastructureConfigurationProps {
    * By default, an instance profile and role will be created with minimal permissions needed to build the image,
    * attached to the EC2 instance.
    *
+   * If an S3 logging bucket is provided, an IAM inline policy will be attached to the instance profile's role, allowing
+   * s3:PutObject permissions on the bucket.
+   *
    * @default - An instance profile will be generated
    */
   readonly instanceProfile?: iam.IInstanceProfile;
@@ -1455,28 +1444,17 @@ interface InfrastructureConfigurationProps {
   readonly notificationTopic?: sns.ITopic;
 
   /**
-   * Whether to enable S3 logging for the build.
    *
-   * @default - true
-   */
-  readonly s3LoggingEnabled?: boolean;
-
-  /**
+   * The S3 bucket to use for the build logs.
    *
-   * If S3 logging is enabled for the build, by default a bucket will be created in the current region with the name
-   * formatted as: `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`. This bucket will enforce SSL for all
-   * requests, block public access, have lifecycle policies for log file prefixes, and use an S3-managed key for
-   * encryption. An IAM inline policy will be attached to the instance profile role allowing s3:PutObject on this
-   * bucket. The retention policy of the bucket will be set to RETAIN_ON_UPDATE_OR_DELETE.
-   *
-   * @default - An S3 bucket will be generated
+   * @default - None
    */
   readonly s3LoggingBucket?: s3.IBucket;
 
   /**
    * The S3 key prefix to use for the build logs.
    *
-   * @default - `imagebuilder-logs` if S3 logging is enabled for the build
+   * @default - None
    */
   readonly s3LoggingKeyPrefix?: string;
 
@@ -2630,11 +2608,3 @@ N/A
 * **CloudWatch logging with retention**. Image Builder logs image pipeline details, image build details and component
   execution details into a CloudWatch log group. For images and image pipelines, a CloudWatch log group will be created
   by default with a 90-day retention policy.
-
-* **S3 logging for image builds**. By default, S3 logging will be enabled. A bucket will be created in the current
-  region with the name formatted as: `ec2imagebuilder-logs-${AWS::Region}-${AWS::AccountId}`, where the log file keys
-  will be prefixed with the image pipeline or image name. This bucket will enforce SSL for all requests, block public
-  access, have lifecycle policies for log file prefixes (Infrequent Access storage class after 30 days, Glacier after 90
-  days, expire after 1 year), and use an S3-managed key for encryption. A policy will be attached to the instance
-  profile role allowing `s3:PutObject` on this bucket. The retention policy of the bucket will be set to
-  `RETAIN_ON_UPDATE_OR_DELETE`.
