@@ -159,7 +159,7 @@ The name generated for each built in memory strategy the followin pattern:
 
 Where the suffix is a 5 characters string ([a-z, A-Z, 0-9]).
 
-### Memory with Built-in Strategies - Custom Namespace
+### Memory with custom Strategies
 
 With Long-Term Memory, organization is managed through Namespaces.
 
@@ -212,17 +212,9 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 });
 ```
 
-### Custom Strategies (Built-in strategy with override)
-
 Custom memory strategies let you tailor memory extraction and consolidation to your specific domain or use case. You can override the prompts for extracting and consolidating semantic, summary, or user preferences. You can also choose the model that you want to use for extraction and consolidation.
 
 The custom prompts you create are appended to a non-editable system prompt.
-
-You can do so by using:
-
-1. **Summarization Strategy** (`MemoryStrategy.usingSummaryOverride(props)`)
-1. **Semantic Memory Strategy** (`MemoryStrategy.usingSemanticOverride(props)`)
-1. **User Preference Strategy** (`MemoryStrategy.usingUserPreferenceOverride(props)`)
 
 Since a custom strategy requires you to invoke certain FMs, you need a role with appropriate permissions. For that, you can:
 
@@ -256,7 +248,7 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 
 ```typescript fixture=default
 // Create a custom semantic memory strategy
-const customSemanticStrategy = agentcore.MemoryStrategy.usingSemanticOverride({
+const customSemanticStrategy = agentcore.MemoryStrategy.usingSemantic({
   name: "customSemanticStrategy",
   description: "Custom semantic memory strategy",
   namespaces: ["/custom/strategies/{memoryStrategyId}/actors/{actorId}"],
