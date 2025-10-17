@@ -131,21 +131,21 @@ each optimized for specific use cases.
 For example: An agent helps multiple users with cloud storage setup. From these conversations,
 see how each strategy processes users expressing confusion about account connection:
 
-1. **Summarization Strategy** (`MemoryStrategy.usingBuiltInSummarization()`)
+1. **Summarization Strategy** (`MemoryStrategy.usingBuiltInSummarization(scope)`)
 This strategy compresses conversations into concise overviews, preserving essential context and key insights for quick recall.
 Extracted memory example: Users confused by cloud setup during onboarding.
 
    - Extracts concise summaries to preserve critical context and key insights
    - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}/sessions/{sessionId}`
 
-2. **Semantic Memory Strategy** (`MemoryStrategy.usingBuiltInSemantic()`)
+2. **Semantic Memory Strategy** (`MemoryStrategy.usingBuiltInSemantic(scope)`)
 Distills general facts, concepts, and underlying meanings from raw conversational data, presenting the information in a context-independent format.
 Extracted memory example: In-context learning = task-solving via examples, no training needed.
 
    - Extracts general factual knowledge, concepts and meanings from raw conversations
    - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
 
-3. **User Preference Strategy** (`MemoryStrategy.usingBuiltInUserPreference()`)
+3. **User Preference Strategy** (`MemoryStrategy.usingBuiltInUserPreference(scope)`)
 Captures individual preferences, interaction patterns, and personalized settings to enhance future experiences.
 Extracted memory example: User needs clear guidance on cloud storage account connection during onboarding.
 
@@ -159,9 +159,9 @@ const memory = new agentcore.Memory(this, "MyMemory", {
   description: "Memory with built-in strategies",
   expirationDays: cdk.Duration.days(90),
   memoryStrategies: [
-    agentcore.MemoryStrategy.usingBuiltInSummarization(),
-    agentcore.MemoryStrategy.usingBuiltInSemantic(),
-    agentcore.MemoryStrategy.usingBuiltInUserPreference(),
+    agentcore.MemoryStrategy.usingBuiltInSummarization(this),
+    agentcore.MemoryStrategy.usingBuiltInSemantic(this),
+    agentcore.MemoryStrategy.usingBuiltInUserPreference(this),
   ],
 });
 ```
@@ -172,7 +172,7 @@ The name generated for each built in memory strategy the followin pattern:
 - For Semantic:`semantic_builtin_<suffix>`
 - For User Preferences: `preference_builtin_<suffix>`
 
-Where the suffix is a 5 characters string ([a-z, A-Z, 0-9]).
+Where the suffix is a 5 characters string ([a-z, A-Z, 0-9]) generated via the `Names.uniqueId(scope)`.
 
 ### Memory with custom Strategies
 
@@ -211,9 +211,9 @@ After memory creation, this namespace might look like:
 
 You can customise the namespace, i.e. where the memories are stored by using the following methods:
 
-1. **Summarization Strategy** (`MemoryStrategy.usingSummarization(props)`)
-1. **Semantic Memory Strategy** (`MemoryStrategy.usingSemantic(props)`)
-1. **User Preference Strategy** (`MemoryStrategy.usingUserPreference(props)`)
+1. **Summarization Strategy** (`MemoryStrategy.usingSummarization(scope, props)`)
+1. **Semantic Memory Strategy** (`MemoryStrategy.usingSemantic(scope, props)`)
+1. **User Preference Strategy** (`MemoryStrategy.usingUserPreference(scope, props)`)
 
 ```typescript fixture=default
 // Create memory with built-in strategies
@@ -222,11 +222,11 @@ const memory = new agentcore.Memory(this, "MyMemory", {
   description: "Memory with built-in strategies",
   expirationDays: cdk.Duration.days(90),
   memoryStrategies: [
-    agentcore.MemoryStrategy.usingUserPreference({
+    agentcore.MemoryStrategy.usingUserPreference(this, {
         name: "CustomerPreferences",
         namespaces: ["support/customer/{actorId}/preferences"]
     }),
-    agentcore.MemoryStrategy.usingSemantic({
+    agentcore.MemoryStrategy.usingSemantic(this, {
         name: "CustomerSupportSemantic",
         namespaces: ["support/customer/{actorId}/semantic"]
     }),
@@ -273,7 +273,7 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 
 ```typescript fixture=default
 // Create a custom semantic memory strategy
-const customSemanticStrategy = agentcore.MemoryStrategy.usingSemantic({
+const customSemanticStrategy = agentcore.MemoryStrategy.usingSemantic(this, {
   name: "customSemanticStrategy",
   description: "Custom semantic memory strategy",
   namespaces: ["/custom/strategies/{memoryStrategyId}/actors/{actorId}"],
@@ -309,8 +309,8 @@ const memory = new agentcore.Memory(this, "test-memory", {
 });
 
 // Add strategies after instantiation
-memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSummarization());
-memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSemantic());
+memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSummarization(this));
+memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSemantic(this));
 ```
 
 ---
@@ -425,4 +425,5 @@ It does not affect existing constructs.
 
 ### Are there any open issues that need to be addressed later?
 
-Self managed strategy is not available yet, it will be added as a long term memory strategy.
+The [Self-managed memory strategy](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/memory-self-managed-strategies.html) does not have an
+exposed CloudFormation interface yet. It will be added later as a long term memory strategy once it is exposed.
