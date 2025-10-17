@@ -280,6 +280,8 @@ This is not managed by the construct due to the large number of options.
 
 ### Tools schema For Lambda target
 
+The lambda target need tools schema to understand the fuunction lambda provides. You can upload the tool schema by following 3 ways:
+
 - From a local asset file
 
 ```typescript
