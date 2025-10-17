@@ -259,14 +259,14 @@ when you want to execute custom code in response to tool invocations.
 - Need tool schema (tool schema is a blueprint that describes the functions your Lambda provides to AI agents).
   The construct provide 3 ways to upload a tool schema to Lambda target
 
-- **OpenAPI Schema Target** : OpenAPI widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0
+**OpenAPI Schema Target** : OpenAPI widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0
 specifications for defining API targets. It onnects to REST APIs using OpenAPI specifications
 
 - Supports OAUTH and API_KEY credential providers
 - Ideal for integrating with external REST services
 - Need API schema. The construct provide 3 ways to upload a API schema to OpenAPI target
 
-- **Smithy Model Target** : Smithy is a language for defining services and software development kits (SDKs). Smithy models provide
+**Smithy Model Target** : Smithy is a language for defining services and software development kits (SDKs). Smithy models provide
 a more structured approach to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
 AgentCore Gateway supports built-in AWS service models only. It Connects to services using Smithy model definitions
 
