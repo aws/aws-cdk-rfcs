@@ -390,7 +390,7 @@ Key design principles:
 
 The construct library provides comprehensive interfaces for Memory services:
 
-all interfaces are available in the public pull request: https://github.com/aws/aws-cdk/pull/35757
+All interfaces are available in the public pull request: https://github.com/aws/aws-cdk/pull/35757
 
 ### Is this a breaking change?
 
