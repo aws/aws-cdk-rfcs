@@ -2124,6 +2124,13 @@ class ContainerRecipe extends ContainerRecipeBase {
   readonly containerRecipeVersion: Version;
 
   constructor(scope: Construct, id: string, props: ContainerRecipeProps);
+
+  /**
+   * Adds block devices to attach to the instance used for building, testing, and distributing the container image.
+   *
+   * @param instanceBlockDevices - The list of block devices to attach
+   */
+  addInstanceBlockDevices(...instanceBlockDevices: ec2.BlockDevice[]): void;
 }
 
 class DistributionConfiguration extends DistributionConfigurationBase {
@@ -2271,6 +2278,13 @@ class ImageRecipe extends ImageRecipeBase {
   readonly imageRecipeVersion: Version;
 
   constructor(scope: Construct, id: string, props: ImageRecipeProps);
+
+  /**
+   * Adds block devices to attach to the instance used for building the image.
+   *
+   * @param blockDevices - The list of block devices to attach
+   */
+  addBlockDevices(...blockDevices: ec2.BlockDevice[]): void;
 }
 
 class InfrastructureConfiguration extends InfrastructureConfigurationBase {
