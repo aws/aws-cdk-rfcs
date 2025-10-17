@@ -199,7 +199,6 @@ outside a pipeline, defined as a standalone resource.
 ### Example
 
 ```ts
-import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
@@ -437,7 +436,8 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
 
 A component defines the sequence of steps required to customize an instance during image creation (build component) or
 test an instance launched from the created image (test component). Components are created from declarative YAML or JSON
-documents that describe runtime configuration for building, validating, or testing instances.
+documents that describe runtime configuration for building, validating, or testing instances. Components are included
+when added to the image recipe or container recipe for an image build.
 
 EC2 Image Builder supports AWS-managed components for common tasks, AWS Marketplace components, and custom components
 that you create. Components run during specific workflow phases: build and validate phases during the build stage, and
@@ -515,7 +515,7 @@ const component = new imagebuilder.Component(stack, 'Component', {
 Infrastructure configuration defines the compute resources and environment settings used during the image building
 process. This includes instance types, IAM instance profile, VPC settings, subnets, security groups, SNS topics for
 notifications, logging configuration, and troubleshooting settings like whether to terminate instances on failure or
-keep them running for debugging.
+keep them running for debugging. These settings are applied to builds when included in an image or an image pipeline.
 
 ### Example
 
@@ -567,8 +567,10 @@ const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration
     `arn:${stack.partition}:imagebuilder:${stack.region}:${stack.account}:topic:image-builder-topic`,
   ),
   // Optional - log settings. Logging is enabled by default
-  s3LoggingBucket: s3.Bucket.fromBucketName(stack, 'LogBucket', `imagebuilder-logging-${stack.account}`),
-  s3LoggingKeyPrefix: 'imagebuilder-logs',
+  logging: {
+    s3Bucket: s3.Bucket.fromBucketName(stack, 'LogBucket', `imagebuilder-logging-${stack.account}`),
+    s3KeyPrefix: 'imagebuilder-logs',
+  },
   // Optional - host placement settings
   ec2InstanceAvailabilityZone: stack.availabilityZones[0],
   ec2InstanceHostId: dedicatedHost.attrHostId,
@@ -584,93 +586,22 @@ const infrastructureConfiguration = new imagebuilder.InfrastructureConfiguration
 Distribution configuration defines how and where your built images are distributed after successful creation. For AMIs,
 this includes target AWS Regions, KMS encryption keys, account sharing permissions, License Manager associations, and
 launch template configurations. For container images, it specifies the target Amazon ECR repositories across regions.
+A distribution configuration can be associated with an image or an image pipeline to define these distribution settings
+for image builds.
 
 ### Example
 
 ```ts
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as s3 from 'aws-cdk-lib/aws-s3';
 
 const distributionConfiguration = new imagebuilder.DistributionConfiguration(stack, 'DistributionConfiguration', {
   distributionConfigurationName: 'test-distribution-configuration',
   description: 'A Distribution Configuration',
-  distributions: [
-    {
-      region: 'us-west-2',
-      amiName: 'imagebuilder-{{ imagebuilder:buildDate }}',
-      amiDescription: 'Build AMI',
-      amiKmsKey: kms.Key.fromLookup(stack, 'ComponentKey', { aliasName: 'alias/distribution-encryption-key' }),
-      // Copy the AMI to different accounts
-      amiTargetAccountIds: ['123456789012', '098765432109'],
-      // Add launch permissions on the AMI
-      amiLaunchPermission: {
-        organizationArns: [`arn:${stack.partition}:organizations::${stack.account}:organization/o-1234567abc`],
-        organizationalUnitArns: [
-          `arn:${stack.partition}:organizations::${stack.account}:ou/o-1234567abc/ou-a123-b4567890`,
-        ],
-        userGroups: ['all'],
-        userIds: ['234567890123'],
-      },
-      // Attach tags to the AMI
-      amiTags: {
-        Environment: 'production',
-        Version: '{{ imagebuilder:buildVersion }}',
-      },
-      // Optional - publish the distributed AMI ID to an SSM parameter
-      ssmParameters: [
-        {
-          parameter: ssm.StringParameter.fromStringParameterName(stack, 'Parameter', '/imagebuilder/ami'),
-        },
-        {
-          amiAccount: '098765432109',
-          parameter: ssm.StringParameter.fromStringParameterArn(
-            stack,
-            'CrossAccountParameter',
-            `arn:${stack.partition}:ssm:us-west-2:098765432109:parameter/imagebuilder/prod/ami`,
-          ),
-        },
-      ],
-      // Optional - create a new launch template version with the distributed AMI ID
-      launchTemplates: [
-        {
-          launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'LaunchTemplate', {
-            launchTemplateName: 'imagebuilder-ami',
-          }),
-          setDefaultVersion: true,
-        },
-        {
-          accountId: '098765432109',
-          launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'CrossAccountLaunchTemplate', {
-            launchTemplateName: 'imagebuilder-cross-account-ami',
-          }),
-          setDefaultVersion: true,
-        },
-      ],
-      // Optional - enable Fast Launch on an imported launch template
-      fastLaunchConfigurations: [
-        {
-          enabled: true,
-          launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'FastLaunchLT', {
-            launchTemplateName: 'fast-launch-lt',
-          }),
-          maxParallelLaunches: 10,
-          targetSnapshotCount: 2,
-        },
-      ],
-      // Optional - license configurations to apply to the AMI
-      licenseConfigurationArns: [
-        'arn:aws:license-manager:us-west-2:123456789012:license-configuration:lic-abcdefghijklmnopqrstuvwxyz',
-      ],
-      // Optional - Export AMI to S3 as a VMDK file
-      s3ExportDiskImageFormat: imagebuilder.DiskImageFormat.VMDK,
-      s3ExportRole: iam.Role.fromRoleName(stack, 'VMExportRole', 'vmimport'),
-      s3ExportBucket: s3.Bucket.fromBucketName(stack, 'VMExportBucket', `vm-export-${stack.account}`),
-      s3ExportKeyPrefix: 'vm-images',
-    },
+  amiDistributions: [
     {
       // Distribute AMI to ap-southeast-2 and publish the AMI ID to an SSM parameter
       region: 'ap-southeast-2',
@@ -681,6 +612,79 @@ const distributionConfiguration = new imagebuilder.DistributionConfiguration(sta
       ],
     },
   ],
+});
+
+// For AMI-based image builds - add an AMI distribution in the current region
+distributionConfiguration.addAmiDistributions({
+  amiName: 'imagebuilder-{{ imagebuilder:buildDate }}',
+  amiDescription: 'Build AMI',
+  amiKmsKey: kms.Key.fromLookup(stack, 'ComponentKey', { aliasName: 'alias/distribution-encryption-key' }),
+  // Copy the AMI to different accounts
+  amiTargetAccountIds: ['123456789012', '098765432109'],
+  // Add launch permissions on the AMI
+  amiLaunchPermission: {
+    organizationArns: [`arn:${stack.partition}:organizations::${stack.account}:organization/o-1234567abc`],
+    organizationalUnitArns: [`arn:${stack.partition}:organizations::${stack.account}:ou/o-1234567abc/ou-a123-b4567890`],
+    userGroups: ['all'],
+    userIds: ['234567890123'],
+  },
+  // Attach tags to the AMI
+  amiTags: {
+    Environment: 'production',
+    Version: '{{ imagebuilder:buildVersion }}',
+  },
+  // Optional - publish the distributed AMI ID to an SSM parameter
+  ssmParameters: [
+    {
+      parameter: ssm.StringParameter.fromStringParameterName(stack, 'Parameter', '/imagebuilder/ami'),
+    },
+    {
+      amiAccount: '098765432109',
+      parameter: ssm.StringParameter.fromStringParameterArn(
+        stack,
+        'CrossAccountParameter',
+        `arn:${stack.partition}:ssm:us-west-2:098765432109:parameter/imagebuilder/prod/ami`,
+      ),
+    },
+  ],
+  // Optional - create a new launch template version with the distributed AMI ID
+  launchTemplates: [
+    {
+      launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'LaunchTemplate', {
+        launchTemplateName: 'imagebuilder-ami',
+      }),
+      setDefaultVersion: true,
+    },
+    {
+      accountId: '098765432109',
+      launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'CrossAccountLaunchTemplate', {
+        launchTemplateName: 'imagebuilder-cross-account-ami',
+      }),
+      setDefaultVersion: true,
+    },
+  ],
+  // Optional - enable Fast Launch on an imported launch template
+  fastLaunchConfigurations: [
+    {
+      enabled: true,
+      launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateAttributes(stack, 'FastLaunchLT', {
+        launchTemplateName: 'fast-launch-lt',
+      }),
+      maxParallelLaunches: 10,
+      targetSnapshotCount: 2,
+    },
+  ],
+  // Optional - license configurations to apply to the AMI
+  licenseConfigurationArns: [
+    'arn:aws:license-manager:us-west-2:123456789012:license-configuration:lic-abcdefghijklmnopqrstuvwxyz',
+  ],
+});
+
+// For container-based image builds - add a container distribution in the current region
+distributionConfiguration.addContainerDistributions({
+  containerRepository: ecr.Repository.fromRepositoryName(stack, 'TargetRepository', 'target-repository'),
+  containerDescription: 'Test container image',
+  containerTags: ['latest', 'latest-1.0'],
 });
 ```
 
@@ -1119,7 +1123,7 @@ interface ImageRecipeProps {
   readonly imageRecipeName?: string;
 
   /**
-   * The version of the container recipe.
+   * The version of the image recipe.
    *
    * @default - 1.0.0
    */
@@ -1162,7 +1166,7 @@ interface ImageRecipeProps {
   /**
    * Whether to uninstall the Systems Manager agent from your final build image, prior to creating the new AMI.
    *
-   * @default - Image Builder will remove the Systems Manager agent only if it was installed by Image Builder.
+   * @default - This is false if the Systems Manager agent is pre-installed on the base image. Otherwise, this is true.
    */
   readonly uninstallSsmAgentAfterBuild?: boolean;
 
@@ -1170,8 +1174,7 @@ interface ImageRecipeProps {
    * The user data commands to pass to Image Builder build and test EC2 instances. If you override the user data, you
    * must ensure to add commands to install Systems Manager, if it is not pre-installed on your base image.
    *
-   * @default - For Linux and macOS, Image Builder will use a default user data script to install the Systems Manager
-   * agent. None for Windows.
+   * @default - None
    */
   readonly userDataOverride?: ec2.UserData;
 
@@ -1444,19 +1447,11 @@ interface InfrastructureConfigurationProps {
   readonly notificationTopic?: sns.ITopic;
 
   /**
-   *
-   * The S3 bucket to use for the build logs.
-   *
-   * @default - None
-   */
-  readonly s3LoggingBucket?: s3.IBucket;
-
-  /**
-   * The S3 key prefix to use for the build logs.
+   * The log settings for detailed build logging.
    *
    * @default - None
    */
-  readonly s3LoggingKeyPrefix?: string;
+  readonly logging?: InfrastructureConfigurationLogging;
 
   /**
    * The availability zone to place Image Builder build and test EC2 instances.
@@ -1467,11 +1462,19 @@ interface InfrastructureConfigurationProps {
 
   /**
    * The ID of the Dedicated Host on which build and test instances run. This only applies if the instance tenancy is
-   * `host`.
+   * `host`. This cannot be used with the `ec2InstanceHostResourceGroupArn` parameter.
    *
    * @default - None
    */
   readonly ec2InstanceHostId?: string;
+
+  /**
+   * The ARN of the host resource group on which build and test instances run. This only applies if the instance tenancy
+   * is `host`. This cannot be used with the `ec2InstanceHostId` parameter.
+   *
+   * @default - None
+   */
+  readonly ec2InstanceHostResourceGroupArn?: string;
 
   /**
    * The tenancy of the instance. Dedicated tenancy runs instances on single-tenant hardware, while host tenancy runs
@@ -1502,9 +1505,22 @@ interface InfrastructureConfigurationProps {
 ```ts
 interface DistributionConfigurationProps {
   /**
-   * The list of target regions and associated distribution settings where the built image will be distributed.
+   * The list of target regions and associated AMI distribution settings where the built AMI will be distributed. AMI
+   * distributions may also be added with the `addAmiDistributions` method.
+   *
+   * @default - None if container distributions are provided. Otherwise, at least one AMI or container distribution must
+   *            be provided
    */
-  readonly distributions: Distribution[];
+  readonly amiDistributions?: AmiDistribution[];
+
+  /**
+   * The list of target regions and associated container distribution settings where the built container will be
+   * distributed. Container distributions may also be added with the `addContainerDistributions` method.
+   *
+   * @default - None if AMI distributions are provided. Otherwise, at least one AMI or container distribution must be
+   *            provided
+   */
+  readonly containerDistributions?: ContainerDistribution[];
 
   /**
    * The name of the distribution configuration.
@@ -2073,6 +2089,11 @@ class Component extends ComponentBase {
    */
   readonly type: ComponentType;
 
+  /**
+   * Optional KMS encryption key associated with this component
+   */
+  readonly kmsKey?: kms.IKey;
+
   constructor(scope: Construct, id: string, props: ComponentProps);
 }
 
@@ -2119,6 +2140,20 @@ class DistributionConfiguration extends DistributionConfigurationBase {
   readonly distributionConfigurationName: string;
 
   constructor(scope: Construct, id: string, props: DistributionConfigurationProps);
+
+  /**
+   * Adds AMI distribution settings to the distribution configuration
+   *
+   * @param amiDistributions - The list of AMI distribution settings to apply
+   */
+  addAmiDistributions(...amiDistributions: AmiDistribution[]): void;
+
+  /**
+   * Adds container distribution settings to the distribution configuration
+   *
+   * @param containerDistributions - The list of container distribution settings to apply
+   */
+  addContainerDistributions(...containerDistributions: ContainerDistribution[]): void;
 }
 
 class Image extends ImageBase {
@@ -2208,7 +2243,7 @@ class ImagePipeline extends ImagePipelineBase {
   /**
    * The recipe used for the image build
    */
-  readonly recipe?: IRecipeBase;
+  readonly recipe: IRecipeBase;
 
   constructor(scope: Construct, id: string, props: ImagePipelineProps);
 }
