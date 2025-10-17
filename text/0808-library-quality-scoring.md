@@ -78,7 +78,7 @@ SUBSCORES
 — Time to first response......................... ★★★☆☆    3
 — Commit Frequency .............................. ★★★☆☆    3
 — Release Frequency ............................. ★★★★☆    3
-— Lockfile Update Recency ....................... ★★★★★    3
+— Provenance Verification ....................... ★★★★★    3
 — Open issues / total issues .................... ★★★★★    3
 — Median PR time-to-merge ....................... ★★☆☆☆    2
 — Number of Contributors ........................ ★★★☆☆    2
@@ -111,7 +111,7 @@ Helps determine if the project is active and healthy, or abandoned. Signals incl
 * Time to first response: Fast issue resolution reflects active, responsive maintainers.
 * Commit Frequency: Frequent commits show steady development and maintenance.
 * Release Frequency: Regular releases signal iteration, patching, and progress.
-* Lockfile Update Recency: Recent lockfile updates indicate active dependency management and security maintenance.
+* Provenance Verification: Verifies package authenticity and supply chain security.
 * Open issues / total issues: A lower ratio of open issues indicates backlog health and follow-through
 normalized by repository popularity.
 * Median PR time-to-merge: Shorter merge times suggest attentiveness to community contributions.
@@ -266,7 +266,7 @@ may have a README but it could be poorly written. These signals come together to
 | Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0   | Repo API       | YES      | Reflects responsiveness          | 3          |
 | Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 in 12mo = 0                   | Repo API       | YES      | Shows steady activity            | 3          |
 | Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0      | Registry API   | YES      | Activity check, responsiveness   | 3          |
-| Maintenance | Lockfile Update Recency            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0 | Repo API       | YES      | Shows active dependency upkeep   | 3          |
+| Maintenance | Provenance Verification            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0 | Repo API       | YES      | Ensures supply chain security    | 3          |
 | Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0   | Repo API       | YES      | Measures backlog health          | 2          |
 | Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0              | Repo API       | YES      | Signals maintainer attention     | 2          |
 | Maintenance | Number of Contributors             | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                     | Repo API       | YES      | Broad community involvement      | 2          |
@@ -309,7 +309,7 @@ Overall:     72/100
 | Maintenance | Time to first response             | 2          | 3        |
 | Maintenance | Commit Frequency                   | 3          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 3          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
@@ -338,7 +338,7 @@ Overall:     65/100
 | Maintenance | Time to first response             | 3          | 3        |
 | Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 2          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 3          | 2        |
 | Maintenance | Median PR time-to-merge            | 3          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
@@ -367,7 +367,7 @@ Overall:     75/100
 | Maintenance | Time to first response             | 3          | 3        |
 | Maintenance | Commit Frequency                   | 3          | 3        |
 | Maintenance | Release Frequency                  | 4          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 2          | 2        |
 | Maintenance | Number of Contributors             | 3          | 2        |
@@ -386,17 +386,17 @@ Overall:     75/100
 
 #### **Repository**: `@pahud/cdk-remote-stack`
 
-Maintenance: 20/100
+Maintenance: 35/100
 Quality:     84/100
 Popularity:  63/100
-Overall:     56/100
+Overall:     61/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 3          | 3        |
 | Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 1          | 3        |
-| Maintenance | Lockfile Update Recency            | 1          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 2          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
@@ -425,7 +425,7 @@ Overall:     37/100
 | Maintenance | Time to first response             | 1          | 3        |
 | Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 1          | 3        |
-| Maintenance | Lockfile Update Recency            | 1          | 3        |
+| Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 1          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
@@ -454,7 +454,7 @@ Overall:     85/100
 | Maintenance | Time to first response             | 4          | 3        |
 | Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 3          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 4          | 2        |
@@ -483,7 +483,7 @@ Overall:    100/100
 | Maintenance | Time to first response             | 5          | 3        |
 | Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 5          | 2        |
@@ -512,7 +512,7 @@ Overall:     71/100
 | Maintenance | Time to first response             | 4          | 3        |
 | Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Lockfile Update Recency            | 1          | 3        |
+| Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 2          | 2        |
@@ -531,17 +531,17 @@ Overall:     71/100
 
 #### **Repository**: `@hashicorp/terraform-cdk`
 
-Maintenance: 53/100
+Maintenance: 45/100
 Quality:     87/100
 Popularity:  83/100
-Overall:     74/100
+Overall:     72/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 4          | 3        |
 | Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 4          | 3        |
-| Maintenance | Lockfile Update Recency            | 3          | 3        |
+| Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
@@ -570,7 +570,7 @@ Overall:     90/100
 | Maintenance | Time to first response             | 4          | 3        |
 | Maintenance | Commit Frequency                   | 4          | 3        |
 | Maintenance | Release Frequency                  | 3          | 3        |
-| Maintenance | Lockfile Update Recency            | 5          | 3        |
+| Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 4          | 2        |
