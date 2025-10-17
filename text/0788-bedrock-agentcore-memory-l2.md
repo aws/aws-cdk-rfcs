@@ -242,7 +242,7 @@ const memory = new agentcore.Memory(this, "MyMemory", {
   memoryName: "my_memory",
   description: "Memory with custom execution role",
   expirationDays: cdk.Duration.days(90),
- // executionRole: executionRole,
+  executionRole: executionRole,
 });
 ```
 
