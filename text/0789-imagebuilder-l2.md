@@ -1171,8 +1171,9 @@ interface ImageRecipeProps {
   readonly uninstallSsmAgentAfterBuild?: boolean;
 
   /**
-   * The user data commands to pass to Image Builder build and test EC2 instances. If you override the user data, you
-   * must ensure to add commands to install Systems Manager, if it is not pre-installed on your base image.
+   * The user data commands to pass to Image Builder build and test EC2 instances. For Linux and macOS, Image Builder
+   * uses a default user data script to install the Systems Manager agent. If you override the user data, you must
+   * ensure to add commands to install Systems Manager agent, if it is not pre-installed on your base image.
    *
    * @default - None
    */
