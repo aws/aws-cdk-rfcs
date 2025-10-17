@@ -111,6 +111,7 @@ Helps determine if the project is active and healthy, or abandoned. Signals incl
 * Time to first response: Fast issue resolution reflects active, responsive maintainers.
 * Commit Frequency: Frequent commits show steady development and maintenance.
 * Release Frequency: Regular releases signal iteration, patching, and progress.
+* Lockfile Update Recency: Recent lockfile updates indicate active dependency management and security maintenance.
 * Open issues / total issues: A lower ratio of open issues indicates backlog health and follow-through
 normalized by repository popularity.
 * Median PR time-to-merge: Shorter merge times suggest attentiveness to community contributions.
