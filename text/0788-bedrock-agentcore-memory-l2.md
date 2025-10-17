@@ -46,16 +46,23 @@ For more details please refer here [Amazon Bedrock AgentCore Memory Documentatio
 
 ## Memory Overview
 
-Memory is a critical component of intelligence. While Large Language Models (LLMs) have impressive capabilities, they lack persistent memory across conversations. Amazon Bedrock AgentCore Memory addresses this limitation by providing a managed service that enables AI agents to maintain context over time, remember important facts, and deliver consistent, personalized experiences.
+Memory is a critical component of intelligence. While Large Language Models (LLMs) have impressive capabilities,
+they lack persistent memory across conversations. Amazon Bedrock AgentCore Memory addresses this limitation by providing a managed service
+that enables AI agents to maintain context over time, remember important facts, and deliver consistent, personalized experiences.
 
 AgentCore Memory operates on two levels:
 
-- **Short-Term Memory**: Immediate conversation context and session-based information that provides continuity within a single interaction or closely related sessions.
-- **Long-Term Memory**: Persistent information extracted and stored across multiple conversations, including facts, preferences, and summaries that enable personalized experiences over time.
+- **Short-Term Memory**: Immediate conversation context and session-based information that provides continuity within a single interaction
+or closely related sessions.
+- **Long-Term Memory**: Persistent information extracted and stored across multiple conversations, including facts, preferences, and summaries
+that enable personalized experiences over time.
 
-When you interact with the memory via the `CreateEvent` API, you store interactions in Short-Term Memory (STM) instantly. These interactions can include everything from user messages, assistant responses, to tool actions.
+When you interact with the memory via the `CreateEvent` API, you store interactions in Short-Term Memory (STM) instantly.
+These interactions can include everything from user messages, assistant responses, to tool actions.
 
-To write to long-term memory, you need to configure extraction strategies which define how and where to store information from conversations for future use. These strategies are asynchronously processed from raw events after every few turns based on the strategy that was selected. You can't create long term memory records directly, as they are extracted asynchronously by AgentCore Memory.
+To write to long-term memory, you need to configure extraction strategies which define how and where to store information from conversations
+for future use. These strategies are asynchronously processed from raw events after every few turns based on the strategy that was selected.
+You can't create long term memory records directly, as they are extracted asynchronously by AgentCore Memory.
 
 ### Memory Properties
 
@@ -71,7 +78,8 @@ To write to long-term memory, you need to configure extraction strategies which 
 
 #### Basic Memory Creation
 
-Below you can find how to configure a simple short-term memory (STM) with no long-term memory extraction strategies. Note how you set `expirationDays`, which defines the time the events will be stored in the short-term memory before they expire.
+Below you can find how to configure a simple short-term memory (STM) with no long-term memory extraction strategies.
+Note how you set `expirationDays`, which defines the time the events will be stored in the short-term memory before they expire.
 
 ```typescript fixture=default
 
@@ -103,36 +111,43 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 
 ### LTM Memory Extraction Stategies
 
-If you need long-term memory for context recall across sessions, you can setup memory extraction strategies to extract the relevant memory from the raw events.
+If you need long-term memory for context recall across sessions, you can setup memory extraction strategies
+to extract the relevant memory from the raw events.
 
 Amazon Bedrock AgentCore Memory has different memory strategies for extracting and organizing information:
 
 - **Summarization**: to summarize interactions to preserve critical context and key insights.
-- **Semantic Memory**: to extract general factual knowledge, concepts and meanings from raw conversations using vector embeddings. This enables similarity-based retrieval of relevant facts and context.
+- **Semantic Memory**: to extract general factual knowledge, concepts and meanings from raw conversations using vector embeddings.
+This enables similarity-based retrieval of relevant facts and context.
 - **User Preferences**: to extract user behavior patterns from raw conversations.
 
 You can use built-in extraction strategies for quick setup, or create custom extraction strategies with specific models and prompt templates.
 
 ### Memory with Built-in Strategies
 
-The library provides three built-in LTM strategies. These are default strategies for organizing and extracting memory data, each optimized for specific use cases.
+The library provides three built-in LTM strategies. These are default strategies for organizing and extracting memory data,
+each optimized for specific use cases.
 
-For example: An agent helps multiple users with cloud storage setup. From these conversations, see how each strategy processes users expressing confusion about account connection:
+For example: An agent helps multiple users with cloud storage setup. From these conversations,
+see how each strategy processes users expressing confusion about account connection:
 
 1. **Summarization Strategy** (`MemoryStrategy.usingBuiltInSummarization()`)
-This strategy compresses conversations into concise overviews, preserving essential context and key insights for quick recall. Extracted memory example: Users confused by cloud setup during onboarding.
+This strategy compresses conversations into concise overviews, preserving essential context and key insights for quick recall.
+Extracted memory example: Users confused by cloud setup during onboarding.
 
    - Extracts concise summaries to preserve critical context and key insights
    - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}/sessions/{sessionId}`
 
 2. **Semantic Memory Strategy** (`MemoryStrategy.usingBuiltInSemantic()`)
-Distills general facts, concepts, and underlying meanings from raw conversational data, presenting the information in a context-independent format. Extracted memory example: In-context learning = task-solving via examples, no training needed.
+Distills general facts, concepts, and underlying meanings from raw conversational data, presenting the information in a context-independent format.
+Extracted memory example: In-context learning = task-solving via examples, no training needed.
 
    - Extracts general factual knowledge, concepts and meanings from raw conversations
    - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
 
 3. **User Preference Strategy** (`MemoryStrategy.usingBuiltInUserPreference()`)
-Captures individual preferences, interaction patterns, and personalized settings to enhance future experiences. Extracted memory example: User needs clear guidance on cloud storage account connection during onboarding.
+Captures individual preferences, interaction patterns, and personalized settings to enhance future experiences.
+Extracted memory example: User needs clear guidance on cloud storage account connection during onboarding.
 
    - Extracts user behavior patterns from raw conversations
    - Namespace: `/strategies/{memoryStrategyId}/actors/{actorId}`
@@ -163,13 +178,20 @@ Where the suffix is a 5 characters string ([a-z, A-Z, 0-9]).
 
 With Long-Term Memory, organization is managed through Namespaces.
 
-An `actor` refers to entity such as end users or agent/user combinations. For example, in a coding support chatbot, the actor is usually the developer asking questions. Using the actor ID helps the system know which user the memory belongs to, keeping each user's data separate and organized.
+An `actor` refers to entity such as end users or agent/user combinations. For example, in a coding support chatbot,
+the actor is usually the developer asking questions. Using the actor ID helps the system know which user the memory belongs to,
+keeping each user's data separate and organized.
 
-A `session` is usually a single conversation or interaction period between the user and the AI agent. It groups all related messages and events that happen during that conversation.
+A `session` is usually a single conversation or interaction period between the user and the AI agent.
+It groups all related messages and events that happen during that conversation.
 
 A `namespace` is used to logically group and organize long-term memories. It ensures data stays neat, separate, and secure.
 
-With AgentCore Memory, you need to add a namespace when you define a memory strategy. This namespace helps define where the long-term memory will be logically grouped. Every time a new long-term memory is extracted using this memory strategy, it is saved under the namespace you set. This means that all long-term memories are scoped to their specific namespace, keeping them organized and preventing any mix-ups with other users or sessions. You should use a hierarchical format separated by forward slashes /. This helps keep memories organized clearly. As needed, you can choose to use the below pre-defined variables within braces in the namespace based on your applications' organization needs:
+With AgentCore Memory, you need to add a namespace when you define a memory strategy. This namespace helps define where the long-term memory
+will be logically grouped. Every time a new long-term memory is extracted using this memory strategy, it is saved under the namespace you set.
+This means that all long-term memories are scoped to their specific namespace, keeping them organized and preventing any mix-ups with other
+users or sessions. You should use a hierarchical format separated by forward slashes /. This helps keep memories organized clearly. As needed,
+you can choose to use the below pre-defined variables within braces in the namespace based on your applications' organization needs:
 
 - `actorId` – Identifies who the long-term memory belongs to, such as a user
 - `strategyId` – Shows which memory strategy is being used. This strategy identifier is auto-generated when you create a memory using CreateMemory operation.
@@ -212,7 +234,9 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 });
 ```
 
-Custom memory strategies let you tailor memory extraction and consolidation to your specific domain or use case. You can override the prompts for extracting and consolidating semantic, summary, or user preferences. You can also choose the model that you want to use for extraction and consolidation.
+Custom memory strategies let you tailor memory extraction and consolidation to your specific domain or use case.
+You can override the prompts for extracting and consolidating semantic, summary, or user preferences.
+You can also choose the model that you want to use for extraction and consolidation.
 
 The custom prompts you create are appended to a non-editable system prompt.
 
@@ -224,7 +248,8 @@ Since a custom strategy requires you to invoke certain FMs, you need a role with
 
 #### Memory with Custom Execution Role
 
-Keep in mind that memories that **do not** use custom strategies do not require a service role. So even if you provide it, it will be ignored as it will never be used.
+Keep in mind that memories that **do not** use custom strategies do not require a service role.
+So even if you provide it, it will be ignored as it will never be used.
 
 ```typescript fixture=default
 // Create a custom execution role
@@ -365,7 +390,7 @@ Key design principles:
 
 The construct library provides comprehensive interfaces for Memory services:
 
-<will add link here to the public pull request containing all interfaces>
+all interfaces are available in the public pull request: https://github.com/aws/aws-cdk/pull/35757
 
 ### Is this a breaking change?
 
@@ -399,3 +424,5 @@ It does not affect existing constructs.
 - Add support for additional extraction strategies
 
 ### Are there any open issues that need to be addressed later?
+
+Self managed strategy is not available yet, it will be added as a long term memory strategy.
