@@ -1,13 +1,12 @@
 # Amazon Bedrock AgentCore Gateway L2 Construct
 
-* **Original Author(s):**: @krokoko , @aws-rafams , @dineshSajwan
+* **Original Author(s):**: @krokoko, @aws-rafams, @dineshSajwan
 * **Tracking Issue**: #789
-* **API Bar Raiser**: @alvazjor,
+* **API Bar Raiser**: @alvazjor
 
-The Amazon Bedrock AgentCore Gateway L2 constructs simplify the creation and management of integration points between AI agents
-and external services by wrapping the AgentCore Gateway L1 constructs.
-It provides high-level, object-oriented approaches to creating and managing Gateways and Gateway Targets.
-These components enable AI agents to securely access external tools and APIs.
+The Amazon Bedrock AgentCore Gateway L2 constructs make it easy to create and manage connections between AI agents
+and external services. These constructs provide simple, high-level interfaces for creating Gateways and Gateway Targets,
+which let AI agents securely access external tools and APIs.
 
 A quick comparison between L1 and L2 Gateway constructs:
 
@@ -35,12 +34,12 @@ A quick comparison between L1 and L2 Gateway constructs:
 ```feat(bedrock-agentcore): Amazon Bedrock AgentCore Gateway L2 construct```
 
 **README**:
-[Amazon Bedrock AgentCore Gateway](https://aws.amazon.com/bedrock/agentcore/) provides secure integration points between AI agents and external services.
+[Amazon Bedrock AgentCore Gateway](https://aws.amazon.com/bedrock/agentcore/) provides secure connections between AI agents and external services.
 With Amazon Bedrock AgentCore Gateway, developers can connect agents to multiple tools and APIs through a single MCP URL
-while maintaining enterprise-grade security.
+while keeping everything secure.
 
-This construct library facilitates the deployment of AgentCore Gateway and Gateway Targets.
-It leverages underlying CloudFormation L1 resources to provision these AgentCore Gateway features.
+This construct library helps you deploy AgentCore Gateway and Gateway Targets.
+It uses CloudFormation L1 resources to create these AgentCore Gateway features.
 
 For more details please refer here [Amazon Bedrock AgentCore Gateway Documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html).
 
@@ -52,82 +51,66 @@ The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateway
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `name` | `string` | Yes | The name of the gateway |
-| `description` | `string` | No | Optional description for the gateway |
-| `protocolConfiguration` | `IGatewayProtocolConfiguration` | No | The protocol configuration for the gateway |
-| `authorizerConfiguration` | `IGatewayAuthorizerConfiguration` | No | The authorizer configuration for the gateway |
-| `exceptionLevel` | `GatewayExceptionLevel` | No | The verbosity of exception messages |
+| `gatewayName` | `string` | Yes | The name of the gateway. Valid characters are a-z, A-Z, 0-9, _ (underscore) and - (hyphen). Maximum 100 characters |
+| `description` | `string` | No | Optional description for the gateway. Maximum 200 characters |
+| `protocolConfiguration` | `IGatewayProtocol` | No | The protocol configuration for the gateway. Defaults to MCP protocol |
+| `authorizerConfiguration` | `IGatewayAuthorizer` | No | The authorizer configuration for the gateway. Defaults to Cognito |
+| `exceptionLevel` | `GatewayExceptionLevel` | No | The verbosity of exception messages. Use DEBUG mode to see granular exception messages |
 | `kmsKey` | `kms.IKey` | No | The AWS KMS key used to encrypt data associated with the gateway |
-| `role` | `iam.IRole` | No | The IAM role that provides permissions for the gateway to access AWS services |
+| `role` | `iam.IRole` | No | The IAM role that provides permissions for the gateway to access AWS services. A new role will be created if not provided |
+| `tags` | `{ [key: string]: string }` | No | Tags for the gateway. A list of key:value pairs of tags to apply to this Gateway resource |
 
 ### Basic Gateway Creation
 
-If not provided, the protocol configuration defaults to MCP and the inbound auth configuration uses Cognito (it is automatically created on your behalf).
+The protocol configuration defaults to MCP and the inbound auth configuration uses Cognito (it is automatically created on your behalf).
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import { Gateway } from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
+```typescript fixture=default
 // Create a basic gateway with default MCP protocol and Cognito authorizer
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
 });
 ```
 
-### Protocol Configuration
+### Protocol configuration
 
-Currently MCP is the only protocol available. To configure it, provide a McpProtocolConfiguration object to protocolConfiguration:
+Currently MCP is the only protocol available. To configure it, use the `protocol` property with `McpProtocolConfiguration`:
 
-- **Instructions**: provides the instructions for using the Model Context Protocol gateway. These instructions provide guidance
-on how to interact with the gateway.
-- **Semantic search**: enables intelligent tool discovery so that we are not limited by typical list tools limits (typically 100 or so).
-Our semantic search capability delivers contextually relevant tool subsets, significantly improving tool selection accuracy through focused, relevant results,
-inference performance with reduced token processing and overall orchestration efficiency and response times.
-- **Supported versions**: The supported versions of the Model Context Protocol. This field specifies which versions of the protocol the gateway can use.
+- Instructions: Guidance for how to use the gateway with your tools
+- Semantic search: Smart tool discovery that finds the right tools without typical limits. It improves accuracy by finding relevant tools based on context
+- Supported versions: Which MCP protocol versions the gateway can use
 
-```typescript
-import {
-  Gateway,
-  McpProtocolConfiguration,
-  McpSearchType,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
-  protocolConfiguration: new McpProtocolConfiguration({
+```typescript fixture=default
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
     instructions: "Use this gateway to connect to external MCP tools",
-    searchType: McpSearchType.SEMANTIC,
-    supportedVersions: ["2024-12-01"],
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
   }),
 });
 ```
 
-### Inbound Authorization
+### Inbound authorization
 
-Inbound authorization works with OAuth authorization, where the client application must authenticate with the OAuth authorizer before using the Gateway.
-Your client would receive an access token which is used at runtime.
+Before you create your gateway, you must set up inbound authorization. Inbound authorization validates users who attempt to access targets through
+your AgentCore gateway. By default, if not provided, the construct will create and configure Cognito as the default identity provider
+(inbound Auth setup). AgentCore supports the following types of inbound authorization:
 
-Before creating your Gateway, you need to set up inbound authorization to validate callers attempting to
-access targets through your Amazon Bedrock AgentCore Gateway.
-By default, if not provided, the construct will create and configure Cognito as the default identity provider (inbound Auth setup).
+**JSON Web Token (JWT)** – A secure and compact token used for authorization. After creating the JWT, you specify it as the authorization
+configuration when you create the gateway. You can create a JWT with any of the identity providers at Provider setup and configuration.
 
-You can configure a custom authorization provider by configuring the authorizerConfiguration property.
+You can configure a custom authorization provider using the `inboundAuthorizer` property with `GatewayAuthorizer.usingCustomJwt()`.
 You need to specify an OAuth discovery server and client IDs/audiences when you create the gateway. You can specify the following:
 
-- **Discovery Url** — String that must match the pattern ^.+/\.well-known/openid-configuration$ for OpenID Connect discovery URLs
-- At least one of the below options depending on the chosen identity provider:
-  - **Allowed audiences** — List of allowed audiences for JWT tokens
-  - **Allowed clients** — List of allowed client identifiers
+- Discovery Url — String that must match the pattern ^.+/\.well-known/openid-configuration$ for OpenID Connect discovery URLs
+- At least one of the below options depending on the chosen identity provider.
+- Allowed audiences — List of allowed audiences for JWT tokens
+- Allowed clients — List of allowed client identifiers
 
-```typescript
-import {
-  Gateway,
-  CustomJwtAuthorizerConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
-  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+```typescript fixture=default
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
     allowedAudience: ["my-app"],
     allowedClients: ["my-client-id"],
@@ -135,19 +118,28 @@ const gateway = new Gateway(this, "MyGateway", {
 });
 ```
 
+**IAM** – Authorizes through the credentials of the AWS IAM identity trying to access the gateway.
+
+```typescript fixture=default
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+  authorizerConfiguration: agentcore.GatewayAuthorizer.awsIam,
+});
+
+// Grant access to a Lambda function's role
+const lambdaRole = new iam.Role(this, "LambdaRole", {
+  assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+});
+
+// The Lambda needs permission to invoke the gateway
+gateway.grantInvoke(lambdaRole);
+```
+
 ### Gateway with KMS Encryption
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as kms from "aws-cdk-lib/aws-kms";
-import {
-  Gateway,
-  GatewayExceptionLevel,
-  McpProtocolConfiguration,
-  McpSearchType,
-  CustomJwtAuthorizerConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
+You can provide a KMS key, and configure the authorizer as well as the protocol configuration.
 
+```typescript fixture=default
 // Create a KMS key for encryption
 const encryptionKey = new kms.Key(this, "GatewayEncryptionKey", {
   enableKeyRotation: true,
@@ -155,36 +147,27 @@ const encryptionKey = new kms.Key(this, "GatewayEncryptionKey", {
 });
 
 // Create gateway with KMS encryption
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-encrypted-gateway",
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-encrypted-gateway",
   description: "Gateway with KMS encryption",
-  protocolConfiguration: new McpProtocolConfiguration({
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
     instructions: "Use this gateway to connect to external MCP tools",
-    searchType: McpSearchType.SEMANTIC,
-    supportedVersions: ["2024-12-01"],
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
   }),
-  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
     allowedAudience: ["my-app"],
     allowedClients: ["my-client-id"],
   }),
   kmsKey: encryptionKey,
-  exceptionLevel: GatewayExceptionLevel.DEBUG,
+  exceptionLevel: agentcore.GatewayExceptionLevel.DEBUG,
 });
 ```
 
 ### Gateway with Custom Execution Role
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as iam from "aws-cdk-lib/aws-iam";
-import {
-  Gateway,
-  McpProtocolConfiguration,
-  McpSearchType,
-  CustomJwtAuthorizerConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
+```typescript fixture=default
 // Create a custom execution role
 const executionRole = new iam.Role(this, "GatewayExecutionRole", {
   assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
@@ -194,15 +177,15 @@ const executionRole = new iam.Role(this, "GatewayExecutionRole", {
 });
 
 // Create gateway with custom execution role
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
   description: "Gateway with custom execution role",
-  protocolConfiguration: new McpProtocolConfiguration({
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
     instructions: "Use this gateway to connect to external MCP tools",
-    searchType: McpSearchType.SEMANTIC,
-    supportedVersions: ["2024-12-01"],
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
   }),
-  authorizerConfiguration: new CustomJwtAuthorizerConfiguration({
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
     allowedAudience: ["my-app"],
     allowedClients: ["my-client-id"],
@@ -215,15 +198,21 @@ const gateway = new Gateway(this, "MyGateway", {
 
 The Gateway construct provides convenient methods for granting IAM permissions:
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as iam from "aws-cdk-lib/aws-iam";
-import { Gateway } from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
+```typescript fixture=default
 // Create a gateway
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
   description: "Gateway for external service integration",
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
+  }),
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
 });
 
 // Create a role that needs access to the gateway
@@ -243,66 +232,107 @@ gateway.grant(userRole, "bedrock-agentcore:GetGateway");
 
 ## Gateway Target
 
-After creating gateways, you can add targets which define the tools that your gateway will host.
-Gateway supports multiple target types including Lambda functions and API specifications (either OpenAPI schemas or Smithy models).
-Gateway allows you to attach multiple targets to a Gateway and you can change the targets / tools attached to a gateway at any point.
-Each target can have its own credential provider attached enabling you to securely access targets whether they need IAM, API Key, or OAuth credentials.
-Note: the authorization grant flow (three-legged OAuth) is not supported as a target credential type.
+After Creating gateways, you can add targets which define the tools that your gateway will host. Gateway supports multiple target
+types including Lambda functions and API specifications (either OpenAPI schemas or Smithy models). Gateway allows you to attach multiple
+targets to a Gateway and you can change the targets / tools attached to a gateway at any point. Each target can have its own
+credential provider attached enabling you to securely access targets whether they need IAM, API Key, or OAuth credentials.
 
-With this, Gateway becomes a single MCP URL enabling access to all of the relevant tools for an agent across myriad APIs.
+### Gateway Target Properties
 
-### Target Types
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `targetName` | `string` | Yes | The name of the gateway target. Valid characters are a-z, A-Z, 0-9, _ (underscore) and - (hyphen) |
+| `description` | `string` | No | Optional description for the gateway target. Maximum 200 characters |
+| `gateway` | `IGateway` | Yes | The gateway this target belongs to |
+| `targetConfiguration` | `ITargetConfiguration` | Yes | The target configuration (Lambda, OpenAPI, or Smithy). Use `LambdaTargetConfiguration.create()`, `OpenApiTargetConfiguration.create()`, or `SmithyTargetConfiguration.create()` |
+| `credentialProviderConfigurations` | `IGatewayCredentialProvider[]` | No | Credential providers for authentication. Defaults to `[GatewayCredentialProvider.iamRole()]`. Use `GatewayCredentialProvider.apiKey()`, `GatewayCredentialProvider.oauth()`, or `GatewayCredentialProvider.iamRole()` |
 
-You can create the following target types:
+### Targets types
 
-- **Lambda**: targets allow you to connect your gateway to AWS Lambda functions that implement your tools.
- This is useful when you want to execute custom code in response to tool invocations.
-- **OpenAPI** (formerly known as Swagger): widely used standard for describing RESTful APIs. Gateway supports
-OpenAPI 3.0 specifications for defining API targets.
-- **Smithy**: language for defining services and SDKs that works well with Gateway. Smithy models provide a more structured approach
-to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
-AgentCore Gateway supports built-in AWS service models only. Smithy models are restricted to AWS services and custom
-Smithy models for non-AWS services are not supported.
+You can create the following targets types:
+
+**Lambda Target**: Lambda targets allow you to connect your gateway to AWS Lambda functions that implement your tools. This is useful
+when you want to execute custom code in response to tool invocations.
+
+- Supports GATEWAY_IAM_ROLE credential provider only
+- Ideal for custom serverless function integration
+- Need tool schema (tool schema is a blueprint that describes the functions your Lambda provides to AI agents).
+  The construct provide 3 ways to upload a tool schema to Lambda target
+
+- **OpenAPI Schema Target** : OpenAPI widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0
+specifications for defining API targets. It onnects to REST APIs using OpenAPI specifications
+
+- Supports OAUTH and API_KEY credential providers
+- Ideal for integrating with external REST services
+- Need API schema. The construct provide 3 ways to upload a API schema to OpenAPI target
+
+- **Smithy Model Target** : Smithy is a language for defining services and software development kits (SDKs). Smithy models provide
+a more structured approach to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
+AgentCore Gateway supports built-in AWS service models only. It Connects to services using Smithy model definitions
+
+- Supports OAUTH and API_KEY credential providers
+- Ideal for AWS service integrations
+- Need API schema. The construct provide 3 ways to upload a API schema to Smity target
 
 > Note: For Smithy model targets that access AWS services, your Gateway's execution role needs permissions to access those services.
 For example, for a DynamoDB target, your execution role needs permissions to perform DynamoDB operations.
 This is not managed by the construct due to the large number of options.
 
-### Outbound Auth
+### Tools schema For Lambda target
 
-Outbound authorization lets Amazon Bedrock AgentCore gateways securely access gateway targets on behalf of users
-authenticated and authorized during Inbound Auth.
-
-Similar to AWS resources or Lambda functions, you authenticate by using IAM credentials. With other resources, you can use OAuth 2LO or
-API keys. OAuth 2LO is a type of OAuth 2.0 where a client application accesses resources on it's behalf,
-instead of on behalf of the user.
-
-First, you register your client application with third-party providers and then create an outbound authorization with the client ID and secret.
-Then configure a gateway target with the outbound authorization that you created.
-
-To create an outbound auth, refer to the Identity RFC to create either an API Key identity or OAuth identity.
-
-### API Schema
-
-If you select a target of type OpenAPI or Smithy, there are three ways to provide an API schema for your target:
-
-#### From a local asset file (requires binding to scope)
+- From a local asset file
 
 ```typescript
-import * as path from "path";
-import { ApiSchema } from "aws-cdk/bedrock-agentcore-alpha/gateway/api-schema";
+toolSchema: agentcore.ToolSchema.fromLocalAsset(
+    path.join(__dirname, "schemas", "my-tool-schema.json")
+  ),
+```
 
+- From an existing S3 file:
+
+```typescript
+
+  toolSchema: agentcore.ToolSchema.fromS3File(
+    s3.Bucket.fromBucketName(this, "SchemasBucket", "my-schemas-bucket"),
+    "tools/complex-tool-schema.json",
+    "123456789012"
+  ),
+```
+
+```typescript
+const toolSchema: agentcore.ToolSchema.fromInline( {
+      name: "hello_world",
+      description: "A simple hello world tool",
+      inputSchema: {
+        type: agentcore.SchemaDefinitionType.OBJECT,
+        properties: {
+          name: {
+            type: agentcore.SchemaDefinitionType.STRING,
+            description: "The name to greet",
+          },
+        },
+        required: ["name"],
+      },
+    })
+
+```
+
+### Api schema For OpenAPI and Smithy target
+
+The OpenAPI and Smithy target need API Schema. The Gateway construct provide three ways to upload API schema for your target:
+
+- From a local asset file (requires binding to scope):
+
+```typescript fixture=default
 // When using ApiSchema.fromLocalAsset, you must bind the schema to a scope
-const schema = ApiSchema.fromLocalAsset(path.join(__dirname, "mySchema.yml"));
+const schema = agentcore.ApiSchema.fromLocalAsset(path.join(__dirname, "mySchema.yml"));
 schema.bind(this);
 ```
 
-#### From an inline schema
+- From an inline schema:
 
-```typescript
-import { ApiSchema } from "aws-cdk/bedrock-agentcore-alpha/gateway/api-schema";
-
-const inlineSchema = ApiSchema.fromInline(`
+```typescript fixture=default
+const inlineSchema = agentcore.ApiSchema.fromInline(`
 openapi: 3.0.3
 info:
   title: Library API
@@ -321,74 +351,77 @@ paths:
 `);
 ```
 
-#### From an existing S3 file
+- From an existing S3 file:
 
-```typescript
-import * as s3 from "aws-cdk-lib/aws-s3";
-import { ApiSchema } from "aws-cdk/bedrock-agentcore-alpha/gateway/api-schema";
-
+```typescript fixture=default
 const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
-const s3Schema = ApiSchema.fromS3File(bucket, "schemas/action-group.yaml");
+const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/action-group.yaml");
 ```
+
+### Outbound auth
+
+Outbound authorization lets Amazon Bedrock AgentCore gateways securely access gateway targets on behalf of users authenticated
+and authorized during Inbound Auth.
+
+AgentCore Gateway supports the following types of outbound authorization:
+
+**IAM-based outbound authorization** – The gateway uses its execution role to authenticate with AWS services. This is the default
+ and most common approach for Lambda targets and AWS service integrations.
+
+**2-legged OAuth (OAuth 2LO)** – Use OAuth 2.0 two-legged flow (2LO) for targets that require OAuth authentication.
+The gateway authenticates on its own behalf, not on behalf of a user.
+
+**API key** – Use the AgentCore service/AWS console to generate an API key to authenticate access to the gateway target.
+
+**Note > You need to set up the outbound identity before you can create a gateway target.
 
 ### Basic Gateway Target Creation
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as s3 from "aws-cdk-lib/aws-s3";
-import {
-  GatewayTarget,
-  OpenApiSchemaMcpTargetConfiguration,
-  ApiSchema,
-  ApiKeyCredentialProviderConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-import { ApiKeyIdentity } from "aws-cdk/bedrock-agentcore-alpha/identity/api-key-identity";
+You can create targets in two ways: using the static factory methods on `GatewayTarget` or using the convenient `addTarget` methods on the gateway instance.
 
+#### Using addTarget methods (Recommended)
+
+Below are the examples on how you can create Lambda , Smity and OpenAPI target using `addTarget` method.
+
+```typescript fixture=default
 // Create a gateway first
-const gateway = new Gateway(this, "MyGateway", {
-  name: "my-gateway",
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
+  }),
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
 });
 
-// Create an API Key identity
-const apiKeyIdentity = new ApiKeyIdentity(this, "MyApiKeyIdentity", {
-  name: "my-api-key-provider",
-  apiKey: "your-api-key-here",
-});
+// outbound auth (Use AWS console to create it, Once Identity L2 construct is available you can use it to create identity)
+const apiKeyIdentityArn = "your-idp-arn"
 
+// OpenAPI target need apischema
 const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
-const s3Schema = ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
+const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
 
-// Create a gateway target with OpenAPI Schema
-const target = new GatewayTarget(this, "MyTarget", {
-  name: "my-api-target",
+// Add an OpenAPI target directly to the gateway
+const target = gateway.addOpenApiTarget("MyTarget", {
+  targetName: "my-api-target",
   description: "Target for external API integration",
-  gateway: gateway,
-  targetConfiguration: new OpenApiSchemaMcpTargetConfiguration(s3Schema),
+  apiSchema: s3Schema,
   credentialProviderConfigurations: [
-    new ApiKeyCredentialProviderConfiguration({
-      provider: apiKeyIdentity,
-      credentialLocation: "HEADER",
-      credentialParameterName: "X-API-Key",
+    agentcore.GatewayCredentialProvider.apiKey({
+      providerArn: apiKeyIdentityArn,
+      credentialLocation: agentcore.ApiKeyCredentialLocation.header({
+        credentialParameterName: "X-API-Key",
+      }),
     }),
   ],
 });
-```
 
-### Lambda Target with Tool Schema
-
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as iam from "aws-cdk-lib/aws-iam";
-import {
-  GatewayTarget,
-  LambdaMcpTargetConfiguration,
-  ToolSchema,
-  SchemaDefinitionType,
-  GatewayIamRoleCredentialProviderConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-
-// Create a Lambda function
+// Add a Lambda target
 const lambdaFunction = new lambda.Function(this, "MyFunction", {
   runtime: lambda.Runtime.NODEJS_22_X,
   handler: "index.handler",
@@ -402,92 +435,137 @@ const lambdaFunction = new lambda.Function(this, "MyFunction", {
   `),
 });
 
-// Create a gateway target with Lambda and tool schema
-const target = new GatewayTarget(this, "MyLambdaTarget", {
-  name: "my-lambda-target",
-  description: "Target for Lambda function integration",
-  gateway: gateway,
-  targetConfiguration: new LambdaMcpTargetConfiguration({
-    lambda: lambdaFunction,
-    toolSchema: ToolSchema.fromInline([
-      {
-        name: "hello_world",
-        description: "A simple hello world tool",
-        inputSchema: {
-          type: SchemaDefinitionType.OBJECT,
-          description: "Input schema for hello world tool",
-          properties: {
-            name: {
-              type: SchemaDefinitionType.STRING,
-              description: "The name to greet",
-            },
-          },
-          required: ["name"],
-        },
-        outputSchema: {
-          type: SchemaDefinitionType.OBJECT,
-          description: "Output schema for hello world tool",
-          properties: {
-            message: {
-              type: SchemaDefinitionType.STRING,
-              description: "The greeting message",
-            },
+const lambdaTarget = gateway.addLambdaTarget("MyLambdaTarget", {
+  targetName: "my-lambda-target",
+  description: "Lambda function target",
+  lambdaFunction: lambdaFunction,
+  toolSchema: agentcore.ToolSchema.fromInline([
+    {
+      name: "hello_world",
+      description: "A simple hello world tool",
+      inputSchema: {
+        type: agentcore.SchemaDefinitionType.OBJECT,
+        properties: {
+          name: {
+            type: agentcore.SchemaDefinitionType.STRING,
+            description: "The name to greet",
           },
         },
+        required: ["name"],
       },
-    ]),
-  }),
+    },
+  ]),
+});
+
+// Add a Smithy target
+const smithySchema = agentcore.ApiSchema.fromS3File(bucket, "schemas/mymodel.json");
+const smithyTarget = gateway.addSmithyTarget("MySmithyTarget", {
+  targetName: "my-smithy-target",
+  description: "Smithy model target",
+  smithyModel: smithySchema,
   credentialProviderConfigurations: [
-    new GatewayIamRoleCredentialProviderConfiguration({
-      role: new iam.Role(this, "GatewayTargetRole", {
-        assumedBy: new iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName(
-            "AmazonBedrockAgentCoreGatewayTargetExecutionRolePolicy"
-          ),
-        ],
-      }),
-    }),
+    agentcore.GatewayCredentialProvider.iamRole(),
   ],
 });
 ```
 
-### Smithy Model Target with OAuth
+#### Using static factory methods
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as s3 from "aws-cdk-lib/aws-s3";
-import {
-  GatewayTarget,
-  SmithyModelMcpTargetConfiguration,
-  ApiSchema,
-  OAuthCredentialProviderConfiguration,
-} from "aws-cdk/bedrock-agentcore-alpha/gateway";
-import { OAuthIdentity } from "aws-cdk/bedrock-agentcore-alpha/identity/oauth-identity";
-import { GoogleOauth2Config } from "aws-cdk/bedrock-agentcore-alpha/identity/oauth-provider";
+Create Gateway target using static convienence method.
 
-// Create an OAuth identity
-const oauthIdentity = new OAuthIdentity(this, "MyOAuthIdentity", {
-  name: "my-oauth-provider",
-  oauthProvider: new GoogleOauth2Config({
-    clientId: "your-google-client-id",
-    clientSecret: "your-google-client-secret",
-  }),
+```typescript fixture=default
+// Create a gateway first
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
 });
 
+const apiKeyIdentityArn = "your-idp-arn"
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
+
+// Create a gateway target with OpenAPI Schema 
+const target = agentcore.GatewayTarget.forOpenApi(this, "MyTarget", {
+  targetName: "my-api-target",
+  description: "Target for external API integration",
+  gateway: gateway,  // Note: you need to pass the gateway reference
+  apiSchema: s3Schema,
+  credentialProviderConfigurations: [
+    agentcore.GatewayCredentialProvider.apiKey({
+     providerArn: apiKeyIdentityArn,
+      credentialLocation: agentcore.ApiKeyCredentialLocation.header({
+        credentialParameterName: "X-API-Key",
+      }),
+    }),
+  ],
+});
+
+// Create a Lambda function
+const lambdaFunction = new lambda.Function(this, "MyFunction", {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  handler: "index.handler",
+  code: lambda.Code.fromInline(`
+        exports.handler = async (event) => {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: 'Hello from Lambda!' })
+            };
+        };
+    `),
+});
+
+// Create a gateway target with Lambda and tool schema 
+const target = agentcore.GatewayTarget.forLambda(this, "MyLambdaTarget", {
+  targetName: "my-lambda-target",
+  description: "Target for Lambda function integration",
+  gateway: gateway,
+  lambdaFunction: lambdaFunction,
+  toolSchema: agentcore.ToolSchema.fromInline([
+    {
+      name: "hello_world",
+      description: "A simple hello world tool",
+      inputSchema: {
+        type: agentcore.SchemaDefinitionType.OBJECT,
+        description: "Input schema for hello world tool",
+        properties: {
+          name: {
+            type: agentcore.SchemaDefinitionType.STRING,
+            description: "The name to greet",
+          },
+        },
+        required: ["name"],
+      },
+      outputSchema: {
+        type: agentcore.SchemaDefinitionType.OBJECT,
+        description: "Output schema for hello world tool",
+        properties: {
+          message: {
+            type: agentcore.SchemaDefinitionType.STRING,
+            description: "The greeting message",
+          },
+        },
+      },
+    },
+  ]),
+  credentialProviderConfigurations: [agentcore.GatewayCredentialProvider.iamRole()],
+});
+
+
+// Create an OAuth identity
+const oauthIdentityArn = "oauth-idp-arn"
 const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
 // A Smithy model in JSON AST format
-const s3Schema = ApiSchema.fromS3File(bucket, "schemas/myschema.json");
+const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/myschema.json");
 
-// Create a gateway target with Smithy Model and OAuth
-const target = new GatewayTarget(this, "MySmithyTarget", {
-  name: "my-smithy-target",
+// Create a gateway target with Smithy Model and OAuth 
+const target = agentcore.GatewayTarget.forSmithy(this, "MySmithyTarget", {
+  targetName: "my-smithy-target",
   description: "Target for Smithy model integration",
   gateway: gateway,
-  targetConfiguration: new SmithyModelMcpTargetConfiguration(s3Schema),
+  smithyModel: s3Schema,
   credentialProviderConfigurations: [
-    new OAuthCredentialProviderConfiguration({
-      provider: oauthIdentity,
+    agentcore.GatewayCredentialProvider.oauth({
+      providerArn: oauthIdentityArn,
       scopes: ["read", "write"],
       customParameters: {
         audience: "https://api.example.com",
@@ -496,41 +574,46 @@ const target = new GatewayTarget(this, "MySmithyTarget", {
     }),
   ],
 });
+
 ```
-
-### Target Configuration Types
-
-The Gateway Target construct supports three MCP target configuration types:
-
-1. **OpenAPI Schema Target** (`OpenApiSchemaMcpTargetConfiguration`)
-   - Connects to REST APIs using OpenAPI specifications
-   - Supports OAUTH and API_KEY credential providers
-   - Ideal for integrating with external REST services
-
-2. **Smithy Model Target** (`SmithyModelMcpTargetConfiguration`)
-   - Connects to services using Smithy model definitions
-   - Supports OAUTH and API_KEY credential providers
-   - Ideal for AWS service integrations
-
-3. **Lambda Target** (`LambdaMcpTargetConfiguration`)
-   - Connects to AWS Lambda functions
-   - Supports GATEWAY_IAM_ROLE credential provider only
-   - Ideal for custom serverless function integration
 
 ### Gateway Target IAM Permissions
 
 The Gateway Target construct provides convenient methods for granting IAM permissions:
 
-```typescript
-import * as cdk from "aws-cdk-lib";
-import * as iam from "aws-cdk-lib/aws-iam";
-import { GatewayTarget } from "aws-cdk/bedrock-agentcore-alpha/gateway";
+```typescript fixture=default
+// Create a gateway and target
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+  protocolConfiguration: new agentcore.McpProtocolConfiguration({
+    instructions: "Use this gateway to connect to external MCP tools",
+    searchType: agentcore.McpGatewaySearchType.SEMANTIC,
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
+  }),
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    allowedAudience: ["my-app"],
+    allowedClients: ["my-client-id"],
+  }),
+});
 
-// Create a gateway target
-const target = new GatewayTarget(this, "MyTarget", {
-  name: "my-target",
+const apiKeyIdentityArn = "your-idp-arn"
+
+const bucket = s3.Bucket.fromBucketName(this, "ExistingBucket", "my-schema-bucket");
+const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/myschema.yaml");
+
+const target = agentcore.GatewayTarget.forOpenApi(this, "MyTarget", {
+  targetName: "my-target",
   gateway: gateway,
-  // ... target configuration
+  apiSchema: s3Schema,
+  credentialProviderConfigurations: [
+    agentcore.GatewayCredentialProvider.apiKey({
+     providerArn: apiKeyIdentityArn,
+      credentialLocation: agentcore.ApiKeyCredentialLocation.header({
+        credentialParameterName: "X-API-Key",
+      }),
+    }),
+  ],
 });
 
 // Create a role that needs access to the gateway target
@@ -546,6 +629,10 @@ target.grantManage(userRole);
 
 // Grant specific custom permissions
 target.grant(userRole, "bedrock-agentcore:GetGatewayTarget");
+
+
+// Grants permission to invoke this Gateway
+gateway.grantInvoke(grantee: iam.IGrantable);
 ```
 
 ---
@@ -581,7 +668,6 @@ The Amazon Bedrock AgentCore Gateway L2 constructs offer several compelling adva
 3. **Security First**: Built-in authentication for both inbound and outbound connections
 4. **Multiple Integrations**: Connect to Lambda, REST APIs, and AWS services
 5. **Simple Configuration**: Pre-configured defaults with flexibility
-6. **Cost Effective**: Pay only for what you use
 
 These L2 constructs eliminate the complexity of managing multiple API integrations.
 Developers can focus on building agent applications with rich tool capabilities.
@@ -606,17 +692,6 @@ The L2 constructs address these challenges by providing:
 
 ### Why should we _not_ do this?
 
-Potential concerns to consider:
-
-1. **Service Maturity**: AgentCore is in preview and subject to changes
-3. **Smithy Limitations**: Only supports AWS service models
-
-However, these concerns are mitigated by:
-
-- Clear migration path when CloudFormation support becomes available
-- OpenAPI support for non-AWS services
-- Comprehensive security controls
-
 ### What is the technical solution (design) of this feature?
 
 The L2 construct library is built using:
@@ -634,43 +709,47 @@ Key design principles:
 
 ## Interfaces
 
-The construct library provides comprehensive interfaces for Gateway services:
+The construct library provides interfaces for Gateway services:
 
 ### Gateway Interfaces
 
-- [GatewayProps](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gatewayprops)
-- [GatewayTargetProps](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gatewaytargetprops)
-- [ProtocolConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#protocolconfiguration)
-- [AuthorizerConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#authorizerconfiguration)
-- [TargetConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#targetconfiguration)
-- [CredentialProviderConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#credentialproviderconfiguration)
+- `IGateway` - Represents a Gateway resource
+- `IGatewayTarget` - Represents a Gateway Target resource
+- `IGatewayProps` - Properties for creating a Gateway
+- `IGatewayTargetProps` - Properties for creating a Gateway Target
+- `IGatewayProtocol` - Protocol configuration interface
+- `IGatewayAuthorizer` - Authorizer configuration interface
+- `ITargetConfiguration` - Target configuration interface
+- `IGatewayCredentialProvider` - Credential provider configuration interface
 
 ## Classes
 
 ### Core Classes
 
-- [Gateway](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gateway)
-- [GatewayTarget](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gatewaytarget)
+- `Gateway` - L2 construct for creating and managing Gateways
+- `GatewayTarget` - L2 construct for creating and managing Gateway Targets
 
 ### Configuration Classes
 
-- [McpProtocolConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#mcpprotocolconfiguration)
-- [CustomJwtAuthorizerConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#customjwtauthorizerconfiguration)
-- [ApiKeyCredentialProviderConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#apikeycredentialproviderconfiguration)
-- [OAuthCredentialProviderConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#oauthcredentialproviderconfiguration)
-- [GatewayIamRoleCredentialProviderConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gatewayiamrolecredentialproviderconfiguration)
+- `McpProtocolConfiguration` - Configuration for MCP protocol
+- `GatewayAuthorizer` - Factory class for creating authorizer configurations
+- `GatewayCredentialProvider` - Factory class for creating credential providers
+- `ApiSchema` - Helper class for managing API schemas
+- `ToolSchema` - Helper class for managing tool schemas
+- `ApiKeyCredentialLocation` - Configuration for API key location
 
 ### Target Configuration Classes
 
-- [OpenApiSchemaMcpTargetConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#openapischemamcptargetconfiguration)
-- [SmithyModelMcpTargetConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#smithymodelmcptargetconfiguration)
-- [LambdaMcpTargetConfiguration](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#lambdamcptargetconfiguration)
+- `LambdaTargetConfiguration` - Configuration for Lambda targets
+- `OpenApiTargetConfiguration` - Configuration for OpenAPI targets
+- `SmithyTargetConfiguration` - Configuration for Smithy model targets
 
 ## Enumerations
 
-- [McpSearchType](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#mcpsearchtype)
-- [GatewayExceptionLevel](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#gatewayexceptionlevel)
-- [SchemaDefinitionType](https://github.com/krokoko/agent-core-cdk-constructs/blob/main/API.md#schemadefinitiontype)
+- `McpGatewaySearchType` - Search type for MCP gateway (SEMANTIC or STANDARD)
+- `GatewayExceptionLevel` - Exception verbosity level (DEBUG or STANDARD)
+- `SchemaDefinitionType` - Schema definition types for tool schemas
+- `MCPProtocolVersion` - Supported MCP protocol versions
 
 ### Is this a breaking change?
 
