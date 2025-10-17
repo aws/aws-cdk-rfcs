@@ -282,7 +282,6 @@ may have a README but it could be poorly written. These signals come together to
 | Quality     | Stable versioning                  | ≥1.x.x & active = 100, <1.0 & active = 50, deprecated = 0             | Registry API   | YES      | Avoids abandoned projects        | 2          |
 | Quality     | License, .gitignore/.npmignore     | Both = 100, one = 50, none = 0                                        | Tarball        | YES      | Legal clarity + hygiene          | 1          |
 | Quality     | Multi-language Support             | 4+ = 100, 3 = 75, 2 = 50, 1 = 25, fake/missing = 0                    | Tarball        | YES      | Signals extra effort             | 1          |
-| Quality     | Dependency freshness / vuln checks | —                                                                     | npm            | NO       | Security                         | 3          |
 | Quality     | Download Balance Across Languages  | —                                                                     | All registries | NO       | Confirms real multi-lang support | 1          |
 | Quality     | Code complexity                    | —                                                                     | —              | NO       | Hard to automate                 | 1          |
 | Quality     | Lint configuration                 | Present = 100, Absent = 0                                             | Tarball        | NO       | Style/consistency                | 1          |
