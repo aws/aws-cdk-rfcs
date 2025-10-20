@@ -1265,7 +1265,7 @@ interface ContainerRecipeProps {
    * @default - Image Builder will determine the platform of the base image, if sourced from a third-party container
    * registry. Otherwise, the platform of the base image is required.
    */
-  readonly platform?: string;
+  readonly platform?: Platform;
 
   /**
    * The block devices to attach to the instance used for building, testing, and distributing the container image.
