@@ -159,20 +159,18 @@ const memory = new agentcore.Memory(this, "MyMemory", {
   description: "Memory with built-in strategies",
   expirationDays: cdk.Duration.days(90),
   memoryStrategies: [
-    agentcore.MemoryStrategy.usingBuiltInSummarization(this),
-    agentcore.MemoryStrategy.usingBuiltInSemantic(this),
-    agentcore.MemoryStrategy.usingBuiltInUserPreference(this),
+    agentcore.MemoryStrategy.usingBuiltInSummarization(),
+    agentcore.MemoryStrategy.usingBuiltInSemantic(),
+    agentcore.MemoryStrategy.usingBuiltInUserPreference(),
   ],
 });
 ```
 
-The name generated for each built in memory strategy the followin pattern:
+The name generated for each built in memory strategy is as follows:
 
-- For Summarization: `summary_builtin_<suffix>`
-- For Semantic:`semantic_builtin_<suffix>`
-- For User Preferences: `preference_builtin_<suffix>`
-
-Where the suffix is a 5 characters string ([a-z, A-Z, 0-9]) generated via the `Names.uniqueId(scope)`.
+- For Summarization: `summary_builtin_cdk001`
+- For Semantic:`semantic_builtin_cdk001>`
+- For User Preferences: `preference_builtin_cdk001`
 
 ### Memory with custom Strategies
 
@@ -296,6 +294,58 @@ const memory = new agentcore.Memory(this, "MyMemory", {
 });
 ```
 
+### Memory with self-managed Strategies
+
+A self-managed strategy in Amazon Bedrock AgentCore Memory gives you complete control over your memory extraction and consolidation pipelines. 
+With a self-managed strategy, you can build custom memory processing workflows while leveraging Amazon Bedrock AgentCore for storage and retrieval.
+
+For additional information, you can refer to the [developer guide for self managed strategies](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/memory-self-managed-strategies.html).
+
+Create the required AWS resources including:
+
+- an S3 bucket in your account where Amazon Bedrock AgentCore will deliver batched event payloads.
+- an SNS topic for job notifications. Use FIFO topics if processing order within sessions is important for your use case.
+
+The construct will apply the correct permissions to the memory execution role to access these resources.
+
+```typescript fixture=default
+
+const bucket = new s3.Bucket(stack, 'memoryBucket', {
+  bucketName: 'test-memory',
+  removalPolicy: cdk.RemovalPolicy.DESTROY,
+  autoDeleteObjects: true,
+});
+
+const topic = new sns.Topic(this, 'topic');
+
+// Create a custom semantic memory strategy
+const selfManagedStrategy = agentcore.MemoryStrategy.usingSelfManaged(this, {
+  name: "selfMabagedStrategy",
+  description: "self managed memory strategy",
+  historicalContextWindowSize: 5,
+  invocationConfiguration: {
+    topic: topic,
+    s3Location: {
+      bucketName: bucket.bucketName,
+      objectKey: 'memory/',
+    }
+  },
+  triggerConditions: {
+    messageBasedTrigger: 1,
+    timeBasedTrigger: cdk.Duration.seconds(10),
+    tokenBasedTrigger: 100
+  }
+});
+
+// Create memory with custom strategy
+const memory = new agentcore.Memory(this, "MyMemory", {
+  memoryName: "my-custom-memory",
+  description: "Memory with custom strategy",
+  expirationDays: cdk.Duration.days(90),
+  memoryStrategies: [selfManagedStrategy],
+});
+```
+
 ### Memory Strategy Methods
 
 You can add new memory strategies to the memory construct using the `addMemoryStrategy()` method, for instance:
@@ -309,8 +359,8 @@ const memory = new agentcore.Memory(this, "test-memory", {
 });
 
 // Add strategies after instantiation
-memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSummarization(this));
-memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSemantic(this));
+memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSummarization());
+memory.addMemoryStrategy(agentcore.MemoryStrategy.usingBuiltInSemantic());
 ```
 
 ---
