@@ -13,7 +13,7 @@ glance and maintainers know exactly how to improve.
 
 ### README
 
-#### CDK Constrct Analyzer
+#### CDK Construct Analyzer
 
 `@cdklabs/cdk-construct-analyzer` is a CLI and library for evaluating the quality of construct libraries.
 
@@ -76,22 +76,17 @@ SUBSCORES
 
 === Maintenance ===                               SCORE  WEIGHT
 — Time to first response......................... ★★★☆☆    3
-— Commit Frequency .............................. ★★★☆☆    3
 — Release Frequency ............................. ★★★★☆    3
 — Provenance Verification ....................... ★★★★★    3
 — Open issues / total issues .................... ★★★★★    3
-— Median PR time-to-merge ....................... ★★☆☆☆    2
 — Number of Contributors ........................ ★★★☆☆    2
-— Most recent commit ............................ ★★★★☆    2
 
 === Quality ===                                   SCORE  WEIGHT
-— README, API Reference and usage examples ...... ★★★★★    3
+— Documentation Completeness .................... ★★★★★    3
 — Tests checklist (unit/snapshot) ............... ★★★☆☆    3
-— Passing CI builds ............................. ★★★★★    3
 — Author Track Record ........................... ★★★★★    3
-— Changelog Present ............................. ★☆☆☆☆    3
+— Changelog includes feats/fixes ................ ★☆☆☆☆    3
 — Stable versioning ............................. ★★★★☆    2
-— License, .gitignore/.npmignore present ........ ★★★★☆    1
 — Multi-language Support ........................ ★★★☆☆    1
 
 === Popularity ===                                SCORE  WEIGHT
@@ -109,25 +104,19 @@ The scoring algorithm evaluates each construct on three pillars with multiple we
 Helps determine if the project is active and healthy, or abandoned. Signals include:
 
 * Time to first response: Fast issue resolution reflects active, responsive maintainers.
-* Commit Frequency: Frequent commits show steady development and maintenance.
 * Release Frequency: Regular releases signal iteration, patching, and progress.
 * Provenance Verification: Verifies package authenticity and supply chain security.
-* Open issues / total issues: A lower ratio of open issues indicates backlog health and follow-through
-normalized by repository popularity.
-* Median PR time-to-merge: Shorter merge times suggest attentiveness to community contributions.
+* Open issues / total issues: A lower ratio of open issues indicates backlog health and follow through normalized by repository popularity.
 * Number of Contributors: More contributors reduce risk of abandonment and reflect shared maintenance.
-* Most recent commit: More recent commits help confirm that the project is active and not stale.
 
 ##### Quality
 
 Signals that are visible in the repo/package that showcases quality:
 
-* README, API Reference and usage examples: High quality documentation makes the project easier to adopt and use.
+* Documentation Completeness: High quality documentation makes the project easier to adopt and use (README, API References, Usage Examples).
 * Tests checklist (unit/snapshot): Tests ensure correctness and prevent regressions.
-* Passing CI builds: A passing CI pipeline indicates functional and validated code.
 * Author Track Record: Measures how many packages the author has published, more published packages often indicate greater experience.
-* Changelog Present: A changelog helps users track updates.
-* License, .gitignore/.npmignore present: Legal clarity and clean packaging are basic hygiene signals.
+* Changelog includes feats/fixes: Checks if there are feats/fixes published in the release notes.
 * Stable versioning (>=1.x.x, not deprecated): Indicates API maturity and stability.
 * Multi-language Support: Supporting more CDK languages shows extra effort and intent to reach a broader developer base
 
@@ -147,14 +136,6 @@ importance level 3 will carry 3× the weight of a signal with importance level 1
 * **3 — Critical** signals that strongly influence a library’s overall health and usability (3 points)
 * **2 — Valuable** indicators that support confidence but aren’t decisive signals (2 points)
 * **1 — Supportive** or “nice to have” checks (1 points)
-
-Each signal is also graded into one of five fixed buckets, shown using star ratings:
-
-* ★★★★★ = 100
-* ★★★★☆ = 75
-* ★★★☆☆ = 50
-* ★★☆☆☆ = 25
-* ★☆☆☆☆ = 0
 
 When calculating a subscore (Maintenance, Quality, Popularity), each signal’s grade is weighted by its importance.
 Once all signals in a category are evaluated, the score is normalized to a 0–100 scale. This ensures that categories
@@ -216,8 +197,8 @@ dashboards, or third-party registries.
 The scoring process works as follows:
 
 * Take inputs: Users provide an npm package name.
-* Normalize: The tool will look up the package metadata from sources like npm and GitHub.
-* Collect signals:
+* Fetch Data: The tool will look up the package metadata from sources like npm and GitHub.
+* Collect/Process signals:
   * Maintenance: how active the project is (recent releases, frequency of updates, how quickly issues/PRs are handled, active maintainers).
   * Quality: what the project includes (README, tests, lint setup, changelog, license, repo hygiene, CDK-specific setup).
   * Popularity: how widely it’s used (downloads from registries, growth trends, GitHub stars, forks, and contributors).
@@ -246,13 +227,16 @@ No.
 
 ### How can Gen AI help in this project?
 
-Generative AI can support this project in helpful but limited ways. It could assist with parsing and interpreting unstructured
-content like README files, changelogs, and test files to assess quality related signals. When certain metadata is missing or incomplete,
-AI can help infer details, for example, detecting whether usage examples are present in documentation or summarizing code structure.
-Additionally, Gen AI could be used to generate summaries or suggestions for construct library authors on how to improve their
-library’s score. However, Gen AI is not suitable for core scoring logic. Because its outputs are nondeterministic and not auditable,
-it cannot be relied on for calculating scores or evaluating libraries in a reproducible and explainable way. Overall, Gen AI can be a
-valuable tool for enhancing developer experience, but it should remain a supporting component rather than a decision making tool.
+The current implementation does not use Generative AI for any analysis, including README parsing. Gen AI is being considered as a future
+enhancement to support this project in helpful but limited ways. Future versions may use AI to assist with parsing and interpreting
+unstructured content like README files, changelogs, and test files to assess quality-related signals. When certain metadata is missing or
+incomplete, AI will help infer details, for example, detecting whether usage examples are present in documentation or summarizing code
+structure. Additionally, Gen AI will be used to generate summaries or suggestions for construct library authors on how to improve their
+library's score.
+
+However, Gen AI will not be suitable for core scoring logic. Because its outputs are nondeterministic and not auditable, it cannot be
+relied on for calculating scores or evaluating libraries in a reproducible and explainable way. Future Gen AI integration will remain a
+supporting component for enhancing developer experience, not a decision-making tool.
 
 ## Appendix
 
@@ -264,26 +248,26 @@ may have a README but it could be poorly written. These signals come together to
 | Pillar      | Signal                             | Calculation / Thresholds                                              | Source         | Required | Justification                    | Importance |
 |-------------|------------------------------------|-----------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
 | Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0   | Repo API       | YES      | Reflects responsiveness          | 3          |
-| Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 = 0                           | Repo API       | YES      | Shows steady activity            | 3          |
 | Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0      | Registry API   | YES      | Activity check, responsiveness   | 3          |
 | Maintenance | Provenance Verification            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0 | Repo API       | YES      | Ensures supply chain security    | 3          |
 | Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0   | Repo API       | YES      | Measures backlog health          | 2          |
-| Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0              | Repo API       | YES      | Signals maintainer attention     | 2          |
 | Maintenance | Number of Contributors             | ≥4/mth = 100, 2–3/mth = 75, 1/mth = 50, 0/mth = 0                     | Repo API       | YES      | Broad community involvement      | 2          |
-| Maintenance | Most recent commit                 | <7d = 100, 7–30d = 75, 1–3mo = 50, 3–6mo = 25, >6mo = 0               | Repo API       | YES      | Indicates recency                | 2          |
+| Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 = 0                           | Repo API       | NO       | Shows steady activity            | 3          |
 | Maintenance | Active Maintainers in last 90 days | —                                                                     | Repo API       | NO       | Prevents “bus factor”            | 3          |
+| Maintenance | Most recent commit                 | <7d = 100, 7–30d = 75, 1–3mo = 50, 3–6mo = 25, >6mo = 0               | Repo API       | NO       | Indicates recency                | 2          |
+| Maintenance | Median PR time-to-merge            | <1wk = 100, 1–4wk = 75, 1–3mo = 50, 3–6mo = 25, 6mo+ = 0              | Repo API       | NO       | Signals maintainer attention     | 2          |
 | Maintenance | Number of Significant Contributors | —                                                                     | Repo API       | NO       | Measure of team size             | 2          |
 | Maintenance | Branch activity                    | —                                                                     | Repo API       | NO       | Hard to normalize                | 1          |
 | Maintenance | SemVer                             | —                                                                     | Registry API   | NO       | Maturity ≠ activity              | 1          |
-| Quality     | README, API ref, examples          | Full = 100, README only = 50, none = 0                                | Tarball        | YES      | Entry point for users            | 3          |
+| Quality     | Documentation Completeness         | Full = 100, README only = 50, none = 0                                | Tarball        | YES      | Entry point for users            | 3          |
 | Quality     | Tests checklist (unit/snapshot)    | Unit+Snapshot = 100, one = 50, neither = 0                            | npm            | YES      | Ensures correctness              | 3          |
-| Quality     | Passing CI builds                  | Passing = 100, Failing = 0                                            | Repo API       | YES      | Code quality enforcement         | 3          |
 | Quality     | Author Track Record                | 20+ pkgs = 100, 11–20 = 75, 5–10 = 50, 2–4 = 25, 1 = 0                | Repo API / npm | YES      | Track record of strong authors   | 3          |
-| Quality     | Changelog Present                  | Present = 100, Missing = 0                                            | Tarball        | YES      | Transparency for changes         | 3          |
+| Quality     | Changelog includes feats/fixes     | Present = 100, Missing = 0                                            | Tarball        | YES      | Transparency for changes         | 3          |
 | Quality     | Stable versioning                  | ≥1.x.x & active = 100, <1.0 & active = 50, deprecated = 0             | Registry API   | YES      | Avoids abandoned projects        | 2          |
-| Quality     | License, .gitignore/.npmignore     | Both = 100, one = 50, none = 0                                        | Tarball        | YES      | Legal clarity + hygiene          | 1          |
 | Quality     | Multi-language Support             | 4+ = 100, 3 = 75, 2 = 50, 1 = 25, fake/missing = 0                    | Tarball        | YES      | Signals extra effort             | 1          |
+| Quality     | Passing CI builds                  | Passing = 100, Failing = 0                                            | Repo API       | NO       | Code quality enforcement         | 3          |
 | Quality     | Download Balance Across Languages  | —                                                                     | All registries | NO       | Confirms real multi-lang support | 1          |
+| Quality     | License, .gitignore/.npmignore     | Both = 100, one = 50, none = 0                                        | Tarball        | NO       | Legal clarity + hygiene          | 1          |
 | Quality     | Code complexity                    | —                                                                     | —              | NO       | Hard to automate                 | 1          |
 | Quality     | Lint configuration                 | Present = 100, Absent = 0                                             | Tarball        | NO       | Style/consistency                | 1          |
 | Quality     | Badges                             | ≥3 meaningful = 100, 1–2 = 50, none = 0                               | Tarball        | NO       | Signals professionalism          | 1          |
@@ -307,20 +291,15 @@ Overall:     72/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 2          | 3        |
-| Maintenance | Commit Frequency                   | 3          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 3          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
-| Maintenance | Most recent commit                 | 3          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 1          | 3        |
+| Quality     | Changelog includes feats/fixes     | 1          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
@@ -336,20 +315,15 @@ Overall:     65/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 3          | 3        |
-| Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 2          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 3          | 2        |
-| Maintenance | Median PR time-to-merge            | 3          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
-| Maintenance | Most recent commit                 | 3          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 1          | 3        |
+| Quality     | Changelog includes feats/fixes     | 1          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
@@ -365,20 +339,15 @@ Overall:     75/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 3          | 3        |
-| Maintenance | Commit Frequency                   | 3          | 3        |
 | Maintenance | Release Frequency                  | 4          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 2          | 2        |
 | Maintenance | Number of Contributors             | 3          | 2        |
-| Maintenance | Most recent commit                 | 4          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 1          | 3        |
 | Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
@@ -394,20 +363,15 @@ Overall:     61/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 3          | 3        |
-| Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 1          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 2          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
-| Maintenance | Most recent commit                 | 1          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 1          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 4          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
@@ -423,20 +387,15 @@ Overall:     37/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 1          | 3        |
-| Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 1          | 3        |
 | Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 1          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
-| Maintenance | Most recent commit                 | 1          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Passing CI builds                  | 1          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 3          | 1        |
 | Popularity  | Weekly Downloads                   | 3          | 3        |
 | Popularity  | Repo stars                         | 2          | 2        |
@@ -452,20 +411,15 @@ Overall:     85/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 3          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 4          | 2        |
-| Maintenance | Most recent commit                 | 5          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 4          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 2          | 2        |
@@ -481,20 +435,15 @@ Overall:    100/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 5          | 3        |
-| Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 5          | 2        |
-| Maintenance | Most recent commit                 | 5          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 5          | 2        |
@@ -510,20 +459,15 @@ Overall:     71/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Commit Frequency                   | 5          | 3        |
 | Maintenance | Release Frequency                  | 5          | 3        |
 | Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 2          | 2        |
-| Maintenance | Most recent commit                 | 5          | 2        |
-| Quality     | README, API ref, examples          | 3          | 3        |
+| Quality     | Documentation Completeness         | 3          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 4          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 3          | 1        |
 | Popularity  | Weekly Downloads                   | 4          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
@@ -539,20 +483,15 @@ Overall:     72/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Commit Frequency                   | 1          | 3        |
 | Maintenance | Release Frequency                  | 4          | 3        |
 | Maintenance | Provenance Verification            | 1          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 1          | 2        |
-| Maintenance | Most recent commit                 | 2          | 2        |
-| Quality     | README, API ref, examples          | 3          | 3        |
+| Quality     | Documentation Completeness         | 3          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 5          | 2        |
@@ -568,20 +507,15 @@ Overall:     90/100
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
 | Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Commit Frequency                   | 4          | 3        |
 | Maintenance | Release Frequency                  | 3          | 3        |
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Median PR time-to-merge            | 5          | 2        |
 | Maintenance | Number of Contributors             | 4          | 2        |
-| Maintenance | Most recent commit                 | 5          | 2        |
-| Quality     | README, API ref, examples          | 5          | 3        |
+| Quality     | Documentation Completeness         | 5          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Passing CI builds                  | 5          | 3        |
 | Quality     | Author Track Record                | 3          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | License, .gitignore/.npmignore     | 5          | 1        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
 | Popularity  | Repo stars                         | 4          | 2        |
