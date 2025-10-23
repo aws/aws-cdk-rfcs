@@ -853,7 +853,7 @@ EC2 Image Builder resources can already be provisioned via CDK today, using its 
 interface ImagePipelineProps {
   /**
    * The recipe that defines the base image, components, and customizations used to build the image. This can either be
-   * and image recipe, or a container recipe.
+   * an image recipe, or a container recipe.
    */
   readonly recipe: IRecipeBase;
 
@@ -872,7 +872,8 @@ interface ImagePipelineProps {
   readonly description?: string;
 
   /**
-   * The schedule of the image pipeline.
+   * The schedule of the image pipeline. This configures how often and when a pipeline automatically creates a new
+   * image.
    *
    * @default - None - a manual image pipeline will be created
    */
@@ -987,7 +988,7 @@ interface ImagePipelineProps {
 interface ImageProps {
   /**
    * The recipe that defines the base image, components, and customizations used to build the image. This can either be
-   * and image recipe, or a container recipe.
+   * an image recipe, or a container recipe.
    */
   readonly recipe: IRecipeBase;
 
