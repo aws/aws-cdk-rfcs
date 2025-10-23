@@ -136,7 +136,7 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
   }),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
     imageRecipeName: 'test-image-recipe',
-    imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+    imageRecipeVersion: '1.0.0',
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -156,7 +156,6 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
         workflowName: 'custom-test-workflow',
         workflowType: imagebuilder.WorkflowType.TEST,
-        workflowVersion: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
@@ -208,7 +207,7 @@ const image = new imagebuilder.Image(stack, 'Image', {
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
     imageRecipeName: 'test-image-recipe',
-    imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+    imageRecipeVersion: '1.0.0',
   }),
   infrastructureConfiguration: imagebuilder.InfrastructureConfiguration.fromInfrastructureConfigurationName(
     stack,
@@ -228,7 +227,6 @@ const image = new imagebuilder.Image(stack, 'Image', {
       workflow: imagebuilder.Workflow.fromWorkflowAttributes(stack, 'TestImageWorkflow', {
         workflowName: 'custom-test-workflow',
         workflowType: imagebuilder.WorkflowType.TEST,
-        workflowVersion: imagebuilder.BuildVersion.LATEST,
       }),
     },
     {
@@ -280,7 +278,7 @@ userData.addCommands('User Data complete!');
 
 const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
   imageRecipeName: 'test-image-recipe',
-  imageRecipeVersion: imagebuilder.Version.fromString('1.0.0'),
+  imageRecipeVersion: '1.0.0',
   description: 'An Image Recipe',
   // Use an AL2023 base image
   baseImage: imagebuilder.BaseImage.fromSsmParameterName(
@@ -309,14 +307,12 @@ const imageRecipe = new imagebuilder.ImageRecipe(stack, 'ImageRecipe', {
         {
           name: 'marketplace-component-name',
           marketplaceProductId: '12345678-1234-1234-1234-123456789012',
-          version: imagebuilder.BuildVersion.LATEST,
         },
       ),
     },
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
         componentName: 'custom-component',
-        componentVersion: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER_KEY: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -365,7 +361,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 
 const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe', {
   containerRecipeName: 'test-container-recipe',
-  containerRecipeVersion: imagebuilder.Version.fromString('1.0.0'),
+  containerRecipeVersion: '1.0.0',
   description: 'A Container Recipe',
   baseImage: imagebuilder.BaseImage.fromEcr(
     stack,
@@ -401,7 +397,6 @@ const containerRecipe = new imagebuilder.ContainerRecipe(stack, 'ContainerRecipe
     {
       component: imagebuilder.Component.fromComponentAttributes(stack, 'CustomComponent', {
         componentName: 'custom-component',
-        componentVersion: imagebuilder.BuildVersion.LATEST,
       }),
       parameters: {
         CUSTOM_PARAMETER: imagebuilder.ComponentParameterValue.fromString('custom-parameter-value'),
@@ -451,7 +446,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 
 const component = new imagebuilder.Component(stack, 'Component', {
   componentName: 'build-and-test-component',
-  componentVersion: imagebuilder.Version.fromString('1.0.0'),
+  componentVersion: '1.0.0',
   description: 'A build and test component',
   changeDescription: 'Initial version',
   // Encrypt component data with a KMS key
@@ -704,7 +699,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 const workflow = new imagebuilder.Workflow(stack, 'Workflow', {
   workflowName: 'custom-build-workflow',
   workflowType: imagebuilder.WorkflowType.BUILD,
-  workflowVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+  workflowVersion: '1.0.0',
   description: 'A test workflow',
   changeDescription: 'Initial version',
   kmsKey: kms.Key.fromLookup(stack, 'WorkflowKey', { aliasName: 'alias/workflow-encryption-key' }),
@@ -790,7 +785,7 @@ const lifecyclePolicy = new imagebuilder.LifecyclePolicy(stack, 'LifecyclePolicy
     recipes: [
       imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
         imageRecipeName: 'test-image-recipe',
-        imageRecipeVersion: new imagebuilder.Version({ major: '1', minor: '0', patch: '0' }),
+        imageRecipeVersion: '1.0.0',
       }),
     ],
   },
@@ -857,7 +852,8 @@ EC2 Image Builder resources can already be provisioned via CDK today, using its 
 ```ts
 interface ImagePipelineProps {
   /**
-   * The recipe that defines the base image, components, and customizations used to build the image.
+   * The recipe that defines the base image, components, and customizations used to build the image. This can either be
+   * and image recipe, or a container recipe.
    */
   readonly recipe: IRecipeBase;
 
@@ -922,25 +918,18 @@ interface ImagePipelineProps {
   readonly executionRole?: iam.IRole;
 
   /**
-   * Whether to grant default permissions to the execution role used to build and test the image. If this is set to
-   * false, the execution role will not be granted any default permissions. This setting only applies when you pass
-   * an execution role, or when one is generated automatically when providing a custom set of image workflows.
+   * The log group to use for the image pipeline. By default, a log group will be created with the format
+   * `/aws/imagebuilder/pipeline/<pipeline-name>`, with a 90-day retention policy.
    *
-   * @default - true
-   */
-  readonly grantDefaultPermissionsToExecutionRole?: boolean;
-
-  /**
-   * The log group to use for the image pipeline.
-   *
-   * @default - A log group will be created with a 90-day retention policy
+   * @default - A log group will be created
    */
   readonly imagePipelineLogGroup?: logs.ILogGroup;
 
   /**
-   * The log group to use for images created from the image pipeline.
+   * The log group to use for images created from the image pipeline. By default, a log group will be created with the
+   * format `/aws/imagebuilder/<image-name>`, with a 90-day retention policy.
    *
-   * @default - A log group will be created with a 90-day retention policy
+   * @default - A log group will be created
    */
   readonly imageLogGroup?: logs.ILogGroup;
 
@@ -997,7 +986,8 @@ interface ImagePipelineProps {
 ```ts
 interface ImageProps {
   /**
-   * The recipe that defines the base image, components, and customizations used to build the image.
+   * The recipe that defines the base image, components, and customizations used to build the image. This can either be
+   * and image recipe, or a container recipe.
    */
   readonly recipe: IRecipeBase;
 
@@ -1043,18 +1033,10 @@ interface ImageProps {
   readonly executionRole?: iam.IRole;
 
   /**
-   * Whether to grant default permissions to the execution role used to build and test the image. If this is set to
-   * false, the execution role will not be granted any default permissions. This setting only applies when you pass
-   * an execution role, or when one is generated automatically when providing a custom set of image workflows.
+   * The log group to use for the image. By default, a log group will be created with the format
+   * `/aws/imagebuilder/<image-name>`, with a 90-day retention policy.
    *
-   * @default - true
-   */
-  readonly grantDefaultPermissionsToExecutionRole?: boolean;
-
-  /**
-   * The log group to use for the image.
-   *
-   * @default - A log group will be created with a 90-day retention policy
+   * @default - A log group will be created
    */
   readonly logGroup?: logs.ILogGroup;
 
@@ -1127,7 +1109,7 @@ interface ImageRecipeProps {
    *
    * @default - 1.0.0
    */
-  readonly imageRecipeVersion?: Version;
+  readonly imageRecipeVersion?: string;
 
   /**
    * The description of the image recipe.
@@ -1214,7 +1196,7 @@ interface ContainerRecipeProps {
    *
    * @default - 1.0.0
    */
-  readonly containerRecipeVersion?: Version;
+  readonly containerRecipeVersion?: string;
 
   /**
    * The description of the container recipe.
@@ -1265,7 +1247,7 @@ interface ContainerRecipeProps {
    * @default - Image Builder will determine the platform of the base image, if sourced from a third-party container
    * registry. Otherwise, the platform of the base image is required.
    */
-  readonly platform?: Platform;
+  readonly platform?: string;
 
   /**
    * The block devices to attach to the instance used for building, testing, and distributing the container image.
@@ -1317,7 +1299,7 @@ interface ComponentProps {
    *
    * @default - 1.0.0
    */
-  readonly componentVersion?: Version;
+  readonly componentVersion?: string;
 
   /**
    * The description of the component.
@@ -1572,7 +1554,7 @@ interface WorkflowProps {
    *
    * @default - 1.0.0
    */
-  readonly workflowVersion?: Version;
+  readonly workflowVersion?: string;
 
   /**
    * The description of the workflow.
@@ -1695,7 +1677,7 @@ interface IComponent extends cdk.IResource {
   /**
    * The version of the component
    */
-  readonly componentVersion: BuildVersion;
+  readonly componentVersion: string;
 
   /**
    * Grant custom actions to the given grantee for the component
@@ -1731,7 +1713,7 @@ interface IContainerRecipe extends IRecipeBase {
   /**
    * The version of the container recipe
    */
-  readonly containerRecipeVersion: Version;
+  readonly containerRecipeVersion: string;
 }
 
 interface IDistributionConfiguration extends cdk.IResource {
@@ -1783,7 +1765,7 @@ interface IImage extends cdk.IResource {
   /**
    * The version of the image
    */
-  readonly imageVersion: BuildVersion;
+  readonly imageVersion: string;
 
   /**
    * Grant custom actions to the given grantee for the image pipeline
@@ -1794,43 +1776,18 @@ interface IImage extends cdk.IResource {
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
 
   /**
+   * Grants the default permissions for building an image to the provided execution role.
+   *
+   * @param grantee - The execution role used for the image build.
+   */
+  grantDefaultExecutionRolePermissions(grantee: iam.IGrantable): iam.Grant;
+
+  /**
    * Grant read permissions to the given grantee for the image pipeline
    *
    * @param grantee - The principal
    */
   grantRead(grantee: iam.IGrantable): iam.Grant;
-
-  /**
-   * Creates an EventBridge rule for Image Builder image state change events
-   *
-   * @param id - Unique identifier for the rule
-   * @param options - Configuration options for the event rule
-   */
-  onImageBuildStateChange(id: string, options?: events.OnEventOptions): events.Rule;
-
-  /**
-   * Creates an EventBridge rule for Image Builder image completion events
-   *
-   * @param id - Unique identifier for the rule
-   * @param options - Configuration options for the event rule
-   */
-  onImageBuildCompleted(id: string, options?: events.OnEventOptions): events.Rule;
-
-  /**
-   * Creates an EventBridge rule for Image Builder image failure events
-   *
-   * @param id - Unique identifier for the rule
-   * @param options - Configuration options for the event rule
-   */
-  onImageBuildFailed(id: string, options?: events.OnEventOptions): events.Rule;
-
-  /**
-   * Creates an EventBridge rule for Image Builder wait for action events
-   *
-   * @param id - Unique identifier for the rule
-   * @param options - Configuration options for the event rule
-   */
-  onWaitForAction(id: string, options?: events.OnEventOptions): events.Rule;
 
   /**
    * Converts the image to a BaseImage, to use as the parent image in a recipe
@@ -1856,7 +1813,7 @@ interface IImageRecipe extends IRecipeBase {
   /**
    * The version of the image recipe
    */
-  readonly imageRecipeVersion: Version;
+  readonly imageRecipeVersion: string;
 }
 
 interface IImagePipeline extends cdk.IResource {
@@ -1883,6 +1840,13 @@ interface IImagePipeline extends cdk.IResource {
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
 
   /**
+   * Grants the default permissions for building an image to the provided execution role.
+   *
+   * @param grantee - The execution role used for the image build.
+   */
+  grantDefaultExecutionRolePermissions(grantee: iam.IGrantable): iam.Grant;
+
+  /**
    * Grant read permissions to the given grantee for the image pipeline
    *
    * @param grantee - The principal
@@ -1897,34 +1861,62 @@ interface IImagePipeline extends cdk.IResource {
   grantStartExecution(grantee: iam.IGrantable): iam.Grant;
 
   /**
-   * Creates an EventBridge rule for Image Builder image state change events
+   * Creates an EventBridge rule for Image Builder CVE detected events.
    *
    * @param id - Unique identifier for the rule
    * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
+   */
+  onCVEDetected(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image state change events.
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
    */
   onImageBuildStateChange(id: string, options?: events.OnEventOptions): events.Rule;
 
   /**
-   * Creates an EventBridge rule for Image Builder image completion events
+   * Creates an EventBridge rule for Image Builder image completion events.
    *
    * @param id - Unique identifier for the rule
    * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
    */
   onImageBuildCompleted(id: string, options?: events.OnEventOptions): events.Rule;
 
   /**
-   * Creates an EventBridge rule for Image Builder image failure events
+   * Creates an EventBridge rule for Image Builder image failure events.
    *
    * @param id - Unique identifier for the rule
    * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
    */
   onImageBuildFailed(id: string, options?: events.OnEventOptions): events.Rule;
+
+  /**
+   * Creates an EventBridge rule for Image Builder image pipeline automatically disabled events.
+   *
+   * @param id - Unique identifier for the rule
+   * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
+   */
+  onImagePipelineAutoDisabled(id: string, options?: events.OnEventOptions): events.Rule;
 
   /**
    * Creates an EventBridge rule for Image Builder wait for action events
    *
    * @param id - Unique identifier for the rule
    * @param options - Configuration options for the event rule
+   *
+   * @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/integ-eventbridge.html
    */
   onWaitForAction(id: string, options?: events.OnEventOptions): events.Rule;
 }
@@ -1984,6 +1976,13 @@ interface ILifecyclePolicy extends cdk.IResource {
   grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant;
 
   /**
+   * Grants the default permissions for building an image to the provided execution role.
+   *
+   * @param grantee - The execution role used for the image build.
+   */
+  grantDefaultExecutionRolePermissions(grantee: iam.IGrantable): iam.Grant;
+
+  /**
    * Grant read permissions to the given grantee for the lifecycle policy
    *
    * @param grantee - The principal
@@ -2031,7 +2030,7 @@ interface IWorkflow extends cdk.IResource {
   /**
    * The version of the workflow
    */
-  readonly workflowVersion: BuildVersion;
+  readonly workflowVersion: string;
 
   /**
    * Grant custom actions to the given grantee for the workflow
@@ -2078,7 +2077,7 @@ class Component extends ComponentBase {
   /**
    * The version of the component
    */
-  readonly componentVersion: BuildVersion;
+  readonly componentVersion: string;
 
   /**
    * Whether the component is encrypted
@@ -2121,7 +2120,7 @@ class ContainerRecipe extends ContainerRecipeBase {
   /**
    * The version of the container recipe
    */
-  readonly containerRecipeVersion: Version;
+  readonly containerRecipeVersion: string;
 
   constructor(scope: Construct, id: string, props: ContainerRecipeProps);
 
@@ -2183,7 +2182,7 @@ class Image extends ImageBase {
   /**
    * The version of the image
    */
-  readonly imageVersion: BuildVersion;
+  readonly imageVersion: string;
 
   /**
    * The AMI ID of the EC2 AMI, or URI for the container
@@ -2208,7 +2207,7 @@ class Image extends ImageBase {
   /**
    * The recipe used for the image build
    */
-  readonly recipe?: IRecipeBase;
+  readonly recipe: IRecipeBase;
 
   constructor(scope: Construct, id: string, props: ImageProps);
 }
@@ -2275,7 +2274,7 @@ class ImageRecipe extends ImageRecipeBase {
   /**
    * The version of the image recipe
    */
-  readonly imageRecipeVersion: Version;
+  readonly imageRecipeVersion: string;
 
   constructor(scope: Construct, id: string, props: ImageRecipeProps);
 
@@ -2303,14 +2302,14 @@ class InfrastructureConfiguration extends InfrastructureConfigurationBase {
   readonly infrastructureConfigurationName: string;
 
   /**
+   * The EC2 instance profile to use for the build
+   */
+  readonly instanceProfile: iam.IInstanceProfile;
+
+  /**
    * The bucket used to upload image build logs
    */
   readonly logBucket?: s3.IBucket;
-
-  /**
-   * The EC2 instance profile to use for the build
-   */
-  readonly instanceProfile?: iam.IInstanceProfile;
 
   constructor(scope: Construct, id: string, props: InfrastructureConfigurationProps);
 }
@@ -2362,7 +2361,7 @@ class Workflow extends WorkflowBase {
   /**
    * The version of the workflow
    */
-  readonly workflowVersion: BuildVersion;
+  readonly workflowVersion: string;
 
   constructor(scope: Construct, id: string, props: WorkflowProps);
 }
@@ -2434,34 +2433,6 @@ abstract class BaseImage {
   static fromMarketplaceProductId(scope: Construct, id: string, productId: string): BaseImage;
   static fromSsmParameter(scope: Construct, id: string, parameter: ssm.IStringParameter): BaseImage;
   static fromSsmParameterName(scope: Construct, id: string, parameterName: string): BaseImage;
-}
-
-class BuildVersion extends Version {
-  static readonly LATEST: BuildVersion;
-
-  /**
-   * The build version string
-   */
-  readonly buildVersion?: string;
-
-  protected constructor(attrs: BuildVersionAttributes);
-
-  static fromString(buildVersionString: string): BuildVersion;
-
-  /**
-   * The latest major version for the given version string
-   */
-  get latestMajorVersion(): Version;
-
-  /**
-   * The latest minor version for the given version string
-   */
-  get latestMinorVersion(): Version;
-
-  /**
-   * The latest patch version for the given version string
-   */
-  get latestPatchVersion(): Version;
 }
 
 abstract class ComponentData {
@@ -2545,44 +2516,6 @@ abstract class Schedule {
   static rate(options: RateOptions): Schedule;
   static cron(options: CronOptions): Schedule;
   static expression(expression: string, scheduleOptions?: ScheduleCommonOptions): Schedule;
-}
-
-class Version {
-  static readonly LATEST: Version;
-
-  /**
-   * The version string
-   */
-  readonly version: string;
-
-  /**
-   * The major version number
-   */
-  readonly majorVersion: string;
-
-  /**
-   * The minor version number
-   */
-  readonly minorVersion: string;
-
-  /**
-   * The patch version number
-   */
-  readonly patchVersion: string;
-
-  protected constructor(attrs: VersionAttributes);
-
-  static fromString(versionString: string): Version;
-
-  /**
-   * The latest major version for the given version string
-   */
-  get latestMajorVersion(): Version;
-
-  /**
-   * The latest minor version for the given version string
-   */
-  get latestMinorVersion(): Version;
 }
 
 abstract class WorkflowData {
