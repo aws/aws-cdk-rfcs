@@ -127,13 +127,16 @@ const imagePipeline = new imagebuilder.ImagePipeline(stack, 'ImagePipeline', {
   // Optional - use a custom execution role
   executionRole: iam.Role.fromRoleName(stack, 'ImageBuilderRole', 'ImageBuilderExecutionRole'),
   // Run the pipeline every Monday at 12:00 PST
-  schedule: imagebuilder.Schedule.cron({
+  schedule: {
+    expression: events.Schedule.cron({
+      minute: '0',
+      hour: '12',
+      weekDay: 'MON',
+    }),
     startCondition: imagebuilder.ScheduleStartCondition.EXPRESSION_MATCH_AND_DEPENDENCY_UPDATES_AVAILABLE,
-    minute: '0',
-    hour: '12',
-    weekDay: 'MON',
     timezone: cdk.TimeZone.AMERICA_LOS_ANGELES,
-  }),
+    autoDisableFailureCount: 5,
+  },
   recipe: imagebuilder.ImageRecipe.fromImageRecipeAttributes(stack, 'ImageRecipe', {
     imageRecipeName: 'test-image-recipe',
     imageRecipeVersion: '1.0.0',
@@ -877,7 +880,7 @@ interface ImagePipelineProps {
    *
    * @default - None - a manual image pipeline will be created
    */
-  readonly schedule?: Schedule;
+  readonly schedule?: ImagePipelineSchedule;
 
   /**
    * The infrastructure configuration used for building the image.
@@ -2506,17 +2509,6 @@ abstract class S3WorkflowData extends WorkflowData {
   grantPut(grantee: iam.IGrantable): iam.Grant;
   grantRead(grantee: iam.IGrantable): iam.Grant;
   grantReadWrite(grantee: iam.IGrantable): iam.Grant;
-}
-
-abstract class Schedule {
-  /**
-   * The schedule expression string
-   */
-  readonly expressionString: string;
-
-  static rate(options: RateOptions): Schedule;
-  static cron(options: CronOptions): Schedule;
-  static expression(expression: string, scheduleOptions?: ScheduleCommonOptions): Schedule;
 }
 
 abstract class WorkflowData {
