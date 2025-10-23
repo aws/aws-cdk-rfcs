@@ -93,8 +93,16 @@ const gateway = new agentcore.Gateway(this, "MyGateway", {
 ### Inbound authorization
 
 Before you create your gateway, you must set up inbound authorization. Inbound authorization validates users who attempt to access targets through
-your AgentCore gateway. By default, if not provided, the construct will create and configure Cognito as the default identity provider
-(inbound Auth setup). AgentCore supports the following types of inbound authorization:
+your AgentCore gateway. By default, if not provided, the construct will create and configure Cognito as the default identity provider (inbound Auth setup).
+
+```typescript fixture=default
+// Create a basic gateway with default MCP protocol and Cognito authorizer
+const gateway = new agentcore.Gateway(this, "MyGateway", {
+  gatewayName: "my-gateway",
+});
+```
+
+AgentCore supports the following types of inbound authorization:
 
 **JSON Web Token (JWT)** – A secure and compact token used for authorization. After creating the JWT, you specify it as the authorization
 configuration when you create the gateway. You can create a JWT with any of the identity providers at Provider setup and configuration.
@@ -123,7 +131,7 @@ const gateway = new agentcore.Gateway(this, "MyGateway", {
 ```typescript fixture=default
 const gateway = new agentcore.Gateway(this, "MyGateway", {
   gatewayName: "my-gateway",
-  authorizerConfiguration: agentcore.GatewayAuthorizer.awsIam,
+  authorizerConfiguration: agentcore.GatewayAuthorizer.usingIAM(),
 });
 
 // Grant access to a Lambda function's role
@@ -137,7 +145,11 @@ gateway.grantInvoke(lambdaRole);
 
 ### Gateway with KMS Encryption
 
-You can provide a KMS key, and configure the authorizer as well as the protocol configuration.
+You can provide your own AWS KMS customer-managed key (CMK) for greater control over the encryption process of your
+gateway data. If you don't specify a KMS key, AWS encrypts the gateway with an AWS-managed key. Use a customer-managed
+KMS key when you need to meet specific compliance requirements, implement custom key rotation policies, maintain
+audit trails through CloudTrail, or enforce fine-grained access controls on who can encrypt/decrypt gateway data. For
+more information, see Encrypt your AgentCore gateway with a customer-managed KMS key.
 
 ```typescript fixture=default
 // Create a KMS key for encryption
@@ -166,6 +178,13 @@ const gateway = new agentcore.Gateway(this, "MyGateway", {
 ```
 
 ### Gateway with Custom Execution Role
+
+By default, the Gateway construct creates an execution role with minimal permissions that are automatically
+expanded as you add targets. You can provide your own custom IAM role when you need to comply with organizational IAM
+policies or maintain centralized control over permissions. When providing a custom role, ensure it's assumable by the
+bedrock-agentcore.amazonaws.com service principal and includes necessary permissions for your targets (Lambda
+invoke permissions are handled automatically, but Smithy targets accessing AWS services need appropriate service
+permissions). If using KMS encryption, the role also needs decrypt and data key generation permissions.
 
 ```typescript fixture=default
 // Create a custom execution role
@@ -590,7 +609,7 @@ const gateway = new agentcore.Gateway(this, "MyGateway", {
   protocolConfiguration: new agentcore.McpProtocolConfiguration({
     instructions: "Use this gateway to connect to external MCP tools",
     searchType: agentcore.McpGatewaySearchType.SEMANTIC,
-    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26],
+    supportedVersions: [agentcore.MCPProtocolVersion.MCP_2025_03_26], // Versions are available at https://github.com/modelcontextprotocol/modelcontextprotocol/releases
   }),
   authorizerConfiguration: agentcore.GatewayAuthorizer.usingCustomJwt({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
