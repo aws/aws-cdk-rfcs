@@ -853,7 +853,10 @@ indicating that customers want L2 constructs for EC2 Image Builder.
 
 ### Why should we _not_ do this?
 
-EC2 Image Builder resources can already be provisioned via CDK today, using its L1 constructs.
+EC2 Image Builder resources can already be provisioned via CDK today, using its L1 constructs. For existing customers
+using the L1 constructs today, they will have to perform a refactor/migration to use the new L2 constructs.
+Additionally, creating these new L2 constructs will require time and effort, and will have to be maintained going
+forward, to support any new features that Image Builder adds in the future.
 
 ### What is the technical solution (design) of this feature?
 
@@ -2575,9 +2578,8 @@ N/A
 * **Image Builder execution role for workflows**. Execution roles are used in Image Builder to perform workflow actions.
   By default, the Image Builder Service Linked Role (SLR) will be created automatically and used as the execution role.
   However, when providing a custom set of image workflows for the pipeline, an execution role will be generated with the
-  minimal permissions needed to execute the workflows. You can also indicate whether you want to grant the role the
-  default set of permissions for Image Builder, using the `grantDefaultPermissionsToExecutionRole` field in the image or
-  pipeline - which will apply whenever you pass an `executionRole` or when an execution role is generated for you.
+  minimal permissions needed to execute the workflows. You can also grant permissions to an existing or non-default
+  execution role by using the `grantDefaultExecutionRolePermissions` method on the image or the pipeline.
 
 * **Image Builder execution role for lifecycle policies**. Execution roles are also used in Image Builder to perform
   lifecycle policies. By default, an execution role will be generated with the minimal permissions needed to execute the
@@ -2592,4 +2594,5 @@ N/A
 
 * **CloudWatch logging with retention**. Image Builder logs image pipeline details, image build details and component
   execution details into a CloudWatch log group. For images and image pipelines, a CloudWatch log group will be created
-  by default with a 90-day retention policy.
+  by default with a 90-day retention policy. Log groups will use default naming: `/aws/imagebuilder/<image-name>` for
+  images, and `/aws/imagebuilder/pipeline/<pipeline-name>` for pipelines.
