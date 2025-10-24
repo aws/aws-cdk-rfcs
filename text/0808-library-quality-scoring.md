@@ -249,7 +249,7 @@ may have a README but it could be poorly written. These signals come together to
 |-------------|------------------------------------|-----------------------------------------------------------------------|----------------|----------|----------------------------------|------------|
 | Maintenance | Time to first response             | 0–1 wk = 100, 1–4 wk = 75, 4–12 wk = 50, 3–12 mths = 25, 1+ yrs = 0   | Repo API       | YES      | Reflects responsiveness          | 3          |
 | Maintenance | Release Frequency                  | >55/yr = 100, 34-54/yr = 75, 5-33/yr = 50, 1-4/yr = 25, 0/yr = 0      | Registry API   | YES      | Activity check, responsiveness   | 3          |
-| Maintenance | Provenance Verification            | <1 mth = 100, \<3 mth = 75, <6 mth = 50, <1 yr = 25, >1 yr or N/A = 0 | Repo API       | YES      | Ensures supply chain security    | 3          |
+| Maintenance | Provenance Verification            | verified = 100, unverified = 0                                        | Repo API       | YES      | Ensures supply chain security    | 3          |
 | Maintenance | Open issues / total issues         | <25% = 100, 25-50% = 75, 50–75% = 50, 75%+ = 25, 0 total issues = 0   | Repo API       | YES      | Measures backlog health          | 2          |
 | Maintenance | Number of Contributors             | ≥8/yr = 100, 2–7/yr = 75, 1/yr = 50, 0/yr = 0                         | Repo API       | YES      | Broad community involvement      | 2          |
 | Maintenance | Commit Frequency                   | >20/month = 100, 6–20 = 75, 1–5 = 50, 0 = 0                           | Repo API       | NO       | Shows steady activity            | 3          |
