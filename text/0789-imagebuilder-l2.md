@@ -812,7 +812,14 @@ RFC pull request):
 ### What are we launching today?
 
 We are launching a comprehensive set of L2 constructs for Amazon EC2 Image Builder in the @aws-cdk/aws-imagebuilder
-module.
+module. This includes constructs for all Image Builder resources: image pipelines, images, image recipes,
+container recipes, components, infrastructure configurations, distribution configurations, workflows, and
+lifecycle policies.
+
+These constructs improve the developer experience by making it easier to define Image Builder
+resources needed to build images, with secure and best practice defaults built in. With these constructs, it is now
+simpler to grant IAM permissions for resources, create EventBridge rules for events emitted by image pipelines, and use
+other service's L2 constructs and interfaces when creating Image Builder resources via CDK.
 
 ### Why should I use this feature?
 
@@ -824,6 +831,8 @@ EC2 Image Builder L2 constructs dramatically simplify the creation and managemen
    default for EC2 instances, and CloudWatch log groups with retention. See
    [Secure and Best Practice Defaults](#secure-and-best-practice-defaults).
 3. **Integrated Experience** - Seamless integration with other CDK constructs like VPC, IAM, SNS, and EventBridge.
+   It is also easier to grant IAM permissions for Image Builder resources, and create EventBridge rules that are emitted
+   for image pipelines.
 
 ## Internal FAQ
 
@@ -1772,7 +1781,7 @@ interface IImage extends cdk.IResource {
   readonly imageVersion: string;
 
   /**
-   * Grant custom actions to the given grantee for the image pipeline
+   * Grant custom actions to the given grantee for the image
    *
    * @param grantee - The principal
    * @param actions - The list of actions
@@ -1787,7 +1796,7 @@ interface IImage extends cdk.IResource {
   grantDefaultExecutionRolePermissions(grantee: iam.IGrantable): iam.Grant;
 
   /**
-   * Grant read permissions to the given grantee for the image pipeline
+   * Grant read permissions to the given grantee for the image
    *
    * @param grantee - The principal
    */
