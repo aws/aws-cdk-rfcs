@@ -31,19 +31,20 @@ Each package is scored on their latest version. Scores are unlikely to change dr
 
 Usage: cdk-construct-analyzer [package] [options]
 
-Arguments:
-  package   Name of the construct package to score (Scored on the latest version)
+Positionals:
+  package       NPM package name to analyze (Scored on the latest version)
 
 Options:
- --verbose  Show detailed breakdown of signals
- --help     Show this help message
+ -v, --verbose  Show detailed signal information
+     --help     Show this help message
+     --version  Show version number
 ```
 
 You can run it locally on any library published to npm by providing its package name:
 
-```> cdk-construct-analyzer cdk-ecr-codedeploy
+```> cdk-construct-analyzer cdk-ecr-deployment
 
-LIBRARY: @cdklabs/cdk-ecr-codedeploy
+LIBRARY: @cdklabs/cdk-ecr-deployment
 VERSION: 0.0.421
 
 OVERALL SCORE: 84/100
@@ -58,9 +59,9 @@ SUBSCORES
 
 Add `--verbose` for a detailed breakdown:
 
-```> cdk-construct-analyzer cdk-ecr-codedeploy --verbose
+```> cdk-construct-analyzer cdk-ecr-deployment --verbose
 
-LIBRARY: cdk-ecr-codedeploy
+LIBRARY: cdk-ecr-deployment
 VERSION: 0.0.421
 
 OVERALL SCORE: 84/100
@@ -91,7 +92,7 @@ SUBSCORES
 
 === Popularity ===                                SCORE  WEIGHT
 — Weekly Downloads .............................. ★★★★☆    3
-— Repo stars .................................... ★★★★★    2
+— Github stars .................................. ★★★★★    2
 — Contributors .................................. ★★★★☆    1
 ```
 
@@ -126,7 +127,7 @@ Signals that reflect adoption and community size:
 
 * Contributors: More contributors typically indicate shared maintenance and community trust.
 * Weekly Downloads: High or rising download counts suggest the library is being actively used.
-* Repo stars: Stars represent general developer interest and visibility on GitHub.
+* Github stars: Stars represent general developer interest and visibility on GitHub.
 
 #### Scoring Weights
 
@@ -271,7 +272,7 @@ may have a README but it could be poorly written. These signals come together to
 | Quality     | Lint configuration                 | Present = 100, Absent = 0                                             | Tarball        | NO       | Style/consistency                | 1          |
 | Quality     | Badges                             | ≥3 meaningful = 100, 1–2 = 50, none = 0                               | Tarball        | NO       | Signals professionalism          | 1          |
 | Popularity  | Weekly Downloads                   | 2.5k+ = 100, 251–2.5K = 75 41-250 = 50, 6-40 = 25, <5 = 0             | npm            | YES      | General usage metric             | 3          |
-| Popularity  | Repo stars                         | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                   | Repo API       | YES      | Popularity proxy                 | 2          |
+| Popularity  | Github stars                     | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                   | Repo API       | YES      | Popularity proxy                 | 2          |
 | Popularity  | Contributors                       | ≥8/yr = 100, 2–7/yr = 75, 1/yr = 50, 0/yr = 0                         | Repo API       | YES      | Health of contributions          | 1          |
 | Popularity  | Version Downloads                  | 10K+ = 100, 1K–9K = 75, 100–999 = 50, 10-99 = 25, <10 = 0             | npm            | NO       | Usage of a specific version      | 3          |
 | Popularity  | Dependents                         | —                                                                     | libraries.io   | NO       | Shows reuse                      | 3          |
@@ -301,7 +302,7 @@ Overall:     77/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 3          | 1        |
 
 #### **Repository**: `cdk-stacksets`
@@ -325,7 +326,7 @@ Overall:     80/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 4          | 1        |
 
 #### **Repository**: `cdk-ecr-deployment`
@@ -349,7 +350,7 @@ Overall:     84/100
 | Quality     | Stable versioning                  | 5          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 4          | 1        |
 
 #### **Repository**: `cdk-remote-stack`
@@ -373,7 +374,7 @@ Overall:     73/100
 | Quality     | Stable versioning                  | 5          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 4          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `cdk-ssm-parameter-store`
@@ -397,7 +398,7 @@ Overall:     29/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 3          | 1        |
 | Popularity  | Weekly Downloads                   | 3          | 3        |
-| Popularity  | Repo stars                         | 2          | 2        |
+| Popularity  | Github stars                       | 2          | 2        |
 | Popularity  | Contributors                       | 1          | 1        |
 
 #### **Repository**: `datadog-cdk-constructs-v2`
@@ -421,7 +422,7 @@ Overall:     85/100
 | Quality     | Stable versioning                  | 5          | 2        |
 | Quality     | Multi-language Support             | 4          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 2          | 2        |
+| Popularity  | Github stars                       | 2          | 2        |
 | Popularity  | Contributors                       | 5          | 1        |
 
 #### **Repository**: `aws-cdk`
@@ -438,14 +439,14 @@ Overall:     92/100
 | Maintenance | Provenance Verification            | 5          | 3        |
 | Maintenance | Open issues / total issues         | 5          | 2        |
 | Maintenance | Number of Contributors             | 5          | 2        |
-| Quality     | Documentation Completeness         | 2          | 3        |
+| Quality     | Documentation Completeness         | 4          | 3        |
 | Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
 | Quality     | Author Track Record                | 5          | 3        |
 | Quality     | Changelog Present                  | 5          | 3        |
 | Quality     | Stable versioning                  | 5          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 5          | 1        |
 
 #### **Repository**: `cdk-iam-floyd`
@@ -469,7 +470,7 @@ Overall:     57/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 3          | 1        |
 | Popularity  | Weekly Downloads                   | 4          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 4          | 1        |
 
 #### **Repository**: `cdktf`
@@ -493,7 +494,7 @@ Overall:     83/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 5          | 2        |
+| Popularity  | Github stars                       | 5          | 2        |
 | Popularity  | Contributors                       | 5          | 1        |
 
 #### **Repository**: `@mrgrain/cdk-esbuild`
@@ -517,7 +518,7 @@ Overall:     85/100
 | Quality     | Stable versioning                  | 3          | 2        |
 | Quality     | Multi-language Support             | 5          | 1        |
 | Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Repo stars                         | 4          | 2        |
+| Popularity  | Github stars                       | 4          | 2        |
 | Popularity  | Contributors                       | 4          | 1        |
 
 ### Signals from npms.io (Reference)
