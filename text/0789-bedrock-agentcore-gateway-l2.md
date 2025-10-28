@@ -295,7 +295,7 @@ AgentCore Gateway supports built-in AWS service models only. It Connects to serv
 - Ideal for AWS service integrations
 - Need API schema. The construct provide 3 ways to upload a API schema to Smity target
 - When using the default IAM authentication (no `credentialProviderConfigurations` specified), The construct only
-  grants permission to read the Smithy schema file from S3. You MUST manually grant permissions for the gateway 
+  grants permission to read the Smithy schema file from S3. You MUST manually grant permissions for the gateway
   role to invoke the actual Smithy API endpoints
 
 > Note: For Smithy model targets that access AWS services, your Gateway's execution role needs permissions to access those services.
