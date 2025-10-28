@@ -62,8 +62,8 @@ const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
   name: 'myInvestigationGroup',
   role: customRole,
   encryptionKey: encryptionKey,
-  retentionInDays: Duration.days(30),
-  isCloudTrailEventHistoryEnabled: true,
+  retention: Duration.days(30),
+  includeCloudTrailEvents: true,
   tagKeyBoundaries: ['Environment', 'Application'],
   removalPolicy: RemovalPolicy.DESTROY,
 });
@@ -89,12 +89,20 @@ group.addCrossAccountConfiguration(sourceRole);
 
 ##### Chatbot Notifications
 
-For customers who have integrated AIOps with their chat applications, this method allows you to configure notification delivery through an Amazon SNS topic.
-When added, investigation updates will be sent to the specified SNS topic, which forwards these notifications to your integrated chat client.
+It is a list of chatbotNotificationConfiguration. Each chatbotNotificationConfiguration is used to integrate AIOps with chat applications.
+snsTopicArn is the ARN of an Amazon SNS topic.
+chatConfigurationArns is list of ARNs of one or more chat applications configurations that you want to associate with that topic.
+For more information about these configuration ARNs,
+see [Getting started with Amazon Q in chat applications](https://docs.aws.amazon.com/chatbot/latest/adminguide/getting-started.html) and
+[Resource type defined by AWS Chatbot](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awschatbot.html#awschatbot-resources-for-iam-policies).
 
 ```typescript
 const notificationTopic = new Topic(this, 'AIOpsNotifications');
-group.addChatbotNotification(notificationTopic);
+const chatbotConfig: ChatbotNotificationConfiguration = {
+  chatConfigurationArns: ['arn:aws:chatbot::123456789012:chat-configuration/slack-channel/my-channel'],
+  snsTopicArn: Topic.fromTopicArn(this, 'ImportedTopic', 'arn:aws:sns:us-east-1:123456789012:aiops-notifications'),
+};
+group.addChatbotNotification(chatbotConfig);
 ```
 
 ##### Permissions Management
@@ -143,14 +151,19 @@ new InvestigationGroup(scope: Construct, id: string, props: InvestigationGroupPr
 #### Properties Interface
 
 ```typescript
+export interface ChatbotNotificationConfiguration {
+  readonly chatConfigurationArns: ARN[];
+  readonly snsTopicArn: ITopic;
+}
+
 export interface InvestigationGroupProps {
   readonly name: string;
   readonly role?: IRole;
   readonly encryptionKey?: IKey;
-  readonly retentionInDays?: Duration;
+  readonly retention?: Duration;
   readonly crossAccountConfigurations?: IRole[];
-  readonly chatbotNotificationChannels?: ITopic[];
-  readonly isCloudTrailEventHistoryEnabled?: boolean;
+  readonly chatbotNotifications?: ChatbotNotificationConfiguration[];
+  readonly includeCloudTrailEvents?: boolean;
   readonly tagKeyBoundaries?: string[];
   readonly resourcePolicy?: iam.PolicyStatement[];
   readonly removalPolicy?: RemovalPolicy;
@@ -161,15 +174,15 @@ export interface InvestigationGroupProps {
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `name` | `string` | ✓ | - | Investigation group name |
-| `role` | `IRole` | ✗ | Auto-created | IAM role for AIOps service |
-| `encryptionKey` | `IKey` | ✗ | AWS-managed | KMS key for encryption |
-| `retentionInDays` | `Duration` | ✗ | 90 days | Data retention period (7-90 days) |
-| `crossAccountConfigurations` | `IRole[]` | ✗ | `[]` | Source account roles (max 25) |
-| `chatbotNotificationChannels` | `ITopic[]` | ✗ | `[]` | SNS topics for notifications |
-| `isCloudTrailEventHistoryEnabled` | `boolean` | ✗ | `false` | Enable CloudTrail event history |
-| `tagKeyBoundaries` | `string[]` | ✗ | `[]` | Custom tag keys for resource discovery |
-| `resourcePolicy` | `iam.PolicyStatement[]` | ✗ | `[]` | Resource policy statements |
+| `name` | `string` | ✓ | - | Provides a name for the investigation group. |
+| `role` | `IRole` | ✗ | `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` | Specify the IAM role that AIOps will use when it gathers investigation data. The permissions in this role determine which of your resources AIOps will have access to during investigations. If not specified, AIOps will create a role with the name `AIOpsRole-DefaultInvestigationGroup-{randomSixCharacterSuffix}` containing default permissions. |
+| `encryptionKey` | `IKey` | ✗ | AWS-managed | This customer-managed KMS key ensures encryption of sensitive data during the analysis process, including both the metadata required to retrieve telemetry results and the actual telemetry result data itself. If not specified, AIOps will use an AWS-managed key to encrypt. |
+| `retention` | `Duration` | ✗ | 90 days | Retention period for all resources created under the investigation group container. Min: 7 days, Max: 90 days. Investigation group related resources includes investigation, investigationEvents resources. If not specified, it will be 90 days by default.  |
+| `crossAccountConfigurations` | `IRole[]` | ✗ | `[]` | List of source account role ARN values that have been configured for cross-account access. |
+| `chatbotNotifications` | `ChatbotNotificationConfiguration[]` | ✗ | `[]` | Array of chatbot notification configurations. Each configuration specifies chat configuration ARNs and an SNS topic ARN for delivering investigation updates. |
+| `includeCloudTrailEvents` | `boolean` | ✗ | `false` | Specify true to include CloudTrail event history in investigations. When enabled, AIOps can access change events recorded by CloudTrail during investigations. |
+| `tagKeyBoundaries` | `string[]` | ✗ | `[]` | Displays the custom tag keys for custom applications in your system that you have specified in the investigation group. Resource tags help AIOps narrow the search space when it is unable to discover definite relationships between resources. [More info](https://docs.aws.amazon.com/cloudwatchinvestigations/latest/APIReference/API_CreateInvestigationGroup.html). |
+| `resourcePolicy` | `iam.PolicyStatement[]` | ✗ | `[]` | Resource policy statement on the investigation group. |
 | `removalPolicy` | `RemovalPolicy` | ✗ | `RETAIN` | Resource removal policy |
 
 #### Static Factory Methods
@@ -184,7 +197,7 @@ export interface InvestigationGroupProps {
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `addCrossAccountConfiguration` | `sourceAccountRole: IRole` | `void` | **@config** Add cross-account access |
-| `addChatbotNotification` | `snsTopic: ITopic` | `void` | **@config** Add notification channel |
+| `addChatbotNotification` | `config: ChatbotNotificationConfiguration` | `void` | **@config** Add notification channel |
 | `addToResourcePolicy` | `statement: PolicyStatement` | `void` | Add resource policy statement |
 | `addToRolePolicy` | `statement: PolicyStatement` | `void` | Add statement to the investigation group role policy |
 | `grant` | `grantee: IGrantable, ...actions: string[]` | `Grant` | Grant custom permissions |
@@ -265,12 +278,6 @@ The AIOps service has gone GA. We would like to follow CDK community guidelines 
 - Create comprehensive unit/integration tests
 - Write comprehensive API documentation
 - Get reviewed by CDK community and address feedback
-
-#### Phase 3: Post-Launch
-
-- Publish launch blog and announcement posts
-- Regular updates when feedback is provided by customers
-- Move to aws-cdk-lib package from alpha package if no open issues are present
 
 ### Are there any open issues that need to be addressed later?
 
@@ -399,16 +406,3 @@ public createInvestigationGroup(id: string): void {
     });
   }
 ```
-
-### Core Construct Implementation
-
-```typescript
-export class InvestigationGroup extends Construct implements IInvestigationGroup {
-  public readonly investigationGroupArn: string;
-  public readonly role: IRole;
-  public readonly encryptionKey?: IKey;
-  
-  constructor(scope: Construct, id: string, props: InvestigationGroupProps) {
-    // Implementation with secure defaults
-  }
-}
