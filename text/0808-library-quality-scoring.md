@@ -272,7 +272,7 @@ may have a README but it could be poorly written. These signals come together to
 | Quality     | Lint configuration                 | Present = 100, Absent = 0                                             | Tarball        | NO       | Style/consistency                | 1          |
 | Quality     | Badges                             | ≥3 meaningful = 100, 1–2 = 50, none = 0                               | Tarball        | NO       | Signals professionalism          | 1          |
 | Popularity  | Weekly Downloads                   | 2.5k+ = 100, 251–2.5K = 75 41-250 = 50, 6-40 = 25, <5 = 0             | npm            | YES      | General usage metric             | 3          |
-| Popularity  | Github stars                     | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                   | Repo API       | YES      | Popularity proxy                 | 2          |
+| Popularity  | Github stars                       | ≥638 = 100, 28-637 = 75, 4-27 = 50, 1-3 = 25, 0 = 0                   | Repo API       | YES      | Popularity proxy                 | 2          |
 | Popularity  | Contributors                       | ≥8/yr = 100, 2–7/yr = 75, 1/yr = 50, 0/yr = 0                         | Repo API       | YES      | Health of contributions          | 1          |
 | Popularity  | Version Downloads                  | 10K+ = 100, 1K–9K = 75, 100–999 = 50, 10-99 = 25, <10 = 0             | npm            | NO       | Usage of a specific version      | 3          |
 | Popularity  | Dependents                         | —                                                                     | libraries.io   | NO       | Shows reuse                      | 3          |
