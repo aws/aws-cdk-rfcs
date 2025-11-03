@@ -53,8 +53,8 @@ The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateway
 |------|------|----------|-------------|
 | `gatewayName` | `string` | Yes | The name of the gateway. Valid characters are a-z, A-Z, 0-9, _ (underscore) and - (hyphen). Maximum 100 characters |
 | `description` | `string` | No | Optional description for the gateway. Maximum 200 characters |
-| `protocolConfiguration` | `IGatewayProtocol` | No | The protocol configuration for the gateway. Defaults to MCP protocol |
-| `authorizerConfiguration` | `IGatewayAuthorizer` | No | The authorizer configuration for the gateway. Defaults to Cognito |
+| `protocolConfiguration` | `IGatewayProtocolConfig` | No | The protocol configuration for the gateway. Defaults to MCP protocol |
+| `authorizerConfiguration` | `IGatewayAuthorizerConfig` | No | The authorizer configuration for the gateway. Defaults to Cognito |
 | `exceptionLevel` | `GatewayExceptionLevel` | No | The verbosity of exception messages. Use DEBUG mode to see granular exception messages |
 | `kmsKey` | `kms.IKey` | No | The AWS KMS key used to encrypt data associated with the gateway |
 | `role` | `iam.IRole` | No | The IAM role that provides permissions for the gateway to access AWS services. A new role will be created if not provided |
@@ -233,7 +233,7 @@ credential provider attached enabling you to securely access targets whether the
 | `targetName` | `string` | Yes | The name of the gateway target. Valid characters are a-z, A-Z, 0-9, _ (underscore) and - (hyphen) |
 | `description` | `string` | No | Optional description for the gateway target. Maximum 200 characters |
 | `gateway` | `IGateway` | Yes | The gateway this target belongs to |
-| `targetConfiguration` | `ITargetConfiguration` | Yes | The target configuration (Lambda, OpenAPI, or Smithy). Use `LambdaTargetConfiguration.create()`, `OpenApiTargetConfiguration.create()`, or `SmithyTargetConfiguration.create()` |
+| `targetConfiguration` | `ITargetConfiguration` | No | **Note:** This property is automatically handled when using convenience methods ( `LambdaTargetConfiguration.create()`, `OpenApiTargetConfiguration.create()`, or `SmithyTargetConfiguration.create()`) or gateway `addTarget` methods. Only needed when using the GatewayTarget constructor directly for [advanced scenarios](#advanced-usage-direct-configuration-for-gateway-target). |
 | `credentialProviderConfigurations` | `IGatewayCredentialProvider[]` | No | Credential providers for authentication. Defaults to `[GatewayCredentialProvider.iamRole()]`. Use `GatewayCredentialProvider.apiKey()`, `GatewayCredentialProvider.oauth()`, or `GatewayCredentialProvider.iamRole()`. **Note:** OpenAPI targets do not support IAM authentication and require explicit `credentialProviderConfigurations` (API Key or OAuth). See [Targets types](#targets-types) for details |
 
 ### Targets types
@@ -566,6 +566,28 @@ const target = agentcore.GatewayTarget.forSmithy(this, "MySmithyTarget", {
 
 ```
 
+### Advanced Usage: Direct Configuration for gateway target
+
+For advanced use cases, you can create the target configuration manually and use the GatewayTarget constructor directly:
+
+```typescript
+// Create a custom Lambda configuration
+const customConfig = agentcore.LambdaTargetConfiguration.create(
+  myLambdaFunction,
+  myToolSchema
+);
+
+// Use the GatewayTarget constructor directly
+const target = new agentcore.GatewayTarget(this, "AdvancedTarget", {
+  gateway: myGateway,
+  gatewayTargetName: "advanced-target",
+  targetConfiguration: customConfig,  // Manually created configuration
+  credentialProviderConfigurations: [
+    agentcore.GatewayCredentialProvider.fromIamRole()
+  ]
+});
+```
+
 ### Gateway Target IAM Permissions
 
 The Gateway Target construct provides convenient methods for granting IAM permissions:
@@ -690,8 +712,8 @@ The construct library provides interfaces for Gateway services:
 - `IGatewayTarget` - Represents a Gateway Target resource
 - `IGatewayProps` - Properties for creating a Gateway
 - `IGatewayTargetProps` - Properties for creating a Gateway Target
-- `IGatewayProtocol` - Protocol configuration interface
-- `IGatewayAuthorizer` - Authorizer configuration interface
+- `IGatewayProtocolConfig` - Protocol configuration interface
+- `IGatewayAuthorizerConfig` - Authorizer configuration interface
 - `ITargetConfiguration` - Target configuration interface
 - `IGatewayCredentialProvider` - Credential provider configuration interface
 
