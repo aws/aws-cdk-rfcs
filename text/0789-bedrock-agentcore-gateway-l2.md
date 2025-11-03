@@ -47,6 +47,14 @@ For more details please refer here [Amazon Bedrock AgentCore Gateway Documentati
 
 The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateways, which serve as integration points between agents and external services.
 
+```
+┌─────────────┐         ┌─────────┐         ┌──────────────────┐
+│   Runtime   │ Inbound │         │ Outbound│  Gateway Target  │
+│   (Agent)   ├────────▶│ Gateway ├────────▶│ (Lambda/OpenAPI/ │
+│             │  Auth   │         │  Auth   │     Smithy)      │
+└─────────────┘         └─────────┘         └──────────────────┘
+```
+
 ### Gateway Properties
 
 | Name | Type | Required | Description |
