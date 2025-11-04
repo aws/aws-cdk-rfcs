@@ -29,11 +29,11 @@
 [707](https://github.com/aws/aws-cdk-rfcs/issues/707)|[CDK Pipelines: Use pipeline ServiceRole as default ActionRole](https://github.com/aws/aws-cdk-rfcs/issues/707)||💡 proposed
 [719](https://github.com/aws/aws-cdk-rfcs/issues/719)|[Native Container Image Tarball Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/719)||💡 proposed
 [728](https://github.com/aws/aws-cdk-rfcs/issues/728)|[L2 Constructs for AWS Elemental MediaPackageV2](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0728-aws-elemental-mediapackagev2-l2.md)||💡 proposed
-[750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||💡 proposed
 [762](https://github.com/aws/aws-cdk-rfcs/issues/762)|[Serverless ElastiCache L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0762-serverless-elasticache-l2-construct.md)|[@otaviomacedo](https://github.com/otaviomacedo)|💡 proposed
 [764](https://github.com/aws/aws-cdk-rfcs/issues/764)|[L2 Constructs for Bedrock AgentCore Memory](https://github.com/aws/aws-cdk-rfcs/issues/764)||💡 proposed
-[785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/issues/785)||💡 proposed
+[785](https://github.com/aws/aws-cdk-rfcs/issues/785)|[Bedrock AgentCore L2 alpha package](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0785-bedrock-agentcore-runtime-l2.md)||💡 proposed
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/789)||💡 proposed
-[792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/issues/792)||💡 proposed
 [808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/issues/808)||💡 proposed
+[814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||💡 proposed
+[792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/issues/792)||✍️ review
 <!--END_TABLE-->
