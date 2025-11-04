@@ -17,7 +17,7 @@ glance and maintainers know exactly how to improve.
 
 `@cdklabs/cdk-construct-analyzer` is a CLI and library for evaluating the quality of construct libraries.
 
-It calculates a single score (0–100) based on three equally weighted aspects:
+It calculates a single score (0–100) based on three aspects:
 
 * **Maintenance**: Is the project actively maintained and are owners/maintainers responsive?
 * **Quality**: Does the project have good docs, tests, linting, and hygiene?
@@ -53,7 +53,7 @@ You can run it locally on any library published to npm by providing its package 
 ```
 > cdk-construct-analyzer cdk-ecr-deployment
 
-LIBRARY: @cdklabs/cdk-ecr-deployment
+LIBRARY: https://www.npmjs.com/package/cdk-ecr-deployment
 VERSION: 0.0.421
 
 OVERALL SCORE: 81/100
@@ -68,12 +68,12 @@ SUBSCORES
 
 ##### Verbose
 
-Add `--verbose` for a detailed breakdown:
+You can scrutinize the individual metrics that make up the overall score by providing the `--verbose` flag:
 
 ```
 > cdk-construct-analyzer cdk-ecr-deployment --verbose
 
-LIBRARY: cdk-ecr-deployment
+LIBRARY: https://www.npmjs.com/package/cdk-ecr-deployment
 VERSION: 0.0.421
 
 OVERALL SCORE: 81/100
@@ -156,7 +156,7 @@ The `analyzePackage` method returns a `ScoreResult` object with the following st
 ```typescript
 interface ScoreResult {
   readonly packageName: string;     // "cdk-ecr-codedeploy"
-  readonly version: string;         // "0.0.421"
+  readonly latestVersion: string;         // "0.0.421"
   readonly totalScore: number;      // 76 (0-100)
   readonly pillarScores: Record<string, number>;        // { "MAINTENANCE": 66, "QUALITY": 75, "POPULARITY": 88 }
   readonly signalScores: Record<string, Record<string, number>>;  // { "MAINTENANCE": { "timeToFirstResponse": 2, "provenanceVerification": 5 } }
@@ -209,9 +209,9 @@ are calculated based on the signals that belong to each respective pillar.
 
 ### What are we launching today?
 
-We are launching a new CLI tool and library, called cdk-construct-analyzer, that evaluates CDK construct libraries and
-produces a score. This is not a change to CDK itself or Construct Hub directly, but a standalone project that can be
-used by customers, construct authors, and eventually integrated into Construct Hub.
+We are launching a new CLI tool and library, called `cdk-construct-analyzer`, that evaluates CDK construct libraries and
+produces a score. This is not a change to CDK directly. It is a standalone CLI that can be used by customers, construct
+authors, and/or eventually integrated into Construct Hub.
 
 ### Why should I use this feature?
 
@@ -248,7 +248,7 @@ might start making more low-effort commits just to get a higher score on commit 
 ### What is the technical solution (design) of this feature?
 
 At a high level, the system consists of two parts: a CLI tool and a reusable library. The CLI supports two primary use cases,
-scoring any public CDK library by name (for example, @cdklabs/erc-deployerments) for local evaluation, and enabling future
+scoring any public CDK library by name (for example, cdk-ecr-deployment) for local evaluation, and enabling future
 integrations with tools like Construct Hub or internal dashboards. The underlying library encapsulates the scoring logic and
 is designed to be a general-purpose, standalone scoring engine that can be adopted in any context—whether internal tooling,
 dashboards, or third-party registries.
