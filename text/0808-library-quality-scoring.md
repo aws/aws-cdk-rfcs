@@ -272,8 +272,8 @@ Signals that reflect adoption and community size:
 #### Scoring Weights
 
 Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
-the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score. The library will throw
-an error if the sum does not total 100.
+the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score. The library will log
+a warning if the sum does not total 100.
 
 When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
 overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
