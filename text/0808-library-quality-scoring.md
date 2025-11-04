@@ -111,6 +111,9 @@ SUBSCORES
 
 ##### Fix Recommendations
 
+> [!NOTE]  
+> Fix recommendation is not part of the intern project, but it is included in the RFC for completeness.
+
 The `--fix` flag uses AI to analyze your package's signals and their scores to generate personalized improvement recommendations.
 The output follows a fixed template format to ensure consistent, structured guidance:
 
