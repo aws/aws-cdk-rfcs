@@ -23,13 +23,21 @@ It calculates a single score (0–100) based on three equally weighted aspects:
 * **Quality**: Does the project have good docs, tests, linting, and hygiene?
 * **Popularity**: How widely is the library adopted in the community?
 
-Each package is scored on their latest version. Scores are unlikely to change drasically between versions.
+> [!WARNING]  
+> **Important Usage Guidelines**: This tool provides automated scoring based on publicly available metrics
+and can be used as **one factor** in your evaluation process, not as the sole decision making criteria.
+Scores reflect measurable signals but cannot capture all aspects of library quality, such as code
+architecture, security practices, or alignment with your specific use case. Always combine these scores with
+your own technical evaluation, security review, and testing before making adoption decisions.
+> [!NOTE]  
+> Each package is scored on their latest version. Scores are unlikely to change drasically between versions.
 
 #### CLI Usage
 
-```> cdk-construct-analyzer --help
+```
+> cdk-construct-analyzer --help
 
-Usage: cdk-construct-analyzer [package] [options]
+Usage: cdk-construct-analyzer <package> [options]
 
 Positionals:
   package       NPM package name to analyze (Scored on the latest version)
@@ -42,34 +50,38 @@ Options:
 
 You can run it locally on any library published to npm by providing its package name:
 
-```> cdk-construct-analyzer cdk-ecr-deployment
+```
+> cdk-construct-analyzer cdk-ecr-deployment
 
 LIBRARY: @cdklabs/cdk-ecr-deployment
 VERSION: 0.0.421
 
-OVERALL SCORE: 84/100
+OVERALL SCORE: 81/100
 
 ---
 
 SUBSCORES
-  Maintenance :            73/100
+  Maintenance :            75/100
   Quality     :            90/100
   Popularity  :            88/100
 ```
 
+##### Verbose
+
 Add `--verbose` for a detailed breakdown:
 
-```> cdk-construct-analyzer cdk-ecr-deployment --verbose
+```
+> cdk-construct-analyzer cdk-ecr-deployment --verbose
 
 LIBRARY: cdk-ecr-deployment
 VERSION: 0.0.421
 
-OVERALL SCORE: 84/100
+OVERALL SCORE: 81/100
 
 ---
 
 SUBSCORES
-  Maintenance :            73/100
+  Maintenance :            75/100
   Quality     :            90/100
   Popularity  :            88/100
   
@@ -94,6 +106,61 @@ SUBSCORES
 — Weekly Downloads .............................. ★★★★☆    3
 — Github stars .................................. ★★★★★    2
 — Contributors .................................. ★★★★☆    1
+```
+
+#### Programmatic Access
+
+You can also use the analyzer programmatically in your TypeScript applications by importing the `ConstructAnalyzer` class:
+
+```typescript
+import { ConstructAnalyzer } from '@cdklabs/cdk-construct-analyzer';
+
+const analyzer = new ConstructAnalyzer();
+
+// Analyze a package and get detailed results
+const result = await analyzer.analyzePackage('cdk-ecr-codedeploy');
+
+// Or analyze with custom weights
+const customWeights = {
+  'timeToFirstResponse': 15,
+  'commitFrequency': 10,
+  'releaseFrequency': 8,
+  // ... other signal weights that sum to 100
+};
+const customResult = await analyzer.analyzePackage('cdk-ecr-codedeploy', customWeights);
+
+console.log(`Package: ${result.packageName}`);
+console.log(`Version: ${result.version}`);
+console.log(`Overall Score: ${result.totalScore}/100`);
+
+// Access pillar scores
+console.log('Pillar Scores:');
+Object.entries(result.pillarScores).forEach(([pillar, score]) => {
+  console.log(`  ${pillar}: ${score}/100`);
+});
+
+// Access individual signal scores (star ratings 1-5)
+console.log('Signal Scores:');
+Object.entries(result.signalScores).forEach(([pillar, signals]) => {
+  console.log(`  ${pillar}:`);
+  Object.entries(signals).forEach(([signal, stars]) => {
+    console.log(`    ${signal}: ${'★'.repeat(stars)}${'☆'.repeat(5-stars)}`);
+  });
+});
+```
+
+##### ScoreResult Interface
+
+The `analyzePackage` method returns a `ScoreResult` object with the following structure:
+
+```typescript
+interface ScoreResult {
+  readonly packageName: string;     // "cdk-ecr-codedeploy"
+  readonly version: string;         // "0.0.421"
+  readonly totalScore: number;      // 76 (0-100)
+  readonly pillarScores: Record<string, number>;        // { "MAINTENANCE": 66, "QUALITY": 75, "POPULARITY": 88 }
+  readonly signalScores: Record<string, Record<string, number>>;  // { "MAINTENANCE": { "timeToFirstResponse": 2, "provenanceVerification": 5 } }
+}
 ```
 
 #### Scoring Pillars and Signals
@@ -131,21 +198,12 @@ Signals that reflect adoption and community size:
 
 #### Scoring Weights
 
-Not every signal has the same impact on library , so each signal is assigned an importance level. A signal with
-importance level 3 will carry 3× the weight of a signal with importance level 1:
+Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
+the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score.
 
-* **3 — Critical** signals that strongly influence a library’s overall health and usability (3 points)
-* **2 — Valuable** indicators that support confidence but aren’t decisive signals (2 points)
-* **1 — Supportive** or “nice to have” checks (1 points)
-
-When calculating a subscore (Maintenance, Quality, Popularity), each signal’s grade is weighted by its importance.
-Once all signals in a category are evaluated, the score is normalized to a 0–100 scale. This ensures that categories
-with more signals don’t automatically outweigh others.
-Finally, the three pillar scores are combined into the overall score using equal weights:
-
-* **Maintenance**
-* **Quality**
-* **Popularity**
+When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
+overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
+are calculated based on the signals that belong to each respective pillar.
 
 ## Public FAQ
 
@@ -203,7 +261,7 @@ The scoring process works as follows:
   * Maintenance: how active the project is (recent releases, frequency of updates, how quickly issues/PRs are handled, active maintainers).
   * Quality: what the project includes (README, tests, lint setup, changelog, license, repo hygiene, CDK-specific setup).
   * Popularity: how widely it’s used (downloads from registries, growth trends, GitHub stars, forks, and contributors).
-* Apply weights: Each of these three areas is scored and weighted, then combined into one final score out of 100.
+* Apply weights: Each signal is scored and weighted by its percentage contribution, then all weighted scores are combined into one final score out of 100.
 * Show outputs: The results are available in the CLI (with either a simple summary or a detailed verbose breakdown).
 
 To keep the system modular and easy to maintain, signal weights are defined in a central config file. Each signal includes a
@@ -283,10 +341,10 @@ may have a README but it could be poorly written. These signals come together to
 
 #### **Repository**: `cdk-docker-image-deployment`
 
-Maintenance: 81/100
+Maintenance: 82/100
 Quality:     68/100
-Popularity:  83/100
-Overall:     77/100
+Popularity:  71/100
+Overall:     71/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -310,7 +368,7 @@ Overall:     77/100
 Maintenance: 59/100
 Quality:     93/100
 Popularity:  88/100
-Overall:     80/100
+Overall:     77/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -331,10 +389,10 @@ Overall:     80/100
 
 #### **Repository**: `cdk-ecr-deployment`
 
-Maintenance: 73/100
+Maintenance: 75/100
 Quality:     90/100
 Popularity:  88/100
-Overall:     84/100
+Overall:     81/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -355,10 +413,10 @@ Overall:     84/100
 
 #### **Repository**: `cdk-remote-stack`
 
-Maintenance: 56/100
+Maintenance: 59/100
 Quality:     100/100
 Popularity:  63/100
-Overall:     73/100
+Overall:     74/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -403,10 +461,10 @@ Overall:     29/100
 
 #### **Repository**: `datadog-cdk-constructs-v2`
 
-Maintenance: 83/100
+Maintenance: 63/100
 Quality:     98/100
 Popularity:  75/100
-Overall:     85/100
+Overall:     77/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -430,7 +488,7 @@ Overall:     85/100
 Maintenance:100/100
 Quality:     85/100
 Popularity:  92/100
-Overall:     92/100
+Overall:     89/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -451,7 +509,7 @@ Overall:     92/100
 
 #### **Repository**: `cdk-iam-floyd`
 
-Maintenance: 67/100
+Maintenance: 70/100
 Quality:     45/100
 Popularity:  75/100
 Overall:     57/100
@@ -475,10 +533,10 @@ Overall:     57/100
 
 #### **Repository**: `cdktf`
 
-Maintenance: 65/100
+Maintenance: 68/100
 Quality:     83/100
 Popularity: 100/100
-Overall:     83/100
+Overall:     77/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
@@ -499,10 +557,10 @@ Overall:     83/100
 
 #### **Repository**: `@mrgrain/cdk-esbuild`
 
-Maintenance: 67/100
+Maintenance: 70/100
 Quality:    100/100
 Popularity:  88/100
-Overall:     85/100
+Overall:     83/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
