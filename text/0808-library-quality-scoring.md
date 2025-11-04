@@ -44,6 +44,7 @@ Positionals:
 
 Options:
  -v, --verbose  Show detailed signal information
+     --fix      Show AI-generated improvement recommendations
      --help     Show this help message
      --version  Show version number
 ```
@@ -108,6 +109,61 @@ SUBSCORES
 — Contributors .................................. ★★★★☆    1
 ```
 
+##### Fix Recommendations
+
+The `--fix` flag uses AI to analyze your package's signals and their scores to generate personalized improvement recommendations.
+The output follows a fixed template format to ensure consistent, structured guidance:
+
+```
+> cdk-construct-analyzer cdk-ecr-deployment
+
+LIBRARY: https://www.npmjs.com/package/cdk-ecr-deployment
+VERSION: 0.0.421
+
+OVERALL SCORE: 81/100
+
+---
+
+SUBSCORES
+  Maintenance :            75/100
+  Quality     :            90/100
+  Popularity  :            88/100
+
+---
+
+AI-GENERATED IMPROVEMENT RECOMMENDATIONS:
+
+Based on your package's signal scores, here are the key areas for improvement:
+
+1. ENABLE PROVENANCE VERIFICATION                        +9 points
+   Current: No provenance detected (★☆☆☆☆)
+   Target: Enable npm provenance for supply chain security (★★★★★)
+   
+   This signal checks if your package is published with provenance attestation.
+   Consider enabling provenance in your publishing workflow.
+
+2. IMPROVE TEST COVERAGE                                 +6 points
+   Current: Limited test detection (★★★☆☆)
+   Target: Add comprehensive testing including snapshots (★★★★★)
+   
+   Your package appears to have unit tests but may be missing snapshot tests.
+   CDK constructs benefit from testing CloudFormation template output.
+
+3. REDUCE ISSUE RESPONSE TIME                            +4 points
+   Current: 45 days average first response (★☆☆☆☆)
+   Target: Respond to issues within 1-2 weeks (★★★★☆)
+   
+   Based on GitHub issue data, responses to new issues take over a month.
+   Faster responses improve maintainer reputation and user confidence.
+
+4. EXPAND LANGUAGE SUPPORT                               +3 points
+   Current: 2 languages detected (★★★☆☆)
+   Target: Support 4 CDK languages (★★★★★)
+   
+   Your package supports most CDK languages but may be missing one.
+   Full language support increases potential user base.
+```
+
 #### Programmatic Access
 
 You can also use the analyzer programmatically in your TypeScript applications by importing the `ConstructAnalyzer` class:
@@ -117,17 +173,27 @@ import { ConstructAnalyzer } from '@cdklabs/cdk-construct-analyzer';
 
 const analyzer = new ConstructAnalyzer();
 
-// Analyze a package and get detailed results
-const result = await analyzer.analyzePackage('cdk-ecr-codedeploy');
+// Analyze a popular construct library
+const result = await analyzer.analyzePackage('cdk-ecr-deployment');
 
-// Or analyze with custom weights
+// Generate AI-powered improvement recommendations
+const myPackageResult = await analyzer.analyzePackage('cdk-ecr-deployment', { 
+  generateRecommendations: true 
+});
+
+// Analyze with custom weights (emphasize maintenance over popularity)
 const customWeights = {
-  'timeToFirstResponse': 15,
-  'commitFrequency': 10,
-  'releaseFrequency': 8,
+  'timeToFirstResponse': 12,
+  'releaseFrequency': 10,
+  'provenanceVerification': 8,
+  'snapshotTests': 15,
+  'weeklyDownloads': 5,
   // ... other signal weights that sum to 100
 };
-const customResult = await analyzer.analyzePackage('cdk-ecr-codedeploy', customWeights);
+const enterpriseResult = await analyzer.analyzePackage('@company/internal-constructs', { 
+  weights: customWeights,
+  generateRecommendations: true 
+});
 
 console.log(`Package: ${result.packageName}`);
 console.log(`Version: ${result.version}`);
@@ -147,6 +213,12 @@ Object.entries(result.signalScores).forEach(([pillar, signals]) => {
     console.log(`    ${signal}: ${'★'.repeat(stars)}${'☆'.repeat(5-stars)}`);
   });
 });
+
+// Access AI-generated improvement recommendations
+if (myPackageResult.recommendations) {
+  console.log('\nAI-Generated Improvement Recommendations:');
+  console.log(myPackageResult.recommendations);
+}
 ```
 
 ##### ScoreResult Interface
@@ -156,10 +228,11 @@ The `analyzePackage` method returns a `ScoreResult` object with the following st
 ```typescript
 interface ScoreResult {
   readonly packageName: string;     // "cdk-ecr-codedeploy"
-  readonly latestVersion: string;         // "0.0.421"
+  readonly latestVersion: string;   // "0.0.421"
   readonly totalScore: number;      // 76 (0-100)
   readonly pillarScores: Record<string, number>;        // { "MAINTENANCE": 66, "QUALITY": 75, "POPULARITY": 88 }
   readonly signalScores: Record<string, Record<string, number>>;  // { "MAINTENANCE": { "timeToFirstResponse": 2, "provenanceVerification": 5 } }
+  readonly recommendations?: string;  // AI-generated improvement recommendations as a single string
 }
 ```
 
@@ -199,7 +272,8 @@ Signals that reflect adoption and community size:
 #### Scoring Weights
 
 Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
-the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score.
+the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score. The library will throw
+an error if the sum does not total 100.
 
 When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
 overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
@@ -267,7 +341,12 @@ The scoring process works as follows:
 To keep the system modular and easy to maintain, signal weights are defined in a central config file. Each signal includes a
 pillar field that specifies whether it belongs to Maintenance, Quality, or Popularity. The logic for evaluating each signal lives
 in its corresponding file within the signals directory (for example, signals/maintenance.ts). This structure makes it simple to
-adjust weights, add new signals, or reorganize categories without changing the core logic. The scoring system also automatically
+adjust weights, add new signals, or reorganize categories without changing the core logic.
+
+The system also integrates Generative AI for the `--fix` flag functionality. When users request AI generated improvement recommendations,
+the tool analyzes the package's signal scores and generates personalized suggestions. The AI takes the signals and their scores as input and
+outputs recommendations in the format defined by a steering document, ensuring that the output is consistent and follows the established template
+structure for improvement recommendations.
 
 ### Is this a breaking change?
 
