@@ -276,7 +276,7 @@ Signals that reflect adoption and community size:
 #### Scoring Weights
 
 Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
-the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score. 
+the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score.
 
 > [!NOTE]  
 > If signal weights don't total 100, they'll be normalized with a helpful warning logged.
