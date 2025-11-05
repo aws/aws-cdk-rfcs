@@ -180,7 +180,7 @@ const gateway = new agentcore.Gateway(this, "MyGateway", {
 By default, the Gateway construct creates an execution role with minimal permissions that are automatically
 expanded as you add targets. You can provide your own custom IAM role when you need to comply with organizational IAM
 policies or maintain centralized control over permissions. When providing a custom role, ensure it's assumable by the
-bedrock-agentcore.amazonaws.com service principal and includes necessary permissions for your targets (Lambda
+`bedrock-agentcore.amazonaws.com` service principal and includes necessary permissions for your targets (Lambda
 invoke permissions are handled automatically, but Smithy targets accessing AWS services need appropriate service
 permissions). If using KMS encryption, the role also needs decrypt and data key generation permissions.
 
@@ -251,7 +251,7 @@ You can create the following targets types:
 **Lambda Target**: Lambda targets allow you to connect your gateway to AWS Lambda functions that implement your tools. This is useful
 when you want to execute custom code in response to tool invocations.
 
-- Supports GATEWAY_IAM_ROLE credential provider only
+- Supports GATEWAY_IAM_ROLE credential provider only, The construct by default set outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
 - Ideal for custom serverless function integration
 - Need tool schema (tool schema is a blueprint that describes the functions your Lambda provides to AI agents).
   The construct provide [3 ways to upload a tool schema to Lambda target](#tools-schema-for-lambda-target)
@@ -261,7 +261,7 @@ when you want to execute custom code in response to tool invocations.
 **OpenAPI Schema Target** : OpenAPI widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0
 specifications for defining API targets. It connects to REST APIs using OpenAPI specifications
 
-- Supports OAUTH and API_KEY credential providers (Do not support IAM, you must provide `credentialProviderConfigurations`)
+- Supports `OAUTH` and `API_KEY` credential providers (Do not support `GATEWAY_IAM_ROLE`, you must provide `credentialProviderConfigurations`)
 - Ideal for integrating with external REST services
 - Need API schema. The construct provide [3 ways to upload a API schema to OpenAPI target](#api-schema-for-openapi-and-smithy-target)
 
@@ -269,7 +269,7 @@ specifications for defining API targets. It connects to REST APIs using OpenAPI 
 a more structured approach to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
 AgentCore Gateway supports built-in AWS service models only. It connects to services using Smithy model definitions
 
-- Supports OAUTH and API_KEY credential providers
+- Supports OAUTH and API_KEY credential providers, The construct by default set outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
 - Ideal for AWS service integrations
 - Need API schema. The construct provide 3 ways to upload a API schema to Smity target
 - When using the default IAM authentication (no `credentialProviderConfigurations` specified), The construct only
@@ -430,6 +430,8 @@ const lambdaTarget = gateway.addLambdaTarget("MyLambdaTarget", {
   toolSchema: agentcore.ToolSchema.fromLocalAsset(
     path.join(__dirname, "schemas", "my-tool-schema.json")
   ),
+  //credentialProviderConfigurations is not required for lambda target ,
+  // the underlying service by deafult set it as GATEWAY_IAM_ROLE
 });
 ```
 
@@ -480,7 +482,8 @@ const smithyTarget = gateway.addSmithyTarget("MySmithyTarget", {
   targetName: "my-smithy-target",
   description: "Smithy model target",
   smithyModel: smithySchema,
-
+  //credentialProviderConfigurations is not required for smithy target ,
+  // the underlying service by deafult set it as GATEWAY_IAM_ROLE
 });
 ```
 
@@ -517,6 +520,8 @@ const target = agentcore.GatewayTarget.forLambda(this, "MyLambdaTarget", {
   toolSchema: agentcore.ToolSchema.fromLocalAsset(
     path.join(__dirname, "schemas", "my-tool-schema.json")
   ),
+  //credentialProviderConfigurations is not required for lambda target ,
+  // the underlying service by deafult set it as GATEWAY_IAM_ROLE
 });
 ```
 
@@ -570,6 +575,8 @@ const target = agentcore.GatewayTarget.forSmithy(this, "MySmithyTarget", {
   description: "Target for Smithy model integration",
   gateway: gateway,
   smithyModel: smithySchema,
+  //credentialProviderConfigurations is not required for Smithy target ,
+  // the underlying service by deafult set it as GATEWAY_IAM_ROLE
 });
 
 ```
