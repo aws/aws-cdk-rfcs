@@ -285,6 +285,10 @@ When calculating a pillar score (Maintenance, Quality, Popularity), each signal'
 overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
 are calculated based on the signals that belong to each respective pillar.
 
+```
+[x] Signed-off by API Bar Raiser @kaizencc
+```
+
 ## Public FAQ
 
 ### What are we launching today?
