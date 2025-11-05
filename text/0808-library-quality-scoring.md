@@ -192,6 +192,7 @@ const customWeights = {
   'snapshotTests': 15,
   'weeklyDownloads': 5,
   // ... other signal weights that sum to 100
+  // If signal weights don't total 100, they'll be normalized with a helpful warning logged.
 };
 const enterpriseResult = await analyzer.analyzePackage('@company/internal-constructs', { 
   weights: customWeights,
