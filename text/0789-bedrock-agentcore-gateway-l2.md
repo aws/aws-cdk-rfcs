@@ -61,7 +61,7 @@ The Gateway construct provides a way to create Amazon Bedrock Agent Core Gateway
 |------|------|----------|-------------|
 | `gatewayName` | `string` | Yes | The name of the gateway. Valid characters are a-z, A-Z, 0-9, _ (underscore) and - (hyphen). Maximum 100 characters |
 | `description` | `string` | No | Optional description for the gateway. Maximum 200 characters |
-| `protocolConfiguration` | `IGatewayProtocolConfig` | No | The protocol configuration for the gateway. Defaults to MCP protocol |
+| `protocolConfiguration` | `IGatewayProtocolConfig` | No | The protocol configuration for the gateway. Defaults to MCP protocol. **Note:** Versions are available in [MCP Releases](https://github.com/modelcontextprotocol/modelcontextprotocol/releases) |
 | `authorizerConfiguration` | `IGatewayAuthorizerConfig` | No | The authorizer configuration for the gateway. Defaults to Cognito |
 | `exceptionLevel` | `GatewayExceptionLevel` | No | The verbosity of exception messages. Use DEBUG mode to see granular exception messages |
 | `kmsKey` | `kms.IKey` | No | The AWS KMS key used to encrypt data associated with the gateway |
@@ -242,7 +242,7 @@ credential provider attached enabling you to securely access targets whether the
 | `description` | `string` | No | Optional description for the gateway target. Maximum 200 characters |
 | `gateway` | `IGateway` | Yes | The gateway this target belongs to |
 | `targetConfiguration` | `ITargetConfiguration` | Yes | The target configuration (Lambda, OpenAPI, or Smithy). **Note:** Users typically don't create this directly. When using convenience methods like `GatewayTarget.forLambda()`, `GatewayTarget.forOpenApi()`, `GatewayTarget.forSmithy()` or the gateway's `addLambdaTarget()`, `addOpenApiTarget()`, `addSmithyTarget()` methods, this configuration is created internally for you. Only needed when using the GatewayTarget constructor directly for [advanced scenarios](#advanced-usage-direct-configuration-for-gateway-target). |
-| `credentialProviderConfigurations` | `IGatewayCredentialProvider[]` | No | Credential providers for authentication. Defaults to `[GatewayCredentialProvider.iamRole()]`. Use `GatewayCredentialProvider.apiKey()`, `GatewayCredentialProvider.oauth()`, or `GatewayCredentialProvider.iamRole()`. **Note:** OpenAPI targets do not support IAM authentication and require explicit `credentialProviderConfigurations` (API Key or OAuth). See [Targets types](#targets-types) for details |
+| `credentialProviderConfigurations` | `ICredentialProvider[]` | No | Credential providers for authentication. Defaults to `[GatewayCredentialProvider.fromIamRole()]`. Use `GatewayCredentialProvider.fromApiKeyIdentityArn()`, `GatewayCredentialProvider.fromOauthIdentityArn()`, or `GatewayCredentialProvider.fromIamRole()`. Since the Identity L2 construct is not available we can use these arn based factory methods to set the auth, Once Idenetity is available we will add new methods `GatewayCredentialProvider.apiKey()` ,`GatewayCredentialProvider.oauth()`.  **Note:** OpenAPI targets do not support IAM authentication and require explicit `credentialProviderConfigurations` (API Key or OAuth). See [Targets types](#targets-types) for details |
 
 ### Targets types
 
@@ -251,7 +251,8 @@ You can create the following targets types:
 **Lambda Target**: Lambda targets allow you to connect your gateway to AWS Lambda functions that implement your tools. This is useful
 when you want to execute custom code in response to tool invocations.
 
-- Supports GATEWAY_IAM_ROLE credential provider only, The construct by default set outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
+- Supports only `GATEWAY_IAM_ROLE` credential provider for [outbound authorization](#outbound-authorization),
+The construct by default set outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
 - Ideal for custom serverless function integration
 - Need tool schema (tool schema is a blueprint that describes the functions your Lambda provides to AI agents).
   The construct provide [3 ways to upload a tool schema to Lambda target](#tools-schema-for-lambda-target)
@@ -261,7 +262,7 @@ when you want to execute custom code in response to tool invocations.
 **OpenAPI Schema Target** : OpenAPI widely used standard for describing RESTful APIs. Gateway supports OpenAPI 3.0
 specifications for defining API targets. It connects to REST APIs using OpenAPI specifications
 
-- Supports `OAUTH` and `API_KEY` credential providers (Do not support `GATEWAY_IAM_ROLE`, you must provide `credentialProviderConfigurations`)
+- Supports `OAUTH` and `API_KEY` for [outbound authorization](#outbound-authorization). (Do not support `GATEWAY_IAM_ROLE`, you must provide `credentialProviderConfigurations`)
 - Ideal for integrating with external REST services
 - Need API schema. The construct provide [3 ways to upload a API schema to OpenAPI target](#api-schema-for-openapi-and-smithy-target)
 
@@ -269,7 +270,8 @@ specifications for defining API targets. It connects to REST APIs using OpenAPI 
 a more structured approach to defining APIs compared to OpenAPI, and are particularly useful for connecting to AWS services.
 AgentCore Gateway supports built-in AWS service models only. It connects to services using Smithy model definitions
 
-- Supports OAUTH and API_KEY credential providers, The construct by default set outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
+- Supports OAUTH and API_KEY for [outbound authorization](#outbound-authorization), The construct by default set
+ outbound auth (`credentialProviderConfigurations`) to `GATEWAY_IAM_ROLE`
 - Ideal for AWS service integrations
 - Need API schema. The construct provide 3 ways to upload a API schema to Smity target
 - When using the default IAM authentication (no `credentialProviderConfigurations` specified), The construct only
@@ -380,7 +382,7 @@ const s3Schema = agentcore.ApiSchema.fromS3File(bucket, "schemas/action-group.ya
 ### Outbound authorization
 
 Outbound authorization lets Amazon Bedrock AgentCore gateways securely access gateway targets on behalf of users authenticated
-and authorized during Inbound Auth.
+and authorized during Inbound Auth. You can set outbound authorization with `credentialProviderConfigurations` property on the gateway target construct.
 
 AgentCore Gateway supports the following types of outbound authorization:
 
