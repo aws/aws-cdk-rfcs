@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @krokoko, @aws-rafams, @dineshSajwan
 * **Tracking Issue**: #789
-* **API Bar Raiser**: @alvazjor
+* **API Bar Raiser**: @kumvprat
 
 The Amazon Bedrock AgentCore Gateway L2 constructs make it easy to create and manage connections between AI agents
 and external services. These constructs provide simple, high-level interfaces for creating Gateways and Gateway Targets,
@@ -654,7 +654,7 @@ signed-off by the API bar raiser (the `status/api-approved` label was applied to
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @kumvprat
 ```
 
 ## Public FAQ
