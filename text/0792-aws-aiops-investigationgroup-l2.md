@@ -62,7 +62,11 @@ const sourceAccountRole = Role.fromRoleArn(this, 'SourceAccountRole',
   'arn:aws:iam::123456789012:role/AIOpsSourceRole');
 
 const notificationTopic = new Topic(this, 'NotificationTopic');
-const chatbotChannelConfiguration = new ChatbotChannelConfiguration(this, 'slack-channel/my-channel');
+const chatbotChannelConfiguration = new chatbot.SlackChannelConfiguration(this, 'MySlackChannel', {
+  slackChannelConfigurationName: 'YOUR_CHANNEL_NAME',
+  slackWorkspaceId: 'YOUR_SLACK_WORKSPACE_ID',
+  slackChannelId: 'YOUR_SLACK_CHANNEL_ID',
+});
 
 const group = new InvestigationGroup(this, 'MyInvestigationGroup', {
   name: 'myInvestigationGroup',
@@ -121,7 +125,11 @@ The `addChatbotNotificationChannel` method adds additional chatbotNotificationCh
 
 ```typescript
 const notificationTopic = new Topic(this, 'AIOpsNotifications');
-const chatbotChannelConfiguration = new ChatbotChannelConfiguration(this, 'slack-channel/my-channel');
+const chatbotChannelConfiguration = new chatbot.SlackChannelConfiguration(this, 'MySlackChannel', {
+  slackChannelConfigurationName: 'YOUR_CHANNEL_NAME',
+  slackWorkspaceId: 'YOUR_SLACK_WORKSPACE_ID',
+  slackChannelId: 'YOUR_SLACK_CHANNEL_ID',
+});
 const chatbotNotificationChannel: ChatbotNotificationChannel = {
   chatbotChannelConfigurations: [ chatbotChannelConfiguration ],
   snsTopic: notificationTopic,
@@ -180,7 +188,8 @@ group.addToRolePolicy(new PolicyStatement({
 
 ##### EKS Integration
 
-The `grantEksReadAccess` method creates an EKS AccessEntry that grants the investigation group's IAM role the managed AccessPolicy `AmazonAIOpsAssistantPolicy`.
+The `grantEksReadAccess` method creates an EKS AccessEntry that grants the investigation group's IAM role
+comprehensive Read Only access to resources in the cluster.
 This enables AIOps to access and analyze EKS cluster resources during investigations.
 The method only supports clusters configured with authentication modes of `API_AND_CONFIG_MAP` or `API`.
 For more information, see [Integration with Amazon EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/EKS-Integration.html#AmazonAIOpsAssistantPolicy)
