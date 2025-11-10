@@ -29,8 +29,60 @@ and can be used as **one factor** in your evaluation process, not as the sole de
 Scores reflect measurable signals but cannot capture all aspects of library quality, such as code
 architecture, security practices, or alignment with your specific use case. Always combine these scores with
 your own technical evaluation, security review, and testing before making adoption decisions.
+
+
 > [!NOTE]  
-> Each package is scored on their latest version. Scores are unlikely to change drasically between versions.
+> Each package is scored on their latest version.
+> See this [FAQ question](./0808-library-quality-scoring.md#what-alternative-solutions-did-you-consider) for more details
+
+
+#### Scoring Pillars and Signals
+
+The scoring algorithm evaluates each construct on three pillars with multiple weighted signals as support:
+
+> [!NOTE]  
+> See this [table](./0808-library-quality-scoring.md#signals) for more details on how each signal is scored.
+
+##### Maintenance
+
+Helps determine if the project is active and healthy, or abandoned. Signals include:
+
+* Time to first response: Fast issue response reflects active, responsive maintainers.
+* Release Frequency: Regular releases signal iteration, patching, and progress.
+* Provenance Verification: Verifies package authenticity and supply chain security.
+* Open issues / total issues: A lower ratio of open issues indicates backlog health and follow through normalized by repository popularity.
+* Number of Contributors: More contributors reduce risk of abandonment and reflect shared maintenance.
+
+##### Quality
+
+Signals that are visible in the repo/package that showcases quality:
+
+* Documentation Completeness: High quality documentation makes the project easier to adopt and use (README, API References, Usage Examples).
+* Tests checklist (unit/snapshot): Tests ensure correctness and prevent regressions.
+* Author Track Record: Measures how many packages the author has published, more published packages often indicate greater experience.
+* Changelog includes feats/fixes: Checks if there are feats/fixes published in the release notes.
+* Stable versioning (>=1.x.x, not deprecated): Indicates API maturity and stability.
+* Multi-language Support: Supporting more CDK languages shows extra effort and intent to reach a broader developer base
+
+##### Popularity
+
+Signals that reflect adoption and community size:
+
+* Contributors: More contributors typically indicate shared maintenance and community trust.
+* Weekly Downloads: High or rising download counts suggest the library is being actively used.
+* Github stars: Stars represent general developer interest and visibility on GitHub.
+
+#### Scoring Weights
+
+Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
+the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score.
+> [!NOTE]  
+> If signal weights don't total 100, they'll be normalized with a helpful warning logged.
+
+When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
+overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
+are calculated based on the signals that belong to each respective pillar.
+
 
 #### CLI Usage
 
@@ -43,10 +95,11 @@ Positionals:
   package       NPM package name to analyze (Scored on the latest version)
 
 Options:
- -v, --verbose  Show detailed signal information
-     --fix      Show AI-generated improvement recommendations
-     --help     Show this help message
-     --version  Show version number
+  --detail   Show detailed signal information
+  --fix      Show AI-generated improvement recommendations
+  --weights  Path to custom weights configuration file (JSON)
+  --help     Show this help message
+  --version  Show version number
 ```
 
 You can run it locally on any library published to npm by providing its package name:
@@ -67,12 +120,12 @@ SUBSCORES
   Popularity  :            88/100
 ```
 
-##### Verbose
+##### Detail Option
 
-You can scrutinize the individual metrics that make up the overall score by providing the `--verbose` flag:
+You can scrutinize the individual metrics that make up the overall score by providing the `--detail` flag:
 
 ```
-> cdk-construct-analyzer cdk-ecr-deployment --verbose
+> cdk-construct-analyzer cdk-ecr-deployment --detail
 
 LIBRARY: https://www.npmjs.com/package/cdk-ecr-deployment
 VERSION: 0.0.421
@@ -167,6 +220,61 @@ Based on your package's signal scores, here are the key areas for improvement:
    Full language support increases potential user base.
 ```
 
+##### Custom Weights
+
+You can customize signal weights to match your organization's priorities using the `--weights` flag with a JSON configuration file. This is useful when certain signals matter more for your use case—for example, emphasizing maintenance over popularity for internal libraries, or prioritizing security signals for production deployments.
+
+Create a weights configuration file (e.g., `custom-weights.json`):
+
+```json
+{
+  "timeToFirstResponse": 12,
+  "releaseFrequency": 10,
+  "provenanceVerification": 8,
+  "openIssuesRatio": 5,
+  "numberOfContributors": 5,
+  "documentationCompleteness": 8,
+  "testsChecklist": 15,
+  "authorTrackRecord": 7,
+  "changelogPresent": 8,
+  "stableVersioning": 6,
+  "multiLanguageSupport": 3,
+  "weeklyDownloads": 5,
+  "githubStars": 4,
+  "contributors": 4
+}
+```
+
+Then run the analyzer with your custom weights:
+
+```
+> cdk-construct-analyzer cdk-ecr-deployment --weights custom-weights.json
+
+LIBRARY: https://www.npmjs.com/package/cdk-ecr-deployment
+VERSION: 0.0.421
+
+OVERALL SCORE: 78/100
+
+---
+
+SUBSCORES
+  Maintenance :            72/100
+  Quality     :            85/100
+  Popularity  :            70/100
+```
+
+You can also provide partial weight overrides—only specify the signals you want to change, and the rest will use default weights:
+
+```json
+{
+  "provenanceVerification": 15,
+  "testsChecklist": 12
+}
+```
+
+> [!NOTE]  
+> If your weights don't sum to 100, they'll be automatically normalized with a warning logged. All signal names must match the exact signal identifiers used in the scoring system. You don't need to include every signal, any omitted signals will use their default weights.
+
 #### Programmatic Access
 
 You can also use the analyzer programmatically in your TypeScript applications by importing the `ConstructAnalyzer` class:
@@ -240,50 +348,6 @@ interface ScoreResult {
 }
 ```
 
-#### Scoring Pillars and Signals
-
-The scoring algorithm evaluates each construct on three pillars with multiple weighted signals as support:
-
-##### Maintenance
-
-Helps determine if the project is active and healthy, or abandoned. Signals include:
-
-* Time to first response: Fast issue resolution reflects active, responsive maintainers.
-* Release Frequency: Regular releases signal iteration, patching, and progress.
-* Provenance Verification: Verifies package authenticity and supply chain security.
-* Open issues / total issues: A lower ratio of open issues indicates backlog health and follow through normalized by repository popularity.
-* Number of Contributors: More contributors reduce risk of abandonment and reflect shared maintenance.
-
-##### Quality
-
-Signals that are visible in the repo/package that showcases quality:
-
-* Documentation Completeness: High quality documentation makes the project easier to adopt and use (README, API References, Usage Examples).
-* Tests checklist (unit/snapshot): Tests ensure correctness and prevent regressions.
-* Author Track Record: Measures how many packages the author has published, more published packages often indicate greater experience.
-* Changelog includes feats/fixes: Checks if there are feats/fixes published in the release notes.
-* Stable versioning (>=1.x.x, not deprecated): Indicates API maturity and stability.
-* Multi-language Support: Supporting more CDK languages shows extra effort and intent to reach a broader developer base
-
-##### Popularity
-
-Signals that reflect adoption and community size:
-
-* Contributors: More contributors typically indicate shared maintenance and community trust.
-* Weekly Downloads: High or rising download counts suggest the library is being actively used.
-* Github stars: Stars represent general developer interest and visibility on GitHub.
-
-#### Scoring Weights
-
-Not every signal has the same impact on library quality, so each signal is assigned a weight that represents its percentage contribution to
-the overall score. The sum of all signal weights equals 100, meaning each weight point represents 1% of the total score.
-> [!NOTE]  
-> If signal weights don't total 100, they'll be normalized with a helpful warning logged.
-
-When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
-overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
-are calculated based on the signals that belong to each respective pillar.
-
 ```
 [x] Signed-off by API Bar Raiser @kaizencc
 ```
@@ -316,7 +380,7 @@ transparency and structure, so customers can make informed decisions and authors
 ### Why should we not do this?
 
 A risk of implementing this is that some authors may feel judged by an automated score. To mitigate this, the score is
-explainable and transparent, with a verbose breakdown of all signals so authors understand how to improve.
+explainable and transparent, with a detail breakdown of all signals so authors understand how to improve.
 
 Customers could start treating the score as a guarantee of quality. If people rely only on the score and stop evaluating
 packages for themselves, that could create a false sense of security. That risk gets worse if our system produces a high
@@ -345,7 +409,7 @@ The scoring process works as follows:
   * Quality: what the project includes (README, tests, lint setup, changelog, license, repo hygiene, CDK-specific setup).
   * Popularity: how widely it’s used (downloads from registries, growth trends, GitHub stars, forks, and contributors).
 * Apply weights: Each signal is scored and weighted by its percentage contribution, then all weighted scores are combined into one final score out of 100.
-* Show outputs: The results are available in the CLI (with either a simple summary or a detailed verbose breakdown).
+* Show outputs: The results are available in the CLI (with either a simple summary or a detailed breakdown).
 
 To keep the system modular and easy to maintain, signal weights are defined in a central config file. Each signal includes a
 pillar field that specifies whether it belongs to Maintenance, Quality, or Popularity. The logic for evaluating each signal lives
@@ -424,6 +488,14 @@ may have a README but it could be poorly written. These signals come together to
 | Popularity  | Dependents                         | —                                                                     | libraries.io   | NO       | Shows reuse                      | 3          |
 | Popularity  | Forks                              | —                                                                     | Repo API       | NO       | Community engagement             | 2          |
 | Popularity  | Subscribers/watchers               | —                                                                     | Repo API       | NO       | Indicates user interest          | 1          |
+
+#### Integration with Existing Security and Quality Tools
+
+Tools like Snyk already provide signals around security vulnerabilities, outdated dependencies, and supply chain risks. These platforms have mature detection capabilities and extensive vulnerability databases that could complement the signals in this scoring system.
+
+Integrating with these tools would strengthen the Quality and Maintenance pillars without building duplicate functionality. For example, Snyk's vulnerability counts could inform a security or supply chain signal, while dependency freshness data could enhance maintenance activity assessment. This would provide a more comprehensive view of library health and align with workflows that many organizations already use.
+
+However, adding external dependencies introduces complexity and potential points of failure. These tools require API keys, have rate limits, and may not be freely accessible. Relying on third party services could slow down scoring if their APIs are unavailable or slow to respond. Keeping the scoring system self contained and focused on observable, repository level signals ensures consistency, speed, and independence from external service availability.
 
 ### Construct Library Scoring Examples
 
