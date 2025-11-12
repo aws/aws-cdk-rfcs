@@ -299,7 +299,7 @@ or any other new channel in the future while making the API backwards compatible
 | `addToRolePolicy` | `statement: PolicyStatement` | `void` | Add statement to the investigation group role policy |
 | `grant` | `grantee: IGrantable, ...actions: string[]` | `Grant` | Grant custom permissions to the identity |
 | `grantCreate` | `grantee: IGrantable` | `Grant` | Grants create permissions on investigation groups container to the specified identity, including createInvestigation and createInvestigationEvent permissions. |
-| `grantEksReadAccess` | `cluster: ICluster` | `AccessEntry` | Creates an EKS AccessEntry granting the investigation group IAM role the managed AccessPolicy AmazonAIOpsAssistantPolicy. Only clusters with an authentication mode of API_AND_CONFIG_MAP or API are supported. |
+| `grantEksReadAccess` | `cluster: ICluster` | `AccessEntry` | Creates an EKS AccessEntry granting the investigation group comprehensive readonly access, see [Integration with Amazon EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/EKS-Integration.html#AmazonAIOpsAssistantPolicy). Only clusters with an authentication mode of API_AND_CONFIG_MAP or API are supported. |
 
 #### Metrics Methods
 
