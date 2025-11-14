@@ -1,4 +1,4 @@
-# RFC: Feature Flag Advisor
+# RFC: Library Quality Scoring
 
 * Original Author(s): @huang-benny
 * Tracking Issue: [#808](https://github.com/aws/aws-cdk-rfcs/issues/808)
