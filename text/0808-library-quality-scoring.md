@@ -508,245 +508,233 @@ from external service availability.
 
 ### Construct Library Scoring Examples
 
+> [!NOTE]  
+> The weights shown in these examples are for demonstration purposes only and do not represent the final production weights.
+
 #### **Repository**: `cdk-docker-image-deployment`
 
-Maintenance: 82/100
-Quality:     68/100
-Popularity:  71/100
-Overall:     71/100
+Maintenance: 64/100
+Quality:     50/100
+Popularity:  70/100
+Overall:     61/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 3          | 3        |
-| Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 3          | 2        |
-| Quality     | Documentation Completeness         | 4          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog includes feats/fixes     | 1          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 3          | 1        |
+| Maintenance | Time to first response             | 3          | 10       |
+| Maintenance | Provenance Verification            | 5          | 10       |
+| Maintenance | Release Frequency                  | 5          | 10       |
+| Maintenance | Number of Contributors             | 3          | 5        |
+| Maintenance | Number of Feats and Fixes          | 1          | 5        |
+| Maintenance | Open issues / total issues         | 2          | 5        |
+| Quality     | Documentation Completeness         | 3          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 3          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 1          | 5        |
+| Quality     | Stable versioning                  | 2          | 5        |
+| Quality     | Multi-language Support             | 4          | 5        |
+| Popularity  | Weekly Downloads                   | 4          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 3          | 5        |
 
 #### **Repository**: `cdk-stacksets`
 
-Maintenance: 59/100
-Quality:     93/100
-Popularity:  88/100
-Overall:     77/100
+Maintenance: 58/100
+Quality:     83/100
+Popularity:  75/100
+Overall:     70/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 3          | 3        |
-| Maintenance | Release Frequency                  | 2          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 3          | 2        |
-| Maintenance | Number of Contributors             | 4          | 2        |
-| Quality     | Documentation Completeness         | 5          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog includes feats/fixes     | 5          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 4          | 1        |
+| Maintenance | Time to first response             | 3          | 10       |
+| Maintenance | Provenance Verification            | 5          | 10       |
+| Maintenance | Release Frequency                  | 2          | 10       |
+| Maintenance | Number of Contributors             | 4          | 5        |
+| Maintenance | Number of Feats and Fixes          | 3          | 5        |
+| Maintenance | Open issues / total issues         | 3          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 2          | 5        |
+| Quality     | Multi-language Support             | 5          | 5        |
+| Popularity  | Weekly Downloads                   | 4          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 4          | 5        |
 
 #### **Repository**: `cdk-ecr-deployment`
 
 Maintenance: 75/100
-Quality:     90/100
-Popularity:  88/100
-Overall:     81/100
+Quality:     83/100
+Popularity:  85/100
+Overall:     80/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 2          | 3        |
-| Maintenance | Release Frequency                  | 4          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 4          | 2        |
-| Quality     | Documentation Completeness         | 5          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 4          | 1        |
+| Maintenance | Time to first response             | 2          | 10       |
+| Maintenance | Provenance Verification            | 5          | 10       |
+| Maintenance | Release Frequency                  | 4          | 10       |
+| Maintenance | Number of Contributors             | 4          | 5        |
+| Maintenance | Number of Feats and Fixes          | 5          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 3          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 4          | 5        |
+| Quality     | Multi-language Support             | 5          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 4          | 5        |
 
 #### **Repository**: `cdk-remote-stack`
 
-Maintenance: 59/100
-Quality:     100/100
-Popularity:  63/100
-Overall:     74/100
+Maintenance: 50/100
+Quality:     67/100
+Popularity:  70/100
+Overall:     60/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Release Frequency                  | 1          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 1          | 2        |
-| Quality     | Documentation Completeness         | 5          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 4          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 1          | 1        |
+| Maintenance | Time to first response             | 4          | 10       |
+| Maintenance | Provenance Verification            | 5          | 10       |
+| Maintenance | Release Frequency                  | 1          | 10       |
+| Maintenance | Number of Contributors             | 1          | 5        |
+| Maintenance | Number of Feats and Fixes          | 1          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 1          | 5        |
+| Quality     | Stable versioning                  | 5          | 5        |
+| Quality     | Multi-language Support             | 2          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 1          | 5        |
 
 #### **Repository**: `cdk-ssm-parameter-store`
 
 Maintenance: 0/100
-Quality:     55/100
-Popularity:  33/100
-Overall:     29/100
+Quality:     58/100
+Popularity:  20/100
+Overall:     23/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 1          | 3        |
-| Maintenance | Release Frequency                  | 1          | 3        |
-| Maintenance | Provenance Verification            | 1          | 3        |
-| Maintenance | Open issues / total issues         | 1          | 2        |
-| Maintenance | Number of Contributors             | 1          | 2        |
-| Quality     | Documentation Completeness         | 4          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 3          | 1        |
-| Popularity  | Weekly Downloads                   | 3          | 3        |
-| Popularity  | Github stars                       | 2          | 2        |
-| Popularity  | Contributors                       | 1          | 1        |
+| Maintenance | Time to first response             | 1          | 10       |
+| Maintenance | Provenance Verification            | 1          | 10       |
+| Maintenance | Release Frequency                  | 1          | 10       |
+| Maintenance | Number of Contributors             | 1          | 5        |
+| Maintenance | Number of Feats and Fixes          | 1          | 5        |
+| Maintenance | Open issues / total issues         | 1          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 1          | 5        |
+| Quality     | Stable versioning                  | 3          | 5        |
+| Quality     | Multi-language Support             | 2          | 5        |
+| Popularity  | Weekly Downloads                   | 2          | 10       |
+| Popularity  | Github stars                       | 2          | 10       |
+| Popularity  | Contributors                       | 1          | 5        |
 
 #### **Repository**: `datadog-cdk-constructs-v2`
 
-Maintenance: 63/100
-Quality:     98/100
-Popularity:  75/100
-Overall:     77/100
+Maintenance: 61/100
+Quality:     88/100
+Popularity:  90/100
+Overall:     76/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Release Frequency                  | 3          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 5          | 2        |
-| Quality     | Documentation Completeness         | 5          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | Multi-language Support             | 4          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 2          | 2        |
-| Popularity  | Contributors                       | 5          | 1        |
+| Maintenance | Time to first response             | 4          | 10       |
+| Maintenance | Provenance Verification            | 1          | 10       |
+| Maintenance | Release Frequency                  | 3          | 10       |
+| Maintenance | Number of Contributors             | 5          | 5        |
+| Maintenance | Number of Feats and Fixes          | 5          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 5          | 5        |
+| Quality     | Multi-language Support             | 3          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 5          | 5        |
 
-#### **Repository**: `aws-cdk`
+#### **Repository**: `aws-cdk-lib`
 
-Maintenance:100/100
-Quality:     85/100
-Popularity:  92/100
-Overall:     89/100
-
-| Pillar      | Signal                             | Stars      | Weight   |
-|-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 5          | 3        |
-| Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 5          | 2        |
-| Quality     | Documentation Completeness         | 4          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 5          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 5          | 1        |
-
-#### **Repository**: `cdk-iam-floyd`
-
-Maintenance: 70/100
-Quality:     45/100
-Popularity:  75/100
-Overall:     57/100
+Maintenance: 78/100
+Quality:    100/100
+Popularity: 100/100
+Overall:     90/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Release Frequency                  | 5          | 3        |
-| Maintenance | Provenance Verification            | 1          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 4          | 2        |
-| Quality     | Documentation Completeness         | 3          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 3          | 3        |
-| Quality     | Author Track Record                | 4          | 3        |
-| Quality     | Changelog Present                  | 1          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 3          | 1        |
-| Popularity  | Weekly Downloads                   | 4          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 4          | 1        |
+| Maintenance | Time to first response             | 5          | 10       |
+| Maintenance | Provenance Verification            | 1          | 10       |
+| Maintenance | Release Frequency                  | 5          | 10       |
+| Maintenance | Number of Contributors             | 5          | 5        |
+| Maintenance | Number of Feats and Fixes          | 5          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 5          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 5          | 5        |
+| Quality     | Multi-language Support             | 5          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 5          | 10       |
+| Popularity  | Contributors                       | 5          | 5        |
 
 #### **Repository**: `cdktf`
 
-Maintenance: 68/100
-Quality:     83/100
+Maintenance: 53/100
+Quality:     92/100
 Popularity: 100/100
-Overall:     77/100
+Overall:     76/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 4          | 3        |
-| Maintenance | Release Frequency                  | 4          | 3        |
-| Maintenance | Provenance Verification            | 1          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 5          | 2        |
-| Quality     | Documentation Completeness         | 3          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 5          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 5          | 2        |
-| Popularity  | Contributors                       | 5          | 1        |
+| Maintenance | Time to first response             | 4          | 10       |
+| Maintenance | Provenance Verification            | 1          | 10       |
+| Maintenance | Release Frequency                  | 2          | 10       |
+| Maintenance | Number of Contributors             | 5          | 5        |
+| Maintenance | Number of Feats and Fixes          | 4          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 5          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 5          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 3          | 5        |
+| Quality     | Multi-language Support             | 5          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 5          | 10       |
+| Popularity  | Contributors                       | 5          | 5        |
 
 #### **Repository**: `@mrgrain/cdk-esbuild`
 
-Maintenance: 70/100
-Quality:    100/100
-Popularity:  88/100
-Overall:     83/100
+Maintenance: 64/100
+Quality:     88/100
+Popularity:  85/100
+Overall:     76/100
 
 | Pillar      | Signal                             | Stars      | Weight   |
 |-------------|------------------------------------|------------|----------|
-| Maintenance | Time to first response             | 2          | 3        |
-| Maintenance | Release Frequency                  | 3          | 3        |
-| Maintenance | Provenance Verification            | 5          | 3        |
-| Maintenance | Open issues / total issues         | 5          | 2        |
-| Maintenance | Number of Contributors             | 4          | 2        |
-| Quality     | Documentation Completeness         | 5          | 3        |
-| Quality     | Tests checklist (unit/snapshot)    | 5          | 3        |
-| Quality     | Author Track Record                | 3          | 3        |
-| Quality     | Changelog Present                  | 5          | 3        |
-| Quality     | Stable versioning                  | 3          | 2        |
-| Quality     | Multi-language Support             | 5          | 1        |
-| Popularity  | Weekly Downloads                   | 5          | 3        |
-| Popularity  | Github stars                       | 4          | 2        |
-| Popularity  | Contributors                       | 4          | 1        |
+| Maintenance | Time to first response             | 2          | 10       |
+| Maintenance | Provenance Verification            | 5          | 10       |
+| Maintenance | Release Frequency                  | 3          | 10       |
+| Maintenance | Number of Contributors             | 4          | 5        |
+| Maintenance | Number of Feats and Fixes          | 3          | 5        |
+| Maintenance | Open issues / total issues         | 5          | 5        |
+| Quality     | Documentation Completeness         | 4          | 5        |
+| Quality     | Tests checklist (unit/snapshot)    | 5          | 5        |
+| Quality     | Author Track Record                | 3          | 5        |
+| Quality     | Release Notes includes feats/fixes | 5          | 5        |
+| Quality     | Stable versioning                  | 5          | 5        |
+| Quality     | Multi-language Support             | 5          | 5        |
+| Popularity  | Weekly Downloads                   | 5          | 10       |
+| Popularity  | Github stars                       | 4          | 10       |
+| Popularity  | Contributors                       | 4          | 5        |
 
 ### Signals from npms.io (Reference)
 
