@@ -29,12 +29,9 @@ and can be used as **one factor** in your evaluation process, not as the sole de
 Scores reflect measurable signals but cannot capture all aspects of library quality, such as code
 architecture, security practices, or alignment with your specific use case. Always combine these scores with
 your own technical evaluation, security review, and testing before making adoption decisions.
-
-
-> [!NOTE]  
+> [!NOTE]
 > Each package is scored on their latest version.
 > See this [FAQ question](./0808-library-quality-scoring.md#what-alternative-solutions-did-you-consider) for more details
-
 
 #### Scoring Pillars and Signals
 
@@ -83,7 +80,6 @@ the overall score. The sum of all signal weights equals 100, meaning each weight
 When calculating a pillar score (Maintenance, Quality, Popularity), each signal's level is weighted by its percentage contribution to the
 overall score. Once all signals in a pillar are evaluated, the weighted scores are combined and normalized to a 0–100 scale. The pillar scores
 are calculated based on the signals that belong to each respective pillar.
-
 
 #### CLI Usage
 
@@ -224,7 +220,9 @@ Based on your package's signal scores, here are the key areas for improvement:
 
 ##### Custom Weights
 
-You can customize signal weights to match your organization's priorities using the `--weights` flag with a JSON configuration file. This is useful when certain signals matter more for your use case—for example, emphasizing maintenance over popularity for internal libraries, or prioritizing security signals for production deployments.
+You can customize signal weights to match your organization's priorities using the `--weights` flag with a JSON configuration file.
+This is useful when certain signals matter more for your use case—for example, emphasizing maintenance over popularity for internal
+libraries, or prioritizing security signals for production deployments.
 
 Create a weights configuration file (e.g., `custom-weights.json`):
 
@@ -275,7 +273,8 @@ You can also provide partial weight overrides—only specify the signals you wan
 ```
 
 > [!NOTE]  
-> If your weights don't sum to 100, they'll be automatically normalized with a warning logged. All signal names must match the exact signal identifiers used in the scoring system. You don't need to include every signal, any omitted signals will use their default weights.
+> If your weights don't sum to 100, they'll be automatically normalized with a warning logged. All signal names must match the exact signal
+identifiers used in the scoring system. You don't need to include every signal, any omitted signals will use their default weights.
 
 #### Programmatic Access
 
@@ -494,11 +493,18 @@ may have a README but it could be poorly written. These signals come together to
 
 #### Integration with Existing Security and Quality Tools
 
-Tools like Snyk already provide signals around security vulnerabilities, outdated dependencies, and supply chain risks. These platforms have mature detection capabilities and extensive vulnerability databases that could complement the signals in this scoring system.
+Tools like Snyk already provide signals around security vulnerabilities, outdated dependencies, and supply chain risks. These platforms
+have mature detection capabilities and extensive vulnerability databases that could complement the signals in this scoring system.
 
-Integrating with these tools would strengthen the Quality and Maintenance pillars without building duplicate functionality. For example, Snyk's vulnerability counts could inform a security or supply chain signal, while dependency freshness data could enhance maintenance activity assessment. This would provide a more comprehensive view of library health and align with workflows that many organizations already use.
+Integrating with these tools would strengthen the Quality and Maintenance pillars without building duplicate functionality. For example,
+Snyk's vulnerability counts could inform a security or supply chain signal, while dependency freshness data could enhance maintenance
+activity assessment. This would provide a more comprehensive view of library health and align with workflows that many organizations
+already use.
 
-However, adding external dependencies introduces complexity and potential points of failure. These tools require API keys, have rate limits, and may not be freely accessible. Relying on third party services could slow down scoring if their APIs are unavailable or slow to respond. Keeping the scoring system self contained and focused on observable, repository level signals ensures consistency, speed, and independence from external service availability.
+However, adding external dependencies introduces complexity and potential points of failure. These tools require API keys, have rate limits,
+and may not be freely accessible. Relying on third party services could slow down scoring if their APIs are unavailable or slow to respond.
+Keeping the scoring system self contained and focused on observable, repository level signals ensures consistency, speed, and independence
+from external service availability.
 
 ### Construct Library Scoring Examples
 
