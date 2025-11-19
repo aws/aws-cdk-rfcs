@@ -4,6 +4,6 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "markdownlint-cli": "^0.35.0"
+    "markdownlint-cli": "^0.46.0"
   }
 }
