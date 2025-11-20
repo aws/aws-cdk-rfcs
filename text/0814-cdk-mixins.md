@@ -60,12 +60,24 @@ const customBucket = new AcmeBucket(scope, "MyCustomBucket")
 
 Mixins are simple classes that implement the `IMixin` interface:
 
+```ts
+interface IMixin {
+  /** Check if this mixin can be applied to the given construct */
+  supports(construct: IConstruct): boolean;
+  
+  /** Apply the mixin to the construct */
+  applyTo(construct: IConstruct): IConstruct;
+}
+```
+
+Custom Mixins should extend the abstract `Mixin` base class:
+
 ```typescript
-import { IMixin } from "aws-cdk-lib/mixins";
+import { Mixin } from "aws-cdk-lib/mixins";
 import * as s3 from "aws-cdk-lib/aws-s3";
 
 // Simple mixin that enables versioning
-class EnableVersioning implements IMixin {
+class EnableVersioning extends Mixin {
   supports(construct: IConstruct): boolean {
     return construct instanceof s3.CfnBucket;
   }
@@ -85,14 +97,14 @@ const bucket = new s3.CfnBucket(scope, "MyBucket")
 
 #### Mixins operate on Construct Trees
 
-By default, mixins are applied to all supported constructs in the tree:
+By default, mixins are attempted to be applied to all supported constructs in the tree:
 
 ```ts
 // Apply to all constructs in a scope
 Mixins.of(scope).apply(new EncryptionAtRest());
 ```
 
-Optionally, you may select a subset of constructs
+Optionally, you may select specific constructs:
 
 ```ts
 import { ConstructSelector } from "aws-cdk-lib/mixins";
@@ -107,7 +119,7 @@ Mixins.of(
 // Apply to all resources of a specific type
 Mixins.of(
   scope,
-  ConstructSelector.resourcesOfType(s3.CfnBucket)
+  ConstructSelector.resourcesOfType(s3.CfnBucket.CFN_TYPE_NAME)
 ).apply(new EncryptionAtRest());
 
 // Alternative: select by CloudFormation resource type name
@@ -134,18 +146,21 @@ Mixins.of(scope).select(ConstructSelector.cfnResource())
 
 #### Mixins declare which constructs they support
 
-Mixins typically target specific resource constructs.
-When applied to a construct tree, the mixing will check if a given construct is supported.
-Only when supported applies, otherwise skip.
+Mixins should target specific resource constructs.
+When applied to a construct tree, the applicator will check if the Mixin supports a given construct.
+Only when the construct is supported will the Mixin be applied and otherwise skipped.
 
 ```ts
 bucketAccessLogsMixin.supports(bucket); // true
 bucketAccessLogsMixin.supports(queue); // false
 ```
 
-#### Mixins must apply
+#### Mixins that must be used
 
-todo: will fail if encountering construct it cannot deal with. use to ensure now surprises
+Sometimes you want to guarantee that a Mixin is applied to all select constructs.
+You can use `mustApply()` to ensure this.
+If a construct is encountered that is not supported by the mixin, this will throw an error.
+Use this to prevent Mixins not being applied as expected.
 
 ```ts
 Mixins.of(scope, selector).mustApply(new EncryptionAtRest());
@@ -153,29 +168,28 @@ Mixins.of(scope, selector).mustApply(new EncryptionAtRest());
 
 #### Validations
 
-Mixins are only validating when applied, never at construction time.
-Mixins also provide a list of validation functions that may or may not return messages.
-TODO: Or maybe it's just validate but not throw and return messages instead.
+Mixins have two distinct phases: Construction and application.
+During construction only the Mixin's input properties are available, but during application we also get the target construct.
 
-```typescript
-interface IMixin {
-  /** Check if this mixin can be applied to the given construct */
-  supports(construct: IConstruct): boolean;
-  
-  /** Apply the mixin to the construct */
-  applyTo(construct: IConstruct): IConstruct;
-  
-  /** Validate the construct after mixin application */
-  validate?(construct: IConstruct): string[];
-}
+We do not enforce a strict contract on input validation for mixins (beyond `supports()`).
+It is however recommended that Mixins validate as early as possible.
+This means: Validate input properties during construction.
+Then during application validate target dependent pre-conditions.
 
-// Validation example
-class EncryptionAtRest implements IMixin{
+Mixins should throw errors for unrecoverable failures and use Annotations for recoverable ones.
+Like with constructs, we recommend that any errors are collected as much as possible and thrown as a group.
+
+```ts
+class EncryptionAtRest extends Mixin {
   supports(construct: IConstruct): construct is s3.CfnBucket {
     return construct instanceof s3.CfnBucket;
   }
 
   applyTo(bucket: s3.CfnBucket): s3.CfnBucket {
+    if (!bucket.bucketEncryption) {
+      throw new Error("Bucket encryption not configured");
+    }
+    
     bucket.bucketEncryption = {
       serverSideEncryptionConfiguration: [{
         bucketKeyEnabled: true,
@@ -185,14 +199,6 @@ class EncryptionAtRest implements IMixin{
       }]
     };
     return bucket;
-  }
-
-  validate(bucket: s3.CfnBucket): string[] {
-    const errors: string[] = [];
-    if (!bucket.bucketEncryption) {
-      errors.push("Bucket encryption not configured");
-    }
-    return errors;
   }
 }
 ```
@@ -213,37 +219,7 @@ const bucket = new s3.CfnBucket(scope, "Bucket")
 
 #### Cross-Service Mixins
 
-Apply common patterns across different AWS services:
-
-```typescript
-import { EncryptionAtRest, Mixins, ConstructSelector } from "aws-cdk-lib/mixins";
-import { CfnLogGroup } from "aws-cdk-lib/aws-logs";
-
-// Apply encryption to all log groups in the scope
-Mixins.of(
-  scope,
-  ConstructSelector.resourcesOfType(cloudwatch.CfnLogGroup)
-).apply(new EncryptionAtRest());
-```
-
-#### Types of Mixins
-
-**Resource-Specific Mixins**: Tailored to individual AWS services
-
-```typescript
-// Hand-written mixins for common patterns
-const bucket = new s3.CfnBucket(scope, "Bucket")
-  .with(new BucketEvents())
-  .with(new BucketGrants());
-
-// Auto-generated mixins from AWS service specifications
-const bucketWithNewFeature = new s3.CfnBucket(scope, "NewBucket")
-  .with(new CfnBucketPropsMixin({ 
-    someNewFeatureConfig: { settingOne: "value1" } 
-  }));
-```
-
-**Cross-Service Mixins**: Common patterns across AWS services
+Some Mixins implement common patterns that can be used across different AWS services:
 
 ```typescript
 // Same mixin works across different resource types
@@ -257,9 +233,18 @@ const table = new dynamodb.CfnTable(scope, "Table")
   .with(new EncryptionAtRest());
 ```
 
+These Mixins can also be used to bulk apply on a construct tree:
+
+```typescript
+import { EncryptionAtRest, Mixins, ConstructSelector } from "aws-cdk-lib/mixins";
+
+// Apply encryption to all encryptable (and supported) resources
+Mixins.of(scope).apply(new EncryptionAtRest());
+```
+
 #### Using Mixins with L1 Constructs
 
-Mixins unlock the full potential of L1 constructs by adding sophisticated abstractions:
+With Mixins we can now use abstractions with L1 constructs:
 
 ```typescript
 // L1 with enterprise-grade features
@@ -315,9 +300,14 @@ const hybridBucket = new s3.Bucket(scope, "HybridBucket", {
 
 Mixins and Aspects are very similar in some regards, but crucial differ in their time of application:
 Mixins are always applied _immediately_, they are a tool of imperative programming.
-On the other hand, Aspects are applied _after_ everything else during the synthesis step, they are declarative.
+Aspects are applied _after_ everything else during the synthesis step, they are declarative.
 
-However because implementing Mixins and Aspects is very similar, they can be converted from each other:
+Both Mixins and Aspects have valid use cases.
+They complement each other.
+We recommend to use Mixins to _make changes_, and to use Aspects to _validate behaviors_.
+Aspects should also be used when changes need to apply to _future additions_, for examples in custom libraries.
+
+Because implementing Mixins and Aspects is very similar, they can be converted from each other:
 
 ```ts
 // Applies the aspect immediately
@@ -339,36 +329,10 @@ Mixins apply in declaration order. Later mixins can override earlier ones:
 const bucket = new s3.CfnBucket(scope, "Bucket")
   .with(new EncryptionAtRest({ algorithm: "AES256" }))
   .with(new EncryptionAtRest({ algorithm: "aws:kms" })); // KMS wins
-
-// Mixins could detect and react to conflicts, but this is generally not encouraged
-class ConflictAwareMixin implements IMixin {
-  validate(construct: s3.CfnBucket): string[] {
-    if (construct.bucketEncryption) {
-      return ["Encryption already configured"];
-    }
-    return [];
-  }
-}
 ```
 
-#### Error Handling and Edge Cases
-
-Mixins provide comprehensive error handling for common scenarios:
-
-```typescript
-// Validation errors are collected and reported _per Mixin application_:
-const bucket = new s3.CfnBucket(scope, "Bucket")
-  .with(new EncryptionAtRest())
-  .with(new InvalidMixin()); // Throws validation error
-
-// Graceful handling of unsupported constructs
-Mixins.of(scope)
-  .apply(new EncryptionAtRest()); // Skips unsupported constructs
-
-// Strict application that requires all constructs to match
-Mixins.of(scope)
-  .mustApply(new EncryptionAtRest()); // Throws if any constructs doesn't support the mixin
-```
+We do not recommend that Mixins are checking if a feature already has been configured.
+Within the concept of Mixins, all constructs are mutable and applying a Mixin should always have the desired effect.
 
 ---
 
@@ -439,6 +403,20 @@ L2s will continue to provide:
 * Stable APIs for production workloads
 
 ## Internal FAQ
+
+### Why is it called CDK Mixins?
+
+[Mixin](https://en.wikipedia.org/wiki/Mixin) is a well-established term in object-oriented programming.
+CDK Mixins are applying this principle to the Construct Programming Model.
+While this implementation does not min _callable_ functionality into a class,
+it does mix _usable_ functionality (by an end user) into a construct.
+
+Aspects also borrowed their name from an established concept ([aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming)),
+but doesn't even implement it.
+Mixins will be much closer to what the term is commonly understood at.
+There's also potential for a future extension to actually return objects that can exhibit extended functionality.
+
+We also considered Modifiers, but that decided against it as too generic.
 
 ### Why are we doing this?
 
@@ -576,7 +554,7 @@ Mixins uniquely provide high composability and day-one feature access without br
 ### Are there any open issues that need to be addressed later?
 
 1. **Performance Impact**: Need to measure runtime overhead of mixin composition
-2. **IDE Support**: Ensure TypeScript language services work well with complex mixin types
+2. **Discoverability**: Ensure users can discover applicable mixins
 3. **Documentation Strategy**: Develop clear patterns for documenting mixin combinations
 4. **Mixin helpers**: Composing mixins together into bigger pieces
 5. **Testing Strategy**: Define testing approaches for mixin abstractions
@@ -589,7 +567,6 @@ Mixins uniquely provide high composability and day-one feature access without br
 // Core mixin interface
 interface IMixin{
   supports(construct: IConstruct): boolean;
-  validate?(construct: IConstruct): string[];
   applyTo(construct: IConstruct): IConstruct;
 }
 
