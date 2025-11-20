@@ -36,6 +36,10 @@ const bucket = new s3.CfnBucket(scope, "MyBucket");
 Mixins.of(bucket)
   .apply(new EncryptionAtRest())
   .apply(new AutoDeleteObjects());
+
+// Or multiple Mixins passed to apply
+Mixins.of(bucket)
+  .apply(new EncryptionAtRest(), new AutoDeleteObjects());
 ```
 
 For convenience, constructs implement the `.with()` method as syntactic sugar:
@@ -46,11 +50,11 @@ const l1Bucket = new s3.CfnBucket(scope, "MyL1Bucket")
   .with(new EncryptionAtRest())
   .with(new AutoDeleteObjects());
 
+// Syntactic sugar: pass multiple mixins to with
 const l2Bucket = new s3.Bucket(scope, "MyL2Bucket")
-  .with(new EncryptionAtRest())
-  .with(new AutoDeleteObjects());
+  .with(new EncryptionAtRest(), new AutoDeleteObjects());
 
-// Works with any construct type
+// Works with even with custom construct types
 const customBucket = new AcmeBucket(scope, "MyCustomBucket")
   .with(new EncryptionAtRest())
   .with(new AutoDeleteObjects());
@@ -89,11 +93,23 @@ class EnableVersioning extends Mixin {
     return bucket;
   }
 }
-
-// Usage
-const bucket = new s3.CfnBucket(scope, "MyBucket")
-  .with(new EnableVersioning());
 ```
+
+##### `supports()`
+
+This API is introduced so that Mixins can be checked for the applicability without being executed themselves.
+It allows introspection that is otherwise not possible or only quite convoluted.
+
+The immediate use is to support `Mixins.of().mustApply()`.
+We can now declare (and check) that a Mixin must be applied to a set of constructs.
+
+##### `applyTo()`
+
+Returns the changed construct.
+This allows Mixins to return a different type or even a different construct.
+While this does not matter in normal application using `with()` or `Mixins.of()`,
+it can be leveraged by directly calling the mixin.
+Future extensions and custom MixinApplicator implementations might also make use of it.
 
 #### Mixins operate on Construct Trees
 
