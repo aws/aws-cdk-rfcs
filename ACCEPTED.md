@@ -12,7 +12,6 @@
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing
-[808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||👷 implementing
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0001-cdk-update.md)||✅ done
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|✅ done
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||✅ done
@@ -79,4 +78,5 @@
 [732](https://github.com/aws/aws-cdk-rfcs/issues/732)|[CDK CLI Telemetry](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0732-cdk-cli-telemetry.md)|[@kaizencc](https://github.com/kaizencc)|✅ done
 [745](https://github.com/aws/aws-cdk-rfcs/issues/745)|[User-Provided cdk init Templates](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0745-user-provided-cdk-init-templates.md)||✅ done
 [750](https://github.com/aws/aws-cdk-rfcs/issues/750)|[Feature Flag Advisor](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0750-feature-flag-advisor.md)||✅ done
+[808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||✅ done
 <!--END_TABLE-->

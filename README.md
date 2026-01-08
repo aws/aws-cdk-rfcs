@@ -26,7 +26,6 @@ future state of the libraries and to discover projects for contribution.
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing
-[808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||👷 implementing
 <!--END_TABLE-->
 
 ## What is an RFC?
