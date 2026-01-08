@@ -12,6 +12,7 @@
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing
+[792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0792-aws-aiops-investigationgroup-l2.md)||👷 implementing
 [1](https://github.com/aws/aws-cdk-rfcs/issues/1)|[CDK Watch](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0001-cdk-update.md)||✅ done
 [4](https://github.com/aws/aws-cdk-rfcs/issues/4)|[CDK Testing Toolkit](https://github.com/aws/aws-cdk-rfcs/issues/4)|[@nija-at](https://github.com/nija-at)|✅ done
 [5](https://github.com/aws/aws-cdk-rfcs/issues/5)|[Security-restricted environments](https://github.com/aws/aws-cdk-rfcs/issues/5)||✅ done
