@@ -2,7 +2,7 @@
 
 * **Original Author(s)**: @jsicheng
 * **Tracking Issue**: #859
-* **API Bar Raiser**: TBD
+* **API Bar Raiser**: @kumsmrit, @gjurova
 
 The Amazon ObservabilityAdmin OrganizationCentralizationRule L2 construct simplifies centralization rule creation for an AWS Organization, reducing the complexity of configuring organization-wide log centralization policies through sensible defaults, strong-typing and synthesis-time validation.
 
