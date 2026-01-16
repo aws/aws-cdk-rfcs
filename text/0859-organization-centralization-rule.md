@@ -4,7 +4,8 @@
 * **Tracking Issue**: #859
 * **API Bar Raiser**: @kumsmrit, @gjurova
 
-The Amazon ObservabilityAdmin OrganizationCentralizationRule L2 construct simplifies centralization rule creation for an AWS Organization, reducing the complexity of configuring organization-wide log centralization policies through sensible defaults, strong-typing and synthesis-time validation.
+The Amazon ObservabilityAdmin OrganizationCentralizationRule L2 construct simplifies centralization rule creation for an AWS Organization,
+reducing the complexity of configuring organization-wide log centralization policies through sensible defaults, strong-typing and synthesis-time validation.
 
 ## Working Backwards
 
@@ -18,7 +19,11 @@ feat(observabilityadmin): ObservabilityAdmin OrganizationCentralizationRule L2 c
 
 #### AWS ObservabilityAdmin OrganizationCentralizationRule Construct Library
 
-[Amazon ObservabilityAdmin OrganizationCentralizationRule](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs_Centralization.html) provides AWS Organization management accounts and optionally, delegated admin accounts, the ability to create log centralization rules for their organization. Defined rules automatically replicate select CloudWatch Logs data from multiple source accounts and regions into a centralized destination account and region. Centralization rules offers configuration flexibility to meet operational and security requirements, such as the ability to configure a backup region and KMS encryption behavior.
+[Amazon ObservabilityAdmin OrganizationCentralizationRule](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs_Centralization.html)
+provides AWS Organization management accounts and optionally, delegated admin accounts, the ability to create log centralization rules for their
+organization. Defined rules automatically replicate select CloudWatch Logs data from multiple source accounts and regions into a centralized
+destination account and region. Centralization rules offers configuration flexibility to meet operational and security requirements, such as the ability
+to configure a backup region and KMS encryption behavior.
 
 This module is part of the [AWS Cloud Development Kit](https://github.com/aws/aws-cdk)
 project. It allows you to define ObservabilityAdmin organization centralization rules.
@@ -37,6 +42,7 @@ new OrganizationCentralizationRule(this, 'OrganizationCentralizationRule', {
 ```
 
 ##### Advanced Configuration
+
 ```typescript
 new OrganizationCentralizationRule(this, 'OrganizationCentralizationRule', {
   ruleName: 'OrganizationCentralizationRule',
@@ -72,17 +78,22 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching a new L2 construct in the `aws-observabilityadmin` module that provides a simplified, type-safe interface for creating AWS ObservabilityAdmin OrganizationCentralizationRule resources. This construct abstracts the complexity of the underlying CloudFormation resource and L1 construct while following AWS CDK design principles.
+We are launching a new L2 construct in the `aws-observabilityadmin` module that provides a simplified, type-safe interface for creating
+AWS ObservabilityAdmin OrganizationCentralizationRule resources. This construct abstracts the complexity of the underlying CloudFormation
+resource and L1 construct while following AWS CDK design principles.
 
 ### Why should I use this feature?
 
-The L2 construct enables the creation of organization centralization rules with minimal configurations while adhering to the AWS best practices. The included types and defaults smooths out rough edges in configuring the resource using L1 constructs.
+The L2 construct enables the creation of organization centralization rules with minimal configurations while adhering to the AWS best practices.
+The included types and defaults smooths out rough edges in configuring the resource using L1 constructs.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
-AWS ObservabilityAdmin OrganizationCentralizationRule is a feature that helps organizations centralize their log data collection. Currently, users must work with highly nested L1 parameters, which requires deep knowledge of the service's configuration options and can lead to misconfigurations. An L2 construct will:
+AWS ObservabilityAdmin OrganizationCentralizationRule is a feature that helps organizations centralize their log data collection. Currently, users
+must work with highly nested L1 parameters, which requires deep knowledge of the service's configuration options and can lead to misconfigurations.
+An L2 construct will:
 
 1. Provide a more intuitive API with sensible defaults
 2. Include built-in validation to prevent common configuration errors
@@ -95,10 +106,13 @@ Potential concerns:
 - The service is relatively new and APIs might still evolve
 - The L1 construct already provides full functionality
 
-However, these concerns are outweighed by the benefits of providing a better developer experience and encouraging adoption of centralized log management practices.
+However, these concerns are outweighed by the benefits of providing a better developer experience and encouraging adoption of
+centralized log management practices.
 
 ### What is the technical solution (design) of this feature?
+
 - Resource interfaces:
+
 ```typescript
 interface ICentralizationRuleBase extends IResource, ITaggableV2 {
   /**
@@ -115,7 +129,9 @@ interface ICentralizationRuleBase extends IResource, ITaggableV2 {
 
 interface IOrganizationCentralizationRule extends ICentralizationRuleBase {}
 ```
+
 - Resource classes:
+
 ```typescript
 abstract class CentralizationRuleBase extends Resource implements ICentralizationRuleBase {
   public abstract readonly ruleName: string;
@@ -128,7 +144,9 @@ class OrganizationCentralizationRule extends CentralizationRuleBase implements I
   constructor(scope: Construct, id: string, props: OrganizationCentralizationRuleProps);
 }
 ```
+
 - Resource props:
+
 ```typescript
 interface BaseCentralizationRuleProps {
   /**
@@ -160,11 +178,13 @@ interface BaseCentralizationRuleProps {
   /**
    * Configuration that determines the encryption strategy of the destination log groups. 
    * CUSTOMER_MANAGED uses the configured KmsKeyArn to encrypt newly created destination log groups.
-   * @default - Inferred from destinationLogEncryptionKmsKeyArn. If destinationLogEncryptionKmsKeyArn is not provided, defaults to AWS_OWNED. Otherwise, defaults to CUSTOMER_MANAGED.
+   * @default - Inferred from destinationLogEncryptionKmsKeyArn.
+   * If destinationLogEncryptionKmsKeyArn is not provided, defaults to AWS_OWNED. Otherwise, defaults to CUSTOMER_MANAGED.
    */
   readonly destinationLogEncryptionStrategy?: LogEncryptionStrategy;
   /**
-   * Conflict resolution strategy for centralization if the encryption strategy is set to CUSTOMER_MANAGED and the destination log group is encrypted with an AWS_OWNED KMS Key.
+   * Conflict resolution strategy for centralization if the encryption strategy is set to CUSTOMER_MANAGED and the destination log group is
+   * encrypted with an AWS_OWNED KMS Key.
    * ALLOW lets centralization go through while SKIP prevents centralization into the destination log group.
    * @default - Skip centralization for conflicting encryption.
    */
@@ -181,7 +201,8 @@ interface BaseCentralizationRuleProps {
   readonly destinationBackupRegion?: string;
   /**
    * KMS Key ARN belonging to the primary destination account and backup region, to encrypt newly created central log groups in the backup destination.
-   * Only applied when destinationBackupRegion is set. If destinationBackupRegion is set, the backup region KMS key must be specified if destinationLogEncryptionStrategy is CUSTOMER_MANAGED.
+   * Only applied when destinationBackupRegion is set. 
+   * If destinationBackupRegion is set, the backup region KMS key must be specified if destinationLogEncryptionStrategy is CUSTOMER_MANAGED.
    * @default - centralization backup destination log groups are not encrypted.
    */
   readonly destinationBackupKmsKeyArn?: string; // explicitly string and not IKey, since the KMS key may not be from the same account
@@ -194,7 +215,9 @@ interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProp
   sourceScope: Scope;
 }
 ```
+
 - Helper classes:
+
 ```typescript
 export class Scope {
   // All accounts in the organization
@@ -274,7 +297,8 @@ export enum LogEncryptionStrategy {
 }
 
 /**
- * Conflict resolution strategy for centralization if the LogEncryptionStrategy is set to CUSTOMER_MANAGED and the destination log group is encrypted with an AWS_OWNED KMS Key. 
+ * Conflict resolution strategy for centralization if the LogEncryptionStrategy is set to CUSTOMER_MANAGED and the destination log group is 
+ * encrypted with an AWS_OWNED KMS Key.
  */
 export enum LogEncryptionConflictResolutionStrategy {
   /**
@@ -287,7 +311,9 @@ export enum LogEncryptionConflictResolutionStrategy {
   SKIP = 'SKIP'
 }
 ```
+
 Validations:
+
 - Required array inputs must not be empty.
 - Account IDs in Scope should be 12 digit numbers.
 - `destinationAccount` should be a 12 digit number.
@@ -296,8 +322,8 @@ Validations:
 - `destinationRegion` should be a valid AWS region.
 - `destinationBackupRegion` should be a valid AWS region.
 - If `destinationLogEncryptionStrategy` is `CUSTOMER_MANAGED`, then
- - `destinationLogEncryptionKmsKeyArn` must be provided.
- - If destinationBackupRegion is set, then `destinationBackupKmsKeyArn` must also be provided.
+- `destinationLogEncryptionKmsKeyArn` must be provided.
+- If destinationBackupRegion is set, then `destinationBackupKmsKeyArn` must also be provided.
 - KMS Key ARNs should follow valid ARN format.
 
 ### Is this a breaking change?
@@ -306,11 +332,13 @@ No, this is a new feature that adds functionality without modifying existing API
 
 ### What alternative solutions did you consider?
 
-Keeping a simple string input for all fields without adding new types, but still keeping parameters unnested and flat. However, many customers are likely not familiar with available options or the [OAM LinkFilter syntax](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-oam-link-linkfilter.html).
+Keeping a simple string input for all fields without adding new types, but still keeping parameters unnested and flat. However, many customers are
+likely not familiar with available options or the [OAM LinkFilter syntax](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-oam-link-linkfilter.html).
 
 ### What are the drawbacks of this solution?
 
 - **API evolution**: The underlying service is relatively new and may soon introduce new resources and fields.
+
 ### What is the high-level project plan?
 
 - [ ]  Kick off and gather feedback for RFC
