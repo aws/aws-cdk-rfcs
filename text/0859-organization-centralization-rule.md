@@ -111,10 +111,12 @@ centralized log management practices.
 interface ICentralizationRuleBase extends IResource, ITaggableV2 {
   /**
    * The name of the centralization rule.
+   * 
+   * @attribute
    */
   readonly ruleName: string;
   /**
-   * The arn of the centralization rule.
+   * The ARN of the centralization rule.
    * 
    * @attribute
    */
@@ -177,8 +179,8 @@ interface BaseCentralizationRuleProps {
    */
   readonly destinationLogEncryptionStrategy?: LogEncryptionStrategy;
   /**
-   * Conflict resolution strategy for centralization if the encryption strategy is set to CUSTOMER_MANAGED and the destination log group is
-   * encrypted with an AWS_OWNED KMS Key.
+   * Conflict resolution strategy for centralization if the encryption strategy is set to CUSTOMER_MANAGED and
+   * the destination log group is encrypted with an AWS_OWNED KMS Key.
    * ALLOW lets centralization go through while SKIP prevents centralization into the destination log group.
    * @default - Skip centralization for conflicting encryption.
    */
@@ -197,7 +199,7 @@ interface BaseCentralizationRuleProps {
    * KMS Key ARN belonging to the primary destination account and backup region, to encrypt newly created central log groups in the backup destination.
    * Only applied when destinationBackupRegion is set. 
    * If destinationBackupRegion is set, the backup region KMS key must be specified if destinationLogEncryptionStrategy is CUSTOMER_MANAGED.
-   * @default - centralization backup destination log groups are not encrypted.
+   * @default - backup destination log groups are encrypted with an AWS_OWNED KMS key.
    */
   readonly destinationBackupKmsKeyArn?: string; // explicitly string and not IKey, since the KMS key may not be from the same account
 }
@@ -214,9 +216,15 @@ interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProp
 
 ```typescript
 export class Scope {
-  // All accounts in the organization
+  /**
+   * All accounts in the organization.
+   */
   public static ALL = new Scope('*');
-  // Custom Scope from string
+  /**
+   * Create a scope from a string value.
+   *
+   * @param scope The scope string (e.g., account ID, OU ID, or '*').
+   */
   public static fromString(scope: string): Scope {
     return new Scope(scope);
   }
@@ -227,9 +235,15 @@ export class Scope {
  * The selection criteria that specifies which source log groups to centralize.
  */
 export class LogGroupSelectionCriteria {
-  // All LogGroups
+  /**
+   * All log groups.
+   */
   public static ALL = new LogGroupSelectionCriteria('*');
-  // Custom LogGroupSelectionCriteria from string
+  /**
+   * Create a LogGroupSelectionCriteria from a string value.
+   *
+   * @param selectionCriteria The selection criteria string. Uses the same format as OAM link filters.
+   */
   public static fromString(selectionCriteria: string): LogGroupSelectionCriteria {
     return new LogGroupSelectionCriteria(selectionCriteria);
   }
