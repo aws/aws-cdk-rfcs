@@ -46,15 +46,9 @@ new OrganizationCentralizationRule(this, 'OrganizationCentralizationRule', {
 ```typescript
 new OrganizationCentralizationRule(this, 'OrganizationCentralizationRule', {
   ruleName: 'OrganizationCentralizationRule',
-  sourceScope: Scope.or(
-    Scope.organizationUnitIdEquals('ou-1234-abcdefgh'), 
-    Scope.accountIdIn(['000000000000', '111111111111']),
-  ),
+  sourceScope: Scope.fromString(`AccountId = '012345678901'`),
   sourceRegions: ['us-east-1', 'us-west-2'],
-  sourceLogGroupSelectionCriteria: LogGroupSelectionCriteria.or(
-    LogGroupSelectionCriteria.equals('ExactLogGroupName'),
-    LogGroupSelectionCriteria.like('LogGroupNamePrefix'),
-  ),
+  sourceLogGroupSelectionCriteria: LogGroupSelectionCriteria.fromString(`LogGroupName = 'ExactLogGroupName'`),
   sourceEncryptedLogGroupStrategy: EncryptedLogGroupStrategy.ALLOW,
   destinationAccount: '123456789012',
   destinationRegion: 'us-east-1',
@@ -222,16 +216,6 @@ interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProp
 export class Scope {
   // All accounts in the organization
   public static ALL = new Scope('*');
-  // Equivalent to `AccountId = 'accountId'`
-  public static accountIdEquals(accountId: string): Scope;
-  // Equivalent to `OrganizationUnitId = 'organizationUnitId'`
-  public static organizationUnitIdEquals(organizationUnitId: string): Scope;
-  // Equivalent to `AccountId IN ('accountId1', 'accountId2')`
-  public static accountIdIn(accountIds: string[]): Scope;
-  // Equivalent to `OrganizationUnitId IN ('organizationUnitId1', 'organizationUnitId2')`
-  public static organizationUnitIdIn(organizationUnitIds: string[]): Scope;
-  // Joins all provided Scopes with an OR operator
-  public static or(...operands: Scope[]): Scope;
   // Custom Scope from string
   public static fromString(scope: string): Scope {
     return new Scope(scope);
@@ -245,22 +229,6 @@ export class Scope {
 export class LogGroupSelectionCriteria {
   // All LogGroups
   public static ALL = new LogGroupSelectionCriteria('*');
-  // Equivalent to `LogGroupName = 'logGroupName'`
-  public static equals(logGroupName: string): LogGroupSelectionCriteria;
-  // Equivalent to `LogGroupName != 'logGroupName'`
-  public static notEquals(logGroupName: string): LogGroupSelectionCriteria;
-  // Equivalent to `LogGroupName IN ('logGroupName1', 'logGroupName2')`
-  public static in(logGroupNames: string[]): LogGroupSelectionCriteria;
-  // Equivalent to `LogGroupName NOT IN ('logGroupName1', 'logGroupName2')`
-  public static notIn(logGroupNames: string[]): LogGroupSelectionCriteria;
-  // Prefix search. Equivalent to `LogGroupName LIKE 'logGroupNamePrefix%'`
-  public static like(logGroupNamePrefix: string): LogGroupSelectionCriteria;
-  // Prefix search. Equivalent to `LogGroupName NOT LIKE 'logGroupNamePrefix%'`
-  public static notLike(logGroupNamePrefix: string): LogGroupSelectionCriteria;
-  // Joins all provided LogGroupSelectionCriterias with an AND operator
-  public static and(...operands: LogGroupSelectionCriteria[]): LogGroupSelectionCriteria;
-  // Joins all provided LogGroupSelectionCriterias with an OR operator
-  public static or(...operands: LogGroupSelectionCriteria[]): LogGroupSelectionCriteria;
   // Custom LogGroupSelectionCriteria from string
   public static fromString(selectionCriteria: string): LogGroupSelectionCriteria {
     return new LogGroupSelectionCriteria(selectionCriteria);
@@ -332,8 +300,9 @@ No, this is a new feature that adds functionality without modifying existing API
 
 ### What alternative solutions did you consider?
 
-Keeping a simple string input for all fields without adding new types, but still keeping parameters unnested and flat. However, many customers are
-likely not familiar with available options or the [OAM LinkFilter syntax](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-oam-link-linkfilter.html).
+Keeping a simple string input for all fields without adding new types, but still keeping parameters unnested and flat.
+However, many customers are likely not familiar with available options. Having classes/enums can help customers see
+what options are available and avoid mistakes in configuring their rules.
 
 ### What are the drawbacks of this solution?
 
