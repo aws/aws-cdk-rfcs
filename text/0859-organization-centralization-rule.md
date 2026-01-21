@@ -156,17 +156,13 @@ interface BaseCentralizationRuleProps {
   /**
    * The selection criteria that specifies which source log groups to centralize. The selection criteria uses the same format as OAM link filters.
    */
-  readonly sourceLogGroupSelectionCriteria: LogGroupSelectionCriteria;
+  readonly sourceLogGroupSelectionCriteria?: LogGroupSelectionCriteria;
   /**
    * A strategy determining whether to centralize source log groups that are encrypted with customer managed KMS keys (CMK).
    * ALLOW will consider CMK encrypted source log groups for centralization while SKIP will skip CMK encrypted source log groups from centralization.
    * @default - Skip centralizing CMK encrypted source log groups.
    */
   readonly sourceEncryptedLogGroupStrategy?: EncryptedLogGroupStrategy;
-  /**
-   * The destination account (within the organization) to which the telemetry data should be centralized.
-   */
-  readonly destinationAccount: string;
   /**
    * The primary destination region to which telemetry data should be centralized.
    */
@@ -208,7 +204,11 @@ interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProp
   /**
    * The organizational scope from which telemetry data should be centralized, specified using accounts or organizational unit ids.
    */
-  sourceScope: Scope;
+  readonly sourceScope: Scope;
+  /**
+   * The destination account (within the organization) to which the telemetry data should be centralized.
+   */
+  readonly destinationAccount: string;
 }
 ```
 
@@ -217,18 +217,34 @@ interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProp
 ```typescript
 export class Scope {
   /**
-   * All accounts in the organization.
+   * All AWS account IDs and AWS Organization Unit IDs in the organization.
    */
-  public static ALL = new Scope('*');
+  public static readonly ALL = new Scope('*');
+  /**
+   * Select AWS account IDs in the organization.
+   * 
+   * @param accountIds A list of AWS account IDs to include in the scope.
+   */
+  public static fromAccountIds(accountIds: string[]): Scope {
+    return new Scope(`AccountId IN (${accountIds.map(id => `'${id}'`).join(', ')})`);
+  }
+  /**
+   * Select AWS Organization Unit IDs in the organization.
+   * 
+   * @param organizationUnitIds A list of AWS Organization Unit IDs to include in the scope.
+   */
+  public static fromOrganizationUnitIds(organizationUnitIds: string[]): Scope {
+    return new Scope(`OrganizationUnitId IN (${organizationUnitIds.map(id => `'${id}'`).join(', ')})`);
+  }
   /**
    * Create a scope from a string value.
    *
-   * @param scope The scope string (e.g., account ID, OU ID, or '*').
+   * @param scope The scope string.
    */
   public static fromString(scope: string): Scope {
     return new Scope(scope);
   }
-  protected constructor(public readonly scope: string) { }
+  protected constructor(public readonly scope: string) {}
 }
 
 /**
@@ -303,9 +319,11 @@ Validations:
 - `sourceRegions` should contain valid AWS regions.
 - `destinationRegion` should be a valid AWS region.
 - `destinationBackupRegion` should be a valid AWS region.
+- `destinationBackupRegion` must not be the same as the `destinationRegion`.
 - If `destinationLogEncryptionStrategy` is `CUSTOMER_MANAGED`, then
 - `destinationLogEncryptionKmsKeyArn` must be provided.
 - If destinationBackupRegion is set, then `destinationBackupKmsKeyArn` must also be provided.
+- `sourceLogGroupSelectionCriteria` must be defined.
 - KMS Key ARNs should follow valid ARN format.
 
 ### Is this a breaking change?
