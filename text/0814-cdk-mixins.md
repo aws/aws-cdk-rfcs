@@ -12,55 +12,73 @@ allowing customers to mix and match sophisticated features without being locked 
 
 ### README: CDK Mixins
 
-CDK Mixins provide a new, advanced way to add functionality to through composable abstractions.
+CDK Mixins provide a new, advanced way to add functionality through composable abstractions.
 Unlike traditional L2 constructs that bundle all features together, Mixins allow you to pick and choose exactly the capabilities you need for constructs.
 
 #### Key Benefits
+
+CDK Mixins offer a well-defined way to build self-contained constructs features.
+Mixins are applied during or after construct construction.
 
 * **Universal Compatibility**: Apply the same abstractions to L1 constructs, L2 constructs, or custom constructs
 * **Composable Design**: Mix and match features without being locked into specific implementations
 * **Cross-Service Abstractions**: Use common patterns like encryption across different AWS services
 * **Escape Hatch Freedom**: Customize resources in a safe, typed way while keeping the abstractions you want
 
+Mixins are an _addition_, _not_ a replacement for construct properties.
+By itself, they cannot change optionality of properties or change defaults.
+
 #### Basic Usage
 
-Mixins use `Mixins.of()` as the fundamental API for applying abstractions to constructs:
+Mixins are applied to constructs using the new `.with()` method.
+This method exists on all `Constructs` using the `constructs` module.
 
 ```typescript
-import * as s3 from "aws-cdk-lib/aws-s3";
-import { Mixins, AutoDeleteObjects, EncryptionAtRest } from "aws-cdk-lib/mixins";
-
-// Base form: apply mixins to any construct
-// calls can be chained
-const bucket = new s3.CfnBucket(scope, "MyBucket");
-Mixins.of(bucket)
-  .apply(new EncryptionAtRest())
-  .apply(new AutoDeleteObjects());
-
-// Or multiple Mixins passed to apply
-Mixins.of(bucket)
-  .apply(new EncryptionAtRest(), new AutoDeleteObjects());
-```
-
-For convenience, constructs implement the `.with()` method as syntactic sugar:
-
-```typescript
-// Syntactic sugar: chain mixins fluently
+// Apply mixins fluently
 const l1Bucket = new s3.CfnBucket(scope, "MyL1Bucket")
   .with(new EncryptionAtRest())
   .with(new AutoDeleteObjects());
 
-// Syntactic sugar: pass multiple mixins to with
+// Apply multiple mixins to with
 const l2Bucket = new s3.Bucket(scope, "MyL2Bucket")
   .with(new EncryptionAtRest(), new AutoDeleteObjects());
 
-// Works with even with custom construct types
+// Works with even with any constructs, even custom ones
 const customBucket = new AcmeBucket(scope, "MyCustomBucket")
   .with(new EncryptionAtRest())
   .with(new AutoDeleteObjects());
 ```
 
-#### Creating Custom Mixins
+The AWS Construct Library `aws-cdk-lib` also offers an alternative form: `Mixins.of()`.
+This form allows additional, advanced configuration of Mixin application.
+
+```typescript
+import * as s3 from "aws-cdk-lib/aws-s3";
+import { Mixins, AutoDeleteObjects, EncryptionAtRest } from "aws-cdk-lib/mixins";
+
+// Basic: Apply mixins to any construct, calls can be chained
+const bucket = new s3.CfnBucket(scope, "MyBucket");
+Mixins.of(bucket)
+  .apply(new EncryptionAtRest())
+  .apply(new AutoDeleteObjects());
+
+// Basic: Or multiple Mixins passed to apply
+Mixins.of(bucket)
+  .apply(new EncryptionAtRest(), new AutoDeleteObjects());
+
+// Advanced: Apply to constructs matching a selector, e.g. match by ID
+Mixins.of(
+  scope,
+  ConstructSelector.byId(/.*-prod-.*/) 
+).apply(new ProductionSecurityMixin());
+
+// Advanced: Require a mixin to be applied to every node in the construct tree
+Mixins.of(stack)
+  .apply(new TaggingMixin())
+  .requireAll();
+```
+
+#### Building Mixins
 
 Mixins are simple classes that implement the `IMixin` interface:
 
@@ -70,11 +88,22 @@ interface IMixin {
   supports(construct: IConstruct): boolean;
   
   /** Apply the mixin to the construct */
-  applyTo(construct: IConstruct): IConstruct;
+  applyTo(construct: IConstruct): void;
 }
 ```
 
-Custom Mixins should extend the abstract `Mixin` base class:
+We recommend to implement Mixins at the L1 level and to have them target a specific resource construct.
+This way, the same Mixin can be applied to constructs from all levels.
+
+When applied, the `.supports()` method is used to decided if a Mixin can be applied to a given construct.
+Depending on the application method (see below), the Mixin is then applied, skipped or an error is thrown.
+
+```ts
+bucketAccessLogsMixin.supports(bucket); // true
+bucketAccessLogsMixin.supports(queue); // false
+```
+
+User created Mixins should extend the abstract `Mixin` base class:
 
 ```typescript
 import { Mixin } from "aws-cdk-lib/mixins";
@@ -82,11 +111,11 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 
 // Simple mixin that enables versioning
 class EnableVersioning extends Mixin {
-  supports(construct: IConstruct): boolean {
-    return construct instanceof s3.CfnBucket;
+  supports(construct: IConstruct): construct is s3.CfnBucket {
+    return s3.CfnBucket.isCfnBucket(construct);
   }
 
-  applyTo(bucket: IConstruct): IConstruct {
+  applyTo(bucket: IConstruct) {
     bucket.versioningConfiguration = {
       status: "Enabled"
     };
@@ -95,25 +124,53 @@ class EnableVersioning extends Mixin {
 }
 ```
 
+It's also possible to build cross-service Mixins that can be applied to multiple different resources.
+We recommend to first implement a Mixin for each resource type, and then combine them together into such a cross-service Mixin:
+
+```ts
+class PointInTimeBackup extends Mixin {
+  // declares support for multiple resource types
+  supports(construct: IConstruct): boolean {
+    return s3.CfnBucket.isCfnBucket(construct)
+      || ddb.CfnGlobalTable.isCfnGlobalTable(construct);
+  }
+
+  // use if conditionals or a switch block to pick to specific Mixin to apply
+  applyTo(construct: IConstruct) {
+    if (s3.CfnBucket.isCfnBucket(construct)) {
+      construct.with(new BucketVersioning());
+    } else if (ddb.CfnGlobalTable.isCfnGlobalTable(construct)) {
+      construct.with(new TablePointInTimeRecovery());
+    }
+  }
+}
+```
+
 ##### `supports()`
 
-This API is introduced so that Mixins can be checked for the applicability without being executed themselves.
-It allows introspection that is otherwise not possible or only quite convoluted.
+Returns whether a given construct is supported by the Mixin.
 
-The immediate use is to support `Mixins.of().mustApply()`.
-We can now declare (and check) that a Mixin must be applied to a set of constructs.
+With this API, Mixins can be introspected for their applicability without being executed. One use cases is `Mixins.of(...).mustApply(...)`:
+It allows us to declare and check that a Mixin must be applied to a set of constructs.
 
 ##### `applyTo()`
 
-Returns the changed construct.
-This allows Mixins to return a different type or even a different construct.
-While this does not matter in normal application using `with()` or `Mixins.of()`,
-it can be leveraged by directly calling the mixin.
-Future extensions and custom MixinApplicator implementations might also make use of it.
+Applies the modifications of the Mixin to the target construct.
 
-#### Mixins operate on Construct Trees
+#### How Mixins are applied
 
-By default, mixins are attempted to be applied to all supported constructs in the tree:
+Each construct has a `with()` method and Mixins will be applied to all nodes of the construct.
+Sometimes more control is needed.
+Especially when authoring construct libraries, it may be desirable to have full control over the Mixin application process.
+Think of the L3 pattern again: How can you encode the rules to which Mixins may or may not be applied in your L3?
+This is where `Mixins.of()` and the `MixinApplicator` class come in.
+They provide more complex ways to select targets, apply Mixins and set expectations.
+
+##### Mixin application on construct trees
+
+When working with construct trees like Stacks (as opposed to single resources),
+`Mixins.of()` offers a more comprehensive API to configure how Mixins are applied.
+By default, Mixins are applied to all supported constructs in the tree:
 
 ```ts
 // Apply to all constructs in a scope
@@ -126,7 +183,6 @@ Optionally, you may select specific constructs:
 import { ConstructSelector } from "aws-cdk-lib/mixins";
 
 // Apply to a given L1 resource or L2 resource construct
-// This is what `.with()` is using
 Mixins.of(
   bucket,
   ConstructSelector.cfnResource() // provided CfnResource or a CfnResource default child
@@ -153,59 +209,72 @@ Mixins.of(
 // The default is to apply to all constructs in the scope
 Mixins.of(
   scope,
-  ConstructSelector.all() // supports depth-first and breadth-first
+  ConstructSelector.all() // pass through to IConstruct.findAll()
 ).apply(new ProductionSecurityMixin());
-
-// Option: Alternative syntax
-Mixins.of(scope).select(ConstructSelector.cfnResource())
-```
-
-#### Mixins declare which constructs they support
-
-Mixins should target specific resource constructs.
-When applied to a construct tree, the applicator will check if the Mixin supports a given construct.
-Only when the construct is supported will the Mixin be applied and otherwise skipped.
-
-```ts
-bucketAccessLogsMixin.supports(bucket); // true
-bucketAccessLogsMixin.supports(queue); // false
 ```
 
 #### Mixins that must be used
 
-Sometimes you want to guarantee that a Mixin is applied to all select constructs.
-You can use `mustApply()` to ensure this.
-If a construct is encountered that is not supported by the mixin, this will throw an error.
-Use this to prevent Mixins not being applied as expected.
+Sometimes you need assertions that a Mixin has been applied to certain set of constructs.
+`Mixins.of(...)` can return a `MixinApplicationReport` that can be used to define these kind of guarantees.
+
+It comes with two convenience helpers:
+Use `assertAll()` to ensure the Mixin was applied to all selected constructs.
+If a construct is in the selection that is not supported by the Mixin, this will throw an error.
+The `assertAny()` helper will check the Mixin was applied to at least one construct from the selection.
+If the Mixin wasn't applied to any construct at all, this will throw an error.
 
 ```ts
-Mixins.of(scope, selector).mustApply(new EncryptionAtRest());
+Mixins.of(scope)
+  .apply(new EncryptionAtRest())
+  // Check Mixin was applied to all constructs
+  .assertAll();
+  // OrL Check Mixin was applied to at least one construct
+  // .assertAny();
+
+// Request the report for manual assertions
+const report = Mixins.of(scope).apply(new EncryptionAtRest()).report();
 ```
 
-#### Validations
+This report also allows you to create custom assertions.
 
-Mixins have two distinct phases: Construction and application.
-During construction only the Mixin's input properties are available, but during application we also get the target construct.
+#### Validation
 
-We do not enforce a strict contract on input validation for mixins (beyond `supports()`).
-It is however recommended that Mixins validate as early as possible.
-This means: Validate input properties during construction.
-Then during application validate target dependent pre-conditions.
+Mixins have two distinct phases: Initialization and application.
+During initialization only the Mixin's input properties are available, but during application we also have access the target construct.
 
-Mixins should throw errors for unrecoverable failures and use Annotations for recoverable ones.
-Like with constructs, we recommend that any errors are collected as much as possible and thrown as a group.
+Mixins should validate their properties and targets as early as possible.
+During initialization validate all input properties.
+Then during application validate any target dependent pre-conditions or interactions with Mixin properties.
+
+Like with constructs, Mixins should _throw an error_ in case of unrecoverable failures and use _annotations_ for recoverable ones.
+It is best practices to collect errors and throw as a group whenever possible.
+Mixins can attach _[lazy validators](https://github.com/aws/aws-cdk/blob/main/docs/DESIGN_GUIDELINES.md#attaching-lazy-validators)_ to the target construct.
+Use this to ensure a certain property is met at end of an app's execution.
 
 ```ts
 class EncryptionAtRest extends Mixin {
-  supports(construct: IConstruct): construct is s3.CfnBucket {
-    return construct instanceof s3.CfnBucket;
+  constructor(props: EncryptionAtRest = {}) {
+    // Validate Mixin props at construction time
+    if (props.bucketKey && props.algorithm === 'aws:kms:dsse') {
+      throw new Error("Cannot use S3 Bucket Key and DSSE together");
+    }
   }
 
   applyTo(bucket: s3.CfnBucket): s3.CfnBucket {
+    // Validate pre-conditions on the target, throw if error is unrecoverable
     if (!bucket.bucketEncryption) {
       throw new Error("Bucket encryption not configured");
     }
-    
+
+    // Validate properties are met after app execution
+    bucket.addValidation({
+      validate: () => this.bucketEncryption?.serverSideEncryptionConfiguration?.[0]?.serverSideEncryptionByDefault?.sseAlgorithm !== "aws:kms"
+        ? ['This bucket must use aws:kms encryption.']
+        : []
+      }
+    });
+
     bucket.bucketEncryption = {
       serverSideEncryptionConfiguration: [{
         bucketKeyEnabled: true,
@@ -260,10 +329,10 @@ Mixins.of(scope).apply(new EncryptionAtRest());
 
 #### Using Mixins with L1 Constructs
 
-With Mixins we can now use abstractions with L1 constructs:
+With Mixins we can use abstractions with L1 constructs:
 
 ```typescript
-// L1 with enterprise-grade features
+// L1 with enterprise-grade settings
 const bucket = new s3.CfnBucket(scope, "EnterpriseBucket")
   .with(new EncryptionAtRest())
   .with(new AutoDeleteObjects())
@@ -278,7 +347,7 @@ const bucketWithLatestFeature = new s3.CfnBucket(scope, "LatestBucket")
   }))
   .with(new EncryptionAtRest());
 
-// Helper classes provide L2-like convenience
+// Related feature: Helper classes like Grants provide L2-like convenience
 new BucketGrants(bucket).grantRead(role);
 const eventPattern = new BucketEvents(bucket).onObjectCreated();
 ```
@@ -312,33 +381,9 @@ const hybridBucket = new s3.Bucket(scope, "HybridBucket", {
   .with(new SecurityCompliance());
 ```
 
-#### Mixins and Aspects
-
-Mixins and Aspects are very similar in some regards, but crucial differ in their time of application:
-Mixins are always applied _immediately_, they are a tool of imperative programming.
-Aspects are applied _after_ everything else during the synthesis step, they are declarative.
-
-Both Mixins and Aspects have valid use cases.
-They complement each other.
-We recommend to use Mixins to _make changes_, and to use Aspects to _validate behaviors_.
-Aspects should also be used when changes need to apply to _future additions_, for examples in custom libraries.
-
-Because implementing Mixins and Aspects is very similar, they can be converted from each other:
-
-```ts
-// Applies the aspect immediately
-Mixins.of(scope).apply(Mixin.fromAspect(new TaggingAspect({ Environment: "prod" })));
-
-// Delays application of the Mixin to the synthesis phase
-Aspects.of(scope).add(Aspect.fromMixin(new EncryptionAtRest()));
-```
-
-Mixins have more features than Aspects. When converting a Mixin to an Aspect, the Mixin will automatically only be applied to supported constructs.
-When converting an Aspect to a Mixin, the Aspect will be applied to every node.
-
 #### Mixin Composition and Conflicts
 
-Mixins apply in declaration order. Later mixins can override earlier ones:
+Mixins are applied in declaration order. Later Mixins override earlier ones:
 
 ```typescript
 // Last mixin wins for conflicting properties
@@ -347,8 +392,69 @@ const bucket = new s3.CfnBucket(scope, "Bucket")
   .with(new EncryptionAtRest({ algorithm: "aws:kms" })); // KMS wins
 ```
 
-We do not recommend that Mixins are checking if a feature already has been configured.
-Within the concept of Mixins, all constructs are mutable and applying a Mixin should always have the desired effect.
+This is expected and desired behavior.
+We recommend that Mixins are always applied and do not attempt to "check" if a value has been configured already.
+In the context of Mixins, constructs should be considered mutable and applying a Mixin should always have an effect.
+When Mixins become to "clever", it will be much harder for users to understand what effect a certain Mixin has.
+This aligns with the principle of least surprise.
+
+#### Mixins and Aspects
+
+Mixins and Aspects are similar concepts and both are implementations of the [visitor pattern](https://en.wikipedia.org/wiki/Visitor_pattern).
+They crucially differ in their time of application:
+
+- Mixins are always applied _immediately_, they are a tool of _imperative_ programming.
+- Aspects are applied _after_ all other code during the synthesis phase, this makes them _declarative_.
+
+Both Mixins and Aspects have valid use cases and complement each other.
+We recommend to use Mixins to _make changes_, and to use Aspects to _validate behaviors_.
+Aspects may also be used when changes need to apply to _future additions_, for examples in custom libraries.
+
+Since their implementation is very similar, Mixins and Aspects can be converted from each other:
+
+```ts
+// Applies an Aspect immediately
+const taggingMixin = Shims.mixinFromAspect(new TaggingAspect({ Environment: "prod" }));
+Mixins.of(scope).apply(taggingMixin);
+
+// Delays application of a Mixin to the synthesis phase
+const encryptionAspect = Shims.aspectFromMixin(new EncryptionAtRest());
+Aspects.of(scope).add(encryptionAspect);
+```
+
+When shimming Mixin to Aspect, the Mixin will automatically only be applied to supported constructs (via `supports()`).
+Going from an Aspect to a Mixin, the Aspect will be applied to every node.
+However a concrete Aspect might implement a custom filter.
+
+#### Mixins in the `construct` module
+
+Mixins are a new fundamental feature of the Constructs Programming Model (CPM).
+As such, the Mixin interface `IMixin` and the `.with()` method are introduced to to the `constructs` package.
+
+The standard implementation of `.with()` is deliberately simple and forgiving.
+Mixins are applied to all nodes in the construct's tree that support the Mixin.
+No errors are thrown or warnings are
+
+```ts
+class Construct implements IConstruct {
+  
+  // ...
+
+  public with(...mixins: IMixin[]): void {
+    for (const c of this.node.findAll()) {
+      for (const m of mixins) {
+        if (m.supports(this)) {
+          m.applyTo(this);
+        }
+      }
+    }
+  }
+}
+```
+
+Note that `Mixins.of()` (aka the `MixinApplicator`) and `ConstructSelector` are _not_ included in the `constructs` module.
+Instead, they are features provided by the AWS CDK Construct library.
+In future, we might publish a version of them as part of `constructs` or a helper package.
 
 ---
 
@@ -377,7 +483,8 @@ CDK Mixins solve three critical problems:
 2. **Day-One Coverage**: Access new AWS features immediately through auto-generated mixins while keeping your existing abstractions
 3. **Composability**: Mix and match exactly the features you need without inheriting unwanted behaviors
 
-This is particularly valuable for enterprise customers who need to customize 90% of their constructs while still benefiting from AWS-maintained abstractions.
+This is particularly valuable for enterprise customers, some of which report the need to customize uo to 90% of used constructs.
+Mixins allows them to keep using highly customized constructs, while still benefitting from AWS-maintained abstractions.
 
 ### How are Mixins different than Aspects?
 
@@ -400,8 +507,6 @@ With mixins, you make explicit decisions about each construct's capabilities.
 With aspects, you set policies that the CDK applies automatically during synthesis.
 Mixins give you precise control and type safety, while aspects provide broad governance and compliance enforcement.
 
-Mixins also have a bigger feature set, including declaring support for constructs,
-
 ### What does this mean for L2s? Are L2s going away?
 
 No! L2 constructs remain important and will continue to be developed. Mixins complement L2s by:
@@ -417,6 +522,21 @@ L2s will continue to provide:
 * Integrated multi-resource patterns
 * Comprehensive documentation and examples
 * Stable APIs for production workloads
+
+### How are Mixins different to Property Injection aka CDK Blueprints?
+
+Property injection is a feature to change the default behavior of constructs.
+Users use this feature by adding so called "Blueprint" to their.
+Often this handled for the user by using an internal `AcmeApp` (instead of `cdk.App`).
+
+Mixins however are not added automatically.
+Instead they are a way to scope and build abstractions.
+Users may use Mixins directly,
+or they will be using them indirectly through a company provided L2 `AcmeBucket` that uses Mixins as an implementation detail.
+
+Blueprints and Mixins can be used together in the same app.
+A Blueprint will chang the defaults for any given constructs.
+Users can still apply Mixins to add features and make changes.
 
 ## Internal FAQ
 
@@ -447,24 +567,38 @@ These treadmills are unsustainable given AWS's pace of innovation (2,000+ featur
 
 ### Why should we _not_ do this?
 
-The main risks are:
+The primary risk is that Mixins allow the _internal state of L1s to get out sync from an owning L2_.
+For example, an L2 `Bucket` might have a property `isEncrypted` to indicate the encryption status of the bucket.
+Today, this property would typically be set as an input by the user and stored for later reference.
+This works, because the underlying L1 `CfnBucket` was hidden from the user as an implementation detail.
+Mixins now offer an official way to change the encryption status of the L1 without updating the parent L2.
 
-1. **Complexity**: Adding another abstraction layer could confuse developers
-2. **Fragmentation**: Multiple ways to achieve the same outcome might split the community
-3. **Maintenance Burden**: More code to maintain and test
+Depending on how Mixins will be adopted, this could be an acceptable consequence.
+The situation already exists today with overrides and other low-level escape hatches, although it is not very common.
+Our intended mitigation for this issue are construct reflections:
+Instead of relying on input values, properties can be derived from the state of the construct tree.
+A value like `isEncrypted` can be represented as a query of the configuration of the underlying L1, e.g. "Is `ServerSideEncryptionByDefault` set?"
+Construct reflection is not part of this proposal, but something we are actively investigating.
 
-However, these risks are mitigated by maintaining full backward compatibility and providing clear migration paths.
+Additionally, Mixins add new _complexity and fragmentation_ to the ecosystem.
+Having another abstraction layer could confuse developers.
+Multiple ways to achieve the same outcome might split the community and what is considered a best practice.
+We mitigate this with updated guidance, soft enforcement through linter rules and full backwards compatibility.
 
 ### What is the technical solution (design) of this feature?
 
-The solution has four key components:
+The solution proposed in this RFC has three key components:
 
-1. **Mixin Interface**: A `.with(mixin)` method that allows composing functionality
-2. **Resource Traits**: Common interfaces (like `IEncryptable`) that enable cross-service abstractions
-3. **Addressable Resources**: Shared interfaces between L1s and L2s for interoperability
-4. **Automatic Generation**: Mixins generated from AWS service specifications
+1. **Mixin Interface**: Definition of a Mixin
+2. **Mixin application**: A `.with(mixins)` method to apply Mixins and allows composing functionality
+3. **Advanced features**: Construct selector and application report to support advanced use cases.
 
-The implementation uses TypeScript's type system to ensure type safety while maintaining runtime flexibility.
+However no design can exists outside its context.
+This RFC heavily depends on three other components that have recently been developed in the AWS Construct Library:
+
+1. **Addressable Resources**: Shared interfaces between L1s and L2s for interoperability
+2. **Resource Traits**: Common interfaces (like `IEncryptable`) that enable cross-service abstractions. Mixins can use this to ascertain support.
+3. **Automatic Generation**: More automated generation from AWS service specifications. Some Mixins will be generated like this.
 
 ### Is this a breaking change?
 
@@ -661,7 +795,7 @@ abstract class ConstructSelector {
     return new CfnResourceSelector();
   }
 
-  static resourcesOfType(type: string | Function): ConstructSelector {
+  static resourcesOfType(type: string): ConstructSelector {
     return new ResourceTypeSelector(type);
   }
 
