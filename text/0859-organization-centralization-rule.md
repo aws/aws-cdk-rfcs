@@ -54,9 +54,17 @@ new OrganizationCentralizationRule(this, 'OrganizationCentralizationRule', {
   destinationRegion: 'us-east-1',
   destinationLogEncryptionStrategy: LogEncryptionStrategy.CUSTOMER_MANAGED,
   destinationLogEncryptionConflictResolutionStrategy: LogEncryptionConflictResolutionStrategy.ALLOW,
-  destinationLogEncryptionKmsKeyArn: 'arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012',
+  destinationLogEncryptionKmsKey: kms.Key.fromKeyArn(
+    this,
+    'DestinationKey',
+    'arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012',
+  ),
   destinationBackupRegion: 'us-west-2',
-  destinationBackupKmsKeyArn: 'arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012',
+  destinationBackupKmsKey: kms.Key.fromKeyArn(
+    this,
+    'DestinationBackupKey',
+    'arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012',
+  ),
 });
 ```
 
@@ -146,10 +154,6 @@ class OrganizationCentralizationRule extends CentralizationRuleBase implements I
 ```typescript
 interface BaseCentralizationRuleProps {
   /**
-   * The name of the centralization rule.
-   */
-  readonly ruleName: string;
-  /**
    * The list of source regions from which telemetry data should be centralized.
    */
   readonly sourceRegions: string[];
@@ -182,22 +186,22 @@ interface BaseCentralizationRuleProps {
    */
   readonly destinationLogEncryptionConflictResolutionStrategy?: LogEncryptionConflictResolutionStrategy;
   /**
-   * KMS Key ARN belonging to the primary destination account and region, to encrypt newly created central log groups in the primary destination.
+   * KMS IKeyRef belonging to the primary destination account and region, to encrypt newly created central log groups in the primary destination.
    * @default - Log groups are encrypted with an AWS_OWNED KMS key.
    */
-  readonly destinationLogEncryptionKmsKeyArn?: string; // explicitly string and not IKey, since the KMS key may not be from the same account
+  readonly destinationLogEncryptionKmsKey?: IKeyRef;
   /**
    * Logs-specific backup destination region within the primary destination account to which log data should be centralized.
    * @default - no centralization backup destination region is configured.
    */
   readonly destinationBackupRegion?: string;
   /**
-   * KMS Key ARN belonging to the primary destination account and backup region, to encrypt newly created central log groups in the backup destination.
+   * KMS IKeyRef belonging to the primary destination account and backup region, to encrypt newly created central log groups in the backup destination.
    * Only applied when destinationBackupRegion is set. 
    * If destinationBackupRegion is set, the backup region KMS key must be specified if destinationLogEncryptionStrategy is CUSTOMER_MANAGED.
    * @default - backup destination log groups are encrypted with an AWS_OWNED KMS key.
    */
-  readonly destinationBackupKmsKeyArn?: string; // explicitly string and not IKey, since the KMS key may not be from the same account
+  readonly destinationBackupKmsKey?: IKeyRef;
 }
 
 interface OrganizationCentralizationRuleProps extends BaseCentralizationRuleProps {
@@ -241,10 +245,10 @@ export class Scope {
    *
    * @param scope The scope string.
    */
-  public static fromString(scope: string): Scope {
-    return new Scope(scope);
+  public static fromString(scopeString: string): Scope {
+    return new Scope(scopeString);
   }
-  protected constructor(public readonly scope: string) {}
+  protected constructor(public readonly scopeString: string) {}
 }
 
 /**
@@ -321,10 +325,11 @@ Validations:
 - `destinationBackupRegion` should be a valid AWS region.
 - `destinationBackupRegion` must not be the same as the `destinationRegion`.
 - If `destinationLogEncryptionStrategy` is `CUSTOMER_MANAGED`, then
-- `destinationLogEncryptionKmsKeyArn` must be provided.
-- If destinationBackupRegion is set, then `destinationBackupKmsKeyArn` must also be provided.
+- `destinationLogEncryptionKmsKey` must be provided.
+- If destinationBackupRegion is set, then `destinationBackupKmsKey` must also be provided.
 - `sourceLogGroupSelectionCriteria` must be defined.
-- KMS Key ARNs should follow valid ARN format.
+- KmsKeyArn and EncryptionConflictResolutionStrategy must not be present when EncryptionStrategy is AWS_OWNED
+- Both KmsKeyArn and EncryptionConflictResolutionStrategy are required when EncryptionStrategy is CUSTOMER_MANAGED
 
 ### Is this a breaking change?
 
