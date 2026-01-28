@@ -11,6 +11,7 @@
   "MD046": { "style": "fenced" },
   "MD049": false,
   "MD050": false,
+  "MD059": false,
   "no-duplicate-heading": {
     "siblings_only": true
   },

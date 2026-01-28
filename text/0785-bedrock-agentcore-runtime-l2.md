@@ -69,27 +69,27 @@ to production by simply updating the endpoint to point to the newer version.
 
 ### AgentCore Runtime Properties
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `runtimeName` | `string` | Yes | The name of the agent runtime. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
-| `agentRuntimeArtifact` | `AgentRuntimeArtifact` | Yes | The artifact configuration for the agent runtime containing the container configuration with ECR URI |
-| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the agent runtime. If not provided, a role will be created automatically |
-| `networkConfiguration` | `NetworkConfiguration` | No | Network configuration for the agent runtime. Defaults to `{ networkMode: NetworkMode.PUBLIC }` |
-| `description` | `string` | No | Optional description for the agent runtime |
-| `protocolConfiguration` | `ProtocolType` | No | Protocol configuration for the agent runtime. Defaults to `ProtocolType.HTTP` |
-| `authorizerConfiguration` | `AuthorizerConfigurationRuntime` | No | Authorizer configuration for the agent runtime. Supports IAM, Cognito, JWT, and OAuth authentication modes |
-| `environmentVariables` | `{ [key: string]: string }` | No | Environment variables for the agent runtime. Maximum 50 environment variables |
-| `tags` | `{ [key: string]: string }` | No | Tags for the agent runtime. A list of key:value pairs of tags to apply to this Runtime resource |
+| Name                      | Type                             | Required | Description                                                                                                                                     |
+| ------------------------- | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runtimeName`             | `string`                         | Yes      | The name of the agent runtime. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
+| `agentRuntimeArtifact`    | `AgentRuntimeArtifact`           | Yes      | The artifact configuration for the agent runtime containing the container configuration with ECR URI                                            |
+| `executionRole`           | `iam.IRole`                      | No       | The IAM role that provides permissions for the agent runtime. If not provided, a role will be created automatically                             |
+| `networkConfiguration`    | `NetworkConfiguration`           | No       | Network configuration for the agent runtime. Defaults to `{ networkMode: NetworkMode.PUBLIC }`                                                  |
+| `description`             | `string`                         | No       | Optional description for the agent runtime                                                                                                      |
+| `protocolConfiguration`   | `ProtocolType`                   | No       | Protocol configuration for the agent runtime. Defaults to `ProtocolType.HTTP`                                                                   |
+| `authorizerConfiguration` | `AuthorizerConfigurationRuntime` | No       | Authorizer configuration for the agent runtime. Supports IAM, Cognito, JWT, and OAuth authentication modes                                      |
+| `environmentVariables`    | `{ [key: string]: string }`      | No       | Environment variables for the agent runtime. Maximum 50 environment variables                                                                   |
+| `tags`                    | `{ [key: string]: string }`      | No       | Tags for the agent runtime. A list of key:value pairs of tags to apply to this Runtime resource                                                 |
 
 ### Runtime Endpoint Properties
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `endpointName` | `string` | Yes | The name of the runtime endpoint. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
-| `agentRuntimeId` | `string` | Yes | The Agent Runtime ID for this endpoint |
-| `agentRuntimeVersion` | `string` | Yes | The Agent Runtime version for this endpoint. Must be between 1 and 5 characters long.|
-| `description` | `string` | No | Optional description for the runtime endpoint |
-| `tags` | `{ [key: string]: string }` | No | Tags for the runtime endpoint |
+| Name                  | Type                        | Required | Description                                                                                                                                        |
+| --------------------- | --------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `endpointName`        | `string`                    | Yes      | The name of the runtime endpoint. Valid characters are a-z, A-Z, 0-9, _ (underscore). Must start with a letter and can be up to 48 characters long |
+| `agentRuntimeId`      | `string`                    | Yes      | The Agent Runtime ID for this endpoint                                                                                                             |
+| `agentRuntimeVersion` | `string`                    | Yes      | The Agent Runtime version for this endpoint. Must be between 1 and 5 characters long.                                                              |
+| `description`         | `string`                    | No       | Optional description for the runtime endpoint                                                                                                      |
+| `tags`                | `{ [key: string]: string }` | No       | Tags for the runtime endpoint                                                                                                                      |
 
 ### Creating a Runtime
 

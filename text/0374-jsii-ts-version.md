@@ -632,22 +632,22 @@ release lines include:
 
 ### What is the high-level project plan?
 
-Item                                      | Estimation | Notes
-------------------------------------------|------------|--------
-Initial communication                     | 1 day      |
-**Optional:** Break mono-repository out   | 5 days     |
-Have `jsii` down-level `.d.ts`            | 5 days     | [`aws/jsii#3501`][aws/jsii-3501]
-Update release automation                 | 2 days     |
-Update contributor guide                  | 1 day      |
-Update jsii documentation                 | 2 days     |
-Update [TypeScript] dependency            | 15 days    |
-Initial Release                           | 1 day      |
-Update `projen`'s  `JsiiProject` defaults | 1 day      |
-Migrate `aws-cdk` to new `jsii` release   | 10 days    | Via a pre-release
-Validate ConstructHub support             | 3 days     |
-Maintenance Announcement                  | 1 day      |
-Move to Maintenance                       | 1 day      |
-Move to end-of-life                       | 1 day      |
+| Item                                      | Estimation | Notes                            |
+| ----------------------------------------- | ---------- | -------------------------------- |
+| Initial communication                     | 1 day      |                                  |
+| **Optional:** Break mono-repository out   | 5 days     |                                  |
+| Have `jsii` down-level `.d.ts`            | 5 days     | [`aws/jsii#3501`][aws/jsii-3501] |
+| Update release automation                 | 2 days     |                                  |
+| Update contributor guide                  | 1 day      |                                  |
+| Update jsii documentation                 | 2 days     |                                  |
+| Update [TypeScript] dependency            | 15 days    |                                  |
+| Initial Release                           | 1 day      |                                  |
+| Update `projen`'s  `JsiiProject` defaults | 1 day      |                                  |
+| Migrate `aws-cdk` to new `jsii` release   | 10 days    | Via a pre-release                |
+| Validate ConstructHub support             | 3 days     |                                  |
+| Maintenance Announcement                  | 1 day      |                                  |
+| Move to Maintenance                       | 1 day      |                                  |
+| Move to end-of-life                       | 1 day      |                                  |
 
 ### Are there any open issues that need to be addressed later?
 
