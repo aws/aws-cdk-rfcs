@@ -126,28 +126,28 @@ creating and managing SLOs, allowing focus on defining the service reliability t
 
 `IntervalProps` implements IInterval
 
-|Name |Type |Description |
-|--- |--- |--- |
-|duration |number |Duration value |
-|unit |DurationUnit |Unit of duration <br>One of the following enum values:<br>`HOUR`<br>`DAY`<br>`MINUTE`|
+| Name     | Type         | Description                                                                           |
+| -------- | ------------ | ------------------------------------------------------------------------------------- |
+| duration | number       | Duration value                                                                        |
+| unit     | DurationUnit | Unit of duration <br>One of the following enum values:<br>`HOUR`<br>`DAY`<br>`MINUTE` |
 
 #### CalendarIntervalProps
 
 `CalendarIntervalProps` implements IInterval
 
-|Name |Type |Description |
-|--- |--- |--- |
-|duration |number |Duration value |
-|startTime? |number |Start time for the calendar interval.<br> default is now |
-|unit |DurationUnit (enum) |Unit of duration. the following enum values:<br>`MONTH` |
+| Name       | Type                | Description                                              |
+| ---------- | ------------------- | -------------------------------------------------------- |
+| duration   | number              | Duration value                                           |
+| startTime? | number              | Start time for the calendar interval.<br> default is now |
+| unit       | DurationUnit (enum) | Unit of duration. the following enum values:<br>`MONTH`  |
 
 #### GoalConfig
 
-|Name |Type |Description |
-|--- |--- |--- |
-|attainmentGoal? |number |Optional The target goal percentage.<br> default is 99.9 |
-|warningThreshold? |number |Optional warning threshold percentage.<br> default is 30 |
-|interval |IInterval |Interval configuration |
+| Name              | Type      | Description                                              |
+| ----------------- | --------- | -------------------------------------------------------- |
+| attainmentGoal?   | number    | Optional The target goal percentage.<br> default is 99.9 |
+| warningThreshold? | number    | Optional warning threshold percentage.<br> default is 30 |
+| interval          | IInterval | Interval configuration                                   |
 
 #### KeyAttributes
 
@@ -155,82 +155,82 @@ creating and managing SLOs, allowing focus on defining the service reliability t
 If this SLO is related to a metric collected by Application Signals, you must use this field to specify which service
 the SLO metric is related to. To do so, you must specify at least the Type, Name, and Environment attributes.
 
-|Name |Type | Description                                                                                                                                 |
-|--- |--- |---------------------------------------------------------------------------------------------------------------------------------------------|
-|type |[KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE`<br>`RESOURCE`<br>`AWS::RESOURCE` |
-|name |string | The name of the service. This is used only if the value of the Type field is Service, RemoteService, or AWS::Service.                       |
-|environment |string | The environment of the service                                                                                                              |
-|resourceType? |string | Optional specifies the type of the resource. Used only when type is Resource or AWS::Resource. |
-|identifier? |string | Optional additional identifier for the service. identifies the resource objects of this resource. This is used only if the value of the Type field is Resource or AWS::Resource.                                                                                            |
+| Name          | Type                     | Description                                                                                                                                                                      |
+| ------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| type          | [KeyAttributeType](enum) | The type of service.<br>One of the following enum values:<br>`SERVICE`<br>`AWS_SERVICE`<br>`REMOTE_SERVICE`<br>`RESOURCE`<br>`AWS::RESOURCE`                                     |
+| name          | string                   | The name of the service. This is used only if the value of the Type field is Service, RemoteService, or AWS::Service.                                                            |
+| environment   | string                   | The environment of the service                                                                                                                                                   |
+| resourceType? | string                   | Optional specifies the type of the resource. Used only when type is Resource or AWS::Resource.                                                                                   |
+| identifier?   | string                   | Optional additional identifier for the service. identifies the resource objects of this resource. This is used only if the value of the Type field is Resource or AWS::Resource. |
 
 #### MetricDimension
 
-|Name |Type |Description |
-|--- |--- |--- |
-|name |string |Dimension name |
-|value |string |Dimension value |
+| Name  | Type   | Description     |
+| ----- | ------ | --------------- |
+| name  | string | Dimension name  |
+| value | string | Dimension value |
 
 #### MetricDefinition
 
-|Name |Type |Description |
-|--- |--- |--- |
-|metricName |string |Name of the metric |
-|namespace |string |Metric namespace |
-|dimensions? |MetricDimension[] |Optional metric dimensions |
+| Name        | Type              | Description                |
+| ----------- | ----------------- | -------------------------- |
+| metricName  | string            | Name of the metric         |
+| namespace   | string            | Metric namespace           |
+| dimensions? | MetricDimension[] | Optional metric dimensions |
 
 #### SliMetricBaseProps
 
-|Name | Type |Description |
-|--- |---|---|
-|metricThreshold | number                  | Threshold for the metric|
-|metricType? | MetricType(enum)        | Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY` |
-|keyAttributes? | KeyAttributes           | Optional key attributes|
-|operationName? | string                  | Optional operation name |
-|comparisonOperator? | ComparisonOperator(enum) | Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` |
+| Name                | Type                     | Description                                                                                                                                              |
+| ------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| metricThreshold     | number                   | Threshold for the metric                                                                                                                                 |
+| metricType?         | MetricType(enum)         | Optional metric type. <br>One of the following enum values:<br>`LATENCY`<br>`AVAILABILITY`                                                               |
+| keyAttributes?      | KeyAttributes            | Optional key attributes                                                                                                                                  |
+| operationName?      | string                   | Optional operation name                                                                                                                                  |
+| comparisonOperator? | ComparisonOperator(enum) | Optional comparison operator. <br> One of the following enum values:<br>`GREATER_THAN`<br>`LESS_THAN`<br>`GREATER_THAN_OR_EQUAL`<br>`LESS_THAN_OR_EQUAL` |
 
 #### PeriodBasedMetricProps
 
 `PeriodBasedMetricBaseProps`implements SliMetricBaseProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|periodSeconds? |number |Period in seconds, default is 60s |
-|statistic |MetricStatistic |Statistic |
-|metricDataQueries |MetricDataQuery[] |Array of metric queries |
+| Name              | Type              | Description                       |
+| ----------------- | ----------------- | --------------------------------- |
+| periodSeconds?    | number            | Period in seconds, default is 60s |
+| statistic         | MetricStatistic   | Statistic                         |
+| metricDataQueries | MetricDataQuery[] | Array of metric queries           |
 
 #### RequestBasedMetricProps
 
 `RequestMetricBaseProps`implements SliMetricBaseProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|goodCountMetrics? |MetricDataQuery[] |Optional good count metrics |
-|totalCountMetrics |MetricDataQuery[] |Total count metrics |
-|badCountMetrics? |MetricDataQuery[] |Optional bad count metrics |
+| Name              | Type              | Description                 |
+| ----------------- | ----------------- | --------------------------- |
+| goodCountMetrics? | MetricDataQuery[] | Optional good count metrics |
+| totalCountMetrics | MetricDataQuery[] | Total count metrics         |
+| badCountMetrics?  | MetricDataQuery[] | Optional bad count metrics  |
 
 #### PeriodBasedSloProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|name |string |The name of the SLO |
-|keyAttributes | KeyAttributes |The key attributes for the SLO |
-|operationName? |string |The operation name for the SLO (optional) |
-|goal |GoalConfig |The goal configuration for the SLO |
-|sliMetric? |PeriodBasedMetricProps |Period-based metric configuration |
-|description? |string |A description for the SLO (optional) |
-|burnRateWindows? |number[] |Burn rate windows (Optional) |
+| Name             | Type                   | Description                               |
+| ---------------- | ---------------------- | ----------------------------------------- |
+| name             | string                 | The name of the SLO                       |
+| keyAttributes    | KeyAttributes          | The key attributes for the SLO            |
+| operationName?   | string                 | The operation name for the SLO (optional) |
+| goal             | GoalConfig             | The goal configuration for the SLO        |
+| sliMetric?       | PeriodBasedMetricProps | Period-based metric configuration         |
+| description?     | string                 | A description for the SLO (optional)      |
+| burnRateWindows? | number[]               | Burn rate windows (Optional)              |
 
 #### RequestBasedSloProps
 
-|Name |Type |Description |
-|--- |-- |--- |
-|name |string |The name of the SLO |
-|keyAttributes | KeyAttributes |The key attributes for the SLO |
-|operationName? |string |The operation name for the SLO (optional) |
-|goal |GoalConfig |The goal configuration for the SLO |
-|sliMetric? |RequestBasedMetricProps |Request-based metric configuration |
-|description? |string |A description for the SLO (optional) |
-|burnRateWindows? |number[] |Burn rate windows (Optional) |
+| Name             | Type                    | Description                               |
+| ---------------- | ----------------------- | ----------------------------------------- |
+| name             | string                  | The name of the SLO                       |
+| keyAttributes    | KeyAttributes           | The key attributes for the SLO            |
+| operationName?   | string                  | The operation name for the SLO (optional) |
+| goal             | GoalConfig              | The goal configuration for the SLO        |
+| sliMetric?       | RequestBasedMetricProps | Request-based metric configuration        |
+| description?     | string                  | A description for the SLO (optional)      |
+| burnRateWindows? | number[]                | Burn rate windows (Optional)              |
 
 Ticking the box below indicates that the public API of this RFC has been
 signed-off by the API bar raiser (the `status/api-approved` label was applied to the

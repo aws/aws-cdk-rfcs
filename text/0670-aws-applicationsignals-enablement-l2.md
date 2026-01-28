@@ -23,35 +23,35 @@ extend support to other platforms in the future.
 `ApplicationSignalsTaskDefinition` is a construct to update an existing TaskDefinition with Application Signals auto-instrumentation configurations,
 and attach required IAM permission **CloudWatchAgentServerPolicy** to the Task role, mentioned in the [ECS onboarding guidance](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Signals-ECS-Sidecar.html#CloudWatch-Application-Signals-Enable-ECS-IAM).
 
-|Name |Type |Description |
-|--- |--- |--- |
-|taskDefinition |[ecs.TaskDefinition](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.TaskDefinition.html) |The task definition to render. |
-|instrumentation |[InstrumentationProps](#instrumentationprops) |The auto-instrumentation configuration. |
-|serviceName? |string |The serivce identifier in Application Signals.<br>Default: the input task definition name. |
-|overrideEnvironments? |[EnvironmentExtension](#environmentextension)[] |The Application Signals reserved envrionment variables to overwrite on the main container. For the complete list, see [Environment variables injected by Application Signals auto-instrumentation](#environment-variables-injected-by-application-signals-auto-instrumentation). |
-|cloudWatchAgent? |[CloudWatchAgentProps](#cloudwatchagentprops) |The CloudWatch agent sidecar configuration.<br>Default: enables a basic agent sidecar container with latest public image. |
+| Name                  | Type                                                                                                      | Description                                                                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| taskDefinition        | [ecs.TaskDefinition](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.TaskDefinition.html) | The task definition to render.                                                                                                                                                                                                                                                   |
+| instrumentation       | [InstrumentationProps](#instrumentationprops)                                                             | The auto-instrumentation configuration.                                                                                                                                                                                                                                          |
+| serviceName?          | string                                                                                                    | The serivce identifier in Application Signals.<br>Default: the input task definition name.                                                                                                                                                                                       |
+| overrideEnvironments? | [EnvironmentExtension](#environmentextension)[]                                                           | The Application Signals reserved envrionment variables to overwrite on the main container. For the complete list, see [Environment variables injected by Application Signals auto-instrumentation](#environment-variables-injected-by-application-signals-auto-instrumentation). |
+| cloudWatchAgent?      | [CloudWatchAgentProps](#cloudwatchagentprops)                                                             | The CloudWatch agent sidecar configuration.<br>Default: enables a basic agent sidecar container with latest public image.                                                                                                                                                        |
 
 #### InstrumentationProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|instrumentationLanguage |InstrumentationLanguage (enum) |The langugage SDK to be auto-instrumented.<br>One of the following enum values:<br>`JAVA`<br>`PYTHON`<br>`DOTNET`<br>`NODEJS` |
-|sdkVersion |Instrumentation (enum) |The ADOT language SDK version to be used. |
-|runtimePlatform? |[ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) | The runtime platform.<br>The value inherits from the [ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) specified through the input task definition or defaults to linux-x64 if it isn't custom defined. |
+| Name                    | Type                                                                                                        | Description                                                                                                                                                                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| instrumentationLanguage | InstrumentationLanguage (enum)                                                                              | The langugage SDK to be auto-instrumented.<br>One of the following enum values:<br>`JAVA`<br>`PYTHON`<br>`DOTNET`<br>`NODEJS`                                                                                                                                     |
+| sdkVersion              | Instrumentation (enum)                                                                                      | The ADOT language SDK version to be used.                                                                                                                                                                                                                         |
+| runtimePlatform?        | [ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) | The runtime platform.<br>The value inherits from the [ecs.RuntimePlatform](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.RuntimePlatform.html) specified through the input task definition or defaults to linux-x64 if it isn't custom defined. |
 
 #### EnvironmentExtension
 
-|Name |Type |Description |
-|--- |--- |--- |
-|name |string |The environment variable name to be overwritten. |
-|value |string |The environment variable value to be overwritten. |
+| Name  | Type   | Description                                       |
+| ----- | ------ | ------------------------------------------------- |
+| name  | string | The environment variable name to be overwritten.  |
+| value | string | The environment variable value to be overwritten. |
 
 #### CloudWatchAgentProps
 
-|Name |Type |Description |
-|--- |--- |--- |
-|enableSidecar? |boolean |Inject CloudWatch agent as a sidecar container.<br>Default: true. |
-|container? |[ecs.ContainerDefinitionOptions](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.ContainerDefinitionOptions.html) |The CloudWatch agent container definitionoptionaldefault: a basic agent container with latest public image, see [Default CloudWatch Agent Container Definition](#default-cloudwatch-agent-container-definition). |
+| Name           | Type                                                                                                                              | Description                                                                                                                                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| enableSidecar? | boolean                                                                                                                           | Inject CloudWatch agent as a sidecar container.<br>Default: true.                                                                                                                                                |
+| container?     | [ecs.ContainerDefinitionOptions](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs.ContainerDefinitionOptions.html) | The CloudWatch agent container definitionoptionaldefault: a basic agent container with latest public image, see [Default CloudWatch Agent Container Definition](#default-cloudwatch-agent-container-definition). |
 
 #### Environment variables injected by Application Signals auto-instrumentation
 
@@ -60,62 +60,62 @@ along with their potential override values. The default value is noted with `*` 
 
 ##### Common Exporting Constants
 
-| Constant Name | Values |
-|---|---|
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `OTEL_EXPORTER_OTLP_PROTOCOL_HTTP_PROTOBUF` |
-| `OTEL_AWS_APPLICATION_SIGNALS` | *`OTEL_AWS_APPLICATION_SIGNALS_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_DISABLED` |
-| `OTEL_AWS_APPLICATION_SIGNALS_RUNTIME` |*`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_DISABLED` |
-| `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT` | `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT_LOCAL_CWA` |
+| Constant Name                                    | Values                                                                                             |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_PROTOCOL`                    | `OTEL_EXPORTER_OTLP_PROTOCOL_HTTP_PROTOBUF`                                                        |
+| `OTEL_AWS_APPLICATION_SIGNALS`                   | *`OTEL_AWS_APPLICATION_SIGNALS_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_DISABLED`                 |
+| `OTEL_AWS_APPLICATION_SIGNALS_RUNTIME`           | *`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_ENABLED`<br>`OTEL_AWS_APPLICATION_SIGNALS_RUNTIME_DISABLED` |
+| `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT` | `OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT_LOCAL_CWA`                                         |
 
 ##### Logs Exporting Constants
 
-| Constant Name | Values |
-|---|---|
-| `OTEL_LOGS_EXPORTER` | *`OTEL_LOGS_EXPORTER_NONE`<br>`OTEL_LOGS_EXPORTER_OTLP`|
+| Constant Name        | Values                                                  |
+| -------------------- | ------------------------------------------------------- |
+| `OTEL_LOGS_EXPORTER` | *`OTEL_LOGS_EXPORTER_NONE`<br>`OTEL_LOGS_EXPORTER_OTLP` |
 
 ##### Metrics Exporting Constants
 
-| Constant Name | Values |
-|---|---|
+| Constant Name           | Values                                                        |
+| ----------------------- | ------------------------------------------------------------- |
 | `OTEL_METRICS_EXPORTER` | *`OTEL_METRICS_EXPORTER_NONE`<br>`OTEL_METRICS_EXPORTER_OTLP` |
 
 ##### Trace Exporting Constants
 
-| Constant Name | Values |
-|---|---|
-| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_LOCAL_CWA` |
-| `OTEL_TRACES_SAMPLER` | *`OTEL_TRACES_SAMPLER_XRAY`<br>`OTEL_TRACES_SAMPLER_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_ALWAYS_OFF`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_OFF` |
-| `OTEL_TRACES_SAMPLER_ARG` | `OTEL_TRACES_SAMPLER_ARG_LOCAL_CWA` |
-| `OTEL_PROPAGATORS` | `OTEL_PROPAGATORS_APPLICATION_SIGNALS` |
+| Constant Name                        | Values                                                                                                                                                                                                                                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_LOCAL_CWA`                                                                                                                                                                                                                                                 |
+| `OTEL_TRACES_SAMPLER`                | *`OTEL_TRACES_SAMPLER_XRAY`<br>`OTEL_TRACES_SAMPLER_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_ALWAYS_OFF`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_TRACEID_RATIO`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_ON`<br>`OTEL_TRACES_SAMPLER_PARENT_BASED_ALWAYS_OFF` |
+| `OTEL_TRACES_SAMPLER_ARG`            | `OTEL_TRACES_SAMPLER_ARG_LOCAL_CWA`                                                                                                                                                                                                                                                            |
+| `OTEL_PROPAGATORS`                   | `OTEL_PROPAGATORS_APPLICATION_SIGNALS`                                                                                                                                                                                                                                                         |
 
 ##### Java Instrumentation Constants
 
-| Constant Name | Values |
-|---|---|
+| Constant Name       | Values                   |
+| ------------------- | ------------------------ |
 | `JAVA_TOOL_OPTIONS` | `JAVA_TOOL_OPTIONS_ADOT` |
 
 ##### Python Instrumentation Constants
 
-| Constant Name | Values |
-|---|---|
-| `OTEL_PYTHON_DISTRO` | `OTEL_PYTHON_DISTRO_AWS_DISTRO` |
+| Constant Name              | Values                                      |
+| -------------------------- | ------------------------------------------- |
+| `OTEL_PYTHON_DISTRO`       | `OTEL_PYTHON_DISTRO_AWS_DISTRO`             |
 | `OTEL_PYTHON_CONFIGURATOR` | `OTEL_PYTHON_CONFIGURATOR_AWS_CONFIGURATOR` |
-| `PYTHONPATH` | `PYTHONPATH_ADOT` |
+| `PYTHONPATH`               | `PYTHONPATH_ADOT`                           |
 
 ##### DOTNET Instrumentation Constants
 
-| Constant Name | Values |
-|---|---|
-| `OTEL_DOTNET_DISTRO` | `OTEL_DOTNET_DISTRO_AWS_DISTRO` |
-| `OTEL_DOTNET_CONFIGURATOR` | `OTEL_DOTNET_CONFIGURATOR_AWS_CONFIGURATOR` |
-| `OTEL_DOTNET_AUTO_PLUGINS` | `OTEL_DOTNET_AUTO_PLUGINS_ADOT` |
-| `CORECLR_ENABLE_PROFILING` | *`CORECLR_ENABLE_PROFILING_ENABLED`<br>`CORECLR_ENABLE_PROFILING_DISABLED` |
-| `CORECLR_PROFILER` | `CORECLR_PROFILER_OTEL` |
-| `CORECLR_PROFILER_PATH` | `CORECLR_PROFILER_PATH_LINUX_X64`<br>`CORECLR_PROFILER_PATH_WINDOWS_X64` |
-| `DOTNET_STARTUP_HOOKS` | `DOTNET_STARTUP_HOOKS_LINUX_ADOT`<br>`DOTNET_STARTUP_HOOKS_WINDOWS_ADOT` |
-| `DOTNET_ADDITIONAL_DEPS` | `DOTNET_ADDITIONAL_DEPS_LINUX_ADOT`<br>`DOTNET_ADDITIONAL_DEPS_WINDOWS_ADOT` |
-| `OTEL_DOTNET_AUTO_HOME`  | `OTEL_DOTNET_AUTO_HOME_LINUX_ADOT`<br>`OTEL_DOTNET_AUTO_HOME_WINDOWS_ADOT` |
-| `DOTNET_SHARED_STORE`| `DOTNET_SHARED_STORE_LINUX_ADOT`<br>`DOTNET_SHARED_STORE_WINDOWS_ADOT` |
+| Constant Name              | Values                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| `OTEL_DOTNET_DISTRO`       | `OTEL_DOTNET_DISTRO_AWS_DISTRO`                                              |
+| `OTEL_DOTNET_CONFIGURATOR` | `OTEL_DOTNET_CONFIGURATOR_AWS_CONFIGURATOR`                                  |
+| `OTEL_DOTNET_AUTO_PLUGINS` | `OTEL_DOTNET_AUTO_PLUGINS_ADOT`                                              |
+| `CORECLR_ENABLE_PROFILING` | *`CORECLR_ENABLE_PROFILING_ENABLED`<br>`CORECLR_ENABLE_PROFILING_DISABLED`   |
+| `CORECLR_PROFILER`         | `CORECLR_PROFILER_OTEL`                                                      |
+| `CORECLR_PROFILER_PATH`    | `CORECLR_PROFILER_PATH_LINUX_X64`<br>`CORECLR_PROFILER_PATH_WINDOWS_X64`     |
+| `DOTNET_STARTUP_HOOKS`     | `DOTNET_STARTUP_HOOKS_LINUX_ADOT`<br>`DOTNET_STARTUP_HOOKS_WINDOWS_ADOT`     |
+| `DOTNET_ADDITIONAL_DEPS`   | `DOTNET_ADDITIONAL_DEPS_LINUX_ADOT`<br>`DOTNET_ADDITIONAL_DEPS_WINDOWS_ADOT` |
+| `OTEL_DOTNET_AUTO_HOME`    | `OTEL_DOTNET_AUTO_HOME_LINUX_ADOT`<br>`OTEL_DOTNET_AUTO_HOME_WINDOWS_ADOT`   |
+| `DOTNET_SHARED_STORE`      | `DOTNET_SHARED_STORE_LINUX_ADOT`<br>`DOTNET_SHARED_STORE_WINDOWS_ADOT`       |
 
 #### Default CloudWatch Agent Container Definition
 
