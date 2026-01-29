@@ -75,14 +75,14 @@ For more information on VPC connectivity for Amazon Bedrock AgentCore Browser, p
 
 ### Browser Properties
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `browserCustomName` | `string` | Yes | The name of the browser. Must start with a letter and can be up to 48 characters long. Pattern: `[a-zA-Z][a-zA-Z0-9_]{0,47}` |
-| `description` | `string` | No | Optional description for the browser. Can have up to 200 characters |
-| `networkConfiguration` | `BrowserNetworkConfiguration` | No | Network configuration for browser. Defaults to PUBLIC network mode |
-| `recordingConfig` | `RecordingConfig` | No | Recording configuration for browser. Defaults to no recording |
-| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the browser to access AWS services. A new role will be created if not provided |
-| `tags` | `{ [key: string]: string }` | No | Tags to apply to the browser resource |
+| Name                   | Type                          | Required | Description                                                                                                                  |
+| ---------------------- | ----------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `browserCustomName`    | `string`                      | Yes      | The name of the browser. Must start with a letter and can be up to 48 characters long. Pattern: `[a-zA-Z][a-zA-Z0-9_]{0,47}` |
+| `description`          | `string`                      | No       | Optional description for the browser. Can have up to 200 characters                                                          |
+| `networkConfiguration` | `BrowserNetworkConfiguration` | No       | Network configuration for browser. Defaults to PUBLIC network mode                                                           |
+| `recordingConfig`      | `RecordingConfig`             | No       | Recording configuration for browser. Defaults to no recording                                                                |
+| `executionRole`        | `iam.IRole`                   | No       | The IAM role that provides permissions for the browser to access AWS services. A new role will be created if not provided    |
+| `tags`                 | `{ [key: string]: string }`   | No       | Tags to apply to the browser resource                                                                                        |
 
 ### Basic Browser Creation
 
@@ -278,13 +278,13 @@ For more information on VPC connectivity for Amazon Bedrock AgentCore Browser, p
 
 ### Code Interpreter Properties
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `codeInterpreterCustomName` | `string` | Yes | The name of the code interpreter. Must start with a letter and can be up to 48 characters long. Pattern: `[a-zA-Z][a-zA-Z0-9_]{0,47}` |
-| `description` | `string` | No | Optional description for the code interpreter. Can have up to 200 characters |
-| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the code interpreter to access AWS services. A new role will be created if not provided |
-| `networkConfiguration` | `CodeInterpreterNetworkConfiguration` | No | Network configuration for code interpreter. Defaults to PUBLIC network mode |
-| `tags` | `{ [key: string]: string }` | No | Tags to apply to the code interpreter resource |
+| Name                        | Type                                  | Required | Description                                                                                                                           |
+| --------------------------- | ------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `codeInterpreterCustomName` | `string`                              | Yes      | The name of the code interpreter. Must start with a letter and can be up to 48 characters long. Pattern: `[a-zA-Z][a-zA-Z0-9_]{0,47}` |
+| `description`               | `string`                              | No       | Optional description for the code interpreter. Can have up to 200 characters                                                          |
+| `executionRole`             | `iam.IRole`                           | No       | The IAM role that provides permissions for the code interpreter to access AWS services. A new role will be created if not provided    |
+| `networkConfiguration`      | `CodeInterpreterNetworkConfiguration` | No       | Network configuration for code interpreter. Defaults to PUBLIC network mode                                                           |
+| `tags`                      | `{ [key: string]: string }`           | No       | Tags to apply to the code interpreter resource                                                                                        |
 
 ### Basic Code Interpreter Creation
 

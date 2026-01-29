@@ -66,15 +66,15 @@ You can't create long term memory records directly, as they are extracted asynch
 
 ### Memory Properties
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `memoryName` | `string` | Yes | The name of the memory |
-| `expirationDays` | `Duration` | No | Short-term memory expiration in days (between 7 and 365). Default: 90 days |
-| `description` | `string` | No | Optional description for the memory. Default: no description. |
-| `kmsKey` | `IKey` | No | Custom KMS key to use for encryption. Default: Your data is encrypted with a key that AWS owns and manages for you |
-| `memoryStrategies` | `MemoryStrategyBase[]` | No | Built-in extraction strategies to use for this memory. Default: No extraction strategies (short term memory only) |
-| `executionRole` | `iam.IRole` | No | The IAM role that provides permissions for the memory to access AWS services. Default: A new role will be created. |
-| `tags` | `{ [key: string]: string }` | No | Tags for memory. Default: no tags. |
+| Name               | Type                        | Required | Description                                                                                                        |
+| ------------------ | --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `memoryName`       | `string`                    | Yes      | The name of the memory                                                                                             |
+| `expirationDays`   | `Duration`                  | No       | Short-term memory expiration in days (between 7 and 365). Default: 90 days                                         |
+| `description`      | `string`                    | No       | Optional description for the memory. Default: no description.                                                      |
+| `kmsKey`           | `IKey`                      | No       | Custom KMS key to use for encryption. Default: Your data is encrypted with a key that AWS owns and manages for you |
+| `memoryStrategies` | `MemoryStrategyBase[]`      | No       | Built-in extraction strategies to use for this memory. Default: No extraction strategies (short term memory only)  |
+| `executionRole`    | `iam.IRole`                 | No       | The IAM role that provides permissions for the memory to access AWS services. Default: A new role will be created. |
+| `tags`             | `{ [key: string]: string }` | No       | Tags for memory. Default: no tags.                                                                                 |
 
 #### Basic Memory Creation
 
