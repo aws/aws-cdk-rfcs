@@ -203,7 +203,7 @@
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing
 [792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0792-aws-aiops-investigationgroup-l2.md)||👷 implementing
 [808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||✅ done
-[814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||💡 proposed
+[814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||⏰ final comments
 [835](https://github.com/aws/aws-cdk-rfcs/issues/835)|[Native EBS Snapshot Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/835)||💡 proposed
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
 <!--END_TABLE-->
