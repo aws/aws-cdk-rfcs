@@ -216,24 +216,27 @@ Mixins.of(
 #### Mixins that must be used
 
 Sometimes you need assertions that a Mixin has been applied to certain set of constructs.
-`Mixins.of(...)` can return a `MixinApplicationReport` that can be used to define these kind of guarantees.
+`Mixins.of(...)` keeps track of Mixin applications and this report can be used to create assertions.
 
 It comes with two convenience helpers:
-Use `assertAll()` to ensure the Mixin was applied to all selected constructs.
+Use `requireAll()` to assert the Mixin will be applied to all selected constructs.
 If a construct is in the selection that is not supported by the Mixin, this will throw an error.
-The `assertAny()` helper will check the Mixin was applied to at least one construct from the selection.
+The `requireAny()` helper will assert the Mixin was applied to at least one construct from the selection.
 If the Mixin wasn't applied to any construct at all, this will throw an error.
 
-```ts
-Mixins.of(scope)
-  .apply(new EncryptionAtRest())
-  // Check Mixin was applied to all constructs
-  .assertAll();
-  // OrL Check Mixin was applied to at least one construct
-  // .assertAny();
+Both helpers will only check future calls of `apply()`.
+Set them before calling `apply()` to take effect.
 
-// Request the report for manual assertions
-const report = Mixins.of(scope).apply(new EncryptionAtRest()).report();
+```ts
+Mixins.of(scope, selector)
+  // Assert Mixin was applied to all constructs in the selection
+  .requireAll()
+  // Or assert Mixin was applied to at least one construct in the selection
+  // .requireAny()
+  .apply(new EncryptionAtRest());
+
+// Get an application report for manual assertions
+const report = Mixins.of(scope).apply(new EncryptionAtRest()).report;
 ```
 
 This report also allows you to create custom assertions.
