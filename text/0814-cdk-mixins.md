@@ -442,15 +442,28 @@ No errors are thrown or warnings are
 class Construct implements IConstruct {
   
   // ...
-
-  public with(...mixins: IMixin[]): void {
-    for (const c of this.node.findAll()) {
-      for (const m of mixins) {
-        if (m.supports(this)) {
-          m.applyTo(this);
+  
+  /**
+   * Applies one or more mixins to this construct.
+   *
+   * Mixins are applied in order. The list of constructs is captured at the
+   * start of the call, so constructs added by a mixin will not be visited.
+   * Use multiple `with()` calls if subsequent mixins should apply to added
+   * constructs.
+   *
+   * @param mixins The mixins to apply
+   * @returns This construct for chaining
+   */
+  public with(...mixins: IMixin[]): IConstruct {
+    const allConstructs = this.node.findAll();
+    for (const mixin of mixins) {
+      for (const construct of allConstructs) {
+        if (mixin.supports(construct)) {
+          mixin.applyTo(construct);
         }
       }
     }
+    return this;
   }
 }
 ```
