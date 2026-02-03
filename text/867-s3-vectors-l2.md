@@ -1,6 +1,6 @@
 # S3 Vectors L2 Construct
 
-* **Original Author(s):**: @{AUTHOR}
+* **Original Author(s):**: @krokoko
 * **Tracking Issue**: #867 (https://github.com/aws/aws-cdk-rfcs/issues/867)
 * **API Bar Raiser**: @{BAR_RAISER_USER}
 
