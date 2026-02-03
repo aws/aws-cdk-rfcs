@@ -206,4 +206,5 @@
 [814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||⏰ final comments
 [835](https://github.com/aws/aws-cdk-rfcs/issues/835)|[Native EBS Snapshot Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/835)||💡 proposed
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
+[867](https://github.com/aws/aws-cdk-rfcs/issues/867)|[S3 Vector L2 CDK Constructs](https://github.com/aws/aws-cdk-rfcs/issues/867)||💡 proposed
 <!--END_TABLE-->
