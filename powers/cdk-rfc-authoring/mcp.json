@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "aws-knowledge-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "fastmcp",
+        "run",
+        "https://knowledge-mcp.global.api.aws"
+      ],
+      "autoApprove": [
+        "aws___search_documentation"
+      ]
+    },
+    "awslabs.aws-iac-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-iac-mcp-server@latest"
+      ],
+      "autoApprove": [
+        "search_cloudformation_documentation",
+        "read_iac_documentation_page",
+        "search_cdk_documentation",
+        "search_cdk_samples_and_constructs"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    }
+  }
+}
