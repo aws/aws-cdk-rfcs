@@ -42,6 +42,19 @@ Point users to these if they're unfamiliar with the process:
 - **RFC Process:** [README.md](https://github.com/aws/aws-cdk-rfcs/blob/main/README.md)
 - **CDK Design Guidelines:** [DESIGN_GUIDELINES.md](https://github.com/aws/aws-cdk/blob/main/docs/DESIGN_GUIDELINES.md)
 
+### Metadata Fields
+
+When filling in the RFC header:
+
+| Field | Required for PR? | Notes |
+|-------|------------------|-------|
+| **Author** | ✅ Yes | Your GitHub username |
+| **Summary** | ✅ Yes | One-sentence description of the change |
+| **Tracking Issue** | ❌ No | Leave as placeholder (`#{TRACKING_ISSUE}`); created when PR is opened |
+| **API Bar Raiser** | ❌ No | Leave as TBD or placeholder; assigned by maintainers during review |
+
+> Don't block on tracking issue or bar raiser — these are filled in after you submit the PR.
+
 ---
 
 ## Phase 2: Service Research (New L2 Constructs Only)

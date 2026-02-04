@@ -37,10 +37,12 @@ If they reference a file, read it before proceeding.
 Review the draft against this checklist:
 
 ### Metadata
-- [ ] Author (GitHub username)
-- [ ] Tracking issue (link)
-- [ ] API Bar Raiser (can be TBD)
-- [ ] One-sentence summary
+- [ ] Author (GitHub username) — **required for submission**
+- [ ] One-sentence summary — **required for submission**
+- [ ] Tracking issue (link) — *created automatically when PR is opened, can be placeholder*
+- [ ] API Bar Raiser — *assigned during review, can be TBD or placeholder*
+
+> **Note:** Only Author and Summary are required before submitting the RFC PR. The tracking issue is created when you open the PR, and the API Bar Raiser is assigned by maintainers during review. Don't flag these as high-priority gaps.
 
 ### Working Backwards
 - [ ] README section exists
@@ -81,7 +83,11 @@ After reviewing, share a structured assessment:
 - [Section]: [Why it's good]
 - [Section]: [Why it's good]
 
-### ⚠️ Sections Needing Work
+### 🚨 Missing Sections (require research + proposal)
+- [Construct/Resource]: Mentioned in [location] but no README documentation
+- [Section]: Required by template but entirely absent
+
+### ⚠️ Sections Needing Work (exist but incomplete)
 - [Section]: [What's missing or weak]
 - [Section]: [What's missing or weak]
 
@@ -93,6 +99,9 @@ After reviewing, share a structured assessment:
 Which would you like to tackle first?
 ```
 
+> **Important:** Distinguish between "missing" (needs research + proposal workflow) and "needs work" (can improve directly).
+> Missing sections require the conversational approach in Step 4.
+
 **Wait for user to choose before proceeding.**
 
 ---
@@ -101,9 +110,91 @@ Which would you like to tackle first?
 
 Work on the section the user chose. Use the patterns below.
 
+### Adding a Completely Missing Section (e.g., undocumented construct)
+
+> **STOP: Do not generate the missing section immediately.**
+> When a section is entirely missing (not just thin), use the conversational research approach.
+
+**When to use this pattern:**
+- A construct is mentioned in the RFC but has no README documentation
+- A CloudFormation resource is in scope but not covered
+- The user says "help me add the X section"
+
+**Step 4.1: Research the AWS Resource**
+
+Use MCP tools to gather information before proposing anything:
+
+```
+# Search CloudFormation documentation
+search_cloudformation_documentation: "AWS::[Service]::[Resource] properties"
+
+# Read the full resource page if needed
+read_iac_documentation_page: [URL from search results]
+
+# Search for similar CDK patterns
+search_cdk_documentation: "CDK [similar service] L2 construct"
+```
+
+**Step 4.2: Share Findings and Propose**
+
+Present what you learned and propose an API — but **wait for confirmation**:
+
+```
+I researched AWS::[Service]::[Resource] and found:
+
+**CloudFormation Properties:**
+- `PropertyA` (required) — [description]
+- `PropertyB` (optional) — [description]
+- `PropertyC` (optional) — [description]
+
+**Proposed L2 API:**
+
+```ts
+const resource = new service.Resource(this, 'Resource', {
+  propertyA: value,
+  propertyB: service.OptionType.VALUE,
+});
+```
+
+**Reasoning:**
+- `propertyA` maps directly from CFN (required)
+- `propertyB` uses enum-like class following [similar CDK pattern]
+
+**Questions before I write this section:**
+1. Does this API shape match your intent?
+2. Should `propertyC` be included or deferred?
+3. Any additional methods needed (e.g., `addX()`, grants)?
+```
+
+**Step 4.3: Wait for User Confirmation**
+
+Do NOT write the section until the user confirms the approach.
+
+**Step 4.4: Write the Final Section**
+
+Once confirmed, write the section in final RFC format (not proposal format):
+
+```markdown
+##### [Resource Name]
+
+The `Resource` construct creates a [description].
+
+```ts
+const resource = new service.Resource(this, 'Resource', {
+  propertyA: value,
+});
+```
+
+[Explanatory text about what the construct does and any automatic behaviors]
+```
+
+Move any design rationale to Internal FAQ → "What alternatives were considered?"
+
+---
+
 ### Improving Working Backwards / README
 
-**If code examples are thin or missing:**
+**If code examples are thin or missing (but section exists):**
 
 1. Ask clarifying questions about the intended API
 2. Generate complete examples showing:
@@ -269,9 +360,10 @@ Before the RFC is ready for submission, verify:
 - [ ] Security considerations addressed
 
 ### Process Ready
-- [ ] Tracking issue exists
-- [ ] Author identified
+- [ ] Author identified (required)
 - [ ] Project plan has phases
+- [ ] Tracking issue placeholder present (will be updated after PR creation)
+- [ ] API Bar Raiser placeholder present (will be assigned during review)
 
 ---
 

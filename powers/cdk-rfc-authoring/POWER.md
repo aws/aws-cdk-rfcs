@@ -2,7 +2,7 @@
 name: "cdk-rfc-authoring"
 displayName: "AWS CDK RFC Authoring Assistant"
 description: "Expert guidance for writing AWS CDK RFC proposals using the Working Backwards methodology. Helps scaffold, structure, and refine RFC documents with API design best practices."
-keywords: ["cdk", "rfc", "aws-cdk", "working-backwards", "api-design", "l2-construct"]
+keywords: ["cdk", "rfc", "aws-cdk", "working-backwards", "api-design", "l2-construct", "rfc-review", "review rfc", "rfc ready", "submit rfc", "rfc feedback"]
 author: "AWS CDK Team"
 ---
 
@@ -137,7 +137,7 @@ Every RFC needs these sections (details in steering files):
 
 | Section | Purpose | Key Quality Check |
 |---------|---------|-------------------|
-| **Metadata** | Author, tracking issue, summary | All fields populated |
+| **Metadata** | Author, tracking issue, summary | Author and summary required; tracking issue/bar raiser filled after PR |
 | **Working Backwards** | README with code examples | Complete, runnable examples |
 | **Public FAQ** | User-facing value prop | Answers "why should I use this?" |
 | **Internal FAQ** | Technical design decisions | 2-3 alternatives with trade-offs |
