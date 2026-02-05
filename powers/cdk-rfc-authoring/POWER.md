@@ -147,8 +147,28 @@ Every RFC needs these sections (details in steering files):
 
 ## MCP Server Setup
 
-**No setup required for basic usage.** The AWS Knowledge MCP server works without credentials.
+**No setup required for basic usage.** The AWS Knowledge and IAC servers work without credentials.
 
-**Optional:** For CloudFormation troubleshooting features from the IAC server:
+### GitHub Integration (Recommended)
+
+The GitHub MCP server enables fetching existing RFCs, design guidelines, and code examples directly from GitHub. To enable it:
+
+1. Create a GitHub Personal Access Token at https://github.com/settings/tokens
+   - Select "Fine-grained tokens" for better security
+   - Grant read access to "Contents" for public repositories (no special permissions needed for public repos)
+
+2. Set the `GITHUB_TOKEN` environment variable:
+   ```bash
+   # Add to your shell profile (~/.zshrc, ~/.bashrc, etc.)
+   export GITHUB_TOKEN="your_token_here"
+   ```
+
+3. Restart Kiro to pick up the new environment variable
+
+**Without GitHub configured:** The power still works for documentation search and RFC drafting, but you won't be able to fetch RFC examples or design guidelines directly from the aws-cdk-rfcs and aws-cdk repositories.
+
+### CloudFormation Troubleshooting (Optional)
+
+For CloudFormation stack troubleshooting features from the IAC server:
 - Set `AWS_PROFILE` environment variable to your AWS CLI profile name
 - Profile should have read access to CloudFormation stacks you want to analyze

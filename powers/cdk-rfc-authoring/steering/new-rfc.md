@@ -42,6 +42,9 @@ Point users to these if they're unfamiliar with the process:
 - **RFC Process:** [README.md](https://github.com/aws/aws-cdk-rfcs/blob/main/README.md)
 - **CDK Design Guidelines:** [DESIGN_GUIDELINES.md](https://github.com/aws/aws-cdk/blob/main/docs/DESIGN_GUIDELINES.md)
 
+> **Setup Note:** This power uses the GitHub MCP server to fetch the CDK design guidelines.
+> Ensure `GITHUB_TOKEN` environment variable is set with a valid GitHub personal access token.
+
 ### Metadata Fields
 
 When filling in the RFC header:
@@ -90,7 +93,23 @@ Use `search_cdk_documentation` to find:
 
 **Example query:** `"CDK EventBridge Pipes L2 construct"`
 
-### Step 2.4: Confirm Scope with User
+### Step 2.4: Read CDK Design Guidelines
+
+**This step is critical for API design.** Use the GitHub MCP to fetch the official CDK design guidelines:
+
+```
+Repository: aws/aws-cdk
+Path: docs/DESIGN_GUIDELINES.md
+```
+
+Key sections to review for L2 constructs:
+- **Construct interfaces** — Understand the `IResource` and auto-generated `IRef` patterns
+- **Import methods** — When to use `fromXxxArn()` vs `fromXxxAttributes()`
+- **Grant patterns** — How to implement `grantRead()`, `grantWrite()`, etc.
+- **Naming conventions** — Property names, method names, class names
+- **Enums and Enum-like Classes** - When to use actual enums or static factories (enum-like approach)
+
+### Step 2.5: Confirm Scope with User
 
 **Before generating the skeleton**, share your findings and ask:
 

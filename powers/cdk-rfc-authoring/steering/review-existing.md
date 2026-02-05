@@ -34,6 +34,27 @@ If they reference a file, read it before proceeding.
 
 ## Step 2: Health Check
 
+### Step 2.1: Read CDK Design Guidelines
+
+**Before reviewing the draft**, fetch the official CDK design guidelines to use as your reference:
+
+```
+Repository: aws/aws-cdk
+Path: docs/DESIGN_GUIDELINES.md
+```
+
+Key sections to check against:
+- **Construct interfaces** — Does the RFC follow `IResource` patterns correctly?
+- **Import methods** — Are `fromXxxArn()` vs `fromXxxAttributes()` used appropriately?
+- **Grant patterns** — Do grant methods follow the standard signatures?
+- **Naming conventions** — Do property/method/class names follow CDK conventions?
+- **Enums and Enum-like Classes** — Are enums vs static factories used correctly?
+
+> **Setup Note:** This step uses the GitHub MCP server.
+> If `GITHUB_TOKEN` is not configured, you can still review but should note that design guideline compliance wasn't verified.
+
+### Step 2.2: Review Against Checklist
+
 Review the draft against this checklist:
 
 ### Metadata
@@ -70,6 +91,14 @@ Review the draft against this checklist:
 - [ ] Metric methods (if applicable)
 - [ ] Import methods (fromXxxName, fromXxxAttributes)
 
+### Design Guidelines Compliance
+- [ ] Construct interfaces follow recommended pattern
+- [ ] Import methods match guideline patterns 
+- [ ] Grant methods use standard signatures 
+- [ ] Property names follow CDK conventions 
+- [ ] Enums vs enum-like classes used appropriately
+- [ ] Props interfaces are properly structured
+
 ---
 
 ## Step 3: Share Assessment and Prioritize
@@ -91,6 +120,10 @@ After reviewing, share a structured assessment:
 - [Section]: [What's missing or weak]
 - [Section]: [What's missing or weak]
 
+### 📐 Design Guidelines Issues
+- [Issue]: [What doesn't align with CDK conventions and how to fix]
+- [Issue]: [What doesn't align with CDK conventions and how to fix]
+
 ### Recommended Priority
 1. [Most critical gap] — [Why it matters]
 2. [Second priority] — [Why it matters]
@@ -101,6 +134,7 @@ Which would you like to tackle first?
 
 > **Important:** Distinguish between "missing" (needs research + proposal workflow) and "needs work" (can improve directly).
 > Missing sections require the conversational approach in Step 4.
+> Design guidelines issues should be flagged even if the section is otherwise complete.
 
 **Wait for user to choose before proceeding.**
 
@@ -135,7 +169,21 @@ read_iac_documentation_page: [URL from search results]
 search_cdk_documentation: "CDK [similar service] L2 construct"
 ```
 
-**Step 4.2: Share Findings and Propose**
+**Step 4.2: Verify Against Design Guidelines**
+
+Before proposing an API, check the CDK design guidelines (fetched in Step 2.1) for:
+- Correct interface patterns for this type of resource
+- Appropriate import method style
+- Standard grant method signatures (if applicable)
+- Naming conventions for properties and methods
+
+If you didn't fetch the guidelines earlier, do so now:
+```
+Repository: aws/aws-cdk
+Path: docs/DESIGN_GUIDELINES.md
+```
+
+**Step 4.3: Share Findings and Propose**
 
 Present what you learned and propose an API — but **wait for confirmation**:
 
@@ -159,6 +207,7 @@ const resource = new service.Resource(this, 'Resource', {
 **Reasoning:**
 - `propertyA` maps directly from CFN (required)
 - `propertyB` uses enum-like class following [similar CDK pattern]
+- [Note any design guideline patterns being followed]
 
 **Questions before I write this section:**
 1. Does this API shape match your intent?
@@ -166,11 +215,11 @@ const resource = new service.Resource(this, 'Resource', {
 3. Any additional methods needed (e.g., `addX()`, grants)?
 ```
 
-**Step 4.3: Wait for User Confirmation**
+**Step 4.4: Wait for User Confirmation**
 
 Do NOT write the section until the user confirms the approach.
 
-**Step 4.4: Write the Final Section**
+**Step 4.5: Write the Final Section**
 
 Once confirmed, write the section in final RFC format (not proposal format):
 

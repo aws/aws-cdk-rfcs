@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "aws-knowledge-mcp-server": {
-      "command": "uvx",
-      "args": [
-        "fastmcp",
-        "run",
-        "https://knowledge-mcp.global.api.aws"
-      ],
+      "url": "https://knowledge-mcp.global.api.aws",
+      "type": "http",
       "autoApprove": [
         "aws___search_documentation"
       ]
@@ -25,6 +21,19 @@
       "env": {
         "FASTMCP_LOG_LEVEL": "ERROR"
       }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "autoApprove": [
+        "get_file_contents"
+      ]
     }
   }
 }
