@@ -10,7 +10,7 @@
 | Phase | Goal | Gate to Next Phase |
 |-------|------|-------------------|
 | 1. Discovery | Understand what the user wants to build | User answers all essential questions |
-| 2. Research | Learn the AWS service (L2s only) | User confirms scope of resources to include |
+| 2. Research | Investigate the relevant service, feature, or component | User confirms scope and research findings |
 | 3. Skeleton | Generate RFC structure with proposals | User has a document to react to |
 | 4. Drafting | Iterate section-by-section | User approves each section |
 
@@ -20,16 +20,29 @@
 
 **Your goal:** Understand the RFC scope before writing anything.
 
+### Step 1.1: Get GitHub Username (if available)
+
+Before asking questions, try to automatically fetch the user's GitHub username using the GitHub MCP server:
+
+```
+Use the GitHub MCP server to get the authenticated user's information.
+This will allow you to pre-fill the author field in the RFC metadata.
+```
+
+If the GitHub MCP server is configured and returns a username, store it for later use when generating the RFC skeleton.
+
+If the GitHub MCP server is not configured or fails, you'll ask the user for their GitHub username in Step 3 when generating the skeleton.
+
 ### Questions to Ask
 
 Ask these questions and **wait for answers**:
 
 1. What AWS service or CDK area does this target?
 2. What type of change is this?
-   - New L2 construct module → Go to Phase 2
-   - Feature addition to existing construct → Skip to Phase 3
-   - CLI change → Skip to Phase 3
-   - Other → Clarify before proceeding
+   - New L2 construct module → Go to Phase 2 (research the service)
+   - Feature addition to existing construct → Go to Phase 2 (research the feature)
+   - CLI change → Go to Phase 2 (research current CLI behavior)
+   - Other → Clarify before proceeding, then go to Phase 2 with appropriate research focus
 3. What user pain point does this solve?
 4. What's the scope? (single construct, full module, multi-phase initiative)
 5. Are there existing GitHub issues or discussions?
@@ -60,36 +73,63 @@ When filling in the RFC header:
 
 ---
 
-## Phase 2: Service Research (New L2 Constructs Only)
+## Phase 2: Research
 
-> **Skip this phase** if the RFC is a feature addition, CLI change, or non-L2 work.
+**Your goal:** Investigate the relevant service, feature, or component so you can propose informed designs.
 
-**Your goal:** Learn the AWS service so you can propose informed API designs.
+The scope of research depends on the type of change identified in Phase 1:
+
+| Change Type | Research Focus |
+|-------------|---------------|
+| New L2 construct module | The AWS service: concepts, resources, terminology, workflows |
+| Feature addition to existing construct | The specific service feature: what it does, how it's configured, CloudFormation support |
+| CLI change | How the CLI currently handles this area, related CLI commands, existing behavior and UX patterns |
+| Other | Whatever context is most relevant to the change |
 
 ### Step 2.1: Search AWS Documentation
 
-Use `aws___search_documentation` to find:
+Use `aws___search_documentation` to find information relevant to the change type:
+
+**For new L2 constructs:**
 - Service overview and key concepts
 - Terminology the RFC should use
 - Common user workflows
 
 **Example query:** `"Amazon DataSync concepts overview"`
 
-### Step 2.2: Search CloudFormation Resources
+**For feature additions:**
+- The specific feature's documentation and behavior
+- Configuration options and constraints
+- How the feature interacts with existing resources
+
+**Example query:** `"Amazon S3 Intelligent-Tiering archive access tier"`
+
+**For CLI changes:**
+- Current CLI behavior and commands related to the change
+- Existing UX patterns and conventions
+- Any known pain points or limitations
+
+**Example query:** `"AWS CDK CLI deploy command options"`
+
+### Step 2.2: Search CloudFormation Resources (L2 and Feature Changes)
 
 Use `search_cloudformation_documentation` to find:
-- All `AWS::ServiceName::*` resources
+- All `AWS::ServiceName::*` resources (for new L2s)
+- Specific resource properties related to the feature (for feature additions)
 - Required vs optional properties
 - Resource relationships
 
 **Example query:** `"AWS::DataSync Task resource properties"`
 
+> **Skip this step** for CLI changes or non-CloudFormation work.
+
 ### Step 2.3: Search CDK Patterns
 
 Use `search_cdk_documentation` to find:
-- Similar L2 constructs for API patterns
-- Naming conventions
-- Integration patterns (IAM, VPC, KMS)
+- Similar L2 constructs for API patterns (for new L2s)
+- How similar features are exposed in other CDK modules (for feature additions)
+- Existing CLI implementation patterns (for CLI changes)
+- Naming conventions and integration patterns
 
 **Example query:** `"CDK EventBridge Pipes L2 construct"`
 
@@ -102,16 +142,83 @@ Repository: aws/aws-cdk
 Path: docs/DESIGN_GUIDELINES.md
 ```
 
-Key sections to review for L2 constructs:
-- **Construct interfaces** — Understand the `IResource` and auto-generated `IRef` patterns
-- **Import methods** — When to use `fromXxxArn()` vs `fromXxxAttributes()`
-- **Grant patterns** — How to implement `grantRead()`, `grantWrite()`, etc.
-- **Naming conventions** — Property names, method names, class names
-- **Enums and Enum-like Classes** - When to use actual enums or static factories (enum-like approach)
+Key sections to review:
+- **Construct interfaces** — Understand the `IResource` and auto-generated `IRef` patterns (for L2 constructs)
+- **Import methods** — When to use `fromXxxArn()` vs `fromXxxAttributes()` (for L2 constructs)
+- **Grant patterns** — How to implement `grantRead()`, `grantWrite()`, etc. (for L2 constructs and feature additions)
+- **Naming conventions** — Property names, method names, class names (all change types)
+- **Enums and Enum-like Classes** - When to use actual enums or static factories (all change types)
+
+> **For CLI changes:** The design guidelines are less directly applicable, but still review naming conventions and any CLI-specific guidance.
+
+### Understanding IRef Interfaces (Critical for RFCs)
+
+> **IMPORTANT:** This guidance is based on the current CDK Design Guidelines. Always read the [CDK Design Guidelines](https://github.com/aws/aws-cdk/blob/main/docs/DESIGN_GUIDELINES.md) directly, specifically the "Construct Interface" section. If the guidelines have changed or conflict with this guidance, **follow the official guidelines**, not this document.
+
+**What are IRef interfaces?**
+
+For every L2 resource construct (e.g., `Cluster`), the CDK build system **automatically generates** a reference interface (e.g., `IClusterRef`). This interface contains the minimal identifying properties needed to reference the resource.
+
+**Key points:**
+- `IRef` interfaces are **autogenerated** — you don't define them in your RFC
+- You **reference** them (e.g., `extends IClusterRef`) but don't define their contents
+- The CDK determines what properties go in `IRef` based on CloudFormation specs
+- You don't know what properties `IRef` will contain
+- The main interface (e.g., `ICluster`) extends both `IResource` and `IRef`
+
+**In your RFC interfaces:**
+
+```ts
+// ✅ DO: Reference ITableRef but don't define it
+interface ITable extends cdk.IResource, ITableRef {
+  /** The ARN of the table. @attribute */
+  readonly tableArn: string;
+  /** The name of the table. @attribute */
+  readonly tableName: string;
+  readonly grants: TableGrants;
+}
+
+// ❌ DO NOT: Define ITableRef yourself
+interface ITableRef {  // Don't do this!
+  readonly tableName: string;
+  readonly tableArn: string;
+}
+```
+
+**How to design your interface:**
+
+Design your interface as if you were only extending `IResource` directly. Include properties based on what your API design actually needs:
+
+- Include a property if your construct's API needs it (e.g., ARN for grants, endpoint for connections)
+- Don't include a property if it's never used elsewhere in your design
+- Don't make assumptions about what `IRef` provides
+
+**Example:**
+
+```ts
+// ✅ DO: Include properties your API actually uses
+interface ITable extends cdk.IResource, ITableRef {
+  /** The ARN of the table. @attribute */
+  readonly tableArn: string;  // Needed for IAM grants
+  /** The name of the table. @attribute */
+  readonly tableName: string;  // Needed for references
+  readonly grants: TableGrants;  // Uses tableArn internally
+}
+
+// ✅ ALSO FINE: Only include what you need
+interface IBucket extends cdk.IResource, IBucketRef {
+  /** The ARN of the bucket. @attribute */
+  readonly bucketArn: string;  // Only property the API needs
+}
+```
+
+The key is to design based on your API's actual requirements. `IRef` will provide whatever it provides, and there may be overlap with your interface properties — that's fine and expected.
 
 ### Step 2.5: Confirm Scope with User
 
-**Before generating the skeleton**, share your findings and ask:
+**Before generating the skeleton**, share your findings and ask the user to confirm. Adapt the confirmation based on the change type:
+
+**For new L2 constructs:**
 
 ```
 I found these CloudFormation resources for [Service]:
@@ -123,6 +230,34 @@ Questions:
 1. Which of these should be L2 constructs in this RFC?
 2. Are any out of scope or deferred for a future RFC?
 3. Should we start with core resources only, or cover everything?
+```
+
+**For feature additions:**
+
+```
+I researched [feature] for [Service] and found:
+- [Key finding 1]
+- [Key finding 2]
+- CloudFormation support: [what properties/resources are involved]
+
+Questions:
+1. Does this match your understanding of the feature?
+2. What's the expected user-facing API for this?
+3. Are there edge cases or constraints we should account for?
+```
+
+**For CLI changes:**
+
+```
+I looked into how the CLI currently handles [area]:
+- [Current behavior 1]
+- [Current behavior 2]
+- [Related commands or patterns]
+
+Questions:
+1. Does this match your understanding of the current state?
+2. What specifically should change?
+3. Are there backward compatibility concerns?
 ```
 
 **Wait for confirmation before proceeding.**
@@ -306,29 +441,64 @@ Help them decide:
 
 ---
 
-## API Design Quick Reference
+## Phase 5: Final Validation Before Submission
 
-### Import Methods
+> **⚠️ MANDATORY:** Before telling the user the RFC is ready for submission, you MUST re-fetch and verify against the CDK Design Guidelines.
 
-| Pattern | When to Use |
-|---------|-------------|
-| `fromXxxName()` / `fromXxxArn()` | Single identifier suffices |
-| `fromXxxAttributes()` | Multiple independent attributes needed |
-| Both | Resource has `connections` or runtime attributes |
+**Your goal:** Catch any design guideline violations that may have been introduced during drafting.
 
-### Standard Methods to Consider
+### Step 5.1: Re-fetch CDK Design Guidelines
 
-- **Grant methods:** `grantRead()`, `grantWrite()`, `grantConnect()`
-- **Metric methods:** `metricCPUUtilization()`, `metricMemoryUsage()`
-- **Connections:** If VPC-aware, implement `IConnectable`
+Even if you fetched the guidelines earlier, fetch them again now:
 
-### Code Quality Checklist
+```
+Repository: aws/aws-cdk
+Path: docs/DESIGN_GUIDELINES.md
+```
 
-- [ ] Examples are complete and runnable (not pseudocode)
-- [ ] JSDoc comments on all properties
-- [ ] Required vs optional is clear
-- [ ] Defaults are documented
-- [ ] Security considered (IAM, cross-account)
+**Why re-fetch?**
+- During iterative drafting, patterns may have drifted from guidelines
+- You may have made assumptions without checking
+- This is the last chance to catch issues before the user submits
+
+### Step 5.2: Validate Against the Guidelines
+
+Read through the fetched guidelines and check every interface, method, and pattern in the RFC against what the guidelines actually say. Do not rely on your training data or assumptions — the guidelines are the source of truth.
+
+Key areas to validate (check the guidelines for current patterns):
+- Construct interface structure
+- Import method signatures
+- Grant and metric patterns
+- Enum vs enum-like class usage
+- Props interface structure
+
+### Step 5.3: Report Any Issues Found
+
+If you find guideline violations:
+
+```
+## Pre-Submission Validation
+
+I re-checked the RFC against the CDK Design Guidelines and found:
+
+### ⚠️ Issues to Fix
+- [Issue]: [What's wrong and what the guidelines say]
+
+### ✅ Validated
+- [Pattern]: Matches guidelines
+
+Would you like me to fix these issues before submission?
+```
+
+If no issues found:
+
+```
+## Pre-Submission Validation ✅
+
+I verified the RFC against the CDK Design Guidelines. All patterns match the current guidelines.
+
+The RFC is ready for submission.
+```
 
 ---
 
