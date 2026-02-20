@@ -98,8 +98,8 @@ closed issue, feature request misidentified as a bug, not the path we want to go
 
 Pull requests will inherit the labels of the issue they address. Pull requests without a linked issue
 are by default labeled `incubating`. We will have heavy-handed communication in the Contributing Guide
-and in the PR description template that `incubating` PRs will not be reviewed. After 28 days, 
-`incubating` PRs are auto-closed. Critically, `incubating` PRs are `incubating` because they have been 
+and in the PR description template that `incubating` PRs will not be reviewed. After 28 days,
+`incubating` PRs are auto-closed. Critically, `incubating` PRs are `incubating` because they have been
 identified as not worth review effort and maintenance effort, so we will ignore them.
 
 ### Demonstrated Customer Impact
