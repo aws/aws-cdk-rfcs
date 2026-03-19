@@ -117,13 +117,26 @@ The rest of this doc outlines the design for an L2 construct.
 
 ### README
 
-[AWS Elemental MediaConnect](https://aws.amazon.com/mediaconnect/) is a high-quality transport service for live video that provides the reliability and security of satellite and fiber-optic combined with the flexibility, agility, and economics of IP-based networks. MediaConnect enables you to build mission-critical live video workflows in a fraction of the time and cost of satellite or fiber services.
+[AWS Elemental MediaConnect](https://aws.amazon.com/mediaconnect/) is a
+high-quality transport service for live video that provides the reliability
+and security of satellite and fiber-optic combined with the flexibility,
+agility, and economics of IP-based networks. MediaConnect enables you to
+build mission-critical live video workflows in a fraction of the time and
+cost of satellite or fiber services.
 
-Without an L2 construct, developers define MediaConnect flows and bridges via the AWS console, the AWS CLI, and Infrastructure as Code tools like CloudFormation and CDK.
+Without an L2 construct, developers define MediaConnect flows and bridges
+via the AWS console, the AWS CLI, and Infrastructure as Code tools like
+CloudFormation and CDK.
 
-However, there are several challenges to defining MediaConnect resources at scale that an L2 construct can resolve. For example, developers must reference documentation to determine the valid combinations of parameters for different source types and bridge configurations.
+However, there are several challenges to defining MediaConnect resources at
+scale that an L2 construct can resolve. For example, developers must
+reference documentation to determine the valid combinations of parameters
+for different source types and bridge configurations.
 
-We could greatly simplify the developer experience in CDK by introducing MediaConnect L2 constructs. This will have a mixture of sensible defaults as well as methods to help build correct configurations of Flows, Bridges, Gateways, Routers, and VPC interfaces.
+We could greatly simplify the developer experience in CDK by introducing
+MediaConnect L2 constructs. This will have a mixture of sensible defaults
+as well as methods to help build correct configurations of Flows, Bridges,
+Gateways, Routers, and VPC interfaces.
 
 * [What is AWS Elemental MediaConnect?](https://aws.amazon.com/mediaconnect/)
 * [MediaConnect Documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/what-is.html)
@@ -131,7 +144,9 @@ We could greatly simplify the developer experience in CDK by introducing MediaCo
 
 #### AWS Elemental MediaConnect Flow
 
-A MediaConnect flow represents a transport stream connection between a source and one or more outputs. Flows are the primary resource for transporting live video content.
+A MediaConnect flow represents a transport stream connection between a
+source and one or more outputs. Flows are the primary resource for
+transporting live video content.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/flows.html).
 
@@ -160,7 +175,9 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 ##### Adding Outputs to Flows
 
-The `addOutput()` method provides a convenient way to create outputs directly associated with a flow. Outputs define where and how the flow sends content to downstream destinations.
+The `addOutput()` method provides a convenient way to create outputs directly
+associated with a flow. Outputs define where and how the flow sends content
+to downstream destinations.
 
 ```ts
 const flow = new mediaconnect.Flow(stack, 'MyFlow', {
@@ -420,7 +437,11 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 #### AWS Elemental MediaConnect VPC Interface
 
-VPC interfaces enable MediaConnect flows to send and receive content through your Amazon VPC, providing secure, private connectivity between MediaConnect and your VPC resources. VPC interfaces are essential for integrating MediaConnect with other AWS services within your VPC, such as connecting flows to bridges or routing content through private networks.
+VPC interfaces enable MediaConnect flows to send and receive content through
+your Amazon VPC, providing secure, private connectivity between MediaConnect
+and your VPC resources. VPC interfaces are essential for integrating
+MediaConnect with other AWS services within your VPC, such as connecting
+flows to bridges or routing content through private networks.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/vpc-interfaces.html).
 
@@ -487,7 +508,10 @@ const vpcInterface = mediaconnect.VpcInterface.create({
 });
 ```
 
-**Note:** You cannot specify both `networkInterfaceType` and `networkInterfaceIds`. Use `networkInterfaceType` to let MediaConnect create interfaces automatically, or `networkInterfaceIds` to use existing interfaces.
+**Note:** You cannot specify both `networkInterfaceType` and
+`networkInterfaceIds`. Use `networkInterfaceType` to let MediaConnect
+create interfaces automatically, or `networkInterfaceIds` to use
+existing interfaces.
 
 ##### Using VPC Interfaces with Flows
 
@@ -619,7 +643,10 @@ export interface VpcInterfaceConfig {
 
 #### AWS Elemental MediaConnect Gateway
 
-MediaConnect gateways enable hybrid cloud workflows by allowing on-premises equipment to connect to AWS cloud resources. Gateways define the network infrastructure that bridges use to transport video between on-premises and cloud environments.
+MediaConnect gateways enable hybrid cloud workflows by allowing on-premises
+equipment to connect to AWS cloud resources. Gateways define the network
+infrastructure that bridges use to transport video between on-premises and
+cloud environments.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/gateways.html).
 
@@ -725,7 +752,10 @@ export interface IGateway extends IResource, IGatewayRef {
 
 #### AWS Elemental MediaConnect Bridge
 
-MediaConnect bridges enable you to interconnect on-premises equipment with cloud-based workflows. Bridges support both ingress (on-premises to cloud) and egress (cloud to on-premises) scenarios. Bridges must be associated with a gateway to function.
+MediaConnect bridges enable you to interconnect on-premises equipment with
+cloud-based workflows. Bridges support both ingress (on-premises to cloud)
+and egress (cloud to on-premises) scenarios. Bridges must be associated
+with a gateway to function.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/bridges.html).
 
@@ -767,7 +797,7 @@ BridgeProps {
 }
 ```
 
-###### Ingress Bridge (On-premises to Cloud)
+##### Ingress Bridge (On-premises to Cloud)
 
 ```ts
 const gateway = new mediaconnect.Gateway(stack, 'MyGateway', {
@@ -796,7 +826,7 @@ new mediaconnect.Bridge(stack, 'MyIngressBridge', {
 });
 ```
 
-###### Egress Bridge (Cloud to On-premises)
+##### Egress Bridge (Cloud to On-premises)
 
 ```ts
 declare const gateway: mediaconnect.IGateway;
@@ -827,9 +857,101 @@ new mediaconnect.Bridge(stack, 'MyEgressBridge', {
 });
 ```
 
+##### Adding Outputs to Bridges
+
+For egress bridges, the `addOutput()` method provides a convenient
+way to add network outputs:
+
+```ts
+const bridge = new mediaconnect.Bridge(stack, 'MyEgressBridge', {
+  bridgeName: 'my-egress-bridge',
+  config: mediaconnect.BridgeConfiguration.egress({
+    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    flowSources: [{
+      name: 'cloud-source',
+      flow: flow,
+      vpcInterface: vpcInterface,
+    }],
+    networkOutputs: [], // Start with empty outputs
+  }),
+  gateway: gateway,
+});
+
+// Add network outputs using the helper method
+bridge.addOutput('Output1', {
+  name: 'on-prem-output-1',
+  ipAddress: '192.168.1.200',
+  port: 5001,
+  networkName: 'production-network',
+  protocol: mediaconnect.BridgeProtocol.RTP,
+  ttl: 64,
+});
+
+bridge.addOutput('Output2', {
+  name: 'on-prem-output-2',
+  ipAddress: '192.168.1.201',
+  port: 5002,
+  networkName: 'production-network',
+  protocol: mediaconnect.BridgeProtocol.UDP,
+});
+```
+
+Interface example of what the Bridge will implement:
+
+```ts
+/**
+ * Interface for MediaConnect Bridge
+ */
+export interface IBridge extends IResource, IBridgeRef {
+  /**
+   * The name of the bridge
+   *
+   * @attribute
+   */
+  readonly bridgeName: string;
+
+  /**
+   * The Amazon Resource Name (ARN) of the bridge
+   *
+   * @attribute
+   */
+  readonly bridgeArn: string;
+
+  /**
+   * The state of the bridge
+   *
+   * @attribute
+   */
+  readonly bridgeState: string;
+
+  /**
+   * Add a network output to this bridge (for egress bridges only)
+   */
+  addOutput(id: string, options: BridgeOutputOptions): BridgeOutput;
+
+  /**
+   * Create a CloudWatch metric
+   *
+   * @param metricName name of the metric
+   * @param props metric options
+   */
+  metric(metricName: string, props?: MetricOptions): Metric;
+
+  /**
+   * Returns Metric for Bridge State
+   *
+   * @default - average over 60 seconds
+   */
+  metricBridgeState(props?: MetricOptions): Metric;
+}
+```
+
 #### AWS Elemental MediaConnect Router
 
-MediaConnect routers provide high-performance, low-latency video routing capabilities for building complex live video workflows. Router resources include network interfaces, inputs, and outputs.
+AWS Elemental MediaConnect Router enables real-time routing of live
+video streams between sources and destinations, modernizing broadcast
+infrastructure through cloud-native flexibility and scalability. Router
+resources include network interfaces, inputs, and outputs.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/routers.html).
 
@@ -982,95 +1104,9 @@ const flowOutputNoConnection = new mediaconnect.RouterOutput(stack, 'FlowOutputN
 });
 ```
 
-##### Adding Outputs to Bridges
-
-For egress bridges, the `addOutput()` method provides a convenient way to add network outputs:
-
-```ts
-const bridge = new mediaconnect.Bridge(stack, 'MyEgressBridge', {
-  bridgeName: 'my-egress-bridge',
-  config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
-    flowSources: [{
-      name: 'cloud-source',
-      flow: flow,
-      vpcInterface: vpcInterface,
-    }],
-    networkOutputs: [], // Start with empty outputs
-  }),
-  gateway: gateway,
-});
-
-// Add network outputs using the helper method
-bridge.addOutput('Output1', {
-  name: 'on-prem-output-1',
-  ipAddress: '192.168.1.200',
-  port: 5001,
-  networkName: 'production-network',
-  protocol: mediaconnect.BridgeProtocol.RTP,
-  ttl: 64,
-});
-
-bridge.addOutput('Output2', {
-  name: 'on-prem-output-2',
-  ipAddress: '192.168.1.201',
-  port: 5002,
-  networkName: 'production-network',
-  protocol: mediaconnect.BridgeProtocol.UDP,
-});
-```
-
-Interface example of what the Bridge will implement:
-
-```ts
-/**
- * Interface for MediaConnect Bridge
- */
-export interface IBridge extends IResource, IBridgeRef {
-  /**
-   * The name of the bridge
-   *
-   * @attribute
-   */
-  readonly bridgeName: string;
-
-  /**
-   * The Amazon Resource Name (ARN) of the bridge
-   *
-   * @attribute
-   */
-  readonly bridgeArn: string;
-
-  /**
-   * The state of the bridge
-   *
-   * @attribute
-   */
-  readonly bridgeState: string;
-
-  /**
-   * Add a network output to this bridge (for egress bridges only)
-   */
-  addOutput(id: string, options: BridgeOutputOptions): BridgeOutput;
-
-  /**
-   * Create a CloudWatch metric
-   *
-   * @param metricName name of the metric
-   * @param props metric options
-   */
-  metric(metricName: string, props?: MetricOptions): Metric;
-
-  /**
-   * Returns Metric for Bridge State
-   *
-   * @default - average over 60 seconds
-   */
-  metricBridgeState(props?: MetricOptions): Metric;
-}
-```
-
-Ticking the box below indicates that the public API of this RFC has been signed-off by the API bar raiser (the `status/api-approved` label was applied to the RFC pull request):
+Ticking the box below indicates that the public API of this RFC has been
+signed-off by the API bar raiser (the `status/api-approved` label was
+applied to the RFC pull request):
 
 ```
 [ ] Signed-off by API Bar Raiser @xxxxx
@@ -1080,63 +1116,93 @@ Ticking the box below indicates that the public API of this RFC has been signed-
 
 ### Flow Size Validation
 
-The construct validates flow size constraints at synthesis time based on the source protocol and NDI configuration:
+The construct validates flow size constraints at synthesis time based on
+the source protocol and NDI configuration:
 
-- `LARGE_4X` is required for CDI and JPEG XS protocols
-- `LARGE` is required when NDI is enabled
-- `LARGE_4X` cannot be used with transport stream protocols (RTP, SRT, RIST, etc.)
+- `MEDIUM` supports transport stream protocols (RTP, SRT, RIST, etc.)
+  but not NDI or CDI
+- `LARGE` supports transport streams and NDI, and is required when NDI
+  is enabled
+- `LARGE_4X` is required for CDI and JPEG XS protocols, and does not
+  support transport streams or NDI
 
-These are mutually exclusive — CDI/JPEG XS and NDI cannot coexist on the same flow because they require different flow sizes.
+These are mutually exclusive — CDI/JPEG XS and NDI cannot coexist on
+the same flow because they require different flow sizes.
 
 ### Factory Pattern for Configurations
 
 Router inputs and outputs use factory methods to create configurations:
 
 - `RouterInputConfiguration.standard()` - Standard protocol-based input
-- `RouterInputConfiguration.mediaConnectFlow()` - Input from a specific MediaConnect flow
-- `RouterInputConfiguration.mediaConnectFlowWithoutConnection()` - Prepared for flow connection (requires AZ)
-- `RouterOutputConfiguration.standard()` - Standard protocol-based output  
-- `RouterOutputConfiguration.mediaLiveInput()` - Output to a specific MediaLive input
-- `RouterOutputConfiguration.mediaLiveInputWithoutConnection()` - Prepared for MediaLive connection (requires AZ)
-- `RouterOutputConfiguration.mediaConnectFlow()` - Output to a specific MediaConnect flow
-- `RouterOutputConfiguration.mediaConnectFlowWithoutConnection()` - Prepared for flow connection (requires AZ)
+- `RouterInputConfiguration.mediaConnectFlow()` - Input from a specific
+  MediaConnect flow
+- `RouterInputConfiguration.mediaConnectFlowWithoutConnection()` - Prepared
+  for flow connection (requires AZ)
+- `RouterOutputConfiguration.standard()` - Standard protocol-based output
+- `RouterOutputConfiguration.mediaLiveInput()` - Output to a specific
+  MediaLive input
+- `RouterOutputConfiguration.mediaLiveInputWithoutConnection()` - Prepared
+  for MediaLive connection (requires AZ)
+- `RouterOutputConfiguration.mediaConnectFlow()` - Output to a specific
+  MediaConnect flow
+- `RouterOutputConfiguration.mediaConnectFlowWithoutConnection()` - Prepared
+  for flow connection (requires AZ)
 
-This pattern provides type safety and makes it clear which parameters are required for each configuration type, preventing invalid combinations at compile time.
+This pattern provides type safety and makes it clear which parameters are
+required for each configuration type, preventing invalid combinations at
+compile time.
 
 ### Encryption Patterns
 
 The construct library uses specific encryption classes for different protocols:
 
-- **StaticKeyEncryption**: Used for Zixi protocols and flow entitlements (requires algorithm: AES128, AES192, or AES256)
-- **SrtPasswordEncryption**: Used for SRT protocols in flow sources and outputs (no algorithm required)
-- **RouterSrtEncryption**: Used for SRT protocols in router outputs (simplified structure)
-- **TransitEncryption**: Used for securing connections between flows and routers
+- **StaticKeyEncryption**: Used for Zixi protocols and flow entitlements
+  (requires algorithm: AES128, AES192, or AES256)
+- **SrtPasswordEncryption**: Used for SRT protocols in flow sources and
+  outputs (no algorithm required)
+- **RouterSrtEncryption**: Used for SRT protocols in router outputs
+  (simplified structure)
+- **TransitEncryption**: Used for securing connections between flows
+  and routers
 
-**Note on SPEKE**: Flow entitlements do not support SPEKE encryption because flow sources cannot decrypt SPEKE-encrypted content. Only static key encryption is supported for entitlements.
+**Note on SPEKE**: Flow entitlements do not support SPEKE encryption
+because flow sources cannot decrypt SPEKE-encrypted content. Only static
+key encryption is supported for entitlements.
 
 ## Public FAQ
 
 ### What are we launching today?
 
-We're launching new AWS Elemental MediaConnect L2 Constructs to provide best-practice defaults and developer friendly functions to create your Flow, Bridge, Gateway, Router, and VpcInterface resources.
+We're launching new AWS Elemental MediaConnect L2 Constructs to provide
+best-practice defaults and developer friendly functions to create your
+Flow, Bridge, Gateway, Router, and VpcInterface resources.
 
 The primary aim is to help users with guardrails to improve developer experience, as well as speeding up the development process generally.
 
 ### Why should I use this feature?
 
-Developers should use this Construct to reduce the amount of boilerplate code, complexity each individual has to navigate, and make it easier to create MediaConnect resources.
+Developers should use this Construct to reduce the amount of boilerplate
+code, complexity each individual has to navigate, and make it easier to
+create MediaConnect resources.
 
-This construct continues our work abstracting AWS Elemental Media Services (following MediaPackageV2). Meaning that we can help builders with compatibility, construction and integration in these services.
+This construct continues our work abstracting AWS Elemental Media Services
+(following MediaPackageV2). Meaning that we can help builders with
+compatibility, construction and integration in these services.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
-Today we help builders with reference architectures using the opensource project [AWS CDK Media Services Reference Architectures](https://github.com/aws-samples/aws-cdk-mediaservices-refarch). This open source project has received much positive feedback.
+Today we help builders with reference architectures using the opensource
+project [AWS CDK Media Services Reference Architectures](https://github.com/aws-samples/aws-cdk-mediaservices-refarch).
+This open source project has received much positive feedback.
 
 By building out an L2 CDK construct for AWS Elemental MediaConnect (and other services in the future) will mean we can simplify these architectures.
 
-The existing process requires extensive configuration and lacks standardization, leading to potential errors and a time-consuming setup process. By abstracting and simplifying these resources (L2) we will continue improving our developer experience in AWS CDK.
+The existing process requires extensive configuration and lacks
+standardization, leading to potential errors and a time-consuming setup
+process. By abstracting and simplifying these resources (L2) we will
+continue improving our developer experience in AWS CDK.
 
 ### Why should we _not_ do this?
 
@@ -1144,7 +1210,10 @@ Users today are already using the L1 construct, and would likely need to do a wo
 
 ### What is the technical solution (design) of this feature?
 
-The main thing required for these resources in particular are abstracting fields using factory patterns. This will make the services more accessible and speed up the development process as you don't need to deep-dive the documentation to understand the resource.
+The main thing required for these resources in particular are abstracting
+fields using factory patterns. This will make the services more accessible
+and speed up the development process as you don't need to deep-dive the
+documentation to understand the resource.
 
 ### Is this a breaking change?
 
@@ -1152,9 +1221,10 @@ No - an L2 doesn't exist today.
 
 ### What alternative solutions did you consider?
 
-**Source/Output configuration: Factory pattern vs. flat props**
+#### Source/Output configuration: Factory pattern vs. flat props
 
-We considered exposing source and output configuration as flat props directly on the Flow construct, similar to how the L1 works. For example:
+We considered exposing source and output configuration as flat props
+directly on the Flow construct, similar to how the L1 works. For example:
 
 ```ts
 new mediaconnect.Flow(stack, 'Flow', {
@@ -1166,27 +1236,52 @@ new mediaconnect.Flow(stack, 'Flow', {
 ```
 
 - Pros: Simpler API surface, fewer classes to learn
-- Cons: No compile-time safety for protocol-specific parameters. Users could supply SRT-specific props (like `minLatency`) alongside an RTP source, which would be silently ignored or cause runtime errors. The L1 already suffers from this problem.
+- Cons: No compile-time safety for protocol-specific parameters. Users
+  could supply SRT-specific props (like `minLatency`) alongside an RTP
+  source, which would be silently ignored or cause runtime errors. The L1
+  already suffers from this problem.
 
-We chose the factory pattern (`SourceConfiguration.rtp()`, `SourceConfiguration.srtListener()`, etc.) because it makes invalid states unrepresentable at compile time. Each factory method only accepts the parameters valid for that protocol, which eliminates an entire class of configuration errors.
+We chose the factory pattern (`SourceConfiguration.rtp()`,
+`SourceConfiguration.srtListener()`, etc.) because it makes invalid states
+unrepresentable at compile time. Each factory method only accepts the
+parameters valid for that protocol, which eliminates an entire class of
+configuration errors.
 
-**Bridge configuration: Single construct vs. separate ingress/egress classes**
+#### Bridge configuration: Single construct vs. separate ingress/egress classes
 
-We considered having separate `IngressBridge` and `EgressBridge` classes instead of a single `Bridge` with `BridgeConfiguration.ingress()` / `BridgeConfiguration.egress()`.
+We considered having separate `IngressBridge` and `EgressBridge` classes
+instead of a single `Bridge` with `BridgeConfiguration.ingress()` /
+`BridgeConfiguration.egress()`.
 
-- Pros of separate classes: Stronger type separation, impossible to mix ingress and egress concerns
-- Cons of separate classes: Doubles the number of bridge-related classes, and CloudFormation models this as a single `AWS::MediaConnect::Bridge` resource with optional `IngressGatewayBridge` / `EgressGatewayBridge` properties
+- Pros of separate classes: Stronger type separation, impossible to mix
+  ingress and egress concerns
+- Cons of separate classes: Doubles the number of bridge-related classes,
+  and CloudFormation models this as a single `AWS::MediaConnect::Bridge`
+  resource with optional `IngressGatewayBridge` / `EgressGatewayBridge`
+  properties
 
-We chose the single `Bridge` construct with a configuration factory because it mirrors the CloudFormation model and keeps the API surface smaller, while still providing type safety through the factory methods.
+We chose the single `Bridge` construct with a configuration factory
+because it mirrors the CloudFormation model and keeps the API surface
+smaller, while still providing type safety through the factory methods.
 
 ### What are the drawbacks of this solution?
 
-- **Larger API surface**: The factory pattern for sources, outputs, and bridge configurations introduces more classes and static methods than a flat-props approach. Users need to discover the right factory method for their protocol, which adds a learning curve compared to a simple props object.
-- **Migration from L1**: Users with existing L1-based MediaConnect stacks will need to refactor their code to use the L2 API. While this is not a breaking change (the L1 continues to work), the migration effort could be non-trivial for complex workflows with many flows and bridges.
+- **Larger API surface**: The factory pattern for sources, outputs, and
+  bridge configurations introduces more classes and static methods than a
+  flat-props approach. Users need to discover the right factory method for
+  their protocol, which adds a learning curve compared to a simple props
+  object.
+- **Migration from L1**: Users with existing L1-based MediaConnect stacks
+  will need to refactor their code to use the L2 API. While this is not a
+  breaking change (the L1 continues to work), the migration effort could
+  be non-trivial for complex workflows with many flows and bridges.
 
 ### What is the high-level project plan?
 
-A draft implementation covering all constructs (Flow, Bridge, Gateway, Router, VpcInterface) has been completed. The remaining work is to finalize the RFC review, address any Bar Raiser feedback, and prepare the implementation PR for submission.
+A draft implementation covering all constructs (Flow, Bridge, Gateway,
+Router, VpcInterface) has been completed. The remaining work is to
+finalize the RFC review, address any Bar Raiser feedback, and prepare
+the implementation PR for submission.
 
 ### Are there any open issues that need to be addressed later?
 
