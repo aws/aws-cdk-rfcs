@@ -2,7 +2,7 @@
 
 * **Original Author(s):**: @ShadowCat567
 * **Tracking Issue**: #886
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @rix0rrr
 
 Currently hotswap supports a very small number of resource types (see below) and we have gotten many feature requests asking for expanded hotswap coverage.
 Additionally, hotswap spends about 7 seconds performing actions that are not making changes to the resources that are being hotswapped.
