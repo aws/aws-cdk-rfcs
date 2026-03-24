@@ -121,9 +121,9 @@ however this is fine for the purpose of rapid iteration.
 ### Will there be any additional telemetry collection to support this feature?
 
 We will collect counts of CloudFormation resource types that cause hotswap deployments to fall back to a full deployment.
-Hotswap fallbacks represent a performance degradation. 
+Hotswap fallbacks represent a performance degradation.
 Users invoking hotswap expect to be put on a faster deployment path and falling back to the standard path results in
-significantly longer deployment times. 
+significantly longer deployment times.
 This data allows us to identify which resource types are primarily responsible for causing hotswap deployments to
 fallback, so we can target performance improvements to reduce hotswap deployment latency.
 Where fallback rates are high for specific resource types, we may implement optimized deployment paths (such as CCAPI integration
