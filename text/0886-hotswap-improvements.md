@@ -51,7 +51,7 @@ bypassing the full AWS CloudFormation deployment process.
 This allows developers to see their changes reflected in AWS in seconds rather than minutes.
 Hotswap has historically supported only a limited set of resource types,
 including AWS Lambda functions, AWS Step Functions, AWS AppSync, Amazon ECS Task Definitions, and AWS CodeBuild Projects.
-Within those resource types hotswap supports, only a limited set of properties are allowed to be changed. 
+Within those resource types hotswap supports, only a limited set of properties are allowed to be changed.
 Changes to any other resource type required a full AWS CloudFormation deployment, even during active development.
 This meant that many developers could not take full advantage of hotswap's speed benefits across their entire application.
 
@@ -64,7 +64,7 @@ for any change that is not already handled by an existing implementation, the en
 If this is not possible the change is gracefully classified as non-hotswappable and routed to a fallback AWS CloudFormation deployment.
 This means it will be easier for the CDK team to add hotswap support for new resource types,
 since the need to write custom implementations with SDK will largely be eliminated.
-Developers working with resources that previously fell outside of hotswap coverage will see the most dramatic improvement in their iteration speed 
+Developers working with resources that previously fell outside of hotswap coverage will see the most dramatic improvement in their iteration speed
 compared to performing regular AWS CloudFormation deployments.
 
 #### Additional Improvements
@@ -73,8 +73,8 @@ Alongside the CCAPI-based engine, we have made several complementary improvement
 
 * **Optimized asset handling** — Assets are now rebuilt only when necessary, and the cdk synth step is skipped when only asset files have changed.
 This reduces pre-deployment overhead.
-* **Improved state tracking** — Successive hotswap deployments now diff against the last successful hotswap rather than the last full AWS CloudFormation deployment,
-preventing redundant resource updates.
+* **Improved state tracking** — Successive hotswap deployments now diff against the last successful hotswap rather than the last full
+AWS CloudFormation deployment, preventing redundant resource updates.
 
 ---
 
@@ -142,8 +142,8 @@ Resources that will be supported by hotswap must meet the following criteria:
 If a resource type that is not currently hotswappable appears in often in hotswap deployments that is a signal that resource type should get hotswap support.
 2. Hotswappable resources must recover well from drift. If making hotswap changes to a resource outside of
 AWS CloudFormation routinely causes errors while attempting to recover from drift we do not consider this resource hotswappable.
-3. Hotswappable resources, when implemented with CCAPIs, have a deployment speed through hotswap that is at least 2x faster than deploying through AWS CloudFormation.
-We want to ensure that we are only allow listing resources that will receive significant deployments speed benefits from hotswap.
+3. Hotswappable resources, when implemented with CCAPIs, have a deployment speed through hotswap that is at least 2x faster than deploying through
+AWS CloudFormation. We want to ensure that we are only allow listing resources that will receive significant deployments speed benefits from hotswap.
 
 ### What is the technical solution (design) of this feature?
 
@@ -167,7 +167,8 @@ Hotswapping assets has been improved in the following ways:
 2. We skip the cdk synth step of hotswap if we detect that a change only involves assets
 
 Asset bundling is expensive and we want to avoid doing it unless absolutely necessary while doing hotswap deployment using `cdk watch`.
-We take advantage of the watching capabilities of the watcher in `cdk watch` and register assets like lambda function handler files to be watched for changes.
+We take advantage of the watching capabilities of the watcher in `cdk watch` and register assets like
+lambda function handler files to be watched for changes.
 If a change happens to an asset, then we rebuild it during the next hotswap deployment.
 
 #### State Tracking during Subsequent Hotswap Deployments
@@ -176,7 +177,8 @@ Currently running `cdk deploy --hotswap` updates all resources since the last AW
 If you are running multiple hotswap deployments in a row, this means each new template that is generated to perform the hotswap deployment
 does not know about the last hotswap deployment that happened.
 Which leads to creating diffs that includes changes that have already been hotswapped.
-This incurs a performance penalty over time since the time it takes for a `--hotswap` deployment to complete is proportional to the number of changed resources.
+This incurs a performance penalty over time since the time it takes for a `--hotswap`
+deployment to complete is proportional to the number of changed resources.
 To address this problem we are saving the AWS CloudFormation template synthesized from the most recent successful hotswap deployment
 so we can refer back to it when new changes are made instead of referring back to the AWS CloudFormation template from the last full deployment.
 These hotswap templates are wiped when a AWS CloudFormation deployment happens and they do not attempt to alter
