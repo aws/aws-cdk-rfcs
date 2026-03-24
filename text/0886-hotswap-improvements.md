@@ -120,9 +120,14 @@ however this is fine for the purpose of rapid iteration.
 
 ### Will there be any additional telemetry collection to support this feature?
 
-We will be collecting counts of resource types that have caused the hotswap deployment to fallback or fail.
-We will use this information to prioritize which resources will be supported by the CCAPI implementation and
-get additional special treatment with custom SDK logic if needed.
+We will collect counts of CloudFormation resource types that cause hotswap deployments to fall back to a full deployment.
+Hotswap fallbacks represent a performance degradation. 
+Users invoking hotswap expect to be put on a faster deployment path and falling back to the standard path results in
+significantly longer deployment times. 
+This data allows us to identify which resource types are primarily responsible for causing hotswap deployments to
+fallback, so we can target performance improvements to reduce hotswap deployment latency.
+Where fallback rates are high for specific resource types, we may implement optimized deployment paths (such as CCAPI integration
+or custom SDK logic) to eliminate the bottleneck.
 
 ### What resources will get hotswap implementations through SDK/CCAPI?
 
