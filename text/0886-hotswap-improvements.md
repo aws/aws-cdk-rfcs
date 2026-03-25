@@ -30,9 +30,8 @@ Resources currently supported by Hotswap:
 ### CHANGELOG
 
 * feat(hotswap): hotswap now covers significantly more resource types due to using a CCAPI-based deployment engine
-* feat(hotswap): asset hotswapping has been improved
-* feat(cli): by default hotswap deployments fallback to an AWS CloudFormation deployment
-* feat(cli): the hotswap-fallback flag can now accept a deployment mode
+* feat(watch): assets are only rebuilt when they need to be due to a changes
+* feat(htoswap): synth step is skipped if only assets are being hotswapped
 * feat(hotswap): hotswap deployments are now diff-ed based on the last successful hotswap deployment instead of the last full AWS CloudFormation deployment
 
 ### BLOG POST
@@ -95,8 +94,7 @@ We are launching a set of improvements to CDK hotswap which will affect one off 
 The more expansive improvements that will affect most cdk hotswap users are expanding the coverage of hotswap using a CCAPI-based engine and
 improvements to hotswapping assets such as incremental bundling and skipping the cdk synth phase if the hotswap change only includes asset files which
 should help speed up the pre-hotswap synthesis phase.
-We are also improving tracking of actual resource state when doing multiple subsequent hotswap deployments,
-updating the fallback behavior of hotswap (hotswap will now fallback to doing a full deployment by default) and the hotswap fallback command.
+We are also improving tracking of actual resource state when doing multiple subsequent hotswap deployments.
 Our primary metric for success is that hotswap deployments will be at least 25% faster than they were previously.
 
 ### Why should I use this feature?
@@ -184,29 +182,6 @@ so we can refer back to it when new changes are made instead of referring back t
 These hotswap templates are wiped when a AWS CloudFormation deployment happens and they do not attempt to alter
 or replace the AWS CloudFormation template from the last successful deployment.
 
-#### Hotswap Fallback Mode
-
-Currently the hotswap can only configure one type of AWS CloudFormation deployment.
-If in the future AWS CloudFormation releases other deployment modes, they cannot be used as a fallback deployment mode
-for hotswap deployments with non-hotswappable changes.
-In response to this, we are introducing a new flag that is used in conjunction with the `cdk deploy --hotswap` command
-to configure a specific fallback mode.
-If the fallback flag is not present, we use the default fallback mode of `cdk deploy --hotswap`.
-Current behavior will remain the same (no fallback):
-
-```
-$ cdk deploy --hotswap
-```
-
-Can now specify a deployment mode (performs a full AWS CloudFormation deployment):
-
-```
-$ cdk deploy --hotswap --fallback=FULL_DEPLOY
-```
-
-The default fallback mode for hotswap will change if AWS CloudFormation releases a deployment option that is faster than
-what we currently get from AWS CloudFormation deployments.
-
 ### Is this a breaking change?
 
 No
@@ -245,8 +220,7 @@ I will be basing the CCAPI-based hotswap engine off this POC and pushing that as
 The second part of this project will be focused on improving asset hotswapping.
 While we are working on improving asset hotswapping, we will also be working on decreasing the amount of time we spend preparing to hotswap resources.
 The third part of this project will focus on addressing several open issues related to hotswapping,
-including altering the default fallback deployment type, updating the hotswap fallback command,
-and improving tracking of current resource state compared to the last time a full AWS CloudFormation deployment happened.
+including improving tracking of current resource state compared to the last time a full AWS CloudFormation deployment happened.
 
 ### Are there any open issues that need to be addressed later?
 
