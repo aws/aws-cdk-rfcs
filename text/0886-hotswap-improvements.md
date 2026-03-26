@@ -65,6 +65,8 @@ This means it will be easier for the CDK team to add hotswap support for new res
 since the need to write custom implementations with SDK will largely be eliminated.
 Developers working with resources that previously fell outside of hotswap coverage will see the most dramatic improvement in their iteration speed
 compared to performing regular AWS CloudFormation deployments.
+This does not mean we will entirely abandon adding custom SDK implementations for certain resource types if there is a significant enough
+speed advantage, however we believe that the CCAPI implemention will be satifactory for most situations.
 
 #### Additional Improvements
 
@@ -142,6 +144,25 @@ If a resource type that is not currently hotswappable appears in often in hotswa
 AWS CloudFormation routinely causes errors while attempting to recover from drift we do not consider this resource hotswappable.
 3. Hotswappable resources, when implemented with CCAPIs, have a deployment speed through hotswap that is at least 2x faster than deploying through
 AWS CloudFormation. We want to ensure that we are only allow listing resources that will receive significant deployments speed benefits from hotswap.
+
+#### Resource Types that would be considered good canditates
+
+Note that this is not a final or exhaustive list.
+
+* `AWS::ApiGateway::RestApi`
+* `AWS::ApiGateway::Method`
+* `AWS::ApiGatewayV2::Api`
+* `AWS::ApiGatewayV2::Integration`
+* `AWS::ApiGatewayV2::Route`
+* `AWS::Bedrock::Agent`
+* `AWS::Events::Rule`
+* `AWS::DynamoDB::Table`
+* `AWS::DynamoDB::GlobalTable`
+* `AWS::SNS::Subscription`
+* `AWS::SNS::Topic`
+* `AWS::SQS::Queue`
+* `AWS::CloudWatch::Alarm`
+* `AWS::CloudWatch::Dashboard`
 
 ### What is the technical solution (design) of this feature?
 
