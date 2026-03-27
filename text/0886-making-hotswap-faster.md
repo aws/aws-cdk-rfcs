@@ -1,4 +1,4 @@
-# Hotswap Improvements
+# Making Hotswap Faster
 
 * **Original Author(s):**: @ShadowCat567
 * **Tracking Issue**: #886
