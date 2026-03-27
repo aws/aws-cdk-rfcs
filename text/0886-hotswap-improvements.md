@@ -4,11 +4,9 @@
 * **Tracking Issue**: #886
 * **API Bar Raiser**: @rix0rrr
 
-Currently hotswap supports a very small number of resource types (see below) and we have gotten many feature requests asking for expanded hotswap coverage.
-Additionally, hotswap spends about 7 seconds performing actions that are not making changes to the resources that are being hotswapped.
-This time is largely spent doing language-specific compilation and synthesis.
-With this feature, we aim to speed up hotswap deployments by increasing hotswap coverage and
-decreasing the amount of time hotswap deployments spend not updating the requested resources.
+Currently hotswap is very fast for the resources it does provide support for, however we think we can make it faster.
+We aim to make hotswap faster by increasing hotswap resource coverage to include resources that are commonly involved in
+hotswap operations but are not currently hotswappable and making improvements to asset handling in `cdk synth` and `cdk watch`.
 Resources currently supported by Hotswap:
 
 * Lambda functions
@@ -30,8 +28,8 @@ Resources currently supported by Hotswap:
 ### CHANGELOG
 
 * feat(hotswap): hotswap now covers significantly more resource types due to using a CCAPI-based deployment engine
-* feat(watch): assets are only rebuilt when they need to be due to a changes
-* feat(htoswap): synth step is skipped if only assets are being hotswapped
+* feat(synth): assets are only rebuilt when they need to be due to a changes
+* feat(watch): synth step is skipped if only assets are being hotswapped
 * feat(hotswap): hotswap deployments are now diff-ed based on the last successful hotswap deployment instead of the last full AWS CloudFormation deployment
 
 ### BLOG POST
@@ -54,7 +52,7 @@ Within those resource types hotswap supports, only a limited set of properties a
 Changes to any other resource type required a full AWS CloudFormation deployment, even during active development.
 This meant that many developers could not take full advantage of hotswap's speed benefits across their entire application.
 
-#### Broader Resource Coverage with AWS Cloud Control API
+#### Increased Speed through Broader Resource Coverage with AWS Cloud Control API
 
 The primary driver behind this improvement is the introduction of a new hotswap engine built on the AWS Cloud Control API (CCAPI).
 Previously, each supported resource type required a dedicated hotswap implementation.
@@ -68,12 +66,18 @@ compared to performing regular AWS CloudFormation deployments.
 This does not mean we will entirely abandon adding custom SDK implementations for certain resource types if there is a significant enough
 speed advantage, however we believe that the CCAPI implemention will be satifactory for most situations.
 
+#### Assets are only re-bundled when necessary during cdk synth
+
+After the initial `cdk synth` run, assets are now only re-bundled when necessary.
+This is a change that is not only useful to hotswap, but will improve `cdk synth` times across the board since
+we will no longer be rebundling every asset every time `cdk synth` is run.
+Instead, we will only be rebundling assets if something has changed in their source files or their build configuration that necessitates a rebuild.
+
 #### Additional Improvements
 
-Alongside the CCAPI-based engine, we have made several complementary improvements:
+Alongside the CCAPI-based engine, we have made some complementary improvements:
 
-* **Optimized asset handling** — Assets are now rebuilt only when necessary, and the cdk synth step is skipped when only asset files have changed.
-This reduces pre-deployment overhead.
+* **Optimized asset handling during cdk watch** — The `cdk synth` step is skipped when only asset files have changed during `cdk watch`.
 * **Improved state tracking** — Successive hotswap deployments now diff against the last successful hotswap rather than the last full
 AWS CloudFormation deployment, preventing redundant resource updates.
 
@@ -91,11 +95,12 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching a set of improvements to CDK hotswap which will affect one off hotswap deployments
-(`cdk deploy --hotswap`/`cdk deploy --hotswap-fallback`) and iterative hotswap deployments via watch (`cdk watch`).
+We are launching a set of improvements to CDK hotswap which are primarily concerned with making hotswap faster.
+These improvements will affect one off hotswap deployments (`cdk deploy --hotswap`/`cdk deploy --hotswap-fallback`)
+and iterative hotswap deployments via watch (`cdk watch`).
 The more expansive improvements that will affect most cdk hotswap users are expanding the coverage of hotswap using a CCAPI-based engine and
-improvements to hotswapping assets such as incremental bundling and skipping the cdk synth phase if the hotswap change only includes asset files which
-should help speed up the pre-hotswap synthesis phase.
+improvements to hotswapping assets such as incremental bundling and skipping the `cdk synth` phase if the hotswap change only includes asset files
+which should help speed up the pre-hotswap synthesis phase.
 We are also improving tracking of actual resource state when doing multiple subsequent hotswap deployments.
 Our primary metric for success is that hotswap deployments will be at least 25% faster than they were previously.
 
@@ -119,6 +124,10 @@ Deployment speed could be addressed somewhere else in the deployment process, su
 resources that don’t need it, which could allow for speed gains without introducing drift.
 Hotswap and watch are still not commands that can be used in productions environments because they introduce drift,
 however this is fine for the purpose of rapid iteration.
+This change will not entirely address the resource coverage gap hotswap has, since we are primarily focuses on speeding up hotswap
+deployments for the majority of users.
+A more complete set of hotswap improvements would include a plugin interface to allow customers to write their own hotswap implementations,
+however, as stated previously, full resource coverage and therefore the plugin interface are not planned for this project.
 
 ### Will there be any additional telemetry collection to support this feature?
 
@@ -183,12 +192,24 @@ Changes to resource types not on this allow list will be classified has non-hots
 Hotswapping assets has been improved in the following ways:
 
 1. We only rebuild assets when a change happens to them that requires that they are rebuilt
-2. We skip the cdk synth step of hotswap if we detect that a change only involves assets
 
-Asset bundling is expensive and we want to avoid doing it unless absolutely necessary while doing hotswap deployment using `cdk watch`.
-We take advantage of the watching capabilities of the watcher in `cdk watch` and register assets like
-lambda function handler files to be watched for changes.
-If a change happens to an asset, then we rebuild it during the next hotswap deployment.
+Asset bundling is expensive and we want to avoid doing it unless absolutely necessary while running `cdk synth`.
+To do this we compute a hash of everything that goes into bundling an asset in the Cloud Assembly
+(source files and bundling configuration), the source fingerprint, and persist it in `cdk.out`.
+During the first cdk synth a customer does, everything is bundled from scratch and an initial source fingerprint is computed.
+On subsequent `cdk synths` (which is also run everytime `cdk deploy`/`cdk deploy --hotswap` is run) we compare
+the new souce fingerprint to the old source fingerprint, cached in `cdk.out`.
+If there is a change, we rebundle the asset, if there is no change, we skip bundling for that asset.
+
+2. While running `cdk watch`, We skip the `cdk synth` step if we detect that a change only involves assets
+
+After the initial `cdk watch` run, we cache a mapping from an asset's source path to its affiliated resources,
+including what resources an asset is affiliated with, whether all those resources are hotswappable, and the asset's metadata.
+On subsequent runs of `cdk watch` (triggered by file saves) we detect whether all the changes are changes to
+assets affiliated with hotswappable resources.
+If we only have asset changes, then we rebuild and upload the affected asset and construct a minimal template diff
+from the cached mapping, then feed it through the exising hotswap detctors.
+This means we would skip the overhead from synthesis and AWS Cloudformation GetTemplate API calls on asset only changes.  
 
 #### State Tracking during Subsequent Hotswap Deployments
 
@@ -216,7 +237,9 @@ In this option we would create a plugin architecture which would allow CDK custo
 This would let customers add hotswap support for their own resources without waiting for the CDK team. However, it shifts that responsibility to the community.
 While some community members would write and share hotswap implementations for new resource types, only those who write their own or
 find publicly shared ones would benefit.
-Which makes this an incomplete solution to the speed limitations that come from hotswapping non-hotswappable resources.
+While this would provide the benefit of increased resource coverage for those who would create plugins and would allow customers to make plugins
+tailored to their environments, which could also serve the goal of making hotswap faster.
+Ultimately this is an incomplete solution for the goal of increasing the speed of hotswap for the highest number of customers.
 
 #### Classify deployment speed as problem for AWS CloudFormation to solve
 
@@ -231,6 +254,7 @@ a custom hotswap implementation that uses SDK and CCAPI will still be faster bec
 
 The main drawback of this solution is that hotswap deployments will continue to introduce drift between actual resource state and
 the state AWS CloudFormation thinks the resource should be in.
+We will not have the full resource coverage or customization a plugin interface could provide to customers.
 
 ### What is the high-level project plan?
 
