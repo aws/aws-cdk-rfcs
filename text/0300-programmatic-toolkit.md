@@ -355,7 +355,8 @@ RFC pull request):
 
 ### What are we launching today?
 
-We are launching the [Programmatic Toolkit], a new TypeScript package that enables integrators to build custom lifecycle management solutions for CDK applications.
+We are launching the [Programmatic Toolkit], a new TypeScript package that enables integrators to build custom lifecycle management
+solutions for CDK applications.
 The toolkit provides implementation for all of the CDK's actions like bootstrap, synth or deploy.
 It gives integrators full control over all output and allows to interweave actions with custom steps.
 
@@ -648,7 +649,8 @@ interface RecoverableError<T, U> extends IoRequest<T, U> {
 }
 ```
 
-When `IoHost.requestResponse()` is called with a recoverable error, the integrator may choose to return `retry: true` to indicate the block should be retried.
+When `IoHost.requestResponse()` is called with a recoverable error, the integrator may choose to return `retry: true` to indicate
+the block should be retried.
 A single retry is allowed, if the block fails again with the same error it will be raised as an exception.
 Retries are not guaranteed and integrators must handle the case where a requested retry is not executed.
 Recoverable errors are rare as they require special programming and not always possible.
