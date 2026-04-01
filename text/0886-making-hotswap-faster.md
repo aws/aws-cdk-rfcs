@@ -185,6 +185,8 @@ in the reason why this was not a hotswappable change.
 We also have an allow list for resources that will not cause issues with subsequent AWS CloudFormation deployments when
 hotswapped and resources where their hotswap implementation with CCAPIs is at least 2x faster than with a regular AWS CloudFormation deployment.
 Changes to resource types not on this allow list will be classified has non-hotswappable changes.
+Part of this work requires that we improve how we resolve intrinsic functions in AWS CloudFormation.
+Specifically, we are most interested in attribute resolution and the improvements will be focused there.
 [See the appendix for a prototype of the CCAPI hotswap engine](#ai-generated-implementation-of-ccapi-hotswap-engine)
 
 #### Hotswapping Assets
