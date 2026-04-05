@@ -451,7 +451,8 @@ The engine will handle intrinsics natively. The engine requirements include:
 The actual implementation of the engine is out of scope of this RFC however.
 
 The default rule set is likely to be around ~50MB when considering the size of the CFN schema
-and other sources. 
+and other sources. This is a high penalty to pay considering the v2.1117.0 CDK CLI version is
+~24MB unpacked. We are effectively tripling the unpacked size with the default validation rules.
 
 #### Engine Integration
 
