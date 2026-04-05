@@ -95,10 +95,10 @@ including invalid property values, deprecated runtimes, overly permissive IAM po
 missing encryption, and cross-resource dependency issues.
 The engine is compiled to WASM and adds under Y seconds to synthesis time.
 
-Offline Validation reuses the same protocol as the existing [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) and is implemented via a new entrypoint in the CDK Toolkit.
+Offline Validation reuses the same protocol as the existing [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) and is implemented via a new entrypoint in the CDK CLI.
 If you are using the Policy Validation plugin system you an continue to do so but there may be overlap with what is being
 validated. Offline Validation ships with CloudFormation Guard rules built in. If your Policy Validation plugin is written
-in TypeScript, you can now supply your plugin via the CDK Toolkit in addition to the CDK App. 
+in TypeScript, you can now supply your plugin via the CDK CLI in addition to the CDK App. 
 
 ##### `cdk validate`
 
@@ -433,7 +433,7 @@ this can be somewhat mitigated by providing an ergonomic suppression mechanism.
 
 The technical components of Offline Validation include:
 - Offline Validation Engine
-- Integration point in the synthesis command of CDK Toolkit
+- Integration point in the synthesis command of CDK CLI
 - Suppression mechanism
 - Custom rule sets
 - `cdk validate` command
@@ -505,7 +505,7 @@ The `validate` method will hold most of the plugin implementation; we will call 
 from there. We can extend the interface contract however we see fit with additional optional properties to fit
 our needs regarding output reporting.
 
-Available plugins will get evaluated during the `synthAndMeasure` method of the CDK Toolkit, which is the
+Available plugins will get evaluated during the `cloudExecutable.synthesize()` method, which is the
 earliest common ancestor for all CLI methods that synthesize.
 
 ```ts
@@ -570,7 +570,7 @@ pipe to the offline validation engine.
 Custom rules are written in Rego and configured via `cdk.json` or the `--custom-rules` CLI option.
 Both point to directories or individual `.rego` files on disk.
 
-The CLI reads custom rule paths during `synthAndMeasure`, resolves all paths, collects `.rego` files, and passes them to the `OfflineValidationPlugin`:
+The CLI reads custom rule paths during synth, resolves all paths, collects `.rego` files, and passes them to the `OfflineValidationPlugin`:
 
 ```ts
 const customRulePaths = [
