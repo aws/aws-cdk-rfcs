@@ -95,10 +95,14 @@ including invalid property values, deprecated runtimes, overly permissive IAM po
 missing encryption, and cross-resource dependency issues.
 The engine is compiled to WASM and adds under Y seconds to synthesis time.
 
-Offline Validation reuses the same protocol as the existing [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) and is implemented via a new entrypoint in the CDK CLI.
-If you are using the Policy Validation plugin system you an continue to do so but there may be overlap with what is being
-validated. Offline Validation ships with CloudFormation Guard rules built in. If your Policy Validation plugin is written
-in TypeScript, you can now supply your plugin via the CDK CLI in addition to the CDK App. 
+Offline Validation reuses the same protocol as the existing
+[Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html)
+and is implemented via a new entrypoint in the CDK CLI.
+If you are using the Policy Validation plugin system you can continue to do so
+but there may be overlap with what is being validated.
+Offline Validation ships with CloudFormation Guard rules built in.
+If your Policy Validation plugin is written in TypeScript,
+you can now supply your plugin via the CDK CLI in addition to the CDK App.
 
 ##### `cdk validate`
 
@@ -403,10 +407,13 @@ CDK's _default_ validation mechanisms include the following:
 
 CDK also offers additional validation mechanisms within the ecosystem:
 
-* [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) - post-synthesis validation that is defined in the CDK App or Stage.
-* [Cfn Guard Hooks](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.CfnGuardHook.html) - integration with a CloudFormation feature to evaluate Gaurd DSL rules before CFN stack operations.
+* [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) -
+  post-synthesis validation that is defined in the CDK App or Stage.
+* [Cfn Guard Hooks](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.CfnGuardHook.html) -
+  integration with a CloudFormation feature to evaluate Guard DSL rules before CFN stack operations.
 * [`cdk-nag`](https://github.com/cdklabs/cdk-nag) - best-practice rules
-* custom [Annotations](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.Annotations.html) - customer-written warnings/errors that are evaluated post-synthesis.
+* custom [Annotations](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.Annotations.html) -
+  customer-written warnings/errors that are evaluated post-synthesis.
 
 Offline Validation is meant to bring much of these additional validation rule sets natively into the CDK CLI.
 Customers can continue to use these mechanisms but many custom set ups will no longer be necessary.
@@ -432,6 +439,7 @@ this can be somewhat mitigated by providing an ergonomic suppression mechanism.
 ### What is the technical solution (design) of this feature?
 
 The technical components of Offline Validation include:
+
 - Offline Validation Engine
 - Integration point in the synthesis command of CDK CLI
 - Suppression mechanism
@@ -520,12 +528,16 @@ if (allStacks.length > 0) {
 
 Offline Validation will run by default in addition to any other plugins the user provides.
 
-#### Suppression Mechanism:
+#### Suppression Mechanism
 
-There is a suppression mechanism available for Annotation warnings today: `Annotations.of(construct).acknowledgeWarning()`. This will be deprecated in favor of a unified `Validations.of()` API that covers
+There is a suppression mechanism available for Annotation warnings today:
+`Annotations.of(construct).acknowledgeWarning()`.
+This will be deprecated in favor of a unified `Validations.of()` API that covers
 suppression for all types of CDK errors and warnings.
 
-The main `Validations` method will be `acknowledge`, where the user supplies one or more rule IDs. Under the hood, we will use the ID to differentiate `Annotation` rules from Offline
+The main `Validations` method will be `acknowledge`,
+where the user supplies one or more rule IDs.
+Under the hood, we will use the ID to differentiate `Annotation` rules from Offline
 Validation rules and abstract the rule provenance away from the user.
 
 ```ts
@@ -566,7 +578,7 @@ export class Validations {
 The suppressed rules stored in the construct metadata will be available after synthesis to
 pipe to the offline validation engine.
 
-#### Custom Rule Mechanism:
+#### Custom Rule Mechanism
 
 Custom rules are written in Rego and configured via `cdk.json` or the `--custom-rules` CLI option.
 Both point to directories or individual `.rego` files on disk.
@@ -594,7 +606,8 @@ No
    and that happens too late in the deployment process.
 2. Extend CDK construct library validation: rejected because it is a treadmill,
    and L1 level users do not get access to L2 level validations.
-3. Use the existing CDK Policy Validation plugin system in the framework: rejected because we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
+3. Use the existing CDK Policy Validation plugin system in the framework: rejected because
+   we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
 4. Custom rules: Add custom rules via `Validations.of(stack).addRules()` using construct metadata:
    rejected because custom rules apply globally to the entire CloudFormation template,
    not to individual constructs. Storing rule paths as construct metadata implies
@@ -613,6 +626,13 @@ No
 3. Overlap with existing CDK Policy Validation: Two validation systems running at synth time
    could confuse users. Clear documentation and messaging is needed
    to explain how the built-in engine relates to the existing plugin system.
+4. Package size: The default rule set and WASM engine is estimated to add approximately 50MB to the CDK CLI
+   package on disk, tripling its current unpacked size from ~24MB to ~74MB.
+   The npm tarball is gzip-compressed during publish, so the actual download increase
+   is ~15MB — comparable to other large CLI tools in the ecosystem.
+   Disk footprint is negligible for most environments.
+   CI/CD pipelines that install the CLI fresh per run will see a modest increase
+   in install time proportional to the download size increase.
 
 ### What is the high-level project plan?
 
