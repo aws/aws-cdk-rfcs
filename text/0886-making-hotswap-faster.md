@@ -56,9 +56,10 @@ This meant that many developers could not take full advantage of hotswap's speed
 
 The primary driver behind this improvement is the introduction of a new hotswap engine built on the AWS Cloud Control API (CCAPI).
 Previously, each supported resource type required a dedicated hotswap implementation.
-The new CCAPI-based engine takes a different approach:
-for any change that is not already handled by an existing implementation, the engine attempts to perform an in-place update using Cloud Control APIs.
-If this is not possible the change is gracefully classified as non-hotswappable and routed to a fallback AWS CloudFormation deployment.
+The new CCAPI engine will be allow-listed for resource types that have minimial issues stemming from drift recovery,
+have a CCAPI implementaion that is at least 2x faster than the current AWS CloudFormation deployment time
+ and are resources that were previously not hotswappable that commonly recieve changes alongside hotswappable resources
+ or have commuity support for a hotswap implementation.
 This means it will be easier for the CDK team to add hotswap support for new resource types,
 since the need to write custom implementations with SDK will largely be eliminated.
 Developers working with resources that previously fell outside of hotswap coverage will see the most dramatic improvement in their iteration speed
@@ -177,13 +178,13 @@ Note that this is not a final or exhaustive list.
 
 #### CCAPI-Based Hotswap
 
-We are introducing a CCAPI-based implementation of hotswap which takes in changes that are not already covered
-by our previously created SDK-based implementation and attempts to perform a hotswap change using Cloud Control APIs.
-If the resource that we are trying to hotswap is not supported by CCAPIs or we cannot update the resource in place,
+We are introducing a CCAPI-based implementation of hotswap which has an allowlist of resources which we consider to be good
+candidates for hotswap (see
+[Resource Types that would be considered good candidates](#resource-types-that-would-be-considered-good-canditates))
+and attempts to perform a hotswap change using Cloud Control APIs.
+If the resource that we are trying to hotswap cannot be updated in place or requires a change in IAM permissions,
 we swallow the error that would have been generated and log it as a non-hotswappable change where we use part of the error message
 in the reason why this was not a hotswappable change.
-We also have an allow list for resources that will not cause issues with subsequent AWS CloudFormation deployments when
-hotswapped and resources where their hotswap implementation with CCAPIs is at least 2x faster than with a regular AWS CloudFormation deployment.
 Changes to resource types not on this allow list will be classified has non-hotswappable changes.
 Part of this work requires that we improve how we resolve intrinsic functions in AWS CloudFormation.
 Specifically, we are most interested in attribute resolution and the improvements will be focused there.
