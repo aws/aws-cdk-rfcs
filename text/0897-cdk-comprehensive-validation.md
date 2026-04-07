@@ -130,9 +130,13 @@ Stack MyAppStack
  [warning] [suppressable] UseLatestVersion: Node.js 16 runtime is deprecated.
            Consider upgrading to Node.js 20 or later
            (at Resources/MyLambdaFunction)
+           └── MyAppStack (src/main.ts:10:5)
+               └── MyLambdaFunction (src/main.ts:22:10)
 
  [error] [suppressable] InvalidArchitectureValue: Allowed values: x86_64, arm64.
          Received: "x64_86" (at Resources/MyLambdaFunction)
+         └── MyAppStack (src/main.ts:10:5)
+             └── MyLambdaFunction (src/main.ts:22:10)
 
 Found 1 error, 1 warning.
 ```
@@ -204,7 +208,6 @@ import { rulesDir } from '@my-org/rules';
 Validations.of(myStack).addRules(rulesDir);
 ```
 
-
 ##### Suppressing Warnings and Errors
 
 Offline validation findings can be suppressed directly in your CDK code
@@ -255,26 +258,38 @@ Stack MyAppStack
  [warning] [suppressable] ThroughputNotSupported: The throughput property is not supported
            on EC2 instances. Use a Launch Template instead.
            (at Resources/MyEc2Instance)
+           └── MyAppStack (src/main.ts:10:5)
+               └── MyEc2Instance (src/main.ts:18:10)
 
  // Offline Warnings
  [warning] [suppressable] UseLatestVersion: Node.js 16 runtime is deprecated.
            Consider upgrading to Node.js 20 or later
            (at Resources/MyLambdaFunction)
+           └── MyAppStack (src/main.ts:10:5)
+               └── MyLambdaFunction (src/main.ts:22:10)
 
  // Annotation Errors
  [error] [blocking] MyOwnError: Bucket versioning is not enabled
          (at Resources/MyBucket)
+         └── MyAppStack (src/main.ts:10:5)
+             └── MyBucket (src/main.ts:14:10)
 
  // Construct Library Errors
  [error] [blocking] DurationAmountsCannotNegative: Duration amounts cannot be negative.
          Received: -1 (at Resources/MyLambdaFunction)
+         └── MyAppStack (src/main.ts:10:5)
+             └── MyLambdaFunction (src/main.ts:22:10)
 
  // Offline Errors
  [error] [suppressable] InvalidArchitectureValue: Allowed values: x86_64, arm64.
          Received: "x64_86" (at Resources/MyLambdaFunction)
+         └── MyAppStack (src/main.ts:10:5)
+             └── MyLambdaFunction (src/main.ts:22:10)
 
  // Online Errors
  [error] [blocking] ResourceExists: Resource already exists (at Resources/MyS3Bucket)
+         └── MyAppStack (src/main.ts:10:5)
+             └── MyS3Bucket (src/main.ts:26:10)
 
 Found 4 errors, 2 warnings.
 ```
