@@ -4,7 +4,7 @@
 
 * **Original Author(s):** @jamiepmullan
 * **Tracking Issue:** [#884](https://github.com/aws/aws-cdk-rfcs/issues/884)
-* **API Bar Raiser:** TBD
+* **API Bar Raiser:** @alvazjor
 
 This design outlines how we build an L2 construct for AWS Elemental MediaConnect, delivering the following benefits:
 
@@ -82,7 +82,7 @@ const flow = new mediaconnect.Flow(stack, 'Flow', {
   source: mediaconnect.SourceConfiguration.rtp({
     flowSourceName: 'my-source',
     port: 5000,
-    network: mediaconnect.NetworkConfiguration.internet('203.0.113.0/24'),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
   }),
   vpcInterfaces: [vpcInterface],
 });
@@ -155,7 +155,7 @@ new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.rtp({
     flowSourceName: 'my-source',
     port: 5000,
-    network: mediaconnect.NetworkConfiguration.internet('203.0.113.0/24'),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
   }),
 });
 ```
@@ -168,7 +168,7 @@ new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.rtp({
     flowSourceName: 'my-source',
     port: 5000,
-    network: mediaconnect.NetworkConfiguration.internet('203.0.113.0/24'),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
   }),
 });
 ```
@@ -184,7 +184,7 @@ const flow = new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.rtp({
     flowSourceName: 'my-source',
     port: 5000,
-    network: mediaconnect.NetworkConfiguration.internet('203.0.113.0/24'),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
   }),
 });
 
@@ -389,7 +389,7 @@ new mediaconnect.Flow(stack, 'MyFlow', {
     description: 'Live encoder feed',
     port: 5000,
     minLatency: Duration.millis(2000),
-    network: mediaconnect.NetworkConfiguration.internet('203.0.113.0/24'),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
   }),
 });
 ```
@@ -963,7 +963,7 @@ Network interfaces define the network connectivity for router inputs and outputs
 // Public network interface
 const publicInterface = new mediaconnect.RouterNetworkInterface(stack, 'PublicInterface', {
   routerNetworkInterfaceName: 'public-interface',
-  configuration: mediaconnect.RouterNetworkConfiguration.internet({
+  configuration: mediaconnect.RouterNetworkConfiguration.publicNetwork({
     cidr: ['10.0.0.0/16'],
   }),
 });
