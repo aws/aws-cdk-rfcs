@@ -196,10 +196,19 @@ To share custom rules across teams or an entire organization,
 we recommend publishing them in your package manager of choice.
 Rego files are plain text — no compilation or runtime is involved.
 
+They can be imported via your CDK App via a new `Validations.of()` API:
+
+```ts
+import { rulesDir } from '@my-org/rules';
+
+Validations.of(myStack).addRules(rulesDir);
+```
+
+
 ##### Suppressing Warnings and Errors
 
 Offline validation findings can be suppressed directly in your CDK code
-using the new `Validations.of()` API:
+using the `Validations.of()` API:
 
 ```ts
 Validations.of(myConstruct).acknowledge('UseLatestVersion');
@@ -583,8 +592,8 @@ pipe to the offline validation engine.
 
 #### Custom Rule Mechanism
 
-Custom rules are written in Rego and configured via `cdk.json` or the `--custom-rules` CLI option.
-Both point to directories or individual `.rego` files on disk.
+Custom rules are written in Rego and configured via `cdk.json`, `--custom-rules` cli option, or in code via `Validations.of(stack).addRules()`.
+The user supplies directories or individual `.rego` files on disk.
 
 The CLI reads custom rule paths during synth, resolves all paths, collects `.rego` files, and passes them to the `OfflineValidationPlugin`:
 
@@ -599,6 +608,43 @@ const offlinePlugin = new OfflineValidationPlugin({
 });
 ```
 
+For `Validations.of(stack).addRules()`, these rules can be scoped to specific constructs within a CDK App. That means we must translate
+the scope to a filter that is either a) sent to the validation engine or b) applied in a post-validation step. To facilitate this, `Validations`
+will manipulate the construct metadata so the information is available after synthesis:
+
+```ts
+export class Validations {
+  public addRules(options: { sources: string[] }): void {
+    const stage = Stage.of(this.construct);
+    if (!stage) {
+      throw new Error('addRules() must be called within a Stage or App');
+    }
+    for (const source of options.sources) {
+      const resolved = path.resolve(source);
+      stage.node.addMetadata(Validations.CUSTOM_RULES_METADATA_KEY, resolved);
+    }
+  }
+}
+```
+
+After synthesis, this gets translated and then sent to the engine:
+
+```ts
+function collectCustomRulesFromAssembly(assembly: CloudAssembly): string[] {
+  const paths: string[] = [];
+  for (const stack of assembly.stacksRecursively) {
+    for (const [, entries] of Object.entries(stack.manifest.metadata ?? {})) {
+      for (const entry of entries) {
+        if (entry.type === Validations.CUSTOM_RULES_METADATA_KEY) {
+          paths.push(entry.data as string);
+        }
+      }
+    }
+  }
+  return [...new Set(paths)];
+}
+```
+
 ### Is this a breaking change?
 
 No
@@ -611,11 +657,6 @@ No
    and L1 level users do not get access to L2 level validations.
 3. Use the existing CDK Policy Validation plugin system in the framework: rejected because
    we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
-4. Custom rules: Add custom rules via `Validations.of(stack).addRules()` using construct metadata:
-   rejected because custom rules apply globally to the entire CloudFormation template,
-   not to individual constructs. Storing rule paths as construct metadata implies
-   per-construct scoping that does not exist. This is not a 1-way door; if a use case arisese
-   for per-construct scoped rules then we can implement this.
 
 ### What are the drawbacks of this solution?
 
