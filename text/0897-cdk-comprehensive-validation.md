@@ -23,7 +23,7 @@ Whether you are deploying infrastructure yourself
 or relying on an AI agent to build and deploy on your behalf,
 slow feedback from deployment failures disrupts your development lifecycle.
 CDK Comprehensive Validation gives you confidence that your deployment will succeed,
-up to 90% faster than waiting for a full `cdk deploy` to fail.
+up to X% faster than waiting for a full `cdk deploy` to fail.
 
 A new `cdk validate` command also unifies all validation output —
 offline rule checks, construct library errors, and CloudFormation change set validation —
@@ -31,8 +31,8 @@ into a single invocation.
 
 ##### Three Layers of Defense
 
-The AWS CDK already provides validation at two points in the deployment lifecycle:
-construct library validation during synthesis
+The AWS CDK already provides built-in validation at two points in the deployment lifecycle:
+construct library exceptions during synthesis
 and CloudFormation Early Validation during change set creation.
 CDK Comprehensive Validation adds a third layer — offline validation —
 that runs immediately after synthesis,
@@ -78,11 +78,12 @@ block-beta
     style A4 fill:#555,stroke:#333,color:#fff
 ```
 
-* **CDK Construct Library Validation (existing)** — Handwritten checks that run when your CDK constructs
+* **CDK construct library exceptions (existing)** — Handwritten checks that run when your CDK constructs
   are built during synthesis. These catch issues like negative duration values or missing required properties.
 * **Offline Validation (NEW)** — Immediately after synthesis, the new built-in validation engine evaluates
   your CloudFormation template against hundreds of rules. Unlike external tools, this engine resolves
-  CloudFormation intrinsic functions natively, so it can catch issues that static analysis tools miss.
+  CloudFormation intrinsic functions natively, so it can catch issues that currently available CloudFormation
+  analysis tools miss.
 * **CFN Early Validation (existing)** — During `cdk deploy`, CloudFormation validates your change set
   before execution, catching issues like resources that already exist.
 
@@ -100,7 +101,7 @@ Offline Validation reuses the same protocol as the existing
 and is implemented via a new entrypoint in the CDK CLI.
 If you are using the Policy Validation plugin system you can continue to do so
 but there may be overlap with what is being validated.
-Offline Validation ships with CloudFormation Guard rules built in.
+If you have written custom rules in CloudFormation Guard syntax they can be applied directly to Offline Validation.
 If your Policy Validation plugin is written in TypeScript,
 you can now supply your plugin via the CDK CLI in addition to the CDK App.
 
@@ -144,8 +145,7 @@ without waiting for a full deployment.
 ##### Custom Rules and Sharing Across Organizations
 
 Organizations can extend the default rule set with custom rules
-written in a policy language like Rego. The default rule set will be a superset
-over CloudFormation Guard rules so there is no need to add those rules again.
+written in a policy language like Rego or CloudFormation Guard.
 
 For example, here is a rule that checks Lambda function architectures:
 
@@ -399,7 +399,7 @@ as a success gate for rapid agentic cycles.
 
 CDK's _default_ validation mechanisms include the following:
 
-* Construct Library Validation — handwritten errors that occur during synthesis
+* construct library exceptions — handwritten errors that occur during synthesis
 * Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis
 * [NEW] Offline Validation — validation of the synthesized CloudFormation Template immediately after synthesis
 * CFN Early Validation — CFN change sets are validated during CFN change set creation at CDK deploy time
@@ -461,6 +461,9 @@ The actual implementation of the engine is out of scope of this RFC however.
 The default rule set is likely to be around ~50MB when considering the size of the CFN schema
 and other sources. This is a high penalty to pay considering the v2.1117.0 CDK CLI version is
 ~24MB unpacked. We are effectively tripling the unpacked size with the default validation rules.
+
+Still, its better to ship this size penalty in the CLI over the framework, as any cold-start initialization
+of the Validation Engine can be amortized across long-running CDK Toolkit processes like `watch`.
 
 #### Engine Integration
 
@@ -604,7 +607,7 @@ No
 
 1. Rely solely on CFN Early Validation: rejected because it requires a CFN change set
    and that happens too late in the deployment process.
-2. Extend CDK construct library validation: rejected because it is a treadmill,
+2. Write more CDK construct library exceptions: rejected because it is a treadmill,
    and L1 level users do not get access to L2 level validations.
 3. Use the existing CDK Policy Validation plugin system in the framework: rejected because
    we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
@@ -642,7 +645,7 @@ The project can be split into four parts:
   with a default rule set, custom Rego rule support,
   and native CloudFormation intrinsic function resolution
 * Create the `cdk validate` CLI command that unifies output
-  from construct library validation, offline validation, and online validation
+  from construct library exceptions, offline validation, and online validation
 * Create a unified suppression mechanism via `Validations.of()`
   that handles both offline validation and annotation warnings
 * Standardize output from all locations where we report errors/warnings, including:
