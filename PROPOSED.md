@@ -35,4 +35,7 @@
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
 [867](https://github.com/aws/aws-cdk-rfcs/issues/867)|[S3 Vector L2 CDK Constructs](https://github.com/aws/aws-cdk-rfcs/issues/867)||💡 proposed
 [877](https://github.com/aws/aws-cdk-rfcs/issues/877)|[Automated issue triage and guidance for community PRs](https://github.com/aws/aws-cdk-rfcs/issues/877)||💡 proposed
+[884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/issues/884)||💡 proposed
+[886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/issues/886)||💡 proposed
+[897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/issues/897)||💡 proposed
 <!--END_TABLE-->

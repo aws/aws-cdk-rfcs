@@ -121,10 +121,10 @@ const browser = new agentcore.BrowserCustom(this, 'BrowserVpcWithRecording', {
 });
 ```
 
-Browser exposes a [connections](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Connections.html) property. This property returns a connections
-object, which simplifies the process of defining and managing ingress and egress rules for security groups in your AWS CDK applications. Instead of directly
-manipulating security group rules, you interact with the Connections object of a construct, which then translates your connectivity requirements into the
-appropriate security group rules. For instance:
+Browser exposes a [connections](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Connections.html) property. This property
+returns a connections object, which simplifies the process of defining and managing ingress and egress rules for security groups in your
+AWS CDK applications. Instead of directly manipulating security group rules, you interact with the Connections object of a construct, which
+then translates your connectivity requirements into the appropriate security group rules. For instance:
 
 ```typescript fixture=default
 const vpc = new ec2.Vpc(this, 'testVPC');
