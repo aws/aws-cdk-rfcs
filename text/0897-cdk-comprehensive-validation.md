@@ -221,6 +221,12 @@ Validations.of(myConstruct).acknowledgeAllWarnings();
 `Validations.of()` also handles annotation warning suppression,
 becoming the unified way to acknowledge warnings in CDK.
 
+##### CDK Toolkit
+
+Offline Validation will be built natively into the CDK Toolkit. The
+`synth` method (and other methods that synthesize) will automatically validate.
+A new `validate` method will be available that mirrors the `cdk validate` CLI command.
+
 ##### Get Started
 
 CDK Comprehensive Validation is available today.
@@ -372,10 +378,32 @@ arch_valid("arm64")
 ```
 
 Custom rules are loaded via file/directory path specified in `cdk.json`
-or with the `--custom-rules` option.
+or with the `--custom-rules` option:
 
-Rules with the `.rego` file extension will be automatically loaded into the validation for
-that CDK stack or app.
+```json
+{
+  "validation": {
+    "customRules": ["node_modules/@your-org/cfn-rules/rules"]
+  }
+}
+```
+
+```bash
+cdk synth --custom-rules ./my-local-rules
+cdk validate --custom-rules ./my-local-rules
+```
+
+Custom rules can also be added in code via `Validations.of().addRules()`.
+This is the recommended approach when distributing rules as packages
+in non-JavaScript languages (Python, Java, .NET),
+where the installed file path is platform-specific
+and difficult to reference from `cdk.json`:
+
+```ts
+import { rulesDir } from '@your-org/cfn-rules';
+
+Validations.of(myStack).addRules({ sources: [rulesDir] });
+```
 
 ---
 
@@ -534,7 +562,8 @@ This path was discarded because:
 
 Both of these reasons point to niche setups that will remain supported by the framework plugin location.
 This RFC intends to introduce a _supplemental_ plugin location, which will become the standard plugin point
-for most standard setups that run CDK CLI and use TypeScript packages.
+for most standard setups that run CDK CLI and use TypeScript packages. Furthermore, we will make validation
+available in the CDK Toolkit so CDK applications that synthesize programmatically will validate as well.
 
 We will pull the `IPolicyValidationPlugin` protocol out into its own package that both the CDK CLI and CDK framework will depend on.
 The `validate` method will hold most of the plugin implementation; we will call the Offline Validation Engine
@@ -542,7 +571,9 @@ from there. We can extend the interface contract however we see fit with additio
 our needs regarding output reporting.
 
 Available plugins will get evaluated during the `cloudExecutable.synthesize()` method, which is the
-earliest common ancestor for all CLI methods that synthesize.
+earliest common ancestor for all CLI methods that synthesize. In the CDK Toolkit, the earliest common ancestor
+is `synthAndMeasure`; the Toolkit and CLI actually use different sources for synthesis for legacy reasons.
+That means that the plugin will have to be added to both locations to support both synthesis methods.
 
 ```ts
 // Run plugins against synthesized templates
