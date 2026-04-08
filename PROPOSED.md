@@ -38,4 +38,5 @@
 [884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/issues/884)||💡 proposed
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/issues/886)||💡 proposed
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/issues/897)||💡 proposed
+[904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/issues/904)||💡 proposed
 <!--END_TABLE-->
