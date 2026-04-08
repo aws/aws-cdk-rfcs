@@ -141,6 +141,63 @@ Stack MyAppStack
 Found 1 error, 1 warning.
 ```
 
+The command also generates the report in JSON format with the `--json` option.
+
+```json
+{
+  "title": "Validation Report",
+  "stacks": [
+    {
+      "stackName": "MyAppStack",
+      "violations": [
+        {
+          "ruleName": "UseLatestVersion",
+          "description": "Node.js 16 runtime is deprecated. Consider upgrading to Node.js 20 or later",
+          "severity": "warning",
+          "suppressable": true,
+          "source": "offline",
+          "violatingResources": [
+            {
+              "resourceLogicalId": "MyLambdaFunction",
+              "templatePath": "cdk.out/MyAppStack.template.json",
+              "locations": ["Properties/Runtime"],
+              "constructPath": "MyAppStack/MyLambdaFunction",
+              "creationStack": [
+                { "construct": "MyAppStack", "location": "src/main.ts:10:5" },
+                { "construct": "MyLambdaFunction", "location": "src/main.ts:22:10" }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleName": "InvalidArchitectureValue",
+          "description": "Allowed values: x86_64, arm64. Received: \"x64_86\"",
+          "severity": "error",
+          "suppressable": true,
+          "source": "offline",
+          "violatingResources": [
+            {
+              "resourceLogicalId": "MyLambdaFunction",
+              "templatePath": "cdk.out/MyAppStack.template.json",
+              "locations": ["Properties/Architectures/0"],
+              "constructPath": "MyAppStack/MyLambdaFunction",
+              "creationStack": [
+                { "construct": "MyAppStack", "location": "src/main.ts:10:5" },
+                { "construct": "MyLambdaFunction", "location": "src/main.ts:22:10" }
+              ]
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "errors": 1,
+        "warnings": 1
+      }
+    }
+  ]
+}
+```
+
 This makes `cdk validate` an ideal success gate for agentic workflows —
 an AI agent can run it after generating infrastructure code
 and immediately know whether the template is valid
@@ -703,6 +760,9 @@ No
    and L1 level users do not get access to L2 level validations.
 3. Use the existing CDK Policy Validation plugin system in the framework: rejected because
    we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
+4. Custom rules written in TS: Right now the proposal is to allow for rules to be written in rego/guard rules
+   only. It is possible in the future to add support directly in code, with a CDK construct that synthesizes
+   into policy langugae rules. But that is more complicated and we will start with the simple solution first.
 
 ### What are the drawbacks of this solution?
 
