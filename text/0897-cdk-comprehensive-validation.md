@@ -622,6 +622,15 @@ This RFC intends to introduce a _supplemental_ plugin location, which will becom
 for most standard setups that run CDK CLI and use TypeScript packages. Furthermore, we will make validation
 available in the CDK Toolkit so CDK applications that synthesize programmatically will validate as well.
 
+The validation logic lives in the CLI because of size and time tradeoffs that are better handled within the CLI package.
+The package, including the default rules, is estimated to be ~50MB. We will also pay a 1-time engine cold start cost
+of around 600-1000ms. The actual validation of CDK stacks should take a negligible amount of time compared to the time
+it takes to synthesize. Parallelizing the engine initialization with synthesis has the potential to minimize up to 1 second
+of validation time; that sort of optimization can be handled in the CLI in a much cleaner fashion. Furthermore, with validation
+handled in the CLI, the ~50MB engine cost is paid once per machine rather than once per CDK App. Finally, this allows us
+to support both configuration within code and within the `cdk.json` configuration file, which provides more options for
+our users to supply their configurations in a way that fits their mental model.
+
 We will pull the `IPolicyValidationPlugin` protocol out into its own package that both the CDK CLI and CDK framework will depend on.
 The `validate` method will hold most of the plugin implementation; we will call the Offline Validation Engine
 from there. We can extend the interface contract however we see fit with additional optional properties to fit
