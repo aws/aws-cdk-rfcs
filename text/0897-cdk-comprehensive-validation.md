@@ -693,7 +693,11 @@ function collectCustomRulesFromAssembly(assembly: CloudAssembly): string[] {
 
 ### Is this a breaking change?
 
-No
+Maybe. The purpose of blocking Offline Validation rules is that such a configuration _cannot_ successfully deploy.
+And if we are unsure of that, we provide the error/warning as suppressable. Still, a previously successful CDK App
+could now receive suppressable errors and may need code updates to run successfully. Because we are committed to
+backwards compatibility, some rules we really want to be errors may have to be warnings. Alternatively, `cdk validate`
+can throw the right errors while we may need to take a softer approach in `cdk synth`.
 
 ### What alternative solutions did you consider?
 
