@@ -86,7 +86,7 @@ block-beta
   analysis tools miss.
 * **CFN Early Validation (existing)** — During `cdk deploy`, CloudFormation validates your change set
   before execution, catching issues like resources that already exist. Note that you get this by default, but
-  not if you bypass change set creation with `--method=direct`. 
+  not if you bypass change set creation with `--method=direct`.
 
 ##### Offline Validation
 
@@ -498,7 +498,8 @@ CDK's validation mechanisms include the following:
 * construct library exceptions — handwritten errors that occur during synthesis
 * [NEW] Offline Validation — validation of the synthesized CloudFormation Template immediately after synthesis. This covers some existing validation mechanisms:
   * Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis
-  * Optional [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) plugins - allowing CDK Nag, CFN Guard rules, etc.
+  * Optional [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) plugins -
+  allowing CDK Nag, CFN Guard rules, etc.
   * Default policy validation plugin covering common CFN deployment failures.
 * CFN Early Validation — CFN change sets are validated during CFN change set creation at CDK deploy time
 * CFN Deploy-Time Errors — Actual errors that occur during CFN deployment
@@ -723,7 +724,7 @@ can throw the right errors while we may need to take a softer approach in `cdk s
    The suppression mechanism mitigates this
    but adds cognitive overhead to determine if the error is real.
 3. Overlap with existing CDK Policy Validation: Customers with existing policy validation plugins will
-   have questions as to what is now an overlap and what they need to keep in their set up. 
+   have questions as to what is now an overlap and what they need to keep in their set up.
    Clear documentation and messaging is needed to explain how the default rules interact and whether
    customers should keep existing plugins or migrate to adding custom rules to the default plugin.
 4. Package size: The default rule set and WASM engine is estimated to add approximately 50MB unpacked size
