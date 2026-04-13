@@ -91,7 +91,7 @@ const bridge = new mediaconnect.Bridge(stack, 'Bridge', {
   bridgeName: 'my-bridge',
   gateway: gateway,
   config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     flowSources: [{
       name: 'flow-source',
       flow: flow,
@@ -356,24 +356,47 @@ export interface IFlow extends IResource, IFlowRef {
    * @default - maximum over 60 seconds
    */
   metricFailoverSourceSelected(props?: MetricOptions): Metric;
+
+  /**
+   * Grant methods for this flow
+   */
+  readonly grants: FlowGrants;
 }
 ```
 
 Provide fromMethod capability - allowing imports of the resource:
 
 ```ts
-/**
- * Creates a Flow construct that represents an external (imported) Flow
- */
-public static fromFlowAttributes(scope: Construct, id: string, attrs: FlowAttributes): IFlow {
-  class Import extends FlowBase implements IFlow {
-    public readonly flowArn = attrs.flowArn;
-    public readonly sourceArn = attrs.primarySourceArn;
-    public readonly isFailoverEnabled = attrs.isFailoverEnabled ?? false;
-  }
+// Simple import — when you only need the flow ARN
+const importedFlow = mediaconnect.Flow.fromFlowArn(
+  stack, 'ImportedFlow',
+  'arn:aws:mediaconnect:us-west-2:111122223333:flow:1-11111111111111111111111111111111:MyFlow',
+);
 
-  return new Import(scope, id);
-}
+// Full import — when you need source ARN or failover state
+const importedFlow = mediaconnect.Flow.fromFlowAttributes(stack, 'ImportedFlow', {
+  flowArn: 'arn:aws:mediaconnect:us-west-2:111122223333:flow:1-11111111111111111111111111111111:MyFlow',
+  sourceArn: 'arn:aws:mediaconnect:us-west-2:111122223333:source:2-22222222222222222222222222222222:MySource',
+  isFailoverEnabled: true,
+});
+```
+
+##### Granting Permissions on Flows
+
+Grant methods enable Lambda functions or Step Functions to orchestrate flow lifecycle without manual IAM policy wiring:
+
+```ts
+declare const flow: mediaconnect.IFlow;
+declare const fn: lambda.IFunction;
+
+// Grant permission to start the flow
+flow.grants.start(fn);
+
+// Grant permission to stop the flow
+flow.grants.stop(fn);
+
+// Grant arbitrary actions
+flow.grants.actions(fn, 'mediaconnect:UpdateFlow');
 ```
 
 ##### Flow Source Types
@@ -424,11 +447,75 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 ```ts
 // Import an entitlement from another AWS account
-const entitlement = mediaconnect.FlowEntitlement.fromFlowEntitlementAttributes(stack, 'ImportedEntitlement', {
-  entitlementArn: 'arn:aws:mediaconnect:us-west-2:111122223333:entitlement:1-11111111111111111111111111111111:MyEntitlement',
-});
+const entitlement = mediaconnect.FlowEntitlement.fromFlowEntitlementArn(
+  stack, 'ImportedEntitlement',
+  'arn:aws:mediaconnect:us-west-2:111122223333:entitlement:1-11111111111111111111111111111111:MyEntitlement',
+);
 
 new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.entitlement({
+    entitlement: entitlement,
+  }),
+});
+```
+
+#### AWS Elemental MediaConnect Flow Source
+
+A FlowSource (`AWS::MediaConnect::FlowSource`) is a standalone resource used to add secondary
+or failover sources to an existing flow. This is separate from the primary source defined in
+`FlowProps` — secondary sources are created as their own constructs and associated with a flow
+to enable failover configurations.
+
+For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/flows-source.html).
+
+```ts
+declare const flow: mediaconnect.IFlow;
+
+new mediaconnect.FlowSource(stack, 'BackupSource', {
+  flow: flow,
+  flowSourceName: 'backup-source',
+  source: mediaconnect.SourceConfiguration.srtListener({
+    flowSourceName: 'backup',
+    port: 5001,
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+This enables failover configurations where the primary source is defined on the Flow and secondary sources are added as separate constructs.
+
+#### AWS Elemental MediaConnect Flow Entitlement
+
+A FlowEntitlement (`AWS::MediaConnect::FlowEntitlement`) grants another AWS account permission
+to access content from your flow. It is created on the content originator's side and consumed
+by the subscriber via `SourceConfiguration.entitlement()`.
+
+For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/entitlements.html).
+
+##### Creating an Entitlement
+
+```ts
+declare const flow: mediaconnect.IFlow;
+
+const entitlement = new mediaconnect.FlowEntitlement(stack, 'Entitlement', {
+  flow: flow,
+  entitlementName: 'partner-access',
+  subscribers: ['111122223333'],
+  description: 'Grant partner access to live feed',
+});
+```
+
+##### Consuming an Entitlement (Subscriber Side)
+
+The subscriber imports the entitlement ARN and uses it as a source in their own flow:
+
+```ts
+const entitlement = mediaconnect.FlowEntitlement.fromFlowEntitlementArn(
+  stack, 'ImportedEntitlement',
+  'arn:aws:mediaconnect:us-west-2:111122223333:entitlement:1-11111111111111111111111111111111:MyEntitlement',
+);
+
+new mediaconnect.Flow(stack, 'SubscriberFlow', {
   source: mediaconnect.SourceConfiguration.entitlement({
     entitlement: entitlement,
   }),
@@ -553,7 +640,7 @@ new mediaconnect.Bridge(stack, 'EgressBridge', {
   bridgeName: 'my-egress-bridge',
   gateway: gateway,
   config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     flowSources: [{
       name: 'cloud-source',
       flow: flow,
@@ -692,16 +779,17 @@ gateway.addNetwork({
 You can import existing gateways for use in your CDK application:
 
 ```ts
-const gateway = mediaconnect.Gateway.fromAttributes(stack, 'ImportedGateway', {
-  gatewayArn: 'arn:aws:mediaconnect:us-west-2:111122223333:gateway:1-11111111111111111111111111111111:MyGateway',
-});
+const gateway = mediaconnect.Gateway.fromGatewayArn(
+  stack, 'ImportedGateway',
+  'arn:aws:mediaconnect:us-west-2:111122223333:gateway:1-11111111111111111111111111111111:MyGateway',
+);
 
 // Use the imported gateway with bridges
 new mediaconnect.Bridge(stack, 'MyBridge', {
   bridgeName: 'my-bridge',
   gateway: gateway,
   config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     flowSources: [/* ... */],
     networkOutputs: [/* ... */],
   }),
@@ -812,7 +900,7 @@ const gateway = new mediaconnect.Gateway(stack, 'MyGateway', {
 new mediaconnect.Bridge(stack, 'MyIngressBridge', {
   bridgeName: 'my-ingress-bridge',
   config: mediaconnect.BridgeConfiguration.ingress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     maxOutputs: 2,
     networkSources: [{
       name: 'on-prem-source',
@@ -836,7 +924,7 @@ declare const vpcInterface: mediaconnect.VpcInterfaceConfig;
 new mediaconnect.Bridge(stack, 'MyEgressBridge', {
   bridgeName: 'my-egress-bridge',
   config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     flowSources: [{
       name: 'cloud-source',
       flow: flow,
@@ -857,6 +945,17 @@ new mediaconnect.Bridge(stack, 'MyEgressBridge', {
 });
 ```
 
+##### Importing Existing Bridges
+
+You can import existing bridges for use in your CDK application:
+
+```ts
+const importedBridge = mediaconnect.Bridge.fromBridgeArn(
+  stack, 'ImportedBridge',
+  'arn:aws:mediaconnect:us-west-2:111122223333:bridge:1-11111111111111111111111111111111:MyBridge',
+);
+```
+
 ##### Adding Outputs to Bridges
 
 For egress bridges, the `addOutput()` method provides a convenient
@@ -866,7 +965,7 @@ way to add network outputs:
 const bridge = new mediaconnect.Bridge(stack, 'MyEgressBridge', {
   bridgeName: 'my-egress-bridge',
   config: mediaconnect.BridgeConfiguration.egress({
-    maxBitrate: mediaconnect.Bitrate.mbps(10),
+    maxBitrate: cdk.Bitrate.mbps(10),
     flowSources: [{
       name: 'cloud-source',
       flow: flow,
@@ -955,6 +1054,30 @@ resources include network interfaces, inputs, and outputs.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/mediaconnect/latest/ug/routers.html).
 
+##### Importing Existing Router Resources
+
+You can import existing router resources for use in your CDK application:
+
+```ts
+// Import a router network interface
+const importedInterface = mediaconnect.RouterNetworkInterface.fromRouterNetworkInterfaceArn(
+  stack, 'ImportedInterface',
+  'arn:aws:mediaconnect:us-west-2:111122223333:router-network-interface:1-11111111111111111111111111111111:MyInterface',
+);
+
+// Import a router input
+const importedInput = mediaconnect.RouterInput.fromRouterInputArn(
+  stack, 'ImportedInput',
+  'arn:aws:mediaconnect:us-west-2:111122223333:router-input:1-11111111111111111111111111111111:MyInput',
+);
+
+// Import a router output
+const importedOutput = mediaconnect.RouterOutput.fromRouterOutputArn(
+  stack, 'ImportedOutput',
+  'arn:aws:mediaconnect:us-west-2:111122223333:router-output:1-11111111111111111111111111111111:MyOutput',
+);
+```
+
 ##### Router Network Interfaces
 
 Network interfaces define the network connectivity for router inputs and outputs:
@@ -964,7 +1087,7 @@ Network interfaces define the network connectivity for router inputs and outputs
 const publicInterface = new mediaconnect.RouterNetworkInterface(stack, 'PublicInterface', {
   routerNetworkInterfaceName: 'public-interface',
   configuration: mediaconnect.RouterNetworkConfiguration.publicNetwork({
-    cidr: ['10.0.0.0/16'],
+    cidr: ['203.0.113.0/24'],
   }),
 });
 
@@ -991,7 +1114,7 @@ declare const networkInterface: mediaconnect.IRouterNetworkInterface;
 
 const input = new mediaconnect.RouterInput(stack, 'RtpInput', {
   routerInputName: 'rtp-input',
-  maximumBitrate: mediaconnect.Bitrate.mbps(10),
+  maximumBitrate: cdk.Bitrate.mbps(10),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterInputTier.INPUT_100,
   availabilityZone: 'us-east-1a',
@@ -1009,7 +1132,7 @@ declare const flowOutput: mediaconnect.IFlowOutput;
 
 const flowInput = new mediaconnect.RouterInput(stack, 'FlowInput', {
   routerInputName: 'flow-input',
-  maximumBitrate: mediaconnect.Bitrate.mbps(20),
+  maximumBitrate: cdk.Bitrate.mbps(20),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterInputTier.INPUT_50,
   availabilityZone: 'us-east-1a',
@@ -1022,7 +1145,7 @@ const flowInput = new mediaconnect.RouterInput(stack, 'FlowInput', {
 // MediaConnect Flow input without specific connection (requires explicit AZ)
 const flowInputNoConnection = new mediaconnect.RouterInput(stack, 'FlowInputNoConnection', {
   routerInputName: 'flow-input-no-connection',
-  maximumBitrate: mediaconnect.Bitrate.mbps(20),
+  maximumBitrate: cdk.Bitrate.mbps(20),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterInputTier.INPUT_50,
   availabilityZone: 'us-east-1a',
@@ -1030,6 +1153,41 @@ const flowInputNoConnection = new mediaconnect.RouterInput(stack, 'FlowInputNoCo
     availabilityZone: 'us-east-1a',
   }),
 });
+```
+
+##### Router Input Grants
+
+Grant methods enable orchestration of router input lifecycle:
+
+```ts
+declare const routerInput: mediaconnect.IRouterInput;
+declare const fn: lambda.IFunction;
+
+routerInput.grants.start(fn);
+routerInput.grants.stop(fn);
+routerInput.grants.restart(fn);
+routerInput.grants.actions(fn, 'mediaconnect:UpdateRouterInput');
+```
+
+Interface for Router Input:
+
+```ts
+/**
+ * Interface for MediaConnect Router Input
+ */
+export interface IRouterInput extends IResource {
+  /**
+   * The Amazon Resource Name (ARN) of the router input
+   *
+   * @attribute
+   */
+  readonly routerInputArn: string;
+
+  /**
+   * Grant methods for this router input
+   */
+  readonly grants: RouterInputGrants;
+}
 ```
 
 ##### Router Outputs
@@ -1042,7 +1200,7 @@ declare const networkInterface: mediaconnect.IRouterNetworkInterface;
 
 const output = new mediaconnect.RouterOutput(stack, 'SrtOutput', {
   routerOutputName: 'srt-output',
-  maximumBitrate: mediaconnect.Bitrate.mbps(10),
+  maximumBitrate: cdk.Bitrate.mbps(10),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterOutputTier.OUTPUT_100,
   configuration: mediaconnect.RouterOutputConfiguration.standard({
@@ -1059,7 +1217,7 @@ declare const mediaLiveInput: medialive.CfnInput;
 
 const mediaLiveOutput = new mediaconnect.RouterOutput(stack, 'MediaLiveOutput', {
   routerOutputName: 'medialive-output',
-  maximumBitrate: mediaconnect.Bitrate.mbps(15),
+  maximumBitrate: cdk.Bitrate.mbps(15),
   routingScope: mediaconnect.RoutingScope.GLOBAL,
   tier: mediaconnect.RouterOutputTier.OUTPUT_50,
   configuration: mediaconnect.RouterOutputConfiguration.mediaLiveInput({
@@ -1071,7 +1229,7 @@ const mediaLiveOutput = new mediaconnect.RouterOutput(stack, 'MediaLiveOutput', 
 // MediaLive output without specific connection (requires explicit AZ)
 const mediaLiveOutputNoConnection = new mediaconnect.RouterOutput(stack, 'MediaLiveOutputNoConnection', {
   routerOutputName: 'medialive-output-no-connection',
-  maximumBitrate: mediaconnect.Bitrate.mbps(15),
+  maximumBitrate: cdk.Bitrate.mbps(15),
   routingScope: mediaconnect.RoutingScope.GLOBAL,
   tier: mediaconnect.RouterOutputTier.OUTPUT_50,
   configuration: mediaconnect.RouterOutputConfiguration.mediaLiveInputWithoutConnection({
@@ -1084,7 +1242,7 @@ declare const flow: mediaconnect.IFlow;
 
 const flowOutput = new mediaconnect.RouterOutput(stack, 'FlowOutput', {
   routerOutputName: 'flow-output',
-  maximumBitrate: mediaconnect.Bitrate.mbps(20),
+  maximumBitrate: cdk.Bitrate.mbps(20),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterOutputTier.OUTPUT_100,
   configuration: mediaconnect.RouterOutputConfiguration.mediaConnectFlow({
@@ -1095,7 +1253,7 @@ const flowOutput = new mediaconnect.RouterOutput(stack, 'FlowOutput', {
 // MediaConnect Flow output without specific connection (requires explicit AZ)
 const flowOutputNoConnection = new mediaconnect.RouterOutput(stack, 'FlowOutputNoConnection', {
   routerOutputName: 'flow-output-no-connection',
-  maximumBitrate: mediaconnect.Bitrate.mbps(20),
+  maximumBitrate: cdk.Bitrate.mbps(20),
   routingScope: mediaconnect.RoutingScope.REGIONAL,
   tier: mediaconnect.RouterOutputTier.OUTPUT_100,
   configuration: mediaconnect.RouterOutputConfiguration.mediaConnectFlowWithoutConnection({
