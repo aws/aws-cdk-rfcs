@@ -85,25 +85,18 @@ block-beta
   CloudFormation intrinsic functions natively, so it can catch issues that currently available CloudFormation
   analysis tools miss.
 * **CFN Early Validation (existing)** — During `cdk deploy`, CloudFormation validates your change set
-  before execution, catching issues like resources that already exist.
+  before execution, catching issues like resources that already exist. Note that you get this by default, but
+  not if you bypass change set creation with `--method=direct`. 
 
 ##### Offline Validation
 
-Offline validation runs automatically as part of `cdk synth`
-with no additional configuration required.
-It ships with a comprehensive default rule set that checks for common misconfigurations
-including invalid property values, deprecated runtimes, overly permissive IAM policies,
-missing encryption, and cross-resource dependency issues.
-The engine is compiled to WASM and adds under Y seconds to synthesis time.
-
-Offline Validation reuses the same protocol as the existing
+Offline validation runs automatically as part of `cdk synth` with no additional configuration required.
+It combines all post-synthesis checks into one term that covers Annotation errors and warnings as well as
 [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html)
-and is implemented via a new entrypoint in the CDK CLI.
-If you are using the Policy Validation plugin system you can continue to do so
-but there may be overlap with what is being validated.
-If you have written custom rules in CloudFormation Guard syntax they can be applied directly to Offline Validation.
-If your Policy Validation plugin is written in TypeScript,
-you can now supply your plugin via the CDK CLI in addition to the CDK App.
+plugins. In fact, the new rule set shipped as part of Offline Validation is implemented
+as a default Policy Validation plugin. This default rule set covers common misconfigurations including
+invalid property values, deprecated runtimes, overly permissive IAM policies, missing encryption, and
+cross-resource dependency issues. These additional validations add under Y seconds to synthesis time.
 
 ##### `cdk validate`
 
@@ -121,24 +114,114 @@ cdk validate MyAppStack
 cdk validate MyAppStack --include offline --include online
 ```
 
-The unified output clearly distinguishes between blockers and suppressable issues:
+The unified output deliniates error provenance and whether the issue is suppressable. The following
+example is of a user with a CDK Nag Policy Validation plugin enabled:
 
 ```bash
 > cdk validate MyAppStack
+Validation Report
+-----------------
 
-Stack MyAppStack
- [warning] [suppressable] UseLatestVersion: Node.js 16 runtime is deprecated.
-           Consider upgrading to Node.js 20 or later
-           (at Resources/MyLambdaFunction)
-           └── MyAppStack (src/main.ts:10:5)
-               └── MyLambdaFunction (src/main.ts:22:10)
+(Blocking)
 
- [error] [suppressable] InvalidArchitectureValue: Allowed values: x86_64, arm64.
-         Received: "x64_86" (at Resources/MyLambdaFunction)
-         └── MyAppStack (src/main.ts:10:5)
-             └── MyLambdaFunction (src/main.ts:22:10)
+AwsSolutions-S1 (1 occurrences)
+Severity: Error
+Source: CdkNagValidator
 
-Found 1 error, 1 warning.
+  Occurrences:
+
+    - Construct Path: MyStack/DataBucket
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  DataBucket (MyStack/DataBucket)
+                  │ Construct: aws-cdk-lib/aws-s3.Bucket
+                  │ Library Version: 2.180.0
+                  │ Location: new MyStack (lib/my-stack.ts:12:5)
+    - Resource ID: DataBucket2C40E2F8
+    - Template Locations:
+      > Properties/LoggingConfiguration
+
+  Description: The S3 Bucket does not have server access logs enabled
+  How to fix: Enable server access logging by setting the serverAccessLogsBucket property
+
+Subnet has MapPublicIpOnLaunch enabled (1 occurrences)
+Severity: Error
+Source: Construct Annotations
+
+  Occurrences:
+
+    - Construct Path: MyStack/VpcStack/PublicSubnet
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  VpcStack (MyStack/VpcStack)
+                  └──  PublicSubnet (MyStack/VpcStack/PublicSubnet)
+                       │ Construct: aws-cdk-lib/aws-ec2.PublicSubnet
+                       │ Library Version: 2.180.0
+                       │ Location: new MyStack (lib/my-stack.ts:30:5)
+    - Resource ID: VpcStackPublicSubnetABC123
+
+  Description: Subnet has MapPublicIpOnLaunch enabled without justification
+
+(Suppressable)
+
+I3011 - S3 bucket versioning should be enabled (1 occurrences)
+Severity: Warning
+Source: ValidationEngine (Default)
+Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.bucketVersioning')
+
+  Occurrences:
+
+    - Construct Path: MyStack/DataBucket
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  DataBucket (MyStack/DataBucket)
+                  │ Construct: aws-cdk-lib/aws-s3.Bucket
+                  │ Library Version: 2.180.0
+                  │ Location: new MyStack (lib/my-stack.ts:12:5)
+    - Resource ID: DataBucket2C40E2F8
+    - Template Locations:
+      > Properties/VersioningConfiguration
+
+  Description: S3 bucket should have versioning enabled for data protection
+  How to fix: Set versioned: true on the Bucket construct
+
+Bucket policy allows public read access (1 occurrences)
+Severity: Warning
+Source: Construct Annotations
+Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.publicRead')
+
+  Occurrences:
+
+    - Construct Path: MyStack/DataBucket
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  DataBucket (MyStack/DataBucket)
+                  │ Construct: aws-cdk-lib/aws-s3.Bucket
+                  │ Library Version: 2.180.0
+                  │ Location: new MyStack (lib/my-stack.ts:12:5)
+    - Resource ID: DataBucket2C40E2F8
+
+  Description: Bucket policy allows public read access
+
+Policy Validation Report Summary
+
+╔═════════════════════════════════════╤═════════╤════════════════════╗
+║ Source                              │ Status  │ Blocking / Suppr.  ║
+╟─────────────────────────────────────┼─────────┼────────────────────╢
+║ ValidationEngine (Default)          │ success │ 0 / 1              ║
+╟─────────────────────────────────────┼─────────┼────────────────────╢
+║ CdkNagValidator                     │ failure │ 1 / 0              ║
+╟─────────────────────────────────────┼─────────┼────────────────────╢
+║ Construct Annotations               │ failure │ 1 / 1              ║
+╚═════════════════════════════════════╧═════════╧════════════════════╝
+
+2 blocking, 2 suppressable
+
+Validation failed. See the validation report above for details
 ```
 
 The command also generates the report in JSON format with the `--json` option.
@@ -146,53 +229,147 @@ The command also generates the report in JSON format with the `--json` option.
 ```json
 {
   "title": "Validation Report",
-  "stacks": [
+  "summary": {
+    "status": "failure",
+    "blocking": 2,
+    "suppressable": 2,
+    "sources": [
+      { "name": "ValidationEngine (Default)", "version": "1.0.0", "status": "success", "blocking": 0, "suppressable": 1 },
+      { "name": "CdkNagValidator", "version": "2.28.0", "status": "failure", "blocking": 1, "suppressable": 0 },
+      { "name": "Construct Annotations", "status": "failure", "blocking": 1, "suppressable": 1 }
+    ]
+  },
+  "blocking": [
     {
-      "stackName": "MyAppStack",
-      "violations": [
+      "ruleName": "AwsSolutions-S1",
+      "severity": "Error",
+      "source": "CdkNagValidator",
+      "description": "The S3 Bucket does not have server access logs enabled",
+      "fix": "Enable server access logging by setting the serverAccessLogsBucket property",
+      "occurrences": [
         {
-          "ruleName": "UseLatestVersion",
-          "description": "Node.js 16 runtime is deprecated. Consider upgrading to Node.js 20 or later",
-          "severity": "warning",
-          "suppressable": true,
-          "source": "offline",
-          "violatingResources": [
-            {
-              "resourceLogicalId": "MyLambdaFunction",
-              "templatePath": "cdk.out/MyAppStack.template.json",
-              "locations": ["Properties/Runtime"],
-              "constructPath": "MyAppStack/MyLambdaFunction",
-              "creationStack": [
-                { "construct": "MyAppStack", "location": "src/main.ts:10:5" },
-                { "construct": "MyLambdaFunction", "location": "src/main.ts:22:10" }
-              ]
+          "constructPath": "MyStack/DataBucket",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "DataBucket2C40E2F8",
+          "locations": ["Properties/LoggingConfiguration"],
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "DataBucket",
+              "path": "MyStack/DataBucket",
+              "construct": "aws-cdk-lib/aws-s3.Bucket",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:12:5)"
             }
-          ]
-        },
-        {
-          "ruleName": "InvalidArchitectureValue",
-          "description": "Allowed values: x86_64, arm64. Received: \"x64_86\"",
-          "severity": "error",
-          "suppressable": true,
-          "source": "offline",
-          "violatingResources": [
-            {
-              "resourceLogicalId": "MyLambdaFunction",
-              "templatePath": "cdk.out/MyAppStack.template.json",
-              "locations": ["Properties/Architectures/0"],
-              "constructPath": "MyAppStack/MyLambdaFunction",
-              "creationStack": [
-                { "construct": "MyAppStack", "location": "src/main.ts:10:5" },
-                { "construct": "MyLambdaFunction", "location": "src/main.ts:22:10" }
-              ]
-            }
-          ]
+          }
         }
-      ],
-      "summary": {
-        "errors": 1,
-        "warnings": 1
-      }
+      ]
+    },
+    {
+      "ruleName": "Subnet has MapPublicIpOnLaunch enabled",
+      "severity": "Error",
+      "source": "Construct Annotations",
+      "description": "Subnet has MapPublicIpOnLaunch enabled without justification",
+      "occurrences": [
+        {
+          "constructPath": "MyStack/VpcStack/PublicSubnet",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "VpcStackPublicSubnetABC123",
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "VpcStack",
+              "path": "MyStack/VpcStack",
+              "construct": "aws-cdk-lib/aws-ec2.Vpc",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:28:5)",
+              "child": {
+                "id": "PublicSubnet",
+                "path": "MyStack/VpcStack/PublicSubnet",
+                "construct": "aws-cdk-lib/aws-ec2.PublicSubnet",
+                "libraryVersion": "2.180.0",
+                "location": "new MyStack (lib/my-stack.ts:30:5)"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "suppressable": [
+    {
+      "ruleName": "I3011",
+      "severity": "Warning",
+      "source": "ValidationEngine (Default)",
+      "description": "S3 bucket should have versioning enabled for data protection",
+      "fix": "Set versioned: true on the Bucket construct",
+      "suppress": {
+        "mechanism": "acknowledge",
+        "id": "aws-cdk-lib:S3.bucketVersioning",
+        "instruction": "Validations.of(construct).acknowledge('aws-cdk-lib:S3.bucketVersioning')"
+      },
+      "occurrences": [
+        {
+          "constructPath": "MyStack/DataBucket",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "DataBucket2C40E2F8",
+          "locations": ["Properties/VersioningConfiguration"],
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "DataBucket",
+              "path": "MyStack/DataBucket",
+              "construct": "aws-cdk-lib/aws-s3.Bucket",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:12:5)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "ruleName": "Bucket policy allows public read access",
+      "severity": "Warning",
+      "source": "Construct Annotations",
+      "description": "Bucket policy allows public read access",
+      "suppress": {
+        "mechanism": "acknowledge",
+        "id": "aws-cdk-lib:S3.publicRead",
+        "instruction": "Validations.of(construct).acknowledge('aws-cdk-lib:S3.publicRead')"
+      },
+      "occurrences": [
+        {
+          "constructPath": "MyStack/DataBucket",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "DataBucket2C40E2F8",
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "DataBucket",
+              "path": "MyStack/DataBucket",
+              "construct": "aws-cdk-lib/aws-s3.Bucket",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:12:5)"
+            }
+          }
+        }
+      ]
     }
   ]
 }
@@ -228,24 +405,13 @@ arch_valid("x86_64")
 arch_valid("arm64")
 ```
 
-Custom rules are loaded from a configurable directory specified in `cdk.json`
-or via the `--custom-rules` CLI option.
-The engine automatically collects `.rego` files from the specified path.
+Custom rules can be configured in the library and in the CLI. In the library, you can reference
+specific packages directly in code:
 
-```json
-{
- "validate": {
-   "customRules": [
-     "node_modules/@your-org/cfn-rules/rules",
-     "./my-local-rules"
-   ]
- }
-}
-```
+```ts
+import { rulesDir } from '@your-org/cfn-rules';
 
-```bash
-cdk synth --custom-rules ./my-local-rules
-cdk validate --custom-rules ./my-local-rules
+Validations.of(myApp).addRules({ sources: [rulesDir] });
 ```
 
 Because Rego files are plain text with no compilation step,
@@ -256,14 +422,6 @@ and the dependency management that CDK users already rely on.
 To share custom rules across teams or an entire organization,
 we recommend publishing them in your package manager of choice.
 Rego files are plain text — no compilation or runtime is involved.
-
-They can be imported via your CDK App via a new `Validations.of()` API:
-
-```ts
-import { rulesDir } from '@my-org/rules';
-
-Validations.of(myStack).addRules(rulesDir);
-```
 
 ##### Suppressing Warnings and Errors
 
@@ -290,177 +448,6 @@ CDK Comprehensive Validation is available today.
 Upgrade to the latest AWS CDK CLI and run `cdk synth` —
 offline validation runs automatically.
 Use `cdk validate` for a unified view of all validation results.
-To add custom rules, create a directory of `.rego` files
-and configure the path in your `cdk.json`.
-
-### README
-
-#### cdk validate
-
-```
-cdk validate [STACKS..] [--include <method>]
-```
-
-You can use cdk validate to run offline and online validation against a CDK stack or app.
-
-This synthesizes a CFN template and verifies it against offline rules, such as:
-
-* Lambda Function Architecture values must be one of: x86_64, arm64, got: x64_86
-
-It also generates (without executing) a CFN change set to check against online rules, such as:
-
-* Resource of type `AWS::S3::Bucket` with identifier MyBucket already exists
-
-The output looks like this:
-
-```bash
-> cdk validate MyAppStack
-
-Stack MyAppStack
- // Annotation Warnings
- [warning] [suppressable] ThroughputNotSupported: The throughput property is not supported
-           on EC2 instances. Use a Launch Template instead.
-           (at Resources/MyEc2Instance)
-           └── MyAppStack (src/main.ts:10:5)
-               └── MyEc2Instance (src/main.ts:18:10)
-
- // Offline Warnings
- [warning] [suppressable] UseLatestVersion: Node.js 16 runtime is deprecated.
-           Consider upgrading to Node.js 20 or later
-           (at Resources/MyLambdaFunction)
-           └── MyAppStack (src/main.ts:10:5)
-               └── MyLambdaFunction (src/main.ts:22:10)
-
- // Annotation Errors
- [error] [blocking] MyOwnError: Bucket versioning is not enabled
-         (at Resources/MyBucket)
-         └── MyAppStack (src/main.ts:10:5)
-             └── MyBucket (src/main.ts:14:10)
-
- // Construct Library Errors
- [error] [blocking] DurationAmountsCannotNegative: Duration amounts cannot be negative.
-         Received: -1 (at Resources/MyLambdaFunction)
-         └── MyAppStack (src/main.ts:10:5)
-             └── MyLambdaFunction (src/main.ts:22:10)
-
- // Offline Errors
- [error] [suppressable] InvalidArchitectureValue: Allowed values: x86_64, arm64.
-         Received: "x64_86" (at Resources/MyLambdaFunction)
-         └── MyAppStack (src/main.ts:10:5)
-             └── MyLambdaFunction (src/main.ts:22:10)
-
- // Online Errors
- [error] [blocking] ResourceExists: Resource already exists (at Resources/MyS3Bucket)
-         └── MyAppStack (src/main.ts:10:5)
-             └── MyS3Bucket (src/main.ts:26:10)
-
-Found 4 errors, 2 warnings.
-```
-
-> Note that, if there are Construct Library errors then synthesis fails and the other types
-> of errors will not surface. Offline errors will be suppressable as we can
-> generate a CloudFormation template and do not want to block users in case we are wrong.
-
-A warning is always suppressable. Suppressable errors indicate issues that we believe will
-fail CloudFormation Deployment, but since we can synthesize a CloudFormation template, we
-will not stand in the way. An error that is a blocker fails the synthesis step and there
-is no CloudFormation template that can be deployed.
-
-You can optionally specify `--include` to restrict to a specific type of validation:
-
-```bash
-cdk validate --include offline
-cdk validate --include online
-```
-
-#### Suppressing Warnings
-
-Warnings in the CDK are meant to communicate best practices and must be acknowledgeable.
-Warnings can come from Annotations or Offline Validations.
-
-Annotation Warnings can be suppressed in code:
-
-```ts
-Annotations.of(myConstruct).acknowledgeWarning(
-  'my-library:Construct:someWarning',
-);
-```
-
-Offline Validations can similarly be suppressed in code:
-
-```ts
-Validations.of(myConstruct).acknowledge(
-  'my-construct:UseLatestVersion',
-);
-```
-
-Because CDK users see a unified list of warnings from cdk validate,
-we cannot expect them to differentiate between Annotation and Offline Validation warnings.
-Therefore, Validations.of will also be able to handle Annotation warning suppression
-and will become the unified way to suppress warnings in CDK.
-Acknowledging warnings via Annotations will be deprecated.
-
-We will also expose additional syntactic sugar to allow for more robust suppression.
-To start, we will support `acknowledgeAllWarnings` and `acknowledge`.
-
-```ts
-Validations.of(myConstruct).acknowledgeAllWarnings();
-Validations.of(myConstruct).acknowledge([
-  'UseLatestVersion',
-  'InvalidArchitectureValue',
-]);
-```
-
-#### Validating custom rule sets
-
-Custom rules can be written in a policy language like Rego.
-For example, the InvalidArchitectureValue rule is defined as follows:
-
-```rego
-package cfn
-
-deny[msg] {
-    resource := input.Resources[name]
-    resource.Type == "AWS::Lambda::Function"
-    arch := resource.Properties.Architectures[_]
-    not arch_valid(arch)
-    msg := sprintf(
-      "InvalidArchitectureValue: Allowed values: x86_64, arm64. Received: \"%s\" (at Resources/%s)",
-      [arch, name]
-    )
-}
-
-arch_valid("x86_64")
-arch_valid("arm64")
-```
-
-Custom rules are loaded via file/directory path specified in `cdk.json`
-or with the `--custom-rules` option:
-
-```json
-{
-  "validation": {
-    "customRules": ["node_modules/@your-org/cfn-rules/rules"]
-  }
-}
-```
-
-```bash
-cdk synth --custom-rules ./my-local-rules
-cdk validate --custom-rules ./my-local-rules
-```
-
-Custom rules can also be added in code via `Validations.of().addRules()`.
-This is the recommended approach when distributing rules as packages
-in non-JavaScript languages (Python, Java, .NET),
-where the installed file path is platform-specific
-and difficult to reference from `cdk.json`:
-
-```ts
-import { rulesDir } from '@your-org/cfn-rules';
-
-Validations.of(myStack).addRules({ sources: [rulesDir] });
-```
 
 ---
 
@@ -506,25 +493,17 @@ as a success gate for rapid agentic cycles.
 
 ### What is the validation posture of CDK moving forward?
 
-CDK's _default_ validation mechanisms include the following:
+CDK's validation mechanisms include the following:
 
 * construct library exceptions — handwritten errors that occur during synthesis
-* Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis
-* [NEW] Offline Validation — validation of the synthesized CloudFormation Template immediately after synthesis
+* [NEW] Offline Validation — validation of the synthesized CloudFormation Template immediately after synthesis. This covers some existing validation mechanisms:
+  * Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis
+  * Optional [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) plugins - allowing CDK Nag, CFN Guard rules, etc.
+  * Default policy validation plugin covering common CFN deployment failures.
 * CFN Early Validation — CFN change sets are validated during CFN change set creation at CDK deploy time
 * CFN Deploy-Time Errors — Actual errors that occur during CFN deployment
 
-CDK also offers additional validation mechanisms within the ecosystem:
-
-* [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) -
-  post-synthesis validation that is defined in the CDK App or Stage.
-* [Cfn Guard Hooks](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.CfnGuardHook.html) -
-  integration with a CloudFormation feature to evaluate Guard DSL rules before CFN stack operations.
-* [`cdk-nag`](https://github.com/cdklabs/cdk-nag) - best-practice rules
-* custom [Annotations](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.Annotations.html) -
-  customer-written warnings/errors that are evaluated post-synthesis.
-
-Offline Validation is meant to bring much of these additional validation rule sets natively into the CDK CLI.
+Offline Validatios is meant to bring much of these additional validation rule sets natively into the CDK CLI.
 Customers can continue to use these mechanisms but many custom set ups will no longer be necessary.
 
 ## Internal FAQ
@@ -608,56 +587,24 @@ export interface PolicyViolation {
 }
 ```
 
-When Policy Validation was introduced in [RFC 477](https://github.com/aws/aws-cdk-rfcs/pull/478/changes#diff-6f534b60e9273eb5c44a7f32f86767c9b7c3053a113524d12380b248d970d021R487),
-we evaluated whether it made sense for plugins to be introduced in the CLI rather than the framework.
-This path was discarded because:
+The validation logic lives in the framework to allow for seamless integration of default validations and custom validations.
+Annotation warnings & errors and Policy Validation plugins are already established in the framework. By reusing the Policy
+Validation plugin system, Offline Validation is able to unify all validation mechanisms that happen post-synthesis and pre-deploy.
 
-* All plugins would have to be written in TypeScript/JavaScript for them to be
-  consumable by the CLI.
-* If an application is synthesized without using the CDK CLI, it’s not subject
-  to policy validation.
+This comes with the challenge of dealing with Offline Validation's estimated ~50MB unbundled package size and ~600-1000ms startup
+cost when initializing the engine. We are deciding that we are okay with the size of validation in the framework rather than the CLI,
+and that the engine startup will run parallel with synthesis to minimize its impact. The actual time to validate templates will be
+negligible; about 1ms per resource.
 
-Both of these reasons point to niche setups that will remain supported by the framework plugin location.
-This RFC intends to introduce a _supplemental_ plugin location, which will become the standard plugin point
-for most standard setups that run CDK CLI and use TypeScript packages. Furthermore, we will make validation
-available in the CDK Toolkit so CDK applications that synthesize programmatically will validate as well.
-
-The validation logic lives in the CLI because of size and time tradeoffs that are better handled within the CLI package.
-The package, including the default rules, is estimated to be ~50MB. We will also pay a 1-time engine cold start cost
-of around 600-1000ms. The actual validation of CDK stacks should take a negligible amount of time compared to the time
-it takes to synthesize. Parallelizing the engine initialization with synthesis has the potential to minimize up to 1 second
-of validation time; that sort of optimization can be handled in the CLI in a much cleaner fashion. Furthermore, with validation
-handled in the CLI, the ~50MB engine cost is paid once per machine rather than once per CDK App. Finally, this allows us
-to support both configuration within code and within the `cdk.json` configuration file, which provides more options for
-our users to supply their configurations in a way that fits their mental model.
-
-We will pull the `IPolicyValidationPlugin` protocol out into its own package that both the CDK CLI and CDK framework will depend on.
-The `validate` method will hold most of the plugin implementation; we will call the Offline Validation Engine
-from there. We can extend the interface contract however we see fit with additional optional properties to fit
-our needs regarding output reporting.
-
-Available plugins will get evaluated during the `cloudExecutable.synthesize()` method, which is the
-earliest common ancestor for all CLI methods that synthesize. In the CDK Toolkit, the earliest common ancestor
-is `synthAndMeasure`; the Toolkit and CLI actually use different sources for synthesis for legacy reasons.
-That means that the plugin will have to be added to both locations to support both synthesis methods.
-
-```ts
-// Run plugins against synthesized templates
-const allStacks = ret.assembly.stacks;
-if (allStacks.length > 0) {
-  const plugins = [new OfflineValidationPlugin(), ...(policyPlugins ?? [])];
-  await runPolicyValidation(allStacks, plugins, ioHelper);
-}
-```
-
-Offline Validation will run by default in addition to any other plugins the user provides.
+By putting Offline Validation in the framework, both the CLI and the CDK Toolkit will be able to use it with no additional
+implementation. Offline Validation will run by default in addition to any other plugins the user provides.
 
 #### Suppression Mechanism
 
 There is a suppression mechanism available for Annotation warnings today:
 `Annotations.of(construct).acknowledgeWarning()`.
 This will be deprecated in favor of a unified `Validations.of()` API that covers
-suppression for all types of CDK errors and warnings.
+suppression for all types of post-synthesis CDK errors and warnings.
 
 The main `Validations` method will be `acknowledge`,
 where the user supplies one or more rule IDs.
@@ -699,29 +646,16 @@ export class Validations {
 }
 ```
 
-The suppressed rules stored in the construct metadata will be available after synthesis to
-pipe to the offline validation engine.
+The suppressed rules stored in the construct metadata will be available to filter violations
+reported by the offline validation engine.
 
 #### Custom Rule Mechanism
 
-Custom rules are written in Rego and configured via `cdk.json`, `--custom-rules` cli option, or in code via `Validations.of(stack).addRules()`.
+Custom rules are written in Rego and configured in code via `Validations.of(stack).addRules()`.
 The user supplies directories or individual `.rego` files on disk.
 
-The CLI reads custom rule paths during synth, resolves all paths, collects `.rego` files, and passes them to the `OfflineValidationPlugin`:
-
-```ts
-const customRulePaths = [
-  ...cdkJsonConfig.validation?.customRules ?? [],
-  ...clioptions.customRules ?? [],
-];
-
-const offlinePlugin = new OfflineValidationPlugin({
-  customRules: resolveRegoPaths(customRulePaths),
-});
-```
-
-For `Validations.of(stack).addRules()`, these rules can be scoped to specific constructs within a CDK App. That means we must translate
-the scope to a filter that is either a) sent to the validation engine or b) applied in a post-validation step. To facilitate this, `Validations`
+Rules must be scoped to specific constructs within a CDK App. That means we must translate
+the scope to a filter that is applied in a post-validation step. To facilitate this, `Validations`
 will manipulate the construct metadata so the information is available after synthesis:
 
 ```ts
@@ -767,8 +701,10 @@ No
    and that happens too late in the deployment process.
 2. Write more CDK construct library exceptions: rejected because it is a treadmill,
    and L1 level users do not get access to L2 level validations.
-3. Use the existing CDK Policy Validation plugin system in the framework: rejected because
-   we want the validation to be usable in the CLI during the `cdk synth` and `cdk validate` commands.
+3. Validation logic in the library: The main reasons to do so center around the ~50MB size and ~600-1000ms startup
+   cost of the validation engine. For now, we decided to go with the established protocol of offline validation
+   happening in the framework, and are willing to eat the ~50MB size cost (and have ideas for parallelizing the
+   startup cost).
 4. Custom rules written in TS: Right now the proposal is to allow for rules to be written in rego/guard rules
    only. It is possible in the future to add support directly in code, with a CDK construct that synthesizes
    into policy langugae rules. But that is more complicated and we will start with the simple solution first.
@@ -782,16 +718,13 @@ No
    users get blocked unnecessarily.
    The suppression mechanism mitigates this
    but adds cognitive overhead to determine if the error is real.
-3. Overlap with existing CDK Policy Validation: Two validation systems running at synth time
-   could confuse users. Clear documentation and messaging is needed
-   to explain how the built-in engine relates to the existing plugin system.
-4. Package size: The default rule set and WASM engine is estimated to add approximately 50MB to the CDK CLI
-   package on disk, tripling its current unpacked size from ~24MB to ~74MB.
-   The npm tarball is gzip-compressed during publish, so the actual download increase
-   is ~15MB — comparable to other large CLI tools in the ecosystem.
-   Disk footprint is negligible for most environments.
-   CI/CD pipelines that install the CLI fresh per run will see a modest increase
-   in install time proportional to the download size increase.
+3. Overlap with existing CDK Policy Validation: Customers with existing policy validation plugins will
+   have questions as to what is now an overlap and what they need to keep in their set up. 
+   Clear documentation and messaging is needed to explain how the default rules interact and whether
+   customers should keep existing plugins or migrate to adding custom rules to the default plugin.
+4. Package size: The default rule set and WASM engine is estimated to add approximately 50MB unpacked size
+   to the framework. Disk footprint is negligible for most environments. CI/CD pipelines that install the library
+   fresh per run will see a modest increase in install time proportional to the download size increase.
 
 ### What is the high-level project plan?
 
