@@ -25,18 +25,27 @@ slow feedback from deployment failures disrupts your development lifecycle.
 CDK Comprehensive Validation gives you confidence that your deployment will succeed,
 up to X% faster than waiting for a full `cdk deploy` to fail.
 
-A new `cdk validate` command also unifies all validation output —
-offline rule checks, construct library errors, and CloudFormation change set validation —
-into a single invocation.
+CDK Comprehensive Validation combines three validation concepts under one umbrella:
+- Construct library errors: errors written into CDK code that cause exceptions _during_ synthesis
+- "Offline" validation: local validation of CFN templates immediately _after_ synthesis
+- "Online" validation: validation prior to CFN change set execution with access to your AWS account
+
+A new `cdk validate` command unifies these validation types into one comprehensive output.
 
 ##### Three Layers of Defense
 
 The AWS CDK already provides built-in validation at two points in the deployment lifecycle:
-construct library exceptions during synthesis
-and CloudFormation Early Validation during change set creation.
-CDK Comprehensive Validation adds a third layer — offline validation —
-that runs immediately after synthesis,
-filling the gap between app-level checks and deployment-time checks.
+construct library exceptions during synthesis and Online Validation during change set creation.
+CDK Comprehensive Validation adds a third layer — Offline Validation —
+that runs immediately after synthesis, filling the gap between app-level checks and deployment-time checks.
+
+Note that, Annotation warnings/errors and optional Policy Validation plugins operate at the post-synthesis layer.
+Offline Validation provides additional default rules at this layer and also combines the other validations into
+one concept. These default rules cover invalid property values, deprecated runtimes, and other mistakes that will
+definitively fail CloudFormation deployment. Since this validation happens at the CFN template level, all CDK
+Construct levels (L1+) will benefit from Offline Validaton.
+
+The default layers of defense are as follows:
 
 ```mermaid
 block-beta
@@ -60,9 +69,9 @@ block-beta
     space
     V1["CDK Construct\nLibrary Validation"]:2
     space
-    V2["Offline\nValidation\n(NEW)"]:2
+    V2["Annotation Errors\nOffline Validations (NEW)"]:2
     space:3
-    V4["CFN Early\nValidation"]:2
+    V4["Online\nValidation"]:2
     space:2
     V5["CFN Deploy-Time\nErrors"]:2
 
@@ -81,9 +90,7 @@ block-beta
 * **CDK construct library exceptions (existing)** — Handwritten checks that run when your CDK constructs
   are built during synthesis. These catch issues like negative duration values or missing required properties.
 * **Offline Validation (NEW)** — Immediately after synthesis, the new built-in validation engine evaluates
-  your CloudFormation template against hundreds of rules. Unlike external tools, this engine resolves
-  CloudFormation intrinsic functions natively, so it can catch issues that currently available CloudFormation
-  analysis tools miss.
+  your CloudFormation template against hundreds of rules.
 * **CFN Early Validation (existing)** — During `cdk deploy`, CloudFormation validates your change set
   before execution, catching issues like resources that already exist. Note that you get this by default, but
   not if you bypass change set creation with `--method=direct`.
@@ -95,8 +102,98 @@ It combines all post-synthesis checks into one term that covers Annotation error
 [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html)
 plugins. In fact, the new rule set shipped as part of Offline Validation is implemented
 as a default Policy Validation plugin. This default rule set covers common misconfigurations including
-invalid property values, deprecated runtimes, overly permissive IAM policies, missing encryption, and
-cross-resource dependency issues. These additional validations add under Y seconds to synthesis time.
+invalid property values, deprecated runtimes, and other errors that would result in a CloudFormation failure
+at deploy time.
+
+##### Custom Rules and Sharing Across Organizations
+
+A new `Validations` API becomes the one-stop shop for customizations that previously were ad-hoc with different
+interfaces, implementations, and outputs.
+
+First, `Validations` will directly replace `Annotations` as the place to add ad-hoc errors or warnings:
+
+```ts
+Validations.of(myConstruct).addWarning('annotation:WarningId', 'message');
+Validations.of(myConstruct).addError('message');
+```
+
+Organizations can plug CDK Nag rule sets into `Validations` or
+supply custom rule sets into the Offline Validation engine, written in a policy language like Rego or
+CloudFormation Guard (TBD on exact language).
+
+```ts
+import { AwsSolutionsChecks } from 'cdk-nag';
+
+// previously Aspects.of(app).add(new AwsSolutionsChecks())
+Validations.of(myApp).addAspects(new AwsSolutionsChecks());
+```
+
+This turns `AwsSolutionsChecks` into a "plugin" and becomes baked into anywhere validation happens or is presented
+(example output below).
+
+The existing `CfnGuardValidator` plugin works seamlessly with this new design:
+
+```ts
+import { CfnGuardValidator } from '@cdklabs/cdk-validator-cfnguard';
+
+// previously new CfnGuardValidator() would be configured directly on the app
+Validations.of(myApp).addPlugin(new CfnGuardValidator());
+```
+
+Finally, specific rules can be custom-written in a policy language.
+Here is a rule that checks Lambda function architectures:
+
+```rego
+package cfn
+
+deny[msg] {
+    resource := input.Resources[name]
+    resource.Type == "AWS::Lambda::Function"
+    arch := resource.Properties.Architectures[_]
+    not arch_valid(arch)
+    msg := sprintf(
+      "InvalidArchitectureValue: Allowed values: x86_64, arm64. Received: \"%s\" (at Resources/%s)",
+      [arch, name]
+    )
+}
+
+arch_valid("x86_64")
+arch_valid("arm64")
+```
+
+This can then be shared across organizations by exposing the `IRule[]` interface:
+
+```ts
+interface IRule {
+  readonly source: string;
+}
+
+// @your-org/cfn-rules
+export const customRules: IRule[] = [
+  { source: path.join(__dirname, 'rules/security') },
+  { source: path.join(__dirname, 'rules/naming') },
+];
+
+// consumed as
+import { customRules } from '@your-org/cfn-rules';
+
+Validations.of(myApp).addRules(new customRules());
+```
+
+Because Rego files are plain text with no compilation step,
+they can be distributed through any package manager (npm, PyPI, Maven, NuGet).
+This gives organizations semver for rule versioning, changelogs for communicating changes,
+and the dependency management that CDK users already rely on.
+
+##### Suppressing Warnings and Errors
+
+Offline validation findings regardless of provenance can be suppressed directly in your CDK code
+using the `Validations.of()` API:
+
+```ts
+Validations.of(myConstruct).acknowledge('annotation:WarningId');
+Validations.of(myConstruct).acknowledgeAllWarnings();
+```
 
 ##### `cdk validate`
 
@@ -380,62 +477,6 @@ an AI agent can run it after generating infrastructure code
 and immediately know whether the template is valid
 without waiting for a full deployment.
 
-##### Custom Rules and Sharing Across Organizations
-
-Organizations can extend the default rule set with custom rules
-written in a policy language like Rego or CloudFormation Guard.
-
-For example, here is a rule that checks Lambda function architectures:
-
-```rego
-package cfn
-
-deny[msg] {
-    resource := input.Resources[name]
-    resource.Type == "AWS::Lambda::Function"
-    arch := resource.Properties.Architectures[_]
-    not arch_valid(arch)
-    msg := sprintf(
-      "InvalidArchitectureValue: Allowed values: x86_64, arm64. Received: \"%s\" (at Resources/%s)",
-      [arch, name]
-    )
-}
-
-arch_valid("x86_64")
-arch_valid("arm64")
-```
-
-Custom rules can be configured in the library and in the CLI. In the library, you can reference
-specific packages directly in code:
-
-```ts
-import { rulesDir } from '@your-org/cfn-rules';
-
-Validations.of(myApp).addRules({ sources: [rulesDir] });
-```
-
-Because Rego files are plain text with no compilation step,
-they can be distributed through any package manager (npm, PyPI, Maven, NuGet).
-This gives organizations semver for rule versioning, changelogs for communicating changes,
-and the dependency management that CDK users already rely on.
-
-To share custom rules across teams or an entire organization,
-we recommend publishing them in your package manager of choice.
-Rego files are plain text — no compilation or runtime is involved.
-
-##### Suppressing Warnings and Errors
-
-Offline validation findings can be suppressed directly in your CDK code
-using the `Validations.of()` API:
-
-```ts
-Validations.of(myConstruct).acknowledge('UseLatestVersion');
-Validations.of(myConstruct).acknowledgeAllWarnings();
-```
-
-`Validations.of()` also handles annotation warning suppression,
-becoming the unified way to acknowledge warnings in CDK.
-
 ##### CDK Toolkit
 
 Offline Validation will be built natively into the CDK Toolkit. The
@@ -497,15 +538,17 @@ CDK's validation mechanisms include the following:
 
 * construct library exceptions — handwritten errors that occur during synthesis
 * [NEW] Offline Validation — validation of the synthesized CloudFormation Template immediately after synthesis. This covers some existing validation mechanisms:
-  * Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis
+  * Annotation Warnings & Errors - handwritten warnings/errors that are evaluated immediately after synthesis optionally including
+  opinionated rules like CDK Nag.
   * Optional [policy validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html) plugins -
-  allowing CDK Nag, CFN Guard rules, etc.
-  * Default policy validation plugin covering common CFN deployment failures.
-* CFN Early Validation — CFN change sets are validated during CFN change set creation at CDK deploy time
+  allowing CFN Guard rules, etc.
+  * Default plugin covering common CFN deployment failures.
+* Online Validation aka CFN Early Validation — CFN change sets are validated during CFN change set creation at CDK deploy time
 * CFN Deploy-Time Errors — Actual errors that occur during CFN deployment
 
-Offline Validatios is meant to bring much of these additional validation rule sets natively into the CDK CLI.
-Customers can continue to use these mechanisms but many custom set ups will no longer be necessary.
+Offline Validations is meant to consolidate interfaces for all different types of post-synthesis validation into one ergonomic API.
+Existing custom setups will continue to work seamlessly but can now be managed inside one `Validations` class that clearly defines
+the validation position of a CDK App. Validations will be easier to define in one place going forward.
 
 ## Internal FAQ
 
@@ -542,17 +585,17 @@ The engine will handle intrinsics natively. The engine requirements include:
 
 * default rule set includes CFN Guard rules and CFN schema validation
 * support for custom rule sets written in a policy language like Rego
-* executes during `cdk synth` automatically, adding under Y milliseconds of additional time to cdk synth
+* can be executed during `cdk synth` automatically, while not adding over Y milliseconds of overhead
 * finds both errors and warnings, where warnings can be suppressed.
 
 The actual implementation of the engine is out of scope of this RFC however.
 
 The default rule set is likely to be around ~50MB when considering the size of the CFN schema
-and other sources. This is a high penalty to pay considering the v2.1117.0 CDK CLI version is
-~24MB unpacked. We are effectively tripling the unpacked size with the default validation rules.
-
-Still, its better to ship this size penalty in the CLI over the framework, as any cold-start initialization
-of the Validation Engine can be amortized across long-running CDK Toolkit processes like `watch`.
+and other sources. This is a high penalty to pay, and can be paid either by the CDK CLI or CDK framework.
+This RFC proposes that the code lives in the framework. For comparison, the v2.1117.0 CDK CLI version is
+~24MB unpacked and the v2.249.0 CDK framework version is ~108MB. Note that this comparison did not factor in
+the direction of this RFC; the main reason for putting Offline Validation in the framework
+is that it follows historical precedent.
 
 #### Engine Integration
 
@@ -652,12 +695,17 @@ reported by the offline validation engine.
 
 #### Custom Rule Mechanism
 
-Custom rules are written in Rego and configured in code via `Validations.of(stack).addRules()`.
-The user supplies directories or individual `.rego` files on disk.
+Custom rules can come in a few flavors:
+- Aspect rules (this is how CDK Nag is vended)
+- Annotations
+- Plugins
+- Rego/CFN Guard language rules
 
-Rules must be scoped to specific constructs within a CDK App. That means we must translate
-the scope to a filter that is applied in a post-validation step. To facilitate this, `Validations`
-will manipulate the construct metadata so the information is available after synthesis:
+They are all handled by the `Validations` class. Rule provenance will be handled by well-known
+ID prefixes when initialized (i.e. annotation warnings will be prefixed with `annotation:`).
+
+Rules must be scoped to a CDK App or Stack.`Validations` will utilize construct metadata so the
+information is available after synthesis:
 
 ```ts
 export class Validations {
@@ -674,7 +722,9 @@ export class Validations {
 }
 ```
 
-After synthesis, this gets translated and then sent to the engine:
+After synthesis, different sources are handled individually. `Aspect` and `Annotation` rules
+are handled by traversing the construct tree (no change here). Individual plugins are handled as
+they were before. Custom Rego/CFN Guard rules are compiled with the default rules and sent to the engine:
 
 ```ts
 function collectCustomRulesFromAssembly(assembly: CloudAssembly): string[] {
