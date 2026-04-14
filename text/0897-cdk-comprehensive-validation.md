@@ -26,6 +26,7 @@ CDK Comprehensive Validation gives you confidence that your deployment will succ
 up to X% faster than waiting for a full `cdk deploy` to fail.
 
 CDK Comprehensive Validation combines three validation concepts under one umbrella:
+
 - Construct library errors: errors written into CDK code that cause exceptions _during_ synthesis
 - "Offline" validation: local validation of CFN templates immediately _after_ synthesis
 - "Online" validation: validation prior to CFN change set execution with access to your AWS account
@@ -527,12 +528,13 @@ for agentic workflows to validate their work, up to X% faster than a full cdk de
 ### Why should we not do this?
 
 There are two risks associated with this proposal:
+
 - material increase of synth time (larger than the ~1s quoted in this RFC)
 - false positives
 
 For synth time, we have evaluated that the main time sink will be the start up cost of the engine at 600-1000ms. The actual
 validation of CFN templates takes a negligible amount of time. We can get creative with parallelizing the engine start up
-and track this start up cost in telemetry to ensure it does not increase over time. 
+and track this start up cost in telemetry to ensure it does not increase over time.
 
 False positives will always be a risk, but this risk is somewhat mitigated by having a robust suppression mechanism. Although
 needing to suppress incorrect errors/warnings is friction to the user, it acts as a safety blanket to ensure validation does
@@ -642,14 +644,14 @@ export class Validations {
       if (this.isAnnotationRule(id)) {
         Annotations.of(this.construct).acknowledgeWarning(id);
       } else if (this.isOfflineRule(id)) {
-        this.supressOfflineValidation(id);
+        this.suppress(id);
       } else {
         // warn that the id is invalid
       }
     }
   }
 
-  private suppressOfflineValidation(id: string) {
+  private suppress(id: string) {
     const existing = this.construct.node.metadata.find(
       m => m.type === Validations.SUPPRESSED_RULES_METADATA_KEY,
     );
@@ -670,10 +672,10 @@ reported by the offline validation engine.
 #### Custom Rule Mechanism
 
 Custom rules can come in a few flavors:
-- Aspect rules (this is how CDK Nag is vended)
+
 - Annotations
+- Aspect rules (this is how CDK Nag is vended, but under the hood it uses Annotations)
 - Plugins
-- Rego/CFN Guard language rules
 
 They are all handled by the `Validations` class. Rule provenance will be handled by well-known
 ID prefixes when initialized (i.e. annotation warnings will be prefixed with `annotation:`).
@@ -683,38 +685,20 @@ information is available after synthesis:
 
 ```ts
 export class Validations {
-  public addRules(options: { sources: string[] }): void {
+  public addPlugin(plugin: IPolicyValidationPlugin) {
     const stage = Stage.of(this.construct);
     if (!stage) {
-      throw new Error('addRules() must be called within a Stage or App');
+      throw new Error('addPlugin() must be called within a Stage or App');
     }
-    for (const source of options.sources) {
-      const resolved = path.resolve(source);
-      stage.node.addMetadata(Validations.CUSTOM_RULES_METADATA_KEY, resolved);
-    }
-  }
+    stage.policyValidation.push(plugin);
+  }  
 }
 ```
 
-After synthesis, different sources are handled individually. `Aspect` and `Annotation` rules
+After synthesis, different sources are handled individually. `Annotation` rules
 are handled by traversing the construct tree (no change here). Individual plugins are handled as
-they were before. Custom Rego/CFN Guard rules are compiled with the default rules and sent to the engine:
-
-```ts
-function collectCustomRulesFromAssembly(assembly: CloudAssembly): string[] {
-  const paths: string[] = [];
-  for (const stack of assembly.stacksRecursively) {
-    for (const [, entries] of Object.entries(stack.manifest.metadata ?? {})) {
-      for (const entry of entries) {
-        if (entry.type === Validations.CUSTOM_RULES_METADATA_KEY) {
-          paths.push(entry.data as string);
-        }
-      }
-    }
-  }
-  return [...new Set(paths)];
-}
-```
+they were before. The specific `RegoValidator` and `CfnGuardValidator` plugins will utilize the
+Offline Validation engine under the hood to evaluate rules written in those languages.
 
 ### Is this a breaking change?
 
