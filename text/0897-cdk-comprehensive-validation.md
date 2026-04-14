@@ -601,10 +601,9 @@ export interface PolicyViolation {
 }
 ```
 
-The `IPolicyValidationPluginBeta1` interface has lived in the CDK framework for 3 years without change. There are no open issues
-concerned with how we interact with the validation plugin API (save for this [issue](https://github.com/aws/aws-cdk/issues/25331)
-that complains about polluting the console output, but we have never claimed the console output will be strictly stable).
-Therefore this RFC proposes to graduate the interface to stable by removing the `Beta1` suffix.
+The `IPolicyValidationPluginBeta1` interface has lived in the CDK framework for 3 years without change. There is one open issue
+that we plan to fix: [print](https://github.com/aws/aws-cdk/issues/25331) to stderr rather than stdout. Afterwards, this RFC proposes
+to graduate the interface to stable by removing the `Beta1` suffix.
 
 The validation logic lives in the framework to allow for seamless integration of default validations and custom validations.
 Annotation warnings & errors and Policy Validation plugins are already established in the framework. By reusing the Policy
