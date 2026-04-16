@@ -70,7 +70,7 @@ const bridge = new CfnBridge(stack, 'Bridge', {
 Same Configuration in an example L2:
 
 ```ts
-const vpcInterface = mediaconnect.VpcInterface.create({
+const vpcInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'my-vpc-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -243,6 +243,7 @@ Property Interface for Flow:
 FlowProps {
   /**
    * Flow Name
+   * @default - auto-generated
    */
   flowName?: string;
 
@@ -401,15 +402,44 @@ flow.grants.actions(fn, 'mediaconnect:UpdateFlow');
 
 ##### Flow Source Types
 
-MediaConnect supports multiple source types for ingesting content into a flow:
+MediaConnect supports multiple source types for ingesting content into a flow. The examples below use `NetworkConfiguration.publicNetwork()` for simplicity, but all protocol-based sources can also use `NetworkConfiguration.vpc()` with a VPC interface for private connectivity.
 
-###### SRT Listener Source
+###### RTP
+
+RTP (Real-time Transport Protocol) is a standard protocol for delivering audio and video over IP networks.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.rtp({
+    flowSourceName: 'rtp-source',
+    port: 5000,
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+###### RTP-FEC
+
+RTP with Forward Error Correction adds redundancy to recover lost packets without retransmission. Use this when contributing via RTP and you need packet recovery.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.rtpFec({
+    flowSourceName: 'rtp-fec-source',
+    port: 5000,
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+###### SRT Listener
+
+SRT (Secure Reliable Transport) in listener mode configures MediaConnect to listen on a specific port for incoming content. The upstream device connects to MediaConnect as a caller.
 
 ```ts
 new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.srtListener({
-    flowSourceName: 'live-encoder-source',
-    description: 'Live encoder feed',
+    flowSourceName: 'srt-listener-source',
     port: 5000,
     minLatency: Duration.millis(2000),
     network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
@@ -417,14 +447,71 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 });
 ```
 
+###### SRT Caller
+
+SRT in caller mode configures MediaConnect to connect to a remote SRT listener. Use this when the source device is listening for incoming connections rather than pushing content.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.srtCaller({
+    flowSourceName: 'srt-caller-source',
+    sourceListenerAddress: '198.51.100.10',
+    sourceListenerPort: 5000,
+    minLatency: Duration.millis(2000),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+###### RIST
+
+RIST (Reliable Internet Stream Transport) provides reliable video transport with packet recovery.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.rist({
+    flowSourceName: 'rist-source',
+    port: 5000,
+    maxLatency: Duration.millis(2000),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+###### Zixi Push
+
+Zixi Push uses the Zixi protocol for reliable video transport. Content is pushed to MediaConnect from a Zixi-compatible component upstream.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.zixiPush({
+    flowSourceName: 'zixi-source',
+    maxLatency: Duration.millis(2000),
+    network: mediaconnect.NetworkConfiguration.publicNetwork('203.0.113.0/24'),
+  }),
+});
+```
+
+###### Router Source
+
+Use a router source when the flow's source comes from a MediaConnect Router rather than a direct connection.
+
+```ts
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.router(),
+});
+```
+
 ###### VPC Source
+
+Use a VPC-based source when you need a connection between a flow and your Amazon VPC.
 
 ```ts
 declare const securityGroup: ec2.ISecurityGroup;
 declare const subnet: ec2.ISubnet;
 declare const role: iam.IRole;
 
-const vpcInterface = mediaconnect.VpcInterface.create({
+const vpcInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'my-vpc-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -434,7 +521,6 @@ const vpcInterface = mediaconnect.VpcInterface.create({
 new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.rist({
     flowSourceName: 'vpc-source',
-    description: 'VPC-based source',
     port: 5000,
     maxLatency: Duration.millis(2000),
     network: mediaconnect.NetworkConfiguration.vpc(vpcInterface),
@@ -443,10 +529,11 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 });
 ```
 
-###### Entitled Source (From Another AWS Account)
+###### Entitled Source
+
+Entitlements allow you to subscribe to content from another AWS account.
 
 ```ts
-// Import an entitlement from another AWS account
 const entitlement = mediaconnect.FlowEntitlement.fromFlowEntitlementArn(
   stack, 'ImportedEntitlement',
   'arn:aws:mediaconnect:us-west-2:111122223333:entitlement:1-11111111111111111111111111111111:MyEntitlement',
@@ -456,6 +543,32 @@ new mediaconnect.Flow(stack, 'MyFlow', {
   source: mediaconnect.SourceConfiguration.entitlement({
     entitlement: entitlement,
   }),
+});
+```
+
+###### Gateway Bridge Source
+
+Use a gateway bridge source when ingesting content from on-premises equipment through a MediaConnect gateway and bridge.
+
+```ts
+declare const bridge: mediaconnect.IBridge;
+declare const role: iam.IRole;
+declare const securityGroup: ec2.ISecurityGroup;
+declare const subnet: ec2.ISubnet;
+
+const vpcInterface = mediaconnect.VpcInterface.define({
+  vpcInterfaceName: 'bridge-interface',
+  role: role,
+  securityGroups: [securityGroup],
+  subnet: subnet,
+});
+
+new mediaconnect.Flow(stack, 'MyFlow', {
+  source: mediaconnect.SourceConfiguration.gatewayBridge({
+    bridge: bridge,
+    vpcInterface: vpcInterface,
+  }),
+  vpcInterfaces: [vpcInterface],
 });
 ```
 
@@ -534,14 +647,14 @@ For further information refer to [our documentation](https://docs.aws.amazon.com
 
 ##### Creating VPC Interfaces
 
-VPC interfaces are created using the `VpcInterface.create()` factory method and can be reused across multiple flows and bridges:
+VPC interfaces are created using the `VpcInterface.define()` factory method and can be reused across multiple flows and bridges:
 
 ```ts
 declare const role: iam.IRole;
 declare const securityGroup: ec2.ISecurityGroup;
 declare const subnet: ec2.ISubnet;
 
-const vpcInterface = mediaconnect.VpcInterface.create({
+const vpcInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'my-vpc-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -559,7 +672,7 @@ declare const securityGroup: ec2.ISecurityGroup;
 declare const subnet: ec2.ISubnet;
 
 // ENA (Elastic Network Adapter) - Standard performance
-const enaInterface = mediaconnect.VpcInterface.create({
+const enaInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'ena-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -568,7 +681,7 @@ const enaInterface = mediaconnect.VpcInterface.create({
 });
 
 // EFA (Elastic Fabric Adapter) - Required for CDI workflows
-const efaInterface = mediaconnect.VpcInterface.create({
+const efaInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'efa-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -586,7 +699,7 @@ declare const role: iam.IRole;
 declare const securityGroup: ec2.ISecurityGroup;
 declare const subnet: ec2.ISubnet;
 
-const vpcInterface = mediaconnect.VpcInterface.create({
+const vpcInterface = mediaconnect.VpcInterface.fromNetworkInterfaces({
   vpcInterfaceName: 'existing-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -594,11 +707,6 @@ const vpcInterface = mediaconnect.VpcInterface.create({
   networkInterfaceIds: ['eni-1234567890abcdef0', 'eni-0987654321fedcba0'],
 });
 ```
-
-**Note:** You cannot specify both `networkInterfaceType` and
-`networkInterfaceIds`. Use `networkInterfaceType` to let MediaConnect
-create interfaces automatically, or `networkInterfaceIds` to use
-existing interfaces.
 
 ##### Using VPC Interfaces with Flows
 
@@ -609,7 +717,7 @@ declare const role: iam.IRole;
 declare const securityGroup: ec2.ISecurityGroup;
 declare const subnet: ec2.ISubnet;
 
-const vpcInterface = mediaconnect.VpcInterface.create({
+const vpcInterface = mediaconnect.VpcInterface.define({
   vpcInterfaceName: 'flow-vpc-interface',
   role: role,
   securityGroups: [securityGroup],
@@ -651,10 +759,44 @@ new mediaconnect.Bridge(stack, 'EgressBridge', {
 });
 ```
 
-Property Interface for VpcInterface:
+Property Interfaces for VpcInterface:
 
 ```ts
-VpcInterfaceProps {
+/**
+ * Props for VpcInterface.define() — creates new network interfaces
+ */
+VpcInterfaceDefineProps {
+  /**
+   * Unique name for the VPC interface
+   */
+  name: string;
+
+  /**
+   * IAM role that MediaConnect assumes to create ENIs in your account
+   */
+  role: IRole;
+
+  /**
+   * Security groups to apply to the ENI
+   */
+  securityGroups: ISecurityGroup[];
+
+  /**
+   * Subnet where the ENI will be created (must be in the same AZ as the flow)
+   */
+  subnet: ISubnet;
+
+  /**
+   * Network interface type (ENA or EFA)
+   * @default NetworkInterface.ENA
+   */
+  networkInterfaceType?: NetworkInterface;
+}
+
+/**
+ * Props for VpcInterface.fromNetworkInterfaces() — uses existing ENIs
+ */
+VpcInterfaceFromNetworkInterfacesProps {
   /**
    * Unique name for the VPC interface
    */
@@ -677,15 +819,8 @@ VpcInterfaceProps {
 
   /**
    * Pre-created network interface IDs
-   * @default - MediaConnect creates network interfaces automatically
    */
-  networkInterfaceIds?: string[];
-
-  /**
-   * Network interface type (ENA or EFA)
-   * @default - Default network interface type
-   */
-  networkInterfaceType?: NetworkInterface;
+  networkInterfaceIds: string[];
 }
 ```
 
@@ -802,6 +937,7 @@ Property Interface for Gateway:
 GatewayProps {
   /**
    * Gateway Name
+   * @default - auto-generated
    */
   gatewayName?: string;
 
@@ -853,6 +989,7 @@ Property Interface for Bridge:
 BridgeProps {
   /**
    * Bridge Name
+   * @default - auto-generated
    */
   bridgeName?: string;
 
