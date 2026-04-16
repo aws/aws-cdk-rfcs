@@ -128,7 +128,8 @@ Validations.of(myApp).addPlugin(new CfnGuardValidator());
 ```
 
 The previous entrypoint of plugins within the `App`, `policyValidationsBeta1` will be deprecated
-and eventually removed after 60 days of deprecation (it is a "beta" property that is not subject to backwards compatibility).
+but not removed. Per the CDK's [experimental ("preview") API guidelines](https://github.com/aws/aws-cdk/blob/main/CONTRIBUTING.md#adding-new-experimental-preview-apis),
+`Beta1` properties are never removed — they are deprecated and replaced by the stable version or a newer preview version.
 
 We will modify CDK Nag to be a plugin CDK team manages similar to `CfnGuardValidator`. Organizations can then plug CDK Nag
 rule sets into `Validations`, which becomes baked into anywhere validation happens or is presented (example output shown in the
@@ -154,9 +155,9 @@ import { CustomRegoValidator } from '@your-org/cfn-rules';
 Validations.of(myApp).addPlugin(new CustomRegoValidator());
 ```
 
-##### Suppressing Warnings and Errors
+##### Suppressing Errors and Warnings
 
-Offline validation findings regardless of provenance can be suppressed directly in your CDK code
+Offline validation findings at error or warning severity can be suppressed directly in your CDK code
 using the `Validations.of()` API:
 
 ```ts
@@ -180,19 +181,46 @@ cdk validate MyAppStack
 cdk validate MyAppStack --include offline --include online
 ```
 
-The unified output deliniates error provenance and whether the issue is suppressable. The following
-example is of a user with a CDK Nag Policy Validation plugin enabled:
+The unified output deliniates error provenance and severity. Findings have three severity levels:
+
+- **Fatal** — the template will definitively fail CloudFormation deployment. Fatal findings fail `cdk synth` and cannot be suppressed.
+- **Error** — likely misconfigurations that can be suppressed if intentional.
+- **Warning** — best practice recommendations that can be suppressed.
+
+The following example is of a user with a CDK Nag Policy Validation plugin enabled:
 
 ```bash
 > cdk validate MyAppStack
 Validation Report
 -----------------
 
-(Blocking)
+(Fatal)
+
+F3012 - Unknown resource type (1 occurrences)
+Severity: Fatal
+Source: ValidationEngine (Default)
+
+  Occurrences:
+
+    - Construct Path: MyStack/VpcStack/PublicSubnet
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  VpcStack (MyStack/VpcStack)
+                  └──  PublicSubnet (MyStack/VpcStack/PublicSubnet)
+                       │ Construct: aws-cdk-lib/aws-ec2.PublicSubnet
+                       │ Library Version: 2.180.0
+                       │ Location: new MyStack (lib/my-stack.ts:30:5)
+    - Resource ID: VpcStackPublicSubnetABC123
+
+  Description: Resource type 'AWS::EC2::Subnt' is not a valid CloudFormation resource type
+
+(Errors)
 
 AwsSolutions-S1 (1 occurrences)
 Severity: Error
 Source: CdkNagValidator
+Suppress: Validations.of(construct).acknowledge('AwsSolutions-S1')
 
   Occurrences:
 
@@ -214,6 +242,7 @@ Source: CdkNagValidator
 Subnet has MapPublicIpOnLaunch enabled (1 occurrences)
 Severity: Error
 Source: Construct Annotations
+Suppress: Validations.of(construct).acknowledge('annotation:MapPublicIpOnLaunch')
 
   Occurrences:
 
@@ -230,7 +259,7 @@ Source: Construct Annotations
 
   Description: Subnet has MapPublicIpOnLaunch enabled without justification
 
-(Suppressable)
+(Warnings)
 
 I3011 - S3 bucket versioning should be enabled (1 occurrences)
 Severity: Warning
@@ -275,17 +304,17 @@ Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.publicRead')
 
 Policy Validation Report Summary
 
-╔═════════════════════════════════════╤═════════╤════════════════════╗
-║ Source                              │ Status  │ Blocking / Suppr.  ║
-╟─────────────────────────────────────┼─────────┼────────────────────╢
-║ ValidationEngine (Default)          │ success │ 0 / 1              ║
-╟─────────────────────────────────────┼─────────┼────────────────────╢
-║ CdkNagValidator                     │ failure │ 1 / 0              ║
-╟─────────────────────────────────────┼─────────┼────────────────────╢
-║ Construct Annotations               │ failure │ 1 / 1              ║
-╚═════════════════════════════════════╧═════════╧════════════════════╝
+╔═════════════════════════════════════╤═════════╤═══════╤═══════╤══════════╗
+║ Source                              │ Status  │ Fatal │ Error │ Warning  ║
+╟─────────────────────────────────────┼─────────┼───────┼───────┼──────────╢
+║ ValidationEngine (Default)          │ failure │ 1     │ 0     │ 1        ║
+╟─────────────────────────────────────┼─────────┼───────┼───────┼──────────╢
+║ CdkNagValidator                     │ failure │ 0     │ 1     │ 0        ║
+╟─────────────────────────────────────┼─────────┼───────┼───────┼──────────╢
+║ Construct Annotations               │ failure │ 0     │ 1     │ 1        ║
+╚═════════════════════════════════════╧═════════╧═══════╧═══════╧══════════╝
 
-2 blocking, 2 suppressable
+1 fatal, 2 errors, 2 warnings
 
 Validation failed. See the validation report above for details
 ```
@@ -297,49 +326,21 @@ The command also generates the report in JSON format with the `--json` option.
   "title": "Validation Report",
   "summary": {
     "status": "failure",
-    "blocking": 2,
-    "suppressable": 2,
+    "fatal": 1,
+    "errors": 2,
+    "warnings": 2,
     "sources": [
-      { "name": "ValidationEngine (Default)", "version": "1.0.0", "status": "success", "blocking": 0, "suppressable": 1 },
-      { "name": "CdkNagValidator", "version": "2.28.0", "status": "failure", "blocking": 1, "suppressable": 0 },
-      { "name": "Construct Annotations", "status": "failure", "blocking": 1, "suppressable": 1 }
+      { "name": "ValidationEngine (Default)", "version": "1.0.0", "status": "failure", "fatal": 1, "errors": 0, "warnings": 1 },
+      { "name": "CdkNagValidator", "version": "2.28.0", "status": "failure", "fatal": 0, "errors": 1, "warnings": 0 },
+      { "name": "Construct Annotations", "status": "failure", "fatal": 0, "errors": 1, "warnings": 1 }
     ]
   },
-  "blocking": [
+  "fatal": [
     {
-      "ruleName": "AwsSolutions-S1",
-      "severity": "Error",
-      "source": "CdkNagValidator",
-      "description": "The S3 Bucket does not have server access logs enabled",
-      "fix": "Enable server access logging by setting the serverAccessLogsBucket property",
-      "occurrences": [
-        {
-          "constructPath": "MyStack/DataBucket",
-          "templatePath": "./cdk.out/MyStack.template.json",
-          "resourceLogicalId": "DataBucket2C40E2F8",
-          "locations": ["Properties/LoggingConfiguration"],
-          "constructStack": {
-            "id": "MyStack",
-            "path": "MyStack",
-            "construct": "aws-cdk-lib.Stack",
-            "libraryVersion": "2.180.0",
-            "location": "Object.<anonymous> (bin/app.ts:8:1)",
-            "child": {
-              "id": "DataBucket",
-              "path": "MyStack/DataBucket",
-              "construct": "aws-cdk-lib/aws-s3.Bucket",
-              "libraryVersion": "2.180.0",
-              "location": "new MyStack (lib/my-stack.ts:12:5)"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "ruleName": "Subnet has MapPublicIpOnLaunch enabled",
-      "severity": "Error",
-      "source": "Construct Annotations",
-      "description": "Subnet has MapPublicIpOnLaunch enabled without justification",
+      "ruleName": "F3012",
+      "severity": "Fatal",
+      "source": "ValidationEngine (Default)",
+      "description": "Resource type 'AWS::EC2::Subnt' is not a valid CloudFormation resource type",
       "occurrences": [
         {
           "constructPath": "MyStack/VpcStack/PublicSubnet",
@@ -370,7 +371,82 @@ The command also generates the report in JSON format with the `--json` option.
       ]
     }
   ],
-  "suppressable": [
+  "errors": [
+    {
+      "ruleName": "AwsSolutions-S1",
+      "severity": "Error",
+      "source": "CdkNagValidator",
+      "description": "The S3 Bucket does not have server access logs enabled",
+      "fix": "Enable server access logging by setting the serverAccessLogsBucket property",
+      "suppress": {
+        "mechanism": "acknowledge",
+        "id": "AwsSolutions-S1",
+        "instruction": "Validations.of(construct).acknowledge('AwsSolutions-S1')"
+      },
+      "occurrences": [
+        {
+          "constructPath": "MyStack/DataBucket",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "DataBucket2C40E2F8",
+          "locations": ["Properties/LoggingConfiguration"],
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "DataBucket",
+              "path": "MyStack/DataBucket",
+              "construct": "aws-cdk-lib/aws-s3.Bucket",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:12:5)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "ruleName": "Subnet has MapPublicIpOnLaunch enabled",
+      "severity": "Error",
+      "source": "Construct Annotations",
+      "description": "Subnet has MapPublicIpOnLaunch enabled without justification",
+      "suppress": {
+        "mechanism": "acknowledge",
+        "id": "annotation:MapPublicIpOnLaunch",
+        "instruction": "Validations.of(construct).acknowledge('annotation:MapPublicIpOnLaunch')"
+      },
+      "occurrences": [
+        {
+          "constructPath": "MyStack/VpcStack/PublicSubnet",
+          "templatePath": "./cdk.out/MyStack.template.json",
+          "resourceLogicalId": "VpcStackPublicSubnetABC123",
+          "constructStack": {
+            "id": "MyStack",
+            "path": "MyStack",
+            "construct": "aws-cdk-lib.Stack",
+            "libraryVersion": "2.180.0",
+            "location": "Object.<anonymous> (bin/app.ts:8:1)",
+            "child": {
+              "id": "VpcStack",
+              "path": "MyStack/VpcStack",
+              "construct": "aws-cdk-lib/aws-ec2.Vpc",
+              "libraryVersion": "2.180.0",
+              "location": "new MyStack (lib/my-stack.ts:28:5)",
+              "child": {
+                "id": "PublicSubnet",
+                "path": "MyStack/VpcStack/PublicSubnet",
+                "construct": "aws-cdk-lib/aws-ec2.PublicSubnet",
+                "libraryVersion": "2.180.0",
+                "location": "new MyStack (lib/my-stack.ts:30:5)"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "warnings": [
     {
       "ruleName": "I3011",
       "severity": "Warning",
@@ -558,7 +634,7 @@ The engine will handle intrinsics natively. The engine requirements include:
 * default rule set includes CFN Guard rules and CFN schema validation
 * support for custom rule sets written in a policy language like Rego
 * can be executed during `cdk synth` automatically, while not adding over Y milliseconds of overhead
-* finds both errors and warnings, where warnings can be suppressed.
+* produces findings at three severity levels: fatal, error, and warning. Fatal findings fail synthesis. Errors and warnings are displayed in the validation report and can be suppressed.
 
 The actual implementation of the engine is out of scope of this RFC however.
 
@@ -702,10 +778,12 @@ Offline Validation engine under the hood to evaluate rules written in those lang
 
 ### Is this a breaking change?
 
-No. The purpose of blocking Offline Validation rules is that such a configuration _cannot_ successfully deploy.
-And if we are unsure of that, we will provide the error as a suppressable warning. Because we are committed to
-backwards compatibility, some rules we really want to be errors may have to be warnings. Alternatively, `cdk validate`
-can throw the right errors while we may need to take a softer approach in `cdk synth`.
+No. Fatal Offline Validation rules represent configurations that _cannot_ successfully deploy.
+Errors represent likely misconfigurations that can be suppressed if intentional.
+And if we are unsure whether something will fail deployment, we will provide it as a suppressable warning.
+Because we are committed to backwards compatibility, some rules we really want to be fatal may have to be
+errors or warnings. Alternatively, `cdk validate` can throw the right errors while we may need to take a
+softer approach in `cdk synth`.
 
 ### What alternative solutions did you consider?
 
