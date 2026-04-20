@@ -128,8 +128,7 @@ Validations.of(myApp).addPlugin(new CfnGuardValidator());
 ```
 
 The previous entrypoint of plugins within the `App`, `policyValidationsBeta1` will be deprecated
-but not removed. Per the CDK's [experimental ("preview") API guidelines](https://github.com/aws/aws-cdk/blob/main/CONTRIBUTING.md#adding-new-experimental-preview-apis),
-`Beta1` properties are never removed — they are deprecated and replaced by the stable version or a newer preview version.
+but not removed, following the CDK's [experimental ("preview") API guidelines](https://github.com/aws/aws-cdk/blob/main/CONTRIBUTING.md#adding-new-experimental-preview-apis).
 
 We will modify CDK Nag to be a plugin CDK team manages similar to `CfnGuardValidator`. Organizations can then plug CDK Nag
 rule sets into `Validations`, which becomes baked into anywhere validation happens or is presented (example output shown in the
@@ -184,7 +183,8 @@ cdk validate MyAppStack --include offline --include online
 The unified output deliniates error provenance and severity. Findings have three severity levels:
 
 - **Fatal** — the template will definitively fail CloudFormation deployment. Fatal findings fail `cdk synth` and cannot be suppressed.
-- **Error** — likely misconfigurations that can be suppressed if intentional.
+- **Error** — likely misconfigurations that can be suppressed if intentional. It is recommended that users configure their CDK App via
+  feature flag to fail on errors but this does not come by default to preserve backwards compatibility.
 - **Warning** — best practice recommendations that can be suppressed.
 
 The following example is of a user with a CDK Nag Policy Validation plugin enabled:
@@ -776,14 +776,42 @@ are handled by traversing the construct tree (no change here). Individual plugin
 they were before. The specific `RegoValidator` and `CfnGuardValidator` plugins will utilize the
 Offline Validation engine under the hood to evaluate rules written in those languages.
 
+#### Telemetry
+
+To support the launch of CDK Comprehensive Validation, we will collect additional metrics that fit directly
+into the existing [schema](https://github.com/aws/aws-cdk-cli/blob/main/packages/aws-cdk/lib/cli/telemetry/schema.ts):
+
+- Fatal/Error/Warning counters:
+
+```json
+{
+  "counters": {
+    "fatalValidationCount": 0,
+    "errorValidationCount": 3,
+    "warningValidationCount": 7
+  }
+}
+```
+
+- Duration of engine startup and engine validation:
+
+```json
+{
+  "duration": {
+    "components": {
+      "validationEngineLoad": 1000,
+      "validationTime": 50
+    }
+  }
+}
+```
+
 ### Is this a breaking change?
 
 No. Fatal Offline Validation rules represent configurations that _cannot_ successfully deploy.
 Errors represent likely misconfigurations that can be suppressed if intentional.
 And if we are unsure whether something will fail deployment, we will provide it as a suppressable warning.
-Because we are committed to backwards compatibility, some rules we really want to be fatal may have to be
-errors or warnings. Alternatively, `cdk validate` can throw the right errors while we may need to take a
-softer approach in `cdk synth`.
+Errors will fail synthesis only if a feature flag is configured.
 
 ### What alternative solutions did you consider?
 
@@ -817,17 +845,11 @@ softer approach in `cdk synth`.
 
 ### What is the high-level project plan?
 
-The project can be split into four parts:
-
-* Integrate a built-in WASM-based offline validation engine
-  with a default rule set, custom Rego rule support,
-  and native CloudFormation intrinsic function resolution
-* Create the `cdk validate` CLI command that unifies output
-  from construct library exceptions, offline validation, and online validation
-* Create a unified suppression mechanism via `Validations.of()`
-  that handles both offline validation and annotation warnings
-* Standardize output from all locations where we report errors/warnings, including:
-  * code-level errors
-  * annotation warnings and errors
-  * offline warnings and errors
-  * CFN Early Validation errors
+The project can be split into four phases:
+- Stabilize the existing API surface: graduate `Beta1` interfaces to stable, create `Validations` class with `addPlugin()`, add
+`addWarning()`/`addError()` methods, implement `acknowledge()` for suppressions, and update the dev guide
+- Unify the validation report: integrate Annotations errors/warnings into the validation report, update the report JSON schema,
+create `OfflineValidationPlugin`, and build `RegoValidator`/`CfnGuardValidator` base.
+- Create the CLI command: implement the `validate` CDK Toolkit method, add `cdk validate` and `--offline` option.
+- Polish: parallelize engine startup with synthesis, add validation telemtry updates, deprecate `Anotations`, turn CDK Nag into
+a plugin.
