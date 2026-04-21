@@ -102,9 +102,17 @@ Offline validation runs automatically as part of `cdk synth` with no additional 
 It combines all post-synthesis checks into one term that covers Annotation errors and warnings as well as
 [Policy Validation](https://docs.aws.amazon.com/cdk/v2/guide/policy-validation-synthesis.html)
 plugins. In fact, the new rule set shipped as part of Offline Validation is implemented
-as a default Policy Validation plugin. This default rule set covers common misconfigurations including
-invalid property values, deprecated runtimes, and other errors that would result in a CloudFormation failure
-at deploy time.
+as a default Policy Validation plugin. This default rule set ships with 200+ rules across four categories,
+each mapped to a severity level:
+
+- **Template correctness** (Fatal) — schema validation, intrinsic function type-checking, reference integrity,
+  and circular dependency detection. These will definitively fail CloudFormation deployment and cannot be suppressed.
+- **Resource-specific checks** (Error) — Lambda runtime deprecation, Fargate CPU/memory combinations,
+  CloudWatch limits, and similar service constraints. These will very likely fail deployment but can be
+  suppressed if intentional.
+- **Security** (Error) — IAM wildcard actions, secrets in parameters, and open security groups.
+- **Best practices** (Warning) — DeletionPolicy on stateful resources, SnapStart adoption, and similar
+  recommendations. These are suppressible and won't block synthesis.
 
 ##### Custom Rules and Sharing Across Organizations
 
@@ -115,7 +123,7 @@ First, `Validations` will directly replace `Annotations` as the place to add ad-
 
 ```ts
 Validations.of(myConstruct).addWarning('annotation:WarningId', 'message');
-Validations.of(myConstruct).addError('message');
+Validations.of(myConstruct).addError('annotation:ErrorId', 'message');
 ```
 
 The existing `CfnGuardValidator` plugin works seamlessly with this new design:
@@ -130,9 +138,13 @@ Validations.of(myApp).addPlugin(new CfnGuardValidator());
 The previous entrypoint of plugins within the `App`, `policyValidationsBeta1` will be deprecated
 but not removed, following the CDK's [experimental ("preview") API guidelines](https://github.com/aws/aws-cdk/blob/main/CONTRIBUTING.md#adding-new-experimental-preview-apis).
 
-We will modify CDK Nag to be a plugin CDK team manages similar to `CfnGuardValidator`. Organizations can then plug CDK Nag
-rule sets into `Validations`, which becomes baked into anywhere validation happens or is presented (example output shown in the
-`cdk validate` section).
+CDK Nag has shipped a new major version that adopts a two-phase approach: (1) emit findings and record
+suppressions into internal state, (2) produce reports from that state (e.g. write suppression reasons to
+CloudFormation metadata for audit trails). The existing CDK Nag user-facing API remains the same.
+
+Separately, CDK Nag is now also vended as a Validations plugin, fitting natively into the new plugin interface.
+You can plug CDK Nag rule sets into `Validations`, which becomes baked into anywhere validation happens or is
+presented (example output shown in the `cdk validate` section).
 
 ```ts
 import { AwsSolutionsChecks } from 'cdk-nag';
@@ -160,9 +172,13 @@ Offline validation findings at error or warning severity can be suppressed direc
 using the `Validations.of()` API:
 
 ```ts
-Validations.of(myConstruct).acknowledge('annotation:WarningId');
-Validations.of(myConstruct).acknowledgeAllWarnings();
+Validations.of(myConstruct).acknowledge({ id: 'annotation:WarningId', reason: 'Accepted risk per team review' });
 ```
+
+Because `acknowledge()` writes to construct tree metadata, plugins like CDK Nag can read
+acknowledgments and build their own audit reports (e.g. writing suppression reasons to
+CloudFormation metadata). This eliminates the need for a special flag on warnings and allows
+CDK Nag to maintain its existing audit trail behavior through the standard `Validations` API.
 
 ##### `cdk validate`
 
@@ -220,7 +236,7 @@ Source: ValidationEngine (Default)
 AwsSolutions-S1 (1 occurrences)
 Severity: Error
 Source: CdkNagValidator
-Suppress: Validations.of(construct).acknowledge('AwsSolutions-S1')
+Suppress: Validations.of(construct).acknowledge({ id: 'AwsSolutions-S1', reason: '...' })
 
   Occurrences:
 
@@ -242,7 +258,7 @@ Suppress: Validations.of(construct).acknowledge('AwsSolutions-S1')
 Subnet has MapPublicIpOnLaunch enabled (1 occurrences)
 Severity: Error
 Source: Construct Annotations
-Suppress: Validations.of(construct).acknowledge('annotation:MapPublicIpOnLaunch')
+Suppress: Validations.of(construct).acknowledge({ id: 'annotation:MapPublicIpOnLaunch', reason: '...' })
 
   Occurrences:
 
@@ -264,7 +280,7 @@ Suppress: Validations.of(construct).acknowledge('annotation:MapPublicIpOnLaunch'
 I3011 - S3 bucket versioning should be enabled (1 occurrences)
 Severity: Warning
 Source: ValidationEngine (Default)
-Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.bucketVersioning')
+Suppress: Validations.of(construct).acknowledge({ id: 'aws-cdk-lib:S3.bucketVersioning', reason: '...' })
 
   Occurrences:
 
@@ -286,7 +302,7 @@ Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.bucketVersioning
 Bucket policy allows public read access (1 occurrences)
 Severity: Warning
 Source: Construct Annotations
-Suppress: Validations.of(construct).acknowledge('aws-cdk-lib:S3.publicRead')
+Suppress: Validations.of(construct).acknowledge({ id: 'aws-cdk-lib:S3.publicRead', reason: '...' })
 
   Occurrences:
 
@@ -381,7 +397,7 @@ The command also generates the report in JSON format with the `--json` option.
       "suppress": {
         "mechanism": "acknowledge",
         "id": "AwsSolutions-S1",
-        "instruction": "Validations.of(construct).acknowledge('AwsSolutions-S1')"
+        "instruction": "Validations.of(construct).acknowledge({ id: 'AwsSolutions-S1', reason: '...' })"
       },
       "occurrences": [
         {
@@ -414,7 +430,7 @@ The command also generates the report in JSON format with the `--json` option.
       "suppress": {
         "mechanism": "acknowledge",
         "id": "annotation:MapPublicIpOnLaunch",
-        "instruction": "Validations.of(construct).acknowledge('annotation:MapPublicIpOnLaunch')"
+        "instruction": "Validations.of(construct).acknowledge({ id: 'annotation:MapPublicIpOnLaunch', reason: '...' })"
       },
       "occurrences": [
         {
@@ -456,7 +472,7 @@ The command also generates the report in JSON format with the `--json` option.
       "suppress": {
         "mechanism": "acknowledge",
         "id": "aws-cdk-lib:S3.bucketVersioning",
-        "instruction": "Validations.of(construct).acknowledge('aws-cdk-lib:S3.bucketVersioning')"
+        "instruction": "Validations.of(construct).acknowledge({ id: 'aws-cdk-lib:S3.bucketVersioning', reason: '...' })"
       },
       "occurrences": [
         {
@@ -489,7 +505,7 @@ The command also generates the report in JSON format with the `--json` option.
       "suppress": {
         "mechanism": "acknowledge",
         "id": "aws-cdk-lib:S3.publicRead",
-        "instruction": "Validations.of(construct).acknowledge('aws-cdk-lib:S3.publicRead')"
+        "instruction": "Validations.of(construct).acknowledge({ id: 'aws-cdk-lib:S3.publicRead', reason: '...' })"
       },
       "occurrences": [
         {
@@ -542,7 +558,7 @@ signed-off by the API bar raiser (the `status/api-approved` label was applied to
 RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[x] Signed-off by API Bar Raiser @rix0rrr
 ```
 
 ## Public FAQ
@@ -569,7 +585,7 @@ to quickly reason about issues in their CDK App. This in turn makes deployment d
 The `Validations` API is a consolidated view of a CDK App's validaiton posture, which represents an evolution over the currently
 disjoint systems clobbered together: CDK Nag, CFN Guard Validator, custom Annotations all live in separately in the post-synthesis
 validation layer. Customers will use `Validations` to easily customize and reason about their CDK App's validation posture. It
-will also be easier for organizations to vend and configure their custom validations across teams.
+will also be easier for you to vend and configure their custom validations across teams.
 
 ### What is the validation posture of CDK moving forward?
 
@@ -708,6 +724,11 @@ Under the hood, we will use the ID to differentiate `Annotation` rules from Offl
 Validation rules and abstract the rule provenance away from the user.
 
 ```ts
+export interface Acknowledgment {
+  readonly id: string;
+  readonly reason: string;
+}
+
 export class Validations {
   public static of(construct: IConstruct): Validations {
     return new Validations(construct);
@@ -715,35 +736,35 @@ export class Validations {
 
   private constructor(private readonly construct: IConstruct) {}
 
-  public acknowledge(...ruleIds: string[]): void {
-    for (const id of ruleIds) {
-      if (this.isAnnotationRule(id)) {
-        Annotations.of(this.construct).acknowledgeWarning(id);
-      } else if (this.isOfflineRule(id)) {
-        this.suppress(id);
-      } else {
-        // warn that the id is invalid
+  public acknowledge(...rules: Acknowledgment[]): void {
+    for (const rule of rules) {
+      // Always write to construct metadata so plugins (e.g. CDK Nag) can read acknowledgments
+      this.recordAcknowledgment(rule.id, rule.reason);
+
+      // Additionally route to the appropriate handler
+      if (this.isAnnotationRule(rule.id)) {
+        Annotations.of(this.construct).acknowledgeWarning(rule.id);
       }
     }
   }
 
-  private suppress(id: string) {
+  private recordAcknowledgment(id: string, reason: string) {
     const existing = this.construct.node.metadata.find(
-      m => m.type === Validations.SUPPRESSED_RULES_METADATA_KEY,
+      m => m.type === Validations.ACKNOWLEDGED_RULES_METADATA_KEY,
     );
 
-    const suppressions: string[] = existing?.data ?? [];
-    if (!suppressions.includes(ruleId)) {
-      suppressions.push(ruleId);
-    }
+    const acknowledged: Record<string, string> = existing?.data ?? {};
+    acknowledged[id] = reason;
 
-    this.construct.node.addMetadata(Validations.SUPPRESSED_RULES_METADATA_KEY, suppressions);
+    this.construct.node.addMetadata(Validations.ACKNOWLEDGED_RULES_METADATA_KEY, acknowledged);
   }
 }
 ```
 
 The suppressed rules stored in the construct metadata will be available to filter violations
-reported by the offline validation engine.
+reported by the offline validation engine. Because all acknowledgments are written to construct
+metadata regardless of rule provenance, plugins like CDK Nag can read them to produce their own
+audit trail (e.g. writing suppression reasons to CloudFormation metadata).
 
 #### Custom Rule Mechanism
 
