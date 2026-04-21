@@ -650,7 +650,8 @@ The engine will handle intrinsics natively. The engine requirements include:
 * default rule set includes CFN Guard rules and CFN schema validation
 * support for custom rule sets written in a policy language like Rego
 * can be executed during `cdk synth` automatically, while not adding over Y milliseconds of overhead
-* produces findings at three severity levels: fatal, error, and warning. Fatal findings fail synthesis. Errors and warnings are displayed in the validation report and can be suppressed.
+* produces findings at three severity levels: fatal, error, and warning. Fatal findings fail synthesis.
+  Errors and warnings are displayed in the validation report and can be suppressed.
 
 The actual implementation of the engine is out of scope of this RFC however.
 
@@ -867,6 +868,7 @@ Errors will fail synthesis only if a feature flag is configured.
 ### What is the high-level project plan?
 
 The project can be split into four phases:
+
 - Stabilize the existing API surface: graduate `Beta1` interfaces to stable, create `Validations` class with `addPlugin()`, add
 `addWarning()`/`addError()` methods, implement `acknowledge()` for suppressions, and update the dev guide
 - Unify the validation report: integrate Annotations errors/warnings into the validation report, update the report JSON schema,
