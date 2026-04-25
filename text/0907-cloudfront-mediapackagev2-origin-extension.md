@@ -166,7 +166,7 @@ const distribution = new cloudfront.Distribution(stack, 'Distribution', {
 Property Interface:
 
 ```ts
-export interface MediaPackageV2OriginProps extends cloudfront.OriginOptions {
+export interface MediaPackageV2OriginProps extends cloudfront.OriginProps {
   /**
    * The channel group that contains the origin endpoint.
    * Used to derive the egress domain for the custom origin.
@@ -177,7 +177,7 @@ export interface MediaPackageV2OriginProps extends cloudfront.OriginOptions {
    * The origin access control to use.
    * @default - a new MediaPackageV2OriginAccessControl is created
    */
-  readonly originAccessControl?: cloudfront.IOriginAccessControl;
+  readonly originAccessControl?: cloudfront.IOriginAccessControlRef;
 
   /**
    * CDN authorization configuration.
@@ -306,5 +306,29 @@ mediapackagev2 alpha constructs.
 
 ### Are there any open issues that need to be addressed later?
 
-- Migration path for `MediaPackageV2Origin` when the alpha module
-  graduates to stable.
+#### Graduation Plan: Non-Standard Module Split
+
+At graduation, the alpha module cannot promote as a single unit. `MediaPackageV2Origin` must move to `aws-cloudfront-origins` to follow the established convention — every CloudFront origin class (`S3BucketOrigin`, `FunctionUrlOrigin`, `LoadBalancerV2Origin`, `RestApiOrigin`) lives there.
+
+The split at graduation:
+
+| What | Graduates to |
+|------|-------------|
+| `ChannelGroup`, `Channel`, `OriginEndpoint`, `ChannelPolicy`, `OriginEndpointPolicy`, `CdnAuthConfiguration`, and all associated interfaces/types | `aws-cdk-lib/aws-mediapackagev2` |
+| `MediaPackageV2Origin`, `MediaPackageV2OriginProps` | `aws-cdk-lib/aws-cloudfront-origins` |
+| `MediaPackageV2OriginAccessControl` | `aws-cdk-lib/aws-cloudfront` (already stable, no change) |
+
+The dependency direction is one-way and clean — `aws-cloudfront-origins` imports public interfaces from `aws-mediapackagev2` and `aws-cloudfront`. No circular dependencies, no private type leakage.
+
+Import path changes for users:
+
+```ts
+// Alpha (current)
+import { MediaPackageV2Origin, ChannelGroup, Channel, OriginEndpoint } from '@aws-cdk/aws-mediapackagev2-alpha';
+
+// Stable (after graduation)
+import { ChannelGroup, Channel, OriginEndpoint } from 'aws-cdk-lib/aws-mediapackagev2';
+import { MediaPackageV2Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+```
+
+Two import path updates instead of one. The `MediaPackageV2Origin` API itself (constructor, props, behavior) does not change — only the import path. The alpha module's README should document this planned split so users are aware ahead of graduation.
