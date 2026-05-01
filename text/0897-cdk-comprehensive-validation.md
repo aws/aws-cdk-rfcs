@@ -655,7 +655,7 @@ The engine will handle intrinsics natively. The engine requirements include:
 
 The actual implementation of the engine is out of scope of this RFC however.
 
-The default rule set is likely to be around ~50MB when considering the size of the CFN schema
+The default rule set is likely to be around ~10MB when considering the size of the CFN schema
 and other sources. This is a high penalty to pay, and can be paid either by the CDK CLI or CDK framework.
 This RFC proposes that the code lives in the framework. For comparison, the v2.1117.0 CDK CLI version is
 ~24MB unpacked and the v2.249.0 CDK framework version is ~108MB. Note that this comparison did not factor in
@@ -704,7 +704,7 @@ The validation logic lives in the framework to allow for seamless integration of
 Annotation warnings & errors and Policy Validation plugins are already established in the framework. By reusing the Policy
 Validation plugin system, Offline Validation is able to unify all validation mechanisms that happen post-synthesis and pre-deploy.
 
-This comes with the challenge of dealing with Offline Validation's estimated ~50MB unbundled package size and ~600-1000ms startup
+This comes with the challenge of dealing with Offline Validation's estimated ~10MB unbundled package size and ~600-1000ms startup
 cost when initializing the engine. We are deciding that we are okay with the size of validation in the framework rather than the CLI,
 and that the engine startup will run parallel with synthesis to minimize its impact. The actual time to validate templates will be
 negligible; about 1ms per resource.
@@ -940,9 +940,9 @@ Errors will fail synthesis only if a feature flag is configured.
    and that happens too late in the deployment process.
 2. Write more CDK construct library exceptions: rejected because it is a treadmill,
    and L1 level users do not get access to L2 level validations.
-3. Validation logic in the library: The main reasons to do so center around the ~50MB size and ~600-1000ms startup
+3. Validation logic in the library: The main reasons to do so center around the ~10MB size and ~600-1000ms startup
    cost of the validation engine. For now, we decided to go with the established protocol of offline validation
-   happening in the framework, and are willing to eat the ~50MB size cost (and have ideas for parallelizing the
+   happening in the framework, and are willing to eat the ~10MB size cost (and have ideas for parallelizing the
    startup cost).
 4. Custom rules written in TS: This would be a fully managed API that we would vend and then map to a policy language rule
    on the backend before feeding to the Offline Validation engine. It was determined that this is not necessary so long as
