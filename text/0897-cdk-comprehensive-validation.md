@@ -798,6 +798,105 @@ are handled by traversing the construct tree (no change here). Individual plugin
 they were before. The specific `RegoValidator` and `CfnGuardValidator` plugins will utilize the
 Offline Validation engine under the hood to evaluate rules written in those languages.
 
+#### Online Validation in `cdk validate`
+
+`cdk deploy` already surfaces CFN Early Validation errors through `DescribeEvents`. When a change set
+fails with `AWS::EarlyValidation` in the `StatusReason`, CDK calls `DescribeEvents` with the change set
+ARN and `Filters: { FailedEvents: true }` to retrieve structured per-resource validation errors. Today,
+these are formatted and thrown as a `DeploymentError`.
+
+`cdk validate` reuses this same mechanism but maps the results into the validation report schema instead
+of throwing. The lifecycle is a) create a change set per stack, b) poll until complete, c) call `DescribeEvents`
+if early validation failed, d) delete the change set (no execution), e) merge the results with offline
+findings into one report.
+
+##### DescribeEvents Response Schema
+
+Each event returned by `DescribeEvents` contains:
+
+| Field | Description |
+|---|---|
+| `LogicalResourceId` | CFN logical ID of the failing resource |
+| `ResourceType` | CFN resource type (e.g. `AWS::Lambda::Function`) |
+| `ValidationName` | Category identifier (e.g. `PROPERTY_VALIDATION`, `NAME_CONFLICT_VALIDATION`) |
+| `ValidationStatusReason` | Human-readable error message |
+| `ValidationPath` | JSON path to the offending property in the template |
+| `ValidationFailureMode` | `FAIL` (blocks execution) or `WARN` (allows execution) |
+
+##### Mapping to the Validation Report
+
+| Report field | Source |
+|---|---|
+| `ruleName` | Derived from `ValidationName` + a normalized prefix of `ValidationStatusReason` (see below) |
+| `severity` | `FAIL` → `Fatal`, `WARN` → `Warning` |
+| `source` | `"CloudFormation"` |
+| `description` | `ValidationStatusReason` |
+| `occurrences[].resourceLogicalId` | `LogicalResourceId` |
+| `occurrences[].templatePath` | Known by CDK (we sent the template) |
+| `occurrences[].locations` | `ValidationPath` |
+| `occurrences[].constructPath` | Resolved from `LogicalResourceId` via the construct tree |
+| `occurrences[].constructStack` | Resolved from construct path via existing source tracing |
+
+##### `ruleName` Derivation
+
+`ValidationName` is a category shared by many errors — for example, `PROPERTY_VALIDATION` covers type
+mismatches, missing required properties, invalid enum values, and more. Using the category alone as
+`ruleName` would group unrelated errors under one rule.
+
+To produce a more useful identifier, CDK will derive `ruleName` by combining `ValidationName` with a
+normalized prefix of `ValidationStatusReason`. For example:
+
+| `ValidationName` | `ValidationStatusReason` | Derived `ruleName` |
+|---|---|---|
+| `PROPERTY_VALIDATION` | `DISABLED is not a valid enum value. Supported values: [Active, PassThrough]` | `PROPERTY_VALIDATION:InvalidEnumValue` |
+| `PROPERTY_VALIDATION` | `Missing required property: FunctionName` | `PROPERTY_VALIDATION:MissingRequiredProperty` |
+| `PROPERTY_VALIDATION` | `Unsupported property: Foo` | `PROPERTY_VALIDATION:UnsupportedProperty` |
+| `NAME_CONFLICT_VALIDATION` | `Resource with the given name already exists` | `NAME_CONFLICT_VALIDATION:ResourceAlreadyExists` |
+| `BUCKET_EMPTINESS_VALIDATION` | `S3 bucket is not empty` | `BUCKET_EMPTINESS_VALIDATION:BucketNotEmpty` |
+
+The normalization extracts a stable error class from the message text (stripping variable parts like
+specific property names or values). This gives users a meaningful identifier to reference and, for
+`WARN`-mode findings, to suppress via `Validations.of(construct).acknowledge()`.
+
+##### Severity and Suppression
+
+`FAIL`-mode findings map to `Fatal` severity and cannot be suppressed — they represent configurations
+that will definitively fail deployment. `WARN`-mode findings (e.g. S3 bucket not empty on delete) map
+to `Warning` severity and can be acknowledged:
+
+```ts
+Validations.of(myBucket).acknowledge({
+  id: 'BUCKET_EMPTINESS_VALIDATION:BucketNotEmpty',
+  reason: 'Bucket will be emptied by a custom resource before deletion',
+});
+```
+
+##### Example Output
+
+A CFN Early Validation finding in the `cdk validate` report:
+
+```
+PROPERTY_VALIDATION:InvalidEnumValue (1 occurrences)
+Severity: Fatal
+Source: CloudFormation
+
+  Occurrences:
+
+    - Construct Path: MyStack/MyLambdaFunction
+    - Template Path: ./cdk.out/MyStack.template.json
+    - Creation Stack:
+        └──  MyStack (MyStack)
+             └──  MyLambdaFunction (MyStack/MyLambdaFunction)
+                  │ Construct: aws-cdk-lib/aws-lambda.Function
+                  │ Library Version: 2.180.0
+                  │ Location: new MyStack (lib/my-stack.ts:15:5)
+    - Resource ID: MyLambdaFunction
+    - Template Locations:
+      > /Resources/MyLambdaFunction/Properties/TracingConfig/Mode
+
+  Description: DISABLED is not a valid enum value. Supported values: [Active, PassThrough]
+```
+
 #### Telemetry
 
 To support the launch of CDK Comprehensive Validation, we will collect additional metrics that fit directly
