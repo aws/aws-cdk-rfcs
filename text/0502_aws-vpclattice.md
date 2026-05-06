@@ -750,7 +750,10 @@ export abstract class Target {
    * @param alb
    * @param config
    */
-  public static applicationLoadBalancer(alb: elbv2.ApplicationListener[], config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty): Target {  }
+  public static applicationLoadBalancer(
+    alb: elbv2.ApplicationListener[],
+    config: aws_vpclattice.CfnTargetGroup.TargetGroupConfigProperty,
+  ): Target {  }
 
 ```
 

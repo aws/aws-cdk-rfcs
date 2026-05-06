@@ -21,7 +21,6 @@
 [627](https://github.com/aws/aws-cdk-rfcs/issues/627)|[L2 constructs for CodeArtifact](https://github.com/aws/aws-cdk-rfcs/issues/627)||💡 proposed
 [629](https://github.com/aws/aws-cdk-rfcs/issues/629)|[Cost Estimation Tools - Reopened](https://github.com/aws/aws-cdk-rfcs/issues/629)||💡 proposed
 [631](https://github.com/aws/aws-cdk-rfcs/issues/631)|[Amazon VPC Lattice L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/631)||💡 proposed
-[655](https://github.com/aws/aws-cdk-rfcs/issues/655)|[Enhancements to L1s in CDK](https://github.com/aws/aws-cdk-rfcs/issues/655)||💡 proposed
 [676](https://github.com/aws/aws-cdk-rfcs/issues/676)|[Proposing a Contributor Council for AWS CDK](https://github.com/aws/aws-cdk-rfcs/issues/676)||💡 proposed
 [683](https://github.com/aws/aws-cdk-rfcs/issues/683)|[L2 Constructs for AWS Event Schemas](https://github.com/aws/aws-cdk-rfcs/issues/683)||💡 proposed
 [695](https://github.com/aws/aws-cdk-rfcs/issues/695)|[AWS S3 directory bucket L2 constructs](https://github.com/aws/aws-cdk-rfcs/issues/695)||💡 proposed
@@ -35,5 +34,10 @@
 [835](https://github.com/aws/aws-cdk-rfcs/issues/835)|[Native EBS Snapshot Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/835)||💡 proposed
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
 [867](https://github.com/aws/aws-cdk-rfcs/issues/867)|[S3 Vector L2 CDK Constructs](https://github.com/aws/aws-cdk-rfcs/issues/867)||💡 proposed
-[814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/issues/814)||⏰ final comments
+[877](https://github.com/aws/aws-cdk-rfcs/issues/877)|[Automated issue triage and guidance for community PRs](https://github.com/aws/aws-cdk-rfcs/issues/877)||💡 proposed
+[884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/issues/884)||💡 proposed
+[904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/issues/904)||💡 proposed
+[907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/issues/907)||💡 proposed
+[911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
+[897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/issues/897)||⏰ final comments
 <!--END_TABLE-->

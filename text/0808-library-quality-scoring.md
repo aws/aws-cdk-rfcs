@@ -409,7 +409,8 @@ The scoring process works as follows:
   * Maintenance: how active the project is (recent releases, frequency of updates, how quickly issues/PRs are handled, active maintainers).
   * Quality: what the project includes (README, tests, lint setup, changelog, license, repo hygiene, CDK-specific setup).
   * Popularity: how widely it’s used (downloads from registries, growth trends, GitHub stars, forks, and contributors).
-* Apply weights: Each signal is scored and weighted by its percentage contribution, then all weighted scores are combined into one final score out of 100.
+* Apply weights: Each signal is scored and weighted by its percentage contribution, then all weighted scores are combined into one final score
+out of 100.
 * Show outputs: The results are available in the CLI (with either a simple summary or a detailed breakdown).
 
 To keep the system modular and easy to maintain, signal weights are defined in a central config file. Each signal includes a

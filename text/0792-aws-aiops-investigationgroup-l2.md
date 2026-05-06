@@ -332,7 +332,8 @@ It eliminates the complexity of manually configuring IAM roles, KMS encryption, 
 
 ### Why are we doing this?
 
-The development of AIOps L2 constructs addresses significant customer needs and adoption patterns. Currently, customers rely on L1 constructs through CloudFormation,
+The development of AIOps L2 constructs addresses significant customer needs and adoption patterns. Currently, customers rely on L1 constructs through
+CloudFormation,
 requiring detailed understanding of resource configurations. Additionally, multiple Amazon internal teams have successfully adopted an internal
 L2 package for AIOps resource management, demonstrating the value and demand for higher-level abstractions.
 

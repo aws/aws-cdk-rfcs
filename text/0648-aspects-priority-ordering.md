@@ -18,7 +18,8 @@ Conceptually, there are two types of Aspects:
 * **Read-only aspects** scan the construct tree but do not make changes to the tree. Common use cases of read-only aspects include performing validations
 (for example, enforcing that all S3 Buckets have versioning enabled) and logging (for example, collecting information about all deployed resources for
 audits or compliance).
-* **Mutating aspects** either (1.) add new nodes or (2.) mutate existing nodes of the tree in-place. One commonly used mutating Aspect is adding Tags to
+* **Mutating aspects** either (1.) add new nodes or (2.) mutate existing nodes of the tree in-place. One commonly used mutating Aspect is adding
+Tags to
 resources. An example of an Aspect that adds a node is one that automatically adds a security group to every EC2 instance in the construct tree if
 no default is specified.
 
@@ -362,10 +363,10 @@ The behavior we want to guarantee in this algorithm is:
 Additionally, we will remove a constraint from the existing algorithm which prevent nested Aspects from being invoked. The current algorithm emits a warning
 if an Aspect creates another Aspect and does not invoke that new Aspect.
 
-The feature introduces an optional priority parameter when aspects are apdded. Aspects are then invoked on the construct tree in order of increasing priority
-values. This ensures that mutating aspects are applied first and validation aspects follow, if the application author specifies so. Additionally, the algorithm
-ensures that newly created nodes inherit aspects from their parent constructs, even if those nodes are added later in the process. See Appendix for
-Pseudocode for the new `invokeAspects` function.
+The feature introduces an optional priority parameter when aspects are added. Aspects are then invoked on the construct tree in order of
+increasing priority values. This ensures that mutating aspects are applied first and validation aspects follow, if the application author
+specifies so. Additionally, the algorithm ensures that newly created nodes inherit aspects from their parent constructs, even if those nodes
+are added later in the process. See Appendix for Pseudocode for the new `invokeAspects` function.
 
 Our new `invokeAspects` function will use a stabilization loop to recurse the construct tree and invoke Aspects. The stabilization loop is necessary in
 order to ensure that new nodes created by Aspects (as well as new Aspects created by Aspects) get visited.
