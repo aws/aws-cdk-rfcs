@@ -402,7 +402,10 @@ flow.grants.actions(fn, 'mediaconnect:UpdateFlow');
 
 ##### Flow Source Types
 
-MediaConnect supports multiple source types for ingesting content into a flow. The examples below use `NetworkConfiguration.publicNetwork()` for simplicity, but all protocol-based sources can also use `NetworkConfiguration.vpc()` with a VPC interface for private connectivity.
+MediaConnect supports multiple source types for ingesting content into a flow.
+The examples below use `NetworkConfiguration.publicNetwork()` for simplicity,
+but all protocol-based sources can also use `NetworkConfiguration.vpc()` with
+a VPC interface for private connectivity.
 
 ###### RTP
 
@@ -420,7 +423,9 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 ###### RTP-FEC
 
-RTP with Forward Error Correction adds redundancy to recover lost packets without retransmission. Use this when contributing via RTP and you need packet recovery.
+RTP with Forward Error Correction adds redundancy to recover lost packets
+without retransmission. Use this when contributing via RTP and you need
+packet recovery.
 
 ```ts
 new mediaconnect.Flow(stack, 'MyFlow', {
@@ -434,7 +439,9 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 ###### SRT Listener
 
-SRT (Secure Reliable Transport) in listener mode configures MediaConnect to listen on a specific port for incoming content. The upstream device connects to MediaConnect as a caller.
+SRT (Secure Reliable Transport) in listener mode configures MediaConnect
+to listen on a specific port for incoming content. The upstream device
+connects to MediaConnect as a caller.
 
 ```ts
 new mediaconnect.Flow(stack, 'MyFlow', {
@@ -449,7 +456,9 @@ new mediaconnect.Flow(stack, 'MyFlow', {
 
 ###### SRT Caller
 
-SRT in caller mode configures MediaConnect to connect to a remote SRT listener. Use this when the source device is listening for incoming connections rather than pushing content.
+SRT in caller mode configures MediaConnect to connect to a remote SRT
+listener. Use this when the source device is listening for incoming
+connections rather than pushing content.
 
 ```ts
 new mediaconnect.Flow(stack, 'MyFlow', {
