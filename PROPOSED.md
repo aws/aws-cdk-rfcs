@@ -35,9 +35,9 @@
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
 [867](https://github.com/aws/aws-cdk-rfcs/issues/867)|[S3 Vector L2 CDK Constructs](https://github.com/aws/aws-cdk-rfcs/issues/867)||💡 proposed
 [877](https://github.com/aws/aws-cdk-rfcs/issues/877)|[Automated issue triage and guidance for community PRs](https://github.com/aws/aws-cdk-rfcs/issues/877)||💡 proposed
-[884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/issues/884)||💡 proposed
+[884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0884-aws-elemental-mediaconnect-l2.md)||💡 proposed
 [904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/issues/904)||💡 proposed
-[907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/issues/907)||💡 proposed
+[907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0907-cloudfront-mediapackagev2-origin-extension.md)||💡 proposed
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/issues/897)||⏰ final comments
 <!--END_TABLE-->
