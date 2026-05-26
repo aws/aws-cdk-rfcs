@@ -4,8 +4,6 @@
 * **Tracking Issue**: [#920](https://github.com/aws/aws-cdk-rfcs/issues/920)
 * **API Bar Raiser**: TBD
 
-See design doc [Design Doc: CDK LSP and Web Explorer](https://quip-amazon.com/MNagAyAKkB1r) for implementation details
-
 CDK developers cannot see what their code creates, discover deployment failures too late, and must jump between disconnected tools to debug. The CDK
 LSP and Web Explorer close this gap by surfacing construct-to-resource mappings, validation diagnostics, and three-way linked navigation directly in
 editors and a browser-based explorer.
@@ -45,7 +43,9 @@ The explorer opens in your browser with three linked panels:
 * Source panel: your CDK source code
 
 Wireframe:
-[Image: Screenshot 2026-05-20 at 9.57.54 AM.png]Clicking any element in one panel highlights the corresponding elements in the other two. Click a
+![Wireframe Design](../images/WebExplorerWireframe.png)
+
+Clicking any element in one panel highlights the corresponding elements in the other two. Click a
 construct in the tree to see which CloudFormation resources it produces and which line of code created it. Click a resource in the template to jump to
 the CDK code that generated it.
 
