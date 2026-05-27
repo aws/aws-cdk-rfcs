@@ -214,5 +214,5 @@
 [904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/issues/904)||💡 proposed
 [907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0907-cloudfront-mediapackagev2-origin-extension.md)||💡 proposed
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
-[920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/issues/920)||💡 proposed
+[920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/issues/920)||✍️ review
 <!--END_TABLE-->
