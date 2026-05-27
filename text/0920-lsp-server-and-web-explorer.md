@@ -2,7 +2,7 @@
 
 * **Author:** [Megha Narayanan](https://quip-amazon.com/YWB9EAizoK4)
 * **Tracking Issue**: [#920](https://github.com/aws/aws-cdk-rfcs/issues/920)
-* **API Bar Raiser**: TBD
+* **API Bar Raiser**: @ShadowCat567 (lvielto)
 
 CDK developers cannot see what their code creates, discover deployment failures too late, and must jump between disconnected tools to debug. The CDK
 LSP and Web Explorer close this gap by surfacing construct-to-resource mappings, validation diagnostics, and three-way linked navigation directly in
