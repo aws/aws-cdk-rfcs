@@ -4,7 +4,7 @@ merge_queue:
   max_parallel_checks: 1
 queue_rules:
   - name: default
-    conditions:
+    merge_conditions:
       - -title~=(WIP|wip)
       - -label~=(blocked|do-not-merge)
       - -merged
@@ -25,7 +25,6 @@ pull_request_rules:
         message: Thank you for contributing! Your pull request is now being automatically merged.
       queue:
         name: default
-      delete_head_branch: {}
       dismiss_reviews: {}
     conditions:
       - -title~=(WIP|wip)
