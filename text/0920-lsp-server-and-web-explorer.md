@@ -2,7 +2,7 @@
 
 * **Author:** [Megha Narayanan](https://quip-amazon.com/YWB9EAizoK4)
 * **Tracking Issue**: [#920](https://github.com/aws/aws-cdk-rfcs/issues/920)
-* **API Bar Raiser**: @ShadowCat567 (lvielto)
+* **API Bar Raiser**: @ShadowCat567
 
 CDK developers cannot see what their code creates, discover deployment failures too late, and must jump between disconnected tools to debug. The CDK
 LSP and Web Explorer close this gap by surfacing construct-to-resource mappings, validation diagnostics, and three-way linked navigation directly in
@@ -31,10 +31,11 @@ the synthesized CloudFormation templates.
 Launch the explorer from any CDK project directory:
 
 ```
-`$ cdk explore
+$ cdk explore [--no-watch]
 CDK Explorer running at http://127.0.0.1:4000
-`
 ```
+
+Use `--no-watch` to disable automatic re-synthesis on file save. Watch mode can also be toggled from within the explorer UI.
 
 The explorer opens in your browser with three linked panels:
 
@@ -52,8 +53,8 @@ the CDK code that generated it.
 A violations sidebar shows offline validation findings grouped by severity. Clicking a violation navigates all three panels to the relevant construct.
 The explorer watches your source files and re-synthesizes automatically on save.  While synthesis is running, a progress indicator appears. If
 synthesis fails, the explorer shows the failure and continues displaying the last successful results. A timestamp shows when data was last refreshed;
-if source files have been modified since, a staleness warning appears. A manual "Synth now" button is available for forced refresh or when auto-synth
-is disabled
+if source files have been modified since, a staleness warning appears. Auto-synth can be toggled off via the explorer UI or initialization options
+for users who find it too slow. A manual "Synth now" button is available for forced refresh or when auto-synth is disabled.
 
 #### Limitations
 
@@ -86,10 +87,16 @@ and diagnostics appear immediately.
 
 #### AI Agent Integration
 
-In Claude Code, install the CDK LSP plugin or add to your `.lsp.json`:
+In Claude Code, install the CDK LSP plugin:
 
 ```
-`{
+claude plugins install cdk-lsp
+```
+
+Or add manually to your `.lsp.json`:
+
+```
+{
   "cdk-lsp": {
     "command": "cdk lsp",
     "extensionToLanguage": { ".ts": "typescript", ".py": "python", ".java": "java" },
@@ -97,7 +104,6 @@ In Claude Code, install the CDK LSP plugin or add to your `.lsp.json`:
     "initializationOptions": { "applicationDir": "${CLAUDE_PROJECT_DIR}" }
   }
 }
-`
 ```
 
 The agent receives diagnostics automatically after every file change, with no manual invocation needed.
@@ -242,7 +248,7 @@ or network calls required. The shared core (embedded in the LSP) parses four fil
 * **`manifest.json`** — stack enumeration, inter-stack dependencies, and asset information
 * **`*.metadata.json`** — source locations (stack traces captured at construct creation time), enabling the LSP to map resources back to the exact
   line of code that created them
-* **`policy-validation-report.json`** — offline validation results (invalid configurations, deprecated runtimes, security issues, best practice
+* **`validation-report.json`** — offline validation results (invalid configurations, deprecated runtimes, security issues, best practice
   violations) produced during synthesis with no extra setup
 
 ### Is this a breaking change?
@@ -262,7 +268,7 @@ means the LSP works standalone in any editor without a plugin or AWS account set
 
 Offline validation runs locally against the synthesized CloudFormation template during `cdk synth` with no credentials or network calls required. It
 catches the majority of actionable violations, like invalid resource types, deprecated runtimes, invalid Fargate CPU/memory combinations, security
-issues, and best practice violations. Results are always available in `cdk.out/policy-validation-report.json` with no extra configuration. Online
+issues, and best practice violations. Results are always available in `cdk.out/validation-report.json` with no extra configuration. Online
 validation may be offered in the future.
 
 **Using `cdk watch` as-is for re-synthesis****.** `cdk watch` monitors files and re-synthesizes, but it is designed for deployment workflows — it
@@ -313,8 +319,8 @@ IDE patterns rather than an embedded web application.
   TypeScript or Python language server. Users with very large apps may find auto-synth too slow to be useful.
 * **Maintenance surface area.** Shipping an LSP server, a web app, a shared core library, and a VSCode extension integration means four components to
   maintain, test, and version. Bugs or regressions in any one component affect the others.
-* **Dependency on cloud assembly stability.** The tools read `tree.json`, `manifest.json`, and `policy-validation-report.json`. The validation report
-  schema is not yet part of the versioned cloud assembly schema, which adds risk.
+* **Dependency on cloud assembly stability.** The tools read `tree.json`, `manifest.json`, and `validation-report.json`. Changes to these schemas
+  require corresponding updates to the shared core.
 * **Adoption risk.** CDK developers have existing workflows. If the tools are too slow, too noisy, or produce stale results, developers may ignore
   them.
 
@@ -337,33 +343,48 @@ annotations, and access construct-to-resource mappings natively.
 
 #### Features
 
-1. [P0] Construct tree parsing and navigation
-2. [P0] Source location resolution
-3. [P0] CodeLens: construct → CloudFormation resource mapping
-4. [P0] LSP Diagnostics: validation violations at source line
-5. [P0] Three-panel linked navigation: tree ↔ template ↔ source
-6. [P0] `cdk explore` CLI command entry point
-7. [P1] Auto-synth on file save
-8. [P1] Diagnostic staleness: fade to Hint on edit, restore on re-synth
-9. [P1] Web explorer updates without reload
-10. [P1] Staleness indicator + "Synth Now" button
-11. [P2] Hover: logical ID, resource type, template file
-12. [P2] Document Symbols: construct tree in editor Outline view
-13. [P2] Inlay Hints: logical IDs inline
-14. [P2] Quick Fix: acknowledge/suppress violations
-15. [P3] VS Code extension: LSP client (spawns cdk lsp on project detection)
-16. [P3] VS Code extension: Enhanced CDK tree
-17. [P4] Synth progress notifications
-18. [P4] Quick Fixes: (AI-powered) actual fixes (add encryption, scope IAM, etc.)
-19. [P4] Error states, performance tuning
+Milestones: M0 = prework, M1 = MVP, M2 = improvements, M3 = extensions.
+
+1. [M0] Construct tree parsing and navigation
+2. [M0] Source location resolution
+3. [M1] CodeLens: construct → CloudFormation resource mapping
+4. [M1] LSP Diagnostics: validation violations at source line
+5. [M1] Three-panel linked navigation: tree ↔ template ↔ source
+6. [M1] `cdk explore` CLI command entry point
+7. [M1] Auto-synth on file save
+8. [M2] Diagnostic staleness: fade to Hint on edit, restore on re-synth
+9. [M2] Web explorer updates without reload
+10. [M2] Staleness indicator + "Synth Now" button
+11. [M2] Hover: logical ID, resource type, template file
+12. [M2] Document Symbols: construct tree in editor Outline view
+13. [M2] Inlay Hints: logical IDs inline
+14. [M2] Quick Fix: acknowledge/suppress violations
+15. [M3] VS Code extension: LSP client (spawns cdk lsp on project detection)
+16. [M3] VS Code extension: Enhanced CDK tree
+17. [M3] Synth progress notifications
+18. [M3] Quick Fixes: (AI-powered) actual fixes (add encryption, scope IAM, etc.)
+19. [M3] Error states, performance tuning
 
 ### Are there any open issues that need to be addressed later?
 
 * **AWS Toolkit integration.** Embedding the LSP client and enhancing the existing CDK view into the AWS Toolkit VSCode extension requires
   coordination with the AWS Toolkit team. Their contribution guidelines, release cadence, and extension architecture may constrain how the integration
   is built.
-* **Validation report schema stabilization.** The `policy-validation-report.json` schema is not yet part of the versioned cloud assembly schema
-  (`cdklabs/cloud-assembly-schema`). This is pending and expected to be resolved by project launch.
+
+## Out of Scope / Future Extensions
+
+The following are intentionally out of scope for the initial launch but represent natural follow-up work:
+
+* **Non-TypeScript LSP diagnostic support.** Source-location-linked features for jsii languages
+* **Click-to-fix UI for violations.** If a violation has a suggested fix, the web explorer could offer a "Fix" button that applies the change
+  directly.
+* **Click-to-deploy from the explorer.** A "Deploy" button in the web explorer
+* **Asset exploration.** Surface asset metadata (size, type, connected resources) through the LSP and web explorer.
+* **Feature flags management.** Display and manage feature flag state from the web explorer.
+* **Online validation.** Trigger online validation from the explorer or editor. Requires AWS credentials and surfaces account-specific findings.
+* **AI-powered quick fixes.** Using an AI model to generate fixes for violations based on structured context (rule name, construct path, resource
+  type, violating properties).
+* **Agent configuration bundling.** Bundle CDK agent configuration with aws-agent-toolkit rather than maintaining a separate `.lsp.json`.
 
 ## Appendix
 
