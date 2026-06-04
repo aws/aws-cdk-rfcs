@@ -216,4 +216,5 @@
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/issues/920)||✍️ review
 [926](https://github.com/aws/aws-cdk-rfcs/issues/926)|[Lambda-based dependency resolver\installer](https://github.com/aws/aws-cdk-rfcs/issues/926)||💡 proposed
+[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||💡 proposed
 <!--END_TABLE-->
