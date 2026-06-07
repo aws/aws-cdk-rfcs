@@ -217,4 +217,5 @@
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/issues/920)||✍️ review
 [926](https://github.com/aws/aws-cdk-rfcs/issues/926)|[Lambda-based dependency resolver\installer](https://github.com/aws/aws-cdk-rfcs/issues/926)||💡 proposed
 [929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||✍️ review
+[935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
 <!--END_TABLE-->
