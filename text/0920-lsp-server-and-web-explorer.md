@@ -4,9 +4,12 @@
 * **Tracking Issue**: [#920](https://github.com/aws/aws-cdk-rfcs/issues/920)
 * **API Bar Raiser**: @ShadowCat567
 
-CDK developers cannot see what their code creates, discover deployment failures too late, and must jump between disconnected tools to debug. The CDK
-LSP and Web Explorer close this gap by surfacing construct-to-resource mappings, validation diagnostics, and three-way linked navigation directly in
-editors and a browser-based explorer.
+CDK developers cannot easily see what their code creates, discover deployment failures too late, and must jump between disconnected tools to debug.
+Today, understanding what a single construct produces means running `cdk synth`, opening the synthesized template in `cdk.out/`, cross-referencing
+`tree.json` to map constructs to resources, and often switching to the CloudFormation console to trace a deployed resource back to the line of code
+that created it. The CDK LSP and Web Explorer close this gap by surfacing construct-to-resource mappings, validation diagnostics, and three-way linked
+navigation directly in editors and a browser-based explorer. Three-way linked navigation connects your source code, the construct tree, and the
+synthesized CloudFormation template, so that selecting an element in any one view highlights the corresponding elements in the other two.
 
 ## Working Backwards
 
@@ -134,8 +137,23 @@ If you've ever:
 * Had to repeatedly run `cdk synth` to check for validation errors while iterating on code
 * Struggled to trace from a CloudFormation error back to the CDK code that caused it
 
-These tools close that gap. The explorer gives you a visual map of your entire app. The LSP gives you immediate feedback while writing code without
-deploying, without credentials, and without leaving your editor.
+These tools close each of those gaps directly:
+
+* **Surprised by what your code creates:** CodeLens shows the CloudFormation resources each construct produces right on the line that created it, and
+  the explorer's tree panel lets you expand your app from the root down to individual resources. You see the IAM role a single `lambda.Function` adds
+  without reading the synthesized template.
+* **Validation errors found at deploy time:** the LSP surfaces validation violations as warnings and errors in your editor as you work, so
+  deployment-blocking issues show up while you are still writing the code.
+* **Repeatedly running `cdk synth` by hand:** the tools re-synthesize automatically on save, so diagnostics and the explorer stay current without you
+  breaking flow to run a command and parse terminal output.
+* **Tracing a CloudFormation error back to your code:** three-way linked navigation connects your source, the construct tree, and the synthesized
+  template, so you can click a resource in the template and jump to the line of CDK that produced it.
+
+The explorer gives you a visual map of your entire app, and the LSP gives you immediate feedback while writing code, without deploying, without
+credentials, and without leaving your editor. Beyond launch, further features are planned on top of this same foundation: a construct dependency
+graph view to make cross-stack and parent-child relationships easier to reason about, asset and feature-flag exploration so you can see what your
+assets contain and how flags affect your constructs, and AI-assisted fixes that use the structured construct context to resolve violations directly
+rather than only suppressing them.
 
 ### Do I need AWS credentials?
 
@@ -196,14 +214,13 @@ With the LSP Server and Web Explorer, a customer can:
 
 ### Why should we *not* do this?
 
-**Why build both an LSP server and a web interface?** Maintaining two UI surfaces adds complexity. However, the two tools serve fundamentally
-different use cases: the LSP provides a tight inline feedback loop while writing code (violations appear as you type, CodeLens shows resource mappings
-without leaving your editor), while the web explorer provides a full-app visual map for investigation and debugging (navigating the construct tree,
-tracing connections across stacks). The shared core means the incremental cost of the second surface is low.  The data model, synth triggering, and
-source location resolution are implemented once and consumed by both.
-
-Additionally, the web explorer is IDE-agnostic and accessible to all CDK customers regardless of their editor. Offering both tools means no customer
-is left out.
+**Why not only build the web explorer?** The web explorer alone would give customers a visual map of their app, so it is fair to ask whether the LSP
+is worth the additional cost. We build the LSP because it serves a feedback loop the explorer cannot. The explorer is a separate browser surface a
+developer visits to investigate or debug, while the LSP brings the same information into the editor where code is written: violations appear as
+inline warnings on the line that created the offending construct, and CodeLens shows resource mappings without leaving the file. The LSP also speaks
+a standard protocol, so any LSP-capable editor or AI coding agent can consume CDK diagnostics and construct-to-resource data with no custom
+integration. The shared core keeps the LSP's cost low, since the data model, synth triggering, and source location resolution are implemented once
+and consumed by both surfaces.
 
 **Doesn't** **`cdk validate`** **already do this?** There is overlap with `cdk validate --json`, which surfaces validation violations as structured
 output. However, `cdk validate` is a fire-and-forget CLI command; it outputs a report but does not integrate into the editing experience. The LSP
@@ -215,7 +232,7 @@ improves on this because:
   human developers
 * It gives a persistent feedback loop rather than a point-in-time snapshot
 
-The web explorer adds visual, navigable context that a flat JSON report cannot provide — clicking through the construct tree to see what a line of
+The web explorer adds visual, navigable context that a flat JSON report cannot provide. Clicking through the construct tree to see what a line of
 code produces is qualitatively different from reading a validation report.
 
 ### What is the technical solution (design) of this feature?
@@ -233,16 +250,21 @@ Functionality will be built as new packages here: https://github.com/aws/aws-cdk
 The system consists of four components:
 
 * **Shared core (`@aws-cdk/cloud-assembly-api`):** a library that parses the cloud assembly and produces a typed model of the construct tree, source
-  locations, and violations
+  locations, and violations. It also handles file watching, synth triggering, and caching, so every tool that embeds it stays current the same way.
 * **LSP server (`cdk lsp`):** a persistent process that embeds the shared core and exposes its data through the Language Server Protocol over stdio.
-  Owns file watching, synth triggering, and caching.
-* **Web explorer (`cdk explore`):** a local HTTP server and browser SPA. Spawns the LSP as a child process and queries it over JSON-RPC, then serves
+* **Web explorer (`cdk explore`):** a local HTTP server and browser SPA. Embeds the shared core directly to read the cloud assembly, then serves
   data to the browser via HTTP and SSE.
 * **VSCode extension:** an AWS Toolkit integration that spawns `cdk lsp` and connects as a standard LSP client
 
+Since this section was first drafted, the design was simplified. Earlier versions had the web explorer spawn `cdk lsp` as a child process and query it
+over JSON-RPC. The web explorer now embeds the shared core library directly instead. The core is the single reader of the cloud assembly, and both
+the LSP server and the web explorer consume its typed model in-process. This removes a process boundary and a serialization layer from the explorer,
+and keeps the cloud-assembly reading logic in one place.
+
 **Cloud assembly as the data layer**
-The LSP server reads from the cloud assembly (`cdk.out/`) produced by `cdk synth`. This gives it a consistent, offline data source with no credentials
-or network calls required. The shared core (embedded in the LSP) parses four files:
+Both tools read from the cloud assembly (`cdk.out/`) produced by `cdk synth`, which gives them a consistent, offline data source with no credentials
+or network calls required. Neither tool parses these files itself. The shared core library does the interpretation and produces the typed model, and
+the LSP server and web explorer each embed it. The shared core parses four files:
 
 * **`tree.json`** — construct tree hierarchy and construct-to-resource mappings
 * **`manifest.json`** — stack enumeration, inter-stack dependencies, and asset information
@@ -250,6 +272,12 @@ or network calls required. The shared core (embedded in the LSP) parses four fil
   line of code that created them
 * **`validation-report.json`** — offline validation results (invalid configurations, deprecated runtimes, security issues, best practice
   violations) produced during synthesis with no extra setup
+
+**Keeping the data fresh.** The data comes from `cdk synth`, not `cdk deploy`. The tools re-synthesize automatically when you save a source file and
+write the result to `cdk.out/`, which the shared core then re-reads. To avoid
+reimplementing file watching, we reuse the file-monitoring and synth-triggering logic from `cdk watch`, decoupled from its deploy step. Auto-synth can
+be turned off for large apps where synthesis is slow; in that case the tools serve the last `cdk.out/` and show a staleness indicator when source
+files have changed since the last synth.
 
 ### Is this a breaking change?
 
