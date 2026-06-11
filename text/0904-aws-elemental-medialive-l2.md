@@ -10,17 +10,22 @@
 This design outlines how we build L2 constructs for AWS Elemental MediaLive, delivering the following benefits:
 
 - Implement sensible defaults to make getting started with AWS Elemental MediaLive easier.
-- Simplify the declaration of Inputs, Channels, and Output Groups by using typed factory methods and abstract classes instead of deeply nested CFN property bags.
-- Abstract one of the most complex CloudFormation resource in the CDK — `AWS::MediaLive::Channel` has hundreds of nested properties — into a composable, type-safe API.
+- Simplify the declaration of Inputs, Channels, and Output Groups by using typed factory methods and abstract classes instead of deeply nested CFN
+property bags.
+- Abstract one of the most complex CloudFormation resource in the CDK — `AWS::MediaLive::Channel` has hundreds of nested properties — into a
+composable, type-safe API.
 - Provide typed factories for all 9 output group types, all 5 video codecs, and all 7 audio codecs.
 - Auto-derive video/audio/caption encode descriptions from outputs at synth time, deduplicating by name at the channel level.
-- Validate codec compatibility per output group type, destination counts per channel class, and resolution constraints at synth time — catching errors before deployment.
+- Validate codec compatibility per output group type, destination counts per channel class, and resolution constraints at synth time — catching errors
+before deployment.
 - Use CDK `Duration` and `Bitrate` types instead of raw numbers for all time-based and bitrate properties.
 - Guard string validations with `Token.isUnresolved()` to support lazy/token values.
 - Support MediaLive Anywhere deployments with Network, Cluster, and ChannelPlacementGroup constructs.
-- Implement other modules both upstream and downstream with AWS Elemental MediaConnect and origination servers (AWS Elemental MediaPackage V2 and Amazon S3) respectively.
+- Implement other modules both upstream and downstream with AWS Elemental MediaConnect and origination servers (AWS Elemental MediaPackage V2 and
+Amazon S3) respectively.
 
-The `AWS::MediaLive::Channel` CloudFormation resource has more nested properties than many other AWS resource, and the L2 abstracts that complexity into a composable, discoverable API.
+The `AWS::MediaLive::Channel` CloudFormation resource has more nested properties than many other AWS resource, and the L2 abstracts that complexity
+into a composable, discoverable API.
 
 The code sample below is a configuration comparison between the existing L1 construct and what the L2 looks like:
 
@@ -328,7 +333,8 @@ const channel = new medialive.Channel(stack, 'Channel', {
 });
 ```
 
-The L2 reduces the code from ~170 lines to ~70 lines, eliminates string-based codec configuration, and catches invalid codec/output-group combinations at synth time.
+The L2 reduces the code from ~170 lines to ~70 lines, eliminates string-based codec configuration, and catches invalid codec/output-group combinations
+at synth time.
 
 The rest of this doc outlines the design for the L2 constructs.
 
@@ -336,9 +342,13 @@ The rest of this doc outlines the design for the L2 constructs.
 
 ### README
 
-[AWS Elemental MediaLive](https://aws.amazon.com/medialive/) is a real-time video service for creating live outputs for broadcast and streaming delivery. It transforms live video content from one format and package into others, ensuring compatibility with playback devices such as smartphones and set-top boxes.
+[AWS Elemental MediaLive](https://aws.amazon.com/medialive/) is a real-time video service for creating live outputs for broadcast and streaming
+delivery. It transforms live video content from one format and package into others, ensuring compatibility with playback devices such as smartphones
+and set-top boxes.
 
-Without an L2 construct, developers define MediaLive resources via the AWS console, the AWS CLI, or raw CloudFormation/CDK L1 constructs. The `AWS::MediaLive::Channel` resource is one of the most complex CloudFormation resource in AWS, with hundreds of nested properties for encoder settings, output groups, codec configurations, and destinations.
+Without an L2 construct, developers define MediaLive resources via the AWS console, the AWS CLI, or raw CloudFormation/CDK L1 constructs. The
+`AWS::MediaLive::Channel` resource is one of the most complex CloudFormation resource in AWS, with hundreds of nested properties for encoder settings,
+output groups, codec configurations, and destinations.
 
 We greatly simplify the developer experience by introducing MediaLive L2 constructs that:
 
@@ -359,9 +369,12 @@ We greatly simplify the developer experience by introducing MediaLive L2 constru
 
 #### AWS Elemental MediaLive Input
 
-An input represents the upstream source of video content for a MediaLive channel. MediaLive supports many input types — pull-based (URL/HLS, RTMP, SRT caller, MP4/TS files), push-based (RTMP, RTP, UDP, SRT listener, CDI), and managed or Anywhere sources (MediaConnect, MediaConnect Router, SDI, Elemental Link, Multicast, SMPTE 2110 receiver group).
+An input represents the upstream source of video content for a MediaLive channel. MediaLive supports many input types — pull-based (URL/HLS, RTMP, SRT
+caller, MP4/TS files), push-based (RTMP, RTP, UDP, SRT listener, CDI), and managed or Anywhere sources (MediaConnect, MediaConnect Router, SDI,
+Elemental Link, Multicast, SMPTE 2110 receiver group).
 
-The L2 uses a typed `InputConfiguration` factory class to create the correct input type with validated properties, replacing the L1's untyped string-based `type` field and loosely-typed source/destination arrays.
+The L2 uses a typed `InputConfiguration` factory class to create the correct input type with validated properties, replacing the L1's untyped
+string-based `type` field and loosely-typed source/destination arrays.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/inputs.html).
 
@@ -536,20 +549,25 @@ const imported = medialive.InputSecurityGroup.fromInputSecurityGroupAttributes(s
 
 ---
 
-
 #### AWS Elemental MediaLive Channel
 
-The Channel is the central construct in MediaLive. It takes one or more inputs, encodes the content using configurable video and audio codecs, and delivers the output to one or more output groups (MediaPackage V2, HLS, RTMP, UDP, Archive, SRT, CMAF Ingest, Frame Capture, MS Smooth).
+The Channel is the central construct in MediaLive. It takes one or more inputs, encodes the content using configurable video and audio codecs, and
+delivers the output to one or more output groups (MediaPackage V2, HLS, RTMP, UDP, Archive, SRT, CMAF Ingest, Frame Capture, MS Smooth).
 
-This is the most complex single-resource L2 construct in the L2. The underlying `AWS::MediaLive::Channel` CloudFormation resource has hundreds of nested properties. The L2 tames this complexity through several key design decisions:
+This is the most complex single-resource L2 construct in the L2. The underlying `AWS::MediaLive::Channel` CloudFormation resource has hundreds of
+nested properties. The L2 tames this complexity through several key design decisions:
 
-1. **Encode configurations are defined once and shared across output groups.** A `video_1920x1080` encode referenced by both a MediaPackage V2 and an HLS output group is only defined once in the CloudFormation template. The channel deduplicates by name at synth time.
+1. **Encode configurations are defined once and shared across output groups.** A `video_1920x1080` encode referenced by both a MediaPackage V2 and an
+HLS output group is only defined once in the CloudFormation template. The channel deduplicates by name at synth time.
 
-2. **Output groups use typed factory methods.** Instead of a generic `outputGroupSettings` property bag, you call `OutputGroupConfiguration.mediaPackageV2()`, `.hls()`, `.udp()`, etc. Each factory accepts only the props valid for that output group type.
+2. **Output groups use typed factory methods.** Instead of a generic `outputGroupSettings` property bag, you call
+`OutputGroupConfiguration.mediaPackageV2()`, `.hls()`, `.udp()`, etc. Each factory accepts only the props valid for that output group type.
 
-3. **Codec validation happens at synth time.** If you try to use an H.265 video codec with an RTMP output group (which only supports H.264), the construct throws a clear error before deployment.
+3. **Codec validation happens at synth time.** If you try to use an H.265 video codec with an RTMP output group (which only supports H.264), the
+construct throws a clear error before deployment.
 
-4. **Destination counts are validated per channel class.** A STANDARD channel requires 2 destinations per output group (one per pipeline). A SINGLE_PIPELINE channel requires 1. MediaPackage V2 and CMAF Ingest support additional destinations via the `additionalDestinations` prop.
+4. **Destination counts are validated per channel class.** A STANDARD channel requires 2 destinations per output group (one per pipeline). A
+SINGLE_PIPELINE channel requires 1. MediaPackage V2 and CMAF Ingest support additional destinations via the `additionalDestinations` prop.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/creating-a-channel-step1.html).
 
@@ -737,9 +755,11 @@ const imported = medialive.Channel.fromChannelAttributes(stack, 'Imported', {
 
 #### EncodeConfiguration
 
-Encode configurations define the video, audio, or caption encoding settings for a channel output. They are created via static factory methods and passed to outputs. The channel automatically collects all encodes from all output groups and deduplicates them by name at synth time.
+Encode configurations define the video, audio, or caption encoding settings for a channel output. They are created via static factory methods and
+passed to outputs. The channel automatically collects all encodes from all output groups and deduplicates them by name at synth time.
 
-This means a single `video_1920x1080` encode can be referenced by a MediaPackage V2 output, an HLS output, and an Archive output — and it only appears once in the CloudFormation template's `videoDescriptions` array.
+This means a single `video_1920x1080` encode can be referenced by a MediaPackage V2 output, an HLS output, and an Archive output — and it only appears
+once in the CloudFormation template's `videoDescriptions` array.
 
 ```ts
 class EncodeConfiguration {
@@ -794,7 +814,8 @@ const caption = medialive.EncodeConfiguration.caption({
 
 #### OutputGroupConfiguration
 
-Output group configurations define where and how the channel delivers its encoded output. The L2 provides 10 typed factory methods — one for each output group type supported by MediaLive.
+Output group configurations define where and how the channel delivers its encoded output. The L2 provides 10 typed factory methods — one for each
+output group type supported by MediaLive.
 
 Each factory accepts only the props valid for that output group type, with typed destination factory classes and per-type output definitions.
 
@@ -828,7 +849,10 @@ medialive.OutputGroupConfiguration.mediaPackageV2({
 });
 ```
 
-MediaPackage V2 destinations use the `MediaPackageV2Destination.channel()` factory with an explicit `IChannel` reference (from `@aws-cdk/aws-mediapackagev2-alpha`) and a pipeline endpoint ID. Each output must contain a single encode (one track per CMAF output). For additional destinations (cross-region or backup), use the same `channel()` factory and pass the region as the third argument (needed when the channel was imported without a region):
+MediaPackage V2 destinations use the `MediaPackageV2Destination.channel()` factory with an explicit `IChannel` reference (from
+`@aws-cdk/aws-mediapackagev2-alpha`) and a pipeline endpoint ID. Each output must contain a single encode (one track per CMAF output). For additional
+destinations (cross-region or backup), use the same `channel()` factory and pass the region as the third argument (needed when the channel was
+imported without a region):
 
 ```ts
 additionalDestinations: [
@@ -895,7 +919,9 @@ medialive.OutputGroupConfiguration.rtmp({
 });
 ```
 
-Each RTMP output takes one destination per channel pipeline (the console's "Destination A" / "Destination B") — one for `SINGLE_PIPELINE`, two for `STANDARD`. RTMP destinations use the `RtmpDestination.url()` factory with a separate `streamName` parameter. RTMP only supports H.264 video and AAC audio.
+Each RTMP output takes one destination per channel pipeline (the console's "Destination A" / "Destination B") — one for `SINGLE_PIPELINE`, two for
+`STANDARD`. RTMP destinations use the `RtmpDestination.url()` factory with a separate `streamName` parameter. RTMP only supports H.264 video and AAC
+audio.
 
 **SRT output group:**
 
@@ -911,7 +937,9 @@ medialive.OutputGroupConfiguration.srt({
 });
 ```
 
-Each SRT output takes one destination per channel pipeline (the console's "Destination A" / "Destination B") — one for `SINGLE_PIPELINE`, two for `STANDARD`. Use `SrtDestination.caller({ address, port })`, `SrtDestination.callerUrl(url)` (e.g. a MediaConnect Router Input endpoint), or `SrtDestination.listener({ listenerPort })`.
+Each SRT output takes one destination per channel pipeline (the console's "Destination A" / "Destination B") — one for `SINGLE_PIPELINE`, two for
+`STANDARD`. Use `SrtDestination.caller({ address, port })`, `SrtDestination.callerUrl(url)` (e.g. a MediaConnect Router Input endpoint), or
+`SrtDestination.listener({ listenerPort })`.
 
 **CMAF Ingest output group:**
 
@@ -930,7 +958,8 @@ medialive.OutputGroupConfiguration.cmafIngest({
 });
 ```
 
-Like MediaPackage V2, CMAF Ingest requires one track per output. Additional destinations beyond the pipeline count can be specified via the `additionalDestinations` prop.
+Like MediaPackage V2, CMAF Ingest requires one track per output. Additional destinations beyond the pipeline count can be specified via the
+`additionalDestinations` prop.
 
 **Frame Capture output group:**
 
@@ -954,7 +983,8 @@ medialive.OutputGroupConfiguration.frameCapture({
 });
 ```
 
-A channel that includes a Frame Capture output group must also include a separate video output group (e.g. HLS, Archive). Frame Capture cannot be the channel's only output group.
+A channel that includes a Frame Capture output group must also include a separate video output group (e.g. HLS, Archive). Frame Capture cannot be the
+channel's only output group.
 
 **MS Smooth output group:**
 
@@ -975,7 +1005,7 @@ medialive.OutputGroupConfiguration.msSmooth({
 Each output group type has its own destination interface, enforcing the correct shape at compile time:
 
 | Output Group Type | Destination Interface | Key Fields |
-|---|---|---|
+| --- | --- | --- |
 | MediaPackage V2 | `MediaPackageV2Destination` | Abstract class with `channel()` factory method |
 | HLS, Archive, UDP, CMAF, Frame Capture, MS Smooth | `OutputDestination` | Abstract class with `url()` and `toBucket()` factory methods |
 | RTMP | `RtmpDestination` | Abstract class with `url()` factory method |
@@ -989,10 +1019,10 @@ Each output group type has its own destination interface, enforcing the correct 
 
 ---
 
-
 #### VideoCodecSettings
 
-Video codec settings define the encoding parameters for a video output. The L2 provides typed factory methods for all 5 video codecs supported by MediaLive, with full CFN property coverage.
+Video codec settings define the encoding parameters for a video output. The L2 provides typed factory methods for all 5 video codecs supported by
+MediaLive, with full CFN property coverage.
 
 ```ts
 class VideoCodecSettings {
@@ -1060,11 +1090,10 @@ medialive.VideoCodecSettings.mpeg2({
 });
 ```
 
-
 **Codec validation per output group type:**
 
 | Output Group | Allowed Video Codecs | Allowed Audio Codecs |
-|---|---|---|
+| --- | --- | --- |
 | MediaPackage V2 | H.264, H.265, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos |
 | HLS | H.264, H.265, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos |
 | UDP | H.264, H.265, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos, MP2 |
@@ -1075,7 +1104,8 @@ medialive.VideoCodecSettings.mpeg2({
 | Frame Capture | Frame Capture only | (none — video only) |
 | MS Smooth | H.264, H.265, Frame Capture | AAC, AC3, EAC3 |
 
-These validations are enforced at synth time. If you use an unsupported codec, the construct throws a clear error message. For the authoritative mapping, see [supported codecs by output type](https://docs.aws.amazon.com/medialive/latest/ug/outputs-supported-codecs.html).
+These validations are enforced at synth time. If you use an unsupported codec, the construct throws a clear error message. For the authoritative
+mapping, see [supported codecs by output type](https://docs.aws.amazon.com/medialive/latest/ug/outputs-supported-codecs.html).
 
 ---
 
@@ -1131,10 +1161,10 @@ medialive.AudioCodecSettings.passthrough();
 
 ---
 
-
 #### Framerate
 
-The `Framerate` helper class provides static constants for common broadcast frame rates, plus an `of()` method for non-standard rates (e.g. `Framerate.of(24000, 1001)` for 23.976 fps). Frame rates are expressed as numerator/denominator pairs to avoid floating-point precision issues.
+The `Framerate` helper class provides static constants for common broadcast frame rates, plus an `of()` method for non-standard rates (e.g.
+`Framerate.of(24000, 1001)` for 23.976 fps). Frame rates are expressed as numerator/denominator pairs to avoid floating-point precision issues.
 
 ```ts
 class Framerate {
@@ -1221,7 +1251,6 @@ medialive.VideoCodecSettings.h264({
 ```
 
 ---
-
 
 #### Input Attachments
 
@@ -1310,13 +1339,14 @@ const follower = new medialive.Channel(stack, 'Follower', {
 
 ---
 
-
 #### AWS Elemental MediaLive Multiplex
 
 > **Not implemented in the initial release.** `Multiplex`, `MultiplexProgram`, and the
 > `multiplex()` output group are deferred and will follow in a later release.
 
-A multiplex is a multi-program transport stream (MPTS) that carries several programs sharing a fixed total bitrate. Each program is fed by one MediaLive channel through a multiplex output group, and each program's bandwidth can be allocated either statically (constant bitrate) or dynamically across programs (statistical multiplexing).
+A multiplex is a multi-program transport stream (MPTS) that carries several programs sharing a fixed total bitrate. Each program is fed by one
+MediaLive channel through a multiplex output group, and each program's bandwidth can be allocated either statically (constant bitrate) or dynamically
+across programs (statistical multiplexing).
 
 A multiplex spans two availability zones and defines the total transport stream bandwidth:
 
@@ -1328,7 +1358,8 @@ const multiplex = new medialive.Multiplex(stack, 'Multiplex', {
 });
 ```
 
-A `MultiplexProgram` defines one program slot in the multiplex. Use `MultiplexVideoSettings.statmux()` to let the multiplex vary the program's bitrate (statistical multiplexing), or `constantBitrate()` for a fixed rate:
+A `MultiplexProgram` defines one program slot in the multiplex. Use `MultiplexVideoSettings.statmux()` to let the multiplex vary the program's bitrate
+(statistical multiplexing), or `constantBitrate()` for a fixed rate:
 
 ```ts
 const program = new medialive.MultiplexProgram(stack, 'Program', {
@@ -1344,7 +1375,8 @@ const program = new medialive.MultiplexProgram(stack, 'Program', {
 });
 ```
 
-A channel feeds the program via a multiplex output group (see the OutputGroupConfiguration section). The output group references the program, which supplies the multiplex id and program name to the channel's destination.
+A channel feeds the program via a multiplex output group (see the OutputGroupConfiguration section). The output group references the program, which
+supplies the multiplex id and program name to the channel's destination.
 
 Property interfaces:
 
@@ -1405,10 +1437,10 @@ const imported = medialive.Multiplex.fromMultiplexArn(
 
 ---
 
-
 #### AWS Elemental MediaLive Anywhere Network
 
-A network represents a collection of IP address pools and routes used by MediaLive Anywhere resources. Networks are the foundation for on-premises MediaLive deployments.
+A network represents a collection of IP address pools and routes used by MediaLive Anywhere resources. Networks are the foundation for on-premises
+MediaLive deployments.
 
 For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/eml-anywhere.html).
 
@@ -1461,7 +1493,8 @@ const imported = medialive.Network.fromNetworkAttributes(stack, 'Imported', {
 
 #### AWS Elemental MediaLive Anywhere Cluster
 
-A cluster represents a group of on-premises hardware nodes used by MediaLive Anywhere. Clusters require an IAM instance role and optional network settings.
+A cluster represents a group of on-premises hardware nodes used by MediaLive Anywhere. Clusters require an IAM instance role and optional network
+settings.
 
 ```ts
 const cluster = new medialive.Cluster(stack, 'Cluster', {
@@ -1516,10 +1549,10 @@ const imported = medialive.Cluster.fromClusterAttributes(stack, 'Imported', {
 
 ---
 
-
 #### AWS Elemental MediaLive Anywhere ChannelPlacementGroup
 
-A channel placement group assigns channels to specific nodes within a cluster. This enables fine-grained control over which hardware runs which channels in an on-premises deployment.
+A channel placement group assigns channels to specific nodes within a cluster. This enables fine-grained control over which hardware runs which
+channels in an on-premises deployment.
 
 ```ts
 const placementGroup = new medialive.ChannelPlacementGroup(stack, 'PlacementGroup', {
@@ -1602,16 +1635,21 @@ const quadSdi = new medialive.SdiSource(stack, 'QuadSdi', {
 
 ---
 
-
 ### Key Design Decisions
 
 #### 1. Encode deduplication at the channel level
 
-Encode configurations (video, audio, caption) are defined as standalone objects and referenced by outputs. At synth time, the channel collects all encodes from all output groups and deduplicates them by name. This means a `video_1920x1080` encode shared across MediaPackage V2, HLS, and Archive output groups only appears once in the CloudFormation template.
+Encode configurations (video, audio, caption) are defined as standalone objects and referenced by outputs. At synth time, the channel collects all
+encodes from all output groups and deduplicates them by name. This means a `video_1920x1080` encode shared across MediaPackage V2, HLS, and Archive
+output groups only appears once in the CloudFormation template.
 
-This mirrors how the underlying CloudFormation resource works — `videoDescriptions`, `audioDescriptions`, and `captionDescriptions` are top-level arrays on the channel, and outputs reference them by name.
+This mirrors how the underlying CloudFormation resource works — `videoDescriptions`, `audioDescriptions`, and `captionDescriptions` are top-level
+arrays on the channel, and outputs reference them by name.
 
-This is why the `name` prop on every encode is **required**, not optional. The name is the join key: it is what the output's `videoDescriptionName` / `audioDescriptionNames` reference, and it is the key the channel deduplicates on. An auto-generated name would defeat both — outputs could not refer to a stable handle, and two structurally-identical encodes the user intended to share would render as duplicate descriptions. Making the name explicit and required keeps the user in control of the identity that the whole channel graph hangs on.
+This is why the `name` prop on every encode is **required**, not optional. The name is the join key: it is what the output's `videoDescriptionName` /
+`audioDescriptionNames` reference, and it is the key the channel deduplicates on. An auto-generated name would defeat both — outputs could not refer
+to a stable handle, and two structurally-identical encodes the user intended to share would render as duplicate descriptions. Making the name explicit
+and required keeps the user in control of the identity that the whole channel graph hangs on.
 
 #### 2. Abstract classes with static factory methods
 
@@ -1630,55 +1668,66 @@ The L2 uses abstract classes with static factory methods extensively:
 - `RtmpDestination.url()`
 - `MediaPackageV2Destination.channel()`
 
-This pattern provides type safety (each factory returns the correct type), discoverability (IDE autocomplete shows all options), and validation (each factory validates its own props).
+This pattern provides type safety (each factory returns the correct type), discoverability (IDE autocomplete shows all options), and validation (each
+factory validates its own props).
 
 #### 3. Synth-time validation
 
 The L2 validates at synth time:
 
 - **Codec compatibility:** Each output group type validates that its outputs use only supported video and audio codecs.
-- **Destination counts:** Based on channel class (STANDARD requires 2 destinations, SINGLE_PIPELINE requires 1), with additional destinations for MediaPackage V2 and CMAF Ingest via the `additionalDestinations` prop.
+- **Destination counts:** Based on channel class (STANDARD requires 2 destinations, SINGLE_PIPELINE requires 1), with additional destinations for
+MediaPackage V2 and CMAF Ingest via the `additionalDestinations` prop.
 - **Resolution constraints:** Video width and height must be even numbers.
 - **Output name format:** Must be alphanumeric with hyphens and underscores, 1-256 characters.
 - **Single track per output:** MediaPackage V2 and CMAF Ingest require exactly one encode per output.
 - **Frame Capture companion:** Frame Capture output groups require a companion video output group.
 - **MediaPackage V2 framerate:** Video encodes in MediaPackage V2 output groups must have explicit framerate.
 - **Input/channel class match:** Input pipeline class must match channel class (a SINGLE_PIPELINE input on a STANDARD channel throws).
-- **SRT/RTMP destination count:** SRT and RTMP outputs take one destination per pipeline (the console's "Destination A"/"Destination B") — exactly 2 for a STANDARD channel, 1 for SINGLE_PIPELINE.
+- **SRT/RTMP destination count:** SRT and RTMP outputs take one destination per pipeline (the console's "Destination A"/"Destination B") — exactly 2
+for a STANDARD channel, 1 for SINGLE_PIPELINE.
 
 #### 4. Auto-created IAM role and automatic grants
 
-The channel auto-creates an IAM role with `medialive.amazonaws.com` trust if none is provided. The role is exposed via `channel.role` for additional grants, and a user-supplied `role` is honoured as an escape hatch (the L2 then grants onto that role rather than creating its own).
+The channel auto-creates an IAM role with `medialive.amazonaws.com` trust if none is provided. The role is exposed via `channel.role` for additional
+grants, and a user-supplied `role` is honoured as an escape hatch (the L2 then grants onto that role rather than creating its own).
 
 Grants are wired automatically from two sources, all least-privilege and scoped to the most specific ARN the service allows:
 
-**Resource-driven grants** — derived from the destinations and inputs the user actually wired, scoped to those exact resources via each resource's own grant helper (no hand-rolled `PolicyStatement`s):
+**Resource-driven grants** — derived from the destinations and inputs the user actually wired, scoped to those exact resources via each resource's own
+grant helper (no hand-rolled `PolicyStatement`s):
 
 | Wiring | Grant | Scope |
-|--------|-------|-------|
+| -------- | ------- | ------- |
 | `OutputDestination.toBucket()` | `bucket.grantReadWrite()` | the specific bucket/prefix |
 | `InputSource.fromBucket()` | `bucket.grantRead()` | the specific bucket |
 | `InputSource.url()` with an SSM password | `param.grantRead()` | the specific parameter ARN |
 | `MediaPackageV2Destination.channel()` | `mpChannel.grants.ingest()` | the specific MediaPackage V2 channel |
 | `SrtDestination.caller()` / `listener()` with encryption | `secret.grantRead()` | the specific Secrets Manager secret |
 
-**Feature-driven service-role grants** — derived from channel-level features, mirroring the AWS-documented MediaLive trusted-entity requirements (the AWS-managed `MediaLiveAccessRole`):
+**Feature-driven service-role grants** — derived from channel-level features, mirroring the AWS-documented MediaLive trusted-entity requirements (the
+AWS-managed `MediaLiveAccessRole`):
 
 | Feature | Actions | Scope | Why |
-|---------|---------|-------|-----|
+| --------- | --------- | ------- | ----- |
 | Thumbnails (on by default unless `ThumbnailState.DISABLED`) | `s3:PutObject` | `*` | thumbnails upload to an AWS service-owned bucket, not a customer bucket — no ARN to scope to. Write-only, no read/list/delete |
 | Channel logging (when `logLevel !== DISABLED`) | `logs:CreateLogGroup`/`CreateLogStream`/`PutLogEvents`/`PutMetricFilter`/`PutRetentionPolicy`/`DescribeLogStreams`/`DescribeLogGroups` | `arn:<partition>:logs:*` | MediaLive creates its own log group at runtime and `logs:DescribeLogGroups` doesn't support resource-level permissions |
 | VPC output (when `vpc` set) | `ec2:CreateNetworkInterface`/`CreateNetworkInterfacePermission`/`DeleteNetworkInterface` | the ENI plus the user's subnet and security-group ARNs | MediaLive manages ENIs in the user's subnets |
 | VPC output — describe | `ec2:DescribeNetworkInterfaces`/`DescribeSubnets`/`DescribeSecurityGroups`/`DescribeAddresses` | `*` | EC2 `Describe*` actions don't support resource-level permissions |
 | VPC output — public address (only when `publicAddressAllocationIds` set) | `ec2:AssociateAddress` | `*` | association target isn't known at synth time |
 
-Where a `*` resource appears, it is forced by the service (service-owned bucket, runtime-created log group, or actions with no resource-level support) and is documented inline at the call site. ARNs are partition-aware (`Aws.PARTITION`).
+Where a `*` resource appears, it is forced by the service (service-owned bucket, runtime-created log group, or actions with no resource-level support)
+and is documented inline at the call site. ARNs are partition-aware (`Aws.PARTITION`).
 
-**MediaConnect input role is separate.** A MediaConnect / MediaConnect Router input grants `mediaconnect:ManagedDescribeFlow` / `ManagedAddOutput` (and related managed actions) to the *input's* role, not the channel role — these are granted at input-attachment time to the role MediaLive uses to read the flow, which is a distinct trust relationship from the channel's output role.
+**MediaConnect input role is separate.** A MediaConnect / MediaConnect Router input grants `mediaconnect:ManagedDescribeFlow` / `ManagedAddOutput`
+(and related managed actions) to the *input's* role, not the channel role — these are granted at input-attachment time to the role MediaLive uses to
+read the flow, which is a distinct trust relationship from the channel's output role.
 
-This eliminates manual IAM wiring for all common destination and input types. No `bucket.grantReadWrite(channel.role)` or `mpChannel.grants.ingest(channel.role)` needed.
+This eliminates manual IAM wiring for all common destination and input types. No `bucket.grantReadWrite(channel.role)` or
+`mpChannel.grants.ingest(channel.role)` needed.
 
-**Not yet granted** (because the capability isn't exposed by this L2 yet — the grant lands with the feature): AWS Elemental Inference (`elemental-inference:GetMetadata`, `elemental-inference:PutMedia`).
+**Not yet granted** (because the capability isn't exposed by this L2 yet — the grant lands with the feature): AWS Elemental Inference
+(`elemental-inference:GetMetadata`, `elemental-inference:PutMedia`).
 
 #### 5. Duration and Bitrate types
 
@@ -1704,7 +1753,8 @@ bitrate: Bitrate.mbps(5)
 
 #### 6. Token guards
 
-String validations check `Token.isUnresolved()` before validating, so lazy/token values (e.g. from `Fn.ref()` or cross-stack references) pass through without errors.
+String validations check `Token.isUnresolved()` before validating, so lazy/token values (e.g. from `Fn.ref()` or cross-stack references) pass through
+without errors.
 
 #### 7. Complex nested CFN types replaced with proper typed classes
 
@@ -1720,13 +1770,23 @@ Several deeply nested CFN types that were initially exposed as string pass-throu
 
 #### 8. InputSpecification models the input-type choice, not the two CFN properties
 
-At the CloudFormation level the input specification is two disconnected, flat, optional properties on the channel — `inputSpecification` ({ codec, maximumBitrate, resolution }) and `cdiInputSpecification` ({ resolution }) — with no concept linking them. The MediaLive console abstracts this three-way "Input type" control (Other / CDI / Elemental Link) that decides which of the two to populate: "Other" sets the first, "CDI" sets both, "Elemental Link" sets neither. That relationship exists only in the console UX, not in the L1 resource.
+At the CloudFormation level the input specification is two disconnected, flat, optional properties on the channel — `inputSpecification` ({ codec,
+maximumBitrate, resolution }) and `cdiInputSpecification` ({ resolution }) — with no concept linking them. The MediaLive console abstracts this
+three-way "Input type" control (Other / CDI / Elemental Link) that decides which of the two to populate: "Other" sets the first, "CDI" sets both,
+"Elemental Link" sets neither. That relationship exists only in the console UX, not in the L1 resource.
 
-Rather than pass the two props through and leave users to rediscover those rules, the L2 exposes the choice directly via `InputSpecification.standard()` / `.cdi()` / `.elementalLink()`. This makes the valid combinations discoverable (the factory names mirror the console), keeps the CDI resolution reachable only where it applies (it's a prop of `.cdi()` only), and represents "Elemental Link needs no spec" as an explicit, intentional choice rather than an empty object.
+Rather than pass the two props through and leave users to rediscover those rules, the L2 exposes the choice directly via
+`InputSpecification.standard()` / `.cdi()` / `.elementalLink()`. This makes the valid combinations discoverable (the factory names mirror the
+console), keeps the CDI resolution reachable only where it applies (it's a prop of `.cdi()` only), and represents "Elemental Link needs no spec" as an
+explicit, intentional choice rather than an empty object.
 
 #### 9. CloudWatch metrics
 
-`IChannel` exposes a generic `metric(metricName, pipeline, props?)` plus named `metricXxx(pipeline, props?)` helpers (e.g. `metricActiveAlerts`, `metricNetworkIn`/`metricNetworkOut`, `metricInputVideoFrameRate`, `metricFillMsec`, `metricInputLossSeconds`, `metricDroppedFrames`, `metricSvqTime`). All build metrics in the `AWS/MediaLive` namespace; the named helpers default to the AWS-recommended statistic for each metric (e.g. `ActiveAlerts`→Max, `NetworkIn`→Average, `InputLossSeconds`→Sum). Because metrics are on `IChannel`, they're available on both owned and imported channels.
+`IChannel` exposes a generic `metric(metricName, pipeline, props?)` plus named `metricXxx(pipeline, props?)` helpers (e.g. `metricActiveAlerts`,
+`metricNetworkIn`/`metricNetworkOut`, `metricInputVideoFrameRate`, `metricFillMsec`, `metricInputLossSeconds`, `metricDroppedFrames`,
+`metricSvqTime`). All build metrics in the `AWS/MediaLive` namespace; the named helpers default to the AWS-recommended statistic for each metric (e.g.
+`ActiveAlerts`→Max, `NetworkIn`→Average, `InputLossSeconds`→Sum). Because metrics are on `IChannel`, they're available on both owned and imported
+channels.
 
 ```ts
 declare const channel: medialive.IChannel;
@@ -1741,26 +1801,44 @@ channel.metricDroppedFrames(medialive.Pipeline.PIPELINE_0).createAlarm(stack, 'D
 channel.metric('Output4xxErrors', medialive.Pipeline.PIPELINE_0, { statistic: 'sum' });
 ```
 
-**Why a required `Pipeline` argument.** Every MediaLive metric is published per pipeline. `STANDARD` channels run two redundant pipelines (`PIPELINE_0`, `PIPELINE_1`) — to cover the whole channel you alarm on both. `SINGLE_PIPELINE` channels only publish on `PIPELINE_0`; passing `PIPELINE_1` throws at synth time. Making the pipeline an explicit argument (a `Pipeline` value class, not a raw string) forces a deliberate choice rather than silently monitoring one pipeline of a redundant pair.
+**Why a required `Pipeline` argument.** Every MediaLive metric is published per pipeline. `STANDARD` channels run two redundant pipelines
+(`PIPELINE_0`, `PIPELINE_1`) — to cover the whole channel you alarm on both. `SINGLE_PIPELINE` channels only publish on `PIPELINE_0`; passing
+`PIPELINE_1` throws at synth time. Making the pipeline an explicit argument (a `Pipeline` value class, not a raw string) forces a deliberate choice
+rather than silently monitoring one pipeline of a redundant pair.
 
-**Why metrics live only on `Channel`.** Every documented MediaLive metric — global, input, output, pipeline-locking, and MQCS — is dimensioned by `ChannelId`/`Pipeline` (with metric-specific extra dimensions like `OutputGroupName`, `AudioDescriptionName`, or `ActiveInputFailoverLabel` supplied via `props.dimensionsMap`). MediaLive does not publish a separate `Input`-dimensioned namespace, so "input health" and "output health" are both observed through the channel. `Input` therefore intentionally does not expose `metric()` — there is no resource-scoped metric for it to return.
+**Why metrics live only on `Channel`.** Every documented MediaLive metric — global, input, output, pipeline-locking, and MQCS — is dimensioned by
+`ChannelId`/`Pipeline` (with metric-specific extra dimensions like `OutputGroupName`, `AudioDescriptionName`, or `ActiveInputFailoverLabel` supplied
+via `props.dimensionsMap`). MediaLive does not publish a separate `Input`-dimensioned namespace, so "input health" and "output health" are both
+observed through the channel. `Input` therefore intentionally does not expose `metric()` — there is no resource-scoped metric for it to return.
 
 #### 10. MediaConnect integration and the cross-package dependency direction
 
-MediaLive and MediaConnect reference each other across the contribution/distribution boundary: MediaConnect can deliver to a MediaLive input/channel (`RouterOutputConfiguration.mediaLiveInput`, `RouterInputConfiguration.mediaLiveChannel`), and MediaLive can deliver to a MediaConnect Router Input (`SrtDestination.fromRouterInput`). Two alpha packages that import each other's types form a circular package dependency. We break the cycle by fixing a single dependency direction and choosing the reference type accordingly:
+MediaLive and MediaConnect reference each other across the contribution/distribution boundary: MediaConnect can deliver to a MediaLive input/channel
+(`RouterOutputConfiguration.mediaLiveInput`, `RouterInputConfiguration.mediaLiveChannel`), and MediaLive can deliver to a MediaConnect Router Input
+(`SrtDestination.fromRouterInput`). Two alpha packages that import each other's types form a circular package dependency. We break the cycle by fixing
+a single dependency direction and choosing the reference type accordingly:
 
-- **The edge is one-directional: `aws-medialive-alpha` → `aws-mediaconnect-alpha`.** MediaLive is the consumer that needs MediaConnect's richer attributes, so it takes the dependency. This mirrors the existing `aws-medialive-alpha` → `aws-mediapackagev2-alpha` edge.
-- **MediaLive uses MediaConnect's rich L2 types** where it needs runtime attributes. `SrtDestination.fromRouterInput(routerInput: IRouterInput)` reads the router input's ingest endpoint URL and transit encryption secret off the L2 — neither is available on a bare reference, so the rich type is required.
-- **MediaConnect references MediaLive only through `aws-cdk-lib` reference interfaces** (`IInputRef`, `IChannelRef`), never `@aws-cdk/aws-medialive-alpha`. These ref interfaces live in `aws-cdk-lib` (a dependency both alphas already have) and carry just the ARN/identifiers MediaConnect needs. This is the key move: MediaConnect gains type-safe MediaLive references with **no** dependency on the MediaLive alpha, so no back-edge is created.
+- **The edge is one-directional: `aws-medialive-alpha` → `aws-mediaconnect-alpha`.** MediaLive is the consumer that needs MediaConnect's richer
+attributes, so it takes the dependency. This mirrors the existing `aws-medialive-alpha` → `aws-mediapackagev2-alpha` edge.
+- **MediaLive uses MediaConnect's rich L2 types** where it needs runtime attributes. `SrtDestination.fromRouterInput(routerInput: IRouterInput)` reads
+the router input's ingest endpoint URL and transit encryption secret off the L2 — neither is available on a bare reference, so the rich type is
+required.
+- **MediaConnect references MediaLive only through `aws-cdk-lib` reference interfaces** (`IInputRef`, `IChannelRef`), never
+`@aws-cdk/aws-medialive-alpha`. These ref interfaces live in `aws-cdk-lib` (a dependency both alphas already have) and carry just the ARN/identifiers
+MediaConnect needs. This is the key move: MediaConnect gains type-safe MediaLive references with **no** dependency on the MediaLive alpha, so no
+back-edge is created.
 
-A dedicated cross-service "integrations" package was considered and rejected: the coupling is cleanly one-directional (the ref interfaces already remove the only would-be back-edge) and the surface is small and naturally homed on the existing constructs, so a third package would add release/versioning/discoverability overhead for no decoupling benefit.
+A dedicated cross-service "integrations" package was considered and rejected: the coupling is cleanly one-directional (the ref interfaces already
+remove the only would-be back-edge) and the surface is small and naturally homed on the existing constructs, so a third package would add
+release/versioning/discoverability overhead for no decoupling benefit.
 
 ---
 
-
 ### Complete End-to-End Example
 
-This example shows a complete live streaming pipeline: MediaConnect Router input → MediaLive Channel with MediaPackage V2 + HLS output groups → multiple encode profiles (1080p, 720p, audio-only), with the HLS output fronted by CloudFront. It is exercised end-to-end by the `integ.medialive-e2e-cdn` integration test.
+This example shows a complete live streaming pipeline: MediaConnect Router input → MediaLive Channel with MediaPackage V2 + HLS output groups →
+multiple encode profiles (1080p, 720p, audio-only), with the HLS output fronted by CloudFront. It is exercised end-to-end by the
+`integ.medialive-e2e-cdn` integration test.
 
 ```ts
 import * as cdk from 'aws-cdk-lib';
@@ -1886,10 +1964,10 @@ const distribution = new cloudfront.Distribution(stack, 'Cdn', {
 
 ---
 
-
 ### Anywhere Deployment Example
 
-The Anywhere constructs (`Network`, `Cluster`, `ChannelPlacementGroup`, `SdiSource`) ship with this release. See their individual Working Backwards sections above for usage. A full end-to-end Anywhere walkthrough will be added to the module README.
+The Anywhere constructs (`Network`, `Cluster`, `ChannelPlacementGroup`, `SdiSource`) ship with this release. See their individual Working Backwards
+sections above for usage. A full end-to-end Anywhere walkthrough will be added to the module README.
 
 ---
 
@@ -1905,9 +1983,11 @@ RFC pull request):
 
 ### What are we launching today?
 
-We're launching new AWS Elemental MediaLive L2 Constructs to provide best-practice defaults and a developer-friendly API for creating MediaLive Inputs, Input Security Groups, Channels, Networks, Clusters, and Channel Placement Groups.
+We're launching new AWS Elemental MediaLive L2 Constructs to provide best-practice defaults and a developer-friendly API for creating MediaLive
+Inputs, Input Security Groups, Channels, Networks, Clusters, and Channel Placement Groups.
 
-The aim is to reduce the complexity of the `AWS::MediaLive::Channel` CloudFormation resource into a abstracted, type-safe API with synth-time validation.
+The aim is to reduce the complexity of the `AWS::MediaLive::Channel` CloudFormation resource into a abstracted, type-safe API with synth-time
+validation.
 
 ### Why should I use this feature?
 
@@ -1918,13 +1998,16 @@ Developers should use these constructs to:
 - Use CDK `Duration` and `Bitrate` types instead of raw numbers.
 - Share encode configurations across output groups with automatic deduplication.
 - Get IDE autocomplete and type checking for all 9 output group types, 5 video codecs, and 7 audio codecs.
-- Monitor channels with typed CloudWatch metric helpers (`channel.metricDroppedFrames(...)`, `channel.metric(...)`) in the `AWS/MediaLive` namespace, with AWS-recommended default statistics.
+- Monitor channels with typed CloudWatch metric helpers (`channel.metricDroppedFrames(...)`, `channel.metric(...)`) in the `AWS/MediaLive` namespace,
+with AWS-recommended default statistics.
 
 ## Internal FAQ
 
 ### Why are we doing this?
 
-The `AWS::MediaLive::Channel` CloudFormation resource is one of the most complex resource in AWS. It has hundreds of nested properties for encoder settings, output groups, codec configurations, and destinations. Developers must reference extensive documentation to determine valid combinations of parameters.
+The `AWS::MediaLive::Channel` CloudFormation resource is one of the most complex resource in AWS. It has hundreds of nested properties for encoder
+settings, output groups, codec configurations, and destinations. Developers must reference extensive documentation to determine valid combinations of
+parameters.
 
 By building L2 constructs, we:
 
@@ -1936,17 +2019,20 @@ By building L2 constructs, we:
 
 ### Why should we _not_ do this?
 
-Users today are already using the L1 construct and would need to migrate. However, the L1 experience for MediaLive Channel is particularly difficult due to the resource's complexity, making the L2 especially valuable.
+Users today are already using the L1 construct and would need to migrate. However, the L1 experience for MediaLive Channel is particularly difficult
+due to the resource's complexity, making the L2 especially valuable.
 
 ### What is the technical solution (design) of this feature?
 
 The design centers on:
 
-1. **Abstract classes with static factory methods** for type-safe, discoverable configuration of inputs, output groups, codecs, rate control, and avail settings.
+1. **Abstract classes with static factory methods** for type-safe, discoverable configuration of inputs, output groups, codecs, rate control, and
+avail settings.
 2. **Lazy evaluation** — encode descriptions are collected and deduplicated at synth time using `Lazy.any()`.
 3. **Per-output-group validation** — each output group type validates its codec compatibility and destination counts.
 4. **Composable encode configurations** — defined once, referenced by multiple outputs across multiple output groups.
-5. **CloudWatch metrics** — `IChannel` exposes a generic `metric()` and named `metricXxx()` helpers (`AWS/MediaLive` namespace, `ChannelId`/`Pipeline` dimensions), with a required `Pipeline` argument so monitoring of redundant pipelines is an explicit choice. See Key Design Decision #9.
+5. **CloudWatch metrics** — `IChannel` exposes a generic `metric()` and named `metricXxx()` helpers (`AWS/MediaLive` namespace, `ChannelId`/`Pipeline`
+dimensions), with a required `Pipeline` argument so monitoring of redundant pipelines is an explicit choice. See Key Design Decision #9.
 
 ### Is this a breaking change?
 
@@ -1954,11 +2040,16 @@ No — an L2 doesn't exist today. This is a new alpha module.
 
 ### What alternative solutions did you consider?
 
-We considered a builder pattern for the channel, but the factory method pattern on abstract classes provides better discoverability and type safety while keeping the API surface flat and composable.
+We considered a builder pattern for the channel, but the factory method pattern on abstract classes provides better discoverability and type safety
+while keeping the API surface flat and composable.
 
 ### What are the drawbacks of this solution?
 
-Due to the sheer number of property combinations and inter-dependencies in the MediaLive Channel resource, the L2 cannot validate every possible misconfiguration at synth time. We validate the most common and impactful constraints (codec compatibility, destination counts, resolution parity, single-track-per-output for CMAF), but many constraints — such as valid codec parameter ranges, container-specific requirements, and cross-property dependencies — will continue to rely on the MediaLive API for validation. The API error messages from MediaLive are generally clear and actionable, so this is a pragmatic trade-off.
+Due to the sheer number of property combinations and inter-dependencies in the MediaLive Channel resource, the L2 cannot validate every possible
+misconfiguration at synth time. We validate the most common and impactful constraints (codec compatibility, destination counts, resolution parity,
+single-track-per-output for CMAF), but many constraints — such as valid codec parameter ranges, container-specific requirements, and cross-property
+dependencies — will continue to rely on the MediaLive API for validation. The API error messages from MediaLive are generally clear and actionable, so
+this is a pragmatic trade-off.
 
 ### What is the high-level project plan?
 
@@ -1968,11 +2059,18 @@ The L2 constructs have been built and are working towards alpha release. The con
 - 9 output group types: MediaPackage V2, HLS, UDP, Archive, RTMP, SRT, CMAF Ingest, Frame Capture, MS Smooth
 - 5 video codecs: H.264, H.265, AV1, Frame Capture, MPEG-2
 - 7 audio codecs: AAC, AC3, EAC3, EAC3 Atmos, MP2, WAV, Passthrough
-- 16 input types: URL pull, RTMP push/pull, SRT caller/listener, MediaConnect, MediaConnect Router, SDI, UDP push, RTP push, MP4 file, TS file, CDI, Elemental Link (input device), Multicast, SMPTE 2110 receiver group
-- CloudWatch metrics on `Channel`: a generic `metric()` plus named helpers for the common global/input/output/pipeline metrics, in the `AWS/MediaLive` namespace
+- 16 input types: URL pull, RTMP push/pull, SRT caller/listener, MediaConnect, MediaConnect Router, SDI, UDP push, RTP push, MP4 file, TS file, CDI,
+Elemental Link (input device), Multicast, SMPTE 2110 receiver group
+- CloudWatch metrics on `Channel`: a generic `metric()` plus named helpers for the common global/input/output/pipeline metrics, in the `AWS/MediaLive`
+namespace
 
 ### Are there any open issues that need to be addressed later?
 
-- **Multiplex and MultiplexProgram are not implemented in the initial release.** The `Multiplex`, `MultiplexProgram`, and `multiplex()` output group constructs are deferred and will follow in a later release. The MPEG-2 video codec is also deferred, since its only valid output group is Multiplex.
-- Workflow Monitor resources (CloudWatch Alarm Templates, EventBridge Rule Templates, SignalMap) are under the MediaLive CFN namespace but are a cross-service monitoring feature. These are out of scope for this initial release.
-- `Framerate` and `PixelAspectRatio` are generic numerator/denominator value objects with no MediaLive-specific behaviour. The same concepts appear in other media services — notably AWS Elemental MediaConnect — so there is an opportunity to define them once and share rather than re-declaring per package. The open question is *where* they should live: a media-specific shared library, or CDK Core. This is deliberately deferred. For the initial alpha these types stay local to this module; consolidation can follow once a second consumer concretely needs them.
+- **Multiplex and MultiplexProgram are not implemented in the initial release.** The `Multiplex`, `MultiplexProgram`, and `multiplex()` output group
+constructs are deferred and will follow in a later release. The MPEG-2 video codec is also deferred, since its only valid output group is Multiplex.
+- Workflow Monitor resources (CloudWatch Alarm Templates, EventBridge Rule Templates, SignalMap) are under the MediaLive CFN namespace but are a
+cross-service monitoring feature. These are out of scope for this initial release.
+- `Framerate` and `PixelAspectRatio` are generic numerator/denominator value objects with no MediaLive-specific behaviour. The same concepts appear in
+other media services — notably AWS Elemental MediaConnect — so there is an opportunity to define them once and share rather than re-declaring per
+package. The open question is *where* they should live: a media-specific shared library, or CDK Core. This is deliberately deferred. For the initial
+alpha these types stay local to this module; consolidation can follow once a second consumer concretely needs them.
