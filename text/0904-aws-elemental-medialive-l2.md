@@ -305,10 +305,7 @@ const channel = new medialive.Channel(stack, 'Channel', {
   outputGroups: [
     medialive.OutputGroupConfiguration.mediaPackageV2({
       name: 'mp2-dest',
-      destinations: [
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1),
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_2),
-      ],
+      channel: mpChannel,
       outputs: [
         { outputName: 'mp2-video-1080', encode: video1080 },
         { outputName: 'mp2-video-720', encode: video720 },
@@ -630,10 +627,7 @@ const channel = new medialive.Channel(stack, 'Channel', {
   outputGroups: [
     medialive.OutputGroupConfiguration.mediaPackageV2({
       name: 'mp2',
-      destinations: [
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1),
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_2),
-      ],
+      channel: mpChannel,
       outputs: [
         { outputName: 'mp2-1080', encode: video1080 },
         { outputName: 'mp2-720', encode: video720 },
@@ -822,6 +816,7 @@ Each factory accepts only the props valid for that output group type, with typed
 ```ts
 class OutputGroupConfiguration {
   static mediaPackageV2(props: MediaPackageV2OutputGroupProps): OutputGroupConfiguration;
+  static mediaPackageV2PerPipeline(props: MediaPackageV2PerPipelineOutputGroupProps): OutputGroupConfiguration;
   static hls(props: HlsOutputGroupProps): OutputGroupConfiguration;
   static udp(props: UdpOutputGroupProps): OutputGroupConfiguration;
   static archive(props: ArchiveOutputGroupProps): OutputGroupConfiguration;
@@ -838,6 +833,31 @@ class OutputGroupConfiguration {
 ```ts
 medialive.OutputGroupConfiguration.mediaPackageV2({
   name: 'mp2',
+  channel: mpChannel,
+  outputs: [
+    { outputName: 'video-1080', encode: video1080 },
+    { outputName: 'audio', encode: audioStereo },
+  ],
+});
+```
+
+The `mediaPackageV2()` factory takes a single `channel` reference and maps each pipeline to a MediaPackage ingest 
+endpoint automatically (one for `SINGLE_PIPELINE`, both for `STANDARD`). For additional destinations (cross-region or backup), import the channel with its region 
+(`fromChannelAttributes({ ..., region })`) — the destination picks up the region from the channel:
+
+```ts
+additionalDestinations: [
+  medialive.MediaPackageV2Destination.channel(backupChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1),
+],
+```
+
+For per-pipeline control — pinning a pipeline to a specific endpoint, or delivering each pipeline to a different channel 
+— use `mediaPackageV2PerPipeline()` with explicit `destinations` (`destinations[0]` → Pipeline 0, 
+`destinations[1]` → Pipeline 1):
+
+```ts
+medialive.OutputGroupConfiguration.mediaPackageV2PerPipeline({
+  name: 'mp2',
   destinations: [
     medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1),
     medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_2),
@@ -847,17 +867,6 @@ medialive.OutputGroupConfiguration.mediaPackageV2({
     { outputName: 'audio', encode: audioStereo },
   ],
 });
-```
-
-MediaPackage V2 destinations use the `MediaPackageV2Destination.channel()` factory with an explicit `IChannel` reference (from
-`@aws-cdk/aws-mediapackagev2-alpha`) and a pipeline endpoint ID. Each output must contain a single encode (one track per CMAF output). For additional
-destinations (cross-region or backup), use the same `channel()` factory and pass the region as the third argument (needed when the channel was
-imported without a region):
-
-```ts
-additionalDestinations: [
-  medialive.MediaPackageV2Destination.channel(backupChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1, 'us-west-2'),
-],
 ```
 
 **HLS output group:**
@@ -1005,8 +1014,9 @@ medialive.OutputGroupConfiguration.msSmooth({
 Each output group type has its own destination interface, enforcing the correct shape at compile time:
 
 | Output Group Type | Destination Interface | Key Fields |
-| --- | --- | --- |
-| MediaPackage V2 | `MediaPackageV2Destination` | Abstract class with `channel()` factory method |
+|---|---|---|
+| MediaPackage V2 (auto) | single `channel` reference | `mediaPackageV2()` maps pipelines to endpoints automatically by channel class |
+| MediaPackage V2 (custom) | `MediaPackageV2Destination` | `mediaPackageV2PerPipeline()` with explicit per-pipeline `channel()` destinations |
 | HLS, Archive, UDP, CMAF, Frame Capture, MS Smooth | `OutputDestination` | Abstract class with `url()` and `toBucket()` factory methods |
 | RTMP | `RtmpDestination` | Abstract class with `url()` factory method |
 | SRT | `SrtDestination` | Abstract class with `caller()` and `listener()` factory methods |
@@ -1923,10 +1933,7 @@ const channel = new medialive.Channel(stack, 'Channel', {
     // MediaPackage V2 — one track per output (CMAF)
     medialive.OutputGroupConfiguration.mediaPackageV2({
       name: 'mp2',
-      destinations: [
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_1),
-        medialive.MediaPackageV2Destination.channel(mpChannel, medialive.MediaPackageV2EndpointId.ENDPOINT_2),
-      ],
+      channel: mpChannel,
       outputs: [
         { outputName: 'mp2-1080', encode: video1080 },
         { outputName: 'mp2-720', encode: video720 },
