@@ -841,8 +841,9 @@ medialive.OutputGroupConfiguration.mediaPackageV2({
 });
 ```
 
-The `mediaPackageV2()` factory takes a single `channel` reference and maps each pipeline to a MediaPackage ingest 
-endpoint automatically (one for `SINGLE_PIPELINE`, both for `STANDARD`). For additional destinations (cross-region or backup), import the channel with its region 
+The `mediaPackageV2()` factory takes a single `channel` reference and maps each pipeline to a MediaPackage ingest
+endpoint automatically (one for `SINGLE_PIPELINE`, both for `STANDARD`). For additional destinations (cross-region or backup), import the channel with
+its region
 (`fromChannelAttributes({ ..., region })`) — the destination picks up the region from the channel:
 
 ```ts
@@ -851,8 +852,8 @@ additionalDestinations: [
 ],
 ```
 
-For per-pipeline control — pinning a pipeline to a specific endpoint, or delivering each pipeline to a different channel 
-— use `mediaPackageV2PerPipeline()` with explicit `destinations` (`destinations[0]` → Pipeline 0, 
+For per-pipeline control — pinning a pipeline to a specific endpoint, or delivering each pipeline to a different channel
+— use `mediaPackageV2PerPipeline()` with explicit `destinations` (`destinations[0]` → Pipeline 0,
 `destinations[1]` → Pipeline 1):
 
 ```ts
@@ -1014,7 +1015,7 @@ medialive.OutputGroupConfiguration.msSmooth({
 Each output group type has its own destination interface, enforcing the correct shape at compile time:
 
 | Output Group Type | Destination Interface | Key Fields |
-|---|---|---|
+| --- | --- | --- |
 | MediaPackage V2 (auto) | single `channel` reference | `mediaPackageV2()` maps pipelines to endpoints automatically by channel class |
 | MediaPackage V2 (custom) | `MediaPackageV2Destination` | `mediaPackageV2PerPipeline()` with explicit per-pipeline `channel()` destinations |
 | HLS, Archive, UDP, CMAF, Frame Capture, MS Smooth | `OutputDestination` | Abstract class with `url()` and `toBucket()` factory methods |
