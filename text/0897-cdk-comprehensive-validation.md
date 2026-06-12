@@ -815,7 +815,7 @@ findings into one report.
 Each event returned by `DescribeEvents` contains:
 
 | Field | Description |
-|---|---|
+| --- | --- |
 | `LogicalResourceId` | CFN logical ID of the failing resource |
 | `ResourceType` | CFN resource type (e.g. `AWS::Lambda::Function`) |
 | `ValidationName` | Category identifier (e.g. `PROPERTY_VALIDATION`, `NAME_CONFLICT_VALIDATION`) |
@@ -826,7 +826,7 @@ Each event returned by `DescribeEvents` contains:
 ##### Mapping to the Validation Report
 
 | Report field | Source |
-|---|---|
+| --- | --- |
 | `ruleName` | Derived from `ValidationName` + a normalized prefix of `ValidationStatusReason` (see below) |
 | `severity` | `FAIL` → `Fatal`, `WARN` → `Warning` |
 | `source` | `"CloudFormation"` |
@@ -847,7 +847,7 @@ To produce a more useful identifier, CDK will derive `ruleName` by combining `Va
 normalized prefix of `ValidationStatusReason`. For example:
 
 | `ValidationName` | `ValidationStatusReason` | Derived `ruleName` |
-|---|---|---|
+| --- | --- | --- |
 | `PROPERTY_VALIDATION` | `DISABLED is not a valid enum value. Supported values: [Active, PassThrough]` | `PROPERTY_VALIDATION:InvalidEnumValue` |
 | `PROPERTY_VALIDATION` | `Missing required property: FunctionName` | `PROPERTY_VALIDATION:MissingRequiredProperty` |
 | `PROPERTY_VALIDATION` | `Unsupported property: Foo` | `PROPERTY_VALIDATION:UnsupportedProperty` |
