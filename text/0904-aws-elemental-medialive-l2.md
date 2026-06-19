@@ -1778,6 +1778,11 @@ Several deeply nested CFN types that were initially exposed as string pass-throu
 - `archiveCdnSettings` → `archiveS3CannedAcl: S3CannedAcl` prop
 - `frameCaptureCdnSettings` → `frameCaptureS3CannedAcl: S3CannedAcl` prop
 - `captionLanguageMappings` → `CaptionLanguageMapping[]` typed array
+- audio `audioType` string → `AudioType` enum
+- codec `level` string → `H264Level` / `H265Level` / `Av1Level` enums
+- HLS CDN `httpTransferMode` string → `HttpTransferMode` enum
+- SRT decryption `algorithm` string → `SrtDecryptionAlgorithm` enum, and `passphraseSecretArn` string → `passphraseSecret: ISecret`
+- color correction `uri` string → `Lut` value object (S3-only, auto-grants read), with `inputColorSpace` / `outputColorSpace` strings → `ColorSpace` enum
 
 #### 8. InputSpecification models the input-type choice, not the two CFN properties
 
