@@ -4,7 +4,7 @@
 ## L2 Constructs for AWS Elemental MediaLive Input, InputSecurityGroup, Channel, Network, Cluster & ChannelPlacementGroup
 
 * **Original Author(s):** @jamiepmullan
-* **Tracking Issue:** TBD
+* **Tracking Issue:** [#904](https://github.com/aws/aws-cdk-rfcs/issues/904)
 * **API Bar Raiser:** TBD
 
 This design outlines how we build L2 constructs for AWS Elemental MediaLive, delivering the following benefits:
