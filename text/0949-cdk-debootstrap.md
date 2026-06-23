@@ -1,8 +1,8 @@
 # `cdk debootstrap` — Reverse CDK Bootstrap
 
 * **Original Author(s):**: @sanjanaravikumar-az
-* **Tracking Issue**: #TBD
-* **API Bar Raiser**: @TBD
+* **Tracking Issue**: [#949](https://github.com/aws/aws-cdk-rfcs/issues/949)
+* **API Bar Raiser**: @rix0rrr
 
 There is no supported way to reverse `cdk bootstrap`. Users who stop using CDK
 in an account/region, or need to re-bootstrap with a different configuration
@@ -26,7 +26,7 @@ environment that get created when `cdk bootstrap` is run.
 
 ##### Usage
 
-When users want to debootstrap a particular account, they run:
+When you want to remove bootstrap resources from your account, run:
 
 ```console
 $ cdk debootstrap aws://123456789012/us-east-1
@@ -98,13 +98,7 @@ prompts.
 
 ##### Idempotency
 
-The command is safe to re-run after partial failure. Each step checks current
-state before acting:
-
-- If the stack is already gone but the bucket still exists, it skips to bucket
-  cleanup
-- If the bucket is already empty, it skips to the next step
-- If everything is already removed, it exits cleanly
+The command is safe to re-run after partial failure. You can run it to pick up where you left off - for example, if the stack is already gone but the bucket still exists, it skips to bucket cleanup.
 
 ##### Examples
 
@@ -189,7 +183,7 @@ confirmation prompts.
 **Environment selection:** `cdk debootstrap` supports three modes:
 
 - `cdk debootstrap` - discovers bootstrapped environments and presents a picker
-  for the user to select which one(s) to destroy
+  for you to select which one(s) to destroy
 - `cdk debootstrap aws://123456789012/us-east-1` - targets that environment
   directly
 - `cdk debootstrap aws://123456789012/us-east-1 --force` - skips dependency
@@ -221,7 +215,7 @@ names are CDK-specific and not discoverable without reading the bootstrap
 template.
 
 **Termination protection:** If the bootstrap stack has termination protection
-enabled, the command aborts with a clear message asking the user to disable it
+enabled, the command aborts with a clear message asking you to disable it
 first.
 
 **Deletion sequence:**
@@ -292,9 +286,9 @@ perspective.
   B would not be able to deploy into A anymore. We can detect that
   `TrustedAccounts` is configured and warn, but cannot proactively notify
   Account B.
-- **Custom bootstrap templates:** Users who bootstrapped with a custom template
+- **Custom bootstrap templates:** Whoever bootstrapped with a custom template
   may have additional resources with `DeletionPolicy: Retain` that we can't
-  clean up. We identify these via `GetTemplate` and warn the user.
+  clean up. We identify these via `GetTemplate` and warn them.
 - **Race conditions:** If someone runs `cdk deploy` concurrently with
   `cdk debootstrap`, the deployment will fail. This requires operational
   coordination.
@@ -328,8 +322,8 @@ perspective.
 | Limitation | Detail |
 | --- | --- |
 | Cross-account bootstrap | If Account B deploys into Account A using A's bootstrap roles, destroying A's bootstrap breaks B's ability to deploy into A. A warning is printed if `TrustedAccounts` is configured. |
-| Custom bootstrap templates | Resources are enumerated by type (`AWS::S3::Bucket`, `AWS::ECR::Repository`) via `GetTemplate`. Resources with `DeletionPolicy: Retain` are identified and the user is warned they will be orphaned. |
-| S3 Object Lock | If the bucket has Object Lock enabled, deletion will fail. The user must remove Object Lock manually before retrying. |
+| Custom bootstrap templates | Resources are enumerated by type (`AWS::S3::Bucket`, `AWS::ECR::Repository`) via `GetTemplate`. Resources with `DeletionPolicy: Retain` are identified and a warning is printed that they will be orphaned. |
+| S3 Object Lock | If the bucket has Object Lock enabled, deletion will fail. You must remove Object Lock manually before retrying. |
 | KMS key deletion delay | AWS enforces a 7–30 day waiting period. The key is scheduled for deletion but remains pending. |
 | Large buckets | Emptying millions of objects may take 10–30 minutes. Recovery from mid-step failure is via idempotent re-run. |
 | Race conditions | Concurrent `cdk deploy` will fail as resources are removed. Operational coordination required. |
