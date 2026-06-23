@@ -42,14 +42,11 @@ $ cdk debootstrap
 ##### What it does
 
 `cdk debootstrap` performs a complete teardown of the CDKToolkit CloudFormation
-stack in a specified environment:
-
-1. Empties the S3 staging bucket (all object versions)
-2. Deletes all images in the ECR container assets repository
-3. Deletes the CDKToolkit CloudFormation stack (which cascades IAM roles, KMS
-   key, SSM parameter)
-4. Deletes the orphaned S3 bucket (left behind due to its
-   `DeletionPolicy: Retain`)
+stack in a specified environment. All bootstrapped resources will be deleted,
+including the S3 asset bucket, ECR repository, and all files and images within
+them. IAM roles, KMS keys, and the SSM parameter are also removed. Because the
+bucket must be emptied before it can be deleted, the duration of this operation
+depends on how many objects are in the bucket.
 
 ##### Confirmation prompts
 
@@ -68,8 +65,6 @@ Do you want to continue? (y/N):
 ```
 
 **Prompt 2 - Final confirmation**:
-
-This prompt will always be shown unless the user uses `--yes`
 
 ```
 This will permanently delete all assets in the staging bucket and ECR repository.
@@ -198,21 +193,20 @@ bootstrapped environments by:
    the qualifier's stack name pattern
 3. Present the environments that have a bootstrap stack as a multi-select picker
 
-**Dependency detection:** CDK stacks reference bootstrap resources by
-deterministic naming convention, so we can detect them by the following steps:
+**Dependency detection:** We read the actual resource names (bucket name, ECR
+repo name, role ARNs) from the bootstrap stack's outputs and resources, then
+search for those actual values in other stacks:
 
-1. Call `DescribeStacks` to list all stacks in the account/region
-2. Match each stack's `RoleARN` field against the pattern
-   `cdk-${Qualifier}-cfn-exec-role-${Account}-${Region}`
-3. Check stack parameters and template body for references to the bootstrap
-   bucket - `cdk-${Qualifier}-assets-${Account}-${Region}` and ECR repo -
-   `cdk-${Qualifier}-container-assets-${Account}-${Region}`
-4. If there is a match that means that stack depends on this bootstrap
+1. Get the actual bootstrap resource names from the CDKToolkit stack (via
+   stack outputs and `GetTemplate`)
+2. Call `DescribeStacks` to list all stacks in the account/region
+3. For each stack, check its `RoleARN` field, template body, and parameters
+   for any reference to the bootstrap resource names
+4. Any match means that stack depends on this bootstrap
 
-This catches all CDK-deployed stacks. Non-CDK stacks that happen to use
-bootstrap roles as their execution role would also be caught, since the role
-names are CDK-specific and not discoverable without reading the bootstrap
-template.
+This approach catches all stacks that reference the bootstrap — including
+stacks deployed against a customized bootstrap template where resources were
+renamed.
 
 **Termination protection:** If the bootstrap stack has termination protection
 enabled, the command aborts with a clear message asking you to disable it
@@ -307,8 +301,6 @@ perspective.
 
 ### Are there any open issues that need to be addressed later?
 
-- **Cross-account notification:** A mechanism to warn trusted accounts when a
-  bootstrap stack they depend on is about to be destroyed.
 - **Interactive picker without `cdk.json`:** The interactive picker resolves
   environments from the app's stacks (same as `cdk bootstrap`). Without a
   `cdk.json`, the command requires explicit environment arguments. Whether to
