@@ -97,15 +97,40 @@ const fileSystem = new s3files.FileSystem(this, 'MyFileSystem', {
   synchronizationConfiguration: {
     importDataRules: [{
       prefix: '/',
-      sizeLessThan: 1073741824,
+      sizeLessThan: Size.gibibytes(1),
       trigger: s3files.ImportDataRuleTrigger.ON_FILE_ACCESS,
     }],
-    expirationDataRules: [{
-      daysAfterLastAccess: 30,
-    }],
+    expirationDataRule: {
+      daysAfterLastAccess: Duration.days(30),
+    },
   },
 });
 ```
+
+## Granting Access
+
+Use `grant*` methods to authorize principals for NFS client operations.
+These follow the same pattern as the EFS L2 construct:
+
+```ts
+declare const fileSystem: s3files.FileSystem;
+declare const lambdaFunction: lambda.Function;
+
+// Read-only mount access
+fileSystem.grantRead(lambdaFunction);
+
+// Read and write access
+fileSystem.grantReadWrite(lambdaFunction);
+
+// Root access (mount + write + root)
+fileSystem.grantRootAccess(lambdaFunction);
+```
+
+Each method calls `iam.Grant.addToPrincipalOrResource` with the
+appropriate `s3files:Client*` actions and an
+`s3files:AccessedViaMountTarget` condition. A general-purpose
+`grant(grantee, ...actions)` method is also available for custom
+action sets.
 
 ## File System Policy
 
@@ -287,10 +312,13 @@ automation (IAM role creation) without being overly opinionated.
 
 * `S3Files` requires an S3 Bucket so this field is required to create
   the resource unlike EFS.
-* EFS L2 Constructs accept a single VPC with optional `vpcSubnets`.
-  S3Files requires `vpcSubnets` to maintain consistency with the S3
-  Files SDK, CLI, and API interfaces, which all take subnets as
-  arguments rather than VPC IDs.
+* S3Files uses a nested `vpcConfiguration` object (containing `vpc`,
+  `vpcSubnets`, `securityGroup`, `ipAddressType`) whereas EFS accepts
+  `vpc` and `vpcSubnets` as top-level props. Both use
+  `ec2.SubnetSelection` for subnet specification.
+* S3Files exposes `acceptBucketWarning` (a CFN write-only property
+  required for certain bucket configurations) which has no EFS
+  equivalent.
 
 ### What is the high-level project plan?
 
@@ -330,13 +358,22 @@ Phase 2 - GA (future):
 #### Interfaces
 
 * `IFileSystem` - extends `IResource`, `IFileSystemRef`,
-  `ec2.IConnectable`, `iam.IResourceWithPolicyV2`
+  `ec2.IConnectable`, `iam.IResourceWithPolicyV2`, `iam.IGrantable`
+  * `grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant`
+  * `grantRead(grantee: iam.IGrantable): iam.Grant` — grants
+    `s3files:ClientMount`
+  * `grantReadWrite(grantee: iam.IGrantable): iam.Grant` — grants
+    `s3files:ClientMount`, `s3files:ClientWrite`
+  * `grantRootAccess(grantee: iam.IGrantable): iam.Grant` — grants
+    `s3files:ClientMount`, `s3files:ClientWrite`,
+    `s3files:ClientRootAccess`
 * `IAccessPoint` - extends `IAccessPointRef`, `IResource`
 
 #### Enums
 
 * `ImportDataRuleTrigger` - `ON_DIRECTORY_FIRST_ACCESS`,
   `ON_FILE_ACCESS`
+* `IpAddressType` - `IPV4_ONLY`, `IPV6_ONLY`, `DUAL_STACK`
 
 ```ts
 /**
@@ -353,11 +390,32 @@ export enum ImportDataRuleTrigger {
    */
   ON_FILE_ACCESS = 'ON_FILE_ACCESS',
 }
+
+/**
+ * IP address type for mount targets.
+ */
+export enum IpAddressType {
+  /**
+   * IPv4 only.
+   */
+  IPV4_ONLY = 'IPV4_ONLY',
+
+  /**
+   * IPv6 only.
+   */
+  IPV6_ONLY = 'IPV6_ONLY',
+
+  /**
+   * Dual-stack (IPv4 and IPv6).
+   */
+  DUAL_STACK = 'DUAL_STACK',
+}
 ```
 
 #### Props Interfaces
 
-* `VpcConfiguration` - vpc, vpcSubnets (required), securityGroup
+* `VpcConfiguration` - vpc (required), vpcSubnets (required), securityGroup,
+  ipAddressType
 
 ```ts
 /**
@@ -370,11 +428,11 @@ export interface VpcConfiguration {
   readonly vpc: ec2.IVpc;
 
   /**
-   * Specific subnets to place mount targets in.
+   * Selection of subnets to place mount targets in.
    * Only create mount targets in subnets where clients
    * will connect from.
    */
-  readonly subnets: ec2.ISubnet[];
+  readonly vpcSubnets: ec2.SubnetSelection;
 
   /**
    * Security group for the mount targets in this VPC.
@@ -382,13 +440,20 @@ export interface VpcConfiguration {
    * @default - a new security group is created
    */
   readonly securityGroup?: ec2.ISecurityGroup;
+
+  /**
+   * The IP address type for the mount targets.
+   *
+   * @default IpAddressType.IPV4_ONLY
+   */
+  readonly ipAddressType?: IpAddressType;
 }
 ```
 
 * `FileSystemProps` - bucket (`s3.IBucket`), vpcConfiguration,
   role (`iam.IRole`), kmsKey (`kms.IKey`), prefix,
-  synchronizationConfiguration, fileSystemPolicy, fileSystemName,
-  removalPolicy
+  synchronizationConfiguration, fileSystemPolicy,
+  acceptBucketWarning, removalPolicy
 
 ```ts
 /**
@@ -447,11 +512,13 @@ export interface FileSystemProps {
   readonly fileSystemPolicy?: iam.PolicyDocument;
 
   /**
-   * The file system's name.
+   * Acknowledge that the S3 bucket will be shared with the
+   * S3 Files service. Required when the bucket has certain
+   * configurations (e.g., existing event notifications).
    *
-   * @default - CDK generated name
+   * @default false
    */
-  readonly fileSystemName?: string;
+  readonly acceptBucketWarning?: boolean;
 
   /**
    * The removal policy to apply to the file system.
@@ -605,5 +672,70 @@ export interface AccessPointAttributes {
    * @default - no file system
    */
   readonly fileSystem?: IFileSystemRef;
+}
+```
+
+* `SynchronizationConfiguration` - importDataRules,
+  expirationDataRule
+
+```ts
+/**
+ * Configuration for data import and expiration behavior.
+ */
+export interface SynchronizationConfiguration {
+  /**
+   * Rules controlling how data is imported from S3.
+   * Must contain between 1 and 10 rules, and exactly one
+   * rule must have a root prefix ('/').
+   *
+   * @default - service defaults
+   */
+  readonly importDataRules?: ImportDataRule[];
+
+  /**
+   * Rule controlling when cached data expires.
+   * CFN requires exactly one expiration rule.
+   *
+   * @default - service defaults
+   */
+  readonly expirationDataRule?: ExpirationDataRule;
+}
+
+/**
+ * Rule controlling how data is imported from S3.
+ */
+export interface ImportDataRule {
+  /**
+   * The S3 prefix pattern for this rule.
+   * Must match pattern `^(|.*/)$`.
+   */
+  readonly prefix: string;
+
+  /**
+   * Maximum object size to import.
+   * Objects larger than this are not imported.
+   *
+   * @default - no size limit
+   */
+  readonly sizeLessThan?: Size;
+
+  /**
+   * The trigger that causes data to be imported.
+   *
+   * @default ImportDataRuleTrigger.ON_DIRECTORY_FIRST_ACCESS
+   */
+  readonly trigger?: ImportDataRuleTrigger;
+}
+
+/**
+ * Rule controlling when cached data expires.
+ */
+export interface ExpirationDataRule {
+  /**
+   * Number of days after last access before cached data
+   * expires. Must be a whole number of days between 1
+   * and 365.
+   */
+  readonly daysAfterLastAccess: Duration;
 }
 ```
