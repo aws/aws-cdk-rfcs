@@ -32,7 +32,7 @@ When you want to remove bootstrap resources from your account, run:
 $ cdk debootstrap aws://123456789012/us-east-1
 ```
 
-If users want to multi-select environments interactively (discovers bootstrapped
+If you want to multi-select environments interactively (discovers bootstrapped
 environments and presents a picker):
 
 ```console
