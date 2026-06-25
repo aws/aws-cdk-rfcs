@@ -85,7 +85,7 @@ TypeScript, Java, and Python CDK apps. Apps in other source languages still rece
 
 #### AWS Toolkit for VS Code
 
-The CDK LSP is automatically installed as part of the AWS Toolkit extension for VS Code. No additional setup is required, simply open a CDK project
+The CDK LSP is automatically installed as part of the [CDK VS Code Plugin]. No additional setup is required, simply open a CDK project
 and diagnostics appear immediately.
 
 #### AI Agent Integration
@@ -93,7 +93,7 @@ and diagnostics appear immediately.
 In Claude Code, install the CDK LSP plugin:
 
 ```
-claude plugins install cdk-lsp
+claude plugins install [cdk-claude-plugin]
 ```
 
 Or add manually to your `.lsp.json`:
@@ -172,12 +172,12 @@ Note: AWS credentials can be used via the Toolkit integration but are not requir
 ### Which languages are supported?
 
 The core data model is language-agnostic: it reads the synthesized cloud assembly (`cdk.out/`), which any CDK-supported language produces. However,
-source-location-linked features (diagnostics on specific lines, CodeLens on construct lines) require valid stack traces, which CDK only records
-reliably for TypeScript apps.
+source-location-linked features (diagnostics on specific lines, CodeLens on construct lines) require valid stack traces, which CDK records
+reliably for TypeScript, Java, and Python apps.
 
-For C#, and Go apps, violation data and construct-to-resource mappings are surfaced in the Web Explorer (as construct tree annotations),
-and are surfaced in the Problems panel, but without line level precision, since source locations cannot be resolved. Non-TypeScript LSP diagnostic
-support is a planned post-launch extension.
+For C# and Go apps, violation data and construct-to-resource mappings are surfaced in the Web Explorer (as construct tree annotations),
+and are surfaced in the Problems panel, but without line level precision, since source locations cannot be resolved. Line-precise support for
+C# and Go is a planned post-launch extension.
 
 ### What do I get from the CDK LSP that I can't get from my existing language server?
 
