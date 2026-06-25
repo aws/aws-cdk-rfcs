@@ -58,7 +58,7 @@ async function issuesGroupedByStatus(filterStatus = undefined) {
       link = `https://github.com/aws/aws-cdk-rfcs/issues/${issue.number}`;
     }
 
-    (issueByStatus[status] ??= []).push({
+    (issueByStatus[status] ??= []).push({ 
       number: issue.number,
       title: issue.title,
       link,
@@ -79,16 +79,26 @@ function findDocFile(files, number) {
 
 function findMetadata(issue) {
   const body = issue.body || '';
-  const lines = body.split('\n');
+  const lines = body.split(/\r?\n/);
   const titleIndex = lines.findIndex(line => line.startsWith('|PR|Champion|'));
-  if (titleIndex === -1) {
+  if (titleIndex === -1 || titleIndex + 2 >= lines.length) {
     return { champion: '' };
   }
 
-  let [, pr, champion] = lines[titleIndex + 2].split('|');
+  const dataLine = lines[titleIndex + 2];
+  if (!dataLine) {
+    return { champion: '' };
+  }
+
+  const parts = dataLine.split('|');
+  if (parts.length < 3) {
+    return { champion: '' };
+  }
+
+  let [, pr, champion] = parts;
   champion = champion ? champion.trim() : '';
 
-  const pr_number = (pr.startsWith('#') ? pr.substring(1) : '').trim();
+  const pr_number = (pr && pr.startsWith('#') ? pr.substring(1) : '').trim();
   return { champion, pr_number };
 }
 
