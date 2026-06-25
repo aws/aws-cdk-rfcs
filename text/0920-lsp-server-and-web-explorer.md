@@ -81,7 +81,7 @@ What you get:
   encryption, scoping IAM policies) are planned as a future feature, with AI-assisted generation for complex fixes.
 
 Note: Source-linked features (diagnostics on specific lines, CodeLens, hover) require valid stack traces, which are currently only available for
-TypeScript, Java, and Python CDK apps. App in other source languages still receive construct-to-resource data in the web explorer.
+TypeScript, Java, and Python CDK apps. Apps in other source languages still receive construct-to-resource data in the web explorer.
 
 #### AWS Toolkit for VS Code
 
@@ -128,6 +128,14 @@ Two complementary tools for CDK developers: a web explorer (`cdk explore`) that 
 construct tree, and CloudFormation templates; and an LSP server that surfaces validation diagnostics, construct-to-resource mappings, and quick fixes
 directly in your editor or AI coding agent.
 
+At launch, the CDK LSP provides two features in any LSP-capable editor:
+
+* **Diagnostics:** validation violations from the synthesized cloud assembly, reported on the source line that created the offending construct.
+* **CodeLens:** construct-to-resource mappings shown inline on construct lines, so you see what each construct produces without leaving the file.
+
+Auto-synth on save keeps both current. Hover (logical ID, resource type, template links), Document Symbols, Inlay Hints, and Quick Fixes to
+acknowledge or suppress violations follow in later milestones.
+
 ### Why should I use this feature?
 
 If you've ever:
@@ -157,7 +165,7 @@ rather than only suppressing them.
 
 ### Do I need AWS credentials?
 
-No. Both tools work entirely offline by reading the synthesized cloud assembly (`cdk.out/`).  
+No. The LSP and web explorer themselves need no credentials and read the synthesized cloud assembly (`cdk.out/`) locally.  
 
 Note: AWS credentials can be used via the Toolkit integration but are not required for any current functionality of this feature.
 
@@ -167,7 +175,7 @@ The core data model is language-agnostic: it reads the synthesized cloud assembl
 source-location-linked features (diagnostics on specific lines, CodeLens on construct lines) require valid stack traces, which CDK only records
 reliably for TypeScript apps.
 
-For Python, Java, C#, and Go apps, violation data and construct-to-resource mappings are surfaced in the Web Explorer (as construct tree annotations),
+For C#, and Go apps, violation data and construct-to-resource mappings are surfaced in the Web Explorer (as construct tree annotations),
 and are surfaced in the Problems panel, but without line level precision, since source locations cannot be resolved. Non-TypeScript LSP diagnostic
 support is a planned post-launch extension.
 
@@ -214,17 +222,14 @@ With the LSP Server and Web Explorer, a customer can:
 
 ### Why should we *not* do this?
 
-**Why not only build the web explorer?** The web explorer alone would give customers a visual map of their app, so it is fair to ask whether the LSP
-is worth the additional cost. We build the LSP because it serves a feedback loop the explorer cannot. The explorer is a separate browser surface a
-developer visits to investigate or debug, while the LSP brings the same information into the editor where code is written: violations appear as
-inline warnings on the line that created the offending construct, and CodeLens shows resource mappings without leaving the file. The LSP also speaks
-a standard protocol, so any LSP-capable editor or AI coding agent can consume CDK diagnostics and construct-to-resource data with no custom
-integration. The shared core keeps the LSP's cost low, since the data model, synth triggering, and source location resolution are implemented once
-and consumed by both surfaces.
+The strongest arguments against this project are that the problem may not warrant new tooling, or that one of the two tools is sufficient on its own.
 
-**Doesn't** **`cdk validate`** **already do this?** There is overlap with `cdk validate --json`, which surfaces validation violations as structured
-output. However, `cdk validate` is a fire-and-forget CLI command; it outputs a report but does not integrate into the editing experience. The LSP
-improves on this because:
+**Why do anything? Doesn't** **`cdk validate`** **already do this?** Developers already have working debug flows, and the information these
+tools surface is technically available today. A developer can run `cdk synth` and read the synthesized template, run `cdk validate` for a
+violation report, and inspect deployed resources in the console. Adding tools also carries adoption risk: if they are slow, noisy, or produce
+stale results, developers will ignore them and the effort is wasted. However, in the current workflow, each of those steps is manual and breaks
+the development flow. `cdk validate` is a fire-and-forget CLI command; it outputs a report but does not integrate into the editing experience.
+The LSP improves on this because:
 
 * It provides richer data beyond violations: construct-to-resource mappings, source locations, and property metadata that `cdk validate` does not
   expose
@@ -234,6 +239,18 @@ improves on this because:
 
 The web explorer adds visual, navigable context that a flat JSON report cannot provide. Clicking through the construct tree to see what a line of
 code produces is qualitatively different from reading a validation report.
+
+**Why not only build the Web Explorer?** The web explorer alone gives customers all the core features of the LSP, so it is fair to ask
+whether the LSP is worth implementing at all. The key drawback is that the explorer is a separate browser surface: a developer has to leave
+the IDE to investigate or debug, the context switch this project set out to remove. The LSP also speaks a standard protocol, so any
+LSP-capable editor or AI coding agent can consume CDK diagnostics and construct-to-resource data in real time, which a browser interface
+cannot provide.
+
+**Why not only build the LSP?** The LSP is feature-complete and provides the most natural experience for developers, with all feedback
+delivered directly in the IDE, so why would users need the web explorer as well? The answer is that the LSP only reaches developers whose
+editor speaks the Language Server Protocol. Anyone using an editor without LSP support (such as vim), or investigating outside an editor, for
+example by running an agent in their terminal, gets nothing to help them understand relationships between their source code, resources, and
+templates. The web explorer is available to all CDK CLI users, and a single CLI command (`cdk explore`) opens it in any browser.
 
 ### What is the technical solution (design) of this feature?
 
@@ -276,6 +293,10 @@ reimplementing file watching, we reuse the file-monitoring and synth-triggering 
 be turned off for large apps where synthesis is slow; in that case the tools serve the last `cdk.out/` and show a staleness indicator when source
 files have changed since the last synth.
 
+**What happens when synth fails?** A failed synth does not crash the tools or clear the current view. The synth errors, such as TypeScript
+compilation failures, are surfaced as diagnostics on the files that caused them, and the tools keep serving the last successful cloud
+assembly, marked stale, until synth succeeds again.
+
 ### Is this a breaking change?
 
 No. This introduces new packages and a new CLI command. No existing APIs or behaviors are modified.
@@ -301,9 +322,8 @@ triggers `cdk deploy --hotswap` with no synth-only mode. Rather than reimplement
 file-monitoring logic from `cdk watch`'s deploy step and reuse it directly. The LSP gets live-reload behavior without deploying anything or requiring
 credentials.
 
-**Building only the web explorer without an LSP.** A simpler project scope, but would miss the inline editing experience entirely, and lose the
-ability to interface with AI agents. Developers would have to context-switch between their editor and a browser to see violations. The LSP provides
-the tighter feedback loop that catches issues before the user even thinks to check.
+**Making the web explorer read-write.** Supporting writes would push the explorer toward being a web-based IDE, which is a large
+surface to build and maintain and would compete with the editors developers already use.
 
 #### Alternatives for the VSCode Plugin
 
@@ -323,7 +343,7 @@ webview, which would let VS Code users access the full explorer without opening 
 **Building a separate, native VS Code UI from scratch.** We also considered building a VS Code-native experience entirely separate from the web
 explorer using native TreeViews, editor tabs, and VS Code APIs rather than web technologies. This would produce the most integrated experience but at
 high cost: the three-panel linked navigation would need to be reimplemented using VS Code's constrained extension APIs, and code would not be shared
-with the CLI explorer. The development effort would roughly double the project scope for a single IDE.
+with the CLI explorer.
 
 **Chosen approach: enhance the existing AWS Toolkit CDK tree with source linking and violations.** Instead of embedding or rebuilding the explorer, we
 extend the CDK section already present in the AWS Toolkit sidebar. The existing tree view shows the construct hierarchy; we enhance it to:
@@ -342,12 +362,12 @@ IDE patterns rather than an embedded web application.
 * **Synth latency as a bottleneck.** The CDK LSP's data comes from the cloud assembly, which requires running the entire CDK app. For large apps,
   synthesis can take tens of seconds. This means feedback is not instant — the CDK LSP operates on a fundamentally different timescale than a
   TypeScript or Python language server. Users with very large apps may find auto-synth too slow to be useful.
-* **Maintenance surface area.** Shipping an LSP server, a web app, a shared core library, and a VSCode extension integration means four components to
-  maintain, test, and version. Bugs or regressions in any one component affect the others.
-* **Dependency on cloud assembly stability.** The tools read `tree.json`, `manifest.json`, and `validation-report.json`. Changes to these schemas
-  require corresponding updates to the shared core.
-* **Adoption risk.** CDK developers have existing workflows. If the tools are too slow, too noisy, or produce stale results, developers may ignore
-  them.
+* **Auto-synth executes the application on every save.** Refreshing the data requires running the user's CDK app, which can execute arbitrary
+  code with side effects such as writing files or making local calls. This also raises a trust concern: opening an unfamiliar project and saving
+  a file runs that project's code, so auto-synth should be opt-in or gated by editor workspace trust before it runs an untrusted app.
+* **The tools are only as fresh as the last successful synth.** All data comes from a synthesized cloud assembly, so when synth fails the tools
+  cannot produce new construct, template, or violation data. They fall back to the last successful assembly, which means the freshest view is
+  unavailable exactly when the app is broken and the developer most wants to inspect it.
 
 ### What is the high-level project plan?
 
