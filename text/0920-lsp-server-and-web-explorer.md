@@ -81,7 +81,7 @@ What you get:
   encryption, scoping IAM policies) are planned as a future feature, with AI-assisted generation for complex fixes.
 
 Note: Source-linked features (diagnostics on specific lines, CodeLens, hover) require valid stack traces, which are currently only available for
-TypeScript CDK apps. Non-TypeScript apps still receive construct-to-resource data in the web explorer.
+TypeScript, Java, and Python CDK apps. App in other source languages still receive construct-to-resource data in the web explorer.
 
 #### AWS Toolkit for VS Code
 
@@ -256,10 +256,7 @@ The system consists of four components:
   data to the browser via HTTP and SSE.
 * **VSCode extension:** an AWS Toolkit integration that spawns `cdk lsp` and connects as a standard LSP client
 
-Since this section was first drafted, the design was simplified. Earlier versions had the web explorer spawn `cdk lsp` as a child process and query it
-over JSON-RPC. The web explorer now embeds the shared core library directly instead. The core is the single reader of the cloud assembly, and both
-the LSP server and the web explorer consume its typed model in-process. This removes a process boundary and a serialization layer from the explorer,
-and keeps the cloud-assembly reading logic in one place.
+The core is the single reader of the cloud assembly, and both the LSP server and the web explorer consume its typed model in-process.
 
 **Cloud assembly as the data layer**
 Both tools read from the cloud assembly (`cdk.out/`) produced by `cdk synth`, which gives them a consistent, offline data source with no credentials
@@ -287,7 +284,7 @@ No. This introduces new packages and a new CLI command. No existing APIs or beha
 
 We considered the following alternatives:
 
-**Online validation as a primary data source****.** We chose offline validation as the foundation because it keeps the tools credential-free, which
+**Online validation as a primary data source.** We chose offline validation as the foundation because it keeps the tools credential-free, which
 means the LSP works standalone in any editor without a plugin or AWS account setup. Online validation was ruled out for v1 because:
 
 * It introduces a credential requirement that the tools otherwise don't have
@@ -299,7 +296,7 @@ catches the majority of actionable violations, like invalid resource types, depr
 issues, and best practice violations. Results are always available in `cdk.out/validation-report.json` with no extra configuration. Online
 validation may be offered in the future.
 
-**Using `cdk watch` as-is for re-synthesis****.** `cdk watch` monitors files and re-synthesizes, but it is designed for deployment workflows — it
+**Using `cdk watch` as-is for re-synthesis.** `cdk watch` monitors files and re-synthesizes, but it is designed for deployment workflows — it
 triggers `cdk deploy --hotswap` with no synth-only mode. Rather than reimplementing file watching from scratch, we decouple the synth-triggering and
 file-monitoring logic from `cdk watch`'s deploy step and reuse it directly. The LSP gets live-reload behavior without deploying anything or requiring
 credentials.
