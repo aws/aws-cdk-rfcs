@@ -176,8 +176,7 @@ source-location-linked features (diagnostics on specific lines, CodeLens on cons
 reliably for TypeScript, Java, and Python apps.
 
 For C# and Go apps, violation data and construct-to-resource mappings are surfaced in the Web Explorer (as construct tree annotations),
-and are surfaced in the Problems panel, but without line level precision, since source locations cannot be resolved. Line-precise support for
-C# and Go is a planned post-launch extension.
+and are surfaced in the Problems panel, but without line level precision, since source locations cannot be resolved.
 
 ### What do I get from the CDK LSP that I can't get from my existing language server?
 
@@ -420,7 +419,6 @@ Milestones: M0 = prework, M1 = MVP, M2 = improvements, M3 = extensions.
 
 The following are intentionally out of scope for the initial launch but represent natural follow-up work:
 
-* **Non-TypeScript LSP diagnostic support.** Source-location-linked features for jsii languages
 * **Click-to-fix UI for violations.** If a violation has a suggested fix, the web explorer could offer a "Fix" button that applies the change
   directly.
 * **Click-to-deploy from the explorer.** A "Deploy" button in the web explorer
