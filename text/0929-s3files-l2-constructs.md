@@ -54,7 +54,7 @@ The construct automatically:
 * Creates a security group for NFS traffic (port 2049)
 * Creates an IAM role with S3 bucket/object permissions and
   EventBridge permissions for the S3 Files service
-
+* Sets `AcceptBucketWarning: true` on the CFN resource.
 ## Encryption
 
 Encrypt the file system with a customer-managed KMS key:
@@ -109,28 +109,40 @@ const fileSystem = new s3files.FileSystem(this, 'MyFileSystem', {
 
 ## Granting Access
 
-Use `grant*` methods to authorize principals for NFS client operations.
-These follow the same pattern as the EFS L2 construct:
+Use the grants facade to authorize principals for NFS client
+operations:
 
 ```ts
 declare const fileSystem: s3files.FileSystem;
 declare const lambdaFunction: lambda.Function;
 
 // Read-only mount access
-fileSystem.grantRead(lambdaFunction);
+fileSystem.grants.read(lambdaFunction);
 
 // Read and write access
-fileSystem.grantReadWrite(lambdaFunction);
+fileSystem.grants.readWrite(lambdaFunction);
 
 // Root access (mount + write + root)
-fileSystem.grantRootAccess(lambdaFunction);
+fileSystem.grants.rootAccess(lambdaFunction);
 ```
 
-Each method calls `iam.Grant.addToPrincipalOrResource` with the
-appropriate `s3files:Client*` actions and an
-`s3files:AccessedViaMountTarget` condition. A general-purpose
-`grant(grantee, ...actions)` method is also available for custom
-action sets.
+The grants facade can also be instantiated from an L1 or imported
+resource:
+
+```ts
+const grants = s3files.FileSystemGrants.fromFileSystem(fileSystem);
+grants.read(lambdaFunction);
+```
+
+## Metrics
+
+Use the metrics facade to create CloudWatch metric objects:
+
+```ts
+declare const fileSystem: s3files.FileSystem;
+
+const readOps = fileSystem.metrics.metric('DataReadIOBytes');
+```
 
 ## File System Policy
 
@@ -140,12 +152,15 @@ resource is automatically created on the first call to
 
 ```ts
 declare const fileSystem: s3files.FileSystem;
+declare const accessPoint: s3files.AccessPoint;
 
 fileSystem.addToResourcePolicy(new iam.PolicyStatement({
   actions: ['s3files:ClientMount'],
   principals: [new iam.AnyPrincipal()],
   conditions: {
-    Bool: { 's3files:AccessedViaMountTarget': 'true' },
+    StringEquals: {
+      's3files:AccessPointArn': accessPoint.accessPointArn,
+    },
   },
 }));
 ```
@@ -316,9 +331,6 @@ automation (IAM role creation) without being overly opinionated.
   `vpcSubnets`, `securityGroup`, `ipAddressType`) whereas EFS accepts
   `vpc` and `vpcSubnets` as top-level props. Both use
   `ec2.SubnetSelection` for subnet specification.
-* S3Files exposes `acceptBucketWarning` (a CFN write-only property
-  required for certain bucket configurations) which has no EFS
-  equivalent.
 
 ### What is the high-level project plan?
 
@@ -328,7 +340,7 @@ Phase 1 - Alpha Package (current):
   resource policy support
 * `AccessPoint` L2 with POSIX user and root directory configuration
 * `FileSystem.fromFileSystemAttributes()` and
-  `AccessPoint.fromAccessPointAttributes()` import methods
+  `AccessPoint.fromAccessPointId()` import methods
 * Unit tests and integration test
 * Publish as `@aws-cdk/aws-s3files-alpha`
 
@@ -358,16 +370,20 @@ Phase 2 - GA (future):
 #### Interfaces
 
 * `IFileSystem` - extends `IResource`, `IFileSystemRef`,
-  `ec2.IConnectable`, `iam.IResourceWithPolicyV2`, `iam.IGrantable`
-  * `grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant`
-  * `grantRead(grantee: iam.IGrantable): iam.Grant` — grants
-    `s3files:ClientMount`
-  * `grantReadWrite(grantee: iam.IGrantable): iam.Grant` — grants
-    `s3files:ClientMount`, `s3files:ClientWrite`
-  * `grantRootAccess(grantee: iam.IGrantable): iam.Grant` — grants
-    `s3files:ClientMount`, `s3files:ClientWrite`,
-    `s3files:ClientRootAccess`
+  `ec2.IConnectable`, `iam.IResourceWithPolicyV2`
+  * `readonly grants: FileSystemGrants`
+  * `readonly metrics: FileSystemMetrics`
 * `IAccessPoint` - extends `IAccessPointRef`, `IResource`
+
+#### Grants Facade (`FileSystemGrants`)
+
+Auto-generated from `grants.json`. Defined grants:
+
+| Method | Actions |
+| --- | --- |
+| `read` | `s3files:ClientMount` |
+| `readWrite` | `s3files:ClientMount`, `s3files:ClientWrite` |
+| `rootAccess` | `s3files:ClientMount`, `s3files:ClientWrite`, `s3files:ClientRootAccess` |
 
 #### Enums
 
@@ -453,7 +469,7 @@ export interface VpcConfiguration {
 * `FileSystemProps` - bucket (`s3.IBucket`), vpcConfiguration,
   role (`iam.IRole`), kmsKey (`kms.IKey`), prefix,
   synchronizationConfiguration, fileSystemPolicy,
-  acceptBucketWarning, removalPolicy
+  removalPolicy
 
 ```ts
 /**
@@ -512,15 +528,6 @@ export interface FileSystemProps {
   readonly fileSystemPolicy?: iam.PolicyDocument;
 
   /**
-   * Acknowledge that the S3 bucket will be shared with the
-   * S3 Files service. Required when the bucket has certain
-   * configurations (e.g., existing event notifications).
-   *
-   * @default false
-   */
-  readonly acceptBucketWarning?: boolean;
-
-  /**
    * The removal policy to apply to the file system.
    *
    * @default RemovalPolicy.RETAIN
@@ -559,26 +566,14 @@ export interface Acl {
 }
 ```
 
-* `AccessPointProps` - fileSystem, accessPointName, createAcl, path,
-  posixUser
+* `AccessPointOptions` - createAcl, path, posixUser (used by
+  `addAccessPoint()`)
 
 ```ts
 /**
- * Properties for the AccessPoint.
+ * Options for creating an AccessPoint via addAccessPoint().
  */
-export interface AccessPointProps {
-  /**
-   * The file system to create the access point on.
-   */
-  readonly fileSystem: IFileSystemRef;
-
-  /**
-   * The name of the access point.
-   *
-   * @default - CDK generated name
-   */
-  readonly accessPointName?: string;
-
+export interface AccessPointOptions {
   /**
    * Specifies the POSIX IDs and permissions to apply when
    * creating the access point's root directory. If the root
@@ -610,6 +605,20 @@ export interface AccessPointProps {
    * @default - user identity not enforced
    */
   readonly posixUser?: PosixUser;
+}
+```
+
+* `AccessPointProps` - extends `AccessPointOptions`, adds fileSystem
+
+```ts
+/**
+ * Properties for the AccessPoint.
+ */
+export interface AccessPointProps extends AccessPointOptions {
+  /**
+   * The file system to create the access point on.
+   */
+  readonly fileSystem: IFileSystemRef;
 }
 ```
 
