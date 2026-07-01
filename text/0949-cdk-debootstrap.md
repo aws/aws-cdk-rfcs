@@ -32,12 +32,16 @@ When you want to remove bootstrap resources from your account, run:
 $ cdk debootstrap aws://123456789012/us-east-1
 ```
 
-If you want to multi-select environments interactively (discovers bootstrapped
-environments and presents a picker):
+Run from the directory of a CDK app (with a `cdk.json`) without arguments to
+remove the bootstrap resources for all environments referenced by the app,
+mirroring how `cdk bootstrap` targets environments:
 
 ```console
 $ cdk debootstrap
 ```
+
+Before anything is deleted, you are shown exactly which environments and
+resources will be removed and asked to confirm (see Confirmation prompts).
 
 ##### What it does
 
@@ -93,7 +97,9 @@ prompts.
 
 ##### Idempotency
 
-The command is safe to re-run after partial failure. You can run it to pick up where you left off - for example, if the stack is already gone but the bucket still exists, it skips to bucket cleanup.
+The command is safe to re-run after partial failure. You can run it again to
+pick up where you left off - for example, if the stack is already gone but the
+bucket still exists, it skips to bucket cleanup.
 
 ##### Examples
 
@@ -103,7 +109,7 @@ Remove bootstrap from a specific environment:
 $ cdk debootstrap aws://123456789012/us-east-1
 ```
 
-Interactive mode (discover and pick environments):
+Remove bootstrap for all environments referenced by the current CDK app:
 
 ```console
 $ cdk debootstrap
@@ -175,23 +181,20 @@ confirmation prompts.
 **Command:** `cdk debootstrap` is a new top-level CLI command mirroring the
 `deploy`/`destroy` pairing.
 
-**Environment selection:** `cdk debootstrap` supports three modes:
+**Environment selection:** `cdk debootstrap` uses the same environment
+selection behavior as `cdk bootstrap`:
 
-- `cdk debootstrap` - discovers bootstrapped environments and presents a picker
-  for you to select which one(s) to destroy
 - `cdk debootstrap aws://123456789012/us-east-1` - targets that environment
   directly
-- `cdk debootstrap aws://123456789012/us-east-1 --force` - skips dependency
-  check
+- `cdk debootstrap` (in a CDK app directory) - targets all environments
+  referenced by the app
+- `cdk debootstrap` (no `cdk.json`, no arguments) - errors and asks for an
+  explicit environment
 
-**Environment discovery:** When no arguments are provided, the command discovers
-bootstrapped environments by:
-
-1. If running in an app directory (there is a `cdk.json`), resolve environments
-   from the app's stacks
-2. For each environment, check for a CDKToolkit stack via `DescribeStacks` using
-   the qualifier's stack name pattern
-3. Present the environments that have a bootstrap stack as a multi-select picker
+We do not use an interactive picker. This keeps the command consistent with
+the rest of the bootstrap command family and usable in CI. The risk of
+targeting the wrong environment is handled by the confirmation prompt, which
+lists every environment and resource that will be deleted before proceeding.
 
 **Dependency detection:** We read the actual resource names (bucket name, ECR
 repo name, role ARNs) from the bootstrap stack's outputs and resources, then
@@ -301,11 +304,10 @@ perspective.
 
 ### Are there any open issues that need to be addressed later?
 
-- **Interactive picker without `cdk.json`:** The interactive picker resolves
-  environments from the app's stacks (same as `cdk bootstrap`). Without a
-  `cdk.json`, the command requires explicit environment arguments. Whether to
-  support environment discovery outside of an app context - by scanning
-  configured regions for example - is a future consideration.
+- **Environment discovery outside an app:** Without a `cdk.json`, the command
+  requires explicit environment arguments. Whether to support discovering
+  bootstrapped environments outside of an app context - by scanning configured
+  regions, for example - is a future consideration.
 
 ## Appendix
 
