@@ -4,7 +4,7 @@ merge_queue:
   max_parallel_checks: 1
 queue_rules:
   - name: default
-    conditions:
+    merge_conditions:
       - -title~=(WIP|wip)
       - -label~=(blocked|do-not-merge)
       - -merged
@@ -14,10 +14,9 @@ queue_rules:
       - "#changes-requested-reviews-by=0"
       - "#commented-reviews-by=0"
     merge_method: squash
-    commit_message_template: |-
-      {{ title }} (#{{ number }})
-      {{ body }}
-
+    commit_message_format:
+      title: pr-title
+      body: pr-body
 pull_request_rules:
   - name: automatic merge
     actions:
@@ -25,7 +24,6 @@ pull_request_rules:
         message: Thank you for contributing! Your pull request is now being automatically merged.
       queue:
         name: default
-      delete_head_branch: {}
       dismiss_reviews: {}
     conditions:
       - -title~=(WIP|wip)
