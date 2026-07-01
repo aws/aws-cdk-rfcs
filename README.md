@@ -28,7 +28,7 @@ future state of the libraries and to discover projects for contribution.
 [792](https://github.com/aws/aws-cdk-rfcs/issues/792)|[L2 Construct for AIOps](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0792-aws-aiops-investigationgroup-l2.md)||👷 implementing
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0886-making-hotswap-faster.md)||👷 implementing
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
-[920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/issues/920)||⏰ final comments
+[920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||⏰ final comments
 [929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||✍️ review
 <!--END_TABLE-->
 
