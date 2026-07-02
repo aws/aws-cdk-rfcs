@@ -55,6 +55,7 @@ The construct automatically:
 * Creates an IAM role with S3 bucket/object permissions and
   EventBridge permissions for the S3 Files service
 * Sets `AcceptBucketWarning: true` on the CFN resource.
+
 ## Encryption
 
 Encrypt the file system with a customer-managed KMS key:
@@ -100,9 +101,7 @@ const fileSystem = new s3files.FileSystem(this, 'MyFileSystem', {
       sizeLessThan: Size.gibibytes(1),
       trigger: s3files.ImportDataRuleTrigger.ON_FILE_ACCESS,
     }],
-    expirationDataRule: {
-      daysAfterLastAccess: Duration.days(30),
-    },
+    daysAfterLastAccess: Duration.days(30),
   },
 });
 ```
@@ -136,12 +135,17 @@ grants.read(lambdaFunction);
 
 ## Metrics
 
-Use the metrics facade to create CloudWatch metric objects:
+Retrieve CloudWatch metric objects for the file system:
 
 ```ts
 declare const fileSystem: s3files.FileSystem;
 
-const readOps = fileSystem.metrics.metric('DataReadIOBytes');
+// Generic metric method
+const custom = fileSystem.metric('DataReadBytes');
+
+// Named metric helpers
+const readBytes = fileSystem.metricDataReadBytes();
+const writeBytes = fileSystem.metricDataWriteBytes();
 ```
 
 ## File System Policy
@@ -372,7 +376,9 @@ Phase 2 - GA (future):
 * `IFileSystem` - extends `IResource`, `IFileSystemRef`,
   `ec2.IConnectable`, `iam.IResourceWithPolicyV2`
   * `readonly grants: FileSystemGrants`
-  * `readonly metrics: FileSystemMetrics`
+  * `metric(metricName: string, options?: cloudwatch.MetricOptions): cloudwatch.Metric`
+  * `metricDataReadBytes(options?: cloudwatch.MetricOptions): cloudwatch.Metric`
+  * `metricDataWriteBytes(options?: cloudwatch.MetricOptions): cloudwatch.Metric`
 * `IAccessPoint` - extends `IAccessPointRef`, `IResource`
 
 #### Grants Facade (`FileSystemGrants`)
@@ -685,7 +691,7 @@ export interface AccessPointAttributes {
 ```
 
 * `SynchronizationConfiguration` - importDataRules,
-  expirationDataRule
+  daysAfterLastAccess
 
 ```ts
 /**
@@ -696,18 +702,15 @@ export interface SynchronizationConfiguration {
    * Rules controlling how data is imported from S3.
    * Must contain between 1 and 10 rules, and exactly one
    * rule must have a root prefix ('/').
-   *
-   * @default - service defaults
    */
-  readonly importDataRules?: ImportDataRule[];
+  readonly importDataRules: ImportDataRule[];
 
   /**
-   * Rule controlling when cached data expires.
-   * CFN requires exactly one expiration rule.
-   *
-   * @default - service defaults
+   * Number of days after last access before cached data
+   * expires. Must be a whole number of days between 1
+   * and 365.
    */
-  readonly expirationDataRule?: ExpirationDataRule;
+  readonly daysAfterLastAccess: Duration;
 }
 
 /**
@@ -735,16 +738,31 @@ export interface ImportDataRule {
    */
   readonly trigger?: ImportDataRuleTrigger;
 }
+```
 
+* `PosixUser` - uid, gid, secondaryGids
+
+```ts
 /**
- * Rule controlling when cached data expires.
+ * Represents the POSIX user identity used for file system
+ * operations.
  */
-export interface ExpirationDataRule {
+export interface PosixUser {
   /**
-   * Number of days after last access before cached data
-   * expires. Must be a whole number of days between 1
-   * and 365.
+   * The POSIX user ID.
    */
-  readonly daysAfterLastAccess: Duration;
+  readonly uid: string;
+
+  /**
+   * The POSIX group ID.
+   */
+  readonly gid: string;
+
+  /**
+   * Secondary POSIX group IDs.
+   *
+   * @default - no secondary groups
+   */
+  readonly secondaryGids?: string[];
 }
 ```
