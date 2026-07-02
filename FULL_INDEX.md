@@ -219,5 +219,5 @@
 [929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||✍️ review
 [935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/issues/943)||💡 proposed
-[949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||💡 proposed
+[949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 <!--END_TABLE-->
