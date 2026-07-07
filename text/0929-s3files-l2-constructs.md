@@ -710,7 +710,7 @@ export interface SynchronizationConfiguration {
    * expires. Must be a whole number of days between 1
    * and 365.
    */
-  readonly daysAfterLastAccess: Duration;
+  readonly dataExpiration: Duration;
 }
 
 /**
