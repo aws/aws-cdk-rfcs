@@ -42,7 +42,6 @@
 [926](https://github.com/aws/aws-cdk-rfcs/issues/926)|[Lambda-based dependency resolver\installer](https://github.com/aws/aws-cdk-rfcs/issues/926)||💡 proposed
 [935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/issues/943)||💡 proposed
-[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||✍️ review
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||⏰ final comments
