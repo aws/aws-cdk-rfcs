@@ -22,6 +22,7 @@ future state of the libraries and to discover projects for contribution.
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
 ---|-----|-----|------
+[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||❓unknown
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing
@@ -29,7 +30,6 @@ future state of the libraries and to discover projects for contribution.
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0886-making-hotswap-faster.md)||👷 implementing
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||⏰ final comments
-[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||✍️ review
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 <!--END_TABLE-->
 
