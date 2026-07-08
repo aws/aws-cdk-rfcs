@@ -217,7 +217,7 @@ been signed-off by the API bar raiser (the `status/api-approved` label
 was applied to the RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @leonmk-aws
+[X] Signed-off by API Bar Raiser @leonmk-aws
 ```
 
 ## Public FAQ
