@@ -1,4 +1,3 @@
----
 # RFC — AWS Elemental MediaLive CDK L2 Constructs
 
 ## L2 Constructs for AWS Elemental MediaLive Input, InputSecurityGroup, Channel, Network, Cluster & ChannelPlacementGroup
@@ -363,7 +362,6 @@ We greatly simplify the developer experience by introducing MediaLive L2 constru
 
 ---
 
-
 #### AWS Elemental MediaLive Input
 
 An input represents the upstream source of video content for a MediaLive channel. MediaLive supports many input types — pull-based (URL/HLS, RTMP, SRT
@@ -373,7 +371,7 @@ Elemental Link, Multicast, SMPTE 2110 receiver group).
 The L2 uses a typed `InputConfiguration` factory class to create the correct input type with validated properties, replacing the L1's untyped
 string-based `type` field and loosely-typed source/destination arrays.
 
-For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/inputs.html).
+For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/medialive-inputs.html).
 
 Minimal usage:
 
@@ -686,6 +684,8 @@ Property interface for Channel (key props):
 interface ChannelProps {
   /** @default - auto-generated */
   readonly channelName?: string;
+  /** @default RemovalPolicy.RETAIN */
+  readonly removalPolicy?: RemovalPolicy;
   /** @default ChannelClass.SINGLE_PIPELINE */
   readonly channelClass?: ChannelClass;
   /** @default - auto-created with medialive.amazonaws.com trust */
@@ -1453,7 +1453,7 @@ const imported = medialive.Multiplex.fromMultiplexArn(
 A network represents a collection of IP address pools and routes used by MediaLive Anywhere resources. Networks are the foundation for on-premises
 MediaLive deployments.
 
-For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/eml-anywhere.html).
+For further information refer to [our documentation](https://docs.aws.amazon.com/medialive/latest/ug/feature-emla.html).
 
 ```ts
 const network = new medialive.Network(stack, 'Network', {
@@ -1527,6 +1527,8 @@ Property interface:
 interface ClusterProps {
   /** @default - auto-generated */
   readonly clusterName?: string;
+  /** @default RemovalPolicy.RETAIN */
+  readonly removalPolicy?: RemovalPolicy;
   /** @default - no cluster type */
   readonly clusterType?: ClusterType;
   /** The IAM role for nodes in the cluster. */
@@ -1847,6 +1849,13 @@ back-edge is created.
 A dedicated cross-service "integrations" package was considered and rejected: the coupling is cleanly one-directional (the ref interfaces already
 remove the only would-be back-edge) and the surface is small and naturally homed on the existing constructs, so a third package would add
 release/versioning/discoverability overhead for no decoupling benefit.
+
+#### 11. `removalPolicy` on `Channel` and `Cluster`
+
+Recreating these changes their ARN/ID, breaking anything outside the stack that points at them — a MediaPackage/CloudFront reference, or a
+`Cluster`'s registered on-prem nodes — and can disrupt a live broadcast. Following the `aws-mediapackagev2-alpha` `Channel` precedent, each exposes
+`removalPolicy`, defaulting to `RemovalPolicy.RETAIN`. `Network`, `Input`, and the other lighter resources don't need this protection and are
+omitted; adding it later is non-breaking.
 
 ---
 
