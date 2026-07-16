@@ -507,7 +507,7 @@ For further information refer to [our documentation](https://docs.aws.amazon.com
 
 ```ts
 const securityGroup = new medialive.InputSecurityGroup(stack, 'SecurityGroup', {
-  whitelistRules: ['10.0.0.0/8', '172.16.0.0/12'],
+  allowlistRules: ['10.0.0.0/8', '172.16.0.0/12'],
 });
 ```
 
@@ -515,8 +515,8 @@ Property interface:
 
 ```ts
 interface InputSecurityGroupProps {
-  /** The list of IPv4 CIDR addresses to whitelist. */
-  readonly whitelistRules: string[];
+  /** The list of IPv4 CIDR addresses to allow. */
+  readonly allowlistRules: string[];
   /** Tags. @default - no tags */
   readonly tags?: { [key: string]: string };
 }
@@ -1709,6 +1709,11 @@ MediaPackage V2 and CMAF Ingest via the `additionalDestinations` prop.
 - **Frame Capture companion:** Frame Capture output groups require a companion video output group.
 - **MediaPackage V2 framerate:** Video encodes in MediaPackage V2 output groups must have explicit framerate.
 - **Input/channel class match:** Input pipeline class must match channel class (a SINGLE_PIPELINE input on a STANDARD channel throws).
+- **Allowlist CIDR format:** Each `InputSecurityGroup.allowlistRules` entry must be a well-formed IPv4 CIDR block (unless it's an unresolved `Token`);
+throws at synth time otherwise.
+- **Allowlist CIDR breadth:** An `allowlistRules` entry that resolves to `0.0.0.0/0` (or another CIDR wide enough to allow any public address) emits a
+synth-time `Annotations.addWarning` — it doesn't block synthesis, but flags that the input security group would accept push content from anywhere on
+the internet.
 - **SRT/RTMP destination count:** SRT and RTMP outputs take one destination per pipeline (the console's "Destination A"/"Destination B") — exactly 2
 for a STANDARD channel, 1 for SINGLE_PIPELINE.
 
