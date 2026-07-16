@@ -733,6 +733,18 @@ interface IChannel extends IResource {
   readonly channelArn: string;
   /** The ID of the channel. @attribute */
   readonly channelId: string;
+  /** Grant permissions to start, stop, or update the schedule of this channel. */
+  readonly grants: ChannelGrants;
+}
+```
+
+```ts
+class ChannelGrants {
+  static fromChannel(resource: IChannelRef): ChannelGrants;
+  start(grantee: IGrantable): Grant;
+  stop(grantee: IGrantable): Grant;
+  updateSchedule(grantee: IGrantable): Grant;
+  actions(grantee: IGrantable, actions: string[], options?: PermissionsOptions): Grant;
 }
 ```
 
@@ -1858,6 +1870,18 @@ Recreating these changes their ARN/ID, breaking anything outside the stack that 
 `Cluster`'s registered on-prem nodes — and can disrupt a live broadcast. Following the `aws-mediapackagev2-alpha` `Channel` precedent, each exposes
 `removalPolicy`, defaulting to `RemovalPolicy.RETAIN`. `Network`, `Input`, and the other lighter resources don't need this protection and are
 omitted; adding it later is non-breaking.
+
+#### 12. `ChannelGrants` — starting, stopping, and scheduling a channel
+
+Section 4 covers the channel's role reaching *out*. `ChannelGrants` covers the other direction: letting another principal act *on* the channel —
+starting/stopping it, or updating its schedule (SCTE-35/ad-insertion automation). Same `.grants` Facade pattern as `mpChannel.grants.ingest()` in
+Section 4, scoped to `channelArn`:
+
+```ts
+channel.grants.start(role);          // medialive:StartChannel
+channel.grants.stop(role);           // medialive:StopChannel
+channel.grants.updateSchedule(role); // medialive:BatchUpdateSchedule
+```
 
 ---
 
