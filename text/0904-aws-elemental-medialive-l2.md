@@ -1702,8 +1702,10 @@ for a STANDARD channel, 1 for SINGLE_PIPELINE.
 
 #### 4. Auto-created IAM role and automatic grants
 
-The channel auto-creates an IAM role with `medialive.amazonaws.com` trust if none is provided. The role is exposed via `channel.role` for additional
-grants, and a user-supplied `role` is honoured as an escape hatch (the L2 then grants onto that role rather than creating its own).
+The channel auto-creates an IAM role with `medialive.amazonaws.com` trust if none is provided, and the resource-driven and feature-driven grants below
+are wired onto that auto-created role. The role is exposed via `channel.role` for additional grants. If you provide your own `role`, it is used as-is
+and is **not** granted any permissions by the L2 — you must grant it the necessary permissions yourself, mirroring the same rule in
+`aws-mediaconnect-alpha`'s encryption roles. Provide your own role when you need stricter control or a shared identity.
 
 Grants are wired automatically from two sources, all least-privilege and scoped to the most specific ARN the service allows:
 
@@ -1712,8 +1714,8 @@ grant helper (no hand-rolled `PolicyStatement`s):
 
 | Wiring | Grant | Scope |
 | -------- | ------- | ------- |
-| `OutputDestination.toBucket()` | `bucket.grantReadWrite()` | the specific bucket/prefix |
-| `InputSource.fromBucket()` | `bucket.grantRead()` | the specific bucket |
+| `OutputDestination.toBucket()` | `bucket.grants.readWrite()` | the specific bucket/prefix |
+| `InputSource.fromBucket()` | `bucket.grants.read()` | the specific bucket |
 | `InputSource.url()` with an SSM password | `param.grantRead()` | the specific parameter ARN |
 | `MediaPackageV2Destination.channel()` | `mpChannel.grants.ingest()` | the specific MediaPackage V2 channel |
 | `SrtDestination.caller()` / `listener()` with encryption | `secret.grantRead()` | the specific Secrets Manager secret |
@@ -1736,8 +1738,8 @@ and is documented inline at the call site. ARNs are partition-aware (`Aws.PARTIT
 (and related managed actions) to the *input's* role, not the channel role — these are granted at input-attachment time to the role MediaLive uses to
 read the flow, which is a distinct trust relationship from the channel's output role.
 
-This eliminates manual IAM wiring for all common destination and input types. No `bucket.grantReadWrite(channel.role)` or
-`mpChannel.grants.ingest(channel.role)` needed.
+When the L2 creates the channel's role, this eliminates manual IAM wiring for all common destination and input types — no `bucket.grants.readWrite(channel.role)`
+or `mpChannel.grants.ingest(channel.role)` needed. If you supply your own `role`, none of this is wired for you.
 
 **Not yet granted** (because the capability isn't exposed by this L2 yet — the grant lands with the feature): AWS Elemental Inference
 (`elemental-inference:GetMetadata`, `elemental-inference:PutMedia`).
