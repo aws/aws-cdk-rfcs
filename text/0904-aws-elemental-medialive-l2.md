@@ -2096,10 +2096,9 @@ No — an L2 doesn't exist today. This is a new alpha module.
 We considered a builder pattern for the channel, but the factory method pattern on abstract classes provides better discoverability and type safety
 while keeping the API surface flat and composable.
 
-We also considered having `Channel` implement `IConnectable`. VPC output doesn't fit that model: MediaLive creates and owns the ENIs itself, and the
-destination is typically not another connectable CDK construct to negotiate rules with. `vpc?: VpcOutputSettings` instead takes existing
-`securityGroups`/`subnets` directly as inputs, mirroring the L1. `Network` (on-premises IP pools and static routes) doesn't fit either — it has no
-security groups or ENIs.
+We also considered `IConnectable` for `Channel`. VPC output is a one-way push to a fixed IP:port, not the bidirectional negotiation `IConnectable`
+is for, so `vpc?: VpcOutputSettings` takes `securityGroups`/`subnets` directly instead. Deferred, not ruled out — non-breaking to add later.
+`Network` doesn't fit either — no security groups or ENIs.
 
 ### What are the drawbacks of this solution?
 
