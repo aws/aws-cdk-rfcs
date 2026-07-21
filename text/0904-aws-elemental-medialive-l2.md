@@ -13,7 +13,7 @@ This design outlines how we build L2 constructs for AWS Elemental MediaLive, del
 property bags.
 - Abstract one of the most complex CloudFormation resource in the CDK — `AWS::MediaLive::Channel` has hundreds of nested properties — into a
 composable, type-safe API.
-- Provide typed factories for all 10 output group types, all 5 video codecs, and all 7 audio codecs.
+- Provide typed factories for all 10 output group types, 4 video codecs, and all 7 audio codecs.
 - Auto-derive video/audio/caption encode descriptions from outputs at synth time, deduplicating by name at the channel level.
 - Validate codec compatibility per output group type, destination counts per channel class, and resolution constraints at synth time — catching errors
 before deployment.
@@ -353,7 +353,7 @@ We greatly simplify the developer experience by introducing MediaLive L2 constru
 - Validate codec compatibility per output group type before deployment
 - Validate destination counts based on channel class (STANDARD vs SINGLE_PIPELINE)
 - Use CDK `Duration` and `Bitrate` types for all time-based and bitrate properties
-- Support all 10 output group types, all 5 video codecs, and all 7 audio codecs
+- Support all 10 output group types, 4 video codecs, and all 7 audio codecs
 - Support MediaLive Anywhere deployments with Network, Cluster, and ChannelPlacementGroup
 
 * [What is AWS Elemental MediaLive?](https://aws.amazon.com/medialive/)
@@ -1061,7 +1061,7 @@ Each output group type has its own destination interface, enforcing the correct 
 
 #### VideoCodecSettings
 
-Video codec settings define the encoding parameters for a video output. The L2 provides typed factory methods for all 5 video codecs supported by
+Video codec settings define the encoding parameters for a video output. The L2 provides typed factory methods for 4 video codecs supported by
 MediaLive, with full CFN property coverage.
 
 ```ts
@@ -2037,7 +2037,7 @@ Developers should use these constructs to:
 - Catch invalid configurations (wrong codec for output group type, wrong destination count for channel class) at synth time instead of deploy time.
 - Use CDK `Duration` and `Bitrate` types instead of raw numbers.
 - Share encode configurations across output groups with automatic deduplication.
-- Get IDE autocomplete and type checking for all 10 output group types, 5 video codecs, and 7 audio codecs.
+- Get IDE autocomplete and type checking for all 10 output group types, 4 video codecs, and 7 audio codecs.
 - Monitor channels with typed CloudWatch metric helpers (`channel.metricDroppedFrames(...)`, `channel.metric(...)`) in the `AWS/MediaLive` namespace,
 with AWS-recommended default statistics.
 
@@ -2101,7 +2101,7 @@ The L2 constructs have been built and are working towards alpha release. The con
 
 - 6 resource types: Input, InputSecurityGroup, Channel, Network, Cluster, ChannelPlacementGroup
 - 10 output group types: MediaPackage V2, HLS, UDP, Archive, RTMP, SRT, MediaConnect Router, CMAF Ingest, Frame Capture, MS Smooth
-- 5 video codecs: H.264, H.265, AV1, Frame Capture
+- 4 video codecs: H.264, H.265, AV1, Frame Capture
 - 7 audio codecs: AAC, AC3, EAC3, EAC3 Atmos, MP2, WAV, Passthrough
 - 16 input types: URL pull, RTMP push/pull, SRT caller/listener, MediaConnect, MediaConnect Router, SDI, UDP push, RTP push, MP4 file, TS file, CDI,
 Elemental Link (input device), Multicast, SMPTE 2110 receiver group
