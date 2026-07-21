@@ -4,7 +4,7 @@
 
 * **Original Author(s):** @jamiepmullan
 * **Tracking Issue:** [#904](https://github.com/aws/aws-cdk-rfcs/issues/904)
-* **API Bar Raiser:** TBD
+* **API Bar Raiser:** @alvazjor @gudipati
 
 This design outlines how we build L2 constructs for AWS Elemental MediaLive, delivering the following benefits:
 
@@ -13,7 +13,7 @@ This design outlines how we build L2 constructs for AWS Elemental MediaLive, del
 property bags.
 - Abstract one of the most complex CloudFormation resource in the CDK — `AWS::MediaLive::Channel` has hundreds of nested properties — into a
 composable, type-safe API.
-- Provide typed factories for all 9 output group types, all 5 video codecs, and all 7 audio codecs.
+- Provide typed factories for all 10 output group types, all 5 video codecs, and all 7 audio codecs.
 - Auto-derive video/audio/caption encode descriptions from outputs at synth time, deduplicating by name at the channel level.
 - Validate codec compatibility per output group type, destination counts per channel class, and resolution constraints at synth time — catching errors
 before deployment.
@@ -353,7 +353,7 @@ We greatly simplify the developer experience by introducing MediaLive L2 constru
 - Validate codec compatibility per output group type before deployment
 - Validate destination counts based on channel class (STANDARD vs SINGLE_PIPELINE)
 - Use CDK `Duration` and `Bitrate` types for all time-based and bitrate properties
-- Support all 9 output group types, all 5 video codecs, and all 7 audio codecs
+- Support all 10 output group types, all 5 video codecs, and all 7 audio codecs
 - Support MediaLive Anywhere deployments with Network, Cluster, and ChannelPlacementGroup
 
 * [What is AWS Elemental MediaLive?](https://aws.amazon.com/medialive/)
@@ -820,8 +820,8 @@ const caption = medialive.EncodeConfiguration.caption({
 
 #### OutputGroupConfiguration
 
-Output group configurations define where and how the channel delivers its encoded output. The L2 provides 10 typed factory methods — one for each
-output group type supported by MediaLive.
+Output group configurations define where and how the channel delivers its encoded output. The L2 provides 11 typed factory methods covering the 10
+output group types supported by MediaLive.
 
 Each factory accepts only the props valid for that output group type, with typed destination factory classes and per-type output definitions.
 
@@ -834,6 +834,7 @@ class OutputGroupConfiguration {
   static archive(props: ArchiveOutputGroupProps): OutputGroupConfiguration;
   static rtmp(props: RtmpOutputGroupProps): OutputGroupConfiguration;
   static srt(props: SrtOutputGroupProps): OutputGroupConfiguration;
+  static mediaConnectRouter(props: MediaConnectRouterOutputGroupProps): OutputGroupConfiguration;
   static cmafIngest(props: CmafIngestOutputGroupProps): OutputGroupConfiguration;
   static frameCapture(props: FrameCaptureOutputGroupProps): OutputGroupConfiguration;
   static msSmooth(props: MsSmoothOutputGroupProps): OutputGroupConfiguration;
@@ -963,6 +964,21 @@ Each SRT output takes one destination per channel pipeline (the console's "Desti
 `STANDARD`. Use `SrtDestination.caller({ address, port })`, `SrtDestination.callerUrl(url)` (e.g. a MediaConnect Router Input endpoint), or
 `SrtDestination.listener({ listenerPort })`.
 
+**MediaConnect Router output group:**
+
+```ts
+medialive.OutputGroupConfiguration.mediaConnectRouter({
+  name: 'router',
+  outputs: [{
+    outputName: 'router-output',
+    encodes: [video1080, audioStereo],
+  }],
+});
+```
+
+Delivery to specific MediaConnect Router Inputs is wired on the MediaConnect side, so no destination URL is set here — MediaLive auto-provides one
+destination per pipeline.
+
 **CMAF Ingest output group:**
 
 ```ts
@@ -1032,7 +1048,8 @@ Each output group type has its own destination interface, enforcing the correct 
 | MediaPackage V2 (custom) | `MediaPackageV2Destination` | `mediaPackageV2PerPipeline()` with explicit per-pipeline `channel()` destinations |
 | HLS, Archive, UDP, CMAF, Frame Capture, MS Smooth | `OutputDestination` | Abstract class with `url()` and `toBucket()` factory methods |
 | RTMP | `RtmpDestination` | Abstract class with `url()` factory method |
-| SRT | `SrtDestination` | Abstract class with `caller()` and `listener()` factory methods |
+| SRT | `SrtDestination` | Abstract class with `caller()`, `callerUrl()`, and `listener()` factory methods |
+| MediaConnect Router | managed by `mediaConnectRouter()` | Per-pipeline destinations auto-provided; encryption `AUTOMATIC` (default) or Secrets Manager; router-input wiring set on the MediaConnect side |
 
 **Destination validation** is performed at synth time based on channel class:
 
@@ -1123,6 +1140,7 @@ medialive.VideoCodecSettings.mpeg2({
 | Archive | H.264, H.265, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos, MP2 |
 | RTMP | H.264, Frame Capture | AAC |
 | SRT | H.264, H.265, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos, MP2 |
+| MediaConnect Router | H.264, H.265 | AAC, AC3, EAC3, EAC3 Atmos |
 | CMAF Ingest | H.264, H.265, AV1, Frame Capture | AAC, AC3, EAC3, EAC3 Atmos |
 | Frame Capture | Frame Capture only | (none — video only) |
 | MS Smooth | H.264, H.265, Frame Capture | AAC, AC3, EAC3 |
@@ -1848,35 +1866,14 @@ rather than silently monitoring one pipeline of a redundant pair.
 via `props.dimensionsMap`). MediaLive does not publish a separate `Input`-dimensioned namespace, so "input health" and "output health" are both
 observed through the channel. `Input` therefore intentionally does not expose `metric()` — there is no resource-scoped metric for it to return.
 
-#### 10. MediaConnect integration and the cross-package dependency direction
-
-MediaLive and MediaConnect reference each other across the contribution/distribution boundary: MediaConnect can deliver to a MediaLive input/channel
-(`RouterOutputConfiguration.mediaLiveInput`, `RouterInputConfiguration.mediaLiveChannel`), and MediaLive can deliver to a MediaConnect Router Input
-(`SrtDestination.fromRouterInput`). Two alpha packages that import each other's types form a circular package dependency. We break the cycle by fixing
-a single dependency direction and choosing the reference type accordingly:
-
-- **The edge is one-directional: `aws-medialive-alpha` → `aws-mediaconnect-alpha`.** MediaLive is the consumer that needs MediaConnect's richer
-attributes, so it takes the dependency. This mirrors the existing `aws-medialive-alpha` → `aws-mediapackagev2-alpha` edge.
-- **MediaLive uses MediaConnect's rich L2 types** where it needs runtime attributes. `SrtDestination.fromRouterInput(routerInput: IRouterInput)` reads
-the router input's ingest endpoint URL and transit encryption secret off the L2 — neither is available on a bare reference, so the rich type is
-required.
-- **MediaConnect references MediaLive only through `aws-cdk-lib` reference interfaces** (`IInputRef`, `IChannelRef`), never
-`@aws-cdk/aws-medialive-alpha`. These ref interfaces live in `aws-cdk-lib` (a dependency both alphas already have) and carry just the ARN/identifiers
-MediaConnect needs. This is the key move: MediaConnect gains type-safe MediaLive references with **no** dependency on the MediaLive alpha, so no
-back-edge is created.
-
-A dedicated cross-service "integrations" package was considered and rejected: the coupling is cleanly one-directional (the ref interfaces already
-remove the only would-be back-edge) and the surface is small and naturally homed on the existing constructs, so a third package would add
-release/versioning/discoverability overhead for no decoupling benefit.
-
-#### 11. `removalPolicy` on `Channel` and `Cluster`
+#### 10. `removalPolicy` on `Channel` and `Cluster`
 
 Recreating these changes their ARN/ID, breaking anything outside the stack that points at them — a MediaPackage/CloudFront reference, or a
 `Cluster`'s registered on-prem nodes — and can disrupt a live broadcast. Following the `aws-mediapackagev2-alpha` `Channel` precedent, each exposes
 `removalPolicy`, defaulting to `RemovalPolicy.RETAIN`. `Network`, `Input`, and the other lighter resources don't need this protection and are
 omitted; adding it later is non-breaking.
 
-#### 12. `ChannelGrants` — starting, stopping, and scheduling a channel
+#### 11. `ChannelGrants` — starting, stopping, and scheduling a channel
 
 Section 4 covers the channel's role reaching *out*. `ChannelGrants` covers the other direction: letting another principal act *on* the channel —
 starting/stopping it, or updating its schedule (SCTE-35/ad-insertion automation). Same `.grants` Facade pattern as `mpChannel.grants.ingest()` in
@@ -2050,7 +2047,7 @@ Developers should use these constructs to:
 - Catch invalid configurations (wrong codec for output group type, wrong destination count for channel class) at synth time instead of deploy time.
 - Use CDK `Duration` and `Bitrate` types instead of raw numbers.
 - Share encode configurations across output groups with automatic deduplication.
-- Get IDE autocomplete and type checking for all 9 output group types, 5 video codecs, and 7 audio codecs.
+- Get IDE autocomplete and type checking for all 10 output group types, 5 video codecs, and 7 audio codecs.
 - Monitor channels with typed CloudWatch metric helpers (`channel.metricDroppedFrames(...)`, `channel.metric(...)`) in the `AWS/MediaLive` namespace,
 with AWS-recommended default statistics.
 
@@ -2068,7 +2065,7 @@ By building L2 constructs, we:
 2. Provide compile-time and synth-time validation for codec/output-group compatibility.
 3. Enable encode sharing and deduplication across output groups.
 4. Use CDK-native types (Duration, Bitrate) for all time and bitrate properties.
-5. Support the full breadth of MediaLive capabilities including all 9 output group types and MediaLive Anywhere.
+5. Support the full breadth of MediaLive capabilities including all 10 output group types and MediaLive Anywhere.
 
 ### Why should we _not_ do this?
 
@@ -2113,7 +2110,7 @@ this is a pragmatic trade-off.
 The L2 constructs have been built and are working towards alpha release. The constructs cover:
 
 - 6 resource types: Input, InputSecurityGroup, Channel, Network, Cluster, ChannelPlacementGroup
-- 9 output group types: MediaPackage V2, HLS, UDP, Archive, RTMP, SRT, CMAF Ingest, Frame Capture, MS Smooth
+- 10 output group types: MediaPackage V2, HLS, UDP, Archive, RTMP, SRT, MediaConnect Router, CMAF Ingest, Frame Capture, MS Smooth
 - 5 video codecs: H.264, H.265, AV1, Frame Capture, MPEG-2
 - 7 audio codecs: AAC, AC3, EAC3, EAC3 Atmos, MP2, WAV, Passthrough
 - 16 input types: URL pull, RTMP push/pull, SRT caller/listener, MediaConnect, MediaConnect Router, SDI, UDP push, RTP push, MP4 file, TS file, CDI,
