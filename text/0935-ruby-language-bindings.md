@@ -65,10 +65,10 @@ Unlike a speculative design document, this RFC is backed by a working implementa
 [aws/jsii#5129](https://github.com/aws/jsii/issues/5129)); every generated-code example below is **real output** from
 the current generator:
 
-- **123/123 standard compliance suite tests pass**, reported through the same `tools/jsii-compliance` matrix that tracks
-  Java (97.5%) and Go (78.9%) — surfaced in the monorepo implementation PR
+- **The full standard compliance suite passes**, reported through the same `tools/jsii-compliance` matrix used to gate
+  the other jsii languages — surfaced in the monorepo implementation PR
   ([aws/jsii#5178](https://github.com/aws/jsii/pull/5178)).
-- 243 runtime test examples (compliance + unit) run green in CI on every push, alongside generated-code snapshot
+- The runtime test suite (compliance + unit) runs green in CI on every push, alongside generated-code snapshot
   coverage in `jsii-pacmak`'s cross-language test harness.
 - The full `aws/jsii` monorepo CI (build, unit tests across the OS/language matrix, pacmak integration against
   `aws-cdk-lib`) passes end-to-end on the implementation branch.
@@ -85,8 +85,14 @@ the current generator:
   submodules, Cognito, DynamoDB, Lambda, API Gateway, IAM) — breadth across the generated API surface, not a single
   cherry-picked construct. The deployment runs on the final `AWSCDK::S3`-style module naming proposed below (see *Root
   namespace rationale*), so the naming convention is exercised in production, not just on paper.
-  (The gems are currently distributed via a private GitHub Packages feed during bootstrap; RubyGems.org is the GA
-  channel — see *Gem name governance*.)
+  (The gems are available today from a public, credential-free preview channel —
+  `source "https://rubygems.omarqureshi.net"` in a `Gemfile` — with RubyGems.org as the GA channel; see
+  *Gem name governance*.)
+- There is a working implementation of a Rails application stack, using Lamby, deployed via the Ruby CDK.
+- The YARD documentation `jsii-pacmak` emits is rendered and browsable at <https://rubygems.omarqureshi.net/docs> — the
+  full `aws-cdk-lib` API reference in Ruby, with cross-module type links, per-module READMEs and a getting-started
+  guide. (This is the gem-level YARD reference; the Construct Hub Ruby tab is the separate `jsii-docgen` renderer listed
+  in *System Impact*.)
 - The full test matrix passes on Linux, macOS and Windows runners, and the runtime reports itself via the standard
   `JSII_AGENT` mechanism (`Ruby/<version>`), integrating with jsii's existing runtime telemetry.
 
@@ -188,6 +194,30 @@ You will use standard Ruby tools. Dependencies are defined in a standard Gemfile
 install`). Custom or shared infrastructure constructs can be packaged and distributed internally or publicly as standard
 Ruby Gems.
 
+During the preview, a project's Gemfile pulls the CDK gems from the credential-free preview channel:
+
+```ruby
+source "https://rubygems.org"
+
+# The Ruby CDK is a preview, published to a separate gem feed.
+source "https://rubygems.omarqureshi.net" do
+  gem "aws-cdk-lib", ">= 0.0.0.pre"
+  gem "constructs", ">= 0.0.0.pre"
+  gem "jsii-ruby-runtime", ">= 0.0.0.pre"
+
+  # aws-cdk-lib loads these asset packages at require time.
+  gem "aws-cdk-asset-awscli-v1", ">= 0.0.0.pre"
+  gem "aws-cdk-asset-node-proxy-agent-v6", ">= 0.0.0.pre"
+  gem "aws-cdk-cloud-assembly-schema", ">= 0.0.0.pre"
+end
+```
+
+Two details are load-bearing. The block-scoped `source` resolves those gems **only** from the preview feed while
+everything else stays on RubyGems.org — closing the dependency-confusion gap a bare second source would open. And
+`>= 0.0.0.pre` opts Bundler into the timestamped prerelease versions the preview publishes (Bundler otherwise refuses
+prereleases). At GA this collapses to the ordinary case: the gems resolve from RubyGems.org with no extra `source`
+block and no prerelease constraint.
+
 ### Does this update break or slow down development for existing CDK languages?
 
 Not at all. The Ruby implementation is built as an entirely isolated code-generation target within the `jsii-pacmak`
@@ -265,7 +295,7 @@ Every prior language effort — including AWS's own early Ruby prototype: a `@js
 monorepo until it was removed in May 2020 ([aws/jsii#1691](https://github.com/aws/jsii/pull/1691)) as "not a supported
 target and not being actively developed" — ran into the same economics: building and validating a new language target
 is a multi-quarter effort for the core team, weighed against uncertain adoption. This RFC inverts that cost structure:
-the implementation already exists, passes the same 123-test compliance suite that gates Java and Go, runs the full
+the implementation already exists, passes the same standard compliance suite that gates Java and Go, runs the full
 monorepo CI across three operating systems, and is validated against `aws-cdk-lib` at full scale. The remaining ask is
 not "build Ruby support"; it is "review and steward a finished target through a preview".
 
@@ -297,7 +327,7 @@ make that risk bounded and recoverable rather than to pretend it away:
   trails the npm release (see the versioning FAQ), so a Ruby-specific failure can never block a core CDK release.
   Lockstep pipeline integration is deferred to GA.
 - **Objective health signal and an exit ramp.** The standard compliance suite provides a language-neutral health metric
-  (currently 123/123). A sustained regression in that matrix — or an agreed period without an active maintainer — is the
+  (currently a full pass). A sustained regression in that matrix — or an agreed period without an active maintainer — is the
   pre-agreed signal to mark the target unmaintained and, if needed, withdraw it while still in preview, mirroring how
   other targets are tracked. Because the target is additive and isolated, retiring it never affects the other languages.
 
@@ -372,7 +402,7 @@ and reversible decisions come first. Declining a later rung leaves the earlier r
 - Develop the proxy `Object` foundation and robust runtime type validation across the language boundary.
 - Implement the `jsii-pacmak` code generator target for Ruby, including YARD documentation emission and generated-code
   snapshot coverage in the cross-language test harness.
-- **Milestone:** Achieve 100% pass rate on the JSII standard compliance suite. ✅ **Achieved: 123/123**, reported through
+- **Milestone:** A full pass on the JSII standard compliance suite. ✅ **Achieved**, reported through
   `tools/jsii-compliance` into the same compliance matrix as Java and Go.
 - The commitment requested at this rung is code review and an experimental home for the target — no publishing or
   support obligations.
