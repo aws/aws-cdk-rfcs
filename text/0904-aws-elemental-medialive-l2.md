@@ -1070,7 +1070,6 @@ class VideoCodecSettings {
   static h265(props: H265SettingsProps): VideoCodecSettings;
   static av1(props?: Av1SettingsProps): VideoCodecSettings;
   static frameCapture(props?: FrameCaptureSettingsProps): VideoCodecSettings;
-  static mpeg2(props?: Mpeg2SettingsProps): VideoCodecSettings;
 }
 ```
 
@@ -1118,15 +1117,6 @@ medialive.VideoCodecSettings.av1({
 ```ts
 medialive.VideoCodecSettings.frameCapture({
   captureInterval: Duration.seconds(10),
-});
-```
-
-**MPEG-2** Example:
-
-```ts
-medialive.VideoCodecSettings.mpeg2({
-  framerate: medialive.Framerate.FPS_29_97,
-  gopSize: medialive.GopSize.seconds(2),
 });
 ```
 
@@ -1811,7 +1801,7 @@ without errors.
 Several deeply nested CFN types that were initially exposed as string pass-through have been replaced with proper typed classes:
 
 - `colorSpaceSettings` → `H264ColorSpaceSettings`, `H265ColorSpaceSettings`, `Av1ColorSpaceSettings`
-- `filterSettings` → `H264FilterSettings`, `H265FilterSettings`, `Mpeg2FilterSettings`
+- `filterSettings` → `H264FilterSettings`, `H265FilterSettings`
 - `hlsCdnSettings` → `HlsCdnSettings` factory class
 - `keyProviderSettings` → `HlsKeyProviderSettings` factory class
 - `archiveCdnSettings` → `archiveS3CannedAcl: S3CannedAcl` prop
@@ -2111,7 +2101,7 @@ The L2 constructs have been built and are working towards alpha release. The con
 
 - 6 resource types: Input, InputSecurityGroup, Channel, Network, Cluster, ChannelPlacementGroup
 - 10 output group types: MediaPackage V2, HLS, UDP, Archive, RTMP, SRT, MediaConnect Router, CMAF Ingest, Frame Capture, MS Smooth
-- 5 video codecs: H.264, H.265, AV1, Frame Capture, MPEG-2
+- 5 video codecs: H.264, H.265, AV1, Frame Capture
 - 7 audio codecs: AAC, AC3, EAC3, EAC3 Atmos, MP2, WAV, Passthrough
 - 16 input types: URL pull, RTMP push/pull, SRT caller/listener, MediaConnect, MediaConnect Router, SDI, UDP push, RTP push, MP4 file, TS file, CDI,
 Elemental Link (input device), Multicast, SMPTE 2110 receiver group
