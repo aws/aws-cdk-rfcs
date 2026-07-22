@@ -71,7 +71,11 @@ the current generator:
 - The runtime test suite (compliance + unit) runs green in CI on every push, alongside generated-code snapshot
   coverage in `jsii-pacmak`'s cross-language test harness.
 - The full `aws/jsii` monorepo CI (build, unit tests across the OS/language matrix, pacmak integration against
-  `aws-cdk-lib`) passes end-to-end on the implementation branch.
+  `aws-cdk-lib`) passes end-to-end on the preview build of the implementation branch. One caveat is deliberate and
+  disclosed: the branch depends on the `targets.ruby` schema from [aws/jsii-compiler#2663](https://github.com/aws/jsii-compiler/pull/2663),
+  which is not yet released — so CI green requires pinning a pre-release build of that compiler change, and the checks
+  on [aws/jsii#5178](https://github.com/aws/jsii/pull/5178) itself stay red **by construction** until #2663 merges and
+  releases. This is an ordering constraint, not an implementation gap; see *Upstreaming sequence* below.
 - **Validated end-to-end at `aws-cdk-lib` scale.** The generator emits the entire `aws-cdk-lib` (20,351 types across 613
   submodules) in ~10 seconds. The generated assembly loads *lazily* — `require 'aws-cdk-lib'` registers ~20,400 autoload
   entries and eager-defines **zero** types (see *Lazy loading* under Detailed Design) — and a real `App → Stack` with an
@@ -95,6 +99,21 @@ the current generator:
   in *System Impact*.)
 - The full test matrix passes on Linux, macOS and Windows runners, and the runtime reports itself via the standard
   `JSII_AGENT` mechanism (`Ruby/<version>`), integrating with jsii's existing runtime telemetry.
+
+### Upstreaming sequence
+
+The open PRs are not independent — one small change gates the rest, and review effort is best spent in this order:
+
+1. **[aws/jsii-compiler#2663](https://github.com/aws/jsii-compiler/pull/2663)** — additive `targets.ruby` schema
+   validation (+75/−0 with tests, no dependencies on any other change, currently mergeable). Everything else waits on
+   this being merged **and released**, because the jsii monorepo's Ruby target reads that schema at build time.
+2. **[aws/jsii#5178](https://github.com/aws/jsii/pull/5178)** — the runtime + `jsii-pacmak` target. Once a compiler
+   release carries #2663, the branch drops its pre-release compiler pin and monorepo CI goes green with stock
+   dependencies. Until then its checks are red by construction (see the caveat above).
+3. **[aws/jsii-rosetta#3710](https://github.com/aws/jsii-rosetta/pull/3710)** and the `jsii-docgen` Ruby renderer —
+   independent of each other and reviewable in parallel with (2).
+4. **[aws/aws-cdk#38248](https://github.com/aws/aws-cdk/pull/38248)** — pure per-submodule naming configuration; its
+   CI already passes as-is, but the config only takes effect once (1) and (2) are released.
 
 ## Working Backwards
 
@@ -296,7 +315,8 @@ monorepo until it was removed in May 2020 ([aws/jsii#1691](https://github.com/aw
 target and not being actively developed" — ran into the same economics: building and validating a new language target
 is a multi-quarter effort for the core team, weighed against uncertain adoption. This RFC inverts that cost structure:
 the implementation already exists, passes the same standard compliance suite that gates Java and Go, runs the full
-monorepo CI across three operating systems, and is validated against `aws-cdk-lib` at full scale. The remaining ask is
+monorepo CI across three operating systems (on the preview build — see *Upstreaming sequence*), and is validated
+against `aws-cdk-lib` at full scale. The remaining ask is
 not "build Ruby support"; it is "review and steward a finished target through a preview".
 
 Second, the project plan below is structured as a **commitment ladder**: each phase is independently approvable, the
@@ -353,7 +373,8 @@ standard `.gem` archives.
 **3. Documentation Translation (`jsii-rosetta`)** — a new `RubyVisitor` transliterates the TypeScript example snippets
 embedded in CDK documentation into idiomatic Ruby, so Construct Hub and inline docs show Ruby code. Implemented and
 covered by 96 translation fixtures; see *Documentation translation (jsii-rosetta)* in the appendix. Implementation is
-complete on the author's fork; it lands as a separate PR to aws/jsii-rosetta once the RFC direction is approved.
+complete and open for review as [aws/jsii-rosetta#3710](https://github.com/aws/jsii-rosetta/pull/3710) (draft until the
+RFC direction is approved).
 
 ### Is this a breaking change?
 
@@ -390,10 +411,10 @@ and reversible decisions come first. Declining a later rung leaves the earlier r
 
 #### Phase 0: Namespace Protection (near-zero cost, time-sensitive)
 
-- AWS registers `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii-ruby-runtime` and the `aws-cdk-asset-*` gem names on
-  RubyGems.org under an MFA-enforced, AWS-owned organization account (see *Gem name governance*). All were verified
-  unregistered as of 2026-06-07; RubyGems has no reservation mechanism, so early registration is the only reliable
-  protection. This step costs an afternoon and retains its value even if every subsequent phase is declined.
+- AWS registers `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`, `jsii-ruby-runtime` and the `aws-cdk-asset-*` gem names
+  on RubyGems.org under an MFA-enforced, AWS-owned organization account (see *Gem name governance*). All were verified
+  unregistered as of 2026-06-07 and re-verified 2026-07-22; RubyGems has no reservation mechanism, so early registration
+  is the only reliable protection. This step costs an afternoon and retains its value even if every subsequent phase is declined.
 
 #### Phase 1: Prototyping & Core Runtime (Implementation Complete; Upstreaming)
 
@@ -842,8 +863,8 @@ lockstep with their npm counterparts.
 > prerelease runtime gems while the upstream changes ([aws/jsii#5129](https://github.com/aws/jsii/issues/5129),
 > [aws/jsii-compiler#2663](https://github.com/aws/jsii-compiler/pull/2663)) are still in review.
 
-**Gem name governance**: as of 2026-06-07, `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`, `jsii-ruby-runtime` and the
-`aws-cdk-asset-*` names are unregistered on RubyGems.org (verified via the RubyGems API). RubyGems has no reservation
+**Gem name governance**: as of 2026-07-22 (first verified 2026-06-07), `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`,
+`jsii-ruby-runtime` and the `aws-cdk-asset-*` names are unregistered on RubyGems.org (verified via the RubyGems API). RubyGems has no reservation
 mechanism and adjudicates name disputes case-by-case, so early registration is the only reliable protection.
 
 The **recommended path is that AWS registers all of these names itself** — including `jsii-ruby-runtime` — with genuine
@@ -862,8 +883,8 @@ it does for the existing languages.
 `pacmak` generates the gems; `jsii-rosetta` is what lets the *docs* speak Ruby. Every CDK API doc and README carries
 TypeScript example snippets, and rosetta transliterates them per target language. Ruby is added as a first-class
 rosetta target — a new `TargetLanguage.RUBY` enum value wired through `targetName()` and the language registry, plus a
-~860-line `RubyVisitor extends DefaultVisitor` that overrides ~35 AST node handlers (imports, variable/property/class
-declarations, call/new expressions, object literals, parameters, control flow, string/template literals, etc.).
+self-contained `RubyVisitor extends DefaultVisitor` that overrides 40+ AST node handlers (imports, variable/property/class
+declarations, call/new expressions, object literals, parameters, control flow, string/template literals, ternaries, etc.).
 
 Representative behaviors, each pinned by a translation fixture:
 
