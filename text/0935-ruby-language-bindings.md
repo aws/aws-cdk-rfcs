@@ -197,8 +197,25 @@ The architecture is identical to Python's: every jsii binding drives the same No
 pipe, so synthesis time is dominated by the shared kernel rather than the guest language. The measured data so far is
 consistent with that: `require 'aws-cdk-lib'` is effectively free (~20,400 lazy autoload registrations, zero type
 bodies defined — see *Lazy loading* in the Detailed Design), and a real-world `cdk deploy` dropped roughly 30 seconds
-when the generator switched to lazy emission. A side-by-side `synth` benchmark against the Python bindings on an
-identical stack will be published with the Developer Preview.
+when the generator switched to lazy emission.
+
+A side-by-side `synth` benchmark against the Python bindings (measured 2026-07-22; identical mirror stacks — a VPC,
+25 buckets, DynamoDB table, queue, topic, Lambda with IAM grants, and a REST API, both synthesizing the same
+64-resource template; Python `aws-cdk-lib` 2.261.0 from PyPI vs the Ruby preview build; medians of 5 full-process
+runs):
+
+| | Python | Ruby |
+| --- | --- | --- |
+| total wall-clock | 2.05 s | 2.40 s |
+| library load | 1.24 s | 0.49 s |
+| construct phase | 0.29 s | 0.31 s |
+| synth phase | 0.09 s | 1.15 s |
+| peak RSS | 130 MB | 478 MB |
+
+End-to-end `synth` UX is comparable (~17% slower than Python on this stack). The lazy-loading architecture makes
+library load ~2.5× faster than Python's imports, with the deferred cost appearing in the synth phase as
+lazily-referenced types hydrate through the kernel. Peak memory is currently higher and is the first optimisation
+target for the preview. The benchmark harness and raw methodology are published alongside the preview tooling.
 
 ### Do I need Node.js installed on my machine to use CDK for Ruby?
 
