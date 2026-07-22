@@ -870,9 +870,13 @@ mechanism and adjudicates name disputes case-by-case, so early registration is t
 The **recommended path is that AWS registers all of these names itself** — including `jsii-ruby-runtime` — with genuine
 placeholder releases under an MFA-enforced, AWS-owned RubyGems organization account, *before* any public preview is
 announced. This keeps the supply chain entirely within AWS's control and avoids an external account ever holding a
-published CDK name. As an interim fallback only if AWS cannot register before the author needs to publish working
-prereleases, the author can claim `jsii-ruby-runtime` and transfer ownership to AWS (`gem owner --add`) at the
-publishing milestone — but the day-one AWS-owned option is preferred and is the one this RFC asks the team to adopt.
+published CDK name. As an interim fallback while that path has no execution date — and because squat exposure grows
+with every increase in the RFC's visibility — the author can claim the full list above with honest placeholder
+releases: prerelease-versioned (so Bundler and `gem install` never select them by default), authored under the
+author's own name with a reservation notice pointing at this RFC, published from an MFA-enforced account, and carrying
+a standing commitment to transfer ownership to AWS (`gem owner --add`) on request. The day-one AWS-owned option
+remains preferred and is the one this RFC asks the team to adopt; the fallback merely ensures there is still a
+namespace left to hand over.
 
 **API documentation**: `jsii-docgen` gains a Ruby renderer (delivered as a separate PR to cdklabs/jsii-docgen), so
 Construct Hub can present a Ruby tab — API reference in Ruby syntax — for every published construct library, exactly as
