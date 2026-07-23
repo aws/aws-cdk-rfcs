@@ -689,6 +689,24 @@ class OverrideCallsSuper < JsiiCalc::AsyncVirtualMethods
 end
 ```
 
+#### Case 3½: Lambdas as callbacks (SAM coercion)
+
+jsii's wire protocol has no function type — callbacks are always "an object implementing an interface". Whether a
+language can pass a *lambda* there is guest-language ergonomics: TypeScript gets it from structural typing, Java from
+javac's SAM conversion, and Python/C#/Go require an explicit implementing class. Ruby joins the first group at the
+runtime level: at any call site expecting a single-method interface, generated code coerces a `Proc` — or the
+TypeScript-mirror form, `{ member: -> { ... } }` — into an anonymous implementing object, which then rides the
+ordinary (compliance-tested) callback machinery:
+
+```ruby
+consumer.implemented_by_object_literal(->(bell) { bell.ring })
+```
+
+The coercion is additive and self-limiting: the runtime re-derives single-method-ness from the generated module's own
+override table and passes every non-coercible value through to normal type checking. This is also what makes
+rosetta-translated examples honest — a TypeScript `Lazy.string({ produce: () => value })` renders as
+`Lazy.string({ produce: -> { value } })`, which actually runs.
+
 #### Case 4: Abstract classes
 
 Abstractness only exists at the TypeScript level — on the wire there are just object refs and member names. The
