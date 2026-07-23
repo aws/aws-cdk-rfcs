@@ -222,9 +222,14 @@ runs, memory as `/proc`-reported peak RSS for the guest process and its Node sid
 
 End-to-end `synth` UX is comparable (~0.7 s slower than Python on this stack). The lazy-loading architecture makes
 library load ~2× faster than Python's imports and the guest process a third smaller — only the generated files a
-program actually touches are ever loaded — with the deferred cost appearing in the synth phase as lazily-referenced
-types hydrate through the kernel; that synth-phase gap is the optimisation target for the preview. The benchmark
-harness and raw methodology are published alongside the preview tooling.
+program actually touches are ever loaded. The synth-phase gap is **not** a Ruby or jsii cost: it is version skew in
+the underlying library. The Ruby preview is built from `aws-cdk` `main`, where `app.synth()` now runs the default
+CloudFormation validation engine (`@aws/cloudformation-validate`, a WebAssembly-compiled Rego policy engine) on every
+synthesis — roughly 0.6 s of engine initialisation plus 0.6 s of template evaluation on this host — while the Python
+comparison uses release 2.261.0, which predates that feature. A pure-Node control (the same one-bucket app in plain
+JavaScript, no jsii guest at all) synthesizes in ~1.1 s on the preview build and ~0.03 s on 2.261.0; subtracting the
+library's own cost, the jsii synth overhead is ~0.1 s in both languages. The benchmark harness and raw methodology
+are published alongside the preview tooling.
 
 ### Do I need Node.js installed on my machine to use CDK for Ruby?
 
