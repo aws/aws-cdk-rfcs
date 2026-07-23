@@ -116,7 +116,9 @@ The open PRs are not independent — one small change gates the rest, and review
    this being merged **and released**, because the jsii monorepo's Ruby target reads that schema at build time.
 2. **[aws/jsii#5178](https://github.com/aws/jsii/pull/5178)** — the runtime + `jsii-pacmak` target. Once a compiler
    release carries #2663, the branch drops its pre-release compiler pin and monorepo CI goes green with stock
-   dependencies. Until then its checks are red by construction (see the caveat above).
+   dependencies. Until then its checks are red by construction (see the caveat above). The branch tracks upstream:
+   last rebased onto `aws/jsii` `main` on 2026-07-23 (31 upstream commits absorbed; the seven review units replayed
+   without conflicts, full test suite green after regeneration).
 3. **[aws/jsii-rosetta#3710](https://github.com/aws/jsii-rosetta/pull/3710)** and the `jsii-docgen` Ruby renderer —
    independent of each other and reviewable in parallel with (2).
 4. **[aws/aws-cdk#38248](https://github.com/aws/aws-cdk/pull/38248)** — pure per-submodule naming configuration; its
@@ -229,6 +231,12 @@ release 2.261.0 predates that feature. Two controls confirm it: Python built fro
 engine cost (1.06 s), and a pure-Node run of the same app (no jsii guest at all) synthesizes in ~1.1 s on the
 `main` build versus ~0.03 s on 2.261.0. Subtracting the library's own cost, the jsii synth overhead is ~0.1 s in
 both guest languages. The benchmark harness and raw methodology are published alongside the preview tooling.
+
+The numbers above come from the development host (WSL2). To rule out host-specific effects, the same harness also runs
+monthly in CI on a stock `ubuntu-latest` runner; the first run (2026-07-23; Python `aws-cdk-lib` 2.262.0 from PyPI,
+Ruby preview from the public feed, versions disclosed in the run log) measured a median full-process wall of 2.58 s
+and 138 MB process-tree peak for Python against 2.66 s and 140 MB for Ruby — near-parity on neutral hardware, with
+the Ruby column still carrying the synth-time validation-engine cost that the PyPI release predates.
 
 ### Do I need Node.js installed on my machine to use CDK for Ruby?
 
@@ -793,8 +801,8 @@ kernel's `begin` API only accepts object references.
 ### Lazy loading (autoload)
 
 The dominant assembly is `aws-cdk-lib`: ~20,000 types in one gem. Eager-defining every class at `require` time — parsing
-and evaluating ~180 MB of generated source (measured: exactly 180 MB uncompressed in the 2026-07-23 published gem) — is untenable; a program that touches one S3 bucket should not pay to define
-every CloudFormation resource in AWS.
+and evaluating ~180 MB of generated source (measured: exactly 180 MB uncompressed in the 2026-07-23 published gem) — is
+untenable; a program that touches one S3 bucket should not pay to define every CloudFormation resource in AWS.
 
 The generator therefore emits each assembly as a **thin loader plus one file per type**, rather than a single monolith:
 
