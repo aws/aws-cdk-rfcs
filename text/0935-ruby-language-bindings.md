@@ -208,28 +208,27 @@ when the generator switched to lazy emission.
 
 A side-by-side `synth` benchmark against the Python bindings (measured 2026-07-23; identical mirror stacks — a VPC,
 25 buckets, DynamoDB table, queue, topic, Lambda with IAM grants, and a REST API, both synthesizing the same
-64-resource template; Python `aws-cdk-lib` 2.261.0 from PyPI vs the Ruby preview build; medians of 5 full-process
-runs, memory as `/proc`-reported peak RSS for the guest process and its Node sidecar):
+64-resource template; medians of 5 full-process runs, memory as `/proc`-reported peak RSS for the guest process and
+its Node sidecar). Three columns: Python from PyPI (2.261.0), and — for a same-source comparison — Python bindings
+generated with `jsii-pacmak` from the *identical* `aws-cdk` `main` build that produced the Ruby preview gem:
 
-| | Python | Ruby |
-| --- | --- | --- |
-| total wall-clock | 1.55 s | 2.28 s |
-| library load | 0.98 s | 0.46 s |
-| construct phase | 0.26 s | 0.30 s |
-| synth phase | 0.09 s | 1.15 s |
-| guest process peak | 128 MB | 86 MB |
-| Node sidecar peak | 47 MB | 56 MB |
+| | Python 2.261.0 (PyPI) | Python (same source as Ruby) | Ruby preview |
+| --- | --- | --- | --- |
+| library load | 0.98 s | 0.44 s | 0.46 s |
+| construct phase | 0.26 s | 0.35 s | 0.30 s |
+| synth phase | 0.09 s | 1.06 s | 1.15 s |
+| guest process peak | 128 MB | 83 MB | 86 MB |
+| Node sidecar peak | 47 MB | 47 MB | 56 MB |
 
-End-to-end `synth` UX is comparable (~0.7 s slower than Python on this stack). The lazy-loading architecture makes
-library load ~2× faster than Python's imports and the guest process a third smaller — only the generated files a
-program actually touches are ever loaded. The synth-phase gap is **not** a Ruby or jsii cost: it is version skew in
-the underlying library. The Ruby preview is built from `aws-cdk` `main`, where `app.synth()` now runs the default
-CloudFormation validation engine (`@aws/cloudformation-validate`, a WebAssembly-compiled Rego policy engine) on every
-synthesis — roughly 0.6 s of engine initialisation plus 0.6 s of template evaluation on this host — while the Python
-comparison uses release 2.261.0, which predates that feature. A pure-Node control (the same one-bucket app in plain
-JavaScript, no jsii guest at all) synthesizes in ~1.1 s on the preview build and ~0.03 s on 2.261.0; subtracting the
-library's own cost, the jsii synth overhead is ~0.1 s in both languages. The benchmark harness and raw methodology
-are published alongside the preview tooling.
+The same-source columns are the meaningful comparison, and they show **parity**: library load 0.44 vs 0.46 s, synth
+1.06 vs 1.15 s, guest process 83 vs 86 MB. The apparent 0.09-vs-1.15 s synth gap against the PyPI column is version
+skew in the underlying library, not a Ruby or jsii cost: `aws-cdk` `main` now runs the default CloudFormation
+validation engine (`@aws/cloudformation-validate`, a WebAssembly-compiled Rego policy engine) inside every
+`app.synth()` — roughly 0.6 s of engine initialisation plus 0.6 s of template evaluation on this host — while
+release 2.261.0 predates that feature. Two controls confirm it: Python built from the same source pays the same
+engine cost (1.06 s), and a pure-Node run of the same app (no jsii guest at all) synthesizes in ~1.1 s on the
+`main` build versus ~0.03 s on 2.261.0. Subtracting the library's own cost, the jsii synth overhead is ~0.1 s in
+both guest languages. The benchmark harness and raw methodology are published alongside the preview tooling.
 
 ### Do I need Node.js installed on my machine to use CDK for Ruby?
 
