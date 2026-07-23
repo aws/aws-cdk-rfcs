@@ -63,12 +63,17 @@ proceed under each repo's normal review once the direction is approved.
 
 Unlike a speculative design document, this RFC is backed by a working implementation (tracked at
 [aws/jsii#5129](https://github.com/aws/jsii/issues/5129)); every generated-code example below is **real output** from
-the current generator:
+the current generator (lightly presented: long module prefixes are trimmed — `class Calculator` for
+`class JsiiCalc::Calculator` — and doc-comment lines elided where noted):
 
 - **The full standard compliance suite passes**, reported through the same `tools/jsii-compliance` matrix used to gate
   the other jsii languages — surfaced in the monorepo implementation PR
   ([aws/jsii#5178](https://github.com/aws/jsii/pull/5178)).
-- The runtime test suite (compliance + unit) runs green in CI on every push, alongside generated-code snapshot
+- The runtime test suite (compliance + unit) is green at every build: it gates the local development loop and full
+  green monorepo-CI runs exist on the branch (2026-06-04/07, including the full OS matrix). Since the fork-compiler pin
+  landed, the fork's own CI check fails fast by construction (the ordering constraint in *Upstreaming sequence*) — the
+  suite's ongoing verification lives in the daily preview pipeline, whose post-publish smoke test installs the
+  published gems from the public feed and synthesizes a real stack on every run, alongside generated-code snapshot
   coverage in `jsii-pacmak`'s cross-language test harness.
 - The full `aws/jsii` monorepo CI (build, unit tests across the OS/language matrix, pacmak integration against
   `aws-cdk-lib`) passes end-to-end on the preview build of the implementation branch. One caveat is deliberate and
@@ -85,14 +90,16 @@ the current generator:
   resolve. This is the full path a CDK user exercises, on the real library, not a fixture.
 - The author's production blog infrastructure consumes the generated gems today: the stack at
   <https://github.com/omarqureshi/blog> compiles, synthesizes and deploys via the `aws-cdk-lib` Ruby bindings, spanning
-  twelve service modules (S3 and S3 Deployment, CloudFront, Certificate Manager, Route53 with its targets and patterns
-  submodules, Cognito, DynamoDB, Lambda, API Gateway, IAM) — breadth across the generated API surface, not a single
+  eleven service modules (S3 and S3 Deployment, CloudFront, Certificate Manager, Route53 with its targets and patterns
+  submodules, Cognito, DynamoDB, Lambda, API Gateway — with IAM engaged through the `grant_*` helpers rather than
+  direct module references) — breadth across the generated API surface, not a single
   cherry-picked construct. The deployment runs on the final `AWSCDK::S3`-style module naming proposed below (see *Root
   namespace rationale*), so the naming convention is exercised in production, not just on paper.
   (The gems are available today from a public, credential-free preview channel —
   `source "https://rubygems.omarqureshi.net"` in a `Gemfile` — with RubyGems.org as the GA channel; see
   *Gem name governance*.)
-- There is a working implementation of a Rails application stack, using Lamby, deployed via the Ruby CDK.
+- There is a working implementation of a Rails application stack (Lamby on Lambda, Dynamoid on DynamoDB) whose
+  infrastructure is defined and deployed via the Ruby CDK, exercised end to end against a local AWS emulator.
 - The YARD documentation `jsii-pacmak` emits is rendered and browsable at <https://rubygems.omarqureshi.net/docs> — the
   full `aws-cdk-lib` API reference in Ruby, with cross-module type links, per-module READMEs and a getting-started
   guide. (This is the gem-level YARD reference; the Construct Hub Ruby tab is the separate `jsii-docgen` renderer listed
@@ -159,8 +166,8 @@ MyCustomStack.new(app, 'MyStack')
 app.synth
 ```
 
-This is not hypothetical syntax: an equivalent stack spanning twelve service modules (S3, CloudFront, ACM, Route53,
-Cognito, DynamoDB, Lambda, API Gateway, IAM and more) runs today as the author's production blog infrastructure,
+This is not hypothetical syntax: an equivalent stack spanning eleven service modules (S3, CloudFront, ACM, Route53
+and its targets/patterns submodules, Cognito, DynamoDB, Lambda, API Gateway and more) runs today as the author's production blog infrastructure,
 deployed entirely through the Ruby bindings — see <https://github.com/omarqureshi/blog>.
 
 To get started with the AWS CDK for Ruby, visit the AWS CDK Getting Started Guide or explore the open-source repository
@@ -269,6 +276,10 @@ The Ruby constructs will be published as standard `.gem` packages to RubyGems.or
 core AWS CDK releases (e.g., if the CDK is on version `2.150.0`, the corresponding `aws-cdk-lib` gem will also be
 `2.150.0`).
 
+Every preview build also publishes a source manifest beside the gem index
+(`/manifests/<version>.json`) pinning the exact commit of every repository that produced it — each published version is
+traceable to sources.
+
 Publishing happens in two stages. During the preview, gems publish from a **decoupled pipeline that trails the npm
 release** — the version numbers stay in sync, but a Ruby packaging failure can only delay the gem, never the core CDK
 release train. Only at GA, once the promotion criteria are met (see the project plan), does Ruby move into the lockstep
@@ -287,7 +298,7 @@ initial launch.
 **1. Quantified, long-standing demand**
 Ruby support is one of the longest-standing open requests in the jsii tracker:
 [aws/jsii#3923](https://github.com/aws/jsii/issues/3923) has been open since **August 2018** and carries **478
-reactions (386 👍) and 59 comments**; its closed predecessor ([aws/jsii#144](https://github.com/aws/jsii/issues/144),
+reactions (386 👍) and 60+ comments**; its closed predecessor ([aws/jsii#144](https://github.com/aws/jsii/issues/144),
 36 reactions) dates to jsii's original language line-up. The surrounding ecosystem shows these are users who already
 manage AWS infrastructure from Ruby, with weaker tools: the official AWS SDK for Ruby's core gem (`aws-sdk-core`) has
 **~1.69 billion** RubyGems downloads, and `cfndsl` — a community CloudFormation DSL with no L2 abstractions — has 2.4
@@ -391,7 +402,7 @@ standard `.gem` archives.
 
 **3. Documentation Translation (`jsii-rosetta`)** — a new `RubyVisitor` transliterates the TypeScript example snippets
 embedded in CDK documentation into idiomatic Ruby, so Construct Hub and inline docs show Ruby code. Implemented and
-covered by 96 translation fixtures; see *Documentation translation (jsii-rosetta)* in the appendix. Implementation is
+covered by the translation-fixture corpus; see *Documentation translation (jsii-rosetta)* in the appendix. Implementation is
 complete and open for review as [aws/jsii-rosetta#3710](https://github.com/aws/jsii-rosetta/pull/3710) (draft until the
 RFC direction is approved).
 
@@ -430,10 +441,12 @@ and reversible decisions come first. Declining a later rung leaves the earlier r
 
 #### Phase 0: Namespace Protection (near-zero cost, time-sensitive)
 
-- AWS registers `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`, `jsii-ruby-runtime` and the `aws-cdk-asset-*` gem names
-  on RubyGems.org under an MFA-enforced, AWS-owned organization account (see *Gem name governance*). All were verified
-  unregistered as of 2026-06-07 and re-verified 2026-07-22; RubyGems has no reservation mechanism, so early registration
-  is the only reliable protection. This step costs an afternoon and retains its value even if every subsequent phase is declined.
+- Secure `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`, `jsii-ruby-runtime` and the `aws-cdk-asset-*` gem names on
+  RubyGems.org under an MFA-enforced, AWS-owned organization account. **Partially executed:** the names were verified
+  unregistered (2026-06-07 through 2026-07-22) and are now held as author-published placeholder releases pending
+  transfer to AWS — see the *Gem name governance* status disclosure. The remaining step is the ownership transfer
+  itself (`gem owner --add`), being coordinated with the maintainer team; it costs an afternoon and retains its value
+  even if every subsequent phase is declined.
 
 #### Phase 1: Prototyping & Core Runtime (Implementation Complete; Upstreaming)
 
@@ -450,7 +463,8 @@ and reversible decisions come first. Declining a later rung leaves the earlier r
 #### Phase 2: Documentation, Tooling & Decoupled Preview Publishing (In Progress)
 
 - Extend the `jsii-rosetta` translation engine to automatically generate idiomatic Ruby code snippets and usage examples
-  from the original TypeScript sources (implemented on the author's fork; PR opens on RFC approval).
+  from the original TypeScript sources (implemented and open for review as
+  [aws/jsii-rosetta#3710](https://github.com/aws/jsii-rosetta/pull/3710), draft until the RFC direction is approved).
 - Ruby renderer for `jsii-docgen`, enabling a Construct Hub Ruby documentation tab for every published construct library
   (implemented; PR opens on RFC approval).
 - Generate and publish the core `aws-cdk-lib` modules and dependencies as standard Ruby Gems from a **decoupled
@@ -773,7 +787,7 @@ kernel's `begin` API only accepts object references.
 ### Lazy loading (autoload)
 
 The dominant assembly is `aws-cdk-lib`: ~20,000 types in one gem. Eager-defining every class at `require` time — parsing
-and evaluating ~180 MB of generated source — is untenable; a program that touches one S3 bucket should not pay to define
+and evaluating ~180 MB of generated source (measured: exactly 180 MB uncompressed in the 2026-07-23 published gem) — is untenable; a program that touches one S3 bucket should not pay to define
 every CloudFormation resource in AWS.
 
 The generator therefore emits each assembly as a **thin loader plus one file per type**, rather than a single monolith:
@@ -884,7 +898,7 @@ Gem::Specification.new do |s|
   s.authors     = ['Amazon Web Services']
   s.license     = 'Apache-2.0'
   s.homepage    = 'https://github.com/aws/jsii'
-  s.files       = Dir["lib/**/*"]
+  s.files       = Dir["lib/**/*"] + Dir["sig/**/*"]
   s.required_ruby_version = '>= 3.3.0'
   s.add_dependency 'jsii-ruby-runtime', '< 0.0.1'
   s.add_dependency 'base64', '~> 0.2'
@@ -900,20 +914,18 @@ lockstep with their npm counterparts.
 > prerelease runtime gems while the upstream changes ([aws/jsii#5129](https://github.com/aws/jsii/issues/5129),
 > [aws/jsii-compiler#2663](https://github.com/aws/jsii-compiler/pull/2663)) are still in review.
 
-**Gem name governance**: as of 2026-07-22 (first verified 2026-06-07), `aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`,
-`jsii-ruby-runtime` and the `aws-cdk-asset-*` names are unregistered on RubyGems.org (verified via the RubyGems API). RubyGems has no reservation
-mechanism and adjudicates name disputes case-by-case, so early registration is the only reliable protection.
+**Gem name governance**: all target names (`aws-cdk-lib`, `constructs`, `aws-cdk`, `jsii`, `jsii-ruby-runtime` and the
+`aws-cdk-asset-*` names) were verified unregistered on RubyGems.org between 2026-06-07 and 2026-07-22. RubyGems has no
+reservation mechanism and adjudicates name disputes case-by-case, so early registration is the only reliable protection.
 
-The **recommended path is that AWS registers all of these names itself** — including `jsii-ruby-runtime` — with genuine
-placeholder releases under an MFA-enforced, AWS-owned RubyGems organization account, *before* any public preview is
-announced. This keeps the supply chain entirely within AWS's control and avoids an external account ever holding a
-published CDK name. As an interim fallback while that path has no execution date — and because squat exposure grows
-with every increase in the RFC's visibility — the author can claim the full list above with honest placeholder
-releases: prerelease-versioned (so Bundler and `gem install` never select them by default), authored under the
-author's own name with a reservation notice pointing at this RFC, published from an MFA-enforced account, and carrying
-a standing commitment to transfer ownership to AWS (`gem owner --add`) on request. The day-one AWS-owned option
-remains preferred and is the one this RFC asks the team to adopt; the fallback merely ensures there is still a
-namespace left to hand over.
+**Status disclosure (2026-07-22): the author has executed the interim fallback described below.** All of the names
+above are now held by the author's MFA-enforced RubyGems account as honest placeholder releases: prerelease-versioned
+(`0.0.0.pre.reserved.1`, which Bundler and `gem install` never select by default), authored under the author's own name
+— not AWS's — and each carrying a reservation notice pointing at this RFC together with a standing commitment to
+transfer ownership to AWS (`gem owner --add`). **Ownership transfer to AWS is being coordinated with the maintainer
+team.** The end state this RFC asks for is unchanged: every name under an AWS-owned, MFA-enforced organization account,
+so the supply chain sits entirely within AWS's control before any public preview is announced; the executed fallback
+exists solely so that there is a namespace left to hand over.
 
 **API documentation**: `jsii-docgen` gains a Ruby renderer (delivered as a separate PR to cdklabs/jsii-docgen), so
 Construct Hub can present a Ruby tab — API reference in Ruby syntax — for every published construct library, exactly as
@@ -954,14 +966,14 @@ class MyClass
 end
 ```
 
-One deliberate divergence from the generator is worth calling out for review: rosetta translates snippets *without*
-loading the referenced packages' `.jsii` assemblies, so it cannot read the dynamic `targets.ruby.acronyms` config the
-generator uses. It therefore falls back to a **hardcoded CDK acronym list** (`AWS`, `S3`, `VPC`, `IAM`, …) and a
-hardcoded reserved-word set to keep module casing and identifier escaping aligned with the compiled gems. Snippets that
-reference third-party assemblies with custom acronyms could therefore render with slightly different module casing than
-the generated gem — a known limitation, not a correctness bug in the snippet's Ruby.
+Acronym casing follows the same single-source-of-truth rule as the generator: when a snippet's type references
+resolve to a jsii assembly, the visitor reads `targets.ruby.acronyms` (and the module configuration) from that
+assembly — rosetta deliberately carries **no built-in acronym list**. A snippet whose references cannot be resolved to
+any assembly renders plain PascalCase — an honest best-effort guess rather than fake authority — which is a known
+limitation for non-compiling snippets, not a correctness bug in the snippet's Ruby. The reserved-word set (Ruby
+language data, not library data) is the one hardcoded table, mirroring the generator's.
 
-Coverage today is **96 translation fixtures** spanning calls (17), classes (14), expressions (22), statements (12),
+Coverage spans the full fixture corpus (97 at last count) across calls (17), classes (15), expressions (22), statements (12),
 structs (6), imports (6), comments (4), intersections (4), interfaces (2), identifiers (2), visibility/hiding (6) and
 miscellaneous (1) — each checked against the *same* TypeScript source used to validate the Python/Java/Go/.NET
 renderers.
