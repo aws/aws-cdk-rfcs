@@ -198,7 +198,8 @@ switching overhead, and leverage their existing Ruby testing and automation work
 
 MRI (CRuby) **3.3 and newer**. Ruby 3.1 and 3.2 have reached end-of-life and are not supported; the gemspecs enforce
 `required_ruby_version >= 3.3.0`, and CI exercises the currently-supported MRI series (3.3, 3.4, 4.0). The production
-reference deployment runs on Ruby 4.0.
+reference deployment runs on Ruby 4.0. JRuby may work — the runtime is pure Ruby (no C extensions; the only system
+dependency is spawning the Node.js sidecar) — but it is untested and supporting it is explicitly not an initial goal.
 
 ### How does the performance of AWS CDK for Ruby compare to other languages?
 
