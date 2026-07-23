@@ -370,7 +370,9 @@ make that risk bounded and recoverable rather than to pretend it away:
   suite evolves.
 - **Code home and co-maintainership.** To avoid a personal-account dependency, the Ruby target should live under AWS/
   `cdklabs` stewardship from day one, and the RFC explicitly invites at least one additional co-maintainer (from the
-  community or the core team) before GA. The author will support onboarding co-maintainers.
+  community or the core team) before GA. **Status (2026-07-23): a second maintainer has been recruited and begins
+  onboarding onto the project in mid-August 2026** — stated as a commitment in progress, not yet a contribution
+  record. The author will support onboarding this and any further co-maintainers.
 - The Ruby target launches under an **experimental / Developer Preview tier** with explicit stability annotations: no
   semantic-versioning guarantees on the Ruby API surface until promotion criteria (defined with the core team) are met.
   This contains the blast radius mechanically, not just by policy: preview gems publish from a decoupled pipeline that
