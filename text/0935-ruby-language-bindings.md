@@ -212,7 +212,96 @@ when the generator switched to lazy emission.
 A side-by-side `synth` benchmark against the Python bindings (measured 2026-07-23; identical mirror stacks — a VPC,
 25 buckets, DynamoDB table, queue, topic, Lambda with IAM grants, and a REST API, both synthesizing the same
 64-resource template; medians of 5 full-process runs, memory as `/proc`-reported peak RSS for the guest process and
-its Node sidecar). Three columns: Python from PyPI (2.261.0), and — for a same-source comparison — Python bindings
+its Node sidecar). The mirror apps, abridged from the published harness (timing/memory instrumentation and
+output-directory plumbing elided):
+
+```ruby
+require "aws-cdk-lib"
+
+app = AWSCDK::App.new
+stack = AWSCDK::Stack.new(app, "BenchStack")
+
+vpc = AWSCDK::EC2::VPC.new(stack, "Vpc", { max_azs: 2, nat_gateways: 1 })
+
+buckets = (0...25).map do |i|
+  AWSCDK::S3::Bucket.new(stack, "Bucket#{i}", { versioned: true })
+end
+
+table = AWSCDK::DynamoDB::TableV2.new(
+  stack, "Table",
+  { partition_key: { name: "id", type: AWSCDK::DynamoDB::AttributeType::STRING } }
+)
+
+queue = AWSCDK::SQS::Queue.new(stack, "Queue")
+topic = AWSCDK::SNS::Topic.new(stack, "Topic")
+
+fn = AWSCDK::Lambda::Function.new(
+  stack, "Fn",
+  {
+    runtime: AWSCDK::Lambda::Runtime.PYTHON_3_12,
+    handler: "index.handler",
+    code: AWSCDK::Lambda::Code.from_inline("def handler(event, context):\n    return {}")
+  }
+)
+
+table.grant_read_write_data(fn)
+buckets[0].grant_read(fn)
+queue.grant_send_messages(fn)
+
+api = AWSCDK::APIGateway::LambdaRestAPI.new(stack, "Api", { handler: fn })
+AWSCDK::CfnOutput.new(stack, "ApiUrl", { value: api.url })
+
+app.synth
+```
+
+```python
+import aws_cdk as cdk
+from aws_cdk import (
+    aws_apigateway as apigw,
+    aws_dynamodb as ddb,
+    aws_ec2 as ec2,
+    aws_lambda as lambda_,
+    aws_s3 as s3,
+    aws_sns as sns,
+    aws_sqs as sqs,
+)
+
+app = cdk.App()
+stack = cdk.Stack(app, "BenchStack")
+
+vpc = ec2.Vpc(stack, "Vpc", max_azs=2, nat_gateways=1)
+
+buckets = [
+    s3.Bucket(stack, f"Bucket{i}", versioned=True)
+    for i in range(25)
+]
+
+table = ddb.TableV2(
+    stack, "Table",
+    partition_key=ddb.Attribute(name="id", type=ddb.AttributeType.STRING),
+)
+
+queue = sqs.Queue(stack, "Queue")
+topic = sns.Topic(stack, "Topic")
+
+fn = lambda_.Function(
+    stack, "Fn",
+    runtime=lambda_.Runtime.PYTHON_3_12,
+    handler="index.handler",
+    code=lambda_.Code.from_inline("def handler(event, context):\n    return {}"),
+)
+
+table.grant_read_write_data(fn)
+buckets[0].grant_read(fn)
+queue.grant_send_messages(fn)
+
+api = apigw.LambdaRestApi(stack, "Api", handler=fn)
+cdk.CfnOutput(stack, "ApiUrl", value=api.url)
+
+app.synth()
+```
+
+Three columns: Python from PyPI (2.261.0), and — for a same-source comparison — Python bindings
 generated with `jsii-pacmak` from the *identical* `aws-cdk` `main` build that produced the Ruby preview gem:
 
 | | Python 2.261.0 (PyPI) | Python (same source as Ruby) | Ruby preview |
