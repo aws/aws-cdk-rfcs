@@ -341,29 +341,40 @@ You will use standard Ruby tools. Dependencies are defined in a standard Gemfile
 install`). Custom or shared infrastructure constructs can be packaged and distributed internally or publicly as standard
 Ruby Gems.
 
-During the preview, a project's Gemfile pulls the CDK gems from the credential-free preview channel:
+During the preview, a project's Gemfile pulls the CDK from the credential-free preview channel — one line, one gem:
 
 ```ruby
 source "https://rubygems.org"
 
-# The Ruby CDK is a preview, published to a separate gem feed.
-source "https://rubygems.omarqureshi.net" do
-  gem "aws-cdk-lib", ">= 0.0.0.pre"
-  gem "constructs", ">= 0.0.0.pre"
-  gem "jsii-ruby-runtime", ">= 0.0.0.pre"
-
-  # aws-cdk-lib loads these asset packages at require time.
-  gem "aws-cdk-asset-awscli-v1", ">= 0.0.0.pre"
-  gem "aws-cdk-asset-node-proxy-agent-v6", ">= 0.0.0.pre"
-  gem "aws-cdk-cloud-assembly-schema", ">= 0.0.0.pre"
-end
+# The Ruby CDK is a preview, published to a separate gem feed. The rest of
+# the closure (constructs, the asset packages, the jsii runtime) arrives as
+# pinned transitive dependencies of this one gem.
+gem "aws-cdk-lib", "= 0.0.0.pre.20260723215643", source: "https://rubygems.omarqureshi.net"
 ```
 
-Two details are load-bearing. The block-scoped `source` resolves those gems **only** from the preview feed while
-everything else stays on RubyGems.org — closing the dependency-confusion gap a bare second source would open. And
-`>= 0.0.0.pre` opts Bundler into the timestamped prerelease versions the preview publishes (Bundler otherwise refuses
-prereleases). At GA this collapses to the ordinary case: the gems resolve from RubyGems.org with no extra `source`
-block and no prerelease constraint.
+Three details are load-bearing. The per-gem `source:` resolves the CDK gems **only** from the preview feed while
+everything else stays on RubyGems.org — closing the dependency-confusion gap a bare second source would open. Each
+preview build's gemspec pins its sibling gems to exact co-published versions, so the single entry is the whole
+dependency story (this is verified by the publish pipeline's post-publish smoke test, which installs from exactly
+this Gemfile shape and synthesizes a real stack). And the version pin is exact by design: Bundler will not float a
+`>=` range onto a prerelease whose transitive pins are also prereleases, so adopting a newer preview build means
+bumping the pin — the docs site's getting-started page always shows the newest build's line verbatim. At GA this
+collapses to the ordinary case: `gem "aws-cdk-lib"` from RubyGems.org, no `source:`, no pin, transitive dependencies
+resolved by normal semver ranges.
+
+### Do I get static type checking?
+
+Yes, opt-in. Every generated gem ships RBS signatures (`sig/` — ~85,000 typed method signatures for `aws-cdk-lib`),
+and [Steep](https://github.com/soutaro/steep) checks application code against them. Steep is a development-group gem
+for the consumer, never a runtime dependency of the CDK gems — the same relationship Python's bindings have to mypy.
+Verified end to end on the preview build: passing an `Integer` where a construct id `String` belongs, or where
+`IAM::IGrantable` is expected, is reported with precise diagnostics; a full check against the complete `aws-cdk-lib`
+signature set costs roughly two minutes and ~1.5 GB on a development laptop. Two preview caveats, both understood:
+prerelease-only gems defeat RBS's name-based signature discovery (`Gem::Specification.find_by_name` excludes
+prereleases), so during the preview the Steepfile points at the gem-bundled `sig/` directories via Bundler — at GA,
+normal versions make `rbs collection` discovery work as designed. And the generated signatures currently type struct
+parameters as the struct class, so the idiomatic hash-literal form (`{ versioned: true }`) is flagged — a known
+signature-emission improvement (`Props | Hash[Symbol, untyped]`) tracked for the generator.
 
 ### Does this update break or slow down development for existing CDK languages?
 
