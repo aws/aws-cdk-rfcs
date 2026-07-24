@@ -380,10 +380,12 @@ a `sig/manifest.yaml` declaring that dependency is tracked for the generator). S
 the consumer, never a runtime dependency of the CDK gems — the same relationship Python's bindings have to mypy.
 Verified end to end on the preview build: passing an `Integer` where a construct id `String` belongs, or where
 `IAM::IGrantable` is expected, is reported with precise diagnostics and no false positives; the full check against
-the complete `aws-cdk-lib` signature set runs in ~15 seconds / ~1 GB on a development laptop. One known preview
-caveat: the generated signatures type struct parameters as the struct class, so the idiomatic hash-literal form
-(`{ versioned: true }`) is flagged — a signature-emission improvement (`Props | Hash[Symbol, untyped]`) is tracked
-for the generator.
+the complete `aws-cdk-lib` signature set runs in ~15 seconds / ~1 GB on a development laptop. The signatures mirror
+the runtime's coercion rules positionally: struct-typed *parameters* are emitted as `(Props | Hash[Symbol,
+untyped])` — recursively through arrays, maps and union arms — so the idiomatic hash-literal form
+(`{ versioned: true }`) type-checks, while returns and attribute readers stay struct-typed, because values coming
+back from the kernel are always hydrated struct instances (shipping with the preview build following this
+writing).
 
 ### Does this update break or slow down development for existing CDK languages?
 
