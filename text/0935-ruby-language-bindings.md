@@ -98,8 +98,17 @@ the current generator (lightly presented: long module prefixes are trimmed — `
   (The gems are available today from a public, credential-free preview channel —
   `source "https://rubygems.omarqureshi.net"` in a `Gemfile` — with RubyGems.org as the GA channel; see
   *Gem name governance*.)
-- There is a working implementation of a Rails application stack (Lamby on Lambda, Dynamoid on DynamoDB) whose
-  infrastructure is defined and deployed via the Ruby CDK, exercised end to end against a local AWS emulator.
+- **A full Rails application is deployed to production on real AWS** via the Ruby CDK — Lamby on Lambda, Dynamoid on
+  DynamoDB — exercising a broad slice of services from Ruby: a Cognito user pool with Google federation, S3 uploads
+  presigned in the browser and served through CloudFront, DynamoDB with global secondary indexes, and an SQS queue
+  (with a dead-letter queue) wired as a Lambda event source, all traced with X-Ray. It ships through a conventional
+  CI/CD pipeline — a test-gated trunk, a staging branch, and tag-driven production releases — so the bindings are
+  exercised the way a team would actually operate them, not only at `cdk synth`.
+- **The same app demonstrates a Ruby-native infrastructure pattern**: the CDK stack builds its DynamoDB tables — keys,
+  GSIs and attribute types — by reflecting over the application's Dynamoid model classes at synth time, so the app and
+  its infrastructure share one source of truth. That coupling is only possible because the CDK is a first-class Ruby
+  library the app can `require` and introspect — a concrete argument for native bindings over shelling out to a CLI or
+  generating templates.
 - The YARD documentation `jsii-pacmak` emits is rendered and browsable at <https://rubygems.omarqureshi.net/docs> — the
   full `aws-cdk-lib` API reference in Ruby, with cross-module type links, per-module READMEs and a getting-started
   guide. (This is the gem-level YARD reference; the Construct Hub Ruby tab is the separate `jsii-docgen` renderer listed
@@ -640,6 +649,12 @@ Beyond GA, the type information already present in `.jsii` assemblies enables se
   interpreters are plausible targets once officially tested.
 - **Rails integration**: generators/railties that scaffold CDK stacks inside existing Rails applications, unifying app
   and infrastructure in a single repository and test suite.
+- **Ecosystem gems that bridge Ruby libraries with CDK**: because CDK constructs are ordinary Ruby objects, a gem can
+  reflect over both a Ruby library and the CDK to derive infrastructure from application code. The reference app
+  already does this — a small module reads its Dynamoid models' schema (keys, indexes, attribute types) and emits the
+  matching CDK tables, so app and infrastructure share one source of truth — and it packages cleanly into a standalone
+  Dynamoid-to-CDK gem. Reflection-based integration like this is unique to native bindings: there is no Ruby object for
+  a shell-out or template generator to introspect.
 
 ## Appendix: Detailed Design
 
