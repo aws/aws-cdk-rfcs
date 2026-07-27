@@ -652,8 +652,9 @@ Beyond GA, the type information already present in `.jsii` assemblies enables se
 - **Ecosystem gems that bridge Ruby libraries with CDK**: because CDK constructs are ordinary Ruby objects, a gem can
   reflect over both a Ruby library and the CDK to derive infrastructure from application code. The reference app
   already does this — a small module reads its Dynamoid models' schema (keys, indexes, attribute types) and emits the
-  matching CDK tables, so app and infrastructure share one source of truth — and it packages cleanly into a standalone
-  Dynamoid-to-CDK gem. Reflection-based integration like this is unique to native bindings: there is no Ruby object for
+  matching CDK tables, so app and infrastructure share one source of truth — a pattern that could be extracted into a
+  standalone Dynamoid-to-CDK gem (none exists yet). Reflection-based integration like this is unique to native
+  bindings: there is no Ruby object for
   a shell-out or template generator to introspect.
 
 ## Appendix: Detailed Design
