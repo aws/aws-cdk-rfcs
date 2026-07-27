@@ -2,7 +2,7 @@
 
 * **Original Author(s):** @jamiepm
 * **Tracking Issue:** [#943](https://github.com/aws/aws-cdk-rfcs/issues/943)
-* **API Bar Raiser:** (assigned during review)
+* **API Bar Raiser:** @gudipati
 
 AWS Elemental Inference applies AI to live media. A `Feed` receives media for inference processing and
 produces one or more AI-driven outputs — **event clipping**, **smart cropping**, and **smart subtitling** —
@@ -10,7 +10,7 @@ and a `Dictionary` supplies domain-specific vocabulary that improves subtitling 
 
 This L2 turns the `AWS::ElementalInference::Feed` and `AWS::ElementalInference::Dictionary` resources — whose
 raw form requires hand-built status strings, nested output-config objects, and a JSON-encoded dictionary
-`entries` payload — into a typed, intent-based API with factory methods, enums, and synth-time validation.
+`entries` payload — into a typed, intent-based API with factory methods, enum-like classes, and synth-time validation.
 
 ## Motivation — L1 vs L2
 
@@ -269,7 +269,8 @@ By building L2 constructs, we:
 1. Replace the nested `outputConfig` objects and `ENABLED`/`DISABLED` status strings with typed `FeedOutput` factories.
 2. Hide the dictionary `entries` JSON schema behind a typed `DictionaryEntry[]`.
 3. Provide synth-time validation for the constraints the service enforces.
-4. Use enum-like types for the closed-value fields (languages, profanity filter, aspect ratio).
+4. Use enum-like classes for the closed-value fields (languages, profanity filter, aspect ratio), with a `static of(...)` escape hatch for
+   custom values.
 
 ### Why should we _not_ do this?
 
@@ -286,8 +287,9 @@ The design centers on:
    `ENABLED`/`DISABLED` status.
 2. **A `Dictionary` resource construct** whose structured `entries` are serialized to the service's JSON
    payload, translating the idiomatic CDK `soundsLike` to the wire's `sounds_like`.
-3. **Enum and enum-like types** for closed-value fields: `SubtitlingLanguage`, `DictionaryLanguage`,
-   `ProfanityFilter`, and `AspectRatio` (preset instances).
+3. **Enum-like classes** for closed-value fields: `SubtitlingLanguage`, `DictionaryLanguage`,
+   `ProfanityFilter`, and `AspectRatio` (preset instances), each with a `static of(...)` escape hatch for
+   custom values the service may add.
 4. **Synth-time validation** for the documented constraints (non-blank entry content, non-blank `soundsLike`
    hints, ≤40 KB serialized payload, dictionary name pattern/length).
 5. **Resource interfaces, import factories, and refs** (`IFeed`/`fromFeedArn`,
@@ -312,8 +314,8 @@ No — an L2 doesn't exist today. This is a new alpha module.
   cohesive.
 - **A raw `string` `entries` property** matching the L1. Rejected: it exposes the raw JSON issue that the L2
   should remove. Structured `DictionaryEntry[]` is the right implementation.
-- **One shared `Language` enum** across feeds and dictionaries. Rejected: subtitling supports 9 values
-  (including `eng-au`/`eng-gb`/`eng-us`) while dictionaries support only the 6 base codes — a shared enum would
+- **One shared `Language` class** across feeds and dictionaries. Rejected: subtitling supports 9 values
+  (including `eng-au`/`eng-gb`/`eng-us`) while dictionaries support only the 6 base codes — a shared class would
   let an invalid value compile and fail at deploy.
 
 ### What are the drawbacks of this solution?
@@ -356,11 +358,11 @@ the API to match CDK conventions; the wire detail is hidden.
 The L1 takes raw `{ width, height }` integers, but subtitling rendering supports only 16:9 and 9:16 in
 practice. `AspectRatio.LANDSCAPE_16_9` / `PORTRAIT_9_16` presets guide users to the valid options.
 
-### 4. Two language enums, not one
+### 4. Two language classes, not one
 
 `SubtitlingLanguage` (9 values, including regional English variants) and `DictionaryLanguage` (6 base codes)
-have different allowed sets per the service. Separate enums mean each surface offers only its valid values at
-compile time; a shared enum would surface invalid combinations.
+have different allowed sets per the service. Separate classes mean each surface offers only its valid values at
+compile time; a shared class would surface invalid combinations.
 
 ### 5. Feed output naming — explicit and required
 
@@ -396,6 +398,12 @@ helper sets the recommended default statistic and routes through `metric()`, whi
 the `{ Feed: feedId }` dimension; callers can override the statistic, period, or add the secondary `StatusCode`
 dimension via `props`. The metrics live on a shared base so both created and imported feeds expose them.
 `Dictionary` publishes no metrics, so it has no metrics surface.
+
+### 8. `removalPolicy` on `Feed` and `Dictionary`
+
+Both resources default to `RemovalPolicy.RETAIN`, matching the AWS Elemental MediaLive L2 convention.
+Adding `removalPolicy` later is non-breaking, but defaulting to RETAIN from day one avoids
+surprise loss.
 
 ## Appendix — API Surface
 
@@ -445,6 +453,7 @@ class Dictionary extends Resource implements IDictionary {
 interface FeedProps {
   readonly outputs: FeedOutput[];
   /** @default - autogenerated */ readonly feedName?: string;
+  /** @default RemovalPolicy.RETAIN */ readonly removalPolicy?: RemovalPolicy;
   /** @default - no tags */ readonly tags?: Record<string, string>;
 }
 
@@ -475,6 +484,7 @@ interface DictionaryProps {
   readonly language: DictionaryLanguage;
   /** @default - autogenerated */ readonly dictionaryName?: string;
   /** @default - no entries */ readonly entries?: DictionaryEntry[];
+  /** @default RemovalPolicy.RETAIN */ readonly removalPolicy?: RemovalPolicy;
   /** @default - no tags */ readonly tags?: Record<string, string>;
 }
 
@@ -488,9 +498,35 @@ class AspectRatio {
   static readonly PORTRAIT_9_16: AspectRatio;
 }
 
-enum SubtitlingLanguage { /* eng, eng-au, eng-gb, eng-us, fra, ita, deu, spa, por */ }
-enum DictionaryLanguage { /* eng, fra, ita, deu, spa, por */ }
-enum ProfanityFilter { DISABLED, CENSOR, DROP }
+class SubtitlingLanguage {
+  static readonly ENGLISH: SubtitlingLanguage;       // 'eng'
+  static readonly ENGLISH_AU: SubtitlingLanguage;    // 'eng-au'
+  static readonly ENGLISH_GB: SubtitlingLanguage;    // 'eng-gb'
+  static readonly ENGLISH_US: SubtitlingLanguage;    // 'eng-us'
+  static readonly FRENCH: SubtitlingLanguage;        // 'fra'
+  static readonly ITALIAN: SubtitlingLanguage;       // 'ita'
+  static readonly GERMAN: SubtitlingLanguage;        // 'deu'
+  static readonly SPANISH: SubtitlingLanguage;       // 'spa'
+  static readonly PORTUGUESE: SubtitlingLanguage;    // 'por'
+  static of(code: string): SubtitlingLanguage;
+}
+
+class DictionaryLanguage {
+  static readonly ENGLISH: DictionaryLanguage;       // 'eng'
+  static readonly FRENCH: DictionaryLanguage;        // 'fra'
+  static readonly ITALIAN: DictionaryLanguage;       // 'ita'
+  static readonly GERMAN: DictionaryLanguage;        // 'deu'
+  static readonly SPANISH: DictionaryLanguage;       // 'spa'
+  static readonly PORTUGUESE: DictionaryLanguage;    // 'por'
+  static of(code: string): DictionaryLanguage;
+}
+
+class ProfanityFilter {
+  static readonly DISABLED: ProfanityFilter;
+  static readonly CENSOR: ProfanityFilter;
+  static readonly DROP: ProfanityFilter;
+  static of(value: string): ProfanityFilter;
+}
 ```
 
 | Resource | Outputs / key types |
