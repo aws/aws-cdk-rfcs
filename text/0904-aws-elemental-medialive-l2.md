@@ -684,8 +684,6 @@ Property interface for Channel (key props):
 interface ChannelProps {
   /** @default - auto-generated */
   readonly channelName?: string;
-  /** @default RemovalPolicy.RETAIN */
-  readonly removalPolicy?: RemovalPolicy;
   /** @default ChannelClass.SINGLE_PIPELINE */
   readonly channelClass?: ChannelClass;
   /** @default - auto-created with medialive.amazonaws.com trust */
@@ -1547,8 +1545,6 @@ Property interface:
 interface ClusterProps {
   /** @default - auto-generated */
   readonly clusterName?: string;
-  /** @default RemovalPolicy.RETAIN */
-  readonly removalPolicy?: RemovalPolicy;
   /** @default - no cluster type */
   readonly clusterType?: ClusterType;
   /** The IAM role for nodes in the cluster. */
@@ -1856,12 +1852,10 @@ rather than silently monitoring one pipeline of a redundant pair.
 via `props.dimensionsMap`). MediaLive does not publish a separate `Input`-dimensioned namespace, so "input health" and "output health" are both
 observed through the channel. `Input` therefore intentionally does not expose `metric()` — there is no resource-scoped metric for it to return.
 
-#### 10. `removalPolicy` on `Channel` and `Cluster`
+#### 10. No `removalPolicy`
 
-Recreating these changes their ARN/ID, breaking anything outside the stack that points at them — a MediaPackage/CloudFront reference, or a
-`Cluster`'s registered on-prem nodes — and can disrupt a live broadcast. Following the `aws-mediapackagev2-alpha` `Channel` precedent, each exposes
-`removalPolicy`, defaulting to `RemovalPolicy.RETAIN`. `Network`, `Input`, and the other lighter resources don't need this protection and are
-omitted; adding it later is non-breaking.
+MediaLive resources (`Channel`, `Cluster`, `Input`, etc.) are stateless configuration — no data at rest. The CDK Design Guidelines reserve
+`removalPolicy` for stateful resources where deletion means data loss. None of these qualify; adding it later is non-breaking if the need arises.
 
 #### 11. `ChannelGrants` — starting, stopping, and scheduling a channel
 
