@@ -58,11 +58,17 @@ This renders a `Metadata.Context` block on the `AWS::SQS::Queue` resource:
   "Metadata": {
     "Context": {
       "why": "buffer order events async; 14d retention = compliance window",
-      "must": ["VisTimeout >= 6x fn timeout, else dup on retry"],
+      "must": [
+        "VisTimeout >= 6x fn timeout, else dup on retry"
+      ],
       "mutable": "change-with-constraints",
-      "mutability": { "QueueName": "must-never-change" },
+      "mutability": {
+        "QueueName": "must-never-change"
+      },
       "ops": "check ApproxAgeOfOldestMsg before cutting VisTimeout",
-      "failureModes": ["retry 3x w/ exp backoff before DLQ"]
+      "failureModes": [
+        "retry 3x w/ exp backoff before DLQ"
+      ]
     }
   }
 }
@@ -112,9 +118,10 @@ MetadataContext.of(stack).add({
 ```
 
 Record where context came from and how much to trust it with the `trust`
-field - useful when context is produced by tooling rather than authored by
-the resource owner. When omitted, `source` defaults to `AUTHORED` and
-`confidence` to `MEDIUM`:
+field. `AUTHORED` means the context was explicitly declared through this API;
+it does not assert that a human wrote it. Producers that infer context from
+comments, commits, or other artifacts set the corresponding source instead.
+When omitted, `source` defaults to `AUTHORED` and `confidence` to `MEDIUM`:
 
 ```ts
 declare const queue: sqs.Queue;
@@ -180,6 +187,13 @@ Keep free-text values terse - drop articles and use symbols (`->`, `>=`,
 template size limit. Prefer `must` for binding rules whose violation breaks
 something, and `why` for reasoning and rejected alternatives.
 
+CDK already serializes the complete template during synthesis and emits a
+warning above 80% of its conservative 1,000,000-character threshold;
+`Metadata.Context` is included in that measurement. This RFC adds no
+context-specific size validator and never silently trims declared context. The
+existing warning remains the synth-time signal; authoring tools may respond
+using the v1 tier/drop order described in appendix A.
+
 ---
 
 Ticking the box below indicates that the public API of this RFC has been
@@ -241,17 +255,25 @@ Concrete situations this feature addresses:
   one.
 * **Organizational context at scale** - template-level `ref` entries point to shared
   context files (e.g. org-wide encryption rules) without repeating them in every
-  template, and `trust` distinguishes human-authored context from tool-inferred context
+  template, and `trust` distinguishes explicitly declared context from inferred context
   so consumers can weight it appropriately.
 
-These are not just expectations. We benchmarked the alternatives against each other - no
-embedded context, context as source comments, and structured `Metadata.Context` - on the
-same CloudFormation update tasks. Structured context consistently produced the best
-outcomes, and it is the only one of those approaches that survives synthesis and is
-retrievable from a deployed stack.
+These are not just expectations. We evaluated the alternatives on the same
+CloudFormation update tasks. The results showed that supplying design context improved
+outcomes, structured `Metadata.Context` made that context durable and machine-addressable,
+and context-aware tooling used the structured fields most effectively. Structured metadata
+is the tested form designed to survive CDK synthesis and remain structurally retrievable
+from a deployed stack.
+
+Brownfield adoption does not require manually seeding every resource. A companion
+bootstrapping skill is being developed to read existing CDK/CloudFormation source,
+comments, git history, tests, and companion service code, then propose explicit
+`MetadataContext` declarations (or `Metadata.Context` blocks for raw templates) with
+provenance and declared gaps. This subsidizes discovery and authoring effort, while
+keeping heuristic inference and its review outside the core API contract.
 
 If you already maintain design context in READMEs or wikis, this feature does not replace
-them - it puts the *operationally binding* subset where every consumer of the deployed
+them - it puts the *operationally relevant* subset where every consumer of the deployed
 stack can actually find it.
 
 ## Internal FAQ
@@ -274,20 +296,20 @@ never made it into the template. The failure is not that the agent is careless -
 that the artifact it reads does not contain the constraint it needs to respect.
 
 **We benchmarked that claim rather than assuming it.** Before settling the API we compared
-four ways of carrying design context on the same CloudFormation update tasks: no embedded
-context, context as source-file comments, structured `Metadata.Context`, and structured
-context read by tooling that understands the vocabulary. Context-free templates fared worst
-on the tasks whose correct answer depended on knowledge the template did not contain;
-structured context produced the largest improvement; context-aware tooling improved on that
-again. Appendix B has the comparison.
+four conditions on the same CloudFormation update tasks: no embedded context, context as
+natural inline YAML comments, structured `Metadata.Context`, and structured context read
+by tooling that understands the vocabulary. Context-free templates fared worst on the
+tasks whose correct answer depended on knowledge the template did not contain; structured
+context produced the largest improvement; context-aware tooling improved on that again.
+Appendix B has the comparison.
 
-The benchmark also settled the obvious objection, which is that this is what comments are
-for. Comments did score well - where they exist. But they are unavailable to CDK users:
-synthesized JSON carries no comments, and no comment in CDK source survives to the
-template. They are equally unavailable to *any* consumer retrieving a deployed template
-through `GetTemplate`, regardless of how it was authored. Structured metadata is the only
-form of this that survives synthesis and deployment, which is what makes it the right
-target for CDK.
+The benchmark also tested the obvious objection, which is that this is what comments are
+for. Comments scored well where they were present in the input. But CDK synthesis does not
+preserve source comments by contract: synthesized JSON carries no comments unless a
+separate mechanism translates them into template data. Consumers retrieving a deployed
+template through `GetTemplate` therefore cannot rely on CDK source comments. Structured
+metadata is the durable carrier; automatic comment translation remains a compatible but
+heuristic producer alternative described below.
 
 **CDK is uniquely positioned to populate it.** CDK users do not author the template — they
 author constructs, and the template is generated. So the authoring surface has to exist in
@@ -406,13 +428,13 @@ no special-casing required.
 
 #### What is explicitly out of scope for this RFC
 
-This RFC covers **explicit authoring only**: context that a developer states in CDK code.
-Automatically deriving context from other sources — inferring `why` from code, or
-populating `deps` by analysing the resolved template — is not part of this API commitment.
-Any such mechanism is heuristic, and an API contract should not rest on a heuristic. If
-derivation is added later it layers on top of this declaration model without changing it,
-and the `trust` field already exists so derived context can identify itself as such
-(`src: infer`) rather than masquerading as authored.
+This RFC covers **explicit declarations only**: context supplied through the CDK API.
+During synthesis the library does not inspect source comments, git history, tests, service
+code, or deployed state. Automatically deriving `why` or resolving `deps` remains outside
+this API commitment because those mechanisms are heuristic or require a later synthesis
+phase. The companion brownfield bootstrapping skill can layer on top by emitting calls to
+this API, with `trust` and `gaps` identifying evidence and uncertainty, without changing
+the declaration or wire-format contract.
 
 ### Is this a breaking change?
 
@@ -437,32 +459,45 @@ No. The feature is purely additive and opt-in:
    for free via jsii), and integration (the `Mixins` form, `AspectPriority` defaults, and
    eventual L2 integration points all live in core). The external path remains open to
    anyone — the API proposed here does not preclude it.
-2. **Reusing existing `Description` properties.** Many L2s expose `description` props
+2. **Automatic propagation of leading source comments.** A prototype Aspect follows a
+   resource's creation stack to its source location, reads the leading comment, applies an
+   anti-fabrication gate, and writes an attributed `Metadata.Context.why` during synthesis.
+   This can reduce authoring effort for well-commented CDK code, and a compile-time
+   transformer could avoid runtime stack inspection. It is deferred as the v1 core model:
+   compiled projects need source-map handling; comment syntax and
+   quality vary across jsii languages; and weak/circular/boilerplate comments require
+   heuristic rejection. A transformer also adds build integration and is language-specific.
+   This remains a compatible producer: once reliable, it can feed derived values through
+   `MetadataContext` or directly produce the same wire shape, while the deterministic API
+   remains the persistence target.
+3. **Reusing existing `Description` properties.** Many L2s expose `description` props
    that render as first-class resource properties. These are complementary, not
    sufficient: only some resource types have them, they conflate "what it does" with
    "why it exists", and they cannot carry structure (invariants, per-property
    change-safety, provenance). The vocabulary's anti-field rules direct consumers to read
    `Description` properties in place rather than duplicating them into context.
-3. **Tags.** Tags reach the deployed resources (not just the template) but are
+4. **Tags.** Tags reach the deployed resources (not just the template) but are
    key-value-flat, tightly length-limited, count-limited, and propagate to billing and
    IAM surfaces where design prose does not belong.
-4. **Cloud-assembly metadata (out-of-band) instead of template metadata.** Writing
+5. **Cloud-assembly metadata (out-of-band) instead of template metadata.** Writing
    context into `manifest.json`/`tree.json` keeps templates untouched, but the cloud
    assembly does not travel with the deployed stack - the consumers this feature targets
    (console users, agents calling `GetTemplate` on a live stack) never see it.
-5. **A new top-level template section or CloudFormation service feature.** Strictly more
+6. **A new top-level template section or CloudFormation service feature.** Strictly more
    powerful (server-side validation, dedicated retrieval APIs) and strictly slower. `Metadata` is
    the extension point CloudFormation already provides, and it requires no service
    change to adopt (appendix C).
 
 ### What are the drawbacks of this solution?
 
-* **Template size pressure.** Context counts against the 1 MB template limit. Mitigated
-  by the terse-shorthand convention, sparse `mutability` overrides, the hoist rule
-  (cross-cutting context stated once at template level), and `ref` externalization - but
-  pathological over-annotation is possible. The vocabulary spec includes a documented
-  drop order (shed `trust`/`ops`/`failureModes` first, never drop `must`) for tooling
-  that trims under pressure.
+* **Template size pressure.** Context counts against the 1 MB template limit. CDK's
+  existing synth-time warning measures the complete serialized template, including
+  context, above 80% of its conservative 1,000,000-character threshold. This RFC does not
+  add a second limit or silently discard user declarations. Terse values, sparse
+  `mutability`, hoisting, and `ref` externalization reduce pressure; authoring tools may
+  apply the documented drop order (`trust` then `ops`, `failureModes`, `gaps`, `deps`, and
+  lower-value mutability/why detail), but never drop safety-critical `must` entries or an
+  externalization `ref`.
 * **Drift risk.** Context that is not maintained alongside the resources it describes can
   mislead. Partially mitigated by co-location in reviewed CDK source and by `trust`
   provenance; not eliminable.
@@ -510,33 +545,39 @@ because emitting no context is the default and existing synthesized output is un
 
 Resource-level (`Resources.<LogicalId>.Metadata.Context`):
 
-| Field | Type | Meaning |
-| ------- | ------ | --------- |
-| `why` | string | Rationale - purpose, notable config choices, rejected alternatives. Non-binding. |
-| `must` | string[] | Hard invariants; violating any entry breaks something (data loss, outage, security, corruption, coupling). |
-| `mutable` | enum | Resource-default change-safety: `must-never-change` \| `change-with-constraints` \| `review-required` \| `free-to-tune`. |
-| `mutability` | map\<property, enum\> | Sparse per-property overrides; only properties deviating from the default or high-stakes. |
-| `trust` | object | Provenance: `src` (`authored`\|`comment`\|`commit`\|`infer`), `conf` (`high`\|`medium`\|`low`), optional `cite`, `note`. |
-| `ops` | string | What to check before modifying this resource. |
-| `gaps` | string[] | Declared unknowns - honest beats fabricated. |
-| `deps` | string[] | Cross-stack/cross-resource producer dependencies. |
-| `failureModes` | string[] | Failure/recovery paths (retries, timeouts, DLQs, circuit breakers). |
+| Field          | Type                  | Meaning                                                                                                                  |
+|----------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `why`          | string                | Rationale - purpose, notable config choices, rejected alternatives. Non-binding.                                         |
+| `must`         | string[]              | Hard invariants; violating any entry breaks something (data loss, outage, security, corruption, coupling).               |
+| `mutable`      | enum                  | Resource-default change-safety: `must-never-change` \| `change-with-constraints` \| `review-required` \| `free-to-tune`. |
+| `mutability`   | map\<property, enum\> | Sparse per-property overrides; only properties deviating from the default or high-stakes.                                |
+| `trust`        | object                | Provenance: `src` (`authored`\|`comment`\|`commit`\|`infer`), `conf` (`high`\|`medium`\|`low`), optional `cite`, `note`. |
+| `ops`          | string                | What to check before modifying this resource.                                                                            |
+| `gaps`         | string[]              | Declared unknowns - honest beats fabricated.                                                                             |
+| `deps`         | string[]              | Cross-stack/cross-resource producer dependencies.                                                                        |
+| `failureModes` | string[]              | Failure/recovery paths (retries, timeouts, DLQs, circuit breakers).                                                      |
+
+`authored` means explicitly declared through the API; it does not imply that a human was
+the producer. A producer deriving context from comments, commits, or code structure must
+select `comment`, `commit`, or `infer` and set confidence accordingly.
 
 Template-level (top-level `Metadata.Context`):
 
-| Field | Type | Meaning |
-| ------- | ------ | --------- |
-| `arch` | string | High-level shape/pattern of the system. |
-| `must` | string[] | Cross-cutting invariants stated once (DRY). |
-| `ref` | (string \| object)[] | Pointers to external shared/overflow context: `at` (URI), optional `has` (hint), `scope`. |
-| `owner` | string | Owner/contact, if not already a tag. |
+| Field   | Type                 | Meaning                                                                                   |
+|---------|----------------------|-------------------------------------------------------------------------------------------|
+| `arch`  | string               | High-level shape/pattern of the system.                                                   |
+| `must`  | string[]             | Cross-cutting invariants stated once (DRY).                                               |
+| `ref`   | (string \| object)[] | Pointers to external shared/overflow context: `at` (URI), optional `has` (hint), `scope`. |
+| `owner` | string               | Owner/contact, if not already a tag.                                                      |
 
 Conventions carried by the companion specification: free-text values use terse
 telegraphic shorthand; the hoist rule moves context repeated on more than ~3 resources up
 to template level; anti-field rules forbid restating anything the template already
 expresses (`Type`, logical IDs, property values, `Description` properties, `aws:cdk:path`);
-a tiered drop order governs trimming near the 1 MB limit (shed `trust`, `ops`,
-`failureModes`, `gaps`, `deps` first; `must` and template `ref` are never dropped).
+a tiered drop order guides authoring tools near the 1 MB limit (shed `trust`, `ops`,
+`failureModes`, `gaps`, `deps`, then low-value `mutability`/`why` detail; `must` and an
+externalization `ref` are never dropped). CDK warns on the whole serialized template but
+does not automatically apply this drop order.
 
 ### Appendix B - Benchmark and implementation evidence
 
@@ -549,21 +590,22 @@ precedence, targeting options, nested-stack cascade, mixin precedence and valida
 errors; snapshot-verified integration tests cover both the aspect and mixin paths.
 
 **Benchmark.** The motivating claim - that embedded context changes what a template
-consumer actually does - was benchmarked rather than asserted.
-Four approaches to carrying design context were compared on the same CloudFormation update
-tasks:
+consumer actually does - was benchmarked rather than assumed under these conditions:
 
 1. **No embedded context** — the control: the template states what exists, nothing more.
-2. **Context as source-file comments** — the strongest non-structured baseline.
-3. **Structured `Metadata.Context`** — the approach this RFC proposes.
+2. **Natural inline YAML comments** — the strongest unstructured raw-template baseline.
+3. **Structured `Metadata.Context`** — the approach this RFC proposes, consumed without
+   context-specific instructions.
 4. **Structured `Metadata.Context` plus context-aware tooling** — consumers that understand
    the vocabulary rather than merely reading it as text.
 
-The control performed worst, and by the widest margin on exactly the tasks whose correct
-answer depended on knowledge absent from the template. Structured context produced the
-largest single improvement over it; context-aware tooling improved on that again. Comments
-scored well, but only in the one place they exist — the source file — which is why they are
-not a viable answer for CDK or for anything reading a deployed template.
+The comparison showed that context-free templates performed worst, especially on tasks
+whose correct answer depended on absent knowledge. Comments showed that context itself
+provides most of the improvement, while the structured form made that context durable and
+machine-addressable and vocabulary-aware tooling added a further benefit. Comments alone
+remain source-local for CDK because synthesis does not preserve them by default; the
+automatic-propagation alternative would translate them into `Metadata.Context`, which
+remains the deployed carrier.
 
 **What the benchmark taught us about the design.** Three findings shaped this proposal:
 
