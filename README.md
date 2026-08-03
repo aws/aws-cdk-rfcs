@@ -22,7 +22,7 @@ future state of the libraries and to discover projects for contribution.
 <!--BEGIN_TABLE-->
 \#|Title|Owner|Status
 ---|-----|-----|------
-[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||❓unknown
+[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0929-s3files-l2-constructs.md)||❓unknown
 [670](https://github.com/aws/aws-cdk-rfcs/issues/670)|[AWS CloudWatch Application Signals L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0670-aws-applicationsignals-enablement-l2.md)||👷 implementing
 [673](https://github.com/aws/aws-cdk-rfcs/issues/673)|[AWS CloudWatch Application Signals L2 Constructs for SLO](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0673-aws-applicationsignals-slo-l2.md)||👷 implementing
 [789](https://github.com/aws/aws-cdk-rfcs/issues/789)|[EC2 Image Builder L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0789-bedrock-agentcore-gateway-l2.md)||👷 implementing

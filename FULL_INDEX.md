@@ -216,7 +216,7 @@
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||✅ done
 [926](https://github.com/aws/aws-cdk-rfcs/issues/926)|[Lambda-based dependency resolver\installer](https://github.com/aws/aws-cdk-rfcs/issues/926)||💡 proposed
-[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/929)||❓unknown
+[929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0929-s3files-l2-constructs.md)||❓unknown
 [935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/issues/943)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
