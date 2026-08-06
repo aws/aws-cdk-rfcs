@@ -139,9 +139,16 @@ Foundation has been suggested as a natural home for languages with a sustainable
 paved road* above. A new runtime starts with the full conformance suite failing and works it
 down to zero; the claim it earns at the end is the same one the in-tree languages make.
 
-**What may the generated packages be called?** Open question for this RFC — names like
-`aws-cdk-lib` in other package ecosystems carry AWS's brand, and whether community publications
-may use them (vs. e.g. OCF-branded names) needs an explicit AWS position.
+**What may the generated packages be called?** Proposed rule: community publications to shared
+registries use a **`community-` prefix** on any AWS-branded name — `community-aws-cdk-lib`,
+`community-constructs` on RubyGems, and the analogue in other ecosystems. This makes provenance
+unambiguous at a glance, reserves the canonical names for AWS (including the option of granting
+one to a plugin language later, as a graduation), and — because it is a general rule rather than
+a per-name judgment — no plugin language ever needs a naming negotiation with AWS. The prefix
+applies to *distribution* names only; in-code namespaces (`AWSCDK::S3` and friends) are
+unaffected, keeping examples and documentation clean. Self-hosted feeds, where the consumer
+explicitly opts into the source, may mirror the same names for consistency. (Pending AWS
+confirmation.)
 
 ## Internal FAQ
 
@@ -184,5 +191,6 @@ ask for.
   `BuilderFactory` escape hatch — or builder-level only?
 - Version-hook shape: what exactly moves from `version-utils` into the contract?
 - Conformance kit packaging: npm package? repo? who cuts its releases?
-- Naming/branding position for generated packages (see Public FAQ).
+- Naming/branding: `community-` prefix proposed (see Public FAQ) — needs AWS confirmation, and
+  the hosting organization may prefer its own prefix (e.g. `ocf-`).
 - Experimental→stable graduation criteria for the plugin API.
