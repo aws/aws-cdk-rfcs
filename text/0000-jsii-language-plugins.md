@@ -46,7 +46,28 @@ completeness, not a research project), a naming-overlay template, CI, and a self
 pipeline template. The maintainer's job becomes filling in language semantics, not discovering
 the architecture.
 
-## What we are proposing — three deliverables, smallest first
+## What we are proposing — four deliverables, smallest first
+
+### D0. jsii-compiler: open the `targets` namespace *(~5 lines)*
+
+Since [jsii-compiler#2415](https://github.com/aws/jsii-compiler/pull/2415) (Nov 2025),
+`validateTargets` hard-rejects any `jsii.targets` language outside the built-in whitelist
+(`Unknown target language: ruby`) — at both the assembly level (package.json) and the submodule
+level (every `.jsiirc.json` flows through the same function). That check exists to catch typos,
+and should keep doing so for built-in languages; for unknown languages it currently makes
+in-band plugin config impossible.
+
+Proposed change: unknown languages **warn and pass through** instead of throwing (retaining the
+object-shape check). Built-in validation is untouched; a typo like `pyhton` still surfaces —
+as a warning naming the unknown language — while `targets.ruby` reaches the assembly for
+plugin tooling to consume and validate against its own schema (validation belongs at generation
+time, in the plugin that owns the schema, not in a compiler that cannot know it).
+
+*Alternative considered:* zero compiler changes at all, with plugin naming carried exclusively
+by the D1 `--target-config` overlay (plus convention-based derivation for unconfigured
+libraries). Viable, but it forbids third-party construct libraries from ever self-describing
+for plugin languages in-band, which every built-in target can do. The ~5-line warn-and-pass is
+the better trade; the overlay remains for libraries that predate a plugin or never heard of it.
 
 ### D1. pacmak: external target plugins *(the enabling seam)*
 
@@ -117,9 +138,10 @@ AWS's surface.
 
 ### Explicit non-changes
 
-- **jsii-compiler: zero changes.** `targets` already types unknown languages as pass-through
-  (`[otherLanguage: string]: unknown`) — community naming config flows into assemblies today.
-- **The `.jsii` assembly format and kernel protocol: unchanged.**
+- **The `.jsii` assembly format and kernel protocol: unchanged.** (D0 relaxes what the compiler
+  *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
+- **Validation of built-in languages: unchanged** — the typo-catching from jsii-compiler#2415
+  is preserved.
 - **AWS repos gain no language code, no CI matrix rows, no release-train steps.**
 
 ## Public FAQ
@@ -176,13 +198,14 @@ ask for.
 
 **What is the high-level project plan?**
 1. This RFC (co-developed with the jsii maintainers).
-2. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
-3. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
-4. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
-5. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
+2. D0 PR to `jsii-compiler` — warn-and-pass for unknown target languages (~5 lines + tests).
+3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
+4. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
+5. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
+6. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
    Ruby plugin doubles as its living reference).
-6. D3 (phase 2): rosetta registry; re-home the Ruby visitor.
-7. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
+7. D3 (phase 2): rosetta registry; re-home the Ruby visitor.
+8. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
    jsii-rosetta#3710) with pointers here.
 
 **Open questions to settle in co-development**
