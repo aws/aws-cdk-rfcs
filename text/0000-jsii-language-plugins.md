@@ -33,6 +33,19 @@ never waits for it. The community runtime proves itself by publishing a passing 
 **jsii conformance kit** — the same compliance suite that gates the in-tree languages, packaged
 to run against any external runtime.
 
+And a *new* language starts from a paved road rather than a blank page:
+
+```sh
+npx create-jsii-language crystal
+```
+
+scaffolds the whole shape of a language target — the pacmak plugin package with a skeleton
+`Target`, the guest-runtime skeleton with the kernel protocol stubbed out, the conformance kit
+pre-wired so the new runtime begins life with the full suite failing (a progress bar to
+completeness, not a research project), a naming-overlay template, CI, and a self-publish
+pipeline template. The maintainer's job becomes filling in language semantics, not discovering
+the architecture.
+
 ## What we are proposing — three deliverables, smallest first
 
 ### D1. pacmak: external target plugins *(the enabling seam)*
@@ -80,6 +93,28 @@ examples in the docs. Phase 2 opens rosetta's `TARGET_LANGUAGES` map the same wa
 (values are already plain strings; tablets are string-keyed), with the visitor interface offered
 at the same experimental tier. Deliberately deferred so D1 stays reviewable in an afternoon.
 
+### The paved road: a language scaffold *(community deliverable — not an AWS commitment)*
+
+A plugin system with one plugin is a bespoke arrangement; the scaffold is what makes it a
+system. `create-jsii-language` (a template repo plus a thin initializer) generates, for a named
+language:
+
+| Scaffold artifact | Sourced from (Ruby reference) |
+| --- | --- |
+| pacmak plugin package: `Target` skeleton, version hooks, naming utils, snapshot-test harness against the `jsii-calc` fixtures | the ~2,300-line Ruby target and its snapshot suite |
+| guest-runtime skeleton: kernel process management, the wire verbs stubbed, serialization/callback/override module layout, error taxonomy | the runtime gem's `kernel` / `serializer` / `callbacks` / `registry` structure — identical shape in every existing guest language |
+| conformance kit wired to run against the skeleton, all cases initially failing | the compliance suite; "make the suite pass" was empirically how the Ruby runtime was built and validated |
+| naming-overlay template + documented format | the maintained overlay for `aws-cdk-lib`'s 613 submodules |
+| CI + self-publish pipeline templates (generate bindings from an assembly, publish to a community feed, smoke-test the published artifact by synthesizing a real stack) | the operating Ruby publish pipeline |
+| decision checklist docs: member casing, reserved words, module mapping, version-scheme mapping, callback ergonomics | the recorded Ruby design decisions |
+
+Honest scoping: the scaffold cannot generate the hard part — a serializer and callback machinery
+that are *correct* in the target language. What it generates is the proven structure, the
+protocol contract expressed as failing conformance tests, and a working reference to crib from.
+That is the difference between a multi-month solo research project and a tractable engineering
+task with a progress bar. It is community-maintained (a natural OCF asset) and adds nothing to
+AWS's surface.
+
 ### Explicit non-changes
 
 - **jsii-compiler: zero changes.** `targets` already types unknown languages as pass-through
@@ -99,6 +134,10 @@ most community bindings can make today.
 
 **Where do plugin languages live?** Wherever their maintainers choose. The Open Constructs
 Foundation has been suggested as a natural home for languages with a sustainable maintainer team.
+
+**How would a brand-new language get started?** `npx create-jsii-language <name>` — see *The
+paved road* above. A new runtime starts with the full conformance suite failing and works it
+down to zero; the claim it earns at the end is the same one the in-tree languages make.
 
 **What may the generated packages be called?** Open question for this RFC — names like
 `aws-cdk-lib` in other package ecosystems carry AWS's brand, and whether community publications
@@ -133,8 +172,10 @@ ask for.
 2. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
 3. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
 4. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
-5. D3 (phase 2): rosetta registry; re-home the Ruby visitor.
-6. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
+5. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
+   Ruby plugin doubles as its living reference).
+6. D3 (phase 2): rosetta registry; re-home the Ruby visitor.
+7. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
    jsii-rosetta#3710) with pointers here.
 
 **Open questions to settle in co-development**
