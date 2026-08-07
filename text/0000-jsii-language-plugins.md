@@ -1,19 +1,31 @@
 # A lightweight plugin system for jsii language targets
 
-> DRAFT for co-development — offered by @mrgrain in
-> [aws/aws-cdk-rfcs#935](https://github.com/aws/aws-cdk-rfcs/issues/935#issuecomment) ("let's work on an
-> RFC for a lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
-> generated language bindings"). Tracking issue and RFC number TBD.
+* **Original Author(s):**: @omarqureshi
+* **Tracking Issue**: TBD *(successor to [#935](https://github.com/aws/aws-cdk-rfcs/issues/935);
+  co-development offered by @mrgrain in its closing discussion: "let's work on an RFC for a
+  lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
+  generated language bindings")*
+* **API Bar Raiser**: @{BAR_RAISER_USER}
+
+This RFC proposes the smallest set of seams in the jsii toolchain that let a community build,
+publish and self-host a language target **out of tree** — with no AWS release-train coupling and
+no AWS support obligation.
+
+## The Problem
 
 The AWS CDK team does not plan to support additional jsii languages in-tree: usage outside
 TypeScript and Python is marginal, and the Go experience showed that every in-tree language
 target carries a permanent maintenance tail — including forced breaking changes — regardless of
-adoption. At the same time, working community implementations exist (Ruby passes the full jsii
-compliance suite and deploys production workloads today). This RFC proposes the *smallest set of
-seams* that let a community build, publish and self-host a language target **out of tree**, with
-no AWS release-train coupling and no AWS support obligation.
+adoption. That policy decision closed RFC #935 (Ruby language bindings).
 
-## Working Backwards
+At the same time, working community implementations exist: the Ruby bindings pass the full jsii
+compliance suite and deploy production workloads today. The *only* thing forcing such an
+implementation to live in forks is that the toolchain's language registries are closed — the
+Ruby fork's entire delta over upstream is registry entries and version pins. Without sanctioned
+seams, every community language pays a permanent fork tax (rebases, patch-pins, drift), and AWS
+gets support ambiguity instead of a clean boundary.
+
+## Proposed Developer Experience
 
 A community language maintainer publishes two artifacts, entirely under their own governance:
 
@@ -33,7 +45,83 @@ never waits for it. The community runtime proves itself by publishing a passing 
 **jsii conformance kit** — the same compliance suite that gates the in-tree languages, packaged
 to run against any external runtime.
 
-And a *new* language starts from a paved road rather than a blank page:
+## System Impact
+
+The deliverables are deliberately shaped as *openings of existing seams*, not new machinery
+(the full design is in the [Appendix](#appendix-the-deliverables-in-detail)):
+
+- **The `.jsii` assembly format and kernel protocol: unchanged.** (D0 relaxes what the compiler
+  *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
+- **Validation of built-in languages: unchanged** — the typo-catching from jsii-compiler#2415
+  is preserved.
+- **AWS repos gain no language code, no CI matrix rows, no release-train steps.** Stronger:
+  no language-specific content of any kind lands in an AWS repository — the D0/D1/D3 diffs
+  contain zero occurrences of any plugin language's name, verifiable by grep. Even the act of
+  registering a language happens inside the plugin package at load time.
+- **The support boundary is explicit.** The plugin API surface is published as an explicitly
+  versioned, initially **experimental** API; pacmak declares its plugin-API version, plugins
+  declare a compatible range, and mismatches fail loudly at load time. No guarantee is made
+  beyond that during the experimental period.
+
+## Implementation Status (evidence)
+
+Every deliverable exists as a working branch, validated against current upstream `main`:
+
+- **D0** (`jsii-compiler`): warn-and-pass for unknown target languages, ~5 lines plus tests;
+  the full project-info suite passes.
+- **D1** (`jsii`): `--plugin` loading, registry, and CLI integration; a demo plugin round-trips
+  end-to-end, the full pacmak suite passes, and all built-in-target snapshots (1,944 files)
+  are byte-identical — the built-ins provably do not change.
+- **D3** (`jsii-rosetta`): the external language registry; the full rosetta suite passes. The
+  translations corpus and its fixtures now ship in the package behind a `lib/testing` harness,
+  and rosetta's own translation tests consume that same exported API — so the shipped corpus
+  cannot drift from what upstream tests.
+- **Reference plugin** (`jsii-target-ruby`): the extracted Ruby target generates the `jsii-calc`
+  fixture closure through **stock pacmak** via `--plugin`; every generated file passes `ruby -c`;
+  a complete `.gem` builds with the embedded assembly; the repo self-hosts the runtime gem and
+  the full jsii compliance suite (full pass, via the published `@jsii/runtime`); and it consumes
+  the rosetta corpus by contributing only `.rb` expectation files.
+- **Operational proof**: generated `aws-cdk-lib` bindings are self-hosted on a public gem feed
+  with rendered API docs, and production workloads (a Rails application on Lambda) deploy
+  through them today — the publish pipeline has been performing the "out-of-tree language
+  target" role for weeks, via forks and patch-pins that this RFC's seams eliminate.
+
+### Upstreaming sequence
+
+1. This RFC (co-developed with the jsii maintainers).
+2. D0 PR to `jsii-compiler` — warn-and-pass for unknown target languages (~5 lines + tests).
+3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
+4. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
+5. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
+6. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
+   Ruby plugin doubles as its living reference).
+7. D3 (phase 2): rosetta registry + published corpus; re-home the Ruby visitor.
+8. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
+   jsii-rosetta#3710) with pointers here.
+
+## Working Backwards
+
+### Product Press Release
+
+> **Community language targets come to jsii**
+>
+> The jsii toolchain — the technology that lets the AWS CDK ship one construct library to many
+> programming languages — now supports community-built language targets as plugins. A language
+> community publishes a generator plugin and a runtime for their language, generates bindings
+> for any jsii library with the stock `jsii-pacmak` tool, and hosts the results wherever they
+> choose. The plugin proves itself with the same public conformance suite that gates the
+> built-in languages, so "our bindings pass the jsii conformance kit" is a verifiable claim,
+> not a promise. AWS's repositories carry no language-specific code and AWS's release train is
+> unaffected: the boundary between core and community is a small, versioned, documented API.
+> The first community target is Ruby — already passing the full conformance suite and deploying
+> production Rails workloads to AWS Lambda through community-hosted bindings.
+
+### The Developer Experience (UX)
+
+An existing language community ships with two commands — generate and publish — as shown under
+*Proposed Developer Experience* above.
+
+A *new* language starts from a paved road rather than a blank page:
 
 ```sh
 npx create-jsii-language crystal
@@ -46,7 +134,158 @@ completeness, not a research project), a naming-overlay template, CI, and a self
 pipeline template. The maintainer's job becomes filling in language semantics, not discovering
 the architecture.
 
-## What we are proposing — four deliverables, smallest first
+---
+
+Ticking the box below indicates that the public API of this RFC has been signed-off by the API
+bar raiser (the `status/api-approved` label was applied to the RFC pull request):
+
+```
+[ ] Signed-off by API Bar Raiser @xxxxx
+```
+
+## Public FAQ
+
+### What are we launching today?
+
+A plugin seam in the jsii toolchain: `jsii-pacmak --plugin` loads community-published language
+targets, `jsii-compiler` passes unknown target configuration through to them, the kernel wire
+protocol and compliance suite are published as an explicit conformance contract for community
+runtimes, and (phase 2) jsii-rosetta accepts community translation visitors and ships its
+translations corpus for them to validate against.
+
+### Is a plugin language a supported CDK language?
+
+No. Supported languages are TS/JS and Python (plus the existing in-tree targets). Plugin
+languages are community-built, community-hosted and community-supported; AWS supports only the
+seams named above.
+
+### How do I know a community runtime actually works?
+
+It publishes a conformance-kit report — the same suite that gates the in-tree languages. That's
+a stronger, more checkable claim than most community bindings can make today.
+
+### Where do plugin languages live?
+
+Wherever their maintainers choose. The Open Constructs Foundation has been suggested as a
+natural home for languages with a sustainable maintainer team.
+
+### How would a brand-new language get started?
+
+`npx create-jsii-language <name>` — see *The Developer Experience (UX)* above. A new runtime
+starts with the full conformance suite failing and works it down to zero; the claim it earns at
+the end is the same one the in-tree languages make.
+
+### What may the generated packages be called?
+
+Proposed rule: community publications to shared registries use a **`community-` prefix** on any
+AWS-branded name — `community-aws-cdk-lib`, `community-constructs` on RubyGems, and the analogue
+in other ecosystems. This makes provenance unambiguous at a glance, reserves the canonical names
+for AWS (including the option of granting one to a plugin language later, as a graduation), and —
+because it is a general rule rather than a per-name judgment — no plugin language ever needs a
+naming negotiation with AWS. The prefix applies to *distribution* names only; in-code namespaces
+(`AWSCDK::S3` and friends) are unaffected, keeping examples and documentation clean. Self-hosted
+feeds, where the consumer explicitly opts into the source, may mirror the same names for
+consistency. (Pending AWS confirmation.)
+
+## Internal FAQ
+
+### Why are we doing this?
+
+It converts "please absorb a language forever" (declined, for good portfolio reasons — see #935)
+into "expose the boundary that already exists in practice." The Ruby work demonstrated both
+halves: the implementation quality is achievable outside the core team, and the *only* thing
+forcing it to live in forks is the absence of these seams — the fork's entire delta over
+upstream is registry entries and version pins that D1 replaces.
+
+### Why should we _not_ do this?
+
+Frozen APIs are a commitment; a plugin ecosystem could create support pressure ("my plugin
+broke"). Mitigations: the surface is tiny and mostly already-stable interfaces; the experimental
+tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
+
+### What is the technical solution (design) of this feature?
+
+Four deliverables, smallest first — each an opening of an existing seam:
+
+- **D0** — `jsii-compiler` warns-and-passes unknown `jsii.targets` languages instead of
+  rejecting them (~5 lines; built-in validation untouched).
+- **D1** — `jsii-pacmak` loads external targets via `--plugin`; the generic
+  `IndependentPackageBuilder` that already serves three built-in targets serves plugins too;
+  a `--target-config` overlay supplies naming for libraries that don't carry plugin-language
+  config.
+- **D2** — the kernel wire protocol is documented as a public interface for alternative guest
+  runtimes, and the compliance suite is packaged as a runnable conformance kit (no code changes).
+- **D3** *(phase 2)* — jsii-rosetta accepts registered translation visitors and ships its
+  translations corpus + harness so plugins validate against the same snippets upstream tests.
+
+The full design of each deliverable, including the community scaffold (`create-jsii-language`),
+is in the [Appendix](#appendix-the-deliverables-in-detail). Working prototypes of D0, D1, D3 and
+the reference plugin exist — see *Implementation Status (evidence)*.
+
+### Is this a breaking change?
+
+No. Built-in targets are untouched; `--plugin` is additive.
+
+### What alternative solutions did you consider?
+
+- **In-tree language support** — proposed by RFC #935 and declined: every in-tree target is a
+  permanent maintenance commitment regardless of adoption.
+- **Zero compiler changes (D0 omitted)**, with plugin naming carried exclusively by the D1
+  `--target-config` overlay plus convention-based derivation. Viable, but it forbids third-party
+  construct libraries from ever self-describing for plugin languages in-band, which every
+  built-in target can do. The ~5-line warn-and-pass is the better trade; the overlay remains for
+  libraries that predate a plugin or never heard of it.
+- **Permanent forks (the status quo)** — works, as the Ruby fork demonstrates, but pays a
+  permanent rebase/patch-pin tax, produces unverifiable support boundaries, and makes every
+  community language rediscover the architecture from scratch.
+
+### What are the drawbacks of this solution?
+
+The experimental plugin API can still break plugins between pacmak releases (mitigated by
+explicit versioning and loud load-time mismatch failures, but a plugin that lags stops working).
+The conformance kit and corpus add artifacts AWS publishes and must keep coherent. And a
+`community-` ecosystem, once seeded, will generate expectations — naming, discovery, perhaps
+eventually graduation — that need the governance answers recorded in the open questions.
+
+### What is the reference implementation?
+
+Ruby, extracted from the existing fork: a pacmak target (~2,300 lines) and rosetta visitor
+(~1,100 lines) re-homed behind the D1/D3 seams as the `jsii-target-ruby` plugin package, which
+also self-hosts the runtime gem and the full compliance suite; generated `aws-cdk-lib` bindings
+self-hosted on a public gem feed with rendered API docs; production workloads deploying through
+them; and an operating publish pipeline. Maintainer team: two (second maintainer onboarding
+August 2026), meeting the sustainability bar hosting organizations ask for.
+
+### What is the high-level project plan?
+
+See *Upstreaming sequence* under Implementation Status — the RFC leads, the two small toolchain
+PRs follow (D0, D1), the reference plugin re-homes, then the conformance kit (D2), the scaffold,
+and rosetta (D3) complete the system.
+
+### Are there any open issues that need to be addressed later?
+
+- Plugin discovery: `--plugin` flag only (explicit, lightweight) vs. also package.json config?
+- Exact plugin contract: `TargetConstructor`-level (reusing `IndependentPackageBuilder`) with
+  `BuilderFactory` escape hatch — or builder-level only?
+- Version-hook shape: what exactly moves from `version-utils` into the contract?
+- Conformance kit packaging: npm package? repo? who cuts its releases?
+- Corpus packaging: in the jsii-rosetta package (working today, ~2 MB) or a separate
+  `@jsii/rosetta-translation-corpus` package?
+- Naming/branding: `community-` prefix proposed (see Public FAQ) — needs AWS confirmation, and
+  the hosting organization may prefer its own prefix (e.g. `ocf-`).
+- Experimental→stable graduation criteria for the plugin API.
+
+## Future Possibilities
+
+- **Graduation**: a plugin language with sustained quality and adoption could be granted a
+  canonical distribution name (dropping the `community-` prefix) — a decision AWS can make per
+  language, later, without this RFC deciding it now.
+- **More languages**: the scaffold makes Crystal, Elixir, PHP, Swift et al. tractable
+  engineering projects with a progress bar (the conformance suite) instead of research projects.
+- **Hosting maturity**: an Open Constructs Foundation home for plugin languages would give
+  consumers a recognizable trust anchor between "AWS-supported" and "random fork".
+
+## Appendix: The deliverables in detail
 
 ### D0. jsii-compiler: open the `targets` namespace *(~5 lines)*
 
@@ -62,12 +301,6 @@ object-shape check). Built-in validation is untouched; a typo like `pyhton` stil
 as a warning naming the unknown language — while `targets.ruby` reaches the assembly for
 plugin tooling to consume and validate against its own schema (validation belongs at generation
 time, in the plugin that owns the schema, not in a compiler that cannot know it).
-
-*Alternative considered:* zero compiler changes at all, with plugin naming carried exclusively
-by the D1 `--target-config` overlay (plus convention-based derivation for unconfigured
-libraries). Viable, but it forbids third-party construct libraries from ever self-describing
-for plugin languages in-band, which every built-in target can do. The ~5-line warn-and-pass is
-the better trade; the overlay remains for libraries that predate a plugin or never heard of it.
 
 ### D1. pacmak: external target plugins *(the enabling seam)*
 
@@ -89,11 +322,6 @@ framework:
   generation time — per-assembly and per-submodule module names, acronym casing, etc., merged
   over whatever the assembly declares. (The Ruby reference implementation maintains exactly this
   file today for the 613 submodules of `aws-cdk-lib`.)
-
-The stability contract: the plugin API surface (`Target`, `TargetConstructor`, `TargetBuilder`,
-the version hooks) is published as an explicitly versioned, initially **experimental** API; pacmak
-declares its plugin-API version, plugins declare a compatible range, and mismatches fail loudly at
-load time. No guarantee is made beyond that during the experimental period.
 
 ### D2. Runtime conformance: a stability statement plus a kit *(no code changes)*
 
@@ -145,88 +373,3 @@ protocol contract expressed as failing conformance tests, and a working referenc
 That is the difference between a multi-month solo research project and a tractable engineering
 task with a progress bar. It is community-maintained (a natural OCF asset) and adds nothing to
 AWS's surface.
-
-### Explicit non-changes
-
-- **The `.jsii` assembly format and kernel protocol: unchanged.** (D0 relaxes what the compiler
-  *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
-- **Validation of built-in languages: unchanged** — the typo-catching from jsii-compiler#2415
-  is preserved.
-- **AWS repos gain no language code, no CI matrix rows, no release-train steps.** Stronger:
-  no language-specific content of any kind lands in an AWS repository — the D0/D1/D3 diffs
-  contain zero occurrences of any plugin language's name, verifiable by grep. Even the act of
-  registering a language happens inside the plugin package at load time.
-
-## Public FAQ
-
-**Is a plugin language a supported CDK language?** No. Supported languages are TS/JS and Python
-(plus the existing in-tree targets). Plugin languages are community-built, community-hosted and
-community-supported; AWS supports only the seams named above.
-
-**How do I know a community runtime actually works?** It publishes a conformance-kit report —
-the same suite that gates the in-tree languages. That's a stronger, more checkable claim than
-most community bindings can make today.
-
-**Where do plugin languages live?** Wherever their maintainers choose. The Open Constructs
-Foundation has been suggested as a natural home for languages with a sustainable maintainer team.
-
-**How would a brand-new language get started?** `npx create-jsii-language <name>` — see *The
-paved road* above. A new runtime starts with the full conformance suite failing and works it
-down to zero; the claim it earns at the end is the same one the in-tree languages make.
-
-**What may the generated packages be called?** Proposed rule: community publications to shared
-registries use a **`community-` prefix** on any AWS-branded name — `community-aws-cdk-lib`,
-`community-constructs` on RubyGems, and the analogue in other ecosystems. This makes provenance
-unambiguous at a glance, reserves the canonical names for AWS (including the option of granting
-one to a plugin language later, as a graduation), and — because it is a general rule rather than
-a per-name judgment — no plugin language ever needs a naming negotiation with AWS. The prefix
-applies to *distribution* names only; in-code namespaces (`AWSCDK::S3` and friends) are
-unaffected, keeping examples and documentation clean. Self-hosted feeds, where the consumer
-explicitly opts into the source, may mirror the same names for consistency. (Pending AWS
-confirmation.)
-
-## Internal FAQ
-
-**Why are we doing this?** It converts "please absorb a language forever" (declined, for good
-portfolio reasons — see #935) into "expose the boundary that already exists in practice." The
-Ruby work demonstrated both halves: the implementation quality is achievable outside the core
-team, and the *only* thing forcing it to live in forks is the absence of these seams — the fork's
-entire delta over upstream is registry entries and version pins that D1 replaces.
-
-**Why should we _not_ do this?** Frozen APIs are a commitment; a plugin ecosystem could create
-support pressure ("my plugin broke"). Mitigations: the surface is tiny and mostly already-stable
-interfaces; the experimental tier sets expectations; the support boundary is stated in the FAQ
-above and in pacmak's docs.
-
-**Is this a breaking change?** No. Built-in targets are untouched; `--plugin` is additive.
-
-**What is the reference implementation?** Ruby, extracted from the existing fork: a pacmak
-target (~2,300 lines) and rosetta visitor (~1,100 lines) ready to re-home behind the D1/D3 seams;
-a runtime gem passing the full compliance suite; generated `aws-cdk-lib` bindings self-hosted on
-a public gem feed with rendered API docs; production workloads deploying through them; and an
-operating publish pipeline that has been performing the "out-of-tree language target" role for
-weeks — today via forks and patch-pins, which this RFC's seams eliminate. Maintainer team: two
-(second maintainer onboarding August 2026), meeting the sustainability bar hosting organizations
-ask for.
-
-**What is the high-level project plan?**
-1. This RFC (co-developed with the jsii maintainers).
-2. D0 PR to `jsii-compiler` — warn-and-pass for unknown target languages (~5 lines + tests).
-3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
-4. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
-5. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
-6. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
-   Ruby plugin doubles as its living reference).
-7. D3 (phase 2): rosetta registry; re-home the Ruby visitor.
-8. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
-   jsii-rosetta#3710) with pointers here.
-
-**Open questions to settle in co-development**
-- Plugin discovery: `--plugin` flag only (explicit, lightweight) vs. also package.json config?
-- Exact plugin contract: `TargetConstructor`-level (reusing `IndependentPackageBuilder`) with
-  `BuilderFactory` escape hatch — or builder-level only?
-- Version-hook shape: what exactly moves from `version-utils` into the contract?
-- Conformance kit packaging: npm package? repo? who cuts its releases?
-- Naming/branding: `community-` prefix proposed (see Public FAQ) — needs AWS confirmation, and
-  the hosting organization may prefer its own prefix (e.g. `ocf-`).
-- Experimental→stable graduation criteria for the plugin API.
