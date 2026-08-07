@@ -5,7 +5,7 @@
   co-development offered by @mrgrain in its closing discussion: "let's work on an RFC for a
   lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
   generated language bindings")*
-* **API Bar Raiser**: @{BAR_RAISER_USER}
+* **API Bar Raiser**: @mrgrain
 
 This RFC proposes the smallest set of seams in the jsii toolchain that let a community build,
 publish and self-host a language target **out of tree** — with no AWS release-train coupling and
@@ -140,7 +140,7 @@ Ticking the box below indicates that the public API of this RFC has been signed-
 bar raiser (the `status/api-approved` label was applied to the RFC pull request):
 
 ```
-[ ] Signed-off by API Bar Raiser @xxxxx
+[ ] Signed-off by API Bar Raiser @mrgrain
 ```
 
 ## Public FAQ
