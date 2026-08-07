@@ -335,12 +335,16 @@ already depends on its stability. This deliverable makes that implicit contract 
   definition plus the report format, so any external runtime can generate a compliance report
   and make a verifiable claim ("full pass") without AWS running anything.
 
-### D3. rosetta: language plugins *(phase 2, optional)*
+### D3. rosetta: language plugins *(phase 2)*
 
-Example translation is enhancement, not enablement — bindings are useful with TypeScript
-examples in the docs. Phase 2 opens rosetta's `TARGET_LANGUAGES` map the same way as D1
-(values are already plain strings; tablets are string-keyed), with the visitor interface offered
-at the same experimental tier. Deliberately deferred so D1 stays reviewable in an afternoon.
+Rendered API documentation is part of a credible language target, and documentation needs
+translated examples — so rosetta support is a committed deliverable, not an optional extra. The
+Ruby reference implementation already demonstrates the full path: its visitor translates
+examples into idiomatic Ruby and a rendered documentation site is generated and published from
+the bindings today. D3 is *sequenced* as phase 2 purely so D1 stays reviewable in an afternoon;
+in the interim a plugin's bindings remain usable with examples appearing as TypeScript. Phase 2
+opens rosetta's `TARGET_LANGUAGES` map the same way as D1 (values are already plain strings;
+tablets are string-keyed), with the visitor interface offered at the same experimental tier.
 
 D3 also ships rosetta's **translations corpus** (the language-neutral snippet library its own
 Python/Java/C#/Go translation tests iterate) in the published package, behind a small
