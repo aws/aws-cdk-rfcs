@@ -142,7 +142,10 @@ AWS's surface.
   *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
 - **Validation of built-in languages: unchanged** — the typo-catching from jsii-compiler#2415
   is preserved.
-- **AWS repos gain no language code, no CI matrix rows, no release-train steps.**
+- **AWS repos gain no language code, no CI matrix rows, no release-train steps.** Stronger:
+  no language-specific content of any kind lands in an AWS repository — the D0/D1/D3 diffs
+  contain zero occurrences of any plugin language's name, verifiable by grep. Even the act of
+  registering a language happens inside the plugin package at load time.
 
 ## Public FAQ
 
