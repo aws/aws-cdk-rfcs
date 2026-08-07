@@ -114,6 +114,16 @@ examples in the docs. Phase 2 opens rosetta's `TARGET_LANGUAGES` map the same wa
 (values are already plain strings; tablets are string-keyed), with the visitor interface offered
 at the same experimental tier. Deliberately deferred so D1 stays reviewable in an afternoon.
 
+D3 also ships rosetta's **translations corpus** (the language-neutral snippet library its own
+Python/Java/C#/Go translation tests iterate) in the published package, behind a small
+`lib/testing` harness: corpus enumeration, snippet compilation against the fixture assemblies,
+and the comparison normalizers. The in-repo translation tests consume the same exported API, so
+it cannot drift from what upstream actually tests. A language plugin then contributes only its
+expected-output files (e.g. `*.rb`) mirroring the corpus layout — no vendored snippet copy — and
+new upstream snippets surface in the plugin as visibly-skipped tests until an expectation is
+written. This is the rosetta face of the D2 conformance-kit idea: the corpus is to translation
+what the compliance suite is to the runtime protocol.
+
 ### The paved road: a language scaffold *(community deliverable — not an AWS commitment)*
 
 A plugin system with one plugin is a bespoke arrangement; the scaffold is what makes it a
