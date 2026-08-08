@@ -358,6 +358,12 @@ output). The `JsiiModule.dependencyNames` field's sole consumer is the topologic
 the change has no other blast radius; the existing ordering test — whose "peerDependency"
 fixture was, revealingly, mis-written as a devDependency — now pins the corrected semantics.
 
+The fix is what keeps the paved road simple: with it, "npm-install the library, run pacmak
+with `--plugin` and `--recurse`" is the *entire* generation story for a scaffolded language
+pipeline. Without it, every plugin community independently discovers the deadlock and builds
+its own closure-ordering workaround (the Ruby reference pipeline briefly carried exactly that
+script before the fix made it deletable).
+
 ### D2. Runtime conformance: a stability statement plus a kit *(no code changes)*
 
 A guest runtime needs **no plugin API at all** — the jsii kernel wire protocol (line-delimited
