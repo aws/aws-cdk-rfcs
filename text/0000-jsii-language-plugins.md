@@ -323,6 +323,41 @@ framework:
   over whatever the assembly declares. (The Ruby reference implementation maintains exactly this
   file today for the 613 submodules of `aws-cdk-lib`.)
 
+#### Field report: `--recurse` deadlocks on installed artifacts
+
+Building the Ruby reference's CDK pipeline surfaced a latent pacmak defect that is worth
+recording here because it illustrates *why* opening these seams changes what the tool is asked
+to do. The plugin workflow's natural input is the **published npm artifact tree** — install
+`aws-cdk-lib`, point pacmak at it with `--recurse`, generate the closure. That fails today, on
+released pacmak, for every target language:
+
+```
+$ npm install aws-cdk-lib
+$ npx jsii-pacmak --recurse -t python -o dist node_modules/aws-cdk-lib
+Error: Could not determine ordering between: @aws-cdk/asset-awscli-v1,
+       @aws-cdk/asset-node-proxy-agent-v6, aws-cdk-lib
+```
+
+The cause: `findJsiiModules` builds each module's build-order edges from `dependencies` +
+`peerDependencies` + `devDependencies`. Published manifests keep their `devDependencies`
+(`npm publish` does not strip them), and the `@aws-cdk/asset-*` packages devDepend on
+`aws-cdk-lib` for their integration tests — an entirely ordinary arrangement that turns the
+installed closure into a two-node cycle (`aws-cdk-lib` → assets via `dependencies`, assets →
+`aws-cdk-lib` via `devDependencies`) and deadlocks the topological sort. Nothing is
+semantically cyclic: a devDependency cannot influence a dependent's generated bindings, since
+assembly dependencies only ever arise from runtime/peer dependencies.
+
+Nobody had hit this in years of `--recurse` existing because the flag's only realistic users
+ran it inside source monorepos, where the devDependency graph coincides with a sensible build
+order. Generating from *installed artifacts* is the workflow that only exists out-of-tree —
+the first sustained user of that path found the bug within a day. The fix is small and rides
+with the D1 branch: devDependencies still drive `--recurse` *discovery* (source monorepos
+reference sibling jsii packages that way) but no longer produce *ordering edges*
+(`dependencies`/`peerDependencies` only, which is exactly the set that can affect generated
+output). The `JsiiModule.dependencyNames` field's sole consumer is the topological sort, so
+the change has no other blast radius; the existing ordering test — whose "peerDependency"
+fixture was, revealingly, mis-written as a devDependency — now pins the corrected semantics.
+
 ### D2. Runtime conformance: a stability statement plus a kit *(no code changes)*
 
 A guest runtime needs **no plugin API at all** — the jsii kernel wire protocol (line-delimited
