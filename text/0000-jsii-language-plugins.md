@@ -424,6 +424,31 @@ in the interim a plugin's bindings remain usable with examples appearing as Type
 opens rosetta's `TARGET_LANGUAGES` map the same way as D1 (values are already plain strings;
 tablets are string-keyed), with the visitor interface offered at the same experimental tier.
 
+**Opening the map is necessary but not sufficient.** Building the Ruby plugin against it
+surfaced three further places where a closed language set is assumed, each found only by running
+the full pipeline and inspecting its output:
+
+| Assumption | Effect on a plugin language |
+| --- | --- |
+| `Translator.translate` defaulted its language list to the built-in enum | the language was resolvable but never translated; callers (a pacmak target) got the TypeScript source back |
+| translation is farmed to a worker pool, and workers are fresh module contexts | a language registered in the main thread does not exist in any worker, so everything `extract` produces omits it |
+| the cache dirty-check compared only built-in languages | a library's shipped tablet counted as a *hit* for a language it had never been translated for, and those snippets were copied to the output untranslated |
+
+The shape they share is what makes them worth listing: **none produced an error.** Each yielded
+plausible output — a build that succeeded, a 125MB tablet — that was silently missing the
+language. The third is the sharpest illustration: extracting translations for `aws-cdk-lib`
+finished in 70 seconds and wrote a tablet containing 37 Ruby translations out of 21,394
+snippets, because every snippet already in the shipped tablet was waved through. A pipeline
+wired to that tablet would have got dramatically faster and published documentation that was
+almost entirely untranslated.
+
+The remedy in each case is small (check the registry rather than the enum; let callers name
+modules for workers to load), and all three are implemented in the reference fork. The general
+point for this RFC is that a plugin seam is not just a lookup table: the *cache* and *worker*
+paths have to be language-agnostic too, or the system fails in the one way that is hardest to
+notice. This is also the argument for shipping the corpus (below) as a conformance surface —
+these were caught by checking translated output, not by any error the toolchain raised.
+
 D3 also ships rosetta's **translations corpus** (the language-neutral snippet library its own
 Python/Java/C#/Go translation tests iterate) in the published package, behind a small
 `lib/testing` harness: corpus enumeration, snippet compilation against the fixture assemblies,
