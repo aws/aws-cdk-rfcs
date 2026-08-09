@@ -90,7 +90,9 @@ Every deliverable exists as a working branch, validated against current upstream
 
 1. This RFC (co-developed with the jsii maintainers).
 2. D0 PR to `jsii-compiler` — warn-and-pass for unknown target languages (~5 lines + tests).
-3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + version hooks + `--target-config`.
+3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` (+ optionally `--target-config` as
+   CLI sugar; the overlay itself is proven plugin-side, and version hooks turned out to need
+   no seam at all).
 4. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
 5. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
 6. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
@@ -264,16 +266,47 @@ and rosetta (D3) complete the system.
 
 ### Are there any open issues that need to be addressed later?
 
-- Plugin discovery: `--plugin` flag only (explicit, lightweight) vs. also package.json config?
-- Exact plugin contract: `TargetConstructor`-level (reusing `IndependentPackageBuilder`) with
-  `BuilderFactory` escape hatch — or builder-level only?
-- Version-hook shape: what exactly moves from `version-utils` into the contract?
-- Conformance kit packaging: npm package? repo? who cuts its releases?
-- Corpus packaging: in the jsii-rosetta package (working today, ~2 MB) or a separate
-  `@jsii/rosetta-translation-corpus` package?
-- Naming/branding: `community-` prefix proposed (see Public FAQ) — needs AWS confirmation, and
-  the hosting organization may prefer its own prefix (e.g. `ocf-`).
-- Experimental→stable graduation criteria for the plugin API.
+Most of the questions this RFC opened with have since been settled by building and operating
+the reference implementation (the Ruby plugin now builds, tests, documents and publishes the
+full AWS CDK from published npm artifacts in CI). Resolved, with the evidence:
+
+- **Plugin discovery: `--plugin` flag only.** Explicit operator intent, trivially scriptable —
+  the CDK pipeline never once wanted implicit discovery. package.json-based discovery would
+  also mean any dependency can cause code generation plugins to auto-load, a supply-chain
+  surface the flag simply doesn't have. Revisit at stabilization if real demand appears.
+- **Plugin contract: `TargetConstructor`-level with the `BuilderFactory` escape hatch** — as
+  implemented on the D1 branch. Ruby is the hardest packaging case yet attempted (native gem
+  build, a shared output tree across the closure) and never needed builder-level control.
+- **Version hooks: none — dropped from the contract entirely.** The reference implementation
+  owns its complete version mapping (release-version conversion, range translation, its
+  runtime-pairing constraint, and an exact-pin publishing mode) with zero pacmak changes:
+  `toReleaseVersion` is only ever called from inside per-language generators, so a plugin that
+  brings its own mapping needs no seam. This *removes* an item from D1's surface.
+- **Corpus packaging: inside the jsii-rosetta package** (~2 MB), behind `lib/testing` — working
+  today, consumed by the Ruby plugin and the language scaffold; the in-repo translation tests
+  consume the same exported API, so it cannot drift. A separate
+  `@jsii/rosetta-translation-corpus` package remains the fallback if the weight is objected to.
+- **Conformance kit packaging (proposed default): the same pattern.** The corpus demonstrated
+  the shape — ship the canonical artifact with the package it belongs to, expose a small
+  library API, let the repo's own tests consume that API as its proof. The runtime kit should
+  ride the jsii release train the same way; no separate release cadence to govern.
+- **Graduation criteria (proposed):** the plugin API stays experimental (major-version match
+  enforced at load, as implemented) until (a) a second independently-maintained language
+  target builds against it, (b) a full upstream release cycle passes with no breaking
+  plugin-API change, and (c) the conformance kit and corpus have external consumers. Then a
+  stabilization review freezes it.
+
+Still genuinely open — decisions that belong to AWS and the hosting organization, not to
+implementation experience:
+
+- **Naming/branding**: the `community-` prefix rule (see Public FAQ) needs AWS confirmation,
+  and the hosting organization may prefer its own prefix (e.g. `ocf-`). Narrowed by practice:
+  the self-hosted-feed-mirrors-canonical-names clause is exercised in production today.
+- **Parallel-build output isolation**: pacmak builds each dependency batch concurrently and
+  assumes per-package output directories; a target whose packages share an output tree (as
+  Ruby's does, deliberately — one `lib/` for single-path installs) must serialize its own copy
+  phase. Field-tested plugin-side; the open question is whether the plugin contract documents
+  this as a target responsibility or pacmak grows a per-target concurrency knob.
 
 ## Future Possibilities
 
@@ -314,14 +347,18 @@ framework:
   `{ targetName: string, targetConstructor: TargetConstructor }` (or, escape hatch, a full
   `BuilderFactory` for languages that need multi-module builds like .NET/Java).
 - CLI target validation accepts plugin-registered names alongside built-ins.
-- The per-language hooks currently hardcoded in pacmak internals move into the plugin contract:
-  version-scheme conversion (`toReleaseVersion` / native version-range mapping) and any
-  reserved-word/naming utilities the target needs.
+- No version-scheme or naming hooks in the contract: `toReleaseVersion` and friends are only
+  ever called from inside per-language generators, so a plugin simply brings its own mapping
+  (the Ruby reference owns release-version conversion, range translation, its runtime-pairing
+  constraint, and an exact-pin publishing mode, all plugin-side with zero pacmak changes).
 - **Naming-config overlay** (`--target-config <file>`): construct libraries will not carry
   `targets.<community-language>` naming config in their repos, so the plugin supplies it at
   generation time — per-assembly and per-submodule module names, acronym casing, etc., merged
-  over whatever the assembly declares. (The Ruby reference implementation maintains exactly this
-  file today for the 613 submodules of `aws-cdk-lib`.)
+  over whatever the assembly declares. *Proven plugin-side with zero pacmak changes*: the Ruby
+  reference merges its overlay (a file of 328 explicit submodule names plus acronym data,
+  selected via an environment variable) into the assembly spec as it loads, and builds the
+  entire published `aws-cdk-lib` closure that way in CI. The pacmak flag is therefore thin
+  sugar over an existing pattern — worth having for a uniform CLI story, not load-bearing.
 
 #### Field report: `--recurse` deadlocks on installed artifacts
 
