@@ -482,6 +482,27 @@ paths have to be language-agnostic too, or the system fails in the one way that 
 notice. This is also the argument for shipping the corpus (below) as a conformance surface —
 these were caught by checking translated output, not by any error the toolchain raised.
 
+A fourth finding is different in kind, and is the one that argues the seam needs *designing*
+rather than merely opening: a worker can be told to load a language, but not what it is
+translating for. Nothing passes the assemblies down, because no built-in language has ever needed
+them — Java and C# reach a type through a namespace import, and none of the four render an enum
+member differently from a static property. A language where those differ has no other source for
+the answer: a published example does not typecheck (the fixtures it relies on are not shipped
+with the package), so the visitor cannot ask the type checker anything. In the Ruby
+implementation the live case is module resolution — CDK's conventional import aliases mostly do
+not name their submodule (`firehose` is `aws_kinesisfirehose`, `sfn` is `aws_stepfunctions`), and
+the assembly is the only thing that knows where `DeliveryStream` is declared. Without a way
+through, the plugin smuggled the assemblies in through an environment variable: a side channel
+the contract does not describe, invisible to review, and one that every language needing the same
+thing would have reinvented differently.
+
+The remedy is again small — an optional `prepare(context)` on the visitor factory, called after
+the plugins that register the languages have loaded, carrying the assembly *locations* rather
+than the loaded assemblies (an assembly runs to tens of megabytes, and each worker should read
+only what its languages need). No built-in language implements it, so nothing changes for them,
+and `extractSnippets` already receives the locations, so wiring them through costs one field per
+layer. Implemented in the reference fork.
+
 D3 also ships rosetta's **translations corpus** (the language-neutral snippet library its own
 Python/Java/C#/Go translation tests iterate) in the published package, behind a small
 `lib/testing` harness: corpus enumeration, snippet compilation against the fixture assemblies,
