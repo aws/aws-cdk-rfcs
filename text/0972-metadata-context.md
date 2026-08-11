@@ -1,4 +1,4 @@
-# Structured Design Context in Synthesized Templates (Metadata.Context)
+# Structured Design Context in Synthesized Templates
 
 * **Original Author(s):** @satyakigh
 * **Tracking Issue**: #972
@@ -7,7 +7,7 @@
 CDK apps know *why* every resource exists - the rationale, invariants, and operational
 knowledge live in source comments, construct structure, and the author's head - but none
 of it survives `cdk synth`. This RFC adds a `MetadataContext` API to `aws-cdk-lib` that
-embeds structured, advisory design context into the `Metadata.Context` sections of
+embeds structured, advisory design context into the `Metadata["com.aws.cloudformation.Context"]` sections of
 synthesized CloudFormation templates, so that humans and automated tools (consoles, CLIs,
 AI agents) operating on the deployed stack later can act on the author's intent instead
 of guessing it.
@@ -25,7 +25,7 @@ feat(core): embed structured design context in synthesized templates (MetadataCo
 #### Metadata Context
 
 The `MetadataContext` class embeds structured, advisory context into the
-`Metadata.Context` sections of synthesized CloudFormation templates.
+`Metadata["com.aws.cloudformation.Context"]` sections of synthesized CloudFormation templates.
 It captures the *why* behind your infrastructure - rationale, hard
 invariants, change-safety, provenance and operational hints - so that humans
 and automated tools working with the deployed template later can act on the
@@ -50,13 +50,13 @@ MetadataContext.of(queue).add({
 });
 ```
 
-This renders a `Metadata.Context` block on the `AWS::SQS::Queue` resource:
+This renders a `Metadata["com.aws.cloudformation.Context"]` block on the `AWS::SQS::Queue` resource:
 
 ```json
 {
   "Type": "AWS::SQS::Queue",
   "Metadata": {
-    "Context": {
+    "com.aws.cloudformation.Context": {
       "why": "buffer order events async; 14d retention = compliance window",
       "must": [
         "VisTimeout >= 6x fn timeout, else dup on retry"
@@ -64,6 +64,10 @@ This renders a `Metadata.Context` block on the `AWS::SQS::Queue` resource:
       "mutable": "change-with-constraints",
       "mutability": {
         "QueueName": "must-never-change"
+      },
+      "trust": {
+        "src": "authored",
+        "conf": "high"
       },
       "ops": "check ApproxAgeOfOldestMsg before cutting VisTimeout",
       "failureModes": [
@@ -117,11 +121,13 @@ MetadataContext.of(stack).add({
 });
 ```
 
-Record where context came from and how much to trust it with the `trust`
-field. `AUTHORED` means the context was explicitly declared through this API;
-it does not assert that a human wrote it. Producers that infer context from
-comments, commits, or other artifacts set the corresponding source instead.
-When omitted, `source` defaults to `AUTHORED` and `confidence` to `MEDIUM`:
+Every resource context block records where it came from and how much to trust it.
+When the caller omits `trust`, CDK emits `source: AUTHORED` and chooses confidence
+from the declaration: `HIGH` when `why` or a non-empty `must` is present, otherwise
+`MEDIUM`. `AUTHORED` means the context was explicitly declared through this API; it
+does not assert that a human wrote it. Producers that infer context from comments,
+commits, or other artifacts override `trust` with the corresponding source and an
+explicit confidence:
 
 ```ts
 declare const queue: sqs.Queue;
@@ -189,10 +195,10 @@ something, and `why` for reasoning and rejected alternatives.
 
 CDK already serializes the complete template during synthesis and emits a
 warning above 80% of its conservative 1,000,000-character threshold;
-`Metadata.Context` is included in that measurement. This RFC adds no
+`Metadata["com.aws.cloudformation.Context"]` is included in that measurement. This RFC adds no
 context-specific size validator and never silently trims declared context. The
 existing warning remains the synth-time signal; authoring tools may respond
-using the v1 tier/drop order described in appendix A.
+using the advisory schema's tier/drop order described in appendix A.
 
 ---
 
@@ -215,18 +221,19 @@ A new capability in `aws-cdk-lib` core: the `MetadataContext` class and the
 * `MetadataContext.of(scope).add(props, options?)` - declares resource-level context
   (rationale, hard invariants, change-safety, provenance, operational hints, known gaps,
   dependencies, failure modes) on any construct scope. At synthesis time the context is
-  rendered as a `Metadata.Context` block on the scope's primary resources, cascading like
+  rendered as a `Metadata["com.aws.cloudformation.Context"]` block on the scope's primary resources, cascading like
   `Tags` with nearest-wins merge semantics.
 * `MetadataContext.of(scope).addToTemplate(props)` - declares template-level context
   (architecture overview, cross-cutting invariants, external context references,
-  ownership) rendered once as a top-level `Metadata.Context` block.
+  ownership) rendered once as a top-level `Metadata["com.aws.cloudformation.Context"]` block.
 * `MetadataContextMixin` - the same resource-level context applied imperatively to
   exactly the constructs you target, via `.with()` or `Mixins.of(scope).apply()`.
 
-The emitted wire format follows the `Metadata.Context` v1 vocabulary - a small, closed
-set of fields (`why`, `must`, `mutable`, `mutability`, `trust`, `ops`, `gaps`, `deps`,
-`failureModes` at resource level; `arch`, `must`, `ref`, `owner` at template level)
-designed to be terse, advisory, and consumable by both humans and automated tooling. The
+The emitted wire format follows the advisory Context schema under the dedicated
+`com.aws.cloudformation.Context` metadata key. It defines a small, closed set of fields
+(`why`, `must`, `mutable`, `mutability`, `trust`, `ops`, `gaps`, `deps`, `failureModes`
+at resource level; `arch`, `must`, `ref`, `owner` at template level) designed to be
+terse and consumable by both humans and automated tooling. The
 context is plain CloudFormation `Metadata`: it deploys with the stack, has no runtime
 effect, and is retrievable with the standard `GetTemplate` and `DescribeStackResource`
 APIs - no new service support required.
@@ -260,7 +267,7 @@ Concrete situations this feature addresses:
 
 These are not just expectations. We evaluated the alternatives on the same
 CloudFormation update tasks. The results showed that supplying design context improved
-outcomes, structured `Metadata.Context` made that context durable and machine-addressable,
+outcomes, structured `Metadata["com.aws.cloudformation.Context"]` made that context durable and machine-addressable,
 and context-aware tooling used the structured fields most effectively. Structured metadata
 is the tested form designed to survive CDK synthesis and remain structurally retrievable
 from a deployed stack.
@@ -268,7 +275,7 @@ from a deployed stack.
 Brownfield adoption does not require manually seeding every resource. A companion
 bootstrapping skill is being developed to read existing CDK/CloudFormation source,
 comments, git history, tests, and companion service code, then propose explicit
-`MetadataContext` declarations (or `Metadata.Context` blocks for raw templates) with
+`MetadataContext` declarations (or `Metadata["com.aws.cloudformation.Context"]` blocks for raw templates) with
 provenance and declared gaps. This subsidizes discovery and authoring effort, while
 keeping heuristic inference and its review outside the core API contract.
 
@@ -297,7 +304,7 @@ that the artifact it reads does not contain the constraint it needs to respect.
 
 **We benchmarked that claim rather than assuming it.** Before settling the API we compared
 four conditions on the same CloudFormation update tasks: no embedded context, context as
-natural inline YAML comments, structured `Metadata.Context`, and structured context read
+natural inline YAML comments, structured `Metadata["com.aws.cloudformation.Context"]`, and structured context read
 by tooling that understands the vocabulary. Context-free templates fared worst on the
 tasks whose correct answer depended on knowledge the template did not contain; structured
 context produced the largest improvement; context-aware tooling improved on that again.
@@ -343,14 +350,15 @@ The design below is implemented as written — see
 The field vocabulary and the authoring model were settled first, by evaluating context
 embedded in templates directly (see appendix B); this section covers how CDK produces it.
 
-#### Wire format: a small, advisory vocabulary
+#### Wire format: a namespaced advisory schema
 
-The emitted shape follows a small, versioned vocabulary (`Metadata.Context` v1), defined by
-this RFC: the field reference in appendix A and the CDK types below are its normative
-description. It is *advisory* — nothing enforces it. CloudFormation ignores it, and any
-consumer that chooses to read or validate it does so on its own. CDK
-renders the wire format (`trust.src`, `trust.conf`, `trust.cite`, bare-string `ref` entries
-when only a URI is present) from idiomatic, fully-spelled TypeScript property names
+The emitted shape follows the advisory Context schema under the
+`com.aws.cloudformation.Context` key in `Metadata`. The field reference in appendix A and
+the CDK types below are its normative description. It is *advisory* — nothing enforces
+it. CloudFormation ignores it, and any consumer that chooses to read or validate it does
+so on its own. CDK renders the schema (`trust.src`, `trust.conf`, `trust.cite`, and
+`ref` from the TypeScript `refs` property; a `ref` entry becomes a bare string when only
+a URI is present) from idiomatic, fully-spelled TypeScript property names
 (`trust.source`, `trust.confidence`, `trust.citation`).
 
 Resource-level fields: `why` (rationale), `must` (hard invariants), `mutable`
@@ -361,6 +369,11 @@ hint), `gaps` (declared unknowns), `deps` (cross-stack/resource dependencies),
 
 Template-level fields: `arch` (system shape), `must` (cross-cutting invariants), `ref`
 (pointers to external shared/overflow context), `owner` (contact).
+
+Every emitted resource block also contains `trust`. When callers omit it, CDK emits
+`src: authored` and defaults `conf` to `medium`. CDK promotes it to `high` only when
+the final merged block contains a non-blank `why` or at least one non-blank string in
+`must`. Explicit trust values always win.
 
 Change-safety uses a closed four-level enum: `must-never-change`,
 `change-with-constraints`, `review-required`, `free-to-tune`. In the CDK API this is the
@@ -385,8 +398,9 @@ closer to the resource win. Because merge order derives from the construct tree 
 than from aspect registration order, the semantics are deterministic regardless of how
 many scopes declared context or in what order `add()` was called - the same reasoning
 that led Tags to a single-visitor design. Finally the merged block is written with
-`CfnResource.addMetadata('Context', ...)`; any pre-existing `Metadata.Context` written
-directly by the user takes precedence over cascaded context.
+`CfnResource.addMetadata('com.aws.cloudformation.Context', ...)`; any pre-existing value
+in that metadata namespace written directly by the user takes precedence over cascaded
+context.
 
 Merge semantics, field by field:
 
@@ -413,7 +427,7 @@ type, mirroring the `Tags` options surface.
 
 #### Template-level context
 
-`addToTemplate()` merges into `stack.templateOptions.metadata.Context` directly (no
+`addToTemplate()` merges into `stack.templateOptions.metadata[METADATA_CONTEXT_KEY]` directly (no
 aspect needed): `arch`/`owner` from later calls win, `must` entries and `ref`s
 accumulate. `ref` entries render as bare URI strings when only `at` is present, keeping
 templates terse.
@@ -434,7 +448,7 @@ code, or deployed state. Automatically deriving `why` or resolving `deps` remain
 this API commitment because those mechanisms are heuristic or require a later synthesis
 phase. The companion brownfield bootstrapping skill can layer on top by emitting calls to
 this API, with `trust` and `gaps` identifying evidence and uncertainty, without changing
-the declaration or wire-format contract.
+the declaration or advisory-schema contract.
 
 ### Is this a breaking change?
 
@@ -442,12 +456,13 @@ No. The feature is purely additive and opt-in:
 
 * No context is emitted unless `MetadataContext.of(...).add(...)`, `addToTemplate(...)`,
   or the mixin is called. Synthesized output for existing apps is byte-identical.
-* `Metadata.Context` is advisory data in a namespace CloudFormation ignores; it has no
-  deployment-behavior effect. CloudFormation explicitly permits arbitrary `Metadata`
-  keys.
-* Users who already write a resource-level `Metadata.Context` key manually (via
-  `cfnResource.addMetadata('Context', ...)`) keep working: the rendering aspect merges
-  cascaded context *under* explicit resource metadata, so their values win.
+* `com.aws.cloudformation.Context` is an advisory metadata namespace CloudFormation
+  ignores; it has no deployment-behavior effect. CloudFormation explicitly permits
+  arbitrary `Metadata` keys.
+* Users who write that resource-level key manually with
+  `cfnResource.addMetadata('com.aws.cloudformation.Context', ...)` keep working: the
+  rendering aspect merges cascaded context *under* explicit resource metadata, so their
+  values win. Sibling metadata namespaces remain untouched.
 
 ### What alternative solutions did you consider?
 
@@ -461,9 +476,9 @@ No. The feature is purely additive and opt-in:
    anyone — the API proposed here does not preclude it.
 2. **Automatic propagation of leading source comments.** A prototype Aspect follows a
    resource's creation stack to its source location, reads the leading comment, applies an
-   anti-fabrication gate, and writes an attributed `Metadata.Context.why` during synthesis.
+   anti-fabrication gate, and writes an attributed `Metadata["com.aws.cloudformation.Context"].why` during synthesis.
    This can reduce authoring effort for well-commented CDK code, and a compile-time
-   transformer could avoid runtime stack inspection. It is deferred as the v1 core model:
+   transformer could avoid runtime stack inspection. It is deferred from the initial core model:
    compiled projects need source-map handling; comment syntax and
    quality vary across jsii languages; and weak/circular/boilerplate comments require
    heuristic rejection. A transformer also adds build integration and is language-specific.
@@ -495,7 +510,8 @@ No. The feature is purely additive and opt-in:
   context, above 80% of its conservative 1,000,000-character threshold. This RFC does not
   add a second limit or silently discard user declarations. Terse values, sparse
   `mutability`, hoisting, and `ref` externalization reduce pressure; authoring tools may
-  apply the documented drop order (`trust` then `ops`, `failureModes`, `gaps`, `deps`, and
+  apply the documented drop order (optional trust detail, then `ops`, `failureModes`, `gaps`,
+  `deps`, and
   lower-value mutability/why detail), but never drop safety-critical `must` entries or an
   externalization `ref`.
 * **Drift risk.** Context that is not maintained alongside the resources it describes can
@@ -536,14 +552,14 @@ because emitting no context is the default and existing synthesized output is un
   reducing authoring burden using non-heuristic data. A natural follow-on.
 * **L2 integration points.** Whether high-value L2s should accept a `context` prop
   directly (e.g. `new sqs.Queue(this, 'Q', { context: {...} })`) rather than requiring
-  the `MetadataContext.of()` call is intentionally left out of v1 to keep the surface
-  minimal while the vocabulary settles.
+  the `MetadataContext.of()` call is intentionally left out of the initial release to keep
+  the surface minimal while the schema settles.
 
 ## Appendix
 
-### Appendix A - Metadata.Context v1 field reference
+### Appendix A - CloudFormation Context advisory schema field reference
 
-Resource-level (`Resources.<LogicalId>.Metadata.Context`):
+Resource-level (`Resources.<LogicalId>.Metadata["com.aws.cloudformation.Context"]`):
 
 | Field          | Type                  | Meaning                                                                                                                  |
 |----------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------|
@@ -561,7 +577,7 @@ Resource-level (`Resources.<LogicalId>.Metadata.Context`):
 the producer. A producer deriving context from comments, commits, or code structure must
 select `comment`, `commit`, or `infer` and set confidence accordingly.
 
-Template-level (top-level `Metadata.Context`):
+Template-level (`Metadata["com.aws.cloudformation.Context"]` at the template root):
 
 | Field   | Type                 | Meaning                                                                                   |
 |---------|----------------------|-------------------------------------------------------------------------------------------|
@@ -574,7 +590,7 @@ Conventions carried by the companion specification: free-text values use terse
 telegraphic shorthand; the hoist rule moves context repeated on more than ~3 resources up
 to template level; anti-field rules forbid restating anything the template already
 expresses (`Type`, logical IDs, property values, `Description` properties, `aws:cdk:path`);
-a tiered drop order guides authoring tools near the 1 MB limit (shed `trust`, `ops`,
+a tiered drop order guides authoring tools near the 1 MB limit (shed optional trust detail, `ops`,
 `failureModes`, `gaps`, `deps`, then low-value `mutability`/`why` detail; `must` and an
 externalization `ref` are never dropped). CDK warns on the whole serialized template but
 does not automatically apply this drop order.
@@ -594,9 +610,9 @@ consumer actually does - was benchmarked rather than assumed under these conditi
 
 1. **No embedded context** — the control: the template states what exists, nothing more.
 2. **Natural inline YAML comments** — the strongest unstructured raw-template baseline.
-3. **Structured `Metadata.Context`** — the approach this RFC proposes, consumed without
+3. **Structured `Metadata["com.aws.cloudformation.Context"]`** — the approach this RFC proposes, consumed without
    context-specific instructions.
-4. **Structured `Metadata.Context` plus context-aware tooling** — consumers that understand
+4. **Structured `Metadata["com.aws.cloudformation.Context"]` plus context-aware tooling** — consumers that understand
    the vocabulary rather than merely reading it as text.
 
 The comparison showed that context-free templates performed worst, especially on tasks
@@ -604,7 +620,7 @@ whose correct answer depended on absent knowledge. Comments showed that context 
 provides most of the improvement, while the structured form made that context durable and
 machine-addressable and vocabulary-aware tooling added a further benefit. Comments alone
 remain source-local for CDK because synthesis does not preserve them by default; the
-automatic-propagation alternative would translate them into `Metadata.Context`, which
+automatic-propagation alternative would translate them into `Metadata["com.aws.cloudformation.Context"]`, which
 remains the deployed carrier.
 
 **What the benchmark taught us about the design.** Three findings shaped this proposal:
@@ -619,7 +635,7 @@ remains the deployed carrier.
 * **Context informs decisions; it does not enforce them.** Given a documented constraint, a
   consumer is far more likely to *surface* it than to *obey* it when a request conflicts
   with it directly. This is the honest limit of the feature and the reason the RFC frames
-  `Metadata.Context` as advisory: enforcement belongs to policy validation and change-set
+  `Metadata["com.aws.cloudformation.Context"]` as advisory: enforcement belongs to policy validation and change-set
   review, not to metadata.
 
 ### Appendix C - Why `Metadata` is the right carrier
@@ -628,7 +644,12 @@ remains the deployed carrier.
 consumer-defined content: the section accepts arbitrary keys, is ignored by the
 provisioning engine, and is already used this way by
 `AWS::CloudFormation::Interface` (Console form layout) and by CDK itself
-(`aws:cdk:path`). Choosing it means this feature needs no CloudFormation service change.
+(`aws:cdk:path`). The reverse-DNS key `com.aws.cloudformation.Context` gives this schema a
+stable identity without claiming the whole `Metadata` map. Sibling reverse-DNS keys are
+the generic extension mechanism for structured domains such as data classification, so
+independent tools can share a schema and ordering rules without adding fields to Context.
+Choosing `Metadata` means this feature and its extensions need no CloudFormation service
+change.
 
 The relevant public constraints are the template size quotas - the template body is capped
 when passed inline and higher when passed by S3 URL - so context competes with resources
@@ -642,9 +663,9 @@ in `GetTemplate` output.
 
 CDK already writes structural metadata into synthesized templates: `aws:cdk:path` on
 every resource (construct-tree location) and version-reporting analytics. The
-`Metadata.Context` key is additive alongside these; the vocabulary's anti-field rules
+`com.aws.cloudformation.Context` metadata key is additive alongside these; the schema's anti-field rules
 explicitly forbid duplicating them (no path, no construct type, no logical id inside
 context). Where `aws:cdk:path` answers "where in the source tree did this come from",
-`Metadata.Context` answers "why does it exist and how safely can it change" - the two are
+`Metadata["com.aws.cloudformation.Context"]` answers "why does it exist and how safely can it change" - the two are
 complementary layers of the same idea: the synthesized artifact should carry enough of
 the authoring-time model for downstream consumers to act correctly.
