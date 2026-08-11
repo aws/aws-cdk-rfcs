@@ -397,10 +397,12 @@ collecting staged entries whose targeting options match, and merges them so that
 closer to the resource win. Because merge order derives from the construct tree rather
 than from aspect registration order, the semantics are deterministic regardless of how
 many scopes declared context or in what order `add()` was called - the same reasoning
-that led Tags to a single-visitor design. Finally the merged block is written with
-`CfnResource.addMetadata('com.aws.cloudformation.Context', ...)`; any pre-existing value
-in that metadata namespace written directly by the user takes precedence over cascaded
-context.
+that led Tags to a single-visitor design. Finally the renderer writes the merged block to
+`com.aws.cloudformation.Context`.
+
+**Precedence:** A manually supplied value at that key passes through unchanged unless the
+facade, mixin, or aspect also produces Context for the same location. In that case, the
+API-produced block replaces the manual block in full; the two are not merged.
 
 Merge semantics, field by field:
 
@@ -452,28 +454,23 @@ the declaration or advisory-schema contract.
 
 ### Is this a breaking change?
 
-No. The feature is purely additive and opt-in:
+For supported CDK APIs, no. The feature is opt-in and additive:
 
-* No context is emitted unless `MetadataContext.of(...).add(...)`, `addToTemplate(...)`,
-  or the mixin is called. Synthesized output for existing apps is byte-identical.
-* `com.aws.cloudformation.Context` is an advisory metadata namespace CloudFormation
-  ignores; it has no deployment-behavior effect. CloudFormation explicitly permits
-  arbitrary `Metadata` keys.
-* Users who write that resource-level key manually with
-  `cfnResource.addMetadata('com.aws.cloudformation.Context', ...)` keep working: the
-  rendering aspect merges cascaded context *under* explicit resource metadata, so their
-  values win. Sibling metadata namespaces remain untouched.
+* The feature emits no additional Context unless `MetadataContext.of(...).add(...)`,
+  `addToTemplate(...)`, or the mixin is called. Apps that do not use those APIs retain
+  byte-identical synthesized output, including manually supplied Context metadata.
+* `com.aws.cloudformation.Context` is an Amazon-owned advisory metadata namespace; the
+  precedence rule defined above applies only when the new API is adopted.
+* Sibling metadata namespaces remain untouched, and Context has no deployment-behavior
+  effect because CloudFormation ignores advisory metadata.
 
 ### What alternative solutions did you consider?
 
-1. **A standalone Aspect/construct library (no core changes).** The behavior is achievable
-   outside core: `CfnResource.addMetadata()` already writes arbitrary keys, so an Aspect in
-   a third-party package could render the same blocks. Rejected as the end state for three
-   reasons: discoverability (an adoption feature buried in a third-party package reaches a
-   fraction of users), duplication (every language ecosystem needs bindings that core gets
-   for free via jsii), and integration (the `Mixins` form, `AspectPriority` defaults, and
-   eventual L2 integration points all live in core). The external path remains open to
-   anyone — the API proposed here does not preclude it.
+1. **A standalone Aspect/construct library (no core changes).** The behavior is
+   achievable with generic metadata APIs. Rejected as the end state because the
+   interoperable contract benefits from a validated, discoverable core API with jsii
+   bindings, consistent `Mixins` behavior, `AspectPriority` defaults, and future L2
+   integration points.
 2. **Automatic propagation of leading source comments.** A prototype Aspect follows a
    resource's creation stack to its source location, reads the leading comment, applies an
    anti-fabrication gate, and writes an attributed `Metadata["com.aws.cloudformation.Context"].why` during synthesis.
@@ -483,8 +480,7 @@ No. The feature is purely additive and opt-in:
    quality vary across jsii languages; and weak/circular/boilerplate comments require
    heuristic rejection. A transformer also adds build integration and is language-specific.
    This remains a compatible producer: once reliable, it can feed derived values through
-   `MetadataContext` or directly produce the same wire shape, while the deterministic API
-   remains the persistence target.
+   `MetadataContext`, while the deterministic API remains the persistence target.
 3. **Reusing existing `Description` properties.** Many L2s expose `description` props
    that render as first-class resource properties. These are complementary, not
    sufficient: only some resource types have them, they conflate "what it does" with
@@ -508,7 +504,8 @@ No. The feature is purely additive and opt-in:
 * **Template size pressure.** Context counts against the 1 MB template limit. CDK's
   existing synth-time warning measures the complete serialized template, including
   context, above 80% of its conservative 1,000,000-character threshold. This RFC does not
-  add a second limit or silently discard user declarations. Terse values, sparse
+  add a second limit or silently discard declarations made through `MetadataContext`.
+  Terse values, sparse
   `mutability`, hoisting, and `ref` externalization reduce pressure; authoring tools may
   apply the documented drop order (optional trust detail, then `ops`, `failureModes`, `gaps`,
   `deps`, and
@@ -524,8 +521,8 @@ No. The feature is purely additive and opt-in:
   confident-sounding context. The `trust` field exists precisely so generated context can
   self-identify (`src: infer`, low confidence, citation) — but the API cannot force
   honesty, and a caller is free to claim `authored`.
-* **Merge-semantics complexity.** Nearest-wins plus accumulate-and-dedupe plus explicit
-  overrides is more to learn than a flat key-value store. The rules mirror `Tags`
+* **Merge-semantics complexity.** Nearest-wins plus accumulate-and-dedupe is more to
+  learn than a flat key-value store. The rules mirror `Tags`
   precedence where possible, and the unit-test suite pins them down.
 
 ### What is the high-level project plan?
@@ -537,9 +534,9 @@ metadata, rendering aspect, primary-resource targeting, template-level merge) to
 README section. The code is available for review at
 [aws/aws-cdk#38381](https://github.com/aws/aws-cdk/pull/38381).
 
-The feature ships under the standard core review bar: it is small, purely additive, and has
-no feature-flag interaction. Nothing about it needs to bake behind an experimental gate,
-because emitting no context is the default and existing synthesized output is unchanged.
+The feature ships under the standard core review bar: it is small, opt-in, and has no
+feature-flag interaction. Nothing about it needs to bake behind an experimental gate:
+the feature emits nothing until its APIs are adopted, so existing output remains unchanged.
 
 ### Are there any open issues that need to be addressed later?
 
