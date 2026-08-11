@@ -1,6 +1,6 @@
 # A lightweight plugin system for jsii language targets
 
-* **Original Author(s):**: @omarqureshi
+* **Original Author(s)**: @omarqureshi
 * **Tracking Issue**: TBD *(successor to [#935](https://github.com/aws/aws-cdk-rfcs/issues/935);
   co-development offered by @mrgrain in its closing discussion: "let's work on an RFC for a
   lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
@@ -24,6 +24,16 @@ implementation to live in forks is that the toolchain's language registries are 
 Ruby fork's entire delta over upstream is registry entries and version pins. Without sanctioned
 seams, every community language pays a permanent fork tax (rebases, patch-pins, drift), and AWS
 gets support ambiguity instead of a clean boundary.
+
+An in-tree target also inherits a syntax floor it does not control. Its generated code has to keep
+working on the oldest runtime AWS still supports, and raising that floor is a breaking change for
+every consumer of every CDK library — so the floor tracks the language's *end-of-life* schedule
+rather than its releases. pacmak's Python target went `>=3.6` (2019) → `~=3.7` (2022) → `~=3.8`
+(2023) → `~=3.9` (2025) → `~=3.10` (May 2026), which is to say `match`/`case` became available to
+generated Python more than four years after Python 3.10 shipped it. That lag is structural, not
+neglect: it is what supporting the oldest live runtime costs. A plugin maintainer sets the floor
+against their own community and pays for moving it themselves, rather than charging it to
+everyone downstream of the CDK.
 
 ## Proposed Developer Experience
 
@@ -310,6 +320,29 @@ implementation experience:
 
 ## Future Possibilities
 
+- **Several eras of one language**: nothing in the seam says a language gets exactly one target.
+  Registered language ids are free-form strings and tablets key translations by them, so `ruby`
+  and `ruby-next` coexist in one registry, one tablet and one build with no design change. A
+  maintainer whose community has moved on can emit modern syntax while an older era stays
+  available — and because the target is out-of-tree, that older era can be handed to a *different*
+  maintainer. The maintenance tail becomes transferable rather than permanent, which is precisely
+  what the in-tree model cannot offer. This need not reach users: the language's own packaging
+  already resolves it (a gemspec's `required_ruby_version` makes RubyGems pick the newest
+  compatible release), so `gem install aws-cdk-lib` is unchanged. Whether an era is a separate
+  package or a version-gated option within one target is a maintainer's choice — most of a target
+  is shared, so splitting is worth it only once the eras genuinely diverge.
+- **Extraction, if it is ever wanted**: the seam runs both ways. Once a language can live outside
+  the toolchain, jsii's core is what is genuinely language-neutral — the assembly spec, the
+  compiler, the kernel wire protocol and the conformance kit (D2) — and a built-in target is a
+  plugin that happens to ship in the repo. An existing target could therefore be lifted out
+  without changing what it produces. Note what this is *not*: extraction is not withdrawal of
+  support. The same team can own the same target from its own repository, with its own release
+  cadence and its own language floor — which is the direct remedy for the version lag described
+  in The Problem, applied to a language AWS supports commercially. **This RFC does not propose
+  extracting anything**; it observes that the option exists afterwards and costs nothing to keep
+  open. Precedent for the shape rather than the decision: Terraform moved providers out of core,
+  and Kubernetes moved cloud providers and volume plugins to CCM/CSI, both to shed a maintenance
+  tail for code the core team did not own the domain expertise for.
 - **Graduation**: a plugin language with sustained quality and adoption could be granted a
   canonical distribution name (dropping the `community-` prefix) — a decision AWS can make per
   language, later, without this RFC deciding it now.
