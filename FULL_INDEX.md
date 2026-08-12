@@ -205,20 +205,21 @@
 [808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||✅ done
 [814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0814-cdk-mixins.md)||✅ done
 [835](https://github.com/aws/aws-cdk-rfcs/issues/835)|[Native EBS Snapshot Asset Handling](https://github.com/aws/aws-cdk-rfcs/issues/835)||💡 proposed
+[840](https://github.com/aws/aws-cdk-rfcs/issues/840)|[proposal+titleRFC](https://github.com/aws/aws-cdk-rfcs/issues/840)||💡 proposed
 [859](https://github.com/aws/aws-cdk-rfcs/issues/859)|[L2 Construct for AWS::ObservabilityAdmin::OrganizationCentralizationRule](https://github.com/aws/aws-cdk-rfcs/issues/859)||💡 proposed
 [867](https://github.com/aws/aws-cdk-rfcs/issues/867)|[S3 Vector L2 CDK Constructs](https://github.com/aws/aws-cdk-rfcs/issues/867)||💡 proposed
 [877](https://github.com/aws/aws-cdk-rfcs/issues/877)|[Automated issue triage and guidance for community PRs](https://github.com/aws/aws-cdk-rfcs/issues/877)||💡 proposed
 [884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0884-aws-elemental-mediaconnect-l2.md)||💡 proposed
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0886-making-hotswap-faster.md)||✅ done
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
-[904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/issues/904)||💡 proposed
+[904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0904-aws-elemental-medialive-l2.md)||💡 proposed
 [907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0907-cloudfront-mediapackagev2-origin-extension.md)||💡 proposed
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||✅ done
 [926](https://github.com/aws/aws-cdk-rfcs/issues/926)|[Lambda-based dependency resolver\installer](https://github.com/aws/aws-cdk-rfcs/issues/926)||💡 proposed
 [929](https://github.com/aws/aws-cdk-rfcs/issues/929)|[AWS S3Files L2 Constructs](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0929-s3files-l2-constructs.md)||❓unknown
 [935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
-[943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/issues/943)||💡 proposed
+[943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0943-aws-elemental-inference-l2.md)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [960](https://github.com/aws/aws-cdk-rfcs/issues/960)|[Log Alarm L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/960)||❓unknown
 <!--END_TABLE-->
