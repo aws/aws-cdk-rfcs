@@ -25,15 +25,27 @@ Ruby fork's entire delta over upstream is registry entries and version pins. Wit
 seams, every community language pays a permanent fork tax (rebases, patch-pins, drift), and AWS
 gets support ambiguity instead of a clean boundary.
 
-An in-tree target also inherits a syntax floor it does not control. Its generated code has to keep
-working on the oldest runtime AWS still supports, and raising that floor is a breaking change for
-every consumer of every CDK library — so the floor tracks the language's *end-of-life* schedule
-rather than its releases. pacmak's Python target went `>=3.6` (2019) → `~=3.7` (2022) → `~=3.8`
-(2023) → `~=3.9` (2025) → `~=3.10` (May 2026), which is to say `match`/`case` became available to
-generated Python more than four years after Python 3.10 shipped it. That lag is structural, not
-neglect: it is what supporting the oldest live runtime costs. A plugin maintainer sets the floor
-against their own community and pays for moving it themselves, rather than charging it to
-everyone downstream of the CDK.
+An in-tree target also inherits a syntax floor it does not control.
+
+Generated code has to keep working on the oldest runtime AWS still supports, and raising that
+floor breaks every consumer of every CDK library at once. So the floor cannot follow the
+language's releases. It follows the language's *end-of-life* schedule, which is years behind.
+pacmak's Python target shows the cadence:
+
+| Minimum Python | Since |
+| --- | --- |
+| 3.6 | March 2019 |
+| 3.7 | April 2022 |
+| 3.8 | November 2023 |
+| 3.9 | February 2025 |
+| 3.10 | May 2026 |
+
+Python 3.10 shipped in October 2021, so `match`/`case` reached generated Python four and a half
+years after the language had it. That lag is structural rather than neglect — it is what
+supporting the oldest live runtime costs, and every in-tree language pays it.
+
+A plugin maintainer sets the floor against their own community and pays for moving it themselves,
+instead of charging it to everyone downstream of the CDK.
 
 ## Proposed Developer Experience
 
