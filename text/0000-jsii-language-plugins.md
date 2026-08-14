@@ -1,7 +1,7 @@
 # A lightweight plugin system for jsii language targets
 
 * **Original Author(s)**: @omarqureshi
-* **Tracking Issue**: TBD *(successor to [#935](https://github.com/aws/aws-cdk-rfcs/issues/935);
+* **Tracking Issue**: *(to be opened against aws/aws-cdk-rfcs before submission — successor to [#935](https://github.com/aws/aws-cdk-rfcs/issues/935);
   co-development offered by @mrgrain in its closing discussion: "let's work on an RFC for a
   lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
   generated language bindings")*
@@ -45,9 +45,14 @@ A community language maintainer publishes two artifacts, entirely under their ow
 and generates bindings for any jsii assembly with stock tooling:
 
 ```sh
-npx jsii-pacmak --plugin @cdk-community/jsii-target-ruby -t ruby \
-  --target-config ./naming-overlay.json -o dist/ruby -- .
+npx jsii-pacmak --plugin @cdk-community/jsii-target-ruby -t ruby -o dist/ruby -- .
 ```
+
+`--plugin` is the whole seam. Naming that a construct library does not carry — what `aws_s3`
+is called in the target language — reaches generation through an environment variable the
+plugin reads, which needs no pacmak change and is how the reference implementation works
+today. Promoting that to a `--target-config` flag is optional sugar, noted in D1 and not
+required by anything here.
 
 Consumers install the generated bindings from wherever the community hosts them. AWS's tooling
 knows nothing about the language; AWS's repos contain none of its code; AWS's release train
@@ -68,6 +73,13 @@ The deliverables are deliberately shaped as *openings of existing seams*, not ne
   no language-specific content of any kind lands in an AWS repository — the D0/D1/D3 diffs
   contain zero occurrences of any plugin language's name, verifiable by grep. Even the act of
   registering a language happens inside the plugin package at load time.
+- **The boundary holds in both directions.** Just as no language code lands in an AWS
+  repository, no AWS library naming lands in the language target: what `aws_s3` is called in
+  Ruby is a fact about `aws-cdk-lib`, not about Ruby, and lives in a small per-library
+  repository alongside that library's packaging and publishing. The reference target is
+  vendor-neutral and tests itself against a fabricated library; `aws-cdk-lib`, `cdk8s` and
+  `constructs` each carry their own naming. This is what stops a community target accumulating
+  one vendor's special cases, and the scaffold generates the split by default.
 - **The support boundary is explicit.** The plugin API surface is published as an explicitly
   versioned, initially **experimental** API; pacmak declares its plugin-API version, plugins
   declare a compatible range, and mismatches fail loudly at load time. No guarantee is made
@@ -95,6 +107,20 @@ Every deliverable exists as a working branch, validated against current upstream
   with rendered API docs, and production workloads (a Rails application on Lambda) deploy
   through them today — the publish pipeline has been performing the "out-of-tree language
   target" role for weeks, via forks and patch-pins that this RFC's seams eliminate.
+- **The scaffold produces a running skeleton**: `create-jsii-language` generates a target
+  repository — pacmak target, rosetta visitor, naming harness, snapshot harness, conformance
+  wiring, CI — and a second language (`jsii-target-crystal`) has been generated from it and
+  builds. To be precise about what that is and is not: it is evidence the scaffold works, not
+  a second working target. Crystal is a skeleton with no generator implementation yet, and the
+  graduation criterion below asks for something stronger than this.
+- **The seam is library-neutral, not CDK-shaped**: the same plugin, unchanged, generates and
+  publishes **cdk8s**, eight `cdk8s-plus-*` packages (one per Kubernetes version they target),
+  and `constructs` — twelve documented libraries on the feed in total. cdk8s is not an AWS CDK
+  library and shares none of its naming, packaging or deployment model, so building it exercises
+  the seam rather than one library's assumptions. It also admits a check the CDK cannot cheaply
+  make: a cdk8s app writes YAML and needs no cloud account, so CI synthesizes the same chart
+  from Ruby and from TypeScript and **diffs the manifests** — behavioural equivalence between
+  the bindings and the originals, not merely that the generated code compiles.
 
 ### Upstreaming sequence
 
@@ -215,6 +241,13 @@ Frozen APIs are a commitment; a plugin ecosystem could create support pressure (
 broke"). Mitigations: the surface is tiny and mostly already-stable interfaces; the experimental
 tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
 
+A related worry is inheriting an abandoned ecosystem by association. The honest answer is that
+the seam changes what abandonment costs rather than preventing it: an unmaintained plugin stops
+working for its own users and publishes no fresh conformance report, while AWS's repositories,
+CI matrix and release train are exactly as they were the day before. That is the difference this
+proposal is buying, and it is the reason the reference implementation's own maintainer count
+(one, today) is disclosed rather than dressed up.
+
 ### What is the technical solution (design) of this feature?
 
 Four deliverables, smallest first — each an opening of an existing seam:
@@ -222,9 +255,9 @@ Four deliverables, smallest first — each an opening of an existing seam:
 - **D0** — `jsii-compiler` warns-and-passes unknown `jsii.targets` languages instead of
   rejecting them (~5 lines; built-in validation untouched).
 - **D1** — `jsii-pacmak` loads external targets via `--plugin`; the generic
-  `IndependentPackageBuilder` that already serves three built-in targets serves plugins too;
-  a `--target-config` overlay supplies naming for libraries that don't carry plugin-language
-  config.
+  `IndependentPackageBuilder` that already serves three built-in targets serves plugins too.
+  Naming for libraries that carry no plugin-language config is supplied by the plugin itself
+  and needs no pacmak change; a `--target-config` flag is optional sugar over that.
 - **D2** — the kernel wire protocol is documented as a public interface for alternative guest
   runtimes, and the compliance suite is packaged as a runnable conformance kit (no code changes).
 - **D3** *(phase 2)* — jsii-rosetta accepts registered translation visitors and ships its
@@ -265,8 +298,21 @@ Ruby, extracted from the existing fork: a pacmak target (~2,300 lines) and roset
 (~1,100 lines) re-homed behind the D1/D3 seams as the `jsii-target-ruby` plugin package, which
 also self-hosts the runtime gem and the full compliance suite; generated `aws-cdk-lib` bindings
 self-hosted on a public gem feed with rendered API docs; production workloads deploying through
-them; and an operating publish pipeline. Maintainer team: two (second maintainer onboarding
-August 2026), meeting the sustainability bar hosting organizations ask for.
+them; and an operating publish pipeline.
+
+Maintainer team: one. Stating that plainly matters more than projecting growth, because it is
+precisely the risk this proposal makes AWS-neutral. A single-maintainer target *in tree* becomes
+AWS's permanent liability the moment that maintainer stops — that is the maintenance tail
+described in The Problem, and it is why #935 was closed. A single-maintainer target as a plugin
+does not: it simply stops being updated, its conformance report goes stale, and consumers can see
+both facts and decide. Nothing lands in an AWS repository that AWS would then have to carry.
+
+It remains a real consideration for anyone choosing to depend on the bindings, and for a hosting
+organization weighing adoption. Two things narrow it. The conformance kit gives an objective,
+re-runnable measure of where an implementation actually stands, rather than asking anyone to
+judge maintainer capacity. And out-of-tree targets are transferable — the same property the
+language-era argument relies on under Future Possibilities — so the work can change hands
+without a toolchain change, which is not true of an in-tree language.
 
 ### What is the high-level project plan?
 
@@ -392,6 +438,23 @@ framework:
   selected via an environment variable) into the assembly spec as it loads, and builds the
   entire published `aws-cdk-lib` closure that way in CI. The pacmak flag is therefore thin
   sugar over an existing pattern — worth having for a uniform CLI story, not load-bearing.
+
+#### Field report: a plugin cannot reuse pacmak's generated-code harness
+
+pacmak tests its own targets by generating the `jsii-calc` fixtures and comparing the result
+against a committed snapshot (`packages/jsii-pacmak/test/generated-code`) — the check that
+catches a refactor quietly changing three hundred files, which matters because generated code is
+public API from the moment it ships. A plugin cannot use it: `verifyGeneratedCodeFor` is keyed on
+pacmak's `TargetName` enum, and pacmak publishes only `lib/`, so the harness is not importable.
+
+The reference plugin therefore reimplemented it (~150 lines, pinning 366 files) and the language
+scaffold ships a copy for every future target — which is the same duplication D3 removes for the
+translations corpus, and the same remedy applies: expose the harness behind `lib/testing`, as
+rosetta now does, and let plugins pin their output with the tool their built-in counterparts use.
+
+Not a blocker, and not required by anything else in this RFC — plugins can and do bring their own.
+It is listed because it is the one place where an out-of-tree target still has to rebuild
+machinery that exists upstream, and it is small.
 
 #### Field report: `--recurse` deadlocks on installed artifacts
 
