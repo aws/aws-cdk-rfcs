@@ -519,7 +519,44 @@ already depends on its stability. This deliverable makes that implicit contract 
   runtimes, with its compatibility policy;
 - `tools/jsii-compliance` published as a runnable **conformance kit**: the canonical suite
   definition plus the report format, so any external runtime can generate a compliance report
-  and make a verifiable claim ("full pass") without AWS running anything.
+  and make a verifiable claim ("full pass") without AWS running anything;
+- the suite definition enriched with what each test proves and which runtime capability it
+  exercises — data about tests that already exist, and the difference between a scoreboard and
+  something an implementer can work from.
+
+**Field report: a kit is more than the suite file.** Packaging `tools/jsii-compliance` as it
+stands would hand a new runtime 123 test names and a report format. That is enough to state a
+*claim* and not enough to do the *work* — for two reasons that only show up when you build a
+runtime against it.
+
+The first is that the suite is mostly names. `TestCase` carries a `description`, and **98 of the
+123 are empty**, so `objectIdDoesNotGetReallocatedWhenTheConstructorPassesThisOut` is all a
+reader gets; the only way to learn what it asserts is to find the same test in another
+language's runtime and read the assertions. That is a reasonable state for an internal fixture
+and a poor one for a contract published for others to implement against.
+
+The second matters more. Compliance failures are not independent — one missing mechanism takes
+every test that depends on it down at once, so a new runtime opens on 123 failures that describe
+about a dozen areas of work, in no useful order. Worse, the count is actively misleading: it
+overstates how much is wrong and says nothing about where to start. The Ruby runtime was built
+by inferring that structure and working it in dependency order — kernel before values before
+collections, interfaces and error propagation before synchronous callbacks, those before the
+async completion protocol. Nothing in the suite records that order, so every implementer
+reconstructs it from scratch.
+
+Neither gap needs a toolchain change, which is why this remains a *no code changes*
+deliverable. `create-jsii-language` ships both today: the suite grouped into eleven capabilities
+carrying prerequisites, every test described in one line, and a planner that reads a compliance
+report and names the capability worth working on now. The descriptions were read off the
+existing reference implementations rather than inferred from test names, and the catalogue is
+validated against a runtime that passes — the Ruby target's report scores 123/123 against it
+with the two sets exactly equal, no test in the report unknown to the catalogue and none in the
+catalogue absent from the report.
+
+It works out of tree, which is the point: a community can supply this without AWS's involvement.
+It is offered upstream as part of this deliverable anyway, because the same data would let the
+published compliance matrix group by capability, and because a contract is worth more maintained
+in one place than reconstructed independently by each implementer.
 
 ### D3. rosetta: language plugins *(phase 2)*
 
@@ -598,7 +635,7 @@ language:
 | --- | --- |
 | pacmak plugin package: `Target` skeleton, version hooks, naming utils, snapshot-test harness against the `jsii-calc` fixtures | the ~2,300-line Ruby target and its snapshot suite |
 | guest-runtime skeleton: kernel process management, the wire verbs stubbed, serialization/callback/override module layout, error taxonomy | the runtime gem's `kernel` / `serializer` / `callbacks` / `registry` structure — identical shape in every existing guest language |
-| conformance kit wired to run against the skeleton, all cases initially failing | the compliance suite; "make the suite pass" was empirically how the Ruby runtime was built and validated |
+| conformance kit wired to run against the skeleton, all cases initially failing, plus the capability catalogue and planner described in D2 that turn those failures into an order of work | the compliance suite; "make the suite pass" was empirically how the Ruby runtime was built, and the dependency order was reconstructed by hand while doing it |
 | naming-overlay template + documented format | the maintained overlay for `aws-cdk-lib`'s 613 submodules |
 | CI + self-publish pipeline templates (generate bindings from an assembly, publish to a community feed, smoke-test the published artifact by synthesizing a real stack) | the operating Ruby publish pipeline |
 | decision checklist docs: member casing, reserved words, module mapping, version-scheme mapping, callback ergonomics | the recorded Ruby design decisions |
