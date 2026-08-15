@@ -75,7 +75,73 @@ to run against any external runtime.
 ## System Impact
 
 The deliverables are deliberately shaped as *openings of existing seams*, not new machinery
-(the full design is in the [Appendix](#appendix-the-deliverables-in-detail)):
+(the full design is in the [Appendix](#appendix-the-deliverables-in-detail)). Three parties own
+three separate things, and every arrow below is an existing interface being made public rather
+than a new one being invented:
+
+```mermaid
+flowchart TB
+  subgraph aws["AWS repositories"]
+    direction LR
+    compiler["jsii-compiler<br/>D0 · accept targets.LANG"]
+    pacmak["jsii-pacmak<br/>D1 · --plugin"]
+    rosetta["jsii-rosetta<br/>D3 · language registry"]
+    kernel["@jsii/runtime<br/>the kernel process"]
+    kit["conformance kit<br/>D2 · suite + report format"]
+  end
+
+  subgraph lang["Language repository — one per language, community owned"]
+    direction LR
+    plugin["pacmak target plugin<br/>+ rosetta visitor"]
+    guest["guest runtime"]
+  end
+
+  subgraph lib["Library repositories — one per construct library"]
+    direction LR
+    profile["naming profile<br/>what aws_s3 is called"]
+    publish["packaging + publishing<br/>to a community feed"]
+  end
+
+  pacmak -- "loads at run time" --> plugin
+  rosetta -- "visitor registers itself" --> plugin
+  compiler -. "assembly carries targets.LANG" .-> pacmak
+  profile -- "names, per generation run" --> plugin
+  plugin -- "generated bindings" --> publish
+  guest <-- "wire protocol · line-delimited JSON over stdio" --> kernel
+  guest -- "compliance report" --> kit
+```
+
+Read it for what does **not** cross a line. No language name appears in the AWS box — the
+plugin registers itself, so even that act happens on the community side. And no library naming
+appears in the language box: what `aws_s3` is called is a fact about `aws-cdk-lib`, not about
+the language, so it sits in the library's own repository and reaches generation as an input.
+The language target and the construct library are strangers that meet only through pacmak.
+
+The same split, as it exists today. Every repository below is public, and the non-AWS rows are
+a running deployment rather than a proposed one:
+
+| Repository | Holds | This RFC changes |
+| --- | --- | --- |
+| **AWS** | | |
+| `aws/jsii-compiler` | assembly compilation and validation | D0: accept unknown `targets.LANG` (~5 lines + tests) |
+| `aws/jsii` — `jsii-pacmak` | binding generation | D1: a target-plugin registry and `--plugin` |
+| `aws/jsii` — `jsii-rosetta` | example translation | D3: open the language registry; ship the corpus as a test surface |
+| `aws/jsii` — `@jsii/runtime` | the kernel process every guest runtime talks to | nothing — the wire protocol is documented as public (D2), not altered |
+| `aws/jsii` — `tools/jsii-compliance` | the conformance suite and report format | D2: published as a runnable kit; no code changes |
+| **Language — community owned** | | |
+| `omarqureshi/jsii-target-ruby` | the pacmak target plugin, the rosetta visitor, and the Ruby guest runtime | — consumes the seams above |
+| `omarqureshi/create-jsii-language` | the scaffold: generates the whole shape above for a named language | — |
+| `omarqureshi/jsii-target-crystal` | untouched output of the scaffold, kept as evidence it runs | — |
+| **Library — one per construct library** | | |
+| `omarqureshi/aws-cdk-ruby` | what `aws-cdk-lib` is called in Ruby, and its packaging | — |
+| `omarqureshi/cdk8s-ruby` | the same for `cdk8s` and eight `cdk8s-plus-*` packages | — |
+| `omarqureshi/constructs-ruby` | the same for `constructs`, the base library beneath both | — |
+| `omarqureshi/rubygems.omarqureshi.net` | the community feed and rendered API documentation | — |
+
+Two things are worth noticing in that list. The five AWS rows are the entire ask, and every one
+of them is additive or documentary — none changes what an existing language does, which the
+byte-identical built-in snapshots below are the evidence for. The other seven rows are where a
+language actually lives, and AWS hosts, reviews, releases and supports none of them.
 
 - **The `.jsii` assembly format and kernel protocol: unchanged.** (D0 relaxes what the compiler
   *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
