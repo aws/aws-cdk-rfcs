@@ -6,7 +6,7 @@
 
 AWS Cloud Development Kit (AWS CDK) applications contain information about why each
 resource exists. That information includes reasoning, hard rules that must remain true,
-and operational instructions. It often lives only in source comments,
+and how safely each resource can change. It often lives only in source comments,
 the hierarchy of CDK constructs, or the author's knowledge, and is lost when the `cdk synth`
 command generates a CloudFormation template. This RFC adds three application programming
 interfaces (APIs) to `aws-cdk-lib`:
@@ -31,8 +31,8 @@ feat(core): embed structured design context in generated templates (MetadataCont
 The metadata-context APIs add structured design information that CloudFormation stores but
 does not enforce under the
 `com.aws.cloudformation.Context` key in generated CloudFormation templates. The information
-can include reasoning, hard rules, change-safety guidance, source and confidence, and
-operational instructions. People and automated tools that inspect a deployed template can
+can include reasoning, hard rules, change-safety guidance, and source and confidence.
+People and automated tools that inspect a deployed template can
 therefore use the author's intent instead of guessing it.
 
 Two classes write the same documented template fields: `ResourceMetadataContext` writes
@@ -58,7 +58,6 @@ ResourceMetadataContext.of(queue).add({
   propertyMutability: {
     QueueName: ContextMutability.MUST_NEVER_CHANGE,
   },
-  ops: 'check ApproximateAgeOfOldestMessage before reducing VisibilityTimeout',
 });
 ```
 
@@ -80,8 +79,7 @@ full field reference and name mapping.
       "mutable": "change-with-constraints",
       "mutability": {
         "QueueName": "must-never-change"
-      },
-      "ops": "check ApproximateAgeOfOldestMessage before reducing VisibilityTimeout"
+      }
     }
   }
 }
@@ -89,25 +87,29 @@ full field reference and name mapping.
 
 No `trust` block appears because the caller did not provide one. The `trust` field is
 optional, and CDK never adds it automatically (see *Source and confidence* below).
-`defaultMutability` is `change-with-constraints`, and the required rule is recorded in
+`defaultMutability` is `change-with-constraints`, and the governing rule is recorded in
 `must`: `VisibilityTimeout` must remain at least six times the Lambda timeout.
 `change-with-constraints` means a value may change only while its stated rules remain true;
 using that value without a corresponding `must` rule gives the reader no useful guidance.
 
 ##### Resource context quality
 
-Every top-level field remains optional in the advisory schema. The authoring guidance is
-stricter: each significant resource that receives Context must have a non-empty `why` in
-its final merged block. Omit Context entirely for a trivial resource whose purpose is
-already obvious from its type and name. Add `must` only when violating the rule would break
-correctness, availability, security, data integrity, or a required dependency; never invent
-a rule merely to populate the field.
+Every top-level field is optional in the advisory schema, and CDK adds no requirements on
+top of it: a resource block may contain any subset of the fields, blank strings and empty
+arrays are structurally valid, and an empty declaration is a harmless no-op rather than an
+emitted empty block. The following are recommendations, not enforced rules. Give each
+significant resource that receives Context a `why` so a later reader knows why it exists,
+and omit Context entirely for a trivial resource whose purpose is already obvious from its
+type and name. Add `must` only when violating the rule would break correctness,
+availability, security, data integrity, or a required dependency; never invent a rule
+merely to populate the field.
 
-`must-never-change` and `change-with-constraints`, whether used as a resource default or for
-a property, require at least one non-empty `must` in the final merged block. `trust` cannot
-be used alone. Individual declarations may omit `why` or `must` when another applicable
-declaration supplies them. Template context does not require `must`; `arch`, `ref`, or
-`owner` alone are valid.
+Pair `must-never-change` or `change-with-constraints` with a `must` entry that states the
+rule behind the restriction, so a reader sees why a value is constrained; the schema does
+not require it. A `trust` block describes the source of other content, so it reads best
+alongside a `why` or `must`, but using it alone is valid. Individual declarations may omit
+`why` or `must` when another applicable declaration supplies them, and no template-level
+field is required either.
 
 ##### Propagation is explicit
 
@@ -124,7 +126,7 @@ declare const queue: sqs.Queue;
 
 // Declared on the Stack but limited to primary Amazon SQS queue resources.
 ResourceMetadataContext.of(stack).add({
-  ops: 'drain the queue before changing delivery settings',
+  must: ['delivery settings must preserve in-flight messages'],
 }, {
   applyToDescendants: true,
   includeResourceTypes: ['AWS::SQS::Queue'],
@@ -137,8 +139,8 @@ ResourceMetadataContext.of(queue).add({
 ```
 
 When several declarations apply to one resource, CDK combines them. For fields that hold
-one value (`why`, `defaultMutability`, `trust`, and `ops`), the declaration closest to the
-resource takes precedence. For array fields (`must`, `gaps`, and `deps`),
+one value (`why`, `defaultMutability`, and `trust`), the declaration closest to the
+resource takes precedence. For array fields (`must` and `deps`),
 CDK combines the entries and removes duplicates. For `propertyMutability`, CDK combines the
 maps and uses the closest declaration for each property name.
 
@@ -180,20 +182,18 @@ declare const lambdaFunction: lambda.Function;
 // Applies to the AWS Lambda function, not its generated AWS IAM role.
 ResourceMetadataContext.of(lambdaFunction).add({
   why: 'processes order events from an Amazon SQS queue and ignores previously processed events',
-  ops: 'check the dead-letter queue depth before increasing the timeout',
 });
 ```
 
 When a helper resource is available as a construct, target it directly instead of applying
 context to every descendant. For example, a function's dead-letter queue can record why it
-exists and how to operate it:
+exists:
 
 ```ts
 declare const deadLetterQueue: sqs.Queue;
 
 ResourceMetadataContext.of(deadLetterQueue).add({
   why: 'stores failed order-processing invocations for later recovery',
-  ops: 'inspect the failed message and fix the processor before returning messages to the source queue',
 });
 ```
 
@@ -214,7 +214,7 @@ ResourceMetadataContext.of(stack).add({
 
 // Only Amazon SQS queues among the descendant constructs.
 ResourceMetadataContext.of(stack).add({
-  ops: 'drain the queue before changing it',
+  why: 'buffers events for asynchronous processing',
 }, {
   applyToDescendants: true,
   includeResourceTypes: ['AWS::SQS::Queue'],
@@ -335,8 +335,8 @@ architecture overview, rules that apply throughout the template, references to s
 material, and ownership. The stack's one-line purpose belongs in CloudFormation's built-in
 `Description` field (the `description` property of `Stack`).
 
-Entries in `refs` point to known, version-controlled supporting files in the same
-repository. Referenced material supplements the information stored directly in the
+Entries in `refs` point to supporting material by URI — a relative repository path,
+`s3://`, or `https://`. Referenced material supplements the information stored directly in the
 template; it does not replace safety-critical `must` or `why` fields. Treat referenced
 content as untrusted data and continue with inline context if a file cannot be read.
 
@@ -387,7 +387,7 @@ templates.
 
 * `ResourceMetadataContext.of(scope).add(props, options?)` adds information to a resource.
   The information can include reasoning, hard rules, change-safety guidance, source and
-  confidence, operational instructions, known gaps, and dependencies.
+  confidence, and dependencies.
   By default, CDK writes it to the scope's primary resource. Options can apply it to
   descendants, include helper resources, filter CloudFormation resource types, or exclude
   information inherited from ancestor constructs.
@@ -399,7 +399,7 @@ templates.
   conflict behavior as `ResourceMetadataContext`.
 
 The dedicated `com.aws.cloudformation.Context` metadata key contains a fixed set of
-resource fields (`why`, `must`, `mutable`, `mutability`, `trust`, `ops`, `gaps`, `deps`)
+resource fields (`why`, `must`, `mutable`, `mutability`, `trust`, `deps`)
 and template fields (`arch`, `must`, `ref`, `owner`). The TypeScript API
 uses descriptive property names and maps them to these shorter template field names. This
 is ordinary CloudFormation `Metadata`: it is stored with the stack, has no effect on
@@ -419,14 +419,14 @@ Concrete situations this feature addresses:
   that are important to correct operation. For example, before reducing
   `VisibilityTimeout`, a reviewer sees the rule that it must remain at least six times the
   Lambda timeout to avoid duplicate processing.
-* **Operations and incident response** - `why`, `ops`, and `must` preserve information that
-  would otherwise remain undocumented: why the resource exists, what to check before
-  changing it, and which rules must remain true. A reader can use those fields before
+* **Operations and incident response** - `why` and `must` preserve information that
+  would otherwise remain undocumented: why the resource exists and which rules must
+  remain true. A reader can use those fields before
   changing retry or timeout settings.
 * **Infrastructure changes made by artificial intelligence** - tools that read templates
   through `GetTemplate` or `DescribeStackResource` can use documented intent. A request to
   raise a Lambda timeout may conflict with a documented service-level agreement or with a
-  queue visibility timeout. `must` and `ops` expose those rules before the tool makes a
+  queue visibility timeout. `must` exposes those rules before the tool makes a
   change that is valid in isolation but wrong for the system.
 * **Shared organizational information** - template-level `ref` entries can point to shared
   encryption or tagging rules without copying them into every template. The `trust` field
@@ -444,7 +444,7 @@ Existing applications do not require a person to annotate every resource manuall
 companion authoring tool is being developed to read existing AWS CDK or CloudFormation
 source, comments, version-control history, tests, and related service code. It then proposes
 `ResourceMetadataContext` calls, or `com.aws.cloudformation.Context` values for templates
-written directly, including source information in `trust` and unknowns in `gaps`. A person
+written directly, including source information in `trust`. A person
 reviews that derived information before it becomes part of the application; automatic
 derivation is not part of the core API.
 
@@ -502,8 +502,8 @@ CloudFormation `Metadata` section for optional design information supplied by th
 
 ### Why should we _not_ do this?
 
-* **Outdated information can mislead readers.** The `trust` and `gaps` fields show who or
-  what supplied information, confidence, and known unknowns, but they cannot determine
+* **Outdated information can mislead readers.** The `trust` field shows who or
+  what supplied information and confidence, but cannot determine
   whether the information is still current. Keeping it beside the AWS CDK code means both
   can be reviewed in the same change, but does not guarantee updates.
 * **This adds public APIs to `aws-cdk-lib`.** The change adds three classes, three
@@ -524,20 +524,28 @@ stored directly in templates; Appendix B summarizes that evaluation.
 #### Template representation and dedicated metadata key
 
 CDK writes the documented Context fields under the dedicated
-`com.aws.cloudformation.Context` key in CloudFormation `Metadata`. The advisory Context
-schema is documented in the
-[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema).
-The published
-[AWS CloudFormation agent skill guidance](https://github.com/aws/agent-toolkit-for-aws/pull/257)
-is authoritative for field meaning and authoring behavior. Appendix A and the CDK API
-documentation mirror that guidance and add typed conveniences without changing its
-semantics.
+`com.aws.cloudformation.Context` key in CloudFormation `Metadata`. The published
+CloudFormation Metadata Context schema (JSON Schema Draft 2020-12, version 1), documented in
+the
+[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
+is the structural source of truth for the field set. The schema is advisory: it is intended
+for client-side validation, and CloudFormation does not validate or enforce it. The
+[CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+in the Agent Toolkit for AWS offers non-enforced authoring guidance for agents. Appendix A
+and the CDK API documentation mirror the schema and add typed conveniences without changing
+its structure.
 
-CloudFormation does not interpret or validate these metadata fields. CDK performs limited
-checks on values passed through its typed APIs. It rejects `trust` by itself, blank entries,
-and `trust` without `source` and `confidence`. On each final merged Resource Context block,
-it requires a non-empty `why` and a non-empty `must` when mutability is
-`must-never-change` or `change-with-constraints`. These checks do not validate metadata
+CloudFormation does not interpret or validate these metadata fields, and the schema itself
+is advisory. CDK performs limited checks on values passed through its typed APIs that stay
+within the schema: it constrains `mutable`, `mutability`, and `trust` values to the
+schema's allowed tokens, and requires `source` and `confidence` when a caller supplies
+`trust`, matching the schema's `TrustObject`. CDK may also enforce the schema's sparse
+mutability map rule, keeping `propertyMutability` to properties that deviate from the
+resource default or are high-stakes rather than enumerating every property. CDK does not add
+requiredness beyond the schema: it does not require a `why`, does not require a `must` for
+constrained mutability, does not reject a `trust` block used alone, and does not reject
+blank strings or empty arrays, all of which are structurally valid. An empty declaration is
+a harmless no-op rather than an emitted empty block. These checks do not validate metadata
 written directly through low-level APIs. Other consumers may read, ignore, or validate the
 documented fields as needed.
 
@@ -565,7 +573,7 @@ the names in the generated template. Six use shorter template names:
 
 Resource fields are `why` (reasoning), `must` (hard rules), `mutable` (default
 change-safety), `mutability` (per-property change-safety), `trust` (source and confidence),
-`ops` (instructions before a change), `gaps` (known unknowns), and `deps` (dependencies).
+and `deps` (dependencies).
 
 Template fields are `arch` (architecture overview), `must` (rules that apply throughout
 the template), `ref` (references to supporting information), and `owner` (contact).
@@ -594,8 +602,9 @@ the dedicated APIs from silently overwriting each other.
 
 `ResourceMetadataContext.of(scope).add(context, options?)` performs three actions:
 
-1. It stores the declaration in metadata on the selected construct node. It immediately
-   rejects an empty declaration or blank array entry.
+1. It stores the declaration in metadata on the selected construct node. An empty
+   declaration adds nothing and is treated as a harmless no-op; blank strings and empty
+   arrays are structurally valid and are preserved as given.
 2. It registers `MetadataContextAspect`. A CDK Aspect is an object that visits constructs
    while CDK generates a template. The default priority is `AspectPriority.MUTATING`, and
    callers can change it with `options.priority`.
@@ -613,9 +622,9 @@ independent of the order in which callers invoked `add()`. It then writes the re
 
 The merge rules are:
 
-* For fields that hold one value (`why`, `defaultMutability`, `trust`, and `ops`), the
+* For fields that hold one value (`why`, `defaultMutability`, and `trust`), the
   declaration closest to the resource takes precedence.
-* For array fields (`must`, `gaps`, and `deps`), CDK combines entries and
+* For array fields (`must` and `deps`), CDK combines entries and
   removes duplicates.
 * For `propertyMutability`, CDK combines the maps and uses the closest declaration for each
   property name.
@@ -678,20 +687,20 @@ generation, the library does not inspect source comments, version-control histor
 service code, or deployed resources. Automatically deriving `why` or `deps` is not part of
 this API because derived information can be wrong and some dependencies are visible only
 after later template-processing steps. A separate authoring tool may propose API calls and
-use `trust` and `gaps` to identify evidence and uncertainty without changing these field
+use `trust` to identify evidence and confidence without changing these field
 definitions.
 
 #### Finding the documentation
 
 Readers identify these fields by the dedicated `com.aws.cloudformation.Context` key, which
-appears in applicable `GetTemplate` and `DescribeStackResource` responses. The advisory
-schema is documented in the
-[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema).
-The published
-[AWS CloudFormation agent skill guidance](https://github.com/aws/agent-toolkit-for-aws/pull/257)
-is authoritative for field meaning and authoring behavior. The `aws-cdk-lib` README, public
-API reference, and Appendix A mirror its field definitions and behavior. CloudFormation
-does not validate metadata fields.
+appears in applicable `GetTemplate` and `DescribeStackResource` responses. The published
+CloudFormation Metadata Context schema, documented in the
+[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
+is the structural source of truth for the field set. The
+[CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+in the Agent Toolkit for AWS offers non-enforced authoring guidance. The `aws-cdk-lib`
+README, public API reference, and Appendix A mirror the schema's field definitions.
+CloudFormation does not validate metadata fields against the schema.
 
 We considered printing a documentation notice every time `cdk synth` writes context. We
 decided against it because repeated notices would distract authors, and command output does
@@ -752,7 +761,7 @@ No supported AWS CDK API changes behavior unless a caller uses the new APIs:
   in Appendix A, but must retain safety-critical `must` entries and any `ref` needed to find
   information moved outside the template.
 * **Information can become outdated.** Keeping Context beside reviewed AWS CDK source and
-  recording source and uncertainty can help a reader judge it, but cannot ensure that it is
+  recording source and confidence can help a reader judge it, but cannot ensure that it is
   updated.
 * **CloudFormation does not validate Context.** CDK validates values supplied through the
   new APIs, and other consumers may perform their own checks, but metadata written directly
@@ -782,13 +791,13 @@ below are met.
 #### Requirements before declaring the API stable
 
 * **Public documentation.** Review Appendix A, examples, selection rules, merge rules, and
-  the `aws-cdk-lib` API documentation with the public API. The advisory schema is documented
-  in the
-  [AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema).
-  The companion agent skills, including the published
-  [AWS CloudFormation guidance](https://github.com/aws/agent-toolkit-for-aws/pull/257),
-  define authoring behavior for agents. CloudFormation does not validate metadata against
-  the schema.
+  the `aws-cdk-lib` API documentation with the public API. The published CloudFormation
+  Metadata Context schema, documented in the
+  [AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
+  is the structural source of truth. The
+  [CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+  in the Agent Toolkit for AWS offers non-enforced authoring guidance for agents.
+  CloudFormation does not validate metadata against the schema.
 * **Testing with authors and readers.** The companion authoring tool and at least one tool
   that reads Context must use the fields on real stacks. This confirms that the fields and
   selection behavior are sufficient before they become a long-term compatibility promise.
@@ -822,15 +831,18 @@ below are met.
 
 ### Appendix A - CloudFormation Context template field reference
 
-The advisory schema is documented in the
-[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema).
-The published
-[AWS CloudFormation agent skill guidance](https://github.com/aws/agent-toolkit-for-aws/pull/257)
-is authoritative for authoring behavior. This appendix and the public CDK API documentation
-mirror the schema fields and that guidance. Although every top-level field is structurally
-optional in the schema, authoring guidance requires a non-empty `why` in each final Resource
-Context block and CDK rejects `trust` alone. Template Context requires at least one
-non-empty field but does not require `must`. "API property" is the TypeScript name;
+The published CloudFormation Metadata Context schema (JSON Schema Draft 2020-12, version 1),
+documented in the
+[AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
+is the structural source of truth for the field set. This appendix and the public CDK API
+documentation mirror it. The
+[CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+in the Agent Toolkit for AWS adds non-enforced authoring guidance. Every top-level field is
+optional in both the Resource Context and Template Context blocks; neither defines a
+top-level required array, so any subset of fields is structurally valid. `TrustObject`, when
+present, requires `src` and `conf`; the object form of a `ref` entry requires `at`. The
+schema sets no `minLength` or `minItems`, so blank strings and empty arrays are valid, and
+all object definitions disallow additional fields. "API property" is the TypeScript name;
 "Template field" is the name written to the template.
 
 Resource-level (`Resources.<LogicalId>.Metadata["com.aws.cloudformation.Context"]`):
@@ -842,15 +854,13 @@ Resource-level (`Resources.<LogicalId>.Metadata["com.aws.cloudformation.Context"
 | `mutable` | `defaultMutability` | `ContextMutability` | no | Default change-safety for the resource. | `"change-with-constraints"` |
 | `mutability` | `propertyMutability` | object | no | Change-safety for properties that differ from the resource default or are especially important. | `{ "QueueName": "must-never-change" }` |
 | `trust` | `trust` | object | no | Source and confidence; see the trust fields below. | see the trust table |
-| `ops` | `ops` | text | no | Checks to perform before changing the resource. | `"check ApproximateAgeOfOldestMessage first"` |
-| `gaps` | `gaps` | array of text | no | Information known to be missing. | `["throughput at ten times normal load is unverified"]` |
 | `deps` | `deps` | array of text | no | Stacks, resources, or services this resource relies on. | `["NetworkStack"]` |
 
 `ContextMutability` allows four values: `must-never-change`,
 `change-with-constraints`, `review-required`, and `free-to-tune`.
-`must-never-change` and `change-with-constraints` require a non-empty `must` entry in the
-final merged Resource Context so readers can see the rule behind the restriction. `review-required` and
-`free-to-tune` do not require `must`.
+For `must-never-change` and `change-with-constraints`, pair the level with a `must` entry
+that states the rule behind the restriction so readers can see it; this is a recommendation,
+not a schema requirement.
 
 `trust` object fields:
 
@@ -871,13 +881,15 @@ The four allowed sources are:
 
 An automated tool chooses `comment`, `commit`, or `infer` according to the evidence it
 used. It uses `authored` only after a person writes or confirms the information. The caller
-always supplies `confidence`; CDK never chooses it from other fields. `trust` cannot be the
-only Resource Context field because it describes the source of other content.
+always supplies `confidence`; CDK never chooses it from other fields. Because `trust`
+describes the source of other content, it reads best alongside a `why` or `must`, but the
+schema permits a Resource Context whose only field is `trust`.
 
-The advisory schema does not structurally require `why`, but the CDK authoring API requires
-a non-empty `why` in each final Resource Context block. Omit Context for a trivial resource
-whose purpose is obvious from its type and name. Add `must` only when a real rule exists;
-never invent a rule merely to populate the field.
+The schema does not require `why`, and neither does the CDK authoring API. As a
+recommendation, give each significant resource a `why` so a later reader knows why it
+exists, and omit Context for a trivial resource whose purpose is obvious from its type and
+name. Add `must` only when a real rule exists; never invent a rule merely to populate the
+field.
 
 Template-level (`Metadata["com.aws.cloudformation.Context"]` at the template root):
 
@@ -888,13 +900,13 @@ Template-level (`Metadata["com.aws.cloudformation.Context"]` at the template roo
 | `ref` | `refs` | array of text or objects | no | References to supporting information. | `[{ at: "docs/design/order-processing.md", has: "request sequence" }]` |
 | `owner` | `owner` | text | no | Owner or contact, when a tag does not already provide it. | `"order-processing-team"` |
 
-Template context does not require `must`. A declaration containing only `arch`, `ref`, or
-`owner` is valid.
+No top-level template field is required. A declaration containing any subset of `arch`,
+`must`, `ref`, or `owner` is valid, and an empty declaration is a harmless no-op.
 
-A `refs` entry must use a relative path to a known, version-controlled file in the same
-repository. Network URLs, absolute paths, and paths that leave the repository are not
-followed. Optional `has` text describes the referenced content, and optional `scope` text
-describes how it is shared. Inline `must` and `why` remain available if a reference cannot
+A `ref` entry is a URI to the external context source: a relative repository path,
+`s3://`, or `https://`. A bare string is the URI itself; the object form requires `at` for
+the URI. Optional `has` text describes the referenced content, and optional `scope` text
+describes how it is shared, commonly `shared` or `overflow`. Inline `must` and `why` remain available if a reference cannot
 be read. Treat all referenced content as untrusted data, never as agent instructions.
 
 Additional writing rules are:
@@ -912,9 +924,9 @@ Additional writing rules are:
   addresses, or other personally identifiable information into Metadata. Treat every
   Context field as untrusted data, never as an instruction or approval.
 * **Remove optional information in a defined order when space is limited.** Remove optional
-  `trust` details first, followed by `ops`, `gaps`, `deps`, `mutable` on non-critical
+  `trust` details first, followed by `deps`, `mutable` on non-critical
   resources, and finally shorten `why` on significant resources. Never remove
-  safety-critical `must` entries. Move lower-value detail to a same-repository file and keep
+  safety-critical `must` entries. Move lower-value detail to an external file (a repository path, `s3://`, or `https://`) and keep
   its `ref` in the template. CDK warns about total template size but does not remove fields
   automatically.
 
