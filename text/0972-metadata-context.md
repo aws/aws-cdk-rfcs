@@ -116,9 +116,37 @@ field is required either.
 `add()` targets only the scope's primary resource; it does not automatically apply the
 information to descendant constructs. A declaration must match at least one resource after
 targeting options and resource-type filters are applied, or template generation fails with
-a clear error. To apply one block to descendants of a multi-resource CDK construct, a grouping construct, or a
-`Stack`, set
-`applyToDescendants: true`:
+a clear error.
+
+CDK finds the primary resource by following `defaultChild` repeatedly, not once. When a
+construct's `defaultChild` is another construct rather than a `CfnResource`, CDK follows
+that construct's `defaultChild` in turn, and continues until the chain reaches a
+`CfnResource`. For example, `cloudfront.experimental.EdgeFunction` designates its internal
+`lambda.Function` as its `defaultChild`, and `lambda.Function` designates its
+`AWS::Lambda::Function`. A declaration on the `EdgeFunction` therefore lands on the
+`AWS::Lambda::Function` and still skips the function's generated IAM role, because the role
+is not on the chain. Most L2 constructs designate a `defaultChild`, so the default works for
+them without options.
+
+Whether the default works for a higher-level (L3) construct depends on whether that
+construct declares a `defaultChild`:
+
+* An L3 that designates one, as `EdgeFunction` does, behaves like an L2: the declaration
+  lands on the `CfnResource` at the end of the chain.
+* An L3 that does not, such as `ecs_patterns.ApplicationLoadBalancedFargateService`, a plain
+  grouping `Construct`, or a `Stack`, has no primary resource. `add()` with no options then
+  selects nothing, and template generation fails with an error that names the construct and
+  lists the alternatives: target a child construct directly, set `applyToDescendants: true`
+  (usually with a resource-type filter), or set `applyToAllResources: true`. The chain also
+  ends without a match when it reaches a construct that has no `defaultChild`, or one whose
+  `defaultChild` is ambiguous because it has both a `Resource` and a `Default` child.
+
+Authors of L3 constructs can opt in to the default by setting `this.node.defaultChild` to
+the construct or resource that best represents the pattern. The *Targeting helper
+resources* section below shows the L3 options in code.
+
+To apply one block to descendants of a multi-resource CDK construct, a grouping construct,
+or a `Stack`, set `applyToDescendants: true`:
 
 ```ts
 declare const stack: Stack;
@@ -153,6 +181,16 @@ resources can make that information appear more important than other facts and c
 rule on resources it does not govern. If information applies to the whole template, move it
 to `TemplateMetadataContext` instead. As a guideline, move information to template level
 when it would otherwise be repeated on more than about three resources.
+
+Template level here means `TemplateMetadataContext`, not the template's built-in
+`Description`. The two serve different readers: `Description` is one short, unstructured
+string (at most 1,024 bytes) that CloudFormation shows in the console stack list and
+returns from `DescribeStacks`, so it works best as a one-line statement of what the stack is.
+`TemplateMetadataContext` holds the structured fields `arch`, `must`, `ref`, and `owner`,
+which are returned only inside the template body (`GetTemplate`) and answer how the system
+is shaped, which rules apply everywhere, and where supporting material lives. Avoid repeating
+the `Description` text in `arch`, and keep rules out of `Description`. See *Template-level
+context* below for a side-by-side comparison.
 
 To exclude information inherited from an ancestor construct, set
 `inheritAncestorContext: false` on its own `add()`. The following example refers to a
@@ -197,10 +235,13 @@ ResourceMetadataContext.of(deadLetterQueue).add({
 });
 ```
 
-To include all helper resources, set `applyToAllResources: true`. This disables the
-primary-resource filter and also applies the declaration to descendants.
-`includeResourceTypes` and `excludeResourceTypes` can limit the selected CloudFormation
-resource types:
+`applyToAllResources: true` selects *every* CloudFormation resource under the scope, not
+only the helper resources: it disables the primary-resource filter and also applies the
+declaration to descendants, so primary resources and helpers alike receive the block. There
+is no option that selects only helper resources, because CDK has no reliable marker that
+distinguishes a helper from a primary resource beyond `defaultChild`. To reach helpers of a
+particular kind, combine `applyToAllResources` with `includeResourceTypes` or
+`excludeResourceTypes`, or target an exposed helper construct directly as shown above:
 
 ```ts
 declare const stack: Stack;
@@ -210,6 +251,14 @@ ResourceMetadataContext.of(stack).add({
   deps: ['NetworkStack'],
 }, {
   applyToAllResources: true,
+});
+
+// Only the generated AWS IAM roles anywhere in the stack (helpers by type).
+ResourceMetadataContext.of(stack).add({
+  must: ['execution roles must keep the organization permissions boundary'],
+}, {
+  applyToAllResources: true,
+  includeResourceTypes: ['AWS::IAM::Role'],
 });
 
 // Only Amazon SQS queues among the descendant constructs.
@@ -222,9 +271,11 @@ ResourceMetadataContext.of(stack).add({
 ```
 
 For a multi-resource construct, `add()` with no options requires the construct's
-`defaultChild` property to lead to a `CfnResource`. If it does not, template generation
-fails instead of silently dropping the information. Target a child directly or set
-`applyToDescendants: true`:
+`defaultChild` chain to end at a `CfnResource`. The chain may pass through other constructs:
+if the `defaultChild` is itself a construct, CDK follows that construct's `defaultChild`
+next. If the construct declares no `defaultChild`, or the chain ends at a construct without
+one, template generation fails instead of silently dropping the information. Target a child
+directly or set `applyToDescendants: true`:
 
 ```ts
 declare const service: ecs_patterns.ApplicationLoadBalancedFargateService;
@@ -277,9 +328,12 @@ ResourceMetadataContext.of(queue).add({
 
 Reserve `ContextTrustSource.AUTHORED` for information a person wrote or explicitly
 confirmed. An automated producer uses `COMMENT`, `COMMIT`, or `INFERRED` according to the
-evidence it used. See
+evidence it used. When more than one description fits, `AUTHORED` takes precedence once a
+person has confirmed the text; otherwise use the most direct evidence and record the rest in
+`citation` and `note`. A person writing Context directly in CDK code can omit `trust`
+entirely. See
 [Appendix A](#appendix-a---cloudformation-context-template-field-reference) for the
-`trust` object and guidance.
+`trust` object, the precedence rule, and guidance.
 
 ##### Mixin form
 
@@ -333,7 +387,25 @@ metadata-context API call.
 `TemplateMetadataContext` stores information that applies to the whole stack: an
 architecture overview, rules that apply throughout the template, references to supporting
 material, and ownership. The stack's one-line purpose belongs in CloudFormation's built-in
-`Description` field (the `description` property of `Stack`).
+`Description` field (the `description` property of `Stack`). The two are complementary, not
+interchangeable:
+
+| | Template `Description` | `TemplateMetadataContext` |
+| --- | --- | --- |
+| Shape | One free-text string, at most 1,024 bytes | Named fields: `arch`, `must`, `ref`, `owner` |
+| Where readers see it | Console stack list, `DescribeStacks`, `ListStacks` | Template body only: `GetTemplate` (and the source template) |
+| Question answered | *What is this stack?* | *How is the system shaped, which rules apply everywhere, where is more detail, who owns it?* |
+| Typical content | `"Order processing pipeline for the storefront"` | `arch`, template-wide `must` rules, `ref` entries, `owner` |
+| Set with | `new Stack(app, 'Orders', { description: '...' })` | `TemplateMetadataContext.of(stack).add({...})` |
+
+Keep them distinct: avoid repeating the `Description` text in `arch`, and keep rules and
+references out of `Description`, where tools cannot retrieve them by name. A tool that lists
+stacks sees only `Description`; a tool that reads the template sees both. The
+[CloudFormation Metadata Context schema documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema)
+gives the same guidance: use the template's `Description` for the stack's purpose. The same
+separation applies to resource-level `Description` properties (for example on an AWS Lambda
+function or IAM role): they describe the deployed resource in the service console, and
+Context should not repeat them (see Appendix A).
 
 Entries in `refs` point to supporting material by URI — a relative repository path,
 `s3://`, or `https://`. Referenced material supplements the information stored directly in the
@@ -433,7 +505,7 @@ Concrete situations this feature addresses:
   identifies who or what supplied information and how confident the producer is, helping a
   reader decide how much to rely on it.
 
-These are measured results, not only expectations. We evaluated the alternatives on the
+These are measured results, not only expectations. The alternatives were evaluated on the
 same CloudFormation update tasks. Most of the improvement came from supplying design
 information in any form. Structured `com.aws.cloudformation.Context` keeps that information
 in the deployed template, unlike source comments, and lets tools retrieve fields by name.
@@ -472,7 +544,7 @@ required retention periods, or team service-level agreements that were never rec
 the template. They can therefore make a change that is valid for one resource but wrong for
 the system. The problem is missing information, not careless behavior.
 
-**We tested the claim.** We compared four conditions on the same CloudFormation update
+**The claim was tested.** The evaluation compared four conditions on the same CloudFormation update
 tasks: no added design information; design information in source-template comments; structured
 `com.aws.cloudformation.Context` fields; and the same structured fields read by a tool that
 was explicitly instructed how to use them. Tasks that required information absent from the
@@ -518,7 +590,7 @@ CloudFormation `Metadata` section for optional design information supplied by th
 ### What is the technical solution (design) of this feature?
 
 The implementation in [aws/aws-cdk#38381](https://github.com/aws/aws-cdk/pull/38381)
-follows this design. We selected the field set and API behavior after evaluating information
+follows this design. The field set and API behavior were selected after evaluating information
 stored directly in templates; Appendix B summarizes that evaluation.
 
 #### Template representation and dedicated metadata key
@@ -638,9 +710,16 @@ construct and tells the caller to use only one method.
 #### Selecting resources
 
 A resource is *primary* for a scope when the path from that scope to the resource follows
-each construct's `defaultChild` property. For example, this selects the
-`AWS::SQS::Queue` created by `sqs.Queue` and skips generated roles, policies,
-log-retention resources, and custom-resource providers.
+each construct's `defaultChild` property at every step. The chain may pass through
+intermediate constructs: if a construct's `defaultChild` is another construct, that
+construct's `defaultChild` is followed next, until a `CfnResource` is reached. For example,
+this selects the `AWS::SQS::Queue` created by `sqs.Queue`, and selects the
+`AWS::Lambda::Function` two levels below `cloudfront.experimental.EdgeFunction` (whose
+`defaultChild` is a `lambda.Function`), while skipping generated roles, policies,
+log-retention resources, and custom-resource providers. A construct that declares no
+`defaultChild`, such as most L3 patterns, a plain grouping `Construct`, or a `Stack`, has no
+primary resource. An ambiguous `defaultChild` (a construct with both a `Resource` and a
+`Default` child) is treated as no `defaultChild`.
 
 Each `add()` call can select resources as follows:
 
@@ -648,8 +727,10 @@ Each `add()` call can select resources as follows:
 * With `applyToDescendants: true`, select primary resources under descendant constructs,
   including resources in a `NestedStack`. A `Stage` is a separate cloud assembly, so
   selection never crosses a `Stage`; declare context inside each Stage.
-* With `applyToAllResources: true`, include helper resources as well as primary resources,
-  while still stopping at a `Stage`.
+* With `applyToAllResources: true`, select every `CfnResource` under the scope, helper and
+  primary alike, while still stopping at a `Stage`. There is no option that selects only
+  helper resources; combine `applyToAllResources` with a resource-type filter, or target an
+  exposed helper construct directly.
 * Use `includeResourceTypes` or `excludeResourceTypes` to limit CloudFormation resource
   types.
 * Use `inheritAncestorContext: false` to ignore declarations from ancestor constructs.
@@ -702,8 +783,8 @@ in the Agent Toolkit for AWS offers non-enforced authoring guidance. The `aws-cd
 README, public API reference, and Appendix A mirror the schema's field definitions.
 CloudFormation does not validate metadata fields against the schema.
 
-We considered printing a documentation notice every time `cdk synth` writes context. We
-decided against it because repeated notices would distract authors, and command output does
+Printing a documentation notice every time `cdk synth` writes context was considered and
+rejected: repeated notices would distract authors, and command output does
 not reach a person or tool that later reads the deployed template through `GetTemplate`.
 The metadata key and linked AWS CloudFormation documentation provide the long-term
 reference.
@@ -782,9 +863,33 @@ resource selection, template-level merging, validation, tests, and README docume
 The implementation is available in
 [aws/aws-cdk#38381](https://github.com/aws/aws-cdk/pull/38381).
 
-A runtime feature flag is unnecessary because applications generate no additional context
-unless they call a new API. The APIs should be considered stable only after the criteria
-below are met.
+#### Bake period
+
+A preview phase before the API becomes part of `aws-cdk-lib` was considered. A bake period
+is most valuable when a release is the moment a format becomes a commitment, or when a later
+change to that format could break what customers have already deployed. Neither applies
+here, so the first release goes directly into `aws-cdk-lib`:
+
+* **The field set is already public.** The schema is owned by CloudFormation and is already
+  published as version 1 of the
+  [CloudFormation Metadata Context schema](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema)
+  (`$id` ending in `metadata-context/v1.json`), and the
+  [CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+  in the Agent Toolkit for AWS already writes it. CDK mirrors that published field set, so a
+  CDK preview period would not change the schema.
+* **The schema is advisory, and nothing validates it.** CloudFormation does not validate or
+  enforce `Metadata` content, and the schema describes itself as intended for client-side
+  validation only. A future schema version therefore cannot cause a deployment failure or
+  reject an existing template; a reader that knows a newer version simply sees fewer fields
+  on older templates. Templates generated today remain valid.
+* **Schema evolution is additive on the CDK side.** If CloudFormation publishes a new schema
+  version, CDK can follow with new optional properties or values while existing properties
+  keep writing the same template keys. That is an ordinary non-breaking change to
+  `aws-cdk-lib`.
+
+A runtime feature flag is likewise unnecessary because applications generate no additional
+context unless they call a new API. The APIs are considered stable when the criteria below
+are met.
 
 ### Are there any open issues that need to be addressed later?
 
@@ -799,8 +904,9 @@ below are met.
   in the Agent Toolkit for AWS offers non-enforced authoring guidance for agents.
   CloudFormation does not validate metadata against the schema.
 * **Testing with authors and readers.** The companion authoring tool and at least one tool
-  that reads Context must use the fields on real stacks. This confirms that the fields and
-  selection behavior are sufficient before they become a long-term compatibility promise.
+  that reads Context must use the API on real stacks. This confirms that the options,
+  selection behavior, and merge rules are sufficient before they become a long-term
+  compatibility promise.
 * **Public API approval.** The API Bar Raiser must approve both classes,
   `MetadataContextMixin`, options, allowed-value types, and interfaces, and apply the
   `status/api-approved` label to the RFC pull request.
@@ -815,7 +921,10 @@ below are met.
   properties whose changes replace a resource. CDK could use that authoritative information
   to suggest `must-never-change` for selected properties.
 * **Selecting helper resources by relationship.** Today, callers can target an exposed
-  helper construct directly or use `applyToAllResources` for every helper. A future option
+  helper construct directly, or use `applyToAllResources` (which selects every resource,
+  helper or primary) together with a resource-type filter. There is no helper-only
+  selection because CDK has no marker that identifies a helper beyond its absence from the
+  `defaultChild` chain. A future option
   could select only a related dead-letter queue, execution role, or log group, even when the
   parent construct does not expose it directly.
 * **Applying related information automatically.** A future API could copy appropriate
@@ -879,6 +988,31 @@ The four allowed sources are:
 * `infer` - a tool concluded the information from code structure or behavior without an
   explicit statement.
 
+`src` holds one value, so when more than one description fits, choose by this precedence:
+
+1. `authored` whenever a person wrote the Context text or explicitly confirmed it, even if
+   the text originated in a comment, a commit message, or a tool's inference. Human
+   confirmation is the strongest evidence, and the original evidence is not lost: record it
+   in `cite` (for example the comment's file and line, or the commit identifier) and, when
+   useful, in `note`.
+2. Otherwise, the most direct evidence: `comment` when the text was copied or lightly
+   rephrased from a source comment; `commit` when it came from version-control history.
+3. `infer` when the tool combined evidence or reasoned from code structure or behavior
+   without an explicit statement, even if a comment or commit contributed. Name the
+   contributing evidence in `cite` and `note`.
+
+For example, a tool that lifts `why` from a comment writes `src: "comment"` and
+`cite: "lib/queue.ts:42"`. When the author later reviews and accepts that value, the tool or
+the author changes `src` to `authored` and keeps the `cite`.
+
+Three of the four values (`comment`, `commit`, `infer`) exist for automated producers, and
+that is where `src` matters most: a reader must be able to tell tool-derived Context from
+Context a person stands behind. A person adding Context directly in CDK code usually omits
+`trust` altogether, because the reviewed source code already shows who wrote it. `authored`
+is most useful when a tool records that a person confirmed generated content, or when
+human-written and tool-derived Context appear in the same template and a reader needs to
+tell them apart.
+
 An automated tool chooses `comment`, `commit`, or `infer` according to the evidence it
 used. It uses `authored` only after a person writes or confirms the information. The caller
 always supplies `confidence`; CDK never chooses it from other fields. Because `trust`
@@ -940,7 +1074,7 @@ order, selection options, declarations that select no resources, descendant and 
 selection, `inheritAncestorContext`, direct-metadata conflicts, and validation errors.
 Integration tests verify the generated templates.
 
-**Evaluation.** We tested whether added design information changes how a tool updates a
+**Evaluation.** The evaluation tested whether added design information changes how a tool updates a
 CloudFormation template. The latest evaluation used 33 tasks, ran each condition three
 times, and scored expected outcomes with repeatable text checks:
 
