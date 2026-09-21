@@ -38,7 +38,10 @@ therefore use the author's intent instead of guessing it.
 Two classes write the same documented template fields: `ResourceMetadataContext` writes
 information on individual resources, and `TemplateMetadataContext` writes information once
 for the whole template. `MetadataContextMixin` is a CDK Mixin, which is an API applied
-directly to selected low-level `CfnResource` objects.
+directly to selected low-level `CfnResource` objects. API property names are the field names
+of the published
+[CloudFormation Metadata Context schema](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
+so code and template use one vocabulary.
 
 Add resource-level information to a construct scope with `ResourceMetadataContext`. A scope
 is a node in the CDK construct hierarchy. By default, the information is written to the
@@ -54,18 +57,16 @@ declare const queue: sqs.Queue;
 ResourceMetadataContext.of(queue).add({
   why: 'buffer order events asynchronously; 14-day retention meets compliance requirements',
   must: ['VisibilityTimeout must be at least six times the Lambda timeout to avoid duplicate processing'],
-  defaultMutability: ContextMutability.CHANGE_WITH_CONSTRAINTS,
-  propertyMutability: {
+  mutable: ContextMutability.CHANGE_WITH_CONSTRAINTS,
+  mutability: {
     QueueName: ContextMutability.MUST_NEVER_CHANGE,
   },
 });
 ```
 
-This renders a `com.aws.cloudformation.Context` block on the `AWS::SQS::Queue` resource.
-The API uses descriptive property names (`defaultMutability`, `propertyMutability`) that
-map to the shorter template field names (`mutable`, `mutability`); see
-[Appendix A](#appendix-a---cloudformation-context-template-field-reference) for the
-full field reference and name mapping.
+This renders a `com.aws.cloudformation.Context` block on the `AWS::SQS::Queue` resource. See
+[Appendix A](#appendix-a---cloudformation-context-template-field-reference) for the full
+field reference.
 
 ```json
 {
@@ -87,7 +88,7 @@ full field reference and name mapping.
 
 No `trust` block appears because the caller did not provide one. The `trust` field is
 optional, and CDK never adds it automatically (see *Source and confidence* below).
-`defaultMutability` is `change-with-constraints`, and the governing rule is recorded in
+`mutable` is `change-with-constraints`, and the governing rule is recorded in
 `must`: `VisibilityTimeout` must remain at least six times the Lambda timeout.
 `change-with-constraints` means a value may change only while its stated rules remain true;
 using that value without a corresponding `must` rule gives the reader no useful guidance.
@@ -114,9 +115,8 @@ field is required either.
 ##### Propagation is explicit
 
 `add()` targets only the scope's primary resource; it does not automatically apply the
-information to descendant constructs. A declaration must match at least one resource after
-targeting options and resource-type filters are applied, or template generation fails with
-a clear error.
+information to descendant constructs. A declaration must match at least one resource, or
+template generation fails.
 
 CDK finds the primary resource by following `defaultChild` repeatedly, not once. When a
 construct's `defaultChild` is another construct rather than a `CfnResource`, CDK follows
@@ -136,47 +136,71 @@ construct declares a `defaultChild`:
 * An L3 that does not, such as `ecs_patterns.ApplicationLoadBalancedFargateService`, a plain
   grouping `Construct`, or a `Stack`, has no primary resource. `add()` with no options then
   selects nothing, and template generation fails with an error that names the construct and
-  lists the alternatives: target a child construct directly, set `applyToDescendants: true`
-  (usually with a resource-type filter), or set `applyToAllResources: true`. The chain also
-  ends without a match when it reaches a construct that has no `defaultChild`, or one whose
-  `defaultChild` is ambiguous because it has both a `Resource` and a `Default` child.
+  lists the alternatives: target a child construct, or set `propagate: true` (optionally
+  with a `propagationFilter`). The chain also ends without a match when it
+  reaches a construct that has no `defaultChild`.
+* A construct with both a `Resource` and a `Default` child has an ambiguous `defaultChild`.
+  The `constructs` library throws when it is read (`Cannot determine default child for
+  <path>. There is both a child with id "Resource" and id "Default"`), and template
+  generation fails with that error.
 
 Authors of L3 constructs can opt in to the default by setting `this.node.defaultChild` to
-the construct or resource that best represents the pattern. The *Targeting helper
-resources* section below shows the L3 options in code.
+the construct or resource that best represents the pattern. The *Helper resources* section
+below shows the L3 options in code.
 
-To apply one block to descendants of a multi-resource CDK construct, a grouping construct,
-or a `Stack`, set `applyToDescendants: true`:
+To reach more than the primary resource, set `propagate: true`. Propagation applies the
+declaration to every resource beneath the scope, helpers included; a `PropagationFilter`
+narrows it by resource type:
 
 ```ts
 declare const stack: Stack;
 declare const queue: sqs.Queue;
 
-// Declared on the Stack but limited to primary Amazon SQS queue resources.
-ResourceMetadataContext.of(stack).add({
-  must: ['delivery settings must preserve in-flight messages'],
-}, {
-  applyToDescendants: true,
-  includeResourceTypes: ['AWS::SQS::Queue'],
-});
-
-// Information for one queue; it also receives the applicable Stack declaration above.
+// 1. Default: only the scope's primary resource.
 ResourceMetadataContext.of(queue).add({
   why: 'buffers webhook events for asynchronous processing',
 });
+
+// 2. Propagate to every resource beneath the scope, helper resources included.
+ResourceMetadataContext.of(stack).add({
+  deps: ['NetworkStack'],
+}, {
+  propagate: true,
+});
+
+// 3. Propagate only to resources of a specific type. The queue above also receives
+//    this declaration.
+ResourceMetadataContext.of(stack).add({
+  must: ['delivery settings must preserve in-flight messages'],
+}, {
+  propagate: true,
+  propagationFilter: PropagationFilter.includeResourceTypes(['AWS::SQS::Queue']),
+});
+
+// 4. Propagate to everything except resources of a specific type.
+ResourceMetadataContext.of(stack).add({
+  must: ['execution roles must keep the organization permissions boundary'],
+}, {
+  propagate: true,
+  propagationFilter: PropagationFilter.excludeResourceTypes(['AWS::Lambda::Function']),
+});
 ```
 
+A `propagationFilter` requires `propagate: true`; `add()` throws otherwise, because default
+targeting already selects exactly one resource. A filter that excludes every candidate fails
+template generation like any other declaration that matches nothing.
+
 When several declarations apply to one resource, CDK combines them. For fields that hold
-one value (`why`, `defaultMutability`, and `trust`), the declaration closest to the
+one value (`why`, `mutable`, and `trust`), the declaration closest to the
 resource takes precedence. For array fields (`must` and `deps`),
-CDK combines the entries and removes duplicates. For `propertyMutability`, CDK combines the
+CDK combines the entries and removes duplicates. For `mutability`, CDK combines the
 maps and uses the closest declaration for each property name.
 
-`applyToDescendants` crosses a `NestedStack` boundary because a nested stack remains part of
+Propagation crosses a `NestedStack` boundary because a nested stack remains part of
 the same generated application. It does not cross a `Stage`, which is a separate CDK cloud
 assembly and must declare its own context.
 
-Applying information to descendants is always explicit. Repeating the same block on many
+Propagation is always explicit. Repeating the same block on many
 resources can make that information appear more important than other facts and can place a
 rule on resources it does not govern. If information applies to the whole template, move it
 to `TemplateMetadataContext` instead. As a guideline, move information to template level
@@ -207,12 +231,12 @@ ResourceMetadataContext.of(legacyBucket).add({
 });
 ```
 
-##### Targeting helper resources
+##### Helper resources
 
-The default primary-resource filter skips automatically created helper resources. An AWS
-Lambda function is a useful example: `lambda.Function` creates both an
-`AWS::Lambda::Function` and an `AWS::IAM::Role`. `add()` follows the `defaultChild` property
-to the `AWS::Lambda::Function` and leaves the generated role unchanged:
+Default targeting skips automatically created helper resources. `lambda.Function` creates an
+`AWS::Lambda::Function`, an `AWS::IAM::Role`, and optionally a dead-letter queue; `add()`
+follows `defaultChild` to the function and leaves the helpers unchanged. Helpers that the L2
+exposes as constructs can be targeted through it:
 
 ```ts
 declare const lambdaFunction: lambda.Function;
@@ -221,78 +245,50 @@ declare const lambdaFunction: lambda.Function;
 ResourceMetadataContext.of(lambdaFunction).add({
   why: 'processes order events from an Amazon SQS queue and ignores previously processed events',
 });
+
+// A helper the L2 exposes; set when the function was created with a dead-letter queue.
+if (lambdaFunction.deadLetterQueue) {
+  ResourceMetadataContext.of(lambdaFunction.deadLetterQueue).add({
+    why: 'stores failed order-processing invocations for later recovery',
+  });
+}
 ```
 
-When a helper resource is available as a construct, target it directly instead of applying
-context to every descendant. For example, a function's dead-letter queue can record why it
-exists:
+To target only an L2's helpers, propagate from the L2 and exclude the primary resource's
+type; everything left beneath the L2 is a helper.
 
 ```ts
-declare const deadLetterQueue: sqs.Queue;
+declare const lambdaFunction: lambda.Function;
 
-ResourceMetadataContext.of(deadLetterQueue).add({
-  why: 'stores failed order-processing invocations for later recovery',
-});
-```
-
-`applyToAllResources: true` selects *every* CloudFormation resource under the scope, not
-only the helper resources: it disables the primary-resource filter and also applies the
-declaration to descendants, so primary resources and helpers alike receive the block. There
-is no option that selects only helper resources, because CDK has no reliable marker that
-distinguishes a helper from a primary resource beyond `defaultChild`. To reach helpers of a
-particular kind, combine `applyToAllResources` with `includeResourceTypes` or
-`excludeResourceTypes`, or target an exposed helper construct directly as shown above:
-
-```ts
-declare const stack: Stack;
-
-// Every resource in the stack, including AWS IAM roles and log-retention custom resources.
-ResourceMetadataContext.of(stack).add({
-  deps: ['NetworkStack'],
+// Everything the function creates except the function itself: role, policies, log group.
+ResourceMetadataContext.of(lambdaFunction).add({
+  deps: ['OrderProcessorFunction'],
 }, {
-  applyToAllResources: true,
-});
-
-// Only the generated AWS IAM roles anywhere in the stack (helpers by type).
-ResourceMetadataContext.of(stack).add({
-  must: ['execution roles must keep the organization permissions boundary'],
-}, {
-  applyToAllResources: true,
-  includeResourceTypes: ['AWS::IAM::Role'],
-});
-
-// Only Amazon SQS queues among the descendant constructs.
-ResourceMetadataContext.of(stack).add({
-  why: 'buffers events for asynchronous processing',
-}, {
-  applyToDescendants: true,
-  includeResourceTypes: ['AWS::SQS::Queue'],
+  propagate: true,
+  propagationFilter: PropagationFilter.excludeResourceTypes(['AWS::Lambda::Function']),
 });
 ```
 
-For a multi-resource construct, `add()` with no options requires the construct's
-`defaultChild` chain to end at a `CfnResource`. The chain may pass through other constructs:
-if the `defaultChild` is itself a construct, CDK follows that construct's `defaultChild`
-next. If the construct declares no `defaultChild`, or the chain ends at a construct without
-one, template generation fails instead of silently dropping the information. Target a child
-directly or set `applyToDescendants: true`:
+For a multi-resource construct with no `defaultChild`, `add()` with no options fails rather
+than silently dropping the information. Target a child construct, or propagate with a type
+filter. For a pattern that creates a load balancer, a service, and supporting resources:
 
 ```ts
-declare const service: ecs_patterns.ApplicationLoadBalancedFargateService;
+declare const service: Construct; // e.g. an ecs_patterns.ApplicationLoadBalancedFargateService
 
 // Apply this rule only to the Application Load Balancer created by the construct.
 ResourceMetadataContext.of(service).add({
   must: ['Application Load Balancer idle timeout must be at least the backend read timeout'],
 }, {
-  applyToDescendants: true,
-  includeResourceTypes: ['AWS::ElasticLoadBalancingV2::LoadBalancer'],
+  propagate: true,
+  propagationFilter: PropagationFilter.includeResourceTypes(['AWS::ElasticLoadBalancingV2::LoadBalancer']),
 });
 ```
 
 ##### Source and confidence
 
 Use the optional `trust` field to record where information came from and how confident the
-producer is that it is correct. When `trust` is present, both `source` and `confidence` are
+producer is that it is correct. When `trust` is present, both `src` and `conf` are
 required. CDK never supplies them automatically. The `why` field must contain the actual
 reasoning; source details belong in `trust`:
 
@@ -302,9 +298,9 @@ declare const queue: sqs.Queue;
 ResourceMetadataContext.of(queue).add({
   why: 'retry buffer for an unreliable dependent payments service',
   trust: {
-    source: ContextTrustSource.INFERRED,
-    confidence: ContextTrustConfidence.LOW,
-    citation: 'service/handler.ts:87',
+    src: ContextTrustSource.INFER,
+    conf: ContextTrustConfidence.LOW,
+    cite: 'service/handler.ts:87',
     note: 'derived from retry behavior; no explicit design note was found',
   },
 });
@@ -326,14 +322,31 @@ ResourceMetadataContext.of(queue).add({
 }
 ```
 
-Reserve `ContextTrustSource.AUTHORED` for information a person wrote or explicitly
-confirmed. An automated producer uses `COMMENT`, `COMMIT`, or `INFERRED` according to the
-evidence it used. When more than one description fits, `AUTHORED` takes precedence once a
-person has confirmed the text; otherwise use the most direct evidence and record the rest in
-`citation` and `note`. A person writing Context directly in CDK code can omit `trust`
-entirely. See
+The four sources are `AUTHORED` (a person wrote or explicitly confirmed the information),
+`COMMENT` (taken from a source comment), `COMMIT` (taken from version-control history), and
+`INFER` (a tool concluded it from code structure or behavior without an explicit statement).
+`src` holds one value. When more than one fits, people and tools alike choose by this
+precedence:
+
+1. `AUTHORED` whenever a person wrote or explicitly confirmed the text, even if it
+   originated in a comment, a commit message, or a tool's inference. Human confirmation is
+   the strongest evidence; record the original evidence in `cite` (the comment's file and
+   line, or the commit identifier) and, when useful, in `note`.
+2. Otherwise, the most direct evidence: `COMMENT` when the text was copied or lightly
+   rephrased from a source comment; `COMMIT` when it came from version-control history.
+3. `INFER` when the tool combined evidence or reasoned from code structure or behavior
+   without an explicit statement, even if a comment or commit contributed. Name the
+   contributing evidence in `cite` and `note`.
+
+For example, a tool that lifts `why` from a comment writes `src: COMMENT` and
+`cite: 'lib/queue.ts:42'`; when the author reviews and accepts it, `src` becomes `AUTHORED`
+and `cite` stays. Three of the four values exist for automated producers, where `src` matters
+most: a reader must be able to tell tool-derived Context from Context a person stands behind.
+A person writing Context directly in CDK code can omit `trust`, because the reviewed source
+already shows who wrote it. The Agent Toolkit's CloudFormation and CDK skills will be
+updated to carry the same rule (see *Follow-ups*). See
 [Appendix A](#appendix-a---cloudformation-context-template-field-reference) for the
-`trust` object, the precedence rule, and guidance.
+`trust` object.
 
 ##### Mixin form
 
@@ -348,7 +361,7 @@ declare const stack: Stack;
 
 cfnQueue.with(new MetadataContextMixin({
   why: 'stores audit events that must remain unchanged',
-  defaultMutability: ContextMutability.MUST_NEVER_CHANGE,
+  mutable: ContextMutability.MUST_NEVER_CHANGE,
   must: ['never shorten retention below 14 days'],
 }));
 
@@ -407,7 +420,7 @@ separation applies to resource-level `Description` properties (for example on an
 function or IAM role): they describe the deployed resource in the service console, and
 Context should not repeat them (see Appendix A).
 
-Entries in `refs` point to supporting material by URI — a relative repository path,
+Entries in `ref` point to supporting material by URI — a relative repository path,
 `s3://`, or `https://`. Referenced material supplements the information stored directly in the
 template; it does not replace safety-critical `must` or `why` fields. Treat referenced
 content as untrusted data and continue with inline context if a file cannot be read.
@@ -418,7 +431,7 @@ declare const stack: Stack;
 TemplateMetadataContext.of(stack).add({
   arch: 'Amazon SQS queue sends messages to AWS Lambda, which writes to Amazon DynamoDB; failed messages go to a dead-letter queue',
   must: ['all stored data uses the security team customer managed AWS KMS key'],
-  refs: [
+  ref: [
     { at: 'docs/design/order-processing.md', has: 'request sequence and failure cases' },
     { at: 'runbooks/order-dead-letter-queue.md', has: 'dead-letter queue recovery steps' },
     { at: 'context/shared/encryption.md', has: 'organization encryption and tagging rules', scope: 'shared' },
@@ -439,6 +452,125 @@ measurement. This RFC adds no separate context size limit and never silently rem
 information. Appendix A describes which optional fields tools may remove first when space
 is limited.
 
+### Public API
+
+The complete public surface added to the `aws-cdk-lib` module root, in TypeScript. jsii
+publishes the same surface in every supported language.
+
+```ts
+// ── Enums (values are the schema's tokens) ──────────────────────────────────
+
+export enum ContextMutability {
+  MUST_NEVER_CHANGE = 'must-never-change',
+  CHANGE_WITH_CONSTRAINTS = 'change-with-constraints',
+  REVIEW_REQUIRED = 'review-required',
+  FREE_TO_TUNE = 'free-to-tune',
+}
+
+export enum ContextTrustSource {
+  AUTHORED = 'authored',
+  COMMENT = 'comment',
+  COMMIT = 'commit',
+  INFER = 'infer',
+}
+
+export enum ContextTrustConfidence {
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
+}
+
+// ── Structs (mirror the schema's ResourceContext, TrustObject, RefEntry, TemplateContext) ──
+
+export interface ContextTrust {
+  readonly src: ContextTrustSource;
+  readonly conf: ContextTrustConfidence;
+  readonly cite?: string;
+  readonly note?: string;
+}
+
+export interface ContextRef {
+  readonly at: string;
+  readonly has?: string;
+  readonly scope?: string;
+}
+
+export interface ResourceContextProps {
+  readonly why?: string;
+  readonly must?: string[];
+  readonly mutable?: ContextMutability;
+  readonly mutability?: { [propertyName: string]: ContextMutability };
+  readonly trust?: ContextTrust;
+  readonly deps?: string[];
+}
+
+export interface TemplateContextProps {
+  readonly arch?: string;
+  readonly must?: string[];
+  readonly ref?: ContextRef[];
+  readonly owner?: string;
+}
+
+// ── Targeting ───────────────────────────────────────────────────────────────
+
+export interface ResourceMetadataContextOptions {
+  /** Target every CfnResource beneath the scope instead of only its primary resource. @default false */
+  readonly propagate?: boolean;
+  /** Narrows propagation by CloudFormation resource type. Requires `propagate: true`. @default - every resource */
+  readonly propagationFilter?: PropagationFilter;
+  /** Inherit context merged from ancestor scopes. @default true */
+  readonly inheritAncestorContext?: boolean;
+  /** Priority of the underlying aspect. @default AspectPriority.MUTATING */
+  readonly priority?: number;
+}
+
+export class PropagationFilter {
+  public static includeResourceTypes(resourceTypes: string[]): PropagationFilter;
+  public static excludeResourceTypes(resourceTypes: string[]): PropagationFilter;
+  private constructor(...);
+}
+
+// ── Entry points ────────────────────────────────────────────────────────────
+
+export class ResourceMetadataContext {
+  public static of(scope: IConstruct): ResourceMetadataContext;
+  public add(context: ResourceContextProps, options?: ResourceMetadataContextOptions): void;
+  private constructor(...);
+}
+
+export class TemplateMetadataContext {
+  public static of(stack: Stack): TemplateMetadataContext;
+  public add(context: TemplateContextProps): void;
+  private constructor(...);
+}
+
+export class MetadataContextMixin extends Mixin {
+  constructor(context: ResourceContextProps);
+  public supports(construct: IConstruct): construct is CfnResource;
+  public applyTo(construct: IConstruct): void;
+}
+```
+
+Behavior summary:
+
+* `ResourceMetadataContext.of(scope).add()` targets the scope's primary resource by default
+  (the scope itself when it is a `CfnResource`, otherwise the `CfnResource` at the end of
+  its `defaultChild` chain). With `propagate: true` it targets every `CfnResource` beneath
+  the scope, crossing `NestedStack` but never `Stage` boundaries, narrowed by an optional
+  `PropagationFilter`. A `propagationFilter` without `propagate: true` throws at `add()`.
+  A declaration that matches no resource fails template generation.
+* Declarations merge ancestor-to-resource: the closest declaration wins for `why`, `mutable`,
+  and `trust`; `must` and `deps` are unioned and de-duplicated; `mutability` merges per
+  property. `inheritAncestorContext: false` discards ancestor context for that scope.
+* `TemplateMetadataContext.of(stack).add()` merges repeated calls: later `arch` and `owner`
+  win; `must` and `ref` accumulate. A `ref` with only `at` renders as a bare string.
+* `MetadataContextMixin` applies only to `CfnResource` and delegates to
+  `ResourceMetadataContext.of(resource).add(context)`.
+* Validation: when `trust` is present, `src` and `conf` are required; a `mutability` entry
+  must not repeat `mutable`; a `ref` entry requires `at`. Manually added
+  `com.aws.cloudformation.Context` metadata colliding with an API-produced block fails
+  template generation.
+
 ---
 
 Ticking the box below indicates that the API Bar Raiser, the reviewer responsible for
@@ -453,16 +585,17 @@ RFC pull request):
 
 ### What are we launching today?
 
-A new `aws-cdk-lib` capability: two context classes and one resource Mixin that add
-structured design information to the `Metadata` sections of generated CloudFormation
+A new `aws-cdk-lib` capability: two context classes, a propagation filter, and one resource
+Mixin that add structured design information to the `Metadata` sections of generated CloudFormation
 templates.
 
 * `ResourceMetadataContext.of(scope).add(props, options?)` adds information to a resource.
   The information can include reasoning, hard rules, change-safety guidance, source and
   confidence, and dependencies.
-  By default, CDK writes it to the scope's primary resource. Options can apply it to
-  descendants, include helper resources, filter CloudFormation resource types, or exclude
-  information inherited from ancestor constructs.
+  By default, CDK writes it to the scope's primary resource. `propagate: true` applies it
+  to every resource beneath the scope, a `PropagationFilter` narrows that by CloudFormation
+  resource type, and `inheritAncestorContext: false` excludes information inherited from
+  ancestor constructs.
 * `TemplateMetadataContext.of(stack).add(props)` writes an architecture overview, rules
   that apply throughout the template, references, and ownership once at template level.
 * `MetadataContextMixin` applies resource-level information directly to selected
@@ -472,9 +605,8 @@ templates.
 
 The dedicated `com.aws.cloudformation.Context` metadata key contains a fixed set of
 resource fields (`why`, `must`, `mutable`, `mutability`, `trust`, `deps`)
-and template fields (`arch`, `must`, `ref`, `owner`). The TypeScript API
-uses descriptive property names and maps them to these shorter template field names. This
-is ordinary CloudFormation `Metadata`: it is stored with the stack, has no effect on
+and template fields (`arch`, `must`, `ref`, `owner`). The TypeScript API uses the same
+names. This is ordinary CloudFormation `Metadata`: it is stored with the stack, has no effect on
 running resources, and is available through the existing `GetTemplate` and
 `DescribeStackResource` operations. No CloudFormation service change is required.
 
@@ -562,9 +694,9 @@ this API.
 
 **AWS CDK is the right place to write this information.** AWS CDK users write constructs,
 not the generated CloudFormation template, so they need an AWS CDK API. The construct
-hierarchy also provides useful targeting: one `add()` call with `applyToDescendants` can
-cover primary resources below a construct, while `defaultChild` identifies the primary
-resource and avoids automatically created helpers. Because AWS CDK generates many
+hierarchy also provides useful targeting: `defaultChild` identifies the primary resource
+and avoids automatically created helpers, while one `add()` call with `propagate: true`
+and a resource-type filter can cover matching resources anywhere below a construct. Because AWS CDK generates many
 production CloudFormation templates, adding the API to AWS CDK makes the feature broadly
 available.
 
@@ -578,8 +710,8 @@ CloudFormation `Metadata` section for optional design information supplied by th
   what supplied information and confidence, but cannot determine
   whether the information is still current. Keeping it beside the AWS CDK code means both
   can be reviewed in the same change, but does not guarantee updates.
-* **This adds public APIs to `aws-cdk-lib`.** The change adds three classes, three
-  sets of allowed values, and five interfaces. jsii, the tool AWS CDK uses to generate libraries for
+* **This adds public APIs to `aws-cdk-lib`.** The change adds four classes, three
+  sets of allowed values, and five interfaces (see *Public API* above). jsii, the tool AWS CDK uses to generate libraries for
   other programming languages, publishes these APIs in every supported language. The field
   set also becomes a long-term compatibility promise for tools that read it. A separate construct
   library could provide similar behavior without adding APIs to AWS CDK core.
@@ -610,9 +742,9 @@ its structure.
 CloudFormation does not interpret or validate these metadata fields, and the schema itself
 is advisory. CDK performs limited checks on values passed through its typed APIs that stay
 within the schema: it constrains `mutable`, `mutability`, and `trust` values to the
-schema's allowed tokens, and requires `source` and `confidence` when a caller supplies
-`trust`, matching the schema's `TrustObject`. CDK may also enforce the schema's sparse
-mutability map rule, keeping `propertyMutability` to properties that deviate from the
+schema's allowed tokens, and requires `src` and `conf` when a caller supplies
+`trust`, matching the schema's `TrustObject`. CDK also enforces the schema's sparse
+mutability map rule, keeping `mutability` to properties that deviate from the
 resource default or are high-stakes rather than enumerating every property. CDK does not add
 requiredness beyond the schema: it does not require a `why`, does not require a `must` for
 constrained mutability, does not reject a `trust` block used alone, and does not reject
@@ -629,19 +761,9 @@ AWS CloudFormation agent skill writes a template, it also writes its
 `Metadata.AWSToolsMetrics.AWSAgentToolkit` attribution marker. The CDK API does not add that
 marker because it cannot claim that Agent Toolkit authored a caller's context.
 
-**Mapping API names to template names.** Most TypeScript property names are identical to
-the names in the generated template. Six use shorter template names:
-
-| API property         | Template field |
-| -------------------- | -------------- |
-| `defaultMutability`  | `mutable`      |
-| `propertyMutability` | `mutability`   |
-| `refs`               | `ref`          |
-| `trust.source`       | `trust.src`    |
-| `trust.confidence`   | `trust.conf`   |
-| `trust.citation`     | `trust.cite`   |
-| `trust.note`         | `trust.note`   |
-| all other fields     | *(unchanged)*  |
+**Property names.** Every TypeScript property name is the schema's field name, including the
+short trust fields (`src`, `conf`, `cite`, `note`) and the template-level `ref` array. Enum
+members mirror the schema's tokens: `ContextTrustSource.INFER` renders `infer`.
 
 Resource fields are `why` (reasoning), `must` (hard rules), `mutable` (default
 change-safety), `mutability` (per-property change-safety), `trust` (source and confidence),
@@ -654,20 +776,17 @@ the template), `ref` (references to supporting information), and `owner` (contac
 `trust` or determine confidence when a caller omits it.
 
 `ContextMutability` defines four change-safety values: `must-never-change`,
-`change-with-constraints`, `review-required`, and `free-to-tune`. The template uses
-`mutable` for the resource default and `mutability` for per-property differences. The API
-uses the separate properties `defaultMutability` and `propertyMutability` because jsii
-cannot expose a property that accepts either one value or a map consistently in every
-supported programming language.
+`change-with-constraints`, `review-required`, and `free-to-tune`. `mutable` is the resource
+default (one token); `mutability` is a sparse per-property map.
 
 #### Why use a dedicated API instead of low-level metadata methods
 
 Callers could write the same metadata with
 `cfnResource.addMetadata('com.aws.cloudformation.Context', ...)` or `addOverride`, but those
 low-level methods provide no typed fields, allowed-value checks, required `trust` checks,
-primary-resource selection, descendant targeting, or generated documentation in every
-supported language. The dedicated classes provide those behaviors and require callers to
-request descendant application explicitly. The conflict rule prevents direct metadata and
+primary-resource selection, propagation with type filters, or generated documentation in
+every supported language. The dedicated classes provide those behaviors and require callers
+to request propagation explicitly. The conflict rule prevents direct metadata and
 the dedicated APIs from silently overwriting each other.
 
 #### How declarations are stored and applied
@@ -694,11 +813,11 @@ independent of the order in which callers invoked `add()`. It then writes the re
 
 The merge rules are:
 
-* For fields that hold one value (`why`, `defaultMutability`, and `trust`), the
+* For fields that hold one value (`why`, `mutable`, and `trust`), the
   declaration closest to the resource takes precedence.
 * For array fields (`must` and `deps`), CDK combines entries and
   removes duplicates.
-* For `propertyMutability`, CDK combines the maps and uses the closest declaration for each
+* For `mutability`, CDK combines the maps and uses the closest declaration for each
   property name.
 
 **Conflict with directly written metadata.** A value written directly under
@@ -718,26 +837,29 @@ this selects the `AWS::SQS::Queue` created by `sqs.Queue`, and selects the
 `defaultChild` is a `lambda.Function`), while skipping generated roles, policies,
 log-retention resources, and custom-resource providers. A construct that declares no
 `defaultChild`, such as most L3 patterns, a plain grouping `Construct`, or a `Stack`, has no
-primary resource. An ambiguous `defaultChild` (a construct with both a `Resource` and a
-`Default` child) is treated as no `defaultChild`.
+primary resource. A construct with both a `Resource` and a `Default` child has an ambiguous
+`defaultChild`; the `constructs` library throws when it is read, and template generation
+fails with that error.
 
 Each `add()` call can select resources as follows:
 
 * With no options, select only the scope's primary resource.
-* With `applyToDescendants: true`, select primary resources under descendant constructs,
-  including resources in a `NestedStack`. A `Stage` is a separate cloud assembly, so
-  selection never crosses a `Stage`; declare context inside each Stage.
-* With `applyToAllResources: true`, select every `CfnResource` under the scope, helper and
-  primary alike, while still stopping at a `Stage`. There is no option that selects only
-  helper resources; combine `applyToAllResources` with a resource-type filter, or target an
-  exposed helper construct directly.
-* Use `includeResourceTypes` or `excludeResourceTypes` to limit CloudFormation resource
-  types.
+* With `propagate: true`, select every `CfnResource` beneath the scope, helper and primary
+  alike, including resources in a `NestedStack`. A `Stage` is a separate cloud assembly, so
+  propagation never crosses a `Stage`; declare context inside each Stage.
+* With `propagationFilter`, narrow a propagated declaration by resource type:
+  `PropagationFilter.includeResourceTypes([...])` keeps only the listed types;
+  `excludeResourceTypes([...])` drops them. `PropagationFilter` is a class with static
+  factories so new filter kinds can be added without changing the options interface. A filter
+  requires `propagate: true`; `add()` throws otherwise.
 * Use `inheritAncestorContext: false` to ignore declarations from ancestor constructs.
+
+Helpers are reached by propagating from an L2 while excluding its primary resource's type,
+or by targeting an exposed helper construct such as `lambdaFunction.deadLetterQueue`.
 
 After the Aspect has visited the final construct hierarchy, CDK validates each declaration
 separately. Template generation fails if a declaration selects no resources. This includes
-a missing primary resource, an empty descendant selection, filters that exclude every
+a missing primary resource, an empty propagation scope, a filter that excludes every
 candidate, or candidates that exist only in another `Stage`. The error identifies the
 construct and explains how to select a valid target.
 
@@ -751,7 +873,7 @@ three resources.
 
 `TemplateMetadataContext.of(stack).add()` combines repeated calls for one stack and writes
 the result to the template's `Metadata` section. For `arch` and `owner`, later
-calls take precedence. CDK combines `must` and `refs` arrays. A reference containing only
+calls take precedence. CDK combines `must` and `ref` arrays. A reference containing only
 `at` is written as a string; references with `has` or `scope` are written as objects.
 
 #### Mixin behavior
@@ -812,7 +934,7 @@ No supported AWS CDK API changes behavior unless a caller uses the new APIs:
    the first release because compiled applications require mapping generated code back to
    source, comment syntax differs across supported languages, and weak comments can produce
    incorrect information. A future tool can call `ResourceMetadataContext` with
-   `trust.source = COMMENT` after these problems are addressed.
+   `trust.src = COMMENT` after these problems are addressed.
 3. **Existing `Description` properties.** Some higher-level constructs expose a
    `description` property that becomes a CloudFormation resource property. A caller could
    encode JSON in that string, but CloudFormation and consoles would still show one string,
@@ -848,7 +970,7 @@ No supported AWS CDK API changes behavior unless a caller uses the new APIs:
   new APIs, and other consumers may perform their own checks, but metadata written directly
   can contain invalid fields or values.
 * **Automated tools can write unsupported claims.** A tool should use
-  `source: INFERRED`, an appropriate confidence, and a citation for derived information,
+  `src: INFER`, an appropriate `conf`, and a `cite` for derived information,
   but the API cannot prevent a caller from incorrectly claiming `AUTHORED`.
 * **Combining declarations requires rules.** Callers must learn that the closest
   single-value declaration takes precedence, while arrays are combined and duplicates are
@@ -888,28 +1010,40 @@ here, so the first release goes directly into `aws-cdk-lib`:
   `aws-cdk-lib`.
 
 A runtime feature flag is likewise unnecessary because applications generate no additional
-context unless they call a new API. The APIs are considered stable when the criteria below
-are met.
+context unless they call a new API. The APIs ship as stable once the pre-merge requirements
+below are met.
 
 ### Are there any open issues that need to be addressed later?
 
-#### Requirements before declaring the API stable
+#### Requirements before merging
 
 * **Public documentation.** Review Appendix A, examples, selection rules, merge rules, and
-  the `aws-cdk-lib` API documentation with the public API. The published CloudFormation
-  Metadata Context schema, documented in the
+  the `aws-cdk-lib` API documentation against the *Public API* section. The published
+  CloudFormation Metadata Context schema, documented in the
   [AWS CloudFormation `Metadata` attribute documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-metadata.html#aws-attribute-metadata-context-schema),
-  is the structural source of truth. The
-  [CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
-  in the Agent Toolkit for AWS offers non-enforced authoring guidance for agents.
-  CloudFormation does not validate metadata against the schema.
-* **Testing with authors and readers.** The companion authoring tool and at least one tool
-  that reads Context must use the API on real stacks. This confirms that the options,
-  selection behavior, and merge rules are sufficient before they become a long-term
-  compatibility promise.
-* **Public API approval.** The API Bar Raiser must approve both classes,
-  `MetadataContextMixin`, options, allowed-value types, and interfaces, and apply the
-  `status/api-approved` label to the RFC pull request.
+  is the structural source of truth. CloudFormation does not validate metadata against it.
+* **Public API approval.** The API Bar Raiser must approve the surface listed in *Public
+  API* (four classes, three enums, five interfaces) and apply the `status/api-approved`
+  label to the RFC pull request. The API is then released as stable; see *Bake period*.
+
+#### Follow-ups
+
+* **Agent Toolkit skills.** Two skills in the
+  [Agent Toolkit for AWS](https://github.com/aws/agent-toolkit-for-aws) need updates:
+  * The
+    [CloudFormation authoring skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cloudformation/SKILL.md)
+    already writes `com.aws.cloudformation.Context`; add the `src` precedence rule from
+    *Source and confidence*, so agents writing templates directly apply the same rule as CDK
+    authors.
+  * The
+    [CDK skill](https://github.com/aws/agent-toolkit-for-aws/blob/main/skills/core-skills/aws-cdk/SKILL.md)
+    has no Context guidance today; add `ResourceMetadataContext`, `TemplateMetadataContext`,
+    and `MetadataContextMixin` usage, the targeting rules (`propagate`, `PropagationFilter`),
+    and the same `src` precedence rule, so agents generating CDK code emit Context through the
+    API rather than raw `addMetadata()` calls.
+* **Testing with authors and readers.** Exercise the API on real stacks with the companion
+  authoring tool and at least one tool that reads Context, and feed gaps back as additive
+  changes (new optional properties or filters).
 
 #### Future enhancements
 
@@ -920,21 +1054,19 @@ are met.
 * **Finding change-safety automatically.** CloudFormation resource-type schemas identify
   properties whose changes replace a resource. CDK could use that authoritative information
   to suggest `must-never-change` for selected properties.
-* **Selecting helper resources by relationship.** Today, callers can target an exposed
-  helper construct directly, or use `applyToAllResources` (which selects every resource,
-  helper or primary) together with a resource-type filter. There is no helper-only
-  selection because CDK has no marker that identifies a helper beyond its absence from the
-  `defaultChild` chain. A future option
-  could select only a related dead-letter queue, execution role, or log group, even when the
-  parent construct does not expose it directly.
+* **Additional propagation filters.** `PropagationFilter` offers `includeResourceTypes` and
+  `excludeResourceTypes`. Because it is a class with static factories, filters can be added
+  without changing the options interface: one that selects only primary resources (each
+  construct's `defaultChild` chain), or one that selects a related dead-letter queue,
+  execution role, or log group that the parent construct does not expose.
 * **Applying related information automatically.** A future API could copy appropriate
   information from a primary resource to a related helper, such as from a function to its
   log group or from a queue to its dead-letter queue.
 * **Properties on higher-level constructs.** Frequently used higher-level constructs could
   accept a `context` property directly, for example
   `new sqs.Queue(this, 'Q', { context: {...} })`, instead of requiring a separate
-  `ResourceMetadataContext.of()` call. This is excluded from the first release while the
-  field set is still being evaluated.
+  `ResourceMetadataContext.of()` call. It is excluded from the first release so the
+  standalone API can be adopted first.
 
 ## Appendix
 
@@ -951,19 +1083,19 @@ optional in both the Resource Context and Template Context blocks; neither defin
 top-level required array, so any subset of fields is structurally valid. `TrustObject`, when
 present, requires `src` and `conf`; the object form of a `ref` entry requires `at`. The
 schema sets no `minLength` or `minItems`, so blank strings and empty arrays are valid, and
-all object definitions disallow additional fields. "API property" is the TypeScript name;
-"Template field" is the name written to the template.
+all object definitions disallow additional fields. The CDK property names are identical to
+the template field names below.
 
 Resource-level (`Resources.<LogicalId>.Metadata["com.aws.cloudformation.Context"]`):
 
-| Template field | API property | Type | Required | Meaning | Example |
-| -------------- | ------------ | ---- | -------- | ------- | ------- |
-| `why` | `why` | text | no | Purpose, important configuration choices, and rejected alternatives. | `"retry buffer for an unreliable payments service"` |
-| `must` | `must` | array of text | no | Rules whose violation would break correctness, availability, security, data integrity, or a required dependency. | `["VisibilityTimeout must be at least six times the Lambda timeout"]` |
-| `mutable` | `defaultMutability` | `ContextMutability` | no | Default change-safety for the resource. | `"change-with-constraints"` |
-| `mutability` | `propertyMutability` | object | no | Change-safety for properties that differ from the resource default or are especially important. | `{ "QueueName": "must-never-change" }` |
-| `trust` | `trust` | object | no | Source and confidence; see the trust fields below. | see the trust table |
-| `deps` | `deps` | array of text | no | Stacks, resources, or services this resource relies on. | `["NetworkStack"]` |
+| Field | Type | Required | Meaning | Example |
+| ----- | ---- | -------- | ------- | ------- |
+| `why` | text | no | Purpose, important configuration choices, and rejected alternatives. | `"retry buffer for an unreliable payments service"` |
+| `must` | array of text | no | Rules whose violation would break correctness, availability, security, data integrity, or a required dependency. | `["VisibilityTimeout must be at least six times the Lambda timeout"]` |
+| `mutable` | `ContextMutability` | no | Default change-safety for the resource. | `"change-with-constraints"` |
+| `mutability` | object | no | Change-safety for properties that differ from the resource default or are especially important. | `{ "QueueName": "must-never-change" }` |
+| `trust` | object | no | Source and confidence; see the trust fields below. | see the trust table |
+| `deps` | array of text | no | Stacks, resources, or services this resource relies on. | `["NetworkStack"]` |
 
 `ContextMutability` allows four values: `must-never-change`,
 `change-with-constraints`, `review-required`, and `free-to-tune`.
@@ -973,12 +1105,12 @@ not a schema requirement.
 
 `trust` object fields:
 
-| Template field | API property | Type | Required | Meaning | Example |
-| -------------- | ------------ | ---- | -------- | ------- | ------- |
-| `src` | `source` | allowed value | yes, when `trust` is present | One of `authored`, `comment`, `commit`, or `infer`. | `"infer"` |
-| `conf` | `confidence` | allowed value | yes, when `trust` is present | One of `high`, `medium`, or `low`. | `"low"` |
-| `cite` | `citation` | text | no | Location of supporting evidence, such as a file and line, web address, or commit identifier. | `"service/handler.ts:87"` |
-| `note` | `note` | text | no | Additional explanation about the source or confidence. | `"no explicit design note"` |
+| Field | Type | Required | Meaning | Example |
+| ----- | ---- | -------- | ------- | ------- |
+| `src` | allowed value | yes, when `trust` is present | One of `authored`, `comment`, `commit`, or `infer`. | `"infer"` |
+| `conf` | allowed value | yes, when `trust` is present | One of `high`, `medium`, or `low`. | `"low"` |
+| `cite` | text | no | Location of supporting evidence, such as a file and line, web address, or commit identifier. | `"service/handler.ts:87"` |
+| `note` | text | no | Additional explanation about the source or confidence. | `"no explicit design note"` |
 
 The four allowed sources are:
 
@@ -988,34 +1120,11 @@ The four allowed sources are:
 * `infer` - a tool concluded the information from code structure or behavior without an
   explicit statement.
 
-`src` holds one value, so when more than one description fits, choose by this precedence:
-
-1. `authored` whenever a person wrote the Context text or explicitly confirmed it, even if
-   the text originated in a comment, a commit message, or a tool's inference. Human
-   confirmation is the strongest evidence, and the original evidence is not lost: record it
-   in `cite` (for example the comment's file and line, or the commit identifier) and, when
-   useful, in `note`.
-2. Otherwise, the most direct evidence: `comment` when the text was copied or lightly
-   rephrased from a source comment; `commit` when it came from version-control history.
-3. `infer` when the tool combined evidence or reasoned from code structure or behavior
-   without an explicit statement, even if a comment or commit contributed. Name the
-   contributing evidence in `cite` and `note`.
-
-For example, a tool that lifts `why` from a comment writes `src: "comment"` and
-`cite: "lib/queue.ts:42"`. When the author later reviews and accepts that value, the tool or
-the author changes `src` to `authored` and keeps the `cite`.
-
-Three of the four values (`comment`, `commit`, `infer`) exist for automated producers, and
-that is where `src` matters most: a reader must be able to tell tool-derived Context from
-Context a person stands behind. A person adding Context directly in CDK code usually omits
-`trust` altogether, because the reviewed source code already shows who wrote it. `authored`
-is most useful when a tool records that a person confirmed generated content, or when
-human-written and tool-derived Context appear in the same template and a reader needs to
-tell them apart.
-
-An automated tool chooses `comment`, `commit`, or `infer` according to the evidence it
-used. It uses `authored` only after a person writes or confirms the information. The caller
-always supplies `confidence`; CDK never chooses it from other fields. Because `trust`
+`src` holds one value. When more than one fits, apply the precedence rule in *Source and
+confidence* above: `authored` once a person has written or confirmed the text; otherwise the
+most direct evidence (`comment`, then `commit`); `infer` when a tool combined evidence or
+reasoned without an explicit statement, naming that evidence in `cite` and `note`. The caller
+always supplies `conf`; CDK never derives it. Because `trust`
 describes the source of other content, it reads best alongside a `why` or `must`, but the
 schema permits a Resource Context whose only field is `trust`.
 
@@ -1027,12 +1136,12 @@ field.
 
 Template-level (`Metadata["com.aws.cloudformation.Context"]` at the template root):
 
-| Template field | API property | Type | Required | Meaning | Example |
-| -------------- | ------------ | ---- | -------- | ------- | ------- |
-| `arch` | `arch` | text | no | Architecture overview. | `"Amazon SQS sends messages to AWS Lambda, which writes to Amazon DynamoDB"` |
-| `must` | `must` | array of text | no | Rules that apply throughout the template. | `["all stored data uses the customer managed AWS KMS key"]` |
-| `ref` | `refs` | array of text or objects | no | References to supporting information. | `[{ at: "docs/design/order-processing.md", has: "request sequence" }]` |
-| `owner` | `owner` | text | no | Owner or contact, when a tag does not already provide it. | `"order-processing-team"` |
+| Field | Type | Required | Meaning | Example |
+| ----- | ---- | -------- | ------- | ------- |
+| `arch` | text | no | Architecture overview. | `"Amazon SQS sends messages to AWS Lambda, which writes to Amazon DynamoDB"` |
+| `must` | array of text | no | Rules that apply throughout the template. | `["all stored data uses the customer managed AWS KMS key"]` |
+| `ref` | array of text or objects | no | References to supporting information. | `[{ at: "docs/design/order-processing.md", has: "request sequence" }]` |
+| `owner` | text | no | Owner or contact, when a tag does not already provide it. | `"order-processing-team"` |
 
 No top-level template field is required. A declaration containing any subset of `arch`,
 `must`, `ref`, or `owner` is valid, and an empty declaration is a harmless no-op.
