@@ -1,8 +1,8 @@
 # Structured Design Context in Synthesized Templates
 
 * **Original Author(s):** @satyakigh
-* **Tracking Issue**: #972
-* **API Bar Raiser**: @iliapolo 
+* **Tracking Issue**: #994
+* **API Bar Raiser**: @iliapolo
 
 AWS Cloud Development Kit (AWS CDK) applications contain information about why each
 resource exists. That information includes reasoning, hard rules that must remain true,
@@ -567,7 +567,7 @@ public API consistency, approved this RFC (the `status/api-approved` label was a
 RFC pull request):
 
 ```text
-[ ] Signed-off by API Bar Raiser @xxxxx
+[x] Signed-off by API Bar Raiser @iliapolo
 ```
 
 ## Public FAQ
