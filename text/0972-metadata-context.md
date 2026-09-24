@@ -2,7 +2,7 @@
 
 * **Original Author(s):** @satyakigh
 * **Tracking Issue**: #972
-* **API Bar Raiser**: TBD
+* **API Bar Raiser**: @iliapolo 
 
 AWS Cloud Development Kit (AWS CDK) applications contain information about why each
 resource exists. That information includes reasoning, hard rules that must remain true,
