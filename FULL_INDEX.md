@@ -222,5 +222,5 @@
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0943-aws-elemental-inference-l2.md)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [960](https://github.com/aws/aws-cdk-rfcs/issues/960)|[Log Alarm L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0960-logalarm-l2.md)||❓unknown
-[994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/issues/994)||❓unknown
+[994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/issues/994)||⏰ final comments
 <!--END_TABLE-->
