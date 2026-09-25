@@ -45,4 +45,5 @@
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0943-aws-elemental-inference-l2.md)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
+[994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/issues/994)||⏰ final comments
 <!--END_TABLE-->
