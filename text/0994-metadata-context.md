@@ -160,7 +160,8 @@ When several declarations apply to one resource, CDK combines them. For fields t
 one value (`why`, `mutable`, and `trust`), the declaration closest to the
 resource takes precedence. For array fields (`must` and `deps`),
 CDK combines the entries and removes duplicates. For `mutability`, CDK combines the
-maps and uses the closest declaration for each property name. For example:
+maps, uses the closest declaration for each property name, and drops entries that equal the
+merged `mutable`. For example:
 
 ```ts
 declare const stack: Stack;
@@ -569,7 +570,8 @@ Behavior summary:
   matches no resource fails template generation.
 * Declarations merge ancestor-to-resource: the closest declaration wins for `why`, `mutable`,
   and `trust`; `must` and `deps` are unioned and de-duplicated; `mutability` merges per
-  property. Repeated `add()` calls on the same scope merge in call order, later wins for
+  property, and entries equal to the merged `mutable` are dropped. Repeated `add()` calls on
+  the same scope merge in call order, later wins for
   single-value fields. `CfnResourceMetadataContext.of(scope).clear()` stops declarations made on
   ancestor scopes at `scope`: the ancestor's selector decides which resources are
   candidates, and `clear()` removes every candidate beneath the cleared scope. Declarations
@@ -751,9 +753,9 @@ CloudFormation does not interpret or validate these metadata fields, and the sch
 is advisory. CDK performs limited checks on values passed through its typed APIs that stay
 within the schema: it constrains `mutable`, `mutability`, and `trust` values to the
 schema's allowed tokens, and requires `src` and `conf` when a caller supplies
-`trust`, matching the schema's `TrustObject`. CDK also enforces the schema's sparse
-mutability map rule, keeping `mutability` to properties that deviate from the
-resource default or are high-stakes rather than enumerating every property. CDK does not add
+`trust`, matching the schema's `TrustObject`. For `mutability`, CDK rejects an entry that
+repeats the same declaration's `mutable` and omits from the rendered map any entry equal to
+the merged `mutable`; it does not otherwise check the map's contents. CDK does not add
 requiredness beyond the schema: it does not require a `why`, does not require a `must` for
 constrained mutability, does not reject a `trust` block used alone, and does not reject
 blank strings or empty arrays, all of which are structurally valid. An empty declaration is
@@ -836,7 +838,8 @@ The merge rules are:
 * For array fields (`must` and `deps`), CDK combines entries and
   removes duplicates.
 * For `mutability`, CDK combines the maps and uses the closest declaration for each
-  property name.
+  property name. After merging, any entry equal to the merged `mutable` is dropped, and a
+  map left empty is not rendered.
 
 **Directly written metadata.** A value written directly under
 `com.aws.cloudformation.Context` remains unchanged unless a metadata-context API also
