@@ -223,4 +223,5 @@
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [960](https://github.com/aws/aws-cdk-rfcs/issues/960)|[Log Alarm L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0960-logalarm-l2.md)||❓unknown
 [994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/issues/994)||⏰ final comments
+[1001](https://github.com/aws/aws-cdk-rfcs/issues/1001)|[CloudWatch View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/1001)||❓unknown
 <!--END_TABLE-->
