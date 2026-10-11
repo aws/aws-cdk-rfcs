@@ -223,8 +223,9 @@ Every deliverable exists as a working branch, validated against current upstream
    independent of this RFC ([aws/jsii#5274](https://github.com/aws/jsii/pull/5274), for
    [aws/jsii#5275](https://github.com/aws/jsii/issues/5275)).
 4. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + the `plugin-api` entry point
-   (+ optionally `--target-config` as CLI sugar; the overlay itself is proven plugin-side, and
-   version hooks turned out to need no seam at all).
+   ([aws/jsii#5276](https://github.com/aws/jsii/pull/5276), draft; + optionally
+   `--target-config` as CLI sugar; the overlay itself is proven plugin-side, and version
+   hooks turned out to need no seam at all).
 5. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
 6. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
 7. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
