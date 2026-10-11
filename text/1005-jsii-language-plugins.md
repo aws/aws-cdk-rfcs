@@ -1,10 +1,10 @@
 # A lightweight plugin system for jsii language targets
 
 * **Original Author(s)**: @omarqureshi
-* **Tracking Issue**: *(to be opened against aws/aws-cdk-rfcs before submission — successor to [#935](https://github.com/aws/aws-cdk-rfcs/issues/935);
-  co-development offered by @mrgrain in its closing discussion: "let's work on an RFC for a
-  lightweight plugin-system that would allow you to publish a Ruby-plugin and self-host the
-  generated language bindings")*
+* **Tracking Issue**: [#1005](https://github.com/aws/aws-cdk-rfcs/issues/1005) — successor to
+  [#935](https://github.com/aws/aws-cdk-rfcs/issues/935); co-development offered by @mrgrain in
+  its closing discussion: "let's work on an RFC for a lightweight plugin-system that would allow
+  you to publish a Ruby-plugin and self-host the generated language bindings"
 * **API Bar Raiser**: @mrgrain
 
 This RFC proposes the smallest set of seams in the jsii toolchain that let a community build,
