@@ -142,7 +142,7 @@ a running deployment rather than a proposed one:
 | **AWS layer — the entire ask** | | |
 | `aws/jsii-compiler` | assembly compilation and validation | D0: accept unknown `targets.LANG`, reported as a configurable warning (~55 lines + tests) |
 | `aws/jsii` — `jsii-pacmak` | binding generation | D1: a target-plugin registry and `--plugin` |
-| `aws/jsii` — `jsii-rosetta` | example translation | D3: open the language registry; ship the corpus as a test surface |
+| `aws/jsii-rosetta` | example translation | D3: open the language registry behind a declared plugin API; ship the corpus as a test surface |
 | `aws/jsii` — `@jsii/runtime` | the kernel process every guest runtime talks to | nothing — the wire protocol is documented as public (D2), not altered |
 | `aws/jsii` — `tools/jsii-compliance` | the conformance suite and report format | D2: published as a runnable kit; no code changes |
 
@@ -186,10 +186,11 @@ Every deliverable exists as a working branch, validated against current upstream
   point; a demo plugin round-trips end-to-end against `jsii-calc` without `--force-target`.
   Rebased on current upstream `main`, the full pacmak suite passes (190 tests) and all 1,972
   built-in-target snapshots are unchanged — the built-ins provably do not change.
-- **D3** (`jsii-rosetta`): the external language registry; the full rosetta suite passes. The
-  translations corpus and its fixtures now ship in the package behind a `lib/testing` harness,
-  and rosetta's own translation tests consume that same exported API — so the shipped corpus
-  cannot drift from what upstream tests.
+- **D3** (`jsii-rosetta`): the external language registry behind a declared, versioned
+  `plugin-api` entry point, and `extract --plugin`. Rebased on current upstream `main`, the full
+  rosetta suite passes (576 tests). The translations corpus and its fixtures now ship in the
+  package behind a `lib/testing` harness, and rosetta's own translation tests consume that same
+  exported API — so the shipped corpus cannot drift from what upstream tests.
 - **Reference plugin** (`jsii-target-ruby`): the extracted Ruby target generates the `jsii-calc`
   fixture closure through **stock pacmak** via `--plugin`; every generated file passes `ruby -c`;
   a complete `.gem` builds with the embedded assembly; the repo self-hosts the runtime gem and
@@ -230,7 +231,8 @@ Every deliverable exists as a working branch, validated against current upstream
 6. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
 7. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
    Ruby plugin doubles as its living reference).
-8. D3 (phase 2): rosetta registry + published corpus; re-home the Ruby visitor.
+8. D3 (phase 2): rosetta registry + published corpus; re-home the Ruby visitor
+   ([aws/jsii-rosetta#3878](https://github.com/aws/jsii-rosetta/pull/3878), draft).
 9. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
    jsii-rosetta#3710) with pointers here.
 
@@ -335,8 +337,9 @@ upstream is registry entries and version pins that D1 replaces.
 ### Why should we _not_ do this?
 
 Frozen APIs are a commitment; a plugin ecosystem could create support pressure ("my plugin
-broke"). Mitigations: the surface is one module of mostly already-stable interfaces, and nothing
-outside it is promised; the experimental tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
+broke"). Mitigations: each seam's surface is one declared module and nothing outside it is promised
+(pacmak's is small and mostly already-stable; rosetta's is larger, since a visitor is built
+from its syntax-tree machinery); the experimental tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
 
 A related worry is inheriting an abandoned ecosystem by association. The honest answer is that
 the seam changes what abandonment costs rather than preventing it: an unmaintained plugin stops
@@ -677,7 +680,17 @@ examples into idiomatic Ruby and a rendered documentation site is generated and 
 the bindings today. D3 is *sequenced* as phase 2 purely so D1 stays reviewable in an afternoon;
 in the interim a plugin's bindings remain usable with examples appearing as TypeScript. Phase 2
 opens rosetta's `TARGET_LANGUAGES` map the same way as D1 (values are already plain strings;
-tablets are string-keyed), with the visitor interface offered at the same experimental tier.
+tablets are string-keyed).
+
+**The plugin API is declared, and it is not small.** As with pacmak, a plugin imports from one
+module, `jsii-rosetta/lib/plugin-api`, plus the corpus harness. Rosetta's `exports` map exposes
+those two and nothing else under `lib/`, and `registerTargetLanguage` takes the plugin API
+version the plugin was written against, under the same rule as D1: while it is 0.x, the major
+and minor versions must both match. Unlike pacmak's, this surface is not tiny. A visitor is
+built from rosetta's own syntax-tree machinery — `DefaultVisitor`, `AstRenderer`, `OTree`, and
+about twenty AST and jsii helpers — so that is what the module exports. The set is exactly what
+the Ruby visitor imports, and it is the strongest reason the API starts experimental: it was
+drawn from one visitor, and a second language may need things it does not.
 
 **Opening the map is necessary but not sufficient.** Building the Ruby plugin against it
 surfaced three further places where a closed language set is assumed, each found only by running
@@ -698,7 +711,13 @@ wired to that tablet would have got dramatically faster and published documentat
 almost entirely untranslated.
 
 The remedy in each case is small (check the registry rather than the enum; let callers name
-modules for workers to load), and all three are implemented in the reference fork. The general
+modules for workers to load), and all three are implemented in the reference fork. Loading
+needed one more correction to stay that way: a language has to be registered in the main
+process, where the cache is checked, *and* in every worker. As two separate steps, forgetting
+the first brought the third failure straight back. One option, `pluginModules` (or
+`extract --plugin`), now does both, and resolves its paths from the caller's working
+directory: a worker resolving them itself would start from rosetta's install, and translation
+runs from a temporary directory. The general
 point for this RFC is that a plugin seam is not just a lookup table: the *cache* and *worker*
 paths have to be language-agnostic too, or the system fails in the one way that is hardest to
 notice. This is also the argument for shipping the corpus (below) as a conformance surface —
@@ -723,7 +742,15 @@ the plugins that register the languages have loaded, carrying the assembly *loca
 than the loaded assemblies (an assembly runs to tens of megabytes, and each worker should read
 only what its languages need). No built-in language implements it, so nothing changes for them,
 and `extractSnippets` already receives the locations, so wiring them through costs one field per
-layer. Implemented in the reference fork.
+layer. Implemented in the reference fork, with the locations made absolute before they reach a
+worker.
+
+One risk stays structural. The registry lives in the jsii-rosetta module, so a plugin and the
+jsii-pacmak that loads it must resolve the *same* jsii-rosetta. If they resolve two copies, the
+plugin registers into one while pacmak translates with the other, and examples silently stay
+TypeScript. The reference plugin reports that case loudly at load time, and a plugin installed
+from npm alongside pacmak resolves one copy as a matter of course, but a reviewer should know the
+failure mode exists.
 
 D3 also ships rosetta's **translations corpus** (the language-neutral snippet library its own
 Python/Java/C#/Go translation tests iterate) in the published package, behind a small
