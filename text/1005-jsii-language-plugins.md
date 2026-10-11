@@ -167,10 +167,13 @@ which the byte-identical built-in snapshots below are the evidence for.
   vendor-neutral and tests itself against a fabricated library; `aws-cdk-lib`, `cdk8s` and
   `constructs` each carry their own naming. This is what stops a community target accumulating
   one vendor's special cases, and the scaffold generates the split by default.
-- **The support boundary is explicit.** The plugin API surface is published as an explicitly
-  versioned, initially **experimental** API; pacmak declares its plugin-API version, plugins
-  declare a compatible range, and mismatches fail loudly at load time. No guarantee is made
-  beyond that during the experimental period.
+- **The support boundary is explicit.** The plugin API is one module,
+  `jsii-pacmak/lib/plugin-api`, published as an explicitly versioned, initially
+  **experimental** API. Everything else in pacmak stays internal. pacmak declares the version
+  it implements, every plugin must declare the version it was written against, and a mismatch
+  fails loudly at load time. While the API is 0.x, the major and minor versions must both
+  match, because any minor release may break plugins. No guarantee is made beyond that during
+  the experimental period.
 
 ## Implementation Status (evidence)
 
@@ -179,9 +182,10 @@ Every deliverable exists as a working branch, validated against current upstream
 - **D0** (`jsii-compiler`): unknown target languages pass through to the assembly and are
   reported as a new configurable warning, JSII_4011; rebased on current upstream `main`, the full
   compiler suite passes (440 tests).
-- **D1** (`jsii`): `--plugin` loading, registry, and CLI integration; a demo plugin round-trips
-  end-to-end, the full pacmak suite passes, and all built-in-target snapshots (1,944 files)
-  are byte-identical — the built-ins provably do not change.
+- **D1** (`jsii`): `--plugin` loading, registry, CLI integration and the `plugin-api` entry
+  point; a demo plugin round-trips end-to-end against `jsii-calc` without `--force-target`.
+  Rebased on current upstream `main`, the full pacmak suite passes (190 tests) and all 1,972
+  built-in-target snapshots are unchanged — the built-ins provably do not change.
 - **D3** (`jsii-rosetta`): the external language registry; the full rosetta suite passes. The
   translations corpus and its fixtures now ship in the package behind a `lib/testing` harness,
   and rosetta's own translation tests consume that same exported API — so the shipped corpus
@@ -213,16 +217,20 @@ Every deliverable exists as a working branch, validated against current upstream
 ### Upstreaming sequence
 
 1. This RFC (co-developed with the jsii maintainers).
-2. D0 PR to `jsii-compiler` — pass unknown target languages through, reported as JSII_4011.
-3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` (+ optionally `--target-config` as
-   CLI sugar; the overlay itself is proven plugin-side, and version hooks turned out to need
-   no seam at all).
-4. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
-5. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
-6. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
+2. D0 PR to `jsii-compiler` — pass unknown target languages through, reported as JSII_4011
+   ([aws/jsii-compiler#2830](https://github.com/aws/jsii-compiler/pull/2830), draft).
+3. The `--recurse` fix to `jsii-pacmak`, on its own ahead of D1 — a bug in released pacmak,
+   independent of this RFC ([aws/jsii#5274](https://github.com/aws/jsii/pull/5274), for
+   [aws/jsii#5275](https://github.com/aws/jsii/issues/5275)).
+4. D1 PR to `jsii-pacmak` — small: registry + `--plugin` + the `plugin-api` entry point
+   (+ optionally `--target-config` as CLI sugar; the overlay itself is proven plugin-side, and
+   version hooks turned out to need no seam at all).
+5. Extract `jsii-target-ruby` from the fork as the first plugin; retire the fork pins.
+6. D2: protocol statement + conformance kit packaging; Ruby publishes its report.
+7. Extract `create-jsii-language` from the Ruby plugin's final structure (community-hosted; the
    Ruby plugin doubles as its living reference).
-7. D3 (phase 2): rosetta registry + published corpus; re-home the Ruby visitor.
-8. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
+8. D3 (phase 2): rosetta registry + published corpus; re-home the Ruby visitor.
+9. Dispose of the superseded in-tree PRs (aws/jsii#5178, jsii-compiler#2663, aws-cdk#38248,
    jsii-rosetta#3710) with pointers here.
 
 ## Working Backwards
@@ -326,8 +334,8 @@ upstream is registry entries and version pins that D1 replaces.
 ### Why should we _not_ do this?
 
 Frozen APIs are a commitment; a plugin ecosystem could create support pressure ("my plugin
-broke"). Mitigations: the surface is tiny and mostly already-stable interfaces; the experimental
-tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
+broke"). Mitigations: the surface is one module of mostly already-stable interfaces, and nothing
+outside it is promised; the experimental tier sets expectations; the support boundary is stated in the Public FAQ and in pacmak's docs.
 
 A related worry is inheriting an abandoned ecosystem by association. The honest answer is that
 the seam changes what abandonment costs rather than preventing it: an unmaintained plugin stops
@@ -343,7 +351,8 @@ Four deliverables, smallest first — each an opening of an existing seam:
 - **D0** — `jsii-compiler` passes unknown `jsii.targets` languages through instead of
   rejecting them, and reports each as a configurable warning (built-in validation untouched).
 - **D1** — `jsii-pacmak` loads external targets via `--plugin`; the generic
-  `IndependentPackageBuilder` that already serves three built-in targets serves plugins too.
+  `IndependentPackageBuilder` that already serves three built-in targets serves plugins too,
+  and everything a plugin may import is declared in one versioned module.
   Naming for libraries that carry no plugin-language config is supplied by the plugin itself
   and needs no pacmak change; a `--target-config` flag is optional sugar over that.
 - **D2** — the kernel wire protocol is documented as a public interface for alternative guest
@@ -435,8 +444,8 @@ full AWS CDK from published npm artifacts in CI). Resolved, with the evidence:
   the shape — ship the canonical artifact with the package it belongs to, expose a small
   library API, let the repo's own tests consume that API as its proof. The runtime kit should
   ride the jsii release train the same way; no separate release cadence to govern.
-- **Graduation criteria (proposed):** the plugin API stays experimental (major-version match
-  enforced at load, as implemented) until (a) a second independently-maintained language
+- **Graduation criteria (proposed):** the plugin API stays experimental (major and minor
+  versions must match at load while it is 0.x, as implemented) until (a) a second independently-maintained language
   target builds against it, (b) a full upstream release cycle passes with no breaking
   plugin-API change, and (c) the conformance kit and corpus have external consumers. Then a
   stabilization review freezes it.
@@ -523,6 +532,20 @@ framework:
   `{ targetName: string, targetConstructor: TargetConstructor }` (or, escape hatch, a full
   `BuilderFactory` for languages that need multi-module builds like .NET/Java).
 - CLI target validation accepts plugin-registered names alongside built-ins.
+- A plugin target is generated for **every** package, whether or not its assembly declares the
+  language. Built-in targets only generate for packages that configure them, unless
+  `--force-target` is passed; that filter cannot apply to plugin languages, because the RFC's
+  premise is that libraries will not configure them, and loading a plugin is already an
+  explicit opt-in. This is what makes `--plugin` the whole seam in the example above.
+- **The plugin API is declared.** `jsii-pacmak/lib/plugin-api` exports everything a plugin may
+  use: the declaration and its version contract, `Target` and `Generator`, the
+  `BuilderFactory` types for the escape hatch, and two helpers the built-in targets use
+  (`subprocess`, `assertSpecIsRosettaCompatible`). That set is exactly what the Ruby reference
+  imports, and the reference and the scaffold import nothing else. Every other pacmak module
+  stays internal and free to change.
+- **The version contract is enforced.** A plugin must declare `pluginApiVersion`; while the API
+  is 0.x, pacmak loads it only if the major and minor versions both match its own, and from 1.0
+  only if the majors match and the plugin's minor version is not newer.
 - No version-scheme or naming hooks in the contract: `toReleaseVersion` and friends are only
   ever called from inside per-language generators, so a plugin simply brings its own mapping
   (the Ruby reference owns release-version conversion, range translation, its runtime-pairing
@@ -580,8 +603,9 @@ assembly dependencies only ever arise from runtime/peer dependencies.
 Nobody had hit this in years of `--recurse` existing because the flag's only realistic users
 ran it inside source monorepos, where the devDependency graph coincides with a sensible build
 order. Generating from *installed artifacts* is the workflow that only exists out-of-tree —
-the first sustained user of that path found the bug within a day. The fix is small and rides
-with the D1 branch: devDependencies still drive `--recurse` *discovery* (source monorepos
+the first sustained user of that path found the bug within a day. The fix is small and has
+been submitted on its own, ahead of D1, as
+[aws/jsii#5274](https://github.com/aws/jsii/pull/5274): devDependencies still drive `--recurse` *discovery* (source monorepos
 reference sibling jsii packages that way) but no longer produce *ordering edges*
 (`dependencies`/`peerDependencies` only, which is exactly the set that can affect generated
 output). The `JsiiModule.dependencyNames` field's sole consumer is the topological sort, so
