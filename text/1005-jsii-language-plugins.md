@@ -140,7 +140,7 @@ a running deployment rather than a proposed one:
 | `omarqureshi/create-jsii-language` | the scaffold: generates that whole shape for a named language | — |
 | `omarqureshi/jsii-target-crystal` | untouched output of the scaffold, kept as evidence it runs | — |
 | **AWS layer — the entire ask** | | |
-| `aws/jsii-compiler` | assembly compilation and validation | D0: accept unknown `targets.LANG` (~5 lines + tests) |
+| `aws/jsii-compiler` | assembly compilation and validation | D0: accept unknown `targets.LANG`, reported as a configurable warning (~55 lines + tests) |
 | `aws/jsii` — `jsii-pacmak` | binding generation | D1: a target-plugin registry and `--plugin` |
 | `aws/jsii` — `jsii-rosetta` | example translation | D3: open the language registry; ship the corpus as a test surface |
 | `aws/jsii` — `@jsii/runtime` | the kernel process every guest runtime talks to | nothing — the wire protocol is documented as public (D2), not altered |
@@ -153,8 +153,9 @@ which the byte-identical built-in snapshots below are the evidence for.
 
 - **The `.jsii` assembly format and kernel protocol: unchanged.** (D0 relaxes what the compiler
   *accepts* into the existing open-typed `targets` field — the format itself already permits it.)
-- **Validation of built-in languages: unchanged** — the typo-catching from jsii-compiler#2415
-  is preserved.
+- **Validation of built-in languages: unchanged**, and the typo-catching from jsii-compiler#2415
+  is preserved: an unknown language becomes a coded warning that a package can raise back to an
+  error.
 - **AWS repos gain no language code, no CI matrix rows, no release-train steps.** Stronger:
   no language-specific content of any kind lands in an AWS repository — the D0/D1/D3 diffs
   contain zero occurrences of any plugin language's name, verifiable by grep. Even the act of
@@ -175,8 +176,9 @@ which the byte-identical built-in snapshots below are the evidence for.
 
 Every deliverable exists as a working branch, validated against current upstream `main`:
 
-- **D0** (`jsii-compiler`): warn-and-pass for unknown target languages, ~5 lines plus tests;
-  the full project-info suite passes.
+- **D0** (`jsii-compiler`): unknown target languages pass through to the assembly and are
+  reported as a new configurable warning, JSII_4011; rebased on current upstream `main`, the full
+  compiler suite passes (440 tests).
 - **D1** (`jsii`): `--plugin` loading, registry, and CLI integration; a demo plugin round-trips
   end-to-end, the full pacmak suite passes, and all built-in-target snapshots (1,944 files)
   are byte-identical — the built-ins provably do not change.
@@ -211,7 +213,7 @@ Every deliverable exists as a working branch, validated against current upstream
 ### Upstreaming sequence
 
 1. This RFC (co-developed with the jsii maintainers).
-2. D0 PR to `jsii-compiler` — warn-and-pass for unknown target languages (~5 lines + tests).
+2. D0 PR to `jsii-compiler` — pass unknown target languages through, reported as JSII_4011.
 3. D1 PR to `jsii-pacmak` — small: registry + `--plugin` (+ optionally `--target-config` as
    CLI sugar; the overlay itself is proven plugin-side, and version hooks turned out to need
    no seam at all).
@@ -338,8 +340,8 @@ proposal is buying, and it is the reason the reference implementation's own main
 
 Four deliverables, smallest first — each an opening of an existing seam:
 
-- **D0** — `jsii-compiler` warns-and-passes unknown `jsii.targets` languages instead of
-  rejecting them (~5 lines; built-in validation untouched).
+- **D0** — `jsii-compiler` passes unknown `jsii.targets` languages through instead of
+  rejecting them, and reports each as a configurable warning (built-in validation untouched).
 - **D1** — `jsii-pacmak` loads external targets via `--plugin`; the generic
   `IndependentPackageBuilder` that already serves three built-in targets serves plugins too.
   Naming for libraries that carry no plugin-language config is supplied by the plugin itself
@@ -364,8 +366,9 @@ No. Built-in targets are untouched; `--plugin` is additive.
 - **Zero compiler changes (D0 omitted)**, with plugin naming carried exclusively by the D1
   `--target-config` overlay plus convention-based derivation. Viable, but it forbids third-party
   construct libraries from ever self-describing for plugin languages in-band, which every
-  built-in target can do. The ~5-line warn-and-pass is the better trade; the overlay remains for
-  libraries that predate a plugin or never heard of it.
+  built-in target can do. A small pass-through, reported as a warning a package can make fatal,
+  is the better trade; the overlay remains for libraries that predate a plugin or never heard
+  of it.
 - **Permanent forks (the status quo)** — works, as the Ruby fork demonstrates, but pays a
   permanent rebase/patch-pin tax, produces unverifiable support boundaries, and makes every
   community language rediscover the architecture from scratch.
@@ -485,7 +488,7 @@ implementation experience:
 
 ## Appendix: The deliverables in detail
 
-### D0. jsii-compiler: open the `targets` namespace *(~5 lines)*
+### D0. jsii-compiler: open the `targets` namespace *(~55 lines)*
 
 Since [jsii-compiler#2415](https://github.com/aws/jsii-compiler/pull/2415) (Nov 2025),
 `validateTargets` hard-rejects any `jsii.targets` language outside the built-in whitelist
@@ -494,11 +497,19 @@ level (every `.jsiirc.json` flows through the same function). That check exists 
 and should keep doing so for built-in languages; for unknown languages it currently makes
 in-band plugin config impossible.
 
-Proposed change: unknown languages **warn and pass through** instead of throwing (retaining the
-object-shape check). Built-in validation is untouched; a typo like `pyhton` still surfaces —
-as a warning naming the unknown language — while `targets.ruby` reaches the assembly for
-plugin tooling to consume and validate against its own schema (validation belongs at generation
-time, in the plugin that owns the schema, not in a compiler that cannot know it).
+Proposed change: unknown languages **pass through** instead of throwing (retaining the
+object-shape check), and each is reported as a new diagnostic, `JSII_4011`
+(`jsii-config/unknown-target-language`), naming the language and where it was declared. Built-in
+validation is untouched, and `targets.ruby` reaches the assembly for plugin tooling to consume and
+validate against its own schema (validation belongs at generation time, in the plugin that owns
+the schema, not in a compiler that cannot know it).
+
+It is a diagnostic rather than a log line so that typo-catching survives. `JSII_4011` is a warning
+by default, so `--fail-on-warnings` still fails a build on `pyhton`, and a package that wants the
+old hard error can restore it through `jsii.diagnostics`. A log line would have reached neither.
+For the same reason it is reported by the assembler, not while `package.json` is loaded: a
+package's severity overrides are applied after loading, and `--fail-on-warnings` reads only the
+compiler's own diagnostics.
 
 ### D1. pacmak: external target plugins *(the enabling seam)*
 
