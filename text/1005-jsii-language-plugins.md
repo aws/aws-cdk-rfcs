@@ -34,7 +34,7 @@ repository and no AWS support obligation.
 ### README: Language plugins
 
 jsii generates bindings for TypeScript, Python, Java, C# and Go. A language plugin lets anyone add another language target
-without changing jsii: the plugin is an npm package, published and maintained by its own community, that stock
+without changing jsii: the plugin is an npm package, published and maintained by its own community, that
 `jsii-pacmak` and `jsii-rosetta` load on request.
 
 > Plugin languages are community-built, community-hosted and community-supported. The jsii project supports the
