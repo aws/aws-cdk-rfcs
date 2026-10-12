@@ -127,7 +127,7 @@ registerTargetLanguage(
 );
 ```
 
-A plugin imports from `jsii-pacmak/lib/plugin-api` and `jsii-rosetta/lib/plugin-api` only. Everything else in those
+A plugin imports from `jsii-pacmak/plugin-api` and `jsii-rosetta/plugin-api` only. Everything else in those
 packages is internal.
 
 #### Versions and compatibility
