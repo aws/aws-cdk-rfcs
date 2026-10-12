@@ -111,7 +111,7 @@ target that needs control of the whole build, as Java and .NET do, provides a `b
 To translate examples, the plugin also registers a visitor with jsii-rosetta when it is loaded:
 
 ```ts
-import { DefaultVisitor, registerTargetLanguage } from 'jsii-rosetta/lib/plugin-api';
+import { DefaultVisitor, registerTargetLanguage } from 'jsii-rosetta/plugin-api';
 
 class RubyVisitor extends DefaultVisitor<RubyContext> {
   // render each syntax node in Ruby
