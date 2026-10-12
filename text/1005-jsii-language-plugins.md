@@ -50,8 +50,7 @@ npx jsii-pacmak --plugin jsii-target-ruby -t ruby -o dist/ruby
 ```
 
 A plugin target is generated for every package, whether or not its `package.json` configures that language, so you
-can generate bindings for a library whose authors have never heard of the plugin. `--plugin` may be repeated, and
-`--recurse` works as it does for the built-in targets:
+can generate bindings for a library whose authors have never heard of the plugin. `--plugin` may be repeated.
 
 ```sh
 npm install aws-cdk-lib
