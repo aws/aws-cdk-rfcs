@@ -187,6 +187,8 @@ No. This is a new construct; it does not change any existing API.
    when the L1 is synthesized.
 6. **Expose `Type`, `CreatedAt` and `UpdatedAt` as attributes.** Not in v1, although the guidelines ask for every
    CloudFormation attribute:
+   * An imported view (`fromViewArn`) cannot provide them, and imported constructs must only set properties that are
+     meaningful for the imported resource, so they do not belong on `IView`; they could only live on the `View` class.
    * `Type` is always `USER` for views created through CloudFormation, and the timestamps have no use in CDK code.
    * The awslint rule that enforced this (`resource-attribute`) is commented out, and `AlarmMuteRule` in the same
      module exposes only `Arn` of its four attributes.
@@ -199,8 +201,9 @@ No. This is a new construct; it does not change any existing API.
    interpolated into another query, so an `undefined` name would synthesize as `FROM "undefined"` and fail only when the
    query runs. `fromViewArn` throws instead, like `kms.Key.fromKeyArn`. Malformed ARNs such as `not-an-arn` are rejected
    by `Arn.split` in both approaches. The agent-facing `AGENTS_CONSTRUCT_DESIGN.md` says `from*` methods must not
-   validate identifiers, while `DESIGN_GUIDELINES.md` allows parsing after a token check. Removing the check later is not
-   a breaking change, so we will follow the API Bar Raiser's preference.
+   validate identifiers, while `DESIGN_GUIDELINES.md` allows parsing after a token check. The proposed behaviour is to
+   throw (as the prototype does); removing the check later is not a breaking change, so we will follow the API Bar
+   Raiser's preference if it differs.
 9. **A `ViewGrants` facade.** Deferred to keep v1 minimal (see "Why should we not do this?"). A future
    `ViewGrants.read` would grant `cloudwatch:GetView` on `viewArn`; it can be generated from `grants.json` and added
    later without breaking changes, preferably after the Service Authorization Reference documents the full `view` ARN.
@@ -266,8 +269,8 @@ is collected through the RFC review and the `aws/aws-cdk` pull request review.
   is `view/${ViewName}/${ViewId}`, and a correction to the reference (which documents `view/${ViewName}`) has been
   submitted. `cloudwatch:ListTagsForResource`, `cloudwatch:TagResource` and `cloudwatch:UntagResource` still do not list
   `view` as a resource type in the reference; this has been reported to the service team.
-* Whether `fromViewArn` should throw on an ARN without a resource name or return an `undefined` name (see
-  alternative 8). Decided by the API Bar Raiser during review; relaxing the check later is not a breaking change, but
+* Whether `fromViewArn` should throw on an ARN without a resource name (proposed, see alternative 8) or return an
+  `undefined` name. Confirmed by the API Bar Raiser during review; relaxing the check later is not a breaking change, but
   adding it later would be.
 * `viewType`, `viewCreatedAt` and `viewUpdatedAt` attributes, if users ask for them.
 
