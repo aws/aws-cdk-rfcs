@@ -58,11 +58,11 @@ Tags added with `Tags.of()` are applied as well.
 
 When the values are not tokens, `View` checks them at synthesis time and throws an error if:
 
-* `viewName` is not a valid view name, using the same rules as the `Name` property of `AWS::CloudWatch::View`:
-  * it must start with `view.`;
-  * the next character must be a lowercase letter or digit;
-  * the remaining characters must be lowercase letters, digits, underscores (`_`) or hyphens (`-`);
-  * the whole name must be 6 to 256 characters long (pattern `^view\.[a-z0-9][a-z0-9_-]{0,250}$`);
+* `viewName` breaks any of these rules:
+  * A view name must start with `view.`.
+  * After `view.`, it must start with a lowercase letter or digit.
+  * The remaining characters must be lowercase letters, digits, underscores (`_`) or hyphens (`-`).
+  * The whole name must be 6 to 256 characters long (pattern `^view\.[a-z0-9][a-z0-9_-]{0,250}$`).
 * `definition` is empty or longer than 10000 characters;
 * `description` is longer than 1024 characters.
 
