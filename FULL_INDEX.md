@@ -211,7 +211,7 @@
 [877](https://github.com/aws/aws-cdk-rfcs/issues/877)|[Automated issue triage and guidance for community PRs](https://github.com/aws/aws-cdk-rfcs/issues/877)||💡 proposed
 [884](https://github.com/aws/aws-cdk-rfcs/issues/884)|[L2 Constructs for AWS Elemental MediaConnect](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0884-aws-elemental-mediaconnect-l2.md)||💡 proposed
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0886-making-hotswap-faster.md)||✅ done
-[897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||⏰ final comments
+[897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||✅ done
 [904](https://github.com/aws/aws-cdk-rfcs/issues/904)|[L2 Constructs for AWS Elemental MediaLive](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0904-aws-elemental-medialive-l2.md)||💡 proposed
 [907](https://github.com/aws/aws-cdk-rfcs/issues/907)|[(AWS Elemental MediaPackage V2 + Amazon CloudFront Origins): Extending stable module functionality into alpha modules](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0907-cloudfront-mediapackagev2-origin-extension.md)||💡 proposed
 [911](https://github.com/aws/aws-cdk-rfcs/issues/911)|[L2 construct for CloudWatch Promql alarms](https://github.com/aws/aws-cdk-rfcs/issues/911)||💡 proposed
@@ -222,4 +222,7 @@
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0943-aws-elemental-inference-l2.md)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 [960](https://github.com/aws/aws-cdk-rfcs/issues/960)|[Log Alarm L2 Construct](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0960-logalarm-l2.md)||❓unknown
+[994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/issues/994)||⏰ final comments
+[1001](https://github.com/aws/aws-cdk-rfcs/issues/1001)|[CloudWatch View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/1001)||❓unknown
+[1005](https://github.com/aws/aws-cdk-rfcs/issues/1005)|[A lightweight plugin system for jsii language targets](https://github.com/aws/aws-cdk-rfcs/issues/1005)||💡 proposed
 <!--END_TABLE-->

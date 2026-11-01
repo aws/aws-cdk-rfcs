@@ -82,5 +82,6 @@
 [808](https://github.com/aws/aws-cdk-rfcs/issues/808)|[Library Quality Scoring](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0808-library-quality-scoring.md)||✅ done
 [814](https://github.com/aws/aws-cdk-rfcs/issues/814)|[Unified mechanism for abstractions that change constructs after construction](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0814-cdk-mixins.md)||✅ done
 [886](https://github.com/aws/aws-cdk-rfcs/issues/886)|[Making Hotswap Faster](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0886-making-hotswap-faster.md)||✅ done
+[897](https://github.com/aws/aws-cdk-rfcs/issues/897)|[CDK Comprehensive Validation](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0897-cdk-comprehensive-validation.md)||✅ done
 [920](https://github.com/aws/aws-cdk-rfcs/issues/920)|[CDK LSP Server and Web Explorer](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0920-lsp-server-and-web-explorer.md)||✅ done
 <!--END_TABLE-->
