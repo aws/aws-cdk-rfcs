@@ -44,5 +44,6 @@
 [935](https://github.com/aws/aws-cdk-rfcs/issues/935)|[Ruby Language Support](https://github.com/aws/aws-cdk-rfcs/issues/935)||💡 proposed
 [943](https://github.com/aws/aws-cdk-rfcs/issues/943)|[L2 Construct for AWS Elemental Inference](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0943-aws-elemental-inference-l2.md)||💡 proposed
 [1005](https://github.com/aws/aws-cdk-rfcs/issues/1005)|[A lightweight plugin system for jsii language targets](https://github.com/aws/aws-cdk-rfcs/issues/1005)||💡 proposed
+[1014](https://github.com/aws/aws-cdk-rfcs/issues/1014)|[CloudWatch Omni L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/1014)||💡 proposed
 [949](https://github.com/aws/aws-cdk-rfcs/issues/949)|[CDK Debootstrap Command](https://github.com/aws/aws-cdk-rfcs/issues/949)||✍️ review
 <!--END_TABLE-->

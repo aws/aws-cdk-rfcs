@@ -225,4 +225,5 @@
 [994](https://github.com/aws/aws-cdk-rfcs/issues/994)|[Structured Design Context in Synthesized Templates](https://github.com/aws/aws-cdk-rfcs/blob/main/text/0994-metadata-context.md)||👷 implementing
 [1001](https://github.com/aws/aws-cdk-rfcs/issues/1001)|[CloudWatch View L2 Construct](https://github.com/aws/aws-cdk-rfcs/issues/1001)||❓unknown
 [1005](https://github.com/aws/aws-cdk-rfcs/issues/1005)|[A lightweight plugin system for jsii language targets](https://github.com/aws/aws-cdk-rfcs/issues/1005)||💡 proposed
+[1014](https://github.com/aws/aws-cdk-rfcs/issues/1014)|[CloudWatch Omni L2 Constructs](https://github.com/aws/aws-cdk-rfcs/issues/1014)||💡 proposed
 <!--END_TABLE-->
