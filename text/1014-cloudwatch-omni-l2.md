@@ -314,21 +314,92 @@ A space referenced only by its ARN carries no domain id, so it supports the stan
 
 #### The space's roles
 
-When `dataAccessRole` is not given, the construct creates the role that CloudWatch Omni assumes when it issues credentials to the space's
-users, with the trust policy and the AWS managed policy `CloudWatchOmniSpaceAccessPolicy` that the service documents. The role in use is
-available as `space.dataAccessRole`. A customer managed role needs the same trust policy and permission, and the construct will validate at
-build time to achieve a fail-fast mechanism instead of failing at deploy time. In addition to dataAccessRole, the space api also accepts
-`agentCoreEvaluationRole`, to conduct automated, real-time online AI agent evaluations. `agentCoreEvaluationRole` is optional, has no
-default, and trusts Amazon Bedrock AgentCore rather than CloudWatch so that Amazon Bedrock AgentCore Evaluations can continuously score live
-agent telemetry in the background without an active user session. See [Service Roles for
+A space uses up to two IAM roles. The policies below show what each role needs, which construct creates it, and what the identity that
+deploys the stack needs in order to pass it. The role policies come from the service's [Service roles used for
 setup](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/omni-identity-and-access-management-for-cloudwatch-omni.html#omni-identity-and-access-management-for-cloudwatch-omni-service-roles-used-for-setup)
-for the several IAM roles used for setup.
+and [confused deputy prevention](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/omni-cross-service-confused-deputy-prevention.html)
+pages.
 
-Creating or updating a space passes its roles to CloudWatch, so the identity that deploys the stack needs `iam:PassRole` on `dataAccessRole`
-and on `agentCoreEvaluationRole`, with the `iam:PassedToService` condition equal to `cloudwatch.amazonaws.com` (see the [Service
-Authorization Reference](https://docs.aws.amazon.com/service-authorization/latest/reference/list_cloudwatch.html), `CreateSpace` and
-`UpdateSpace`). Creating an organization domain passes its domain access role in the same way (`CreateDomainForOrganization`). When you
-deploy with CloudFormation, the role that CloudFormation deploys with needs this permission.
+**1. Data access role (`dataAccessRole`, required by the service).** CloudWatch Omni assumes this role when it issues credentials to the
+space's users. When the prop is omitted, the `Space` construct creates the role below. When you supply a role, it needs the same trust
+policy and permissions, and the construct checks them at synthesis if the role is defined in the same app.
+
+Trust policy. `aws:SourceAccount` is the space's account (`Stack.of(space).account`):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudwatch.amazonaws.com" },
+      "Action": ["sts:AssumeRole", "sts:TagSession", "sts:SetSourceIdentity", "sts:SetContext"],
+      "Condition": { "StringEquals": { "aws:SourceAccount": "111122223333" } }
+    }
+  ]
+}
+```
+
+Permissions: the AWS managed policy `arn:aws:iam::aws:policy/CloudWatchOmniSpaceAccessPolicy` is attached. When the space has an
+`encryptionKey`, the construct also adds a statement to that key's policy that lets this role use the key.
+
+**2. AgentCore evaluation role (`agentCoreEvaluationRole`, optional).** Amazon Bedrock AgentCore Evaluations assumes this role to score
+live agent telemetry without an active user session. The construct never creates it. You supply it, following the AgentCore
+[evaluations prerequisites](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/evaluations-prerequisites.html):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "bedrock-agentcore.amazonaws.com" },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": { "aws:SourceAccount": "111122223333", "aws:ResourceAccount": "111122223333" },
+        "ArnLike": {
+          "aws:SourceArn": [
+            "arn:aws:bedrock-agentcore:us-east-1:111122223333:evaluator/*",
+            "arn:aws:bedrock-agentcore:us-east-1:111122223333:online-evaluation-config/*"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+**3. Deploying identity.** `CreateSpace` and `UpdateSpace` pass the space's roles to the service, so the identity that deploys the stack
+needs `iam:PassRole` on each one. With CloudFormation, that identity is the role CloudFormation deploys with. The two roles go to different
+services:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PassDataAccessRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::111122223333:role/MySpaceDataAccessRole",
+      "Condition": { "StringEquals": { "iam:PassedToService": "cloudwatch.amazonaws.com" } }
+    },
+    {
+      "Sid": "PassAgentCoreEvaluationRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::111122223333:role/service-role/AgentCoreEvaluationRole*",
+      "Condition": { "StringEquals": { "iam:PassedToService": "bedrock-agentcore.amazonaws.com" } }
+    }
+  ]
+}
+```
+
+The second statement is only needed when the space has an `agentCoreEvaluationRole`. `CreateDomainForOrganization` passes the organization
+domain's access role the same way, with `iam:PassedToService` equal to `cloudwatch.amazonaws.com` (see [Organization
+domains](#organization-domains)). The default CDK bootstrap CloudFormation execution role has `AdministratorAccess` and already allows this;
+a custom or least-privilege
+execution role needs these statements added.
 
 #### Space replacement
 
@@ -1930,8 +2001,13 @@ each resource schema, the rules the interfaces and import methods follow, and th
 The code generator maps the `AWS::CloudWatch` namespace to `aws-cdk-lib/aws-cloudwatch`. `CfnDomain`, `CfnSpace`, `CfnAccessProfile`,
 `CfnAccessGrant`, `CfnOmniDashboard`, `CfnAlert`, `CfnDomainForOrganization`, `CfnDomainAccessGrantForOrganization` and `CfnIntegration`,
 with their reference interfaces, are in that module next to `CfnDashboard` and `CfnAlarm`. `CfnDatasetIntegration` is in
-`aws-cdk-lib/aws-observabilityadmin`. Each L2 is written in the same module as its L1. The L2s don't reuse the classic `IMetric`,
-`Dashboard` or widget types, and this RFC proposes no L2 for `AWS::CloudWatch::Integration`.
+`aws-cdk-lib/aws-observabilityadmin`. Each L2 is written in the same module as its L1.
+
+This RFC proposes no L2 for `AWS::CloudWatch::Integration`, the resource that connects a space to a third-party service such as Slack or
+PagerDuty. Creating one needs an authorization step with the third-party service that CloudFormation can't perform, so integrations are
+connected in the console and alerts reference them by ARN through `AlertTarget`. An L2 would add little over the L1 while the authorization
+step stays outside CloudFormation, so this RFC leaves
+it for a later proposal.
 
 #### Validation
 
@@ -1972,9 +2048,19 @@ places.
 #### Access grant facades instead of an `AccessGrant` construct
 
 Grants could be methods on the resource being accessed, such as `space.access.read(principal)`, following the IAM grant pattern
-(`bucket.grants.read(role)`). The service already models a grant as a resource with a principal and a permission, and a grant can be
-imported by ARN. So an `AccessGrant` construct with `AccessGrantPrincipal` and `AccessGrantPermission` value classes covers every
-combination with one API, while facades would need a method per permission level and a second way to reach L1 spaces.
+(`bucket.grants.read(role)`). Facades can reach L1 spaces the same way `BucketGrants.fromBucket(cfnBucket)` reaches L1 buckets, so that
+is not the reason for an `AccessGrant` construct.
+
+The reason is that an access grant is a resource of its own, while an IAM grant is not. `bucket.grants.read(role)` adds statements to a
+policy on the grantee and creates nothing that the customer later needs to address. `AWS::CloudWatch::AccessGrant` has its own ARN, name
+and lifecycle: every property is create-only, so changing a grant replaces it, and it can be imported with `fromAccessGrantArn`. Other
+resources depend on it: an alert must be created after the grants that name its profile, or alert creation fails. A facade method would
+create that resource but hide it, leaving no construct to reference, import, depend on or apply a removal policy to. An `AccessGrant`
+construct with `AccessGrantPrincipal` and `AccessGrantPermission` value classes exposes the resource and covers every principal and
+permission combination with one API, without a facade method per permission level.
+
+Facades can be added later as shorthand that returns an `AccessGrant`, for example `space.access.read(principal): AccessGrant`. That is
+a non-breaking addition and doesn't need to be decided in this RFC.
 
 #### An alert that creates its own access profile
 
